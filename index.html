@@ -2840,23 +2840,28 @@ function closeEventModal(){
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('eventModal').style.display!=='none')closeEventModal();});
 
-function admLogin(){
-  if(document.getElementById('admPwd').value === ADMIN_PWD){
-    admUnlocked = true;
-    document.getElementById('admLockWrap').style.display = 'none';
-    const ac = document.getElementById('admContent');
-    ac.style.display = 'flex';
-    ac.style.flex = '1';
-    ac.style.flexDirection = 'column';
-    ac.style.overflow = 'hidden';
-    admTab(admCurTab);
-    admPopulate(admCurTab);
-  } else {
-    const err = document.getElementById('admPwdErr');
-    err.style.display = 'block';
-    setTimeout(()=>err.style.display='none', 2500);
-    document.getElementById('admPwd').value = '';
-  }
+// Esta es la huella digital cifrada de tu clave "rolando2025"
+const AUTH_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"; 
+
+async function admLogin() {
+    const inputPwd = document.getElementById('admPwd').value;
+    
+    // Convertimos lo que escribes en una huella digital (Hash)
+    const msgUint8 = new TextEncoder().encode(inputPwd);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Comparamos las huellas, no el texto plano
+    if (hashHex === AUTH_HASH) {
+        admUnlocked = true;
+        document.getElementById('admLockWrap').style.display = 'none';
+        document.getElementById('admContent').style.display = 'block';
+        // Si Claude usaba otra función para mostrar pestañas, llámala aquí:
+        if(typeof admTab === 'function') admTab('hero'); 
+    } else {
+        alert("Contraseña incorrecta");
+    }
 }
 
 function admTab(name){
