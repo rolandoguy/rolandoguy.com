@@ -929,6 +929,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <img class="lightbox-img" id="lbImg" src="" alt="">
   <button class="lb-nav lb-next" onclick="navLb(1)">&#8594;</button>
   <div class="lb-counter" id="lbCtr">1 / 4</div>
+  <div id="lbCaption" style="text-align:center;max-width:600px;margin:12px auto 0;padding:0 20px">
+    <div id="lbCapText" style="font-size:.85rem;color:var(--text-dim);line-height:1.6"></div>
+    <div id="lbCapPhotog" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;margin-top:6px"></div>
+  </div>
 </div>
 <section id="photos">
   <div class="section-inner">
@@ -1233,9 +1237,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-section" style="margin-top:24px">Backstage</div>
      <div id="admBackstageSlots"></div>
      <div style="margin-top:12px">
+       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
-         + Agregar foto backstage<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
+         + Subir foto<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
        </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:200px" placeholder="URL de imagen (img/foto.jpg)" id="backstageUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addBackstageByUrl()">+ Agregar URL</button>
+       </div>
      </div>
      <div class="adm-feedback" id="fb-photos">¡Foto actualizada!</div>
     </div>
@@ -2301,10 +2310,11 @@ const PHOTOS={
 };
 let lbSet='s',lbIdx=0;
 function lbArr(s){return s==='b'?(getPhotos().b||[]):PHOTOS[s];}
-function openLb(set,idx){lbSet=set;lbIdx=idx;const arr=lbArr(set);document.getElementById('lbImg').src=arr[idx];document.getElementById('lbCtr').textContent=(idx+1)+' / '+arr.length;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden';}
+function updateLbCaption(){const cap=getCaption(lbSet,lbIdx);const t=document.getElementById('lbCapText');const p=document.getElementById('lbCapPhotog');if(t)t.textContent=cap.caption||'';if(p)p.textContent=cap.photographer?'\u00a9 '+cap.photographer:'';}
+function openLb(set,idx){lbSet=set;lbIdx=idx;const arr=lbArr(set);document.getElementById('lbImg').src=arr[idx];document.getElementById('lbCtr').textContent=(idx+1)+' / '+arr.length;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden';updateLbCaption();}
 function closeLb(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow='';}
 function closeLbOnBg(e){if(e.target.id==='lightbox')closeLb();}
-function navLb(d){const arr=lbArr(lbSet);lbIdx=(lbIdx+d+arr.length)%arr.length;document.getElementById('lbImg').src=arr[lbIdx];document.getElementById('lbCtr').textContent=(lbIdx+1)+' / '+lbArr(lbSet).length;}
+function navLb(d){const arr=lbArr(lbSet);lbIdx=(lbIdx+d+arr.length)%arr.length;document.getElementById('lbImg').src=arr[lbIdx];document.getElementById('lbCtr').textContent=(lbIdx+1)+' / '+lbArr(lbSet).length;updateLbCaption();}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape')closeLb();
   if(document.getElementById('lightbox').classList.contains('open')){if(e.key==='ArrowLeft')navLb(-1);if(e.key==='ArrowRight')navLb(1);}
@@ -3191,9 +3201,16 @@ function savePerf(id){
 }
 
 // ── Photos Management ──
+
+// ── PHOTO CAPTIONS ──
+function getCaptions(){ return load('rg_photo_captions') || {}; }
+function saveCaptions(data){ save('rg_photo_captions', data); }
+function getCaption(type, idx){ const caps = getCaptions(); return caps[type+'_'+idx] || {}; }
+function setCaption(type, idx, caption, photographer){ const caps = getCaptions(); caps[type+'_'+idx] = {caption:caption||'',photographer:photographer||''}; saveCaptions(caps); }
+
 function getPhotos(){
   const stored=load('rg_photos');
-  if(stored) return stored;
+  if(stored){ if(!stored.b) stored.b=[]; return stored; }
   return {s:[...PHOTOS.s], t:[...PHOTOS.t], b:[]};
 }
 function savePhotos(data){save('rg_photos',data);}
@@ -3241,10 +3258,14 @@ function admRenderPhotoSlots(){
       <span style="color:var(--gold);font-size:1.2rem;flex-shrink:0;user-select:none">⠿</span>
       <img src="${src}" style="width:72px;height:96px;object-fit:cover;object-position:top;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1">
-        <div class="adm-label" style="margin-bottom:8px">${STUDIO_LABELS[i]}${i===0?' · También en Biografía':''}</div>
-        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+        <div class="adm-label" style="margin-bottom:6px">${STUDIO_LABELS[i]}${i===0?' · También en Biografía':''}</div>
+        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px;margin-bottom:8px">
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('s',${i},this)">
         </label>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-s-${i}" value="${(getCaption('s',i).caption)||''}" onchange="setCaption('s',${i},this.value,document.getElementById('phot-s-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-s-${i}" value="${(getCaption('s',i).photographer)||''}" onchange="setCaption('s',${i},document.getElementById('cap-s-${i}').value,this.value)">
+        </div>
       </div>
     </div>`).join('');
   tDiv.innerHTML=ph.t.map((src,i)=>`
@@ -3259,10 +3280,14 @@ function admRenderPhotoSlots(){
       <span style="color:var(--gold);font-size:1.2rem;flex-shrink:0;user-select:none">⠿</span>
       <img src="${src}" style="width:128px;height:80px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1">
-        <div class="adm-label" style="margin-bottom:8px">${STAGE_LABELS[i]}</div>
-        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+        <div class="adm-label" style="margin-bottom:6px">${STAGE_LABELS[i]}</div>
+        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px;margin-bottom:8px">
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('t',${i},this)">
         </label>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-t-${i}" value="${(getCaption('t',i).caption)||''}" onchange="setCaption('t',${i},this.value,document.getElementById('phot-t-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-t-${i}" value="${(getCaption('t',i).photographer)||''}" onchange="setCaption('t',${i},document.getElementById('cap-t-${i}').value,this.value)">
+        </div>
       </div>
     </div>`).join('');
   // Backstage slots
@@ -3281,17 +3306,36 @@ function admRenderPhotoSlots(){
       <img src="${src}" style="width:128px;height:80px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1">
         <div class="adm-label" style="margin-bottom:8px">${BACKSTAGE_LABELS[i] || 'Backstage '+(i+1)}</div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
           <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
             Cambiar<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('b',${i},this)">
           </label>
           <button class="adm-btn-sm adm-btn-danger" onclick="removeBackstagePhoto(${i})">Eliminar</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-b-${i}" value="${(getCaption('b',i).caption)||''}" onchange="setCaption('b',${i},this.value,document.getElementById('phot-b-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-b-${i}" value="${(getCaption('b',i).photographer)||''}" onchange="setCaption('b',${i},document.getElementById('cap-b-${i}').value,this.value)">
         </div>
       </div>
     </div>`).join('');
   }
 }
 
+
+function addBackstageByUrl(){
+  const input = document.getElementById('backstageUrlInput');
+  const url = input ? input.value.trim() : '';
+  if(!url){alert('Pegá una URL de imagen');return;}
+  const ph=getPhotos();
+  if(!ph.b) ph.b=[];
+  ph.b.push(url);
+  savePhotos(ph);
+  renderPhotoGallery();
+  admRenderPhotoSlots();
+  if(input) input.value='';
+  const fb=document.getElementById('fb-photos');
+  if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);}
+}
 function addBackstagePhoto(input){
   if(!input.files[0]) return;
   const reader=new FileReader();
@@ -3313,6 +3357,17 @@ function removeBackstagePhoto(i){
   const ph=getPhotos();
   ph.b.splice(i,1);
   savePhotos(ph);
+  // Shift captions down
+  const caps=getCaptions();
+  const newCaps={};
+  Object.keys(caps).forEach(k=>{
+    if(!k.startsWith('b_')){newCaps[k]=caps[k];return;}
+    const ci=parseInt(k.split('_')[1]);
+    if(ci<i) newCaps[k]=caps[k];
+    else if(ci>i) newCaps['b_'+(ci-1)]=caps[k];
+    // ci===i is the deleted one, skip
+  });
+  saveCaptions(newCaps);
   renderPhotoGallery();
   admRenderPhotoSlots();
 }
