@@ -2836,28 +2836,34 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 // Huella digital segura (Hash) de tu clave
 const AUTH_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"; 
 
-async function admLogin() {
-  const inputPwd = document.getElementById('admPwd').value;
-  
-  // Generamos el hash para comparar de forma secreta
-  const msgUint8 = new TextEncoder().encode(inputPwd);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// 1. La huella digital se mantiene igual
+const AUTH_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"; 
 
-  if (hashHex === AUTH_HASH) {
-    admUnlocked = true;
-    document.getElementById('admLockWrap').style.display = 'none';
-    document.getElementById('admContent').style.display = 'flex';
-    // Mantiene tu lógica original de Claude
-    admTab(admCurTab); 
-  } else {
-    // Mantiene tu mensaje de error original de Claude
-    const err = document.getElementById('admPwdErr');
-    err.style.display = 'block';
-    setTimeout(() => err.style.display = 'none', 2500);
-    document.getElementById('admPwd').value = '';
-  }
+// 2. Esta función nueva hará de puente para que no falle el clic
+function admLogin() {
+    const inputPwd = document.getElementById('admPwd').value;
+    
+    // Usamos esta forma para que el navegador espere la validación correctamente
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(inputPwd))
+    .then(hashBuffer => {
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (hashHex === AUTH_HASH) {
+            admUnlocked = true;
+            document.getElementById('admLockWrap').style.display = 'none';
+            document.getElementById('admContent').style.display = 'flex';
+            admTab(admCurTab);
+        } else {
+            const err = document.getElementById('admPwdErr');
+            if(err) {
+                err.style.display = 'block';
+                setTimeout(() => err.style.display = 'none', 2500);
+            }
+            document.getElementById('admPwd').value = '';
+        }
+    })
+    .catch(e => console.error("Error de validación:", e));
 }
 
 function admTab(name){
