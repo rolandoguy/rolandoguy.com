@@ -424,7 +424,7 @@ section{position:relative;z-index:2}
 .photo-item-p{aspect-ratio:3/4}.photo-item-s{aspect-ratio:4/3}
 .photo-item img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .5s;filter:grayscale(15%)}
 .photo-item:hover img{transform:scale(1.06)}
-.lightbox{position:fixed;inset:0;z-index:1500;background:rgba(10,10,14,.97);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px)}
+.lightbox{position:fixed;inset:0;z-index:1500;background:rgba(10,10,14,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(16px)}
 .lightbox.open{opacity:1;pointer-events:all}
 .lightbox-img{max-width:80vw;max-height:85vh;object-fit:contain;border:1px solid var(--border)}
 .lightbox-close{position:absolute;top:24px;right:32px;font-family:var(--ff-caps);font-size:.58rem;letter-spacing:.2em;color:var(--text-dim);cursor:none;border:1px solid var(--border);padding:7px 16px;background:transparent;transition:all .3s}
@@ -432,7 +432,7 @@ section{position:relative;z-index:2}
 .lb-nav{position:absolute;top:50%;transform:translateY(-50%);font-size:1.4rem;color:var(--gold);cursor:none;padding:12px 18px;background:rgba(13,13,18,.5);border:1px solid var(--border);transition:all .3s;line-height:1}
 .lb-nav:hover{background:rgba(212,168,67,.1);border-color:var(--gold)}
 .lb-prev{left:16px}.lb-next{right:16px}
-.lb-counter{position:absolute;bottom:22px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.2em;color:var(--text-faint)}
+.lb-counter{font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.2em;color:var(--text-faint);margin-top:8px}
 #performances{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .perf-header{display:grid;grid-template-columns:1fr 1fr;gap:72px;margin-bottom:56px;align-items:end}
 .perf-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
@@ -794,6 +794,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 .perf-more-btn{display:inline-block;margin-top:10px;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold);background:none;border:1px solid rgba(212,168,67,.3);padding:5px 14px;text-transform:uppercase;cursor:pointer;transition:all .25s}
 .perf-more-btn:hover{background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--text)}
+
+#backstageGrid{background:transparent;border:none}
+#backstageGrid .photo-item{border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -929,6 +932,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <img class="lightbox-img" id="lbImg" src="" alt="">
   <button class="lb-nav lb-next" onclick="navLb(1)">&#8594;</button>
   <div class="lb-counter" id="lbCtr">1 / 4</div>
+  <div id="lbCaption" style="text-align:center;max-width:600px;margin:12px auto 0;padding:0 20px">
+    <div id="lbCapText" style="font-size:.85rem;color:var(--text-dim);line-height:1.6"></div>
+    <div id="lbCapPhotog" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;margin-top:6px"></div>
+  </div>
 </div>
 <section id="photos">
   <div class="section-inner">
@@ -1228,14 +1235,35 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <div class="adm-panel" id="admPanel-photos">
      <div class="adm-section">Retratos de Estudio</div>
      <div id="admStudioSlots"></div>
+     <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+       <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+         + Subir foto estudio<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('s',this)">
+       </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="URL de imagen" id="studioUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addPhotoByUrl('s','studioUrlInput')">+ URL</button>
+     </div>
      <div class="adm-section" style="margin-top:24px">Fotos en Escena</div>
      <div id="admStageSlots"></div>
+     <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+       <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+         + Subir foto escena<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('t',this)">
+       </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="URL de imagen" id="stageUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addPhotoByUrl('t','stageUrlInput')">+ URL</button>
+     </div>
      <div class="adm-section" style="margin-top:24px">Backstage</div>
      <div id="admBackstageSlots"></div>
      <div style="margin-top:12px">
+       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
-         + Agregar foto backstage<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
+         + Subir foto<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
        </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:200px" placeholder="URL de imagen (img/foto.jpg)" id="backstageUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addBackstageByUrl()">+ Agregar URL</button>
+       </div>
      </div>
      <div class="adm-feedback" id="fb-photos">¡Foto actualizada!</div>
     </div>
@@ -2300,11 +2328,12 @@ const PHOTOS={
   t:['img/stage-1.jpg','img/stage-2.jpg','img/stage-3.jpg','img/stage-4.jpg','img/stage-5.jpg','img/stage-6.jpg']
 };
 let lbSet='s',lbIdx=0;
-function lbArr(s){return s==='b'?(getPhotos().b||[]):PHOTOS[s];}
-function openLb(set,idx){lbSet=set;lbIdx=idx;const arr=lbArr(set);document.getElementById('lbImg').src=arr[idx];document.getElementById('lbCtr').textContent=(idx+1)+' / '+arr.length;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden';}
+function lbArr(s){if(s==='b'){return (getPhotos().b||[]).map(x=>typeof x==='object'?(x.url||x):x);}return PHOTOS[s];}
+function updateLbCaption(){const cap=getCaption(lbSet,lbIdx);const t=document.getElementById('lbCapText');const p=document.getElementById('lbCapPhotog');if(t)t.textContent=cap.caption||'';if(p)p.textContent=cap.photographer?'\u00a9 '+cap.photographer:'';}
+function openLb(set,idx){lbSet=set;lbIdx=idx;const arr=lbArr(set);document.getElementById('lbImg').src=arr[idx];document.getElementById('lbCtr').textContent=(idx+1)+' / '+arr.length;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden';updateLbCaption();}
 function closeLb(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow='';}
 function closeLbOnBg(e){if(e.target.id==='lightbox')closeLb();}
-function navLb(d){const arr=lbArr(lbSet);lbIdx=(lbIdx+d+arr.length)%arr.length;document.getElementById('lbImg').src=arr[lbIdx];document.getElementById('lbCtr').textContent=(lbIdx+1)+' / '+lbArr(lbSet).length;}
+function navLb(d){const arr=lbArr(lbSet);lbIdx=(lbIdx+d+arr.length)%arr.length;document.getElementById('lbImg').src=arr[lbIdx];document.getElementById('lbCtr').textContent=(lbIdx+1)+' / '+lbArr(lbSet).length;updateLbCaption();}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape')closeLb();
   if(document.getElementById('lightbox').classList.contains('open')){if(e.key==='ArrowLeft')navLb(-1);if(e.key==='ArrowRight')navLb(1);}
@@ -2436,7 +2465,7 @@ function closeMenu(){
 // ══════════════════════════════════════════════
 // ADMIN
 // ══════════════════════════════════════════════
-const ADMIN_PWD = 'rolando2025';
+const ADMIN_PWD_HASH = '2731ffd9c02eb6a1c95681afe9d0ffecc995bd4697bbb731cd71cf1655d2a2b3';
 let admUnlocked = false;
 let admCurTab = 'hero';
 
@@ -2833,8 +2862,12 @@ function closeEventModal(){
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('eventModal').style.display!=='none')closeEventModal();});
 
-function admLogin(){
-  if(document.getElementById('admPwd').value === ADMIN_PWD){
+async function admLogin(){
+  const pwd = document.getElementById('admPwd').value;
+  const enc = new TextEncoder().encode(pwd);
+  const hashBuf = await crypto.subtle.digest('SHA-256', enc);
+  const hashHex = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hashHex === ADMIN_PWD_HASH){
     admUnlocked = true;
     document.getElementById('admLockWrap').style.display = 'none';
     const ac = document.getElementById('admContent');
@@ -3191,17 +3224,34 @@ function savePerf(id){
 }
 
 // ── Photos Management ──
+
+// ── PHOTO CAPTIONS ──
+function getCaptions(){ return load('rg_photo_captions') || {}; }
+function saveCaptions(data){ save('rg_photo_captions', data); }
+function getCaption(type, idx){ const caps = getCaptions(); return caps[type+'_'+idx] || {}; }
+function setCaption(type, idx, caption, photographer){ const caps = getCaptions(); caps[type+'_'+idx] = {caption:caption||'',photographer:photographer||''}; saveCaptions(caps); }
+
 function getPhotos(){
   const stored=load('rg_photos');
-  if(stored) return stored;
+  if(stored){ if(!stored.b) stored.b=[]; return stored; }
   return {s:[...PHOTOS.s], t:[...PHOTOS.t], b:[]};
 }
 function savePhotos(data){save('rg_photos',data);}
 
 function renderPhotoGallery(){
   const ph=getPhotos();
-  document.querySelectorAll('#panel-studio .photo-item img').forEach((img,i)=>{if(ph.s[i]) img.src=ph.s[i];});
-  document.querySelectorAll('#panel-stage .photo-item img').forEach((img,i)=>{if(ph.t[i]) img.src=ph.t[i];});
+  // Studio — dynamic
+  const sGrid=document.getElementById('panel-studio');
+  if(sGrid){
+    const sgrid=sGrid.querySelector('.photo-grid-4');
+    if(sgrid) sgrid.innerHTML=ph.s.map((src,i)=>'<div class="photo-item photo-item-p reveal rd'+(i%4)+'" onclick="openLb(\'s\','+i+')"><img src="'+src+'" alt="Rolando Guy" loading="lazy"></div>').join('');
+  }
+  // Stage — dynamic
+  const tGrid=document.getElementById('panel-stage');
+  if(tGrid){
+    const tgrid=tGrid.querySelector('.photo-grid-3');
+    if(tgrid) tgrid.innerHTML=ph.t.map((src,i)=>'<div class="photo-item photo-item-s reveal rd'+(i%4)+'" onclick="openLb(\'t\','+i+')"><img src="'+src+'" alt="On Stage" loading="lazy"></div>').join('');
+  }
   ph.s.forEach((src,i)=>PHOTOS.s[i]=src);
   ph.t.forEach((src,i)=>PHOTOS.t[i]=src);
   const bio=document.getElementById('bioPhoto');
@@ -3211,7 +3261,10 @@ function renderPhotoGallery(){
   const bEmpty=document.getElementById('backstageEmpty');
   if(bGrid){
     if(ph.b && ph.b.length>0){
-      bGrid.innerHTML=ph.b.map((src,i)=>`<div class="photo-item photo-item-s reveal rd${i%4}" onclick="openLb('b',${i})"><img src="${src}" alt="Backstage" loading="lazy"></div>`).join('');
+      bGrid.innerHTML=ph.b.map((src,i)=>{
+        const imgSrc = typeof src === 'object' ? src.url || src : src;
+        return `<div class="photo-item photo-item-s reveal rd${i%4}" onclick="openLb('b',${i})"><img src="${imgSrc}" alt="Backstage" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
+      }).join('');
       if(bEmpty) bEmpty.style.display='none';
     } else {
       bGrid.innerHTML='';
@@ -3220,9 +3273,9 @@ function renderPhotoGallery(){
   }
 }
 
-const STUDIO_LABELS=['Foto 1 (Bio)','Foto 2','Foto 3','Foto 4'];
-const STAGE_LABELS=['Escena 1','Escena 2','Escena 3','Escena 4','Escena 5','Escena 6'];
-const BACKSTAGE_LABELS=['Backstage 1','Backstage 2','Backstage 3','Backstage 4','Backstage 5','Backstage 6'];
+const STUDIO_LABELS=i=>(i===0?'Foto 1 (Bio)':'Foto '+(i+1));
+const STAGE_LABELS=i=>'Escena '+(i+1);
+const BACKSTAGE_LABELS=i=>'Backstage '+(i+1);
 
 function admRenderPhotoSlots(){
   const ph=getPhotos();
@@ -3241,10 +3294,15 @@ function admRenderPhotoSlots(){
       <span style="color:var(--gold);font-size:1.2rem;flex-shrink:0;user-select:none">⠿</span>
       <img src="${src}" style="width:72px;height:96px;object-fit:cover;object-position:top;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1">
-        <div class="adm-label" style="margin-bottom:8px">${STUDIO_LABELS[i]}${i===0?' · También en Biografía':''}</div>
-        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+        <div class="adm-label" style="margin-bottom:6px">${STUDIO_LABELS(i)}${i===0?' · También en Biografía':''}</div>
+        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px;margin-bottom:8px">
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('s',${i},this)">
         </label>
+        ${ph.s.length>1?'<button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection(\'s\','+i+')">Eliminar</button>':''}
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-s-${i}" value="${(getCaption('s',i).caption)||''}" onchange="setCaption('s',${i},this.value,document.getElementById('phot-s-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-s-${i}" value="${(getCaption('s',i).photographer)||''}" onchange="setCaption('s',${i},document.getElementById('cap-s-${i}').value,this.value)">
+        </div>
       </div>
     </div>`).join('');
   tDiv.innerHTML=ph.t.map((src,i)=>`
@@ -3259,10 +3317,15 @@ function admRenderPhotoSlots(){
       <span style="color:var(--gold);font-size:1.2rem;flex-shrink:0;user-select:none">⠿</span>
       <img src="${src}" style="width:128px;height:80px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1">
-        <div class="adm-label" style="margin-bottom:8px">${STAGE_LABELS[i]}</div>
-        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+        <div class="adm-label" style="margin-bottom:6px">${STAGE_LABELS(i)}</div>
+        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px;margin-bottom:8px">
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('t',${i},this)">
         </label>
+        <button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection('t',${i})">Eliminar</button>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-t-${i}" value="${(getCaption('t',i).caption)||''}" onchange="setCaption('t',${i},this.value,document.getElementById('phot-t-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-t-${i}" value="${(getCaption('t',i).photographer)||''}" onchange="setCaption('t',${i},document.getElementById('cap-t-${i}').value,this.value)">
+        </div>
       </div>
     </div>`).join('');
   // Backstage slots
@@ -3280,18 +3343,82 @@ function admRenderPhotoSlots(){
       <span style="color:var(--gold);font-size:1.2rem;flex-shrink:0;user-select:none">⠿</span>
       <img src="${src}" style="width:128px;height:80px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1">
-        <div class="adm-label" style="margin-bottom:8px">${BACKSTAGE_LABELS[i] || 'Backstage '+(i+1)}</div>
-        <div style="display:flex;gap:8px">
+        <div class="adm-label" style="margin-bottom:8px">${BACKSTAGE_LABELS(i)}</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
           <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
             Cambiar<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('b',${i},this)">
           </label>
           <button class="adm-btn-sm adm-btn-danger" onclick="removeBackstagePhoto(${i})">Eliminar</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-b-${i}" value="${(getCaption('b',i).caption)||''}" onchange="setCaption('b',${i},this.value,document.getElementById('phot-b-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-b-${i}" value="${(getCaption('b',i).photographer)||''}" onchange="setCaption('b',${i},document.getElementById('cap-b-${i}').value,this.value)">
         </div>
       </div>
     </div>`).join('');
   }
 }
 
+
+
+function addPhotoToSection(type, input){
+  if(!input.files[0]) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const ph=getPhotos();
+    if(!ph[type]) ph[type]=[];
+    ph[type].push(e.target.result);
+    savePhotos(ph);
+    renderPhotoGallery();
+    admRenderPhotoSlots();
+  };
+  reader.readAsDataURL(input.files[0]);
+  input.value='';
+}
+function addPhotoByUrl(type, inputId){
+  const input=document.getElementById(inputId);
+  const url=input?input.value.trim():'';
+  if(!url){alert('Pegá una URL');return;}
+  const ph=getPhotos();
+  if(!ph[type]) ph[type]=[];
+  ph[type].push(url);
+  savePhotos(ph);
+  renderPhotoGallery();
+  admRenderPhotoSlots();
+  if(input) input.value='';
+}
+function removePhotoFromSection(type, idx){
+  if(!confirm('¿Eliminar esta foto?')) return;
+  const ph=getPhotos();
+  ph[type].splice(idx,1);
+  savePhotos(ph);
+  // Shift captions
+  const caps=getCaptions();
+  const newCaps={};
+  Object.keys(caps).forEach(k=>{
+    if(!k.startsWith(type+'_')){newCaps[k]=caps[k];return;}
+    const ci=parseInt(k.split('_')[1]);
+    if(ci<idx) newCaps[k]=caps[k];
+    else if(ci>idx) newCaps[type+'_'+(ci-1)]=caps[k];
+  });
+  saveCaptions(newCaps);
+  renderPhotoGallery();
+  admRenderPhotoSlots();
+}
+function addBackstageByUrl(){
+  const input = document.getElementById('backstageUrlInput');
+  const url = input ? input.value.trim() : '';
+  if(!url){alert('Pegá una URL de imagen');return;}
+  const ph=getPhotos();
+  if(!ph.b) ph.b=[];
+  ph.b.push(url);
+  savePhotos(ph);
+  renderPhotoGallery();
+  admRenderPhotoSlots();
+  if(input) input.value='';
+  const fb=document.getElementById('fb-photos');
+  if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);}
+}
 function addBackstagePhoto(input){
   if(!input.files[0]) return;
   const reader=new FileReader();
@@ -3313,6 +3440,17 @@ function removeBackstagePhoto(i){
   const ph=getPhotos();
   ph.b.splice(i,1);
   savePhotos(ph);
+  // Shift captions down
+  const caps=getCaptions();
+  const newCaps={};
+  Object.keys(caps).forEach(k=>{
+    if(!k.startsWith('b_')){newCaps[k]=caps[k];return;}
+    const ci=parseInt(k.split('_')[1]);
+    if(ci<i) newCaps[k]=caps[k];
+    else if(ci>i) newCaps['b_'+(ci-1)]=caps[k];
+    // ci===i is the deleted one, skip
+  });
+  saveCaptions(newCaps);
   renderPhotoGallery();
   admRenderPhotoSlots();
 }
