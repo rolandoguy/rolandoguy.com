@@ -1082,12 +1082,17 @@ textarea.adm-input{resize:vertical;min-height:80px}
   </div>
   <div id="admLockWrap" style="background:var(--surface);padding:40px 32px">
    <div class="adm-lock">
-    <p>Ingresá la contraseña</p>
-    <div class="adm-lock-row">
-     <input type="password" class="adm-input" id="admPwd" placeholder="Contraseña..." onkeydown="if(event.key==='Enter')admLogin()">
-     <button class="adm-btn" onclick="admLogin()">Entrar</button>
+    <p>Acceso administrador</p>
+    <div style="font-size:.8rem;color:var(--text-dim);line-height:1.6;text-align:center">
+      Usuario: <span id="admUserEmail" style="color:var(--gold)">—</span>
     </div>
-    <div class="adm-feedback adm-err" id="admPwdErr">Contraseña incorrecta</div>
+    <div class="adm-lock-row" style="justify-content:center">
+     <button class="adm-btn" id="admSignInBtn" onclick="admSignInGoogle()">Entrar con Google</button>
+     <button class="adm-btn" id="admSignOutBtn" onclick="admSignOut()" style="display:none;background:transparent;color:var(--gold);border:1px solid var(--border)">Cerrar sesión</button>
+    </div>
+    <div class="adm-feedback" id="admAuthErr" style="display:block">
+      <span id="admAuthMsg">Iniciá sesión con Google para acceder.</span>
+    </div>
    </div>
   </div>
   <div id="admContent" style="display:none;flex-direction:column;overflow:hidden">
@@ -1387,10 +1392,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <!-- Firebase SDK -->
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 // ── In-memory cache ──
 const DB = {};
 let fsdb = null;
+let fauth = null;
 
 try {
   const firebaseConfig = {
@@ -1404,8 +1411,63 @@ try {
   if(typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
     fsdb = firebase.firestore();
+    fauth = firebase.auth();
   }
 } catch(e) { console.warn('Firebase init error:', e); }
+
+// ── Admin auth (Google) ──
+// NOTE: This allowlist is only for UI gating. Real security must be enforced by Firestore Security Rules.
+const ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
+function isAdminUser(user){
+  if(!user) return false;
+  const email = (user.email || '').toLowerCase();
+  return ADMIN_ALLOWLIST_EMAILS.map(x=>x.toLowerCase()).includes(email);
+}
+function admSetUnlocked(unlocked, user){
+  admUnlocked = !!unlocked;
+  const lock = document.getElementById('admLockWrap');
+  const content = document.getElementById('admContent');
+  if(lock) lock.style.display = unlocked ? 'none' : '';
+  if(content) content.style.display = unlocked ? 'flex' : 'none';
+
+  const emailEl = document.getElementById('admUserEmail');
+  if(emailEl) emailEl.textContent = (user && user.email) ? user.email : '—';
+
+  const err = document.getElementById('admAuthErr');
+  if(err) err.style.display = '';
+
+  const btnIn = document.getElementById('admSignInBtn');
+  const btnOut = document.getElementById('admSignOutBtn');
+  if(btnIn) btnIn.style.display = user ? 'none' : '';
+  if(btnOut) btnOut.style.display = user ? '' : 'none';
+}
+async function admSignInGoogle(){
+  if(!fauth){ alert('Auth no disponible (Firebase no inicializado).'); return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try{
+    await fauth.signInWithPopup(provider);
+  }catch(e){
+    console.warn('Google sign-in failed:', e);
+    alert('No se pudo iniciar sesión con Google. Revisá que el dominio esté autorizado en Firebase Authentication.');
+  }
+}
+async function admSignOut(){
+  if(!fauth) return;
+  try{ await fauth.signOut(); }catch(e){ console.warn('Sign out failed:', e); }
+}
+if(fauth){
+  fauth.onAuthStateChanged(user=>{
+    // Keep UI responsive even if not authorized (shows email + message)
+    const ok = isAdminUser(user);
+    admSetUnlocked(ok, user);
+    const msg = document.getElementById('admAuthMsg');
+    if(msg){
+      if(!user) msg.textContent = 'Iniciá sesión con Google para acceder.';
+      else if(!ok) msg.textContent = 'Tu cuenta no está autorizada para este panel.';
+      else msg.textContent = 'Sesión iniciada.';
+    }
+  });
+}
 
 async function loadFromFirestore() {
   if(!fsdb) return; // no Firebase, use defaults
@@ -2465,7 +2527,6 @@ function closeMenu(){
 // ══════════════════════════════════════════════
 // ADMIN
 // ══════════════════════════════════════════════
-const ADMIN_PWD_HASH = '2731ffd9c02eb6a1c95681afe9d0ffecc995bd4697bbb731cd71cf1655d2a2b3';
 let admUnlocked = false;
 let admCurTab = 'hero';
 
@@ -2774,10 +2835,12 @@ function saveMonthSize() {
 function openAdmin(){
   document.getElementById('adm').classList.add('open');
   document.body.style.overflow = 'hidden';
+  // UI gating is handled by Firebase auth state; keep the lock visible by default.
   if(!admUnlocked){
-    document.getElementById('admLockWrap').style.display = '';
-    document.getElementById('admContent').style.display = 'none';
-    setTimeout(()=>document.getElementById('admPwd').focus(), 200);
+    const lock = document.getElementById('admLockWrap');
+    const content = document.getElementById('admContent');
+    if(lock) lock.style.display = '';
+    if(content) content.style.display = 'none';
   }
 }
 function closeAdmin(){
@@ -2862,28 +2925,7 @@ function closeEventModal(){
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('eventModal').style.display!=='none')closeEventModal();});
 
-async function admLogin(){
-  const pwd = document.getElementById('admPwd').value;
-  const enc = new TextEncoder().encode(pwd);
-  const hashBuf = await crypto.subtle.digest('SHA-256', enc);
-  const hashHex = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  if(hashHex === ADMIN_PWD_HASH){
-    admUnlocked = true;
-    document.getElementById('admLockWrap').style.display = 'none';
-    const ac = document.getElementById('admContent');
-    ac.style.display = 'flex';
-    ac.style.flex = '1';
-    ac.style.flexDirection = 'column';
-    ac.style.overflow = 'hidden';
-    admTab(admCurTab);
-    admPopulate(admCurTab);
-  } else {
-    const err = document.getElementById('admPwdErr');
-    err.style.display = 'block';
-    setTimeout(()=>err.style.display='none', 2500);
-    document.getElementById('admPwd').value = '';
-  }
-}
+// Admin login is handled via Firebase Authentication (Google).
 
 function admTab(name){
   admCurTab = name;
@@ -3271,6 +3313,11 @@ function renderPhotoGallery(){
       if(bEmpty) bEmpty.style.display='';
     }
   }
+
+  // Re-register dynamically injected reveal elements (innerHTML replaces nodes)
+  try{
+    document.querySelectorAll('#photos .reveal:not(.visible)').forEach(el=>obs.observe(el));
+  }catch(e){}
 }
 
 const STUDIO_LABELS=i=>(i===0?'Foto 1 (Bio)':'Foto '+(i+1));
