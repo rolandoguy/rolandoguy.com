@@ -364,6 +364,10 @@ section{position:relative;z-index:2}
 .rep-intro h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
 .rep-intro h2 em{font-style:italic;color:var(--gold)}
 .rep-intro p{font-size:.91rem;color:var(--text-dim);line-height:1.9;align-self:end}
+.rep-tabs{display:flex;gap:1px;margin-bottom:28px;background:var(--border);border:1px solid var(--border)}
+.rep-tab{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.2em;color:var(--text-faint);text-transform:uppercase;padding:10px 22px;background:var(--surface);cursor:none;border:none;transition:all .3s;flex:1;text-align:center}
+.rep-tab:hover{background:var(--surface2);color:var(--text-dim)}
+.rep-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold)}
 .opera-grid{display:block}
 .opera-card{background:var(--surface);padding:28px 24px;transition:background .3s;position:relative;overflow:hidden}
 .opera-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .3s;transform-origin:left}
@@ -885,6 +889,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <h2 class="reveal" id="repH2"></h2>
       </div>
       <p class="reveal rd1" id="repIntro"></p>
+    </div>
+    <div class="rep-tabs reveal rd2">
+      <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')">Opera</button>
+      <button class="rep-tab" id="repTabOratorio" onclick="setRepCategory('oratorio')">Konzert &amp; Oratorium</button>
+      <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')">Tango &amp; Crossover</button>
     </div>
     <div class="opera-grid" id="operaGrid"></div>
     <details class="roles-full reveal">
@@ -1679,25 +1688,25 @@ const DEFAULTS = {
   },
   rep: {
     cards: [
-      {composer:'W. A. Mozart',      opera:'Die Zauberflöte',          role:'Tamino',            lang:'DE', status:'performed'},
-      {composer:'W. A. Mozart',      opera:'Così fan tutte',            role:'Ferrando',          lang:'IT', status:'performed'},
-      {composer:'Giacomo Puccini',   opera:'La Bohème',                 role:'Rodolfo',           lang:'IT', status:'performed'},
-      {composer:'Giuseppe Verdi',    opera:'La Traviata',               role:'Alfredo / Gastone', lang:'IT', status:'performed'},
-      {composer:'G. Donizetti',      opera:"L'elisir d'amore",          role:'Nemorino',          lang:'IT', status:'performed'},
-      {composer:'Eduard Künneke',    opera:'Der Vetter aus Dingsda',    role:'Roderich de Weert', lang:'DE', status:'performed'},
-      {composer:'G. Donizetti',      opera:'Lucia di Lammermoor',       role:'Edgardo',           lang:'IT', status:'performed'},
-      {composer:'Victor Massé',      opera:'Irma la douce',             role:'Nestor',            lang:'FR', status:'performed'},
-      {composer:'W. A. Mozart',      opera:'Le nozze di Figaro',        role:'Don Ottavio',       lang:'IT', status:'prepared'},
-      {composer:'W. A. Mozart',      opera:'Don Giovanni',              role:'Don Ottavio',       lang:'IT', status:'prepared'},
-      {composer:'Giacomo Puccini',   opera:'Tosca',                     role:'Cavaradossi',       lang:'IT', status:'prepared'},
-      {composer:'Giacomo Puccini',   opera:'Madama Butterfly',          role:'Pinkerton',         lang:'IT', status:'prepared'},
-      {composer:'Giuseppe Verdi',    opera:'Rigoletto',                 role:'Il Duca di Mantova',lang:'IT', status:'prepared'},
-      {composer:'G. Donizetti',      opera:"L'elisir d'amore",          role:'Nemorino',          lang:'IT', status:'prepared'},
-      {composer:'Gaetano Donizetti', opera:'Don Pasquale',              role:'Ernesto',           lang:'IT', status:'prepared'},
-      {composer:'Pietro Mascagni',   opera:'Cavalleria rusticana',      role:'Turiddu',           lang:'IT', status:'studying'},
-      {composer:'Ruggero Leoncavallo',opera:'Pagliacci',                role:'Canio',             lang:'IT', status:'studying'},
-      {composer:'Georges Bizet',     opera:'Carmen',                    role:'Don José',          lang:'FR', status:'studying'},
-      {composer:'Richard Strauss',   opera:'Der Rosenkavalier',        role:'Italian Singer',    lang:'DE', status:'studying'},
+      {composer:'W. A. Mozart',      opera:'Die Zauberflöte',          role:'Tamino',            lang:'DE', status:'performed', cat:'opera'},
+      {composer:'W. A. Mozart',      opera:'Così fan tutte',           role:'Ferrando',          lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Giacomo Puccini',   opera:'La Bohème',                role:'Rodolfo',           lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Giuseppe Verdi',    opera:'La Traviata',              role:'Alfredo / Gastone', lang:'IT', status:'performed', cat:'opera'},
+      {composer:'G. Donizetti',      opera:"L'elisir d'amore",         role:'Nemorino',          lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Eduard Künneke',    opera:'Der Vetter aus Dingsda',   role:'Roderich de Weert', lang:'DE', status:'performed', cat:'opera'},
+      {composer:'G. Donizetti',      opera:'Lucia di Lammermoor',      role:'Edgardo',           lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Victor Massé',      opera:'Irma la douce',            role:'Nestor',            lang:'FR', status:'performed', cat:'opera'},
+      {composer:'W. A. Mozart',      opera:'Le nozze di Figaro',       role:'Don Ottavio',       lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'W. A. Mozart',      opera:'Don Giovanni',             role:'Don Ottavio',       lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Giacomo Puccini',   opera:'Tosca',                    role:'Cavaradossi',       lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Giacomo Puccini',   opera:'Madama Butterfly',         role:'Pinkerton',         lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Giuseppe Verdi',    opera:'Rigoletto',                role:'Il Duca di Mantova',lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'G. Donizetti',      opera:"L'elisir d'amore",         role:'Nemorino',          lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Gaetano Donizetti', opera:'Don Pasquale',             role:'Ernesto',           lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Pietro Mascagni',   opera:'Cavalleria rusticana',     role:'Turiddu',           lang:'IT', status:'studying',  cat:'opera'},
+      {composer:'Ruggero Leoncavallo',opera:'Pagliacci',               role:'Canio',             lang:'IT', status:'studying',  cat:'opera'},
+      {composer:'Georges Bizet',     opera:'Carmen',                   role:'Don José',          lang:'FR', status:'studying',  cat:'opera'},
+      {composer:'Richard Strauss',   opera:'Der Rosenkavalier',       role:'Italian Singer',    lang:'DE', status:'studying',  cat:'opera'},
     ]
   },
   perfs: [
@@ -1711,6 +1720,7 @@ const DEFAULTS = {
 };
 
 let currentLang = 'en';
+let currentRepCategory = 'opera';
 
 // load() and save() defined above via Firebase
 
@@ -1754,6 +1764,10 @@ function renderRep() {
   document.getElementById('repIntro').textContent = d.intro;
   const g = document.getElementById('operaGrid');
 
+  const allCards = d.cards || [];
+  const cat = currentRepCategory || 'opera';
+  const catCards = allCards.filter(c => (c.cat || 'opera') === cat);
+
   const repLabels = {
     en:  {performed:'Performed Roles', prepared:'Prepared Roles', studying:'In Preparation'},
     de:  {performed:'Aufgeführte Rollen', prepared:'Vorbereitete Rollen', studying:'In Vorbereitung'},
@@ -1766,7 +1780,14 @@ function renderRep() {
   const statusDots = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
 
   const groups = {};
-  statuses.forEach(s => groups[s] = d.cards.filter(c => c.status === s || (!c.status && s==='performed')));
+  statuses.forEach(s => groups[s] = catCards.filter(c => c.status === s || (!c.status && s==='performed')));
+
+  if(!catCards.length){
+    g.innerHTML = `<div style="padding:18px 20px;border:1px solid var(--border);background:var(--surface);font-size:.86rem;color:var(--text-dim);font-style:italic">
+      No repertoire has been added yet for this category.
+    </div>`;
+    return;
+  }
 
   g.innerHTML = statuses.map(status => {
     const cards = groups[status];
@@ -1799,6 +1820,20 @@ function renderRep() {
   }).join('');
 
   document.querySelectorAll('#operaGrid .reveal').forEach(el=>obs.observe(el));
+}
+
+function setRepCategory(cat){
+  currentRepCategory = cat;
+  document.querySelectorAll('.rep-tab').forEach(btn=>{
+    if(!btn.id) return;
+    const id = btn.id;
+    const isActive =
+      (cat==='opera'   && id==='repTabOpera') ||
+      (cat==='oratorio'&& id==='repTabOratorio') ||
+      (cat==='tango'   && id==='repTabTango');
+    btn.classList.toggle('active', isActive);
+  });
+  renderRep();
 }
 
 // ── Render Videos ──
@@ -2992,6 +3027,15 @@ function admPopulate(name){
             </select>
           </div>
         </div>
+        <div class="adm-grid">
+          <div class="adm-col" style="max-width:220px"><label class="adm-label">Categoría</label>
+            <select class="adm-input" id="rc-${i}-cat">
+              <option value="opera" ${(card.cat||'opera')==='opera'?'selected':''}>Ópera</option>
+              <option value="oratorio" ${card.cat==='oratorio'?'selected':''}>Konzert &amp; Oratorium</option>
+              <option value="tango" ${card.cat==='tango'?'selected':''}>Tango &amp; Crossover</option>
+            </select>
+          </div>
+        </div>
       </div>`).join('');
   }
   else if(name==='vid'){
@@ -3076,7 +3120,8 @@ function saveSection(name){
       opera:document.getElementById(`rc-${i}-opera`).value,
       role:document.getElementById(`rc-${i}-role`).value,
       lang:(document.getElementById(`rc-${i}-lang`)||{}).value||'IT',
-      status:(document.getElementById(`rc-${i}-status`)||{}).value||'performed'
+      status:(document.getElementById(`rc-${i}-status`)||{}).value||'performed',
+      cat:(document.getElementById(`rc-${i}-cat`)||{}).value||'opera'
     }));
     save('rg_rep_cards',newCards);
     save('rep_'+currentLang,{h2:get('rep').h2,intro:get('rep').intro});
