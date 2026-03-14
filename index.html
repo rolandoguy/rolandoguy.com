@@ -364,8 +364,8 @@ section{position:relative;z-index:2}
 .rep-intro h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
 .rep-intro h2 em{font-style:italic;color:var(--gold)}
 .rep-intro p{font-size:.91rem;color:var(--text-dim);line-height:1.9;align-self:end}
-.rep-tabs{display:flex;gap:1px;margin-bottom:28px;background:var(--border);border:1px solid var(--border)}
-.rep-tab{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.2em;color:var(--text-faint);text-transform:uppercase;padding:10px 22px;background:var(--surface);cursor:none;border:none;transition:all .3s;flex:1;text-align:center}
+.rep-tabs{display:flex;flex-wrap:wrap;gap:1px;margin-bottom:28px;background:var(--border);border:1px solid var(--border)}
+.rep-tab{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.18em;color:var(--text-faint);text-transform:uppercase;padding:10px 18px;background:var(--surface);cursor:none;border:none;transition:all .3s;flex:1 1 25%;text-align:center}
 .rep-tab:hover{background:var(--surface2);color:var(--text-dim)}
 .rep-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold)}
 .opera-grid{display:block}
@@ -891,9 +891,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <p class="reveal rd1" id="repIntro"></p>
     </div>
     <div class="rep-tabs reveal rd2">
-      <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')">Opera</button>
-      <button class="rep-tab" id="repTabOratorio" onclick="setRepCategory('oratorio')">Konzert &amp; Oratorium</button>
-      <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')">Tango &amp; Crossover</button>
+      <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')">Opera Roles</button>
+      <button class="rep-tab" id="repTabArias" onclick="setRepCategory('arias')">Opera Arias &amp; Operetta</button>
+      <button class="rep-tab" id="repTabLied" onclick="setRepCategory('lied')">Lied &amp; Art Song</button>
+      <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')">Tango &amp; Popular Songs</button>
     </div>
     <div class="opera-grid" id="operaGrid"></div>
     <details class="roles-full reveal">
@@ -1766,7 +1767,17 @@ function renderRep() {
 
   const allCards = d.cards || [];
   const cat = currentRepCategory || 'opera';
-  const catCards = allCards.filter(c => (c.cat || 'opera') === cat);
+  // Filter by category and sort by composer, then work
+  const catCards = allCards
+    .filter(c => (c.cat || 'opera') === cat)
+    .slice()
+    .sort((a,b)=>{
+      const ac=(a.composer||'').toLowerCase(), bc=(b.composer||'').toLowerCase();
+      if(ac<bc) return -1; if(ac>bc) return 1;
+      const ao=(a.opera||'').toLowerCase(), bo=(b.opera||'').toLowerCase();
+      if(ao<bo) return -1; if(ao>bo) return 1;
+      return 0;
+    });
 
   const repLabels = {
     en:  {performed:'Performed Roles', prepared:'Prepared Roles', studying:'In Preparation'},
@@ -1829,7 +1840,8 @@ function setRepCategory(cat){
     const id = btn.id;
     const isActive =
       (cat==='opera'   && id==='repTabOpera') ||
-      (cat==='oratorio'&& id==='repTabOratorio') ||
+      (cat==='arias'   && id==='repTabArias') ||
+      (cat==='lied'    && id==='repTabLied')  ||
       (cat==='tango'   && id==='repTabTango');
     btn.classList.toggle('active', isActive);
   });
@@ -2134,6 +2146,16 @@ function removeRepCard(idx) {
   if (!confirm('¿Eliminar este rol?')) return;
   const cards = getRep().cards;
   cards.splice(idx, 1);
+  save('rg_rep_cards', cards);
+  admTab('rep');
+}
+
+function duplicateRepCard(idx){
+  const cards = getRep().cards.slice();
+  const src = cards[idx];
+  if(!src) return;
+  const copy = Object.assign({}, src);
+  cards.splice(idx+1, 0, copy);
   save('rg_rep_cards', cards);
   admTab('rep');
 }
@@ -3006,7 +3028,8 @@ function admPopulate(name){
           <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Arrastrar para reordenar">⠿</span>
           <span style="color:${statusColors[card.status||'performed']};font-size:.7rem">●</span>
           Rol ${i+1}
-          <button onclick="removeRepCard(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
+          <button onclick="duplicateRepCard(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicar</button>
+          <button onclick="removeRepCard(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
         </div>
         <div class="adm-grid">
           <div class="adm-col"><label class="adm-label">Compositor</label><input class="adm-input" id="rc-${i}-composer" value="${card.composer}"></div>
@@ -3028,11 +3051,12 @@ function admPopulate(name){
           </div>
         </div>
         <div class="adm-grid">
-          <div class="adm-col" style="max-width:220px"><label class="adm-label">Categoría</label>
+          <div class="adm-col" style="max-width:260px"><label class="adm-label">Categoría</label>
             <select class="adm-input" id="rc-${i}-cat">
-              <option value="opera" ${(card.cat||'opera')==='opera'?'selected':''}>Ópera</option>
-              <option value="oratorio" ${card.cat==='oratorio'?'selected':''}>Konzert &amp; Oratorium</option>
-              <option value="tango" ${card.cat==='tango'?'selected':''}>Tango &amp; Crossover</option>
+              <option value="opera" ${(card.cat||'opera')==='opera'?'selected':''}>Opera Roles</option>
+              <option value="arias" ${card.cat==='arias'?'selected':''}>Opera Arias &amp; Operetta</option>
+              <option value="lied" ${card.cat==='lied'?'selected':''}>Lied &amp; Art Song</option>
+              <option value="tango" ${card.cat==='tango'?'selected':''}>Tango &amp; Popular Songs</option>
             </select>
           </div>
         </div>
