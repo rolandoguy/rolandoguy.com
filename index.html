@@ -679,6 +679,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
   padding: .5rem .8rem; text-align: left;
   border-bottom: 1px solid rgba(212,168,67,.12);
 }
+.rep-th-sort { cursor: pointer; user-select: none; }
+.rep-th-sort:hover { color: var(--text); }
 .rep-table tbody tr {
   border-bottom: 1px solid rgba(240,237,230,.05);
   transition: background .2s;
@@ -1722,6 +1724,8 @@ const DEFAULTS = {
 
 let currentLang = 'en';
 let currentRepCategory = 'opera';
+let repSortBy = 'composer'; // 'composer' | 'opera' | 'lang'
+let repSortDir = 'asc';     // 'asc' | 'desc'
 
 // load() and save() defined above via Firebase
 
@@ -1781,10 +1785,16 @@ function renderRep() {
     })
     .slice()
     .sort((a,b)=>{
-      const ac=(a.composer||'').toLowerCase(), bc=(b.composer||'').toLowerCase();
-      if(ac<bc) return -1; if(ac>bc) return 1;
-      const ao=(a.opera||'').toLowerCase(), bo=(b.opera||'').toLowerCase();
-      if(ao<bo) return -1; if(ao>bo) return 1;
+      const dir = repSortDir === 'asc' ? 1 : -1;
+      let va = '', vb = '';
+      if (repSortBy === 'composer') { va = (a.composer||'').toLowerCase(); vb = (b.composer||'').toLowerCase(); }
+      else if (repSortBy === 'opera') { va = (a.opera||'').toLowerCase(); vb = (b.opera||'').toLowerCase(); }
+      else { va = (a.lang||'IT').toLowerCase(); vb = (b.lang||'IT').toLowerCase(); }
+      if (va < vb) return -dir; if (va > vb) return dir;
+      const ac = (a.composer||'').toLowerCase(), bc = (b.composer||'').toLowerCase();
+      if (ac < bc) return -dir; if (ac > bc) return dir;
+      const ao = (a.opera||'').toLowerCase(), bo = (b.opera||'').toLowerCase();
+      if (ao < bo) return -dir; if (ao > bo) return dir;
       return 0;
     });
 
@@ -1827,10 +1837,10 @@ function renderRep() {
       <table class="rep-table">
         <thead>
           <tr>
-            <th data-i18n-th="rep.thComposer">Composer</th>
-            <th data-i18n-th="rep.thOpera">${cat==='opera' ? 'Opera / Work' : 'Work'}</th>
+            <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">Composer ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+            <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${cat==='opera' ? 'Opera / Work' : 'Work'} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
             ${hideRole ? '' : '<th data-i18n-th="rep.thRole">Role</th>'}
-            <th data-i18n-th="rep.thLang">Lang</th>
+            <th class="rep-th-sort" onclick="setRepSort('lang')" title="Sort by Language">Lang ${repSortBy==='lang'?(repSortDir==='asc'?'↑':'↓'):''}</th>
           </tr>
         </thead>
         <tbody>
@@ -1860,6 +1870,12 @@ function setRepCategory(cat){
       (cat==='tango'   && id==='repTabTango');
     btn.classList.toggle('active', isActive);
   });
+  renderRep();
+}
+
+function setRepSort(col){
+  if (repSortBy === col) repSortDir = repSortDir === 'asc' ? 'desc' : 'asc';
+  else { repSortBy = col; repSortDir = 'asc'; }
   renderRep();
 }
 
