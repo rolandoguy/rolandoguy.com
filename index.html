@@ -1767,9 +1767,15 @@ function renderRep() {
 
   const allCards = d.cards || [];
   const cat = currentRepCategory || 'opera';
-  // Filter by category and sort by composer, then work
+  // Filter by category and ignore completely empty placeholder rows
   const catCards = allCards
-    .filter(c => (c.cat || 'opera') === cat)
+    .filter(c => {
+      const hasContent =
+        (c.composer && c.composer.trim()) ||
+        (c.opera && c.opera.trim()) ||
+        (c.role && c.role.trim());
+      return hasContent && ((c.cat || 'opera') === cat);
+    })
     .slice()
     .sort((a,b)=>{
       const ac=(a.composer||'').toLowerCase(), bc=(b.composer||'').toLowerCase();
