@@ -1792,7 +1792,11 @@ function renderRep() {
     it:  {performed:'Ruoli Eseguiti', prepared:'Ruoli Preparati', studying:'In Preparazione'},
     fr:  {performed:'Rôles Joués', prepared:'Rôles Préparés', studying:'En Préparation'},
   };
-  const lbl = repLabels[currentLang] || repLabels.en;
+  let lbl = repLabels[currentLang] || repLabels.en;
+  // For non-opera categories, hide the "Performed / Prepared / Studying" headings
+  if (cat !== 'opera') {
+    lbl = {performed:'', prepared:'', studying:''};
+  }
   const statuses = ['performed','prepared','studying'];
   const statusDots = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
 
@@ -1821,7 +1825,7 @@ function renderRep() {
         <thead>
           <tr>
             <th data-i18n-th="rep.thComposer">Composer</th>
-            <th data-i18n-th="rep.thOpera">Opera / Work</th>
+            <th data-i18n-th="rep.thOpera">${cat==='opera' ? 'Opera / Work' : 'Work'}</th>
             ${hideRole ? '' : '<th data-i18n-th="rep.thRole">Role</th>'}
             <th data-i18n-th="rep.thLang">Lang</th>
           </tr>
