@@ -892,7 +892,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <div class="rep-tabs reveal rd2">
       <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')">Opera Roles</button>
-      <button class="rep-tab" id="repTabArias" onclick="setRepCategory('arias')">Opera Arias &amp; Operetta</button>
+      <button class="rep-tab" id="repTabArias" onclick="setRepCategory('arias')">Opera Arias &amp; Operette</button>
       <button class="rep-tab" id="repTabLied" onclick="setRepCategory('lied')">Lied &amp; Art Song</button>
       <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')">Tango &amp; Popular Songs</button>
     </div>
@@ -1806,6 +1806,8 @@ function renderRep() {
     return;
   }
 
+  const hideRole = (cat === 'lied' || cat === 'tango');
+
   g.innerHTML = statuses.map(status => {
     const cards = groups[status];
     if (!cards.length) return '';
@@ -1820,7 +1822,7 @@ function renderRep() {
           <tr>
             <th data-i18n-th="rep.thComposer">Composer</th>
             <th data-i18n-th="rep.thOpera">Opera / Work</th>
-            <th data-i18n-th="rep.thRole">Role</th>
+            ${hideRole ? '' : '<th data-i18n-th="rep.thRole">Role</th>'}
             <th data-i18n-th="rep.thLang">Lang</th>
           </tr>
         </thead>
@@ -1828,7 +1830,7 @@ function renderRep() {
           ${cards.map(card => `<tr>
             <td class="rep-composer">${card.composer}</td>
             <td class="rep-opera">${card.opera}</td>
-            <td class="rep-role"><strong>${card.role}</strong></td>
+            ${hideRole ? '' : `<td class="rep-role"><strong>${card.role||''}</strong></td>`}
             <td class="rep-lang"><span class="lang-badge">${card.lang||'IT'}</span></td>
           </tr>`).join('')}
         </tbody>
