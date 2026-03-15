@@ -360,15 +360,17 @@ section{position:relative;z-index:2}
 .ach-title{font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:5px}
 .ach-desc{font-size:.78rem;color:var(--text-dim);line-height:1.6}
 #repertoire{padding:90px 0}
-.rep-intro{display:grid;grid-template-columns:1fr 1fr;gap:72px;margin-bottom:60px;align-items:end}
-.rep-intro h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
-.rep-intro h2 em{font-style:italic;color:var(--gold)}
-.rep-intro p{font-size:.91rem;color:var(--text-dim);line-height:1.9;align-self:end}
-.rep-tabs{display:flex;flex-wrap:wrap;gap:1px;margin-bottom:28px;background:var(--border);border:1px solid var(--border)}
-.rep-tab{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.18em;color:var(--text-faint);text-transform:uppercase;padding:10px 18px;background:var(--surface);cursor:none;border:none;transition:all .3s;flex:1 1 25%;text-align:center}
+.rep-header{margin-bottom:2rem}
+.rep-header .section-tag{margin-bottom:.5rem}
+.rep-title{font-family:var(--ff-title);font-size:clamp(2.2rem,3.2vw,3.5rem);font-weight:300;line-height:1.2;color:var(--text);margin:0}
+.rep-title em{font-style:italic;color:var(--gold)}
+.rep-intro-line{font-size:.9rem;color:var(--text-dim);line-height:1.7;max-width:38em;margin:.75rem 0 0;padding:0}
+.rep-tabs{display:flex;flex-wrap:wrap;gap:1px;margin-bottom:1.75rem;background:var(--border);border:1px solid var(--border);max-width:100%}
+.rep-tab{font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.16em;color:var(--text-faint);text-transform:uppercase;padding:12px 16px;background:var(--surface);cursor:pointer;border:none;transition:background .25s,color .25s,border-color .25s;flex:1 1 0;min-width:0;text-align:center}
 .rep-tab:hover{background:var(--surface2);color:var(--text-dim)}
-.rep-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold)}
-.opera-grid{display:block}
+.rep-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold);cursor:default}
+.rep-desc{font-size:.9rem;color:var(--text-dim);line-height:1.85;max-width:42em;margin:0 0 2.25rem;padding:0}
+.opera-grid{display:block;margin-top:0}
 .opera-card{background:var(--surface);padding:28px 24px;transition:background .3s;position:relative;overflow:hidden}
 .opera-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .3s;transform-origin:left}
 .opera-card:hover{background:var(--surface2)}
@@ -585,7 +587,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .about-photo{max-width:320px;margin:0 auto}
   
   .achievements{grid-template-columns:1fr}
-  .rep-intro{grid-template-columns:1fr;gap:18px}
+  .rep-tabs{flex-wrap:wrap}.rep-tab{flex:1 1 auto;min-width:7rem}
   .video-grid{grid-template-columns:1fr}
   .video-card:first-child{grid-row:auto}
   .video-card:first-child .video-thumb-wrap{aspect-ratio:16/9;height:auto;min-height:unset}
@@ -618,7 +620,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .section-inner{padding:0 16px}
   #about,#repertoire,#programs,#videos,#photos,#performances,#contact,#epk{padding:90px 0}
   .section-tag{font-size:.52rem;margin-bottom:32px}
-  .about-text h2,.rep-intro h2,.perf-header h2,.photos-header h2{font-size:clamp(2rem,9vw,2.8rem)}
+  .about-text h2,.rep-title,.perf-header h2,.photos-header h2{font-size:clamp(2rem,9vw,2.8rem)}
   .about-text p{font-size:.87rem}
   
   
@@ -655,58 +657,36 @@ textarea.adm-input{resize:vertical;min-height:80px}
 @media(max-width:600px){.press-grid{grid-template-columns:1fr}}
 
 
-/* ── Repertoire Categories ── */
-.rep-category { margin-bottom: 2.5rem; }
-.rep-cat-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 1rem; padding-bottom: .6rem;
-  border-bottom: 1px solid rgba(212,168,67,.15);
-}
-.rep-cat-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.rep-cat-label {
-  font-family: var(--ff-caps); font-size: .65rem; letter-spacing: .15em;
-  text-transform: uppercase; color: var(--text);
-}
-.rep-cat-count {
-  margin-left: auto; font-family: var(--ff-caps); font-size: .6rem;
-  color: var(--text-faint); background: rgba(212,168,67,.08);
-  padding: 2px 8px; border-radius: 10px;
-}
+/* ── Repertoire (curated list, no status) ── */
+.rep-category { margin-bottom: 0; }
 .rep-table {
   width: 100%; border-collapse: collapse;
-  font-family: var(--ff-body); font-size: .82rem;
+  font-family: var(--ff-body); font-size: .84rem;
 }
 .rep-table thead th {
-  font-family: var(--ff-caps); font-size: .55rem; letter-spacing: .12em;
+  font-family: var(--ff-caps); font-size: .54rem; letter-spacing: .12em;
   text-transform: uppercase; color: var(--gold); font-weight: 400;
-  padding: .5rem .8rem; text-align: left;
-  border-bottom: 1px solid rgba(212,168,67,.12);
+  padding: .6rem .85rem; text-align: left;
+  border-bottom: 1px solid rgba(212,168,67,.15);
 }
 .rep-th-sort { cursor: pointer; user-select: none; }
 .rep-th-sort:hover { color: var(--text); }
 .rep-table tbody tr {
-  border-bottom: 1px solid rgba(240,237,230,.05);
+  border-bottom: 1px solid rgba(240,237,230,.06);
   transition: background .2s;
 }
-.rep-table tbody tr:hover { background: rgba(212,168,67,.04); }
+.rep-table tbody tr:hover { background: rgba(212,168,67,.035); }
 .rep-table td {
-  padding: .65rem .8rem; color: var(--text-dim); vertical-align: middle;
+  padding: .7rem .85rem; color: var(--text-dim); vertical-align: middle;
 }
-.rep-composer { color: var(--text-faint) !important; font-size:.78rem; }
-.rep-opera { color: var(--text) !important; }
-.rep-role strong { color: var(--text); font-weight: 500; }
-.lang-badge {
-  display: inline-block; padding: 1px 6px;
-  border: 1px solid rgba(212,168,67,.3); border-radius: 3px;
-  font-family: var(--ff-caps); font-size: .52rem; letter-spacing: .08em;
-  color: var(--gold-dim);
-}
+.rep-cell-role { color: var(--text); font-weight: 500; }
+.rep-cell-work { color: var(--text); }
+.rep-cell-composer { color: var(--text-faint); font-size: .8rem; }
+.rep-empty{padding:1.5rem 1.25rem;border:1px solid var(--border);background:var(--surface);font-size:.88rem;color:var(--text-dim);font-style:italic;text-align:center}
 @media(max-width:600px){
-  .rep-table thead th:nth-child(4),
-  .rep-table td:nth-child(4) { display:none; }
-  .rep-table td { padding: .5rem .5rem; font-size:.78rem; }
+  .rep-table td { padding: .55rem .6rem; font-size: .8rem; }
+  .rep-desc { margin-bottom: 1.75rem; font-size: .88rem; }
+  .rep-intro-line { font-size: .85rem; }
 }
 
 /* ── EPK Section ── */
@@ -997,19 +977,19 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </section>
 <section id="repertoire">
   <div class="section-inner">
-    <div class="rep-intro">
-      <div>
-        <p class="section-tag" data-num="02" data-i18n="nav.rep">Repertoire</p>
-        <h2 class="reveal" id="repH2"></h2>
-      </div>
-      <p class="reveal rd1" id="repIntro"></p>
+    <div class="rep-header">
+      <p class="section-tag" data-num="02" data-i18n="nav.rep">Repertoire</p>
+      <h2 class="reveal rep-title" id="repH2"></h2>
+      <p class="rep-intro-line reveal" id="repIntroLine"></p>
     </div>
-    <div class="rep-tabs reveal rd2">
-      <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')" data-i18n="rep.tabOpera">Opera Roles</button>
-      <button class="rep-tab" id="repTabArias" onclick="setRepCategory('arias')" data-i18n="rep.tabArias">Opera Arias &amp; Operette</button>
-      <button class="rep-tab" id="repTabLied" onclick="setRepCategory('lied')" data-i18n="rep.tabLied">Lied &amp; Art Song</button>
-      <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')" data-i18n="rep.tabTango">Tango &amp; Popular Songs</button>
+    <div class="rep-tabs reveal rd1" role="tablist" aria-label="Repertoire categories">
+      <button type="button" class="rep-tab active" id="repTabOpera" role="tab" aria-selected="true" onclick="setRepCategory('opera')" data-i18n="rep.tabOpera">Opera Roles</button>
+      <button type="button" class="rep-tab" id="repTabArias" role="tab" aria-selected="false" onclick="setRepCategory('arias')" data-i18n="rep.tabArias">Opera Arias</button>
+      <button type="button" class="rep-tab" id="repTabOperetta" role="tab" aria-selected="false" onclick="setRepCategory('operetta')" data-i18n="rep.tabOperetta">Operetta</button>
+      <button type="button" class="rep-tab" id="repTabLied" role="tab" aria-selected="false" onclick="setRepCategory('lied')" data-i18n="rep.tabLied">Lied &amp; Art Song</button>
+      <button type="button" class="rep-tab" id="repTabTango" role="tab" aria-selected="false" onclick="setRepCategory('tango')" data-i18n="rep.tabTango">Tango</button>
     </div>
+    <p class="rep-desc reveal rd2" id="repIntro" aria-live="polite"></p>
     <div class="opera-grid" id="operaGrid"></div>
   </div>
 </section>
@@ -1211,7 +1191,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
    <div class="adm-tabs">
     <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
     <button class="adm-tab" onclick="admTab('bio')">Biografía</button>
-    <button class="adm-tab" onclick="admTab('rep')">Repertorio</button>
+    <button class="adm-tab" onclick="admTab('rep-opera')">Opera</button>
+    <button class="adm-tab" onclick="admTab('rep-arias')">Arias</button>
+    <button class="adm-tab" onclick="admTab('rep-operetta')">Operetta</button>
+    <button class="adm-tab" onclick="admTab('rep-lived')">Lied</button>
+    <button class="adm-tab" onclick="admTab('rep-tango')">Tango</button>
     <button class="adm-tab" onclick="admTab('programs')">Programas</button>
     <button class="adm-tab" onclick="admTab('vid')">Videos</button>
     <button class="adm-tab" onclick="admTab('photos')">Fotos</button>
@@ -1243,20 +1227,105 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Guardar Biografía</button>
      <div class="adm-feedback" id="fb-bio">¡Guardado!</div>
     </div>
-    <!-- REPERTOIRE -->
-    <div class="adm-panel" id="admPanel-rep">
-     <div class="adm-section">Repertorio</div>
-     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">
-       Añade, edita o elimina roles. Estado: <strong style="color:#4CAF50">Performed</strong> = en escena · 
-       <strong style="color:#D4A843">Prepared</strong> = preparado · 
-       <strong style="color:#9A9080">Studying</strong> = en preparación.
-     </p>
-     <div id="repCards"></div>
-     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-       <button class="adm-btn" onclick="addRepCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir rol</button>
-       <button class="adm-btn adm-btn-save" onclick="saveSection('rep')">Guardar Repertorio</button>
+    <!-- REPERTOIRE: Opera -->
+    <div class="adm-panel" id="admPanel-rep-opera">
+     <div class="adm-section">Repertorio — Opera Roles</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-opera" style="max-width:200px" onchange="admPopulate('rep-opera')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
      </div>
-     <div class="adm-feedback" id="fb-rep">¡Guardado!</div>
+     <div id="repCards-opera"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-opera">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Arias -->
+    <div class="adm-panel" id="admPanel-rep-arias">
+     <div class="adm-section">Repertorio — Opera Arias</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-arias" style="max-width:200px" onchange="admPopulate('rep-arias')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-arias"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-arias">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Operetta -->
+    <div class="adm-panel" id="admPanel-rep-operetta">
+     <div class="adm-section">Repertorio — Operetta</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-operetta" style="max-width:200px" onchange="admPopulate('rep-operetta')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-operetta"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-operetta">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Lied -->
+    <div class="adm-panel" id="admPanel-rep-lived">
+     <div class="adm-section">Repertorio — Lied &amp; Art Song</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-lived" style="max-width:200px" onchange="admPopulate('rep-lived')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-lived"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-lived">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Tango -->
+    <div class="adm-panel" id="admPanel-rep-tango">
+     <div class="adm-section">Repertorio — Tango</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-tango" style="max-width:200px" onchange="admPopulate('rep-tango')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-tango"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-tango">¡Guardado!</div>
     </div>
     <!-- PROGRAMS & COLLABORATIONS -->
     <div class="adm-panel" id="admPanel-programs">
@@ -1630,8 +1699,8 @@ const LANG_CONTENT = {
       stat3num:'2+', stat3lbl:'Countries',
     },
     rep: {
-      h2: 'Masterworks of the<br><em>lyric stage</em>',
-      intro: "From the intimate lyricism of Mozart to the dramatic sweep of Puccini and Verdi, Rolando's repertoire spans the full breadth of the tenor tradition.",
+      h2: 'Repertoire',
+      intro: '',
     },
     perf: {
       h2: 'Engagements &amp; <em>Concerts</em>',
@@ -1676,8 +1745,8 @@ const LANG_CONTENT = {
       stat3num:'2+', stat3lbl:'Länder',
     },
     rep: {
-      h2: 'Meisterwerke der<br><em>Lyrischen Bühne</em>',
-      intro: 'Von der intimen Lyrik Mozarts bis zur dramatischen Wucht Puccinis und Verdis umfasst Rolandos Repertoire die gesamte Bandbreite der Tenortradition.',
+      h2: 'Repertoire',
+      intro: '',
     },
     perf: {
       h2: 'Engagements &amp; <em>Konzerte</em>',
@@ -1723,8 +1792,8 @@ const LANG_CONTENT = {
       stat3num:'2+', stat3lbl:'Países',
     },
     rep: {
-      h2: 'Obras maestras de la<br><em>escena lírica</em>',
-      intro: 'Desde el lirismo íntimo de Mozart hasta el dramatismo arrollador de Puccini y Verdi, el repertorio de Rolando abarca toda la tradición del tenor.',
+      h2: 'Repertorio',
+      intro: '',
     },
     perf: {
       h2: 'Actuaciones &amp; <em>Conciertos</em>',
@@ -1770,8 +1839,8 @@ const LANG_CONTENT = {
       stat3num:'2+', stat3lbl:'Pays',
     },
     rep: {
-      h2: 'Chefs-d\'œuvre de<br><em>la scène lyrique</em>',
-      intro: "Du lyrisme intime de Mozart à la puissance dramatique de Puccini et Verdi, le répertoire de Rolando embrasse toute la tradition du ténor.",
+      h2: 'Répertoire',
+      intro: '',
     },
     perf: {
       h2: 'Engagements &amp; <em>Concerts</em>',
@@ -1817,8 +1886,8 @@ const LANG_CONTENT = {
       stat3num:'2+', stat3lbl:'Paesi',
     },
     rep: {
-      h2: 'Capolavori della<br><em>scena lirica</em>',
-      intro: "Dal lirismo intimo di Mozart alla potenza drammatica di Puccini e Verdi, il repertorio di Rolando abbraccia l'intera tradizione del tenore.",
+      h2: 'Repertorio',
+      intro: '',
     },
     perf: {
       h2: 'Impegni &amp; <em>Concerti</em>',
@@ -1908,7 +1977,7 @@ const DEFAULTS = {
 
 let currentLang = 'en';
 let currentRepCategory = 'opera';
-let repSortBy = 'composer'; // 'composer' | 'opera' | 'lang'
+let repSortBy = 'composer'; // 'role' | 'opera' | 'composer'
 let repSortDir = 'asc';     // 'asc' | 'desc'
 
 // load() and save() defined above via Firebase
@@ -1956,8 +2025,8 @@ function getRep() {
   const langData = get('rep');
   let cards = load('rg_rep_cards') || DEFAULTS.rep.cards;
   if (!Array.isArray(cards)) cards = [];
-  // Ensure every card has cat so filtering works (opera, arias, lied, tango)
-  cards = cards.map(c => ({ ...c, cat: (c.cat === 'arias' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera' }));
+  // Ensure every card has cat so filtering works (opera, arias, operetta, lied, tango)
+  cards = cards.map(c => ({ ...c, cat: (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera' }));
   return { h2: langData.h2, intro: langData.intro, cards };
 }
 function renderHero() {
@@ -1984,12 +2053,17 @@ function renderBio() {
 const NUMS=['I','II','III','IV','V','VI'];
 function renderRep() {
   const d = getRep();
+  const cat = currentRepCategory || 'opera';
+  const t = Ti[currentLang] || Ti.en;
   document.getElementById('repH2').innerHTML = d.h2;
-  document.getElementById('repIntro').textContent = d.intro;
+  const repIntroLineEl = document.getElementById('repIntroLine');
+  if (repIntroLineEl) repIntroLineEl.textContent = t['rep.introLine'] || '';
+  const descKey = 'rep.desc' + (cat === 'opera' ? 'Opera' : cat === 'arias' ? 'Arias' : cat === 'operetta' ? 'Operetta' : cat === 'lied' ? 'Lied' : 'Tango');
+  const repIntroEl = document.getElementById('repIntro');
+  if (repIntroEl) repIntroEl.textContent = t[descKey] || '';
   const g = document.getElementById('operaGrid');
 
   const allCards = d.cards || [];
-  const cat = currentRepCategory || 'opera';
   // Filter by category and ignore completely empty placeholder rows
   const catCards = allCards
     .filter(c => {
@@ -2005,7 +2079,7 @@ function renderRep() {
       let va = '', vb = '';
       if (repSortBy === 'composer') { va = (a.composer||'').toLowerCase(); vb = (b.composer||'').toLowerCase(); }
       else if (repSortBy === 'opera') { va = (a.opera||'').toLowerCase(); vb = (b.opera||'').toLowerCase(); }
-      else { va = (a.lang||'IT').toLowerCase(); vb = (b.lang||'IT').toLowerCase(); }
+      else { va = (a.role||'').toLowerCase(); vb = (b.role||'').toLowerCase(); }
       if (va < vb) return -dir; if (va > vb) return dir;
       const ac = (a.composer||'').toLowerCase(), bc = (b.composer||'').toLowerCase();
       if (ac < bc) return -dir; if (ac > bc) return dir;
@@ -2014,71 +2088,36 @@ function renderRep() {
       return 0;
     });
 
-  const repLabels = {
-    en:  {performed:'Performed Roles', prepared:'Prepared Roles', studying:'In Preparation'},
-    de:  {performed:'Aufgeführte Rollen', prepared:'Vorbereitete Rollen', studying:'In Vorbereitung'},
-    es:  {performed:'Roles Interpretados', prepared:'Roles Preparados', studying:'En Preparación'},
-    it:  {performed:'Ruoli Eseguiti', prepared:'Ruoli Preparati', studying:'In Preparazione'},
-    fr:  {performed:'Rôles Joués', prepared:'Rôles Préparés', studying:'En Préparation'},
-  };
-  const lbl = repLabels[currentLang] || repLabels.en;
-  const statuses = ['performed','prepared','studying'];
-  const statusDots = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
-  const groups = {};
-  statuses.forEach(s => groups[s] = catCards.filter(c => c.status === s || (!c.status && s==='performed')));
-
   if(!catCards.length){
-    g.innerHTML = `<div style="padding:18px 20px;border:1px solid var(--border);background:var(--surface);font-size:.86rem;color:var(--text-dim);font-style:italic">
-      No repertoire has been added yet for this category.
-    </div>`;
+    const emptyMsg = (Ti[currentLang] || Ti.en)['rep.empty'] || 'No repertoire has been added yet for this category.';
+    g.innerHTML = `<div class="rep-empty" role="status">${emptyMsg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
     return;
   }
 
-  const hideRole = (cat === 'lied' || cat === 'tango');
-  const t = Ti[currentLang] || Ti.en;
-  const thRole = hideRole ? '' : `<th>${t['rep.thRole']||'Role'}</th>`;
-  const tableHead = `<thead>
-    <tr>
-      <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'} ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-      <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${t['rep.thOpera']||(cat==='opera'?'Opera / Work':'Work')} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-      ${thRole}
-      <th class="rep-th-sort" onclick="setRepSort('lang')" title="Sort by Language">${t['rep.thLang']||'Lang'} ${repSortBy==='lang'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-    </tr>
-  </thead>`;
+  const isOpera = (cat === 'opera');
+  const thWork = isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work');
+  const tableHead = isOpera
+    ? `<thead><tr>
+        <th class="rep-th-sort" onclick="setRepSort('role')" title="Sort by Role">${t['rep.thRole']||'Role'} ${repSortBy==='role'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+        <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${thWork} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+        <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'} ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+      </tr></thead>`
+    : `<thead><tr>
+        <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${thWork} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+        <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'} ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+      </tr></thead>`;
 
-  const row = (card) => `<tr>
-    <td class="rep-composer">${(card.composer||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
-    <td class="rep-opera">${(card.opera||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
-    ${hideRole ? '' : `<td class="rep-role"><strong>${(card.role||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong></td>`}
-    <td class="rep-lang"><span class="lang-badge">${card.lang||'IT'}</span></td>
-  </tr>`;
+  const esc = (s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const row = (card) => isOpera
+    ? `<tr><td class="rep-cell-role">${esc(card.role)}</td><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`
+    : `<tr><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`;
 
-  if (cat !== 'opera') {
-    // Non-opera: single table, no status headers (no dot/label) — all items are presented as one list
-    g.innerHTML = `<div class="rep-category">
-      <table class="rep-table">
-        ${tableHead}
-        <tbody>${catCards.map(c => row(c)).join('')}</tbody>
-      </table>
-    </div>`;
-  } else {
-    // Opera: group by status (performed / prepared / studying) with dot + label + count per group
-    g.innerHTML = statuses.map(status => {
-      const cards = groups[status];
-      if (!cards.length) return '';
-      return `<div class="rep-category">
-        <div class="rep-cat-header">
-          <span class="rep-cat-dot" style="background:${statusDots[status]}"></span>
-          <span class="rep-cat-label">${(lbl[status]||'').replace(/&/g,'&amp;')}</span>
-          <span class="rep-cat-count">${cards.length}</span>
-        </div>
-        <table class="rep-table">
-          ${tableHead}
-          <tbody>${cards.map(c => row(c)).join('')}</tbody>
-        </table>
-      </div>`;
-    }).join('');
-  }
+  g.innerHTML = `<div class="rep-category">
+    <table class="rep-table">
+      ${tableHead}
+      <tbody>${catCards.map(c => row(c)).join('')}</tbody>
+    </table>
+  </div>`;
 
   document.querySelectorAll('#operaGrid .reveal').forEach(el=>obs.observe(el));
 }
@@ -2089,11 +2128,13 @@ function setRepCategory(cat){
     if(!btn.id) return;
     const id = btn.id;
     const isActive =
-      (cat==='opera'   && id==='repTabOpera') ||
-      (cat==='arias'   && id==='repTabArias') ||
-      (cat==='lied'    && id==='repTabLied')  ||
-      (cat==='tango'   && id==='repTabTango');
+      (cat==='opera'    && id==='repTabOpera') ||
+      (cat==='arias'    && id==='repTabArias') ||
+      (cat==='operetta' && id==='repTabOperetta') ||
+      (cat==='lied'     && id==='repTabLied') ||
+      (cat==='tango'    && id==='repTabTango');
     btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
   renderRep();
 }
@@ -2523,30 +2564,33 @@ async function autoTranslateEditDetail(id) {
   }
 }
 
-// ── Repertoire admin helpers ──
-function addRepCard() {
+// ── Repertoire admin helpers (per category) ──
+const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',lied:'rep-lived',tango:'rep-tango'};
+function addRepCard(cat) {
   const cards = (getRep().cards || []).slice();
-  cards.push({composer:'', opera:'', role:'', lang:'IT', status:'performed', cat:'opera'});
+  cards.push({composer:'', opera:'', role:'', lang:'IT', status:'performed', cat: cat});
   save('rg_rep_cards', cards);
-  admTab('rep');
+  admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
 }
-function removeRepCard(idx) {
-  if (!confirm('¿Eliminar este rol?')) return;
-  const cards = (getRep().cards || []).slice();
-  cards.splice(Number(idx), 1);
-  save('rg_rep_cards', cards);
-  admTab('rep');
+function removeRepCard(cat, localIdx) {
+  if (!confirm('¿Eliminar esta entrada?')) return;
+  const allCards = (getRep().cards || []).slice();
+  const globalIndices = allCards.reduce((acc, c, i) => ((c.cat||'opera')===cat ? acc.concat(i) : acc), []);
+  const removeAt = globalIndices[localIdx];
+  if (removeAt == null) return;
+  allCards.splice(removeAt, 1);
+  save('rg_rep_cards', allCards);
+  admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
 }
-
-function duplicateRepCard(idx){
-  const cards = (getRep().cards || []).slice();
-  const i = Number(idx);
-  const src = cards[i];
-  if(!src) return;
-  const copy = Object.assign({}, src);
-  cards.splice(i + 1, 0, copy);
-  save('rg_rep_cards', cards);
-  admTab('rep');
+function duplicateRepCard(cat, localIdx) {
+  const allCards = (getRep().cards || []).slice();
+  const indices = allCards.reduce((acc, c, i) => ((c.cat||'opera')===cat ? acc.concat(i) : acc), []);
+  const globalIdx = indices[localIdx];
+  if (globalIdx == null) return;
+  const copy = Object.assign({}, allCards[globalIdx]);
+  allCards.splice(globalIdx + 1, 0, copy);
+  save('rg_rep_cards', allCards);
+  admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
 }
 
 // ── Programs admin helpers ──
@@ -2943,11 +2987,11 @@ async function submitForm(){
 
 // ── i18n (minimal, content now driven by data) ──
 const Ti={
-  en:{'nav.bio':'Biography','nav.rep':'Repertoire','nav.programs':'Programs','nav.vid':'Videos','nav.photos':'Photos','nav.perf':'Performances','nav.press':'Press','press.tag':'Press & Reviews','press.empty':'No press quotes yet.','nav.contact':'Contact','hero.scroll':'Discover','about.photoLabel':'Lyric Tenor','photos.h2':'Studio &amp; <em>On Stage</em>','photos.sub':'Portrait and stage photography. Click any image to view full size.','photos.studio':'Studio Portraits','photos.stage':'On Stage','photos.backstage':'Backstage','photos.backstageEmpty':'Upload backstage photos via the admin panel.','form.name':'Name','form.email':'Email','form.subject':'Subject','form.message':'Message','form.send':'Send Message','form.success':'Thank you! Your message has been sent.','form.namePh':'Your name','form.emailPh':'your@email.com','form.subjectPh':'Booking inquiry','form.messagePh':'Tell me about your project...','footer.tagline':'Argentinian/Italian Tenor based in Berlin','footer.rights':'All rights reserved','vid.h2':'On Stage &amp; <em>In Concert</em>','press.readMore':'Read article','nav.media':'Media','nav.cal':'Calendar','nav.epk':'Press & Contact','nav.epk.short':'Press & Contact','rep.thComposer':'Composer','rep.thOpera':'Opera / Work','rep.thRole':'Role','rep.thLang':'Lang','epk.title':'Press & <em>Contact</em>','epk.tag':'Press & Contact','epk.bio50lbl':'50-word Bio','epk.bio150lbl':'150-word Bio','epk.bio300lbl':'Full Biography','epk.photos':'High-Res Photos','epk.downloadPhoto':'Download hi-res','epk.preview':'Preview','epk.cv':'Download CV','epk.contact':'Booking Contact','programs.formation':'Formation','programs.duration':'Duration','programs.idealFor':'Ideal for','about.photoLabel':'Lyric Tenor','rep.allRoles':'Complete Operatic Repertoire','programs.sectionTag':'Programs &amp; Collaborations','rep.tabOpera':'Opera Roles','rep.tabArias':'Opera Arias &amp; Operette','rep.tabLied':'Lied &amp; Art Song','rep.tabTango':'Tango &amp; Popular Songs','contact.pressKitPdf':'Press Kit PDF','epk.photosIntro':'Official press images for media, programmes and print. Free to use with credit.','epk.photoCredit':'Photos available for press and programme use. Credit: Rolando Guy','epk.copyBio':'⧉ Copy Bio','form.sending':'Sending...','form.errorSend':'Error sending. Please email rolandoguy@gmail.com directly.','vid.showMore':'+ Show More Videos','vid.showLess':'− Show Less','perf.printAgenda':'Print agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendar','perf.printRepertoire':'Repertoire',},
-  de:{'nav.bio':'Biografie','nav.rep':'Repertoire','nav.programs':'Programme','nav.vid':'Videos','nav.photos':'Fotos','nav.perf':'Aufführungen','nav.press':'Presse','press.tag':'Presse &amp; Rezensionen','press.empty':'Noch keine Pressezitate.','nav.contact':'Kontakt','hero.scroll':'Entdecken','about.photoLabel':'Lyrischer Tenor','photos.h2':'Studio &amp; <em>Bühne</em>','photos.sub':'Porträt- und Bühnenfotografie. Klicken für Vollansicht.','photos.studio':'Studiofotos','photos.stage':'Auf der Bühne','photos.backstage':'Backstage','photos.backstageEmpty':'Backstage-Fotos über das Admin-Panel hochladen.','form.name':'Name','form.email':'E-Mail','form.subject':'Betreff','form.message':'Nachricht','form.send':'Nachricht senden','form.success':'Vielen Dank! Ihre Nachricht wurde gesendet.','form.namePh':'Ihr Name','form.emailPh':'ihre@email.de','form.subjectPh':'Buchungsanfrage','form.messagePh':'Erzählen Sie mir von Ihrem Projekt...','footer.tagline':'Argentinisch-Italienischer Tenor in Berlin','footer.rights':'Alle Rechte vorbehalten','vid.h2':'Auf der Bühne &amp; <em>Im Konzert</em>','press.readMore':'Artikel lesen','nav.media':'Medien','nav.cal':'Kalender','nav.epk':'Presse & Kontakt','nav.epk.short':'Presse & Kontakt','rep.thComposer':'Komponist','rep.thOpera':'Oper / Werk','rep.thRole':'Partie','rep.thLang':'Spr.','epk.title':'Presse & <em>Kontakt</em>','epk.tag':'Presse & Kontakt','epk.bio50lbl':'Kurz-Bio (50 Wörter)','epk.bio150lbl':'Standard-Bio (150 Wörter)','epk.bio300lbl':'Vollständige Biografie','epk.photos':'Fotos in hoher Auflösung','epk.downloadPhoto':'Hi-Res herunterladen','epk.preview':'Vorschau','epk.cv':'Lebenslauf herunterladen','epk.contact':'Buchungsanfrage','programs.formation':'Besetzung','programs.duration':'Dauer','programs.idealFor':'Ideal für','about.photoLabel':'Lyrischer Tenor','rep.allRoles':'Vollständiges Opernrepertoire','programs.sectionTag':'Programme &amp; Kooperationen','rep.tabOpera':'Opernrollen','rep.tabArias':'Opernarien &amp; Operette','rep.tabLied':'Lied &amp; Kunstlied','rep.tabTango':'Tango &amp; Unterhaltungslieder','contact.pressKitPdf':'Press Kit (PDF)','epk.photosIntro':'Offizielle Pressefotos für Medien, Programme und Druck. Nutzung mit Credit.','epk.photoCredit':'Fotos für Presse und Programm. Credit: Rolando Guy','epk.copyBio':'⧉ Bio kopieren','form.sending':'Wird gesendet...','form.errorSend':'Fehler beim Senden. Bitte schreiben Sie direkt an rolandoguy@gmail.com.','vid.showMore':'+ Weitere Videos','vid.showLess':'− Weniger anzeigen','perf.printAgenda':'Agenda drucken','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Kalender','perf.printRepertoire':'Repertoire',},
-  es:{'nav.bio':'Biografía','nav.rep':'Repertorio','nav.programs':'Programas','nav.vid':'Vídeos','nav.photos':'Fotos','nav.perf':'Actuaciones','nav.press':'Prensa','press.tag':'Prensa &amp; Reseñas','press.empty':'Aún no hay citas de prensa.','nav.contact':'Contacto','hero.scroll':'Descubrir','about.photoLabel':'Tenor Lírico','photos.h2':'Estudio &amp; <em>Escenario</em>','photos.sub':'Fotografía de retrato y escena. Clic para ver a tamaño completo.','photos.studio':'Retratos de Estudio','photos.stage':'En Escena','photos.backstage':'Backstage','photos.backstageEmpty':'Subí fotos backstage desde el panel de administración.','form.name':'Nombre','form.email':'Email','form.subject':'Asunto','form.message':'Mensaje','form.send':'Enviar Mensaje','form.success':'¡Gracias! Tu mensaje ha sido enviado.','form.namePh':'Tu nombre','form.emailPh':'tu@email.com','form.subjectPh':'Consulta de contratación','form.messagePh':'Cuéntame sobre tu proyecto...','footer.tagline':'Tenor Argentino/Italiano residente en Berlín','footer.rights':'Todos los derechos reservados','vid.h2':'En Escena &amp; <em>En Concierto</em>','press.readMore':'Leer artículo','nav.media':'Media','nav.cal':'Agenda','nav.epk':'Prensa y contacto','nav.epk.short':'Prensa y contacto','rep.thComposer':'Compositor','rep.thOpera':'Ópera / Obra','rep.thRole':'Rol','rep.thLang':'Idiom.','epk.title':'Prensa y <em>contacto</em>','epk.tag':'Prensa y contacto','epk.bio50lbl':'Bio 50 palabras','epk.bio150lbl':'Bio 150 palabras','epk.bio300lbl':'Biografía completa','epk.photos':'Fotos en alta resolución','epk.downloadPhoto':'Descargar hi-res','epk.preview':'Vista previa','epk.cv':'Descargar CV','epk.contact':'Contacto para contratación','programs.formation':'Formación','programs.duration':'Duración','programs.idealFor':'Ideal para','about.photoLabel':'Tenor Lírico','rep.allRoles':'Repertorio Operístico Completo','programs.sectionTag':'Programas y colaboraciones','rep.tabOpera':'Roles de ópera','rep.tabArias':'Arias y opereta','rep.tabLied':'Lied y canción de arte','rep.tabTango':'Tango y canciones populares','contact.pressKitPdf':'Dossier de prensa (PDF)','epk.photosIntro':'Imágenes oficiales de prensa para medios, programas e impresión. Uso libre con crédito.','epk.photoCredit':'Fotos para prensa y programa. Crédito: Rolando Guy','epk.copyBio':'⧉ Copiar bio','form.sending':'Enviando...','form.errorSend':'Error al enviar. Escribí a rolandoguy@gmail.com directamente.','vid.showMore':'+ Más vídeos','vid.showLess':'− Ver menos','perf.printAgenda':'Imprimir agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Agenda','perf.printRepertoire':'Repertorio',},
-  it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Stampa','press.tag':'Stampa &amp; Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Stampa e contatto','nav.epk.short':'Stampa e contatto','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa e <em>contatto</em>','epk.tag':'Stampa e contatto','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica hi-res','epk.preview':'Anteprima','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie e operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango e canzoni popolari','contact.pressKitPdf':'Press kit (PDF)','epk.photosIntro':'Immagini ufficiali per stampa, programmi e media. Uso libero con crediti.','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno','perf.printAgenda':'Stampa agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendario','perf.printRepertoire':'Repertorio',},
-  fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Presse','press.tag':'Presse &amp; Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Agenda','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger hi-res','epk.preview':'Aperçu','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias &amp; opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango &amp; chansons','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photosIntro':'Images officielles pour presse, programmes et médias. Libre avec crédit.','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins','perf.printAgenda':'Imprimer l\'agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Agenda','perf.printRepertoire':'Répertoire',},
+  en:{'nav.bio':'Biography','nav.rep':'Repertoire','nav.programs':'Programs','nav.vid':'Videos','nav.photos':'Photos','nav.perf':'Performances','nav.press':'Press','press.tag':'Press & Reviews','press.empty':'No press quotes yet.','nav.contact':'Contact','hero.scroll':'Discover','about.photoLabel':'Lyric Tenor','photos.h2':'Studio &amp; <em>On Stage</em>','photos.sub':'Portrait and stage photography. Click any image to view full size.','photos.studio':'Studio Portraits','photos.stage':'On Stage','photos.backstage':'Backstage','photos.backstageEmpty':'Upload backstage photos via the admin panel.','form.name':'Name','form.email':'Email','form.subject':'Subject','form.message':'Message','form.send':'Send Message','form.success':'Thank you! Your message has been sent.','form.namePh':'Your name','form.emailPh':'your@email.com','form.subjectPh':'Booking inquiry','form.messagePh':'Tell me about your project...','footer.tagline':'Argentinian/Italian Tenor based in Berlin','footer.rights':'All rights reserved','vid.h2':'On Stage &amp; <em>In Concert</em>','press.readMore':'Read article','nav.media':'Media','nav.cal':'Calendar','nav.epk':'Press & Contact','nav.epk.short':'Press & Contact','rep.thComposer':'Composer','rep.thOpera':'Opera / Work','rep.thRole':'Role','rep.thLang':'Lang','epk.title':'Press & <em>Contact</em>','epk.tag':'Press & Contact','epk.bio50lbl':'50-word Bio','epk.bio150lbl':'150-word Bio','epk.bio300lbl':'Full Biography','epk.photos':'High-Res Photos','epk.downloadPhoto':'Download hi-res','epk.preview':'Preview','epk.cv':'Download CV','epk.contact':'Booking Contact','programs.formation':'Formation','programs.duration':'Duration','programs.idealFor':'Ideal for','about.photoLabel':'Lyric Tenor','rep.allRoles':'Complete Operatic Repertoire','programs.sectionTag':'Programs &amp; Collaborations','rep.tabOpera':'Opera Roles','rep.tabArias':'Opera Arias','rep.tabOperetta':'Operetta','rep.tabLied':'Lied &amp; Art Song','rep.tabTango':'Tango','rep.descOpera':'Selected tenor roles from the operatic repertoire, prepared for stage and concert performance.','rep.descArias':'A curated selection of arias for concerts, gala programs, and auditions.','rep.descOperetta':'Representative works from the operetta repertoire, combining elegance, clarity, and theatrical style.','rep.descLied':'Recital repertoire for voice and piano from the German, French, and international song tradition.','rep.descTango':'Argentine tango repertoire performed with lyrical expression and strong stylistic identity.','rep.empty':'No repertoire has been added yet for this category.','rep.introLine':'A selected overview of repertoire for stage, recital, and concert performance.','rep.thTitle':'Title','rep.thWork':'Work','contact.pressKitPdf':'Press Kit PDF','epk.photosIntro':'Official press images for media, programmes and print. Free to use with credit.','epk.photoCredit':'Photos available for press and programme use. Credit: Rolando Guy','epk.copyBio':'⧉ Copy Bio','form.sending':'Sending...','form.errorSend':'Error sending. Please email rolandoguy@gmail.com directly.','vid.showMore':'+ Show More Videos','vid.showLess':'− Show Less','perf.printAgenda':'Print agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendar','perf.printRepertoire':'Repertoire',},
+  de:{'nav.bio':'Biografie','nav.rep':'Repertoire','nav.programs':'Programme','nav.vid':'Videos','nav.photos':'Fotos','nav.perf':'Aufführungen','nav.press':'Presse','press.tag':'Presse &amp; Rezensionen','press.empty':'Noch keine Pressezitate.','nav.contact':'Kontakt','hero.scroll':'Entdecken','about.photoLabel':'Lyrischer Tenor','photos.h2':'Studio &amp; <em>Bühne</em>','photos.sub':'Porträt- und Bühnenfotografie. Klicken für Vollansicht.','photos.studio':'Studiofotos','photos.stage':'Auf der Bühne','photos.backstage':'Backstage','photos.backstageEmpty':'Backstage-Fotos über das Admin-Panel hochladen.','form.name':'Name','form.email':'E-Mail','form.subject':'Betreff','form.message':'Nachricht','form.send':'Nachricht senden','form.success':'Vielen Dank! Ihre Nachricht wurde gesendet.','form.namePh':'Ihr Name','form.emailPh':'ihre@email.de','form.subjectPh':'Buchungsanfrage','form.messagePh':'Erzählen Sie mir von Ihrem Projekt...','footer.tagline':'Argentinisch-Italienischer Tenor in Berlin','footer.rights':'Alle Rechte vorbehalten','vid.h2':'Auf der Bühne &amp; <em>Im Konzert</em>','press.readMore':'Artikel lesen','nav.media':'Medien','nav.cal':'Kalender','nav.epk':'Presse & Kontakt','nav.epk.short':'Presse & Kontakt','rep.thComposer':'Komponist','rep.thOpera':'Oper / Werk','rep.thRole':'Partie','rep.thLang':'Spr.','epk.title':'Presse & <em>Kontakt</em>','epk.tag':'Presse & Kontakt','epk.bio50lbl':'Kurz-Bio (50 Wörter)','epk.bio150lbl':'Standard-Bio (150 Wörter)','epk.bio300lbl':'Vollständige Biografie','epk.photos':'Fotos in hoher Auflösung','epk.downloadPhoto':'Hi-Res herunterladen','epk.preview':'Vorschau','epk.cv':'Lebenslauf herunterladen','epk.contact':'Buchungsanfrage','programs.formation':'Besetzung','programs.duration':'Dauer','programs.idealFor':'Ideal für','about.photoLabel':'Lyrischer Tenor','rep.allRoles':'Vollständiges Opernrepertoire','programs.sectionTag':'Programme &amp; Kooperationen','rep.tabOpera':'Opernrollen','rep.tabArias':'Opernarien','rep.tabOperetta':'Operette','rep.tabLied':'Lied &amp; Kunstlied','rep.tabTango':'Tango','rep.descOpera':'Ausgewählte Tenorpartien aus dem Opernrepertoire, einstudiert für Bühne und Konzert.','rep.descArias':'Eine kuratierte Auswahl von Arien für Konzerte, Galaprogramme und Vorsingen.','rep.descOperetta':'Repräsentative Werke aus dem Operettenrepertoire: Eleganz, Klarheit und theatraler Stil.','rep.descLied':'Rezitalrepertoire für Gesang und Klavier aus der deutschen, französischen und internationalen Liedtradition.','rep.descTango':'Argentinisches Tango-Repertoire mit lyrischem Ausdruck und starker stilistischer Identität.','rep.empty':'Für diese Kategorie wurde noch kein Repertoire eingetragen.','rep.introLine':'Eine ausgewählte Übersicht des Repertoires für Bühne, Rezital und Konzert.','rep.thTitle':'Titel','rep.thWork':'Werk','contact.pressKitPdf':'Press Kit (PDF)','epk.photosIntro':'Offizielle Pressefotos für Medien, Programme und Druck. Nutzung mit Credit.','epk.photoCredit':'Fotos für Presse und Programm. Credit: Rolando Guy','epk.copyBio':'⧉ Bio kopieren','form.sending':'Wird gesendet...','form.errorSend':'Fehler beim Senden. Bitte schreiben Sie direkt an rolandoguy@gmail.com.','vid.showMore':'+ Weitere Videos','vid.showLess':'− Weniger anzeigen','perf.printAgenda':'Agenda drucken','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Kalender','perf.printRepertoire':'Repertoire',},
+  es:{'nav.bio':'Biografía','nav.rep':'Repertorio','nav.programs':'Programas','nav.vid':'Vídeos','nav.photos':'Fotos','nav.perf':'Actuaciones','nav.press':'Prensa','press.tag':'Prensa &amp; Reseñas','press.empty':'Aún no hay citas de prensa.','nav.contact':'Contacto','hero.scroll':'Descubrir','about.photoLabel':'Tenor Lírico','photos.h2':'Estudio &amp; <em>Escenario</em>','photos.sub':'Fotografía de retrato y escena. Clic para ver a tamaño completo.','photos.studio':'Retratos de Estudio','photos.stage':'En Escena','photos.backstage':'Backstage','photos.backstageEmpty':'Subí fotos backstage desde el panel de administración.','form.name':'Nombre','form.email':'Email','form.subject':'Asunto','form.message':'Mensaje','form.send':'Enviar Mensaje','form.success':'¡Gracias! Tu mensaje ha sido enviado.','form.namePh':'Tu nombre','form.emailPh':'tu@email.com','form.subjectPh':'Consulta de contratación','form.messagePh':'Cuéntame sobre tu proyecto...','footer.tagline':'Tenor Argentino/Italiano residente en Berlín','footer.rights':'Todos los derechos reservados','vid.h2':'En Escena &amp; <em>En Concierto</em>','press.readMore':'Leer artículo','nav.media':'Media','nav.cal':'Agenda','nav.epk':'Prensa y contacto','nav.epk.short':'Prensa y contacto','rep.thComposer':'Compositor','rep.thOpera':'Ópera / Obra','rep.thRole':'Rol','rep.thLang':'Idiom.','epk.title':'Prensa y <em>contacto</em>','epk.tag':'Prensa y contacto','epk.bio50lbl':'Bio 50 palabras','epk.bio150lbl':'Bio 150 palabras','epk.bio300lbl':'Biografía completa','epk.photos':'Fotos en alta resolución','epk.downloadPhoto':'Descargar hi-res','epk.preview':'Vista previa','epk.cv':'Descargar CV','epk.contact':'Contacto para contratación','programs.formation':'Formación','programs.duration':'Duración','programs.idealFor':'Ideal para','about.photoLabel':'Tenor Lírico','rep.allRoles':'Repertorio Operístico Completo','programs.sectionTag':'Programas y colaboraciones','rep.tabOpera':'Roles de ópera','rep.tabArias':'Arias de ópera','rep.tabOperetta':'Opereta','rep.tabLied':'Lied y canción de arte','rep.tabTango':'Tango','rep.descOpera':'Partes de tenor del repertorio operístico, preparadas para escena y concierto.','rep.descArias':'Selección de arias para conciertos, galas y audiciones.','rep.descOperetta':'Obras representativas del repertorio de opereta: elegancia, claridad y estilo teatral.','rep.descLied':'Repertorio de recital para voz y piano de la tradición alemana, francesa e internacional.','rep.descTango':'Repertorio de tango argentino con expresión lírica e identidad estilística.','rep.empty':'Aún no se ha añadido repertorio en esta categoría.','rep.introLine':'Una selección de repertorio para escena, recital y concierto.','rep.thTitle':'Título','rep.thWork':'Obra','contact.pressKitPdf':'Dossier de prensa (PDF)','epk.photosIntro':'Imágenes oficiales de prensa para medios, programas e impresión. Uso libre con crédito.','epk.photoCredit':'Fotos para prensa y programa. Crédito: Rolando Guy','epk.copyBio':'⧉ Copiar bio','form.sending':'Enviando...','form.errorSend':'Error al enviar. Escribí a rolandoguy@gmail.com directamente.','vid.showMore':'+ Más vídeos','vid.showLess':'− Ver menos','perf.printAgenda':'Imprimir agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Agenda','perf.printRepertoire':'Repertorio',},
+  it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Stampa','press.tag':'Stampa &amp; Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Stampa e contatto','nav.epk.short':'Stampa e contatto','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa e <em>contatto</em>','epk.tag':'Stampa e contatto','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica hi-res','epk.preview':'Anteprima','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie d\'opera','rep.tabOperetta':'Operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango','rep.descOpera':'Parti da tenore del repertorio operistico, preparate per scena e concerto.','rep.descArias':'Selezione di arie per concerti, programmi da gala e audizioni.','rep.descOperetta':'Opere rappresentative del repertorio operettistico: eleganza, chiarezza e stile teatrale.','rep.descLied':'Repertorio da recital per voce e pianoforte dalla tradizione tedesca, francese e internazionale.','rep.descTango':'Repertorio di tango argentino con espressione lirica e forte identità stilistica.','rep.empty':'Non è ancora stato aggiunto repertorio per questa categoria.','rep.introLine':'Una selezione di repertorio per scena, recital e concerto.','rep.thTitle':'Titolo','rep.thWork':'Opera','contact.pressKitPdf':'Press kit (PDF)','epk.photosIntro':'Immagini ufficiali per stampa, programmi e media. Uso libero con crediti.','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno','perf.printAgenda':'Stampa agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendario','perf.printRepertoire':'Repertorio',},
+  fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Presse','press.tag':'Presse &amp; Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Agenda','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger hi-res','epk.preview':'Aperçu','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias d\'opéra','rep.tabOperetta':'Opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango','rep.descOpera':'Rôles de ténor du répertoire lyrique, préparés pour la scène et le concert.','rep.descArias':'Sélection d\'arias pour concerts, galas et auditions.','rep.descOperetta':'Œuvres représentatives du répertoire d\'opérette : élégance, clarté et style théâtral.','rep.descLied':'Répertoire de récital pour voix et piano des traditions allemande, française et internationale.','rep.descTango':'Répertoire de tango argentin avec expression lyrique et forte identité stylistique.','rep.empty':'Aucun répertoire n\'a encore été ajouté pour cette catégorie.','rep.introLine':'Une sélection de répertoire pour la scène, le récital et le concert.','rep.thTitle':'Titre','rep.thWork':'Œuvre','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photosIntro':'Images officielles pour presse, programmes et médias. Libre avec crédit.','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins','perf.printAgenda':'Imprimer l\'agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Agenda','perf.printRepertoire':'Répertoire',},
 };
 function setLang(lang){
   currentLang = lang;
@@ -3252,16 +3296,20 @@ function saveEpkPhotos() {
 
 let repDragSrc = null;
 
-function onDropRep(dstIdx, e) {
+function onDropRep(cat, dstLocalIdx, e) {
   e.stopPropagation();
-  if (!repDragSrc) return;
-  const srcIdx = parseInt(repDragSrc.dataset.repIdx);
-  if (srcIdx === dstIdx) return;
-  const cards = getRep().cards;
-  const [moved] = cards.splice(srcIdx, 1);
-  cards.splice(dstIdx, 0, moved);
-  save('rg_rep_cards', cards);
-  admTab('rep');
+  if (!repDragSrc) return false;
+  const srcCat = repDragSrc.dataset.repCat;
+  const srcLocalIdx = parseInt(repDragSrc.dataset.repLocalIdx, 10);
+  if (srcCat !== cat || srcLocalIdx === dstLocalIdx) return false;
+  const allCards = (getRep().cards || []).slice();
+  const otherCards = allCards.filter(c => (c.cat || 'opera') !== cat);
+  const catCards = allCards.filter(c => (c.cat || 'opera') === cat);
+  const [moved] = catCards.splice(srcLocalIdx, 1);
+  catCards.splice(dstLocalIdx, 0, moved);
+  const newCards = otherCards.concat(catCards);
+  save('rg_rep_cards', newCards);
+  admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
   return false;
 }
 
@@ -3425,7 +3473,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 
 function admTab(name){
   admCurTab = name;
-  const tabs = ['hero','bio','rep','programs','vid','photos','perf','press','contact','epk'];
+  const tabs = ['hero','bio','rep-opera','rep-arias','rep-operetta','rep-lived','rep-tango','programs','vid','photos','perf','press','contact','epk'];
   document.querySelectorAll('.adm-tab').forEach((t,i)=>t.classList.toggle('active', tabs[i]===name));
   document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
   const panel = document.getElementById('admPanel-'+name);
@@ -3449,54 +3497,59 @@ function admPopulate(name){
       stat3num:'f-stat3num',stat3lbl:'f-stat3lbl'};
     Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=d[k]||'';});
   }
-  else if(name==='rep'){
-    const d=getRep();
-    const div=document.getElementById('repCards');
-    const statusColors={performed:'#4CAF50',prepared:'#D4A843',studying:'#9A9080'};
+  else if(name.startsWith('rep-')){
+    const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
+    const cat = catMap[name] || 'opera';
+    const tabSuffix = name.replace('rep-',''); // matches HTML ids: opera, arias, operetta, lived, tango
+    const d = getRep();
+    let catCards = (d.cards || []).filter(c => (c.cat || 'opera') === cat);
+    const sortStatus = (document.getElementById('repSortStatus-'+tabSuffix)||{}).value || '';
+    if (sortStatus) {
+      const order = {performed:0, prepared:1, studying:2};
+      catCards = catCards.slice().sort((a,b)=>{
+        const sa = order[a.status||'performed'] ?? 3;
+        const sb = order[b.status||'performed'] ?? 3;
+        return sa - sb;
+      });
+    }
+    const div = document.getElementById('repCards-'+tabSuffix);
+    if (!div) return;
+    const statusColors = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
     const repEsc = (s)=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    div.innerHTML=d.cards.map((card,i)=>`
-      <div class="adm-card-preview drag-item" id="rc-card-${i}" draggable="true"
-        data-rep-idx="${i}"
+    div.innerHTML = catCards.map((card, localIdx)=>`
+      <div class="adm-card-preview drag-item" id="rc-card-${cat}-${localIdx}" draggable="true"
+        data-rep-cat="${cat}"
+        data-rep-local-idx="${localIdx}"
         style="border-left:3px solid ${statusColors[card.status||'performed']};position:relative;cursor:default"
         ondragstart="repDragSrc=this;this.style.opacity='0.4'"
         ondragend="this.style.opacity='';document.querySelectorAll('.drag-item').forEach(el=>el.classList.remove('drag-over'))"
         ondragover="event.preventDefault()"
         ondragenter="this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
-        ondrop="onDropRep(${i},event)">
+        ondrop="onDropRep('${cat}',${localIdx},event)">
         <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px">
           <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Arrastrar para reordenar">⠿</span>
           <span style="color:${statusColors[card.status||'performed']};font-size:.7rem">●</span>
-          Rol ${i+1}
-          <button type="button" onclick="duplicateRepCard(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicar</button>
-          <button type="button" onclick="removeRepCard(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
+          ${cat==='opera'?'Rol':'Entrada'} ${localIdx+1}
+          <button type="button" onclick="duplicateRepCard('${cat}',${localIdx})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicar</button>
+          <button type="button" onclick="removeRepCard('${cat}',${localIdx})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
         </div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Compositor</label><input class="adm-input" id="rc-${i}-composer" value="${repEsc(card.composer)}"></div>
-          <div class="adm-col"><label class="adm-label">Ópera / Obra</label><input class="adm-input" id="rc-${i}-opera" value="${repEsc(card.opera)}"></div>
+          <div class="adm-col"><label class="adm-label">Compositor</label><input class="adm-input" id="rc-${cat}-${localIdx}-composer" value="${repEsc(card.composer)}"></div>
+          <div class="adm-col"><label class="adm-label">Ópera / Obra</label><input class="adm-input" id="rc-${cat}-${localIdx}-opera" value="${repEsc(card.opera)}"></div>
         </div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Rol</label><input class="adm-input" id="rc-${i}-role" value="${repEsc(card.role)}"></div>
+          <div class="adm-col"><label class="adm-label">Rol / Título</label><input class="adm-input" id="rc-${cat}-${localIdx}-role" value="${repEsc(card.role)}"></div>
           <div class="adm-col" style="max-width:90px"><label class="adm-label">Idioma</label>
-            <select class="adm-input" id="rc-${i}-lang">
+            <select class="adm-input" id="rc-${cat}-${localIdx}-lang">
               ${['IT','DE','FR','EN','LA','ES'].map(l=>`<option value="${l}" ${(card.lang||'IT')===l?'selected':''}>${l}</option>`).join('')}
             </select>
           </div>
           <div class="adm-col"><label class="adm-label">Estado</label>
-            <select class="adm-input" id="rc-${i}-status">
+            <select class="adm-input" id="rc-${cat}-${localIdx}-status">
               <option value="performed" ${(card.status||'performed')==='performed'?'selected':''}>✓ Performed</option>
               <option value="prepared" ${card.status==='prepared'?'selected':''}>◎ Prepared</option>
               <option value="studying" ${card.status==='studying'?'selected':''}>… Studying</option>
-            </select>
-          </div>
-        </div>
-        <div class="adm-grid">
-          <div class="adm-col" style="max-width:260px"><label class="adm-label">Categoría</label>
-            <select class="adm-input" id="rc-${i}-cat">
-              <option value="opera" ${(card.cat||'opera')==='opera'?'selected':''}>Opera Roles</option>
-              <option value="arias" ${card.cat==='arias'?'selected':''}>Opera Arias &amp; Operette</option>
-              <option value="lied" ${card.cat==='lied'?'selected':''}>Lied &amp; Art Song</option>
-              <option value="tango" ${card.cat==='tango'?'selected':''}>Tango &amp; Popular Songs</option>
             </select>
           </div>
         </div>
@@ -3610,23 +3663,26 @@ function saveSection(name){
     data={h2:document.getElementById('f-bioH2').value,p1:document.getElementById('f-bioP1').value,p2:document.getElementById('f-bioP2').value,quote:document.getElementById('f-bioQuote').value,cite:get('bio').cite,stat1num:document.getElementById('f-stat1num').value,stat1lbl:document.getElementById('f-stat1lbl').value,stat2num:document.getElementById('f-stat2num').value,stat2lbl:document.getElementById('f-stat2lbl').value,stat3num:document.getElementById('f-stat3num').value,stat3lbl:document.getElementById('f-stat3lbl').value};
     save('bio_'+currentLang,data); renderBio();
   }
-  else if(name==='rep'){
-    const cards=getRep().cards;
-    const newCards=cards.map((_,i)=>{
-      const cel=document.getElementById('rc-'+i+'-cat');
-      const catVal=(cel&&cel.value)?String(cel.value).trim():'';
-      const cat=(catVal==='arias'||catVal==='lied'||catVal==='tango')?catVal:'opera';
-      return {
-        composer:(document.getElementById('rc-'+i+'-composer')||{}).value||'',
-        opera:(document.getElementById('rc-'+i+'-opera')||{}).value||'',
-        role:(document.getElementById('rc-'+i+'-role')||{}).value||'',
-        lang:(document.getElementById('rc-'+i+'-lang')||{}).value||'IT',
-        status:(document.getElementById('rc-'+i+'-status')||{}).value||'performed',
-        cat:cat
-      };
-    });
-    save('rg_rep_cards',newCards);
-    save('rep_'+currentLang,{h2:get('rep').h2,intro:get('rep').intro});
+  else if(name.startsWith('rep-')){
+    const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
+    const cat = catMap[name] || 'opera';
+    const allCards = (getRep().cards || []).slice();
+    const otherCards = allCards.filter(c => (c.cat || 'opera') !== cat);
+    const newCatCards = [];
+    for (let localIdx = 0; ; localIdx++) {
+      const composerEl = document.getElementById('rc-'+cat+'-'+localIdx+'-composer');
+      if (!composerEl) break;
+      newCatCards.push({
+        composer: (composerEl||{}).value||'',
+        opera: (document.getElementById('rc-'+cat+'-'+localIdx+'-opera')||{}).value||'',
+        role: (document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'',
+        lang: (document.getElementById('rc-'+cat+'-'+localIdx+'-lang')||{}).value||'IT',
+        status: (document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed',
+        cat: cat
+      });
+    }
+    const newCards = otherCards.concat(newCatCards);
+    save('rg_rep_cards', newCards);
     renderRep();
   }
   else if(name==='programs'){
