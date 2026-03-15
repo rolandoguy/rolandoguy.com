@@ -1912,14 +1912,9 @@ function renderRep() {
     it:  {performed:'Ruoli Eseguiti', prepared:'Ruoli Preparati', studying:'In Preparazione'},
     fr:  {performed:'Rôles Joués', prepared:'Rôles Préparés', studying:'En Préparation'},
   };
-  let lbl = repLabels[currentLang] || repLabels.en;
-  // For non-opera categories, hide the "Performed / Prepared / Studying" headings
-  if (cat !== 'opera') {
-    lbl = {performed:'', prepared:'', studying:''};
-  }
+  const lbl = repLabels[currentLang] || repLabels.en;
   const statuses = ['performed','prepared','studying'];
   const statusDots = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
-
   const groups = {};
   statuses.forEach(s => groups[s] = catCards.filter(c => c.status === s || (!c.status && s==='performed')));
 
@@ -1931,36 +1926,50 @@ function renderRep() {
   }
 
   const hideRole = (cat === 'lied' || cat === 'tango');
+  const t = Ti[currentLang] || Ti.en;
+  const thRole = hideRole ? '' : `<th>${t['rep.thRole']||'Role'}</th>`;
+  const tableHead = `<thead>
+    <tr>
+      <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'} ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+      <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${t['rep.thOpera']||(cat==='opera'?'Opera / Work':'Work')} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+      ${thRole}
+      <th class="rep-th-sort" onclick="setRepSort('lang')" title="Sort by Language">${t['rep.thLang']||'Lang'} ${repSortBy==='lang'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+    </tr>
+  </thead>`;
 
-  g.innerHTML = statuses.map(status => {
-    const cards = groups[status];
-    if (!cards.length) return '';
-    return `<div class="rep-category">
-      <div class="rep-cat-header">
-        <span class="rep-cat-dot" style="background:${statusDots[status]}"></span>
-        <span class="rep-cat-label">${lbl[status]}</span>
-        <span class="rep-cat-count">${cards.length}</span>
-      </div>
+  const row = (card) => `<tr>
+    <td class="rep-composer">${(card.composer||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+    <td class="rep-opera">${(card.opera||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+    ${hideRole ? '' : `<td class="rep-role"><strong>${(card.role||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong></td>`}
+    <td class="rep-lang"><span class="lang-badge">${card.lang||'IT'}</span></td>
+  </tr>`;
+
+  if (cat !== 'opera') {
+    // Non-opera: single table, no status headers (no dot/label) — all items are presented as one list
+    g.innerHTML = `<div class="rep-category">
       <table class="rep-table">
-        <thead>
-          <tr>
-            <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">Composer ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-            <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${cat==='opera' ? 'Opera / Work' : 'Work'} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-            ${hideRole ? '' : '<th data-i18n-th="rep.thRole">Role</th>'}
-            <th class="rep-th-sort" onclick="setRepSort('lang')" title="Sort by Language">Lang ${repSortBy==='lang'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${cards.map(card => `<tr>
-            <td class="rep-composer">${card.composer}</td>
-            <td class="rep-opera">${card.opera}</td>
-            ${hideRole ? '' : `<td class="rep-role"><strong>${card.role||''}</strong></td>`}
-            <td class="rep-lang"><span class="lang-badge">${card.lang||'IT'}</span></td>
-          </tr>`).join('')}
-        </tbody>
+        ${tableHead}
+        <tbody>${catCards.map(c => row(c)).join('')}</tbody>
       </table>
     </div>`;
-  }).join('');
+  } else {
+    // Opera: group by status (performed / prepared / studying) with dot + label + count per group
+    g.innerHTML = statuses.map(status => {
+      const cards = groups[status];
+      if (!cards.length) return '';
+      return `<div class="rep-category">
+        <div class="rep-cat-header">
+          <span class="rep-cat-dot" style="background:${statusDots[status]}"></span>
+          <span class="rep-cat-label">${(lbl[status]||'').replace(/&/g,'&amp;')}</span>
+          <span class="rep-cat-count">${cards.length}</span>
+        </div>
+        <table class="rep-table">
+          ${tableHead}
+          <tbody>${cards.map(c => row(c)).join('')}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+  }
 
   document.querySelectorAll('#operaGrid .reveal').forEach(el=>obs.observe(el));
 }
