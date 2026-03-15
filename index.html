@@ -378,17 +378,25 @@ section{position:relative;z-index:2}
 .opera-title{font-family:var(--ff-title);font-size:1.28rem;font-style:italic;color:var(--text);line-height:1.3;margin-bottom:5px}
 .opera-role{font-size:.78rem;color:var(--text-dim)}
 .opera-role strong{color:var(--text);font-weight:400}
-.roles-full{margin-top:48px;border:1px solid var(--border)}
-.roles-full summary{font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;padding:18px 24px;cursor:pointer;display:flex;align-items:center;gap:12px;background:var(--surface);list-style:none}
-.roles-full summary:hover{background:var(--surface2)}
-.roles-full summary::after{content:'+';margin-left:auto;font-size:1rem}
-.roles-full[open] summary::after{content:'−'}
-.roles-table{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border-top:1px solid var(--border)}
-.role-item{background:var(--surface);padding:14px 20px}
-.role-item:hover{background:var(--surface2)}
-.role-name{font-family:var(--ff-title);font-size:1rem;font-style:italic;color:var(--text)}
-.role-opera{font-size:.76rem;color:var(--text-dim);margin-top:2px}
-.role-composer{font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-top:3px}
+#programs{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.programs-header{margin-bottom:28px}
+.programs-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
+.programs-header h2 em{font-style:italic;color:var(--gold)}
+.programs-header p{font-size:.91rem;color:var(--text-dim);line-height:1.9;margin-top:12px}
+.programs-intro{font-size:.92rem;color:var(--text-dim);line-height:1.85;max-width:720px;margin-bottom:48px}
+.programs-grid{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+.program-card{background:var(--surface2);padding:32px 28px;transition:background .3s;position:relative;overflow:hidden}
+.program-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .3s;transform-origin:left}
+.program-card:hover{background:var(--surface)}
+.program-card:hover::before{transform:scaleX(1)}
+.program-card-title{font-family:var(--ff-title);font-size:clamp(1.35rem,2vw,1.65rem);font-weight:400;font-style:italic;color:var(--text);line-height:1.25;margin-bottom:14px}
+.program-card-desc{font-size:.9rem;color:var(--text-dim);line-height:1.8;margin-bottom:20px}
+.program-meta{display:flex;flex-wrap:wrap;gap:20px 32px;font-size:.82rem}
+.program-meta-block{flex:1;min-width:200px}
+.program-meta-label{font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.program-meta-value{color:var(--text-dim);line-height:1.6}
+.program-meta-value ul{margin:0;padding-left:1.2em;list-style:disc}
+.programs-closing{font-size:.8rem;color:var(--text-faint);line-height:1.75;margin-top:40px;font-style:italic;max-width:680px}
 #videos{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .videos-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px}
 .videos-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.1;color:var(--text)}
@@ -578,8 +586,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
   
   .achievements{grid-template-columns:1fr}
   .rep-intro{grid-template-columns:1fr;gap:18px}
-  /* opera-grid mobile: no change needed */
-  .roles-table{grid-template-columns:1fr 1fr}
   .video-grid{grid-template-columns:1fr}
   .video-card:first-child{grid-row:auto}
   .video-card:first-child .video-thumb-wrap{aspect-ratio:16/9;height:auto;min-height:unset}
@@ -610,7 +616,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .hero-cta a:first-child{grid-column:1/-1}
   .btn-primary,.btn-secondary{font-size:.5rem;padding:9px 12px;letter-spacing:.14em;text-align:center;justify-content:center}
   .section-inner{padding:0 16px}
-  #about,#repertoire,#videos,#photos,#performances,#contact{padding:90px 0}
+  #about,#repertoire,#programs,#videos,#photos,#performances,#contact,#epk{padding:90px 0}
   .section-tag{font-size:.52rem;margin-bottom:32px}
   .about-text h2,.rep-intro h2,.perf-header h2,.photos-header h2{font-size:clamp(2rem,9vw,2.8rem)}
   .about-text p{font-size:.87rem}
@@ -618,7 +624,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
   
   
   .opera-grid{grid-template-columns:1fr}
-  .roles-table{grid-template-columns:1fr}
   .photo-grid-4{grid-template-columns:1fr 1fr}
   .photo-grid-3{grid-template-columns:1fr}
   .photo-tab{font-size:.5rem;padding:10px 12px}
@@ -739,7 +744,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 }
 .epk-copy-btn:hover { border-color: var(--text-dim); color: var(--text); }
 
-/* Download column */
+/* Press resources column */
 .epk-dl-col { display: flex; flex-direction: column; gap: 2rem; }
 .epk-dl-group {}
 .epk-dl-label {
@@ -820,9 +825,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <li><a href="#about" data-i18n="nav.bio">Biography</a></li>
     <li><a href="#videos" data-i18n="nav.media">Media</a></li>
     <li><a href="#repertoire" data-i18n="nav.rep">Repertoire</a></li>
+    <li><a href="#programs" data-i18n="nav.programs">Programs</a></li>
     <li><a href="#performances" data-i18n="nav.cal">Calendar</a></li>
     <li><a href="#press" data-i18n="nav.press">Press</a></li>
-    <li><a href="#contact" data-i18n="nav.epk">Contact & EPK</a></li>
+    <li><a href="#contact" data-i18n="nav.epk">Press & Contact</a></li>
   </ul>
   <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -832,9 +838,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <a href="#about" onclick="closeMenu()" data-i18n="nav.bio">Biography</a>
   <a href="#videos" onclick="closeMenu()" data-i18n="nav.media">Media</a>
   <a href="#repertoire" onclick="closeMenu()" data-i18n="nav.rep">Repertoire</a>
+  <a href="#programs" onclick="closeMenu()" data-i18n="nav.programs">Programs</a>
   <a href="#performances" onclick="closeMenu()" data-i18n="nav.cal">Calendar</a>
   <a href="#press" onclick="closeMenu()" data-i18n="nav.press">Press</a>
-    <a href="#contact" onclick="closeMenu()" data-i18n="nav.epk">Contact & EPK</a>
+  <a href="#contact" onclick="closeMenu()" data-i18n="nav.epk">Press & Contact</a>
   <div class="lang-row">
     <button onclick="setLang('en');closeMenu()" id="mob-btn-en" class="active">EN</button>
     <button onclick="setLang('de');closeMenu()" id="mob-btn-de">DE</button>
@@ -856,8 +863,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <a href="#repertoire" class="btn-secondary" data-i18n="nav.rep">Repertoire</a>
       <a href="#photos" class="btn-secondary" data-i18n="nav.photos">Gallery</a>
       <a href="#contact" class="btn-secondary" id="heroCta2"></a>
-      <a href="#epk" class="btn-secondary" id="heroEpkBtn" data-i18n="nav.epk.short">EPK</a>
-      <a id="pkBtn" href="docs/RolandoGuy_PressKit_EN.pdf" download="RolandoGuy_PressKit_2026_EN.pdf" class="btn-secondary" style="border-color:rgba(212,168,67,.4);font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:13px 22px;display:inline-flex;align-items:center;gap:8px;cursor:none">Press Kit</a>
+      <a href="#programs" class="btn-secondary" data-i18n="nav.programs">Programs</a>
+      <a href="#contact" class="btn-secondary" id="heroEpkBtn" data-i18n="nav.epk.short">Press & Contact</a>
     </div>
   </div>
   <div class="hero-scroll"><span data-i18n="hero.scroll">Discover</span><div class="scroll-line"></div></div>
@@ -893,36 +900,24 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <p class="reveal rd1" id="repIntro"></p>
     </div>
     <div class="rep-tabs reveal rd2">
-      <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')">Opera Roles</button>
-      <button class="rep-tab" id="repTabArias" onclick="setRepCategory('arias')">Opera Arias &amp; Operette</button>
-      <button class="rep-tab" id="repTabLied" onclick="setRepCategory('lied')">Lied &amp; Art Song</button>
-      <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')">Tango &amp; Popular Songs</button>
+      <button class="rep-tab active" id="repTabOpera" onclick="setRepCategory('opera')" data-i18n="rep.tabOpera">Opera Roles</button>
+      <button class="rep-tab" id="repTabArias" onclick="setRepCategory('arias')" data-i18n="rep.tabArias">Opera Arias &amp; Operette</button>
+      <button class="rep-tab" id="repTabLied" onclick="setRepCategory('lied')" data-i18n="rep.tabLied">Lied &amp; Art Song</button>
+      <button class="rep-tab" id="repTabTango" onclick="setRepCategory('tango')" data-i18n="rep.tabTango">Tango &amp; Popular Songs</button>
     </div>
     <div class="opera-grid" id="operaGrid"></div>
-    <details class="roles-full reveal">
-      <summary data-i18n="rep.allRoles">Complete Operatic Repertoire (19 Roles)</summary>
-      <div class="roles-table">
-        <div class="role-item"><div class="role-name">Ferrando</div><div class="role-opera">Così fan tutte</div><div class="role-composer">W. A. Mozart</div></div>
-        <div class="role-item"><div class="role-name">Belmonte</div><div class="role-opera">Die Entführung aus dem Serail</div><div class="role-composer">W. A. Mozart</div></div>
-        <div class="role-item"><div class="role-name">Tamino</div><div class="role-opera">Die Zauberflöte</div><div class="role-composer">W. A. Mozart</div></div>
-        <div class="role-item"><div class="role-name">Don Basilio</div><div class="role-opera">Le nozze di Figaro</div><div class="role-composer">W. A. Mozart</div></div>
-        <div class="role-item"><div class="role-name">Don Ottavio</div><div class="role-opera">Don Giovanni</div><div class="role-composer">W. A. Mozart</div></div>
-        <div class="role-item"><div class="role-name">Nemorino</div><div class="role-opera">L'elisir d'amore</div><div class="role-composer">G. Donizetti</div></div>
-        <div class="role-item"><div class="role-name">Edgardo</div><div class="role-opera">Lucia di Lammermoor</div><div class="role-composer">G. Donizetti</div></div>
-        <div class="role-item"><div class="role-name">Alfredo</div><div class="role-opera">La Traviata</div><div class="role-composer">G. Verdi</div></div>
-        <div class="role-item"><div class="role-name">Macduff</div><div class="role-opera">Macbeth</div><div class="role-composer">G. Verdi</div></div>
-        <div class="role-item"><div class="role-name">Gastone</div><div class="role-opera">La Traviata</div><div class="role-composer">G. Verdi</div></div>
-        <div class="role-item"><div class="role-name">Il Duca</div><div class="role-opera">Rigoletto</div><div class="role-composer">G. Verdi</div></div>
-        <div class="role-item"><div class="role-name">Borsa</div><div class="role-opera">Rigoletto</div><div class="role-composer">G. Verdi</div></div>
-        <div class="role-item"><div class="role-name">Lenski</div><div class="role-opera">Eugene Onegin</div><div class="role-composer">P. Tchaikovsky</div></div>
-        <div class="role-item"><div class="role-name">Rodolfo</div><div class="role-opera">La Bohème</div><div class="role-composer">G. Puccini</div></div>
-        <div class="role-item"><div class="role-name">Pinkerton</div><div class="role-opera">Madama Butterfly</div><div class="role-composer">G. Puccini</div></div>
-        <div class="role-item"><div class="role-name">Beppe</div><div class="role-opera">Pagliacci</div><div class="role-composer">R. Leoncavallo</div></div>
-        <div class="role-item"><div class="role-name">Des Grieux</div><div class="role-opera">Manon</div><div class="role-composer">J. Massenet</div></div>
-        <div class="role-item"><div class="role-name">Danilo</div><div class="role-opera">Die lustige Witwe</div><div class="role-composer">F. Lehár</div></div>
-        <div class="role-item"><div class="role-name">Roderich</div><div class="role-opera">Der Vetter aus Dingsda</div><div class="role-composer">E. Künneke</div></div>
-      </div>
-    </details>
+  </div>
+</section>
+<section id="programs">
+  <div class="section-inner">
+    <p class="section-tag" data-num="02b" data-i18n="programs.sectionTag">Programs &amp; Collaborations</p>
+    <div class="programs-header">
+      <h2 class="reveal" id="programsTitle"></h2>
+      <p class="reveal rd1" id="programsSubtitle"></p>
+    </div>
+    <p class="programs-intro reveal rd2" id="programsIntro"></p>
+    <div class="programs-grid" id="programsGrid"></div>
+    <p class="programs-closing reveal" id="programsClosing"></p>
   </div>
 </section>
 <section id="videos">
@@ -1011,7 +1006,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <div class="contact-ctas">
           
           <a id="contactEmailBtn" class="btn-secondary"></a>
-          <a href="docs/RolandoGuy_PressKit_EN.pdf" download="RolandoGuy_PressKit_2026.pdf" class="btn-secondary" style="border-color:rgba(212,168,67,.4);display:inline-flex;align-items:center;gap:7px;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:13px 22px;cursor:none"><svg width="11" height="13" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.7"><path d="M6 0v10M1 8l5 5 5-5M0 13h12" stroke="currentColor" stroke-width="1.2"/></svg>Press Kit PDF</a>
+          <a href="docs/RolandoGuy_PressKit_EN.pdf" download="RolandoGuy_PressKit_2026.pdf" class="btn-secondary" style="border-color:rgba(212,168,67,.4);display:inline-flex;align-items:center;gap:7px;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:13px 22px;cursor:none"><svg width="11" height="13" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.7"><path d="M6 0v10M1 8l5 5 5-5M0 13h12" stroke="currentColor" stroke-width="1.2"/></svg><span data-i18n="contact.pressKitPdf">Press Kit PDF</span></a>
         </div>
       </div>
       <div class="contact-form reveal rd2">
@@ -1031,7 +1026,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <!-- EPK SECTION -->
 <section id="epk">
   <div class="section-inner">
-    <p class="section-tag" data-num="06" data-i18n="epk.tag">Electronic Press Kit</p>
+    <p class="section-tag" data-num="06" data-i18n="epk.tag">Press & Contact</p>
     <h2 class="reveal" id="epkTitle"></h2>
 
     <div class="epk-grid">
@@ -1045,20 +1040,16 @@ textarea.adm-input{resize:vertical;min-height:80px}
         </div>
         <div class="epk-bio-pane active" id="bio50"><p id="bio50Text"></p></div>
         <div class="epk-bio-pane" id="bio150"><p id="bio150Text"></p></div>
-        <div class="epk-bio-pane" id="bio300" id="bio300Text"><p id="bio300TextP1"></p><p id="bio300TextP2"></p><p id="bio300TextP3"></p><p id="bio300TextP4"></p></div>
-        <button class="epk-copy-btn" onclick="epkCopyBio()" id="epkCopyBtn">⧉ Copy Bio</button>
+        <div class="epk-bio-pane" id="bio300"><p id="bio300TextP1"></p><p id="bio300TextP2"></p><p id="bio300TextP3"></p><p id="bio300TextP4"></p></div>
+        <button class="epk-copy-btn" onclick="epkCopyBio()" id="epkCopyBtn" data-i18n="epk.copyBio">⧉ Copy Bio</button>
       </div>
 
-      <!-- RIGHT: Downloads -->
+      <!-- RIGHT: Press resources -->
       <div class="epk-dl-col">
-        <div class="epk-dl-group">
-          <div class="epk-dl-label" data-i18n="epk.cv">Download CV</div>
-          <div class="epk-dl-links" id="epkCvLinks"></div>
-        </div>
         <div class="epk-dl-group">
           <div class="epk-dl-label" data-i18n="epk.photos">High-Res Photos</div>
           <div class="epk-photo-grid" id="epkPhotosGrid"></div>
-          <p class="epk-photo-note">Photos available for press and programme use. Credit: Rolando Guy</p>
+          <p class="epk-photo-note" data-i18n="epk.photoCredit">Photos available for press and programme use. Credit: Rolando Guy</p>
         </div>
       </div>
 
@@ -1112,12 +1103,13 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
     <button class="adm-tab" onclick="admTab('bio')">Biografía</button>
     <button class="adm-tab" onclick="admTab('rep')">Repertorio</button>
+    <button class="adm-tab" onclick="admTab('programs')">Programas</button>
     <button class="adm-tab" onclick="admTab('vid')">Videos</button>
     <button class="adm-tab" onclick="admTab('photos')">Fotos</button>
     <button class="adm-tab" onclick="admTab('perf')">Agenda</button>
     <button class="adm-tab" onclick="admTab('press')">Prensa</button>
          <button class="adm-tab" onclick="admTab('contact')">Contacto</button>
-    <button class="adm-tab" onclick="admTab('epk')">EPK</button>
+    <button class="adm-tab" onclick="admTab('epk')">Press & Contact</button>
    </div>
    <div class="adm-body">
     <!-- HERO -->
@@ -1156,6 +1148,22 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <button class="adm-btn adm-btn-save" onclick="saveSection('rep')">Guardar Repertorio</button>
      </div>
      <div class="adm-feedback" id="fb-rep">¡Guardado!</div>
+    </div>
+    <!-- PROGRAMS & COLLABORATIONS -->
+    <div class="adm-panel" id="admPanel-programs">
+     <div class="adm-section">Programs &amp; Collaborations — Encabezado</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-programsTitle" placeholder="Programs & Collaborations"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-programsSubtitle"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro (párrafo)</label><textarea class="adm-input" id="f-programsIntro" rows="3"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Nota final (closing note)</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
+     <div class="adm-section">Programas (bloques)</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Ordená con arrastre. Solo los publicados se muestran en la web.</p>
+     <div id="programCards"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+       <button class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir programa</button>
+       <button class="adm-btn adm-btn-save" onclick="saveSection('programs')">Guardar Programas</button>
+     </div>
+     <div class="adm-feedback" id="fb-programs">¡Guardado!</div>
     </div>
     <!-- VIDEOS -->
     <div class="adm-panel" id="admPanel-vid">
@@ -1373,21 +1381,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <div class="adm-feedback" id="fb-epkBios">¡Guardado!</div>
      </div>
 
-     <!-- ── CVs ─────────────────────────────────────────── -->
-     <div class="adm-section" style="margin-top:24px">CVs (PDF)</div>
-     <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
-       Subí un nuevo PDF para reemplazar el CV existente. Máx 5MB por archivo.
-     </p>
-     <div id="epkCvAdminList" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px"></div>
-     <div class="adm-row">
-       <button class="adm-save" onclick="saveEpkCvs()">Guardar CVs</button>
-       <div class="adm-feedback" id="fb-epkCvs">¡Guardado!</div>
-     </div>
-
      <!-- ── HIGH-RES PHOTOS ─────────────────────────────── -->
      <div class="adm-section" style="margin-top:24px">Fotos de Prensa (High-Res)</div>
      <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
-       Agregá URLs de fotos de alta resolución para descargar en la sección EPK.
+       Agregá URLs de fotos de alta resolución para descargar en la sección Press & Contact.
      </p>
      <div id="epkPhotoAdminList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
      <button onclick="addEpkPhoto()" style="background:transparent;border:1px dashed var(--gold);color:var(--gold);padding:8px 18px;cursor:pointer;font-size:.75rem;width:100%">+ Agregar foto</button>
@@ -1539,6 +1536,19 @@ const LANG_CONTENT = {
       emailBtn: 'Send Email',
       webBtn: 'Official Website',
     },
+    programs: {
+      title: 'Programs &amp; Collaborations',
+      subtitle: 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.',
+      intro: 'These performance formats are available for presenters, festivals, cultural institutions, salons, and collaborative concert settings. Each program can be tailored to venue, occasion, and ensemble.',
+      closingNote: 'All programs may be adapted in length, language focus, and repertoire selection according to venue, audience, occasion, and collaborating artists.',
+      items: [
+        { id: 1, order: 0, published: true, title: 'Opera Gala: Arias & Duets', description: 'A versatile concert program built around celebrated tenor arias and selected ensemble scenes. Available as a solo recital with piano or in collaboration with soprano and baritone, this format combines dramatic contrast, lyrical expression, and audience-friendly repertoire from the operatic tradition.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Baritone + Piano'], duration: '30, 45, or 60 minutes', idealFor: ['Gala concerts', 'chamber series', 'cultural institutions', 'churches', 'private salons'] },
+        { id: 2, order: 1, published: true, title: 'Italian Song, Opera & Canzone', description: 'A lyrical journey through the Italian vocal tradition, from salon song and canzone to beloved operatic scenes. This program brings together elegance, warmth, and dramatic intensity, offering audiences an intimate yet expressive encounter with Italian repertoire.', formations: ['Tenor + Piano', 'Optional guest artist format'], duration: '30 to 60 minutes', idealFor: ['Italian cultural institutes', 'recital series', 'house concerts', 'intimate classical settings'] },
+        { id: 3, order: 2, published: true, title: 'Tango, Passion & Poetry', description: 'A concert program dedicated to the expressive world of tango and song, shaped by intimacy, nostalgia, dramatic color, and poetic atmosphere. This format moves between the salon, the stage, and the cabaret spirit, offering a distinctive alternative to the traditional recital.', formations: ['Tenor + Piano', 'Expanded collaborative version possible'], duration: '30, 45, or 60 minutes', idealFor: ['Themed evenings', 'cultural centers', 'embassies', 'crossover recital settings', 'tango events'] },
+        { id: 4, order: 3, published: true, title: 'Songs Across Borders', description: 'A multilingual recital program connecting Italian, French, German, English, and Argentine repertoire. Designed as a musical journey across styles, languages, and emotional worlds, this format highlights both artistic versatility and cultural breadth.', formations: ['Tenor + Piano'], duration: '45 to 70 minutes', idealFor: ['International cultural institutions', 'diplomatic events', 'mixed-program recital audiences', 'curated chamber concerts'] },
+        { id: 5, order: 4, published: true, title: 'Duo & Ensemble Recital', description: 'Collaborative recital formats created for tenor with soprano, baritone, and piano. These programs combine solo highlights, duets, and thematic concert design, offering presenters a complete and flexible format for chamber concerts, gala evenings, and curated events.', formations: ['Tenor + Soprano + Piano', 'Tenor + Baritone + Piano', 'Flexible guest artist format'], duration: '45 to 90 minutes', idealFor: ['Festivals', 'gala evenings', 'chamber music series', 'curated events', 'collaborative programs'] }
+      ],
+    },
   },
   de: {
     hero: {
@@ -1572,6 +1582,19 @@ const LANG_CONTENT = {
       email: 'rolandoguy@gmail.com',
       emailBtn: 'E-Mail senden',
       webBtn: 'Offizielle Website',
+    },
+    programs: {
+      title: 'Programme &amp; Kooperationen',
+      subtitle: 'Kuratierte Rezitalformate für Konzerthäuser, Kultureinrichtungen, Salons, private Veranstaltungen und künstlerische Kooperationen.',
+      intro: 'Diese Programmformate stehen Veranstaltern, Festivals, Kultureinrichtungen, Salons und konzertanten Kooperationen zur Verfügung. Jedes Programm kann an Ort, Anlass und Besetzung angepasst werden.',
+      closingNote: 'Alle Programme können in Länge, Sprachschwerpunkt und Repertoireauswahl an Spielstätte, Publikum, Anlass und mitwirkende Künstler angepasst werden.',
+      items: [
+        { id: 1, order: 0, published: true, title: 'Operngala: Arien & Duette', description: 'Ein vielseitiges Konzertprogramm mit bekannten Tenorarien und ausgewählten Ensembleszenen. Als Solorezital mit Klavier oder in Zusammenarbeit mit Sopran und Bariton verbindet dieses Format dramatischen Kontrast, lyrischen Ausdruck und publikumsnahes Repertoire aus der Operntradition.', formations: ['Tenor + Klavier', 'Tenor + Sopran + Klavier', 'Tenor + Bariton + Klavier'], duration: '30, 45 oder 60 Minuten', idealFor: ['Galakonzerte', 'Kammermusikreihen', 'Kultureinrichtungen', 'Kirchen', 'private Salons'] },
+        { id: 2, order: 1, published: true, title: 'Italienisches Lied, Oper & Canzone', description: 'Eine lyrische Reise durch die italienische Gesangstradition, vom Salonlied und der Canzone bis zu beliebten Opernszenen. Dieses Programm vereint Eleganz, Wärme und dramatische Intensität und bietet dem Publikum eine intime und ausdrucksstarke Begegnung mit dem italienischen Repertoire.', formations: ['Tenor + Klavier', 'Optional mit Gastkünstler'], duration: '30 bis 60 Minuten', idealFor: ['Italienische Kulturinstitute', 'Rezitalreihen', 'Hauskonzerte', 'intime klassische Rahmen'] },
+        { id: 3, order: 2, published: true, title: 'Tango, Leidenschaft & Poesie', description: 'Ein Konzertprogramm der expressiven Welt von Tango und Lied, geprägt von Intimität, Nostalgie, dramatischer Farbe und poetischer Atmosphäre. Das Format bewegt sich zwischen Salon, Bühne und Kabarett und bietet eine besondere Alternative zum traditionellen Rezital.', formations: ['Tenor + Klavier', 'Erweiterte kollaborative Version möglich'], duration: '30, 45 oder 60 Minuten', idealFor: ['Themenabende', 'Kulturzentren', 'Botschaften', 'crossover Rezitals', 'Tango-Events'] },
+        { id: 4, order: 3, published: true, title: 'Lieder über Grenzen', description: 'Ein mehrsprachiges Rezitalprogramm, das italienisches, französisches, deutsches, englisches und argentinisches Repertoire verbindet. Als musikalische Reise durch Stile, Sprachen und emotionale Welten unterstreicht dieses Format künstlerische Vielseitigkeit und kulturelle Breite.', formations: ['Tenor + Klavier'], duration: '45 bis 70 Minuten', idealFor: ['Internationale Kultureinrichtungen', 'diplomatische Anlässe', 'gemischte Rezitalpublikum', 'kuratierte Kammermusikkonzerte'] },
+        { id: 5, order: 4, published: true, title: 'Duo- & Ensemble-Rezital', description: 'Kollaborative Rezitalformate für Tenor mit Sopran, Bariton und Klavier. Diese Programme verbinden Solohighlights, Duette und thematische Konzertgestaltung und bieten Veranstaltern ein vollständiges, flexibles Format für Kammermusik, Galabende und kuratierte Events.', formations: ['Tenor + Sopran + Klavier', 'Tenor + Bariton + Klavier', 'Flexibles Gastkünstler-Format'], duration: '45 bis 90 Minuten', idealFor: ['Festivals', 'Galabende', 'Kammermusikreihen', 'kuratierte Events', 'kollaborative Programme'] }
+      ],
     },
   },
   es: {
@@ -1607,6 +1630,19 @@ const LANG_CONTENT = {
       emailBtn: 'Enviar Email',
       webBtn: 'Sitio Oficial',
     },
+    programs: {
+      title: 'Programas y colaboraciones',
+      subtitle: 'Formatos de recital para salas de concierto, instituciones culturales, salones, eventos privados y actuaciones en colaboración.',
+      intro: 'Estos formatos están disponibles para programadores, festivales, instituciones culturales, salones y conciertos en colaboración. Cada programa puede adaptarse al espacio, ocasión y formación.',
+      closingNote: 'Todos los programas pueden adaptarse en duración, idioma y repertorio según el espacio, el público, la ocasión y los artistas colaboradores.',
+      items: [
+        { id: 1, order: 0, published: true, title: 'Gala de ópera: arias y dúos', description: 'Un programa de concierto versátil en torno a arias de tenor y escenas de conjunto. Como recital con piano o en colaboración con soprano y barítono, este formato combina contraste dramático, expresión lírica y repertorio accesible de la tradición operística.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Barítono + Piano'], duration: '30, 45 o 60 minutos', idealFor: ['Conciertos de gala', 'series de cámara', 'instituciones culturales', 'iglesias', 'salones privados'] },
+        { id: 2, order: 1, published: true, title: 'Canción italiana, ópera y canzone', description: 'Un recorrido lírico por la tradición vocal italiana, desde la canción de salón y la canzone hasta escenas operísticas. Este programa reúne elegancia, calidez e intensidad dramática y ofrece al público un encuentro íntimo y expresivo con el repertorio italiano.', formations: ['Tenor + Piano', 'Formato opcional con artista invitado'], duration: '30 a 60 minutos', idealFor: ['Institutos culturales italianos', 'series de recitales', 'conciertos en salón', 'espacios clásicos íntimos'] },
+        { id: 3, order: 2, published: true, title: 'Tango, pasión y poesía', description: 'Un programa de concierto dedicado al mundo expresivo del tango y la canción, con intimidad, nostalgia, color dramático y atmósfera poética. Este formato transita entre el salón, el escenario y el espíritu del cabaré, ofreciendo una alternativa distintiva al recital tradicional.', formations: ['Tenor + Piano', 'Versión colaborativa ampliada posible'], duration: '30, 45 o 60 minutos', idealFor: ['Veladas temáticas', 'centros culturales', 'embajadas', 'recitales crossover', 'eventos de tango'] },
+        { id: 4, order: 3, published: true, title: 'Canciones sin fronteras', description: 'Un programa de recital multilingüe que conecta repertorio italiano, francés, alemán, inglés y argentino. Concebido como un viaje musical por estilos, idiomas y mundos emocionales, destaca la versatilidad artística y la amplitud cultural.', formations: ['Tenor + Piano'], duration: '45 a 70 minutos', idealFor: ['Instituciones culturales internacionales', 'eventos diplomáticos', 'público de recitales mixtos', 'conciertos de cámara curados'] },
+        { id: 5, order: 4, published: true, title: 'Recital en dúo y ensemble', description: 'Formatos de recital en colaboración para tenor con soprano, barítono y piano. Estos programas combinan solos, dúos y diseño temático, ofreciendo a los programadores un formato completo y flexible para conciertos de cámara, galas y eventos curados.', formations: ['Tenor + Soprano + Piano', 'Tenor + Barítono + Piano', 'Formato flexible con artista invitado'], duration: '45 a 90 minutos', idealFor: ['Festivales', 'galas', 'series de música de cámara', 'eventos curados', 'programas colaborativos'] }
+      ],
+    },
   },
   fr: {
     hero: {
@@ -1641,6 +1677,19 @@ const LANG_CONTENT = {
       emailBtn: 'Envoyer un Email',
       webBtn: 'Site Officiel',
     },
+    programs: {
+      title: 'Programmes &amp; collaborations',
+      subtitle: 'Formats de récital pour salles de concert, institutions culturelles, salons, événements privés et concerts en collaboration.',
+      intro: 'Ces formats sont disponibles pour programmateurs, festivals, institutions culturelles, salons et concerts en collaboration. Chaque programme peut être adapté au lieu, à l\'occasion et à l\'ensemble.',
+      closingNote: 'Tous les programmes peuvent être adaptés en durée, langue et répertoire selon le lieu, le public, l\'occasion et les artistes collaborateurs.',
+      items: [
+        { id: 1, order: 0, published: true, title: 'Gala d\'opéra : airs et duos', description: 'Un programme de concert polyvalent autour d\'airs de ténor et de scènes d\'ensemble. En récital avec piano ou en collaboration avec soprano et baryton, ce format allie contraste dramatique, expression lyrique et répertoire accessible de la tradition opératique.', formations: ['Ténor + Piano', 'Ténor + Soprano + Piano', 'Ténor + Baryton + Piano'], duration: '30, 45 ou 60 minutes', idealFor: ['Concerts de gala', 'séries de musique de chambre', 'institutions culturelles', 'églises', 'salons privés'] },
+        { id: 2, order: 1, published: true, title: 'Chanson italienne, opéra et canzone', description: 'Un parcours lyrique à travers la tradition vocale italienne, de la chanson de salon et de la canzone aux scènes d\'opéra. Ce programme réunit élégance, chaleur et intensité dramatique et offre au public une rencontre intime et expressive avec le répertoire italien.', formations: ['Ténor + Piano', 'Format avec artiste invité optionnel'], duration: '30 à 60 minutes', idealFor: ['Instituts culturels italiens', 'séries de récitals', 'concerts en maison', 'cadres classiques intimes'] },
+        { id: 3, order: 2, published: true, title: 'Tango, passion et poésie', description: 'Un programme de concert dédié au monde expressif du tango et de la chanson, marqué par l\'intimité, la nostalgie, la couleur dramatique et l\'atmosphère poétique. Ce format navigue entre salon, scène et esprit cabaret, offrant une alternative distinctive au récital traditionnel.', formations: ['Ténor + Piano', 'Version collaborative élargie possible'], duration: '30, 45 ou 60 minutes', idealFor: ['Soirées à thème', 'centres culturels', 'ambassades', 'récitals crossover', 'événements tango'] },
+        { id: 4, order: 3, published: true, title: 'Chansons sans frontières', description: 'Un programme de récital multilingue reliant les répertoires italien, français, allemand, anglais et argentin. Conçu comme un voyage musical à travers styles, langues et univers émotionnels, il met en valeur la versatilité artistique et l\'ouverture culturelle.', formations: ['Ténor + Piano'], duration: '45 à 70 minutes', idealFor: ['Institutions culturelles internationales', 'événements diplomatiques', 'public de récitals variés', 'concerts de chambre curatés'] },
+        { id: 5, order: 4, published: true, title: 'Récital duo et ensemble', description: 'Formats de récital en collaboration pour ténor avec soprano, baryton et piano. Ces programmes allient solos, duos et conception thématique, offrant aux programmateurs un format complet et flexible pour concerts de chambre, galas et événements curatés.', formations: ['Ténor + Soprano + Piano', 'Ténor + Baryton + Piano', 'Format flexible avec artiste invité'], duration: '45 à 90 minutes', idealFor: ['Festivals', 'galas', 'séries de musique de chambre', 'événements curatés', 'programmes collaboratifs'] }
+      ],
+    },
   },
   it: {
     hero: {
@@ -1674,6 +1723,19 @@ const LANG_CONTENT = {
       email: 'rolandoguy@gmail.com',
       emailBtn: 'Invia Email',
       webBtn: 'Sito Ufficiale',
+    },
+    programs: {
+      title: 'Programmi e collaborazioni',
+      subtitle: 'Formati di recital per sale da concerto, istituzioni culturali, salotti, eventi privati e performance in collaborazione.',
+      intro: 'Questi formati sono disponibili per programmatori, festival, istituzioni culturali, salotti e contesti concertistici in collaborazione. Ogni programma può essere adattato al luogo, all\'occasione e all\'organico.',
+      closingNote: 'Tutti i programmi possono essere adattati in lunghezza, lingua e repertorio in base al luogo, al pubblico, all\'occasione e agli artisti collaboratori.',
+      items: [
+        { id: 1, order: 0, published: true, title: 'Gala d\'opera: arie e duetti', description: 'Un programma da concerto versatile costruito su arie per tenore e scene d\'insieme. Come recital con pianoforte o in collaborazione con soprano e baritono, questo formato unisce contrasto drammatico, espressione lirica e repertorio accessibile dalla tradizione operistica.', formations: ['Tenore + Pianoforte', 'Tenore + Soprano + Pianoforte', 'Tenore + Baritono + Pianoforte'], duration: '30, 45 o 60 minuti', idealFor: ['Concerti di gala', 'stagioni da camera', 'istituzioni culturali', 'chiese', 'salotti privati'] },
+        { id: 2, order: 1, published: true, title: 'Canzone italiana, opera e canzone', description: 'Un viaggio lirico attraverso la tradizione vocale italiana, dalla canzone da salotto e dalla canzone alle scene operistiche. Questo programma unisce eleganza, calore e intensità drammatica, offrendo al pubblico un incontro intimo ed espressivo con il repertorio italiano.', formations: ['Tenore + Pianoforte', 'Formato con artista ospite opzionale'], duration: '30–60 minuti', idealFor: ['Istituti italiani di cultura', 'stagioni di recital', 'concerti in casa', 'ambienti classici intimi'] },
+        { id: 3, order: 2, published: true, title: 'Tango, passione e poesia', description: 'Un programma da concerto dedicato al mondo espressivo del tango e della canzone, tra intimità, nostalgia, colore drammatico e atmosfera poetica. Questo formato si muove tra salotto, palcoscenico e spirito cabaret, offrendo un\'alternativa distintiva al recital tradizionale.', formations: ['Tenore + Pianoforte', 'Versione collaborativa ampliata possibile'], duration: '30, 45 o 60 minuti', idealFor: ['Serate a tema', 'centri culturali', 'ambasciate', 'recital crossover', 'eventi tango'] },
+        { id: 4, order: 3, published: true, title: 'Canzoni oltre i confini', description: 'Un programma di recital multilingue che unisce repertorio italiano, francese, tedesco, inglese e argentino. Pensato come un viaggio musicale tra stili, lingue e mondi emotivi, mette in risalto versatilità artistica e ampiezza culturale.', formations: ['Tenore + Pianoforte'], duration: '45–70 minuti', idealFor: ['Istituzioni culturali internazionali', 'eventi diplomatici', 'pubblico di recital misti', 'concerte da camera curati'] },
+        { id: 5, order: 4, published: true, title: 'Recital in duo e ensemble', description: 'Formati di recital in collaborazione per tenore con soprano, baritono e pianoforte. Questi programmi uniscono assoli, duetti e concezione tematica, offrendo ai programmatori un formato completo e flessibile per concerti da camera, galà ed eventi curati.', formations: ['Tenore + Soprano + Pianoforte', 'Tenore + Baritono + Pianoforte', 'Formato flessibile con artista ospite'], duration: '45–90 minuti', idealFor: ['Festival', 'galà', 'stagioni di musica da camera', 'eventi curati', 'programmi collaborativi'] }
+      ],
     },
   },
 };
@@ -1720,6 +1782,19 @@ const DEFAULTS = {
     {id:4,day:'07',month:'Dec 2024',title:'Tango Tenors',detail:'20:00 · Tango Loft Berlin',venue:'Tango Loft Berlin',city:'Berlin',status:'past',type:'show',sortDate:'2024-12-07'},
     {id:5,day:'01',month:'Dec 2024',title:'Welt AIDS Tag',detail:'16:00 · Zwölf-Apostel-Kirche',venue:'Zwölf-Apostel-Kirche',city:'Berlin',status:'past',type:'concert',sortDate:'2024-12-01'},
   ],
+  programs: {
+    title: 'Programs &amp; Collaborations',
+    subtitle: 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.',
+    intro: 'These performance formats are available for presenters, festivals, cultural institutions, salons, and collaborative concert settings. Each program can be tailored to venue, occasion, and ensemble.',
+    closingNote: 'All programs may be adapted in length, language focus, and repertoire selection according to venue, audience, occasion, and collaborating artists.',
+    programs: [
+      { id: 1, order: 0, published: true, title: 'Opera Gala: Arias & Duets', description: 'A versatile concert program built around celebrated tenor arias and selected ensemble scenes. Available as a solo recital with piano or in collaboration with soprano and baritone, this format combines dramatic contrast, lyrical expression, and audience-friendly repertoire from the operatic tradition.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Baritone + Piano'], duration: '30, 45, or 60 minutes', idealFor: ['Gala concerts', 'chamber series', 'cultural institutions', 'churches', 'private salons'] },
+      { id: 2, order: 1, published: true, title: 'Italian Song, Opera & Canzone', description: 'A lyrical journey through the Italian vocal tradition, from salon song and canzone to beloved operatic scenes. This program brings together elegance, warmth, and dramatic intensity, offering audiences an intimate yet expressive encounter with Italian repertoire.', formations: ['Tenor + Piano', 'Optional guest artist format'], duration: '30 to 60 minutes', idealFor: ['Italian cultural institutes', 'recital series', 'house concerts', 'intimate classical settings'] },
+      { id: 3, order: 2, published: true, title: 'Tango, Passion & Poetry', description: 'A concert program dedicated to the expressive world of tango and song, shaped by intimacy, nostalgia, dramatic color, and poetic atmosphere. This format moves between the salon, the stage, and the cabaret spirit, offering a distinctive alternative to the traditional recital.', formations: ['Tenor + Piano', 'Expanded collaborative version possible'], duration: '30, 45, or 60 minutes', idealFor: ['Themed evenings', 'cultural centers', 'embassies', 'crossover recital settings', 'tango events'] },
+      { id: 4, order: 3, published: true, title: 'Songs Across Borders', description: 'A multilingual recital program connecting Italian, French, German, English, and Argentine repertoire. Designed as a musical journey across styles, languages, and emotional worlds, this format highlights both artistic versatility and cultural breadth.', formations: ['Tenor + Piano'], duration: '45 to 70 minutes', idealFor: ['International cultural institutions', 'diplomatic events', 'mixed-program recital audiences', 'curated chamber concerts'] },
+      { id: 5, order: 4, published: true, title: 'Duo & Ensemble Recital', description: 'Collaborative recital formats created for tenor with soprano, baritone, and piano. These programs combine solo highlights, duets, and thematic concert design, offering presenters a complete and flexible format for chamber concerts, gala evenings, and curated events.', formations: ['Tenor + Soprano + Piano', 'Tenor + Baritone + Piano', 'Flexible guest artist format'], duration: '45 to 90 minutes', idealFor: ['Festivals', 'gala evenings', 'chamber music series', 'curated events', 'collaborative programs'] }
+    ]
+  }
 };
 
 let currentLang = 'en';
@@ -1736,6 +1811,38 @@ function get(key) {
 }
 
 function getVid() { return load('rg_vid') || DEFAULTS.vid; }
+function getPrograms() {
+  const rawByLang = load('rg_programs_' + currentLang);
+  const raw = load('rg_programs') || DEFAULTS.programs;
+  const langPrograms = get('programs') || {};
+  const enItems = LANG_CONTENT.en && LANG_CONTENT.en.programs && Array.isArray(LANG_CONTENT.en.programs.items) ? LANG_CONTENT.en.programs.items : [];
+  // Program list: per-language admin > (EN only: legacy rg_programs) > LANG_CONTENT items > (non-EN: EN items to avoid mixed UI) > legacy/DEFAULTS
+  const programsRaw = (rawByLang && Array.isArray(rawByLang.programs) && rawByLang.programs.length) ? rawByLang.programs
+    : (currentLang === 'en' && Array.isArray(raw.programs) && raw.programs.length) ? raw.programs
+    : (Array.isArray(langPrograms.items) && langPrograms.items.length) ? langPrograms.items
+    : (currentLang !== 'en' && enItems.length) ? enItems
+    : Array.isArray(raw.programs) ? raw.programs
+    : DEFAULTS.programs.programs || [];
+  const programs = programsRaw.map((p, i) => ({
+    id: p.id != null ? p.id : i + 1,
+    order: p.order != null ? p.order : i,
+    published: p.published !== false,
+    title: p.title || '',
+    description: p.description || '',
+    formations: Array.isArray(p.formations) ? p.formations : (typeof p.formations === 'string' ? p.formations.split('\n').map(s => s.trim()).filter(Boolean) : []),
+    duration: p.duration || '',
+    idealFor: Array.isArray(p.idealFor) ? p.idealFor : (typeof p.idealFor === 'string' ? p.idealFor.split('\n').map(s => s.trim()).filter(Boolean) : [])
+  }));
+  // Section-level: admin-saved for this lang > LANG_CONTENT > legacy > DEFAULTS (so admin edits take effect)
+  const section = (key) => (rawByLang && rawByLang[key] != null && rawByLang[key] !== '') ? rawByLang[key] : (langPrograms[key] != null ? langPrograms[key] : (raw[key] != null ? raw[key] : DEFAULTS.programs[key]));
+  return {
+    title: section('title'),
+    subtitle: section('subtitle'),
+    intro: section('intro'),
+    closingNote: section('closingNote'),
+    programs
+  };
+}
 function getRep() {
   const langData = get('rep');
   let cards = load('rg_rep_cards') || DEFAULTS.rep.cards;
@@ -1753,7 +1860,7 @@ function renderHero() {
   const h = document.getElementById('heroName');
   h.innerHTML = 'Rolando<br><em>Guy</em>';
   const epkNavBtn = document.getElementById('heroEpkBtn');
-  if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'EPK'; epkNavBtn.textContent = tl; }
+  if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'Press & Contact'; epkNavBtn.textContent = tl; }
 }
 
 // ── Render Bio ──
@@ -1879,6 +1986,46 @@ function setRepSort(col){
   renderRep();
 }
 
+// ── Render Programs & Collaborations ──
+function renderPrograms() {
+  const d = getPrograms();
+  const titleEl = document.getElementById('programsTitle');
+  const subEl = document.getElementById('programsSubtitle');
+  const introEl = document.getElementById('programsIntro');
+  const closingEl = document.getElementById('programsClosing');
+  const gridEl = document.getElementById('programsGrid');
+  if (titleEl) titleEl.innerHTML = d.title || 'Programs &amp; Collaborations';
+  if (subEl) subEl.textContent = d.subtitle || '';
+  if (introEl) introEl.textContent = d.intro || '';
+  if (closingEl) closingEl.textContent = d.closingNote || '';
+  const list = (d.programs || []).filter(p => p.published !== false).slice().sort((a, b) => (a.order != null ? a.order : 0) - (b.order != null ? b.order : 0));
+  if (!gridEl) return;
+  if (!list.length) {
+    gridEl.innerHTML = '';
+    return;
+  }
+  const t = Ti[currentLang] || Ti.en;
+  const lblFormation = t['programs.formation'] || 'Formation';
+  const lblDuration = t['programs.duration'] || 'Duration';
+  const lblIdealFor = t['programs.idealFor'] || 'Ideal for';
+  gridEl.innerHTML = list.map((p, i) => {
+    const formations = Array.isArray(p.formations) ? p.formations : [];
+    const idealFor = Array.isArray(p.idealFor) ? p.idealFor : [];
+    const formationsHtml = formations.length ? '<ul>' + formations.map(f => '<li>' + (f || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') + '</li>').join('') + '</ul>' : '';
+    const idealHtml = idealFor.length ? '<ul>' + idealFor.map(f => '<li>' + (f || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') + '</li>').join('') + '</ul>' : '';
+    return `<div class="program-card reveal ${i > 0 ? 'rd' + (i % 4) : ''}">
+      <h3 class="program-card-title">${(p.title || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</h3>
+      <div class="program-card-desc">${(p.description || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>')}</div>
+      <div class="program-meta">
+        ${formations.length ? `<div class="program-meta-block"><div class="program-meta-label">${(lblFormation||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="program-meta-value">${formationsHtml}</div></div>` : ''}
+        ${(p.duration || '').trim() ? `<div class="program-meta-block"><div class="program-meta-label">${(lblDuration||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="program-meta-value">${(p.duration||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>` : ''}
+        ${idealFor.length ? `<div class="program-meta-block"><div class="program-meta-label">${(lblIdealFor||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="program-meta-value">${idealHtml}</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#programsGrid .reveal').forEach(el => { try { obs.observe(el); } catch(e) {} });
+}
+
 // ── Render Videos ──
 function renderVideos() {
   const d = getVid();
@@ -1920,9 +2067,10 @@ function renderVideos() {
   grid.innerHTML = visible.map((v, i) => mkCard(v, i, false)).join('');
 
   if (hidden.length > 0) {
+    const showMoreTxt = (Ti[currentLang] || Ti.en)['vid.showMore'] || '+ Show More Videos';
     more.innerHTML = hidden.map((v, i) => mkCard(v, i, true)).join('') +
       `<div style="text-align:center;margin-top:20px">
-        <button class="btn-secondary" id="moreBtn" onclick="toggleMore()">+ Show More Videos</button>
+        <button class="btn-secondary" id="moreBtn" onclick="toggleMore()">${showMoreTxt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</button>
       </div>`;
   } else {
     more.innerHTML = '';
@@ -1939,7 +2087,8 @@ function toggleMore() {
     el.style.display = isHidden ? '' : 'none';
     if (isHidden) el.classList.add('visible'); // bypass IntersectionObserver
   });
-  if (btn) btn.textContent = isHidden ? '− Show Less' : '+ Show More Videos';
+  const t = Ti[currentLang] || Ti.en;
+  if (btn) btn.textContent = isHidden ? (t['vid.showLess'] || '− Show Less') : (t['vid.showMore'] || '+ Show More Videos');
 }
 
 function playVideo(videoId) {
@@ -2190,6 +2339,50 @@ function duplicateRepCard(idx){
   admTab('rep');
 }
 
+// ── Programs admin helpers ──
+let progDragSrc = null;
+function onDropProgram(dstIdx, e) {
+  e.stopPropagation();
+  if (!progDragSrc) return;
+  const srcIdx = parseInt(progDragSrc.dataset.progIdx, 10);
+  if (srcIdx === dstIdx) return;
+  const data = getPrograms();
+  const arr = (data.programs || []).slice();
+  const [moved] = arr.splice(srcIdx, 1);
+  arr.splice(dstIdx, 0, moved);
+  arr.forEach((p, i) => { p.order = i; });
+  save('rg_programs_' + currentLang, { ...data, programs: arr });
+  admTab('programs');
+  return false;
+}
+function addProgramCard() {
+  const data = getPrograms();
+  const programs = (data.programs || []).slice();
+  programs.push({ id: programs.length + 1, order: programs.length, published: true, title: '', description: '', formations: [], duration: '', idealFor: [] });
+  save('rg_programs_' + currentLang, { ...data, programs });
+  admTab('programs');
+}
+function removeProgramCard(idx) {
+  if (!confirm('¿Eliminar este programa?')) return;
+  const data = getPrograms();
+  const programs = (data.programs || []).slice();
+  programs.splice(Number(idx), 1);
+  programs.forEach((p, i) => { p.order = i; });
+  save('rg_programs_' + currentLang, { ...data, programs });
+  admTab('programs');
+}
+function duplicateProgramCard(idx) {
+  const data = getPrograms();
+  const programs = (data.programs || []).slice();
+  const i = Number(idx);
+  const src = programs[i];
+  if (!src) return;
+  const copy = { ...src, id: (programs.length ? Math.max(...programs.map(p => p.id)) : 0) + 1, order: i + 1, formations: (src.formations || []).slice(), idealFor: (src.idealFor || []).slice() };
+  programs.splice(i + 1, 0, copy);
+  programs.forEach((p, i) => { p.order = i; });
+  save('rg_programs_' + currentLang, { ...data, programs });
+  admTab('programs');
+}
 
 // ── Render Contact ──
 function renderContact() {
@@ -2247,7 +2440,7 @@ function renderEpk() {
 
   // Title
   const titleEl = document.getElementById('epkTitle');
-  if (titleEl) titleEl.innerHTML = ti['epk.title'] || 'Press Kit & <em>Downloads</em>';
+  if (titleEl) titleEl.innerHTML = ti['epk.title'] || 'Press & <em>Contact</em>';
 
   // Update tab labels
   document.querySelectorAll('.epk-tab').forEach((btn, i) => {
@@ -2271,17 +2464,6 @@ function renderEpk() {
   if (p3) p3.textContent = activeBios.b300p3;
   if (p4) p4.textContent = activeBios.b300p4;
 
-  // CV download links — use stored CVs if uploaded, fall back to hardcoded
-  const storedCvs = load('rg_epk_cvs') || {};
-  const cvContainer = document.getElementById('epkCvLinks');
-  if (cvContainer) {
-    cvContainer.innerHTML = Object.entries(EPK_CVS).map(([langKey, cv]) => {
-      const b64 = storedCvs[langKey] || cv.b64;
-      return `<a class="epk-dl-btn" href="${b64.startsWith('data:')?b64:b64.includes('/')?b64:'data:application/pdf;base64,'+b64}"
-         download="${cv.filename}">${cv.label}</a>`;
-    }).join('');
-  }
-
   // High-res photos
   const epkPhotos = load('rg_epk_photos') || [];
   const photosContainer = document.getElementById('epkPhotosGrid');
@@ -2289,21 +2471,24 @@ function renderEpk() {
     if (epkPhotos.length === 0) {
       photosContainer.innerHTML = '';
     } else {
-      photosContainer.innerHTML = epkPhotos.filter(ph => ph.url).map(ph =>
-        `<div class="epk-photo-item">
+      const t = Ti[currentLang] || Ti.en;
+      const downloadLbl = (t['epk.downloadPhoto'] || 'Download').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      photosContainer.innerHTML = epkPhotos.filter(ph => ph.url).map(ph => {
+        const credit = (ph.credit||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return `<div class="epk-photo-item">
           <a href="${ph.url}" download target="_blank" class="epk-photo-thumb">
-            <img src="${ph.url}" alt="${ph.credit||'Press photo'}" loading="lazy" style="width:100%;height:160px;object-fit:cover;display:block">
-            <div class="epk-photo-credit">${ph.credit||''}</div>
+            <img src="${ph.url}" alt="${credit||'Press photo'}" loading="lazy" style="width:100%;height:160px;object-fit:cover;display:block">
+            <div class="epk-photo-credit">${credit}</div>
           </a>
-          <a href="${ph.url}" download class="epk-dl-btn" style="margin-top:6px;display:block;text-align:center;font-size:.65rem">⬇ Descargar</a>
-        </div>`
-      ).join('');
+          <a href="${ph.url}" download class="epk-dl-btn" style="margin-top:6px;display:block;text-align:center;font-size:.65rem">⬇ ${downloadLbl}</a>
+        </div>`;
+      }).join('');
     }
   }
 
   // Copy button label update
   const copyBtn = document.getElementById('epkCopyBtn');
-  if (copyBtn && epkActiveBio === 'bio50') copyBtn.textContent = '⧉ Copy Bio';
+  if (copyBtn) copyBtn.textContent = (Ti[currentLang] || Ti.en)['epk.copyBio'] || '⧉ Copy Bio';
 }
 
 // ── Init all sections ──
@@ -2430,7 +2615,7 @@ function injectEventSchema() {
   document.head.appendChild(script);
 }
 function renderAll() {
-  renderHero(); renderBio(); renderRep(); renderVideos(); renderPerfs(); renderPress(); renderContact(); renderEpk();
+  renderHero(); renderBio(); renderRep(); renderPrograms(); renderVideos(); renderPerfs(); renderPress(); renderContact(); renderEpk();
   injectEventSchema();
 }
 
@@ -2504,8 +2689,9 @@ async function submitForm(){
   });
   if(!ok) return;
   const btn = document.querySelector('.form-submit');
+  const t = Ti[currentLang] || Ti.en;
   btn.disabled = true; btn.style.opacity = '.5';
-  btn.querySelector('span').textContent = 'Sending...';
+  btn.querySelector('span').textContent = t['form.sending'] || 'Sending...';
   try {
     const res = await fetch('https://formspree.io/f/' + FORMSPREE_ID, {
       method: 'POST',
@@ -2522,23 +2708,23 @@ async function submitForm(){
       inputs.forEach(i => i.value = '');
       setTimeout(() => document.getElementById('formOk').style.display = 'none', 5000);
     } else {
-      alert('Error al enviar. Por favor escribí a rolandoguy@gmail.com directamente.');
+      alert(t['form.errorSend'] || 'Error sending. Please email rolandoguy@gmail.com directly.');
     }
   } catch(e) {
-    alert('Error al enviar. Por favor escribí a rolandoguy@gmail.com directamente.');
+    alert(t['form.errorSend'] || 'Error sending. Please email rolandoguy@gmail.com directly.');
   } finally {
     btn.disabled = false; btn.style.opacity = '';
-    btn.querySelector('span').textContent = 'Send Message';
+    btn.querySelector('span').textContent = t['form.send'] || 'Send Message';
   }
 }
 
 // ── i18n (minimal, content now driven by data) ──
 const Ti={
-  en:{'nav.bio':'Biography','nav.rep':'Repertoire','nav.vid':'Videos','nav.photos':'Photos','nav.perf':'Performances','nav.press':'Press','press.tag':'Press & Reviews','press.empty':'No press quotes yet.','nav.contact':'Contact','hero.scroll':'Discover','about.photoLabel':'Lyric Tenor','photos.h2':'Studio &amp; <em>On Stage</em>','photos.sub':'Portrait and stage photography. Click any image to view full size.','photos.studio':'Studio Portraits','photos.stage':'On Stage','photos.backstage':'Backstage','photos.backstageEmpty':'Upload backstage photos via the admin panel.','rep.allRoles':'Complete Operatic Repertoire (19 Roles)','form.name':'Name','form.email':'Email','form.subject':'Subject','form.message':'Message','form.send':'Send Message','form.success':'Thank you! Your message has been sent.','form.namePh':'Your name','form.emailPh':'your@email.com','form.subjectPh':'Booking inquiry','form.messagePh':'Tell me about your project...','footer.tagline':'Argentinian/Italian Tenor based in Berlin','footer.rights':'All rights reserved','vid.h2':'On Stage &amp; <em>In Concert</em>','press.readMore':'Read article','nav.media':'Media','nav.cal':'Calendar','nav.epk':'Contact & EPK','nav.epk.short':'EPK','rep.thComposer':'Composer','rep.thOpera':'Opera / Work','rep.thRole':'Role','rep.thLang':'Lang','epk.title':'Press Kit & <em>Downloads</em>','epk.tag':'Electronic Press Kit','epk.bio50lbl':'50-word Bio','epk.bio150lbl':'150-word Bio','epk.bio300lbl':'Full Biography','epk.photos':'High-Res Photos','epk.cv':'Download CV','epk.contact':'Booking Contact','about.photoLabel':'Lyric Tenor','rep.allRoles':'Complete Operatic Repertoire',},
-  de:{'nav.bio':'Biografie','nav.rep':'Repertoire','nav.vid':'Videos','nav.photos':'Fotos','nav.perf':'Aufführungen','nav.press':'Presse','press.tag':'Presse &amp; Rezensionen','press.empty':'Noch keine Pressezitate.','nav.contact':'Kontakt','hero.scroll':'Entdecken','about.photoLabel':'Lyrischer Tenor','photos.h2':'Studio &amp; <em>Bühne</em>','photos.sub':'Porträt- und Bühnenfotografie. Klicken für Vollansicht.','photos.studio':'Studiofotos','photos.stage':'Auf der Bühne','photos.backstage':'Backstage','photos.backstageEmpty':'Backstage-Fotos über das Admin-Panel hochladen.','rep.allRoles':'Vollständiges Opernrepertoire (19 Partien)','form.name':'Name','form.email':'E-Mail','form.subject':'Betreff','form.message':'Nachricht','form.send':'Nachricht senden','form.success':'Vielen Dank! Ihre Nachricht wurde gesendet.','form.namePh':'Ihr Name','form.emailPh':'ihre@email.de','form.subjectPh':'Buchungsanfrage','form.messagePh':'Erzählen Sie mir von Ihrem Projekt...','footer.tagline':'Argentinisch-Italienischer Tenor in Berlin','footer.rights':'Alle Rechte vorbehalten','vid.h2':'Auf der Bühne &amp; <em>Im Konzert</em>','press.readMore':'Artikel lesen','nav.media':'Medien','nav.cal':'Kalender','nav.epk':'Kontakt & EPK','nav.epk.short':'EPK','rep.thComposer':'Komponist','rep.thOpera':'Oper / Werk','rep.thRole':'Partie','rep.thLang':'Spr.','epk.title':'Pressemappe & <em>Downloads</em>','epk.tag':'Electronic Press Kit','epk.bio50lbl':'Kurz-Bio (50 Wörter)','epk.bio150lbl':'Standard-Bio (150 Wörter)','epk.bio300lbl':'Vollständige Biografie','epk.photos':'Fotos in hoher Auflösung','epk.cv':'Lebenslauf herunterladen','epk.contact':'Buchungsanfrage','about.photoLabel':'Lyrischer Tenor','rep.allRoles':'Vollständiges Opernrepertoire',},
-  es:{'nav.bio':'Biografía','nav.rep':'Repertorio','nav.vid':'Vídeos','nav.photos':'Fotos','nav.perf':'Actuaciones','nav.press':'Prensa','press.tag':'Prensa &amp; Reseñas','press.empty':'Aún no hay citas de prensa.','nav.contact':'Contacto','hero.scroll':'Descubrir','about.photoLabel':'Tenor Lírico','photos.h2':'Estudio &amp; <em>Escenario</em>','photos.sub':'Fotografía de retrato y escena. Clic para ver a tamaño completo.','photos.studio':'Retratos de Estudio','photos.stage':'En Escena','photos.backstage':'Backstage','photos.backstageEmpty':'Subí fotos backstage desde el panel de administración.','rep.allRoles':'Repertorio Completo (19 Roles)','form.name':'Nombre','form.email':'Email','form.subject':'Asunto','form.message':'Mensaje','form.send':'Enviar Mensaje','form.success':'¡Gracias! Tu mensaje ha sido enviado.','form.namePh':'Tu nombre','form.emailPh':'tu@email.com','form.subjectPh':'Consulta de contratación','form.messagePh':'Cuéntame sobre tu proyecto...','footer.tagline':'Tenor Argentino/Italiano residente en Berlín','footer.rights':'Todos los derechos reservados','vid.h2':'En Escena &amp; <em>En Concierto</em>','press.readMore':'Leer artículo','nav.media':'Media','nav.cal':'Agenda','nav.epk':'Contacto & EPK','nav.epk.short':'EPK','rep.thComposer':'Compositor','rep.thOpera':'Ópera / Obra','rep.thRole':'Rol','rep.thLang':'Idiom.','epk.title':'Dossier de Prensa & <em>Descargas</em>','epk.tag':'Electronic Press Kit','epk.bio50lbl':'Bio 50 palabras','epk.bio150lbl':'Bio 150 palabras','epk.bio300lbl':'Biografía completa','epk.photos':'Fotos en alta resolución','epk.cv':'Descargar CV','epk.contact':'Contacto para contratación','about.photoLabel':'Tenor Lírico','rep.allRoles':'Repertorio Operístico Completo',},
-  it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Stampa','press.tag':'Stampa &amp; Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','rep.allRoles':'Repertorio Operistico Completo (19 Ruoli)','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Contatto & EPK','nav.epk.short':'EPK','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Cartella Stampa & <em>Download</em>','epk.tag':'Electronic Press Kit','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.cv':'Scarica CV','epk.contact':'Contatto booking','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo',},
-  fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Presse','press.tag':'Presse &amp; Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','rep.allRoles':'Répertoire Opératique Complet (19 Rôles)','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Agenda','nav.epk':'Contact & EPK','nav.epk.short':'EPK','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Dossier de Presse & <em>Téléchargements</em>','epk.tag':'Electronic Press Kit','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.cv':'Télécharger CV','epk.contact':'Contact booking','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet',},
+  en:{'nav.bio':'Biography','nav.rep':'Repertoire','nav.programs':'Programs','nav.vid':'Videos','nav.photos':'Photos','nav.perf':'Performances','nav.press':'Press','press.tag':'Press & Reviews','press.empty':'No press quotes yet.','nav.contact':'Contact','hero.scroll':'Discover','about.photoLabel':'Lyric Tenor','photos.h2':'Studio &amp; <em>On Stage</em>','photos.sub':'Portrait and stage photography. Click any image to view full size.','photos.studio':'Studio Portraits','photos.stage':'On Stage','photos.backstage':'Backstage','photos.backstageEmpty':'Upload backstage photos via the admin panel.','form.name':'Name','form.email':'Email','form.subject':'Subject','form.message':'Message','form.send':'Send Message','form.success':'Thank you! Your message has been sent.','form.namePh':'Your name','form.emailPh':'your@email.com','form.subjectPh':'Booking inquiry','form.messagePh':'Tell me about your project...','footer.tagline':'Argentinian/Italian Tenor based in Berlin','footer.rights':'All rights reserved','vid.h2':'On Stage &amp; <em>In Concert</em>','press.readMore':'Read article','nav.media':'Media','nav.cal':'Calendar','nav.epk':'Press & Contact','nav.epk.short':'Press & Contact','rep.thComposer':'Composer','rep.thOpera':'Opera / Work','rep.thRole':'Role','rep.thLang':'Lang','epk.title':'Press & <em>Contact</em>','epk.tag':'Press & Contact','epk.bio50lbl':'50-word Bio','epk.bio150lbl':'150-word Bio','epk.bio300lbl':'Full Biography','epk.photos':'High-Res Photos','epk.downloadPhoto':'Download','epk.cv':'Download CV','epk.contact':'Booking Contact','programs.formation':'Formation','programs.duration':'Duration','programs.idealFor':'Ideal for','about.photoLabel':'Lyric Tenor','rep.allRoles':'Complete Operatic Repertoire','programs.sectionTag':'Programs &amp; Collaborations','rep.tabOpera':'Opera Roles','rep.tabArias':'Opera Arias &amp; Operette','rep.tabLied':'Lied &amp; Art Song','rep.tabTango':'Tango &amp; Popular Songs','contact.pressKitPdf':'Press Kit PDF','epk.photoCredit':'Photos available for press and programme use. Credit: Rolando Guy','epk.copyBio':'⧉ Copy Bio','form.sending':'Sending...','form.errorSend':'Error sending. Please email rolandoguy@gmail.com directly.','vid.showMore':'+ Show More Videos','vid.showLess':'− Show Less',},
+  de:{'nav.bio':'Biografie','nav.rep':'Repertoire','nav.programs':'Programme','nav.vid':'Videos','nav.photos':'Fotos','nav.perf':'Aufführungen','nav.press':'Presse','press.tag':'Presse &amp; Rezensionen','press.empty':'Noch keine Pressezitate.','nav.contact':'Kontakt','hero.scroll':'Entdecken','about.photoLabel':'Lyrischer Tenor','photos.h2':'Studio &amp; <em>Bühne</em>','photos.sub':'Porträt- und Bühnenfotografie. Klicken für Vollansicht.','photos.studio':'Studiofotos','photos.stage':'Auf der Bühne','photos.backstage':'Backstage','photos.backstageEmpty':'Backstage-Fotos über das Admin-Panel hochladen.','form.name':'Name','form.email':'E-Mail','form.subject':'Betreff','form.message':'Nachricht','form.send':'Nachricht senden','form.success':'Vielen Dank! Ihre Nachricht wurde gesendet.','form.namePh':'Ihr Name','form.emailPh':'ihre@email.de','form.subjectPh':'Buchungsanfrage','form.messagePh':'Erzählen Sie mir von Ihrem Projekt...','footer.tagline':'Argentinisch-Italienischer Tenor in Berlin','footer.rights':'Alle Rechte vorbehalten','vid.h2':'Auf der Bühne &amp; <em>Im Konzert</em>','press.readMore':'Artikel lesen','nav.media':'Medien','nav.cal':'Kalender','nav.epk':'Presse & Kontakt','nav.epk.short':'Presse & Kontakt','rep.thComposer':'Komponist','rep.thOpera':'Oper / Werk','rep.thRole':'Partie','rep.thLang':'Spr.','epk.title':'Presse & <em>Kontakt</em>','epk.tag':'Presse & Kontakt','epk.bio50lbl':'Kurz-Bio (50 Wörter)','epk.bio150lbl':'Standard-Bio (150 Wörter)','epk.bio300lbl':'Vollständige Biografie','epk.photos':'Fotos in hoher Auflösung','epk.downloadPhoto':'Herunterladen','epk.cv':'Lebenslauf herunterladen','epk.contact':'Buchungsanfrage','programs.formation':'Besetzung','programs.duration':'Dauer','programs.idealFor':'Ideal für','about.photoLabel':'Lyrischer Tenor','rep.allRoles':'Vollständiges Opernrepertoire','programs.sectionTag':'Programme &amp; Kooperationen','rep.tabOpera':'Opernrollen','rep.tabArias':'Opernarien &amp; Operette','rep.tabLied':'Lied &amp; Kunstlied','rep.tabTango':'Tango &amp; Unterhaltungslieder','contact.pressKitPdf':'Press Kit (PDF)','epk.photoCredit':'Fotos für Presse und Programm. Credit: Rolando Guy','epk.copyBio':'⧉ Bio kopieren','form.sending':'Wird gesendet...','form.errorSend':'Fehler beim Senden. Bitte schreiben Sie direkt an rolandoguy@gmail.com.','vid.showMore':'+ Weitere Videos','vid.showLess':'− Weniger anzeigen',},
+  es:{'nav.bio':'Biografía','nav.rep':'Repertorio','nav.programs':'Programas','nav.vid':'Vídeos','nav.photos':'Fotos','nav.perf':'Actuaciones','nav.press':'Prensa','press.tag':'Prensa &amp; Reseñas','press.empty':'Aún no hay citas de prensa.','nav.contact':'Contacto','hero.scroll':'Descubrir','about.photoLabel':'Tenor Lírico','photos.h2':'Estudio &amp; <em>Escenario</em>','photos.sub':'Fotografía de retrato y escena. Clic para ver a tamaño completo.','photos.studio':'Retratos de Estudio','photos.stage':'En Escena','photos.backstage':'Backstage','photos.backstageEmpty':'Subí fotos backstage desde el panel de administración.','form.name':'Nombre','form.email':'Email','form.subject':'Asunto','form.message':'Mensaje','form.send':'Enviar Mensaje','form.success':'¡Gracias! Tu mensaje ha sido enviado.','form.namePh':'Tu nombre','form.emailPh':'tu@email.com','form.subjectPh':'Consulta de contratación','form.messagePh':'Cuéntame sobre tu proyecto...','footer.tagline':'Tenor Argentino/Italiano residente en Berlín','footer.rights':'Todos los derechos reservados','vid.h2':'En Escena &amp; <em>En Concierto</em>','press.readMore':'Leer artículo','nav.media':'Media','nav.cal':'Agenda','nav.epk':'Prensa y contacto','nav.epk.short':'Prensa y contacto','rep.thComposer':'Compositor','rep.thOpera':'Ópera / Obra','rep.thRole':'Rol','rep.thLang':'Idiom.','epk.title':'Prensa y <em>contacto</em>','epk.tag':'Prensa y contacto','epk.bio50lbl':'Bio 50 palabras','epk.bio150lbl':'Bio 150 palabras','epk.bio300lbl':'Biografía completa','epk.photos':'Fotos en alta resolución','epk.downloadPhoto':'Descargar','epk.cv':'Descargar CV','epk.contact':'Contacto para contratación','programs.formation':'Formación','programs.duration':'Duración','programs.idealFor':'Ideal para','about.photoLabel':'Tenor Lírico','rep.allRoles':'Repertorio Operístico Completo','programs.sectionTag':'Programas y colaboraciones','rep.tabOpera':'Roles de ópera','rep.tabArias':'Arias y opereta','rep.tabLied':'Lied y canción de arte','rep.tabTango':'Tango y canciones populares','contact.pressKitPdf':'Dossier de prensa (PDF)','epk.photoCredit':'Fotos para prensa y programa. Crédito: Rolando Guy','epk.copyBio':'⧉ Copiar bio','form.sending':'Enviando...','form.errorSend':'Error al enviar. Escribí a rolandoguy@gmail.com directamente.','vid.showMore':'+ Más vídeos','vid.showLess':'− Ver menos',},
+  it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Stampa','press.tag':'Stampa &amp; Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Stampa e contatto','nav.epk.short':'Stampa e contatto','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa e <em>contatto</em>','epk.tag':'Stampa e contatto','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie e operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango e canzoni popolari','contact.pressKitPdf':'Press kit (PDF)','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno',},
+  fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Presse','press.tag':'Presse &amp; Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Agenda','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias &amp; opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango &amp; chansons','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins',},
 };
 function setLang(lang){
   currentLang = lang;
@@ -2547,14 +2733,14 @@ function setLang(lang){
   document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(Ti[lang]&&Ti[lang][k]!==undefined)el.innerHTML=Ti[lang][k];});
   document.querySelectorAll('[data-ph]').forEach(el=>{const k=el.getAttribute('data-ph');if(Ti[lang]&&Ti[lang][k]!==undefined)el.placeholder=Ti[lang][k];});
   // Re-render all content sections with new language
-  renderHero(); renderBio(); renderRep(); renderPerfs(); renderContact(); renderEpk(); updatePressKitLink();
+  renderHero(); renderBio(); renderRep(); renderPrograms(); renderPerfs(); renderContact(); renderEpk(); updatePressKitLink();
   // Update admin lang indicator if panel is open
   const ind = document.getElementById('admLangInd');
   if(ind) ind.textContent = lang.toUpperCase();
   // Re-populate admin if open and unlocked
   if(admUnlocked) admPopulate(admCurTab);
   // Sync mobile lang buttons
-  ['en','de','es','it'].forEach(l=>{
+  ['en','de','es','it','fr'].forEach(l=>{
     const mb=document.getElementById('mob-btn-'+l);
     if(mb) mb.classList.toggle('active',l===lang);
   });
@@ -3016,7 +3202,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 
 function admTab(name){
   admCurTab = name;
-  const tabs = ['hero','bio','rep','vid','photos','perf','press','contact','epk'];
+  const tabs = ['hero','bio','rep','programs','vid','photos','perf','press','contact','epk'];
   document.querySelectorAll('.adm-tab').forEach((t,i)=>t.classList.toggle('active', tabs[i]===name));
   document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
   const panel = document.getElementById('admPanel-'+name);
@@ -3091,6 +3277,40 @@ function admPopulate(name){
             </select>
           </div>
         </div>
+      </div>`).join('');
+  }
+  else if(name==='programs'){
+    const d = getPrograms();
+    const el = document.getElementById('f-programsTitle'); if(el) el.value = d.title || '';
+    const es = document.getElementById('f-programsSubtitle'); if(es) es.value = d.subtitle || '';
+    const ei = document.getElementById('f-programsIntro'); if(ei) ei.value = d.intro || '';
+    const ec = document.getElementById('f-programsClosing'); if(ec) ec.value = d.closingNote || '';
+    const div = document.getElementById('programCards');
+    if(!div) return;
+    const progEsc = (s)=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const progLines = (arr)=>Array.isArray(arr) ? arr.join('\n') : (typeof arr==='string'?arr:'');
+    div.innerHTML = (d.programs || []).map((p, i) => `
+      <div class="adm-card-preview drag-item" id="pc-card-${i}" draggable="true" data-prog-idx="${i}"
+        style="border-left:3px solid ${p.published?'#4CAF50':'#9A9080'};position:relative;cursor:default"
+        ondragstart="progDragSrc=this;this.style.opacity='0.4'"
+        ondragend="this.style.opacity='';document.querySelectorAll('.drag-item').forEach(el=>el.classList.remove('drag-over'))"
+        ondragover="event.preventDefault()"
+        ondragenter="this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="onDropProgram(${i},event)">
+        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Arrastrar para reordenar">⠿</span>
+          <span style="color:${p.published?'#4CAF50':'#9A9080'};font-size:.7rem">●</span>
+          Programa ${i+1}${!p.published?' (oculto)':''}
+          <button type="button" onclick="duplicateProgramCard(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicar</button>
+          <button type="button" onclick="removeProgramCard(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
+        </div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="prog-${i}-title" value="${progEsc(p.title)}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción</label><textarea class="adm-input" id="prog-${i}-description" rows="3">${progEsc(p.description)}</textarea></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Formaciones (una por línea)</label><textarea class="adm-input" id="prog-${i}-formations" rows="2">${progEsc(progLines(p.formations))}</textarea></div></div>
+        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Duración</label><input class="adm-input" id="prog-${i}-duration" value="${progEsc(p.duration)}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Ideal para (una por línea)</label><textarea class="adm-input" id="prog-${i}-idealFor" rows="2">${progEsc(progLines(p.idealFor))}</textarea></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visible</label><input type="checkbox" id="prog-${i}-published" ${p.published?'checked':''}></div></div>
       </div>`).join('');
   }
   else if(name==='vid'){
@@ -3185,6 +3405,31 @@ function saveSection(name){
     save('rg_rep_cards',newCards);
     save('rep_'+currentLang,{h2:get('rep').h2,intro:get('rep').intro});
     renderRep();
+  }
+  else if(name==='programs'){
+    const title = (document.getElementById('f-programsTitle')||{}).value || '';
+    const subtitle = (document.getElementById('f-programsSubtitle')||{}).value || '';
+    const intro = (document.getElementById('f-programsIntro')||{}).value || '';
+    const closingNote = (document.getElementById('f-programsClosing')||{}).value || '';
+    const programs = [];
+    for (let i = 0; ; i++) {
+      const titleEl = document.getElementById('prog-'+i+'-title');
+      if (!titleEl) break;
+      const formationsRaw = (document.getElementById('prog-'+i+'-formations')||{}).value || '';
+      const idealForRaw = (document.getElementById('prog-'+i+'-idealFor')||{}).value || '';
+      programs.push({
+        id: i + 1,
+        order: i,
+        published: !!((document.getElementById('prog-'+i+'-published')||{}).checked),
+        title: titleEl.value || '',
+        description: (document.getElementById('prog-'+i+'-description')||{}).value || '',
+        formations: formationsRaw.split('\n').map(s=>s.trim()).filter(Boolean),
+        duration: (document.getElementById('prog-'+i+'-duration')||{}).value || '',
+        idealFor: idealForRaw.split('\n').map(s=>s.trim()).filter(Boolean)
+      });
+    }
+    save('rg_programs_' + currentLang, { title, subtitle, intro, closingNote, programs });
+    if (typeof renderPrograms === 'function') renderPrograms();
   }
   else if(name==='vid'){
     const d=getVid();
@@ -3627,6 +3872,7 @@ const PK_FR = "docs/RolandoGuy_PressKit_FR.pdf";
 const PK_FILENAMES = {'en':'RolandoGuy_PressKit_2026_EN.pdf','de':'RolandoGuy_PressKit_2026_DE.pdf','es':'RolandoGuy_PressKit_2026_ES.pdf','it':'RolandoGuy_PressKit_2026_IT.pdf','fr':'RolandoGuy_PressKit_2026_FR.pdf'};
 const PK_URLS = {'en':PK_EN,'de':PK_DE,'es':PK_ES,'it':PK_IT,'fr':PK_FR};
 function updatePressKitLink() {
+  // Hero Press Kit button was removed; PK link remains in Contact section. This function is kept for possible future language-specific PDF link in Contact.
   const btn = document.getElementById('pkBtn');
   if(!btn) return;
   btn.href = PK_URLS[currentLang] || PK_EN;
