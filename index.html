@@ -749,8 +749,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .epk-dl-group {}
 .epk-dl-label {
   font-family: var(--ff-caps); font-size: .6rem; letter-spacing: .15em;
-  text-transform: uppercase; color: var(--gold); margin-bottom: .8rem;
+  text-transform: uppercase; color: var(--gold); margin-bottom: .4rem;
   padding-bottom: .4rem; border-bottom: 1px solid rgba(212,168,67,.15);
+}
+.epk-photo-intro {
+  font-size: .78rem; color: var(--text-dim); line-height: 1.5;
+  margin-bottom: 1rem; max-width: 32em;
 }
 .epk-dl-links { display: flex; flex-wrap: wrap; gap: 8px; }
 .epk-dl-btn {
@@ -771,9 +775,67 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .epk-email-link:hover, .epk-web-link:hover { opacity: .75; }
 .epk-phone { font-family: var(--ff-body); font-size: .88rem; color: var(--text-dim); }
 .epk-photo-note {
-  font-size: .72rem; color: var(--text-faint);
-  margin-top: .5rem; font-style: italic;
+  font-size: .7rem; color: var(--text-faint);
+  margin-top: 1rem; line-height: 1.5;
+  font-style: normal; letter-spacing: .02em;
 }
+.epk-photo-note a {
+  color: var(--text-faint); text-decoration: none;
+  border-bottom: 1px solid rgba(212,168,67,.25);
+  transition: color .2s, border-color .2s;
+}
+.epk-photo-note a:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* High-Res Photos: press assets, not gallery */
+.epk-photo-grid {
+  display: grid; gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+@media (min-width: 900px) {
+  .epk-photo-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
+.epk-press-card {
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid rgba(212,168,67,.08);
+  border-radius: 2px; overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.epk-press-card:hover { border-color: rgba(212,168,67,.2); box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+.epk-press-frame {
+  position: relative; width: 100%;
+  aspect-ratio: 3 / 4; min-height: 180px;
+  background: rgba(18,18,22,.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.epk-press-frame img {
+  width: 100%; height: 100%;
+  object-fit: contain; object-position: center;
+  display: block;
+}
+.epk-press-body { padding: .75rem .85rem; display: flex; flex-direction: column; gap: .5rem; }
+.epk-press-label {
+  font-family: var(--ff-caps); font-size: .52rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gold-dim);
+}
+.epk-press-credit {
+  font-size: .65rem; color: var(--text-faint);
+  line-height: 1.4; letter-spacing: .02em;
+  margin: 0; padding: 0;
+}
+.epk-press-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.epk-press-preview,
+.epk-press-dl {
+  font-family: var(--ff-caps); font-size: .5rem; letter-spacing: .12em;
+  text-transform: uppercase; text-decoration: none;
+  padding: 6px 12px; border: 1px solid rgba(212,168,67,.25);
+  color: var(--text-dim); background: transparent;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.epk-press-preview:hover, .epk-press-dl:hover {
+  border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,.06);
+}
+.epk-press-dl { border-color: rgba(212,168,67,.35); color: var(--text-faint); }
+.epk-press-dl:hover { color: var(--gold); }
 
 /* ── ULTRA-CLEAN AGENDA (Beczała-style) ── */
 .perf-year-group{margin-bottom:36px}
@@ -805,9 +867,51 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 .perf-more-btn{display:inline-block;margin-top:10px;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold);background:none;border:1px solid rgba(212,168,67,.3);padding:5px 14px;text-transform:uppercase;cursor:pointer;transition:all .25s}
 .perf-more-btn:hover{background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--text)}
+.perf-print-btn{font-family:var(--ff-caps);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text);background:transparent;border:1px solid var(--gold);padding:11px 26px;cursor:pointer;transition:all .3s}
+.perf-print-btn:hover{background:rgba(212,168,67,.12);color:var(--gold)}
+.print-only{display:none}
+.perf-print-repertoire{margin-top:.5em;font-size:.9em;line-height:1.5;color:inherit}
 
 #backstageGrid{background:transparent;border:none}
 #backstageGrid .photo-item{border:1px solid var(--border)}
+
+/* ── Print: solo agenda, A4, encabezado limpio ── */
+@media print{
+  body *{visibility:hidden}
+  #performances,#performances *{visibility:visible}
+  #performances{position:absolute;left:0;top:0;width:100%;max-width:210mm;margin:0 auto;padding:18mm 20mm;background:#fff;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;font-size:11pt;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .no-print{display:none !important}
+  .print-only{display:block !important}
+  .print-only-header{margin-bottom:1.8em;padding-bottom:1em;border-bottom:1px solid #2a2a2a;text-align:center}
+  .print-only-title{font-size:1.75rem;font-weight:400;margin:0;color:#1a1a1a;letter-spacing:.04em}
+  .print-only-subtitle{font-size:.7rem;margin:.5em 0 0;color:#555;text-transform:uppercase;letter-spacing:.25em;font-weight:400}
+  #performances .perf-header,#performances .section-tag{display:none !important}
+  #performances .perf-list{display:block;margin-top:0}
+  #performances .perf-year-group{margin-bottom:2em;break-inside:auto}
+  #performances .perf-year-label{font-size:1rem;font-weight:600;color:#2a2a2a;margin:0 0 .65em;padding-bottom:.35em;border-bottom:1px solid #d0d0d0;letter-spacing:.08em;break-after:avoid}
+  #performances .perf-past-divider{font-size:.65rem;letter-spacing:.22em;color:#666;margin:2em 0 1.25em;padding:.5em 0;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;text-align:center}
+  #performances .perf-item{break-inside:avoid;page-break-inside:avoid;margin-bottom:1.35em;padding-bottom:1.1em;border-bottom:1px solid #e5e5e5;display:block}
+  #performances .perf-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:0}
+  #performances .perf-date-box{display:block;margin-bottom:.5em;text-align:left}
+  #performances .perf-day{font-size:1.15rem;font-weight:400;color:#1a1a1a;line-height:1.2}
+  #performances .perf-month{font-size:.7rem;color:#555;text-transform:uppercase;letter-spacing:.12em;margin-top:.15em}
+  #performances .perf-time{font-size:.75rem;color:#555;margin-top:.35em;padding-top:.35em;border-top:1px solid #eee}
+  #performances .perf-badge,#performances .perf-type{font-size:.6rem;letter-spacing:.14em;color:#666;margin-bottom:.4em;font-weight:500}
+  #performances .perf-info-title{font-size:1.1rem;font-style:italic;font-weight:400;margin:0 0 .25em;color:#1a1a1a;line-height:1.3}
+  #performances .perf-info-detail{font-size:.95rem;color:#333;line-height:1.5;margin-bottom:.4em}
+  #performances .perf-venue-link{color:#444;text-decoration:none;border:0;pointer-events:none;font-size:.9rem;display:inline-block;margin-top:.2em}
+  #performances .perf-venue-link::before{content:'Location: ';font-weight:600;color:#333;letter-spacing:.03em}
+  #performances .perf-venue-emoji{display:none}
+  #performances .perf-venue-link .perf-maps-hint{display:none}
+  #performances .perf-venue-bg{display:none !important}
+  #performances .perf-past-stamp{display:none !important}
+  #performances .perf-print-repertoire{margin-top:.65em;padding:.5em 0 0 .75em;border-left:2px solid #ccc;font-size:.9rem;color:#444;line-height:1.5;font-style:normal}
+  #performances .perf-print-repertoire strong{font-size:.75rem;letter-spacing:.1em;color:#555;font-weight:600}
+  body.print-upcoming-only .perf-past-divider,
+  body.print-upcoming-only .perf-year-group.perf-row-past{display:none !important}
+  nav,.lang-bar,footer,.admin-trigger,.adm,.cursor,.cursor-ring,.mobile-menu,.hamburger,[id^="adm"]{display:none !important}
+  a[href]::after{content:none}
+}
 </style>
 </head>
 <body>
@@ -972,6 +1076,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </section>
 <section id="performances">
   <div class="section-inner">
+    <div class="print-only-header print-only" id="perfPrintHeader" aria-hidden="true">
+      <h1 class="print-only-title">Rolando Guy</h1>
+      <p class="print-only-subtitle" id="perfPrintSubtitle">Agenda</p>
+    </div>
     <div class="perf-header">
       <div>
         <p class="section-tag" data-num="03" data-i18n="nav.cal">Calendar</p>
@@ -980,8 +1088,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <p class="reveal rd1" id="perfIntro"></p>
     </div>
     <div class="perf-list" id="perfList"></div>
-    <div style="text-align:center;margin-top:28px">
+    <div class="perf-actions no-print" style="text-align:center;margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
       <button id="pastToggleBtn" onclick="togglePastPerfs()" style="display:none;font-family:var(--ff-caps);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-faint);background:transparent;border:1px solid var(--border);padding:11px 26px;cursor:none;transition:all .3s" onmouseenter="this.style.color='var(--gold)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--text-faint)';this.style.borderColor='var(--border)'">+ Show Past Performances</button>
+      <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print agenda"><span id="perfPrintBtnText">Imprimir agenda</span></button>
     </div>
   </div>
 </section>
@@ -1046,8 +1155,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
       <!-- RIGHT: Press resources -->
       <div class="epk-dl-col">
-        <div class="epk-dl-group">
+        <div class="epk-dl-group epk-press-photos">
           <div class="epk-dl-label" data-i18n="epk.photos">High-Res Photos</div>
+          <p class="epk-photo-intro" data-i18n="epk.photosIntro">Official press images for media, programmes and print. Free to use with credit.</p>
           <div class="epk-photo-grid" id="epkPhotosGrid"></div>
           <p class="epk-photo-note" data-i18n="epk.photoCredit">Photos available for press and programme use. Credit: Rolando Guy</p>
         </div>
@@ -2175,7 +2285,7 @@ function renderPerfs() {
         const timeFmts = {en:t=>t, de:t=>t+' Uhr', es:t=>t+' h', it:t=>'ore '+t, fr:t=>t.replace(':','h')};
         return '<div class="perf-time">' + (timeFmts[currentLang]||timeFmts.en)(cleanTime) + '</div>';
       })();
-      const venueCity = p.venue ? '<a href="https://www.google.com/maps/search/'+encodeURIComponent(p.venue+(p.city?' '+p.city:''))+'" target="_blank" rel="noopener" class="perf-venue-link">\ud83d\udccd '+p.venue+(p.city?' \u00b7 '+p.city:'')+' <span class="perf-maps-hint">\u2192 Maps</span></a>' : '';
+      const venueCity = p.venue ? '<a href="https://www.google.com/maps/search/'+encodeURIComponent(p.venue+(p.city?' '+p.city:''))+'" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">\ud83d\udccd </span>'+p.venue+(p.city?' \u00b7 '+p.city:'')+' <span class="perf-maps-hint">\u2192 Maps</span></a>' : '';
       const detail = (p["detail_"+currentLang]||p.detail)||"";
       const pastClass = p.status==='past' ? ' perf-item-past' : '';
       const hasVenuePhoto = p.venuePhoto && p.venuePhoto.trim();
@@ -2185,9 +2295,12 @@ function renderPerfs() {
       if(hasVenuePhoto) { const op = (p.venueOpacity||50)/100; html += '<div class="perf-venue-bg" style="opacity:'+op+';background-image:url('+p.venuePhoto+')"></div>'; }
       html += '<div class="perf-date-box"><div class="perf-day">'+p.day+'</div><div class="perf-month">'+translateMonth(p.month)+'</div>'+timeHtml+'</div>';
       html += '<div>'+badge+'<div class="perf-info-title">'+p.title+'</div><div class="perf-info-detail">'+detail+'</div>'+venueCity+'</div>';
+      // Print-only: repertoire / extended description (si existe)
+      const repLabel = ({en:'Repertoire',de:'Repertoire',es:'Repertorio',it:'Repertorio',fr:'Répertoire'}[currentLang]||'Repertoire');
+      if(p.extDesc && p.extDesc.trim()) html += '<div class="perf-print-repertoire print-only"><strong>'+repLabel+':</strong> '+p.extDesc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div>';
       // More Info button (only if there's extra content)
       const hasExtra = (p.extDesc && p.extDesc.trim()) || (p.ticketPrice && p.ticketPrice.trim()) || (p.eventLink && p.eventLink.trim()) || (p.flyerImg && p.flyerImg.trim());
-      if(hasExtra) html += '<button class="perf-more-btn" onclick="event.stopPropagation();openEventModal('+p.id+')">'+({'en':'More Info','de':'Mehr Info','es':'Más Info','it':'Più Info','fr':"Plus d'Info"}[currentLang]||'More Info')+' →</button>';
+      if(hasExtra) html += '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal('+p.id+')">'+({'en':'More Info','de':'Mehr Info','es':'Más Info','it':'Più Info','fr':"Plus d'Info"}[currentLang]||'More Info')+' →</button>';
       html += '</div>';
     });
     html += '</div>';
@@ -2207,12 +2320,102 @@ function renderPerfs() {
     const btn=document.getElementById('pastToggleBtn');
     if(btn) btn.style.display='none';
   }
+  var t = Ti[currentLang] || Ti.en;
+  var printBtnText = document.getElementById('perfPrintBtnText');
+  if(printBtnText) printBtnText.textContent = t['perf.printAgenda'] || 'Imprimir agenda';
+  var printSub = document.getElementById('perfPrintSubtitle');
+  if(printSub) printSub.textContent = t['perf.printSubtitle'] || 'Agenda';
   document.querySelectorAll('#perfList .reveal:not(.visible)').forEach(el=>{
     const ob=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting){en.target.classList.add('visible');ob.unobserve(en.target);}});},{threshold:0.1});
     ob.observe(el);
   });
 }
 function togglePastPerfs(){showPastPerfs=!showPastPerfs;renderPerfs();}
+
+function getPrintAgendaHtml(){
+  var perfs=load('rg_perfs')||DEFAULTS.perfs;
+  var sortDate=function(p){
+    if(p.sortDate)return new Date(p.sortDate);
+    var str=(p.day&&p.day!=='TBA'?p.day+' ':'1 ')+(p.month||'Jan 2099');
+    var d=new Date(str);
+    return isNaN(d.getTime())?new Date('2099-01-01'):d;
+  };
+  var upcoming=perfs.filter(function(p){return p.status!=='past';}).sort(function(a,b){return sortDate(a)-sortDate(b);});
+  var headerSub={en:'Upcoming performances',de:'Agenda der kommenden Auftritte',es:'Próximas actuaciones',it:'Prossimi spettacoli',fr:'Prochaines représentations'};
+  var headerSubText=headerSub[currentLang]||headerSub.en;
+  if(!upcoming.length){
+    var emptyCss='*{margin:0;padding:0}body{font-family:Georgia,serif;padding:22mm 24mm;max-width:200mm;margin:0 auto;background:#fff;color:#1a1a1a;font-size:11pt}.p-header{text-align:center;margin-bottom:2em;padding-bottom:1em;border-bottom:1px solid #c9c9c9}.p-header h1{font-size:1.65rem;font-weight:400;letter-spacing:.06em}.p-header-sub{font-size:.7rem;margin-top:.5em;color:#555;text-transform:uppercase;letter-spacing:.28em}.p-empty{color:#666;font-style:italic}';
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rolando Guy — Agenda</title><style>'+emptyCss+'</style></head><body><header class="p-header"><h1>Rolando Guy</h1><p class="p-header-sub">'+String(headerSubText).replace(/&/g,'&amp;')+'</p></header><p class="p-empty">No upcoming events.</p></body></html>';
+  }
+  var perfLang=get('perf');
+  var types=perfLang.eventTypes||{opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
+  var groups={};
+  upcoming.forEach(function(p){
+    var sd=sortDate(p);
+    var yr=sd.getFullYear()>2090?'TBA':sd.getFullYear().toString();
+    if(!groups[yr])groups[yr]=[];
+    groups[yr].push(p);
+  });
+  var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+  var timeFmt=function(t){
+    if(!t)return'';
+    var clean=t.replace(/\s*(uhr|h)\s*$/i,'').trim();
+    var fmts={en:function(x){return x;},de:function(x){return x+' Uhr';},es:function(x){return x+' h';},it:function(x){return x;},fr:function(x){return x.replace(':','h');}};
+    return(fmts[currentLang]||fmts.en)(clean);
+  };
+  var body='';
+  Object.keys(groups).sort().forEach(function(yr){
+    body+='<section class="p-year"><h2 class="p-year-title">'+esc(yr)+'</h2>';
+    groups[yr].forEach(function(p){
+      var typeLabel=types[p.type]||p.type||'Event';
+      var monthStr=translateMonth(p.month)||'';
+      var dateStr=esc(p.day)+'. '+esc(monthStr)+' '+esc(yr);
+      if(p.time){dateStr+=' · '+timeFmt(p.time);}
+      var venueCity=[p.venue,p.city].filter(Boolean).join(', ');
+      body+='<article class="p-event">'
+        +'<p class="p-event-meta">'+dateStr+'</p>'
+        +'<p class="p-event-type">'+esc(typeLabel)+'</p>'
+        +(p.title&&p.title.trim()?'<p class="p-event-title">'+esc(p.title)+'</p>':'')
+        +(venueCity?'<p class="p-event-venue">'+esc(venueCity)+'</p>':'')
+        +(p.ticketPrice&&p.ticketPrice.trim()?'<p class="p-event-price">'+esc(p.ticketPrice)+'</p>':'')
+        +'</article>';
+    });
+    body+='</section>';
+  });
+  var sub=(Ti[currentLang]||Ti.en)['perf.printSubtitle']||'Agenda';
+  var css=
+    '*{box-sizing:border-box;margin:0;padding:0}'
+    +'html,body{height:auto;min-height:0;background:#fff;color:#1a1a1a;font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'body.p-body{padding:22mm 24mm;max-width:200mm;margin:0 auto}'
+    +'.p-header{text-align:center;margin-bottom:2.2em;padding-bottom:1.1em;border-bottom:1px solid #c9c9c9}'
+    +'.p-header h1{font-size:1.65rem;font-weight:400;letter-spacing:.06em;color:#1a1a1a}'
+    +'.p-header-sub{font-size:.7rem;margin-top:.55em;color:#555;text-transform:uppercase;letter-spacing:.28em;font-weight:500}'
+    +'.p-empty{color:#666;font-style:italic;margin-top:1em}'
+    +'.p-year{margin-bottom:2.5em}'
+    +'.p-year-title{font-size:.75rem;font-weight:600;color:#444;letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.25em;padding-bottom:.4em;border-bottom:1px solid #e5e5e5}'
+    +'.p-event{break-inside:avoid;page-break-inside:avoid;padding:1em 0;border-bottom:1px solid #ebebeb}'
+    +'.p-event:last-child{border-bottom:0}'
+    +'.p-event-meta{font-size:.95rem;color:#333;letter-spacing:.03em;margin-bottom:.25em}'
+    +'.p-event-type{font-size:.62rem;font-weight:600;font-variant:small-caps;letter-spacing:.16em;color:#666;margin-bottom:.4em}'
+    +'.p-event-title{font-size:1.08rem;font-weight:500;font-style:italic;color:#1a1a1a;line-height:1.4;margin-bottom:.35em}'
+    +'.p-event-venue{font-size:.88rem;color:#555;line-height:1.45}'
+    +'.p-event-price{font-size:.82rem;color:#555;margin-top:.3em}'
+    +'@media print{html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}}';
+  return '<!DOCTYPE html><html lang="'+currentLang+'"><head><meta charset="utf-8"><title>Rolando Guy — '+esc(sub)+'</title><style>'+css+'</style></head><body class="p-body"><header class="p-header"><h1>Rolando Guy</h1><p class="p-header-sub">'+esc(headerSubText)+'</p></header>'+body+'</body></html>';
+}
+
+function printAgenda(){
+  var html=getPrintAgendaHtml();
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,'_blank','noopener');
+  if(!w){URL.revokeObjectURL(url);return;}
+  w.onload=function(){
+    URL.revokeObjectURL(url);
+    w.addEventListener('afterprint',function(){w.close();});
+    setTimeout(function(){try{w.focus();w.print();}catch(e){w.close();}},100);
+  };
+}
 
 
 // ── Auto-translate event detail via Anthropic API ────────────
@@ -2473,7 +2676,7 @@ function renderEpk() {
   if (p3) p3.textContent = activeBios.b300p3;
   if (p4) p4.textContent = activeBios.b300p4;
 
-  // High-res photos
+  // High-res photos: press assets (contain, no crop; credit as caption; Preview + Download)
   const epkPhotos = load('rg_epk_photos') || [];
   const photosContainer = document.getElementById('epkPhotosGrid');
   if (photosContainer) {
@@ -2481,16 +2684,25 @@ function renderEpk() {
       photosContainer.innerHTML = '';
     } else {
       const t = Ti[currentLang] || Ti.en;
-      const downloadLbl = (t['epk.downloadPhoto'] || 'Download').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      photosContainer.innerHTML = epkPhotos.filter(ph => ph.url).map(ph => {
+      const downloadLbl = (t['epk.downloadPhoto'] || 'Download hi-res').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const previewLbl = (t['epk.preview'] || 'Preview').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      photosContainer.innerHTML = epkPhotos.filter(ph => ph.url).map((ph, i) => {
         const credit = (ph.credit||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        return `<div class="epk-photo-item">
-          <a href="${ph.url}" download target="_blank" class="epk-photo-thumb">
-            <img src="${ph.url}" alt="${credit||'Press photo'}" loading="lazy" style="width:100%;height:160px;object-fit:cover;display:block">
-            <div class="epk-photo-credit">${credit}</div>
-          </a>
-          <a href="${ph.url}" download class="epk-dl-btn" style="margin-top:6px;display:block;text-align:center;font-size:.65rem">⬇ ${downloadLbl}</a>
-        </div>`;
+        const label = (ph.label||'').trim() || ('Portrait ' + (i+1));
+        const alt = credit || 'Press photo — Rolando Guy';
+        return `<article class="epk-press-card">
+          <div class="epk-press-frame">
+            <img src="${ph.url}" alt="${alt}" loading="lazy">
+          </div>
+          <div class="epk-press-body">
+            <span class="epk-press-label">${label.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+            ${credit ? `<p class="epk-press-credit">${credit}</p>` : ''}
+            <div class="epk-press-actions">
+              <a href="${ph.url}" target="_blank" rel="noopener" class="epk-press-preview">${previewLbl}</a>
+              <a href="${ph.url}" download class="epk-press-dl">${downloadLbl}</a>
+            </div>
+          </div>
+        </article>`;
       }).join('');
     }
   }
@@ -2651,6 +2863,10 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
   a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});}});
 });
 
+// ── Print agenda (listener por si falla onclick con file://) ──
+var perfPrintBtn = document.getElementById('perfPrintBtn');
+if(perfPrintBtn){perfPrintBtn.addEventListener('click',function(e){e.preventDefault();printAgenda();});}
+
 // ── Hero parallax ──
 window.addEventListener('scroll',()=>{
   const bg=document.getElementById('heroBg');
@@ -2729,11 +2945,11 @@ async function submitForm(){
 
 // ── i18n (minimal, content now driven by data) ──
 const Ti={
-  en:{'nav.bio':'Biography','nav.rep':'Repertoire','nav.programs':'Programs','nav.vid':'Videos','nav.photos':'Photos','nav.perf':'Performances','nav.press':'Press','press.tag':'Press & Reviews','press.empty':'No press quotes yet.','nav.contact':'Contact','hero.scroll':'Discover','about.photoLabel':'Lyric Tenor','photos.h2':'Studio &amp; <em>On Stage</em>','photos.sub':'Portrait and stage photography. Click any image to view full size.','photos.studio':'Studio Portraits','photos.stage':'On Stage','photos.backstage':'Backstage','photos.backstageEmpty':'Upload backstage photos via the admin panel.','form.name':'Name','form.email':'Email','form.subject':'Subject','form.message':'Message','form.send':'Send Message','form.success':'Thank you! Your message has been sent.','form.namePh':'Your name','form.emailPh':'your@email.com','form.subjectPh':'Booking inquiry','form.messagePh':'Tell me about your project...','footer.tagline':'Argentinian/Italian Tenor based in Berlin','footer.rights':'All rights reserved','vid.h2':'On Stage &amp; <em>In Concert</em>','press.readMore':'Read article','nav.media':'Media','nav.cal':'Calendar','nav.epk':'Press & Contact','nav.epk.short':'Press & Contact','rep.thComposer':'Composer','rep.thOpera':'Opera / Work','rep.thRole':'Role','rep.thLang':'Lang','epk.title':'Press & <em>Contact</em>','epk.tag':'Press & Contact','epk.bio50lbl':'50-word Bio','epk.bio150lbl':'150-word Bio','epk.bio300lbl':'Full Biography','epk.photos':'High-Res Photos','epk.downloadPhoto':'Download','epk.cv':'Download CV','epk.contact':'Booking Contact','programs.formation':'Formation','programs.duration':'Duration','programs.idealFor':'Ideal for','about.photoLabel':'Lyric Tenor','rep.allRoles':'Complete Operatic Repertoire','programs.sectionTag':'Programs &amp; Collaborations','rep.tabOpera':'Opera Roles','rep.tabArias':'Opera Arias &amp; Operette','rep.tabLied':'Lied &amp; Art Song','rep.tabTango':'Tango &amp; Popular Songs','contact.pressKitPdf':'Press Kit PDF','epk.photoCredit':'Photos available for press and programme use. Credit: Rolando Guy','epk.copyBio':'⧉ Copy Bio','form.sending':'Sending...','form.errorSend':'Error sending. Please email rolandoguy@gmail.com directly.','vid.showMore':'+ Show More Videos','vid.showLess':'− Show Less',},
-  de:{'nav.bio':'Biografie','nav.rep':'Repertoire','nav.programs':'Programme','nav.vid':'Videos','nav.photos':'Fotos','nav.perf':'Aufführungen','nav.press':'Presse','press.tag':'Presse &amp; Rezensionen','press.empty':'Noch keine Pressezitate.','nav.contact':'Kontakt','hero.scroll':'Entdecken','about.photoLabel':'Lyrischer Tenor','photos.h2':'Studio &amp; <em>Bühne</em>','photos.sub':'Porträt- und Bühnenfotografie. Klicken für Vollansicht.','photos.studio':'Studiofotos','photos.stage':'Auf der Bühne','photos.backstage':'Backstage','photos.backstageEmpty':'Backstage-Fotos über das Admin-Panel hochladen.','form.name':'Name','form.email':'E-Mail','form.subject':'Betreff','form.message':'Nachricht','form.send':'Nachricht senden','form.success':'Vielen Dank! Ihre Nachricht wurde gesendet.','form.namePh':'Ihr Name','form.emailPh':'ihre@email.de','form.subjectPh':'Buchungsanfrage','form.messagePh':'Erzählen Sie mir von Ihrem Projekt...','footer.tagline':'Argentinisch-Italienischer Tenor in Berlin','footer.rights':'Alle Rechte vorbehalten','vid.h2':'Auf der Bühne &amp; <em>Im Konzert</em>','press.readMore':'Artikel lesen','nav.media':'Medien','nav.cal':'Kalender','nav.epk':'Presse & Kontakt','nav.epk.short':'Presse & Kontakt','rep.thComposer':'Komponist','rep.thOpera':'Oper / Werk','rep.thRole':'Partie','rep.thLang':'Spr.','epk.title':'Presse & <em>Kontakt</em>','epk.tag':'Presse & Kontakt','epk.bio50lbl':'Kurz-Bio (50 Wörter)','epk.bio150lbl':'Standard-Bio (150 Wörter)','epk.bio300lbl':'Vollständige Biografie','epk.photos':'Fotos in hoher Auflösung','epk.downloadPhoto':'Herunterladen','epk.cv':'Lebenslauf herunterladen','epk.contact':'Buchungsanfrage','programs.formation':'Besetzung','programs.duration':'Dauer','programs.idealFor':'Ideal für','about.photoLabel':'Lyrischer Tenor','rep.allRoles':'Vollständiges Opernrepertoire','programs.sectionTag':'Programme &amp; Kooperationen','rep.tabOpera':'Opernrollen','rep.tabArias':'Opernarien &amp; Operette','rep.tabLied':'Lied &amp; Kunstlied','rep.tabTango':'Tango &amp; Unterhaltungslieder','contact.pressKitPdf':'Press Kit (PDF)','epk.photoCredit':'Fotos für Presse und Programm. Credit: Rolando Guy','epk.copyBio':'⧉ Bio kopieren','form.sending':'Wird gesendet...','form.errorSend':'Fehler beim Senden. Bitte schreiben Sie direkt an rolandoguy@gmail.com.','vid.showMore':'+ Weitere Videos','vid.showLess':'− Weniger anzeigen',},
-  es:{'nav.bio':'Biografía','nav.rep':'Repertorio','nav.programs':'Programas','nav.vid':'Vídeos','nav.photos':'Fotos','nav.perf':'Actuaciones','nav.press':'Prensa','press.tag':'Prensa &amp; Reseñas','press.empty':'Aún no hay citas de prensa.','nav.contact':'Contacto','hero.scroll':'Descubrir','about.photoLabel':'Tenor Lírico','photos.h2':'Estudio &amp; <em>Escenario</em>','photos.sub':'Fotografía de retrato y escena. Clic para ver a tamaño completo.','photos.studio':'Retratos de Estudio','photos.stage':'En Escena','photos.backstage':'Backstage','photos.backstageEmpty':'Subí fotos backstage desde el panel de administración.','form.name':'Nombre','form.email':'Email','form.subject':'Asunto','form.message':'Mensaje','form.send':'Enviar Mensaje','form.success':'¡Gracias! Tu mensaje ha sido enviado.','form.namePh':'Tu nombre','form.emailPh':'tu@email.com','form.subjectPh':'Consulta de contratación','form.messagePh':'Cuéntame sobre tu proyecto...','footer.tagline':'Tenor Argentino/Italiano residente en Berlín','footer.rights':'Todos los derechos reservados','vid.h2':'En Escena &amp; <em>En Concierto</em>','press.readMore':'Leer artículo','nav.media':'Media','nav.cal':'Agenda','nav.epk':'Prensa y contacto','nav.epk.short':'Prensa y contacto','rep.thComposer':'Compositor','rep.thOpera':'Ópera / Obra','rep.thRole':'Rol','rep.thLang':'Idiom.','epk.title':'Prensa y <em>contacto</em>','epk.tag':'Prensa y contacto','epk.bio50lbl':'Bio 50 palabras','epk.bio150lbl':'Bio 150 palabras','epk.bio300lbl':'Biografía completa','epk.photos':'Fotos en alta resolución','epk.downloadPhoto':'Descargar','epk.cv':'Descargar CV','epk.contact':'Contacto para contratación','programs.formation':'Formación','programs.duration':'Duración','programs.idealFor':'Ideal para','about.photoLabel':'Tenor Lírico','rep.allRoles':'Repertorio Operístico Completo','programs.sectionTag':'Programas y colaboraciones','rep.tabOpera':'Roles de ópera','rep.tabArias':'Arias y opereta','rep.tabLied':'Lied y canción de arte','rep.tabTango':'Tango y canciones populares','contact.pressKitPdf':'Dossier de prensa (PDF)','epk.photoCredit':'Fotos para prensa y programa. Crédito: Rolando Guy','epk.copyBio':'⧉ Copiar bio','form.sending':'Enviando...','form.errorSend':'Error al enviar. Escribí a rolandoguy@gmail.com directamente.','vid.showMore':'+ Más vídeos','vid.showLess':'− Ver menos',},
-  it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Stampa','press.tag':'Stampa &amp; Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Stampa e contatto','nav.epk.short':'Stampa e contatto','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa e <em>contatto</em>','epk.tag':'Stampa e contatto','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie e operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango e canzoni popolari','contact.pressKitPdf':'Press kit (PDF)','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno',},
-  fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Presse','press.tag':'Presse &amp; Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Agenda','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias &amp; opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango &amp; chansons','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins',},
+  en:{'nav.bio':'Biography','nav.rep':'Repertoire','nav.programs':'Programs','nav.vid':'Videos','nav.photos':'Photos','nav.perf':'Performances','nav.press':'Press','press.tag':'Press & Reviews','press.empty':'No press quotes yet.','nav.contact':'Contact','hero.scroll':'Discover','about.photoLabel':'Lyric Tenor','photos.h2':'Studio &amp; <em>On Stage</em>','photos.sub':'Portrait and stage photography. Click any image to view full size.','photos.studio':'Studio Portraits','photos.stage':'On Stage','photos.backstage':'Backstage','photos.backstageEmpty':'Upload backstage photos via the admin panel.','form.name':'Name','form.email':'Email','form.subject':'Subject','form.message':'Message','form.send':'Send Message','form.success':'Thank you! Your message has been sent.','form.namePh':'Your name','form.emailPh':'your@email.com','form.subjectPh':'Booking inquiry','form.messagePh':'Tell me about your project...','footer.tagline':'Argentinian/Italian Tenor based in Berlin','footer.rights':'All rights reserved','vid.h2':'On Stage &amp; <em>In Concert</em>','press.readMore':'Read article','nav.media':'Media','nav.cal':'Calendar','nav.epk':'Press & Contact','nav.epk.short':'Press & Contact','rep.thComposer':'Composer','rep.thOpera':'Opera / Work','rep.thRole':'Role','rep.thLang':'Lang','epk.title':'Press & <em>Contact</em>','epk.tag':'Press & Contact','epk.bio50lbl':'50-word Bio','epk.bio150lbl':'150-word Bio','epk.bio300lbl':'Full Biography','epk.photos':'High-Res Photos','epk.downloadPhoto':'Download hi-res','epk.preview':'Preview','epk.cv':'Download CV','epk.contact':'Booking Contact','programs.formation':'Formation','programs.duration':'Duration','programs.idealFor':'Ideal for','about.photoLabel':'Lyric Tenor','rep.allRoles':'Complete Operatic Repertoire','programs.sectionTag':'Programs &amp; Collaborations','rep.tabOpera':'Opera Roles','rep.tabArias':'Opera Arias &amp; Operette','rep.tabLied':'Lied &amp; Art Song','rep.tabTango':'Tango &amp; Popular Songs','contact.pressKitPdf':'Press Kit PDF','epk.photosIntro':'Official press images for media, programmes and print. Free to use with credit.','epk.photoCredit':'Photos available for press and programme use. Credit: Rolando Guy','epk.copyBio':'⧉ Copy Bio','form.sending':'Sending...','form.errorSend':'Error sending. Please email rolandoguy@gmail.com directly.','vid.showMore':'+ Show More Videos','vid.showLess':'− Show Less','perf.printAgenda':'Print agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendar','perf.printRepertoire':'Repertoire',},
+  de:{'nav.bio':'Biografie','nav.rep':'Repertoire','nav.programs':'Programme','nav.vid':'Videos','nav.photos':'Fotos','nav.perf':'Aufführungen','nav.press':'Presse','press.tag':'Presse &amp; Rezensionen','press.empty':'Noch keine Pressezitate.','nav.contact':'Kontakt','hero.scroll':'Entdecken','about.photoLabel':'Lyrischer Tenor','photos.h2':'Studio &amp; <em>Bühne</em>','photos.sub':'Porträt- und Bühnenfotografie. Klicken für Vollansicht.','photos.studio':'Studiofotos','photos.stage':'Auf der Bühne','photos.backstage':'Backstage','photos.backstageEmpty':'Backstage-Fotos über das Admin-Panel hochladen.','form.name':'Name','form.email':'E-Mail','form.subject':'Betreff','form.message':'Nachricht','form.send':'Nachricht senden','form.success':'Vielen Dank! Ihre Nachricht wurde gesendet.','form.namePh':'Ihr Name','form.emailPh':'ihre@email.de','form.subjectPh':'Buchungsanfrage','form.messagePh':'Erzählen Sie mir von Ihrem Projekt...','footer.tagline':'Argentinisch-Italienischer Tenor in Berlin','footer.rights':'Alle Rechte vorbehalten','vid.h2':'Auf der Bühne &amp; <em>Im Konzert</em>','press.readMore':'Artikel lesen','nav.media':'Medien','nav.cal':'Kalender','nav.epk':'Presse & Kontakt','nav.epk.short':'Presse & Kontakt','rep.thComposer':'Komponist','rep.thOpera':'Oper / Werk','rep.thRole':'Partie','rep.thLang':'Spr.','epk.title':'Presse & <em>Kontakt</em>','epk.tag':'Presse & Kontakt','epk.bio50lbl':'Kurz-Bio (50 Wörter)','epk.bio150lbl':'Standard-Bio (150 Wörter)','epk.bio300lbl':'Vollständige Biografie','epk.photos':'Fotos in hoher Auflösung','epk.downloadPhoto':'Hi-Res herunterladen','epk.preview':'Vorschau','epk.cv':'Lebenslauf herunterladen','epk.contact':'Buchungsanfrage','programs.formation':'Besetzung','programs.duration':'Dauer','programs.idealFor':'Ideal für','about.photoLabel':'Lyrischer Tenor','rep.allRoles':'Vollständiges Opernrepertoire','programs.sectionTag':'Programme &amp; Kooperationen','rep.tabOpera':'Opernrollen','rep.tabArias':'Opernarien &amp; Operette','rep.tabLied':'Lied &amp; Kunstlied','rep.tabTango':'Tango &amp; Unterhaltungslieder','contact.pressKitPdf':'Press Kit (PDF)','epk.photosIntro':'Offizielle Pressefotos für Medien, Programme und Druck. Nutzung mit Credit.','epk.photoCredit':'Fotos für Presse und Programm. Credit: Rolando Guy','epk.copyBio':'⧉ Bio kopieren','form.sending':'Wird gesendet...','form.errorSend':'Fehler beim Senden. Bitte schreiben Sie direkt an rolandoguy@gmail.com.','vid.showMore':'+ Weitere Videos','vid.showLess':'− Weniger anzeigen','perf.printAgenda':'Agenda drucken','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Kalender','perf.printRepertoire':'Repertoire',},
+  es:{'nav.bio':'Biografía','nav.rep':'Repertorio','nav.programs':'Programas','nav.vid':'Vídeos','nav.photos':'Fotos','nav.perf':'Actuaciones','nav.press':'Prensa','press.tag':'Prensa &amp; Reseñas','press.empty':'Aún no hay citas de prensa.','nav.contact':'Contacto','hero.scroll':'Descubrir','about.photoLabel':'Tenor Lírico','photos.h2':'Estudio &amp; <em>Escenario</em>','photos.sub':'Fotografía de retrato y escena. Clic para ver a tamaño completo.','photos.studio':'Retratos de Estudio','photos.stage':'En Escena','photos.backstage':'Backstage','photos.backstageEmpty':'Subí fotos backstage desde el panel de administración.','form.name':'Nombre','form.email':'Email','form.subject':'Asunto','form.message':'Mensaje','form.send':'Enviar Mensaje','form.success':'¡Gracias! Tu mensaje ha sido enviado.','form.namePh':'Tu nombre','form.emailPh':'tu@email.com','form.subjectPh':'Consulta de contratación','form.messagePh':'Cuéntame sobre tu proyecto...','footer.tagline':'Tenor Argentino/Italiano residente en Berlín','footer.rights':'Todos los derechos reservados','vid.h2':'En Escena &amp; <em>En Concierto</em>','press.readMore':'Leer artículo','nav.media':'Media','nav.cal':'Agenda','nav.epk':'Prensa y contacto','nav.epk.short':'Prensa y contacto','rep.thComposer':'Compositor','rep.thOpera':'Ópera / Obra','rep.thRole':'Rol','rep.thLang':'Idiom.','epk.title':'Prensa y <em>contacto</em>','epk.tag':'Prensa y contacto','epk.bio50lbl':'Bio 50 palabras','epk.bio150lbl':'Bio 150 palabras','epk.bio300lbl':'Biografía completa','epk.photos':'Fotos en alta resolución','epk.downloadPhoto':'Descargar hi-res','epk.preview':'Vista previa','epk.cv':'Descargar CV','epk.contact':'Contacto para contratación','programs.formation':'Formación','programs.duration':'Duración','programs.idealFor':'Ideal para','about.photoLabel':'Tenor Lírico','rep.allRoles':'Repertorio Operístico Completo','programs.sectionTag':'Programas y colaboraciones','rep.tabOpera':'Roles de ópera','rep.tabArias':'Arias y opereta','rep.tabLied':'Lied y canción de arte','rep.tabTango':'Tango y canciones populares','contact.pressKitPdf':'Dossier de prensa (PDF)','epk.photosIntro':'Imágenes oficiales de prensa para medios, programas e impresión. Uso libre con crédito.','epk.photoCredit':'Fotos para prensa y programa. Crédito: Rolando Guy','epk.copyBio':'⧉ Copiar bio','form.sending':'Enviando...','form.errorSend':'Error al enviar. Escribí a rolandoguy@gmail.com directamente.','vid.showMore':'+ Más vídeos','vid.showLess':'− Ver menos','perf.printAgenda':'Imprimir agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Agenda','perf.printRepertoire':'Repertorio',},
+  it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Stampa','press.tag':'Stampa &amp; Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Stampa e contatto','nav.epk.short':'Stampa e contatto','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa e <em>contatto</em>','epk.tag':'Stampa e contatto','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica hi-res','epk.preview':'Anteprima','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie e operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango e canzoni popolari','contact.pressKitPdf':'Press kit (PDF)','epk.photosIntro':'Immagini ufficiali per stampa, programmi e media. Uso libero con crediti.','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno','perf.printAgenda':'Stampa agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendario','perf.printRepertoire':'Repertorio',},
+  fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Presse','press.tag':'Presse &amp; Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Agenda','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger hi-res','epk.preview':'Aperçu','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias &amp; opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango &amp; chansons','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photosIntro':'Images officielles pour presse, programmes et médias. Libre avec crédit.','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins','perf.printAgenda':'Imprimer l\'agenda','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Agenda','perf.printRepertoire':'Répertoire',},
 };
 function setLang(lang){
   currentLang = lang;
