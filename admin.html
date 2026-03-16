@@ -1239,7 +1239,419 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <div></div>
   </div>
 </footer>
+<button class="admin-trigger" onclick="openAdmin()">✦ admin</button>
+<!-- ADMIN MODAL -->
+<div class="adm" id="adm" onclick="admBgClose(event)">
+ <div class="adm-wrap">
+  <div class="adm-head">
+   <span class="adm-head-title">Panel de Administración · <span id="admLangInd" style="color:var(--text-dim)">EN</span></span>
+   <button class="adm-close" onclick="closeAdmin()">Cerrar ✕</button>
+  </div>
+  <div id="admLockWrap" style="background:var(--surface);padding:40px 32px">
+   <div class="adm-lock">
+    <p>Acceso administrador</p>
+    <div style="font-size:.8rem;color:var(--text-dim);line-height:1.6;text-align:center">
+      Usuario: <span id="admUserEmail" style="color:var(--gold)">—</span>
+    </div>
+    <div class="adm-lock-row" style="justify-content:center">
+     <button class="adm-btn" id="admSignInBtn" onclick="admSignInGoogle()">Entrar con Google</button>
+     <button class="adm-btn" id="admSignOutBtn" onclick="admSignOut()" style="display:none;background:transparent;color:var(--gold);border:1px solid var(--border)">Cerrar sesión</button>
+    </div>
+    <div class="adm-feedback" id="admAuthErr" style="display:block">
+      <span id="admAuthMsg">Iniciá sesión con Google para acceder.</span>
+    </div>
+   </div>
+  </div>
+  <div id="admContent" style="display:none;flex-direction:column;overflow:hidden">
+   <div class="adm-tabs">
+    <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
+    <button class="adm-tab" onclick="admTab('bio')">Biografía</button>
+    <button class="adm-tab" onclick="admTab('rep-opera')">Opera</button>
+    <button class="adm-tab" onclick="admTab('rep-arias')">Arias</button>
+    <button class="adm-tab" onclick="admTab('rep-operetta')">Operetta</button>
+    <button class="adm-tab" onclick="admTab('rep-lived')">Lied</button>
+    <button class="adm-tab" onclick="admTab('rep-tango')">Tango</button>
+    <button class="adm-tab" onclick="admTab('programs')">Programas</button>
+    <button class="adm-tab" onclick="admTab('vid')">Videos</button>
+    <button class="adm-tab" onclick="admTab('photos')">Fotos</button>
+    <button class="adm-tab" onclick="admTab('perf')">Agenda</button>
+    <button class="adm-tab" onclick="admTab('press')">Prensa</button>
+         <button class="adm-tab" onclick="admTab('contact')">Contacto</button>
+    <button class="adm-tab" onclick="admTab('epk')">Press & Contact</button>
+   </div>
+   <div class="adm-body">
+    <!-- HERO -->
+    <div class="adm-panel active" id="admPanel-hero">
+     <div class="adm-section">Hero</div>
+     <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Eyebrow</label><input class="adm-input" id="f-heroEyebrow"></div>
+      <div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-heroSubtitle"></div>
+      <div class="adm-col"><label class="adm-label">Botón 1</label><input class="adm-input" id="f-heroCta1"></div>
+      <div class="adm-col"><label class="adm-label">Botón 2</label><input class="adm-input" id="f-heroCta2"></div>
+     </div>
+     <button class="adm-btn adm-btn-save" onclick="saveSection('hero')">Guardar Hero</button>
+     <div class="adm-feedback" id="fb-hero">¡Guardado!</div>
+    </div>
+    <!-- BIO -->
+    <div class="adm-panel" id="admPanel-bio">
+     <div class="adm-section">Biografía</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-bioH2"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 1</label><textarea class="adm-input" id="f-bioP1" rows="4"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 2</label><textarea class="adm-input" id="f-bioP2" rows="4"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><textarea class="adm-input" id="f-bioQuote" rows="3"></textarea></div></div>
+     <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Guardar Biografía</button>
+     <div class="adm-feedback" id="fb-bio">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Opera -->
+    <div class="adm-panel" id="admPanel-rep-opera">
+     <div class="adm-section">Repertorio — Opera Roles</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-opera" style="max-width:200px" onchange="admPopulate('rep-opera')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+    <div id="repCards-opera"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)">✨ Auto-Ordenar (Estado + Compositor)</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-opera">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Arias -->
+    <div class="adm-panel" id="admPanel-rep-arias">
+     <div class="adm-section">Repertorio — Opera Arias</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-arias" style="max-width:200px" onchange="admPopulate('rep-arias')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-arias"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-arias">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Operetta -->
+    <div class="adm-panel" id="admPanel-rep-operetta">
+     <div class="adm-section">Repertorio — Operetta</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-operetta" style="max-width:200px" onchange="admPopulate('rep-operetta')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-operetta"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-operetta">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Lied -->
+    <div class="adm-panel" id="admPanel-rep-lived">
+     <div class="adm-section">Repertorio — Lied &amp; Art Song</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-lived" style="max-width:200px" onchange="admPopulate('rep-lived')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-lived"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-lived">¡Guardado!</div>
+    </div>
+    <!-- REPERTOIRE: Tango -->
+    <div class="adm-panel" id="admPanel-rep-tango">
+     <div class="adm-section">Repertorio — Tango</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <select class="adm-input" id="repSortStatus-tango" style="max-width:200px" onchange="admPopulate('rep-tango')">
+       <option value="">Orden actual</option>
+       <option value="performed">Performed primero</option>
+       <option value="prepared">Prepared primero</option>
+       <option value="studying">Studying primero</option>
+      </select>
+     </div>
+     <div id="repCards-tango"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Guardar</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-tango">¡Guardado!</div>
+    </div>
+    <!-- PROGRAMS & COLLABORATIONS -->
+    <div class="adm-panel" id="admPanel-programs">
+     <div class="adm-section">Programs &amp; Collaborations — Encabezado</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-programsTitle" placeholder="Programs & Collaborations"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-programsSubtitle"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro (párrafo)</label><textarea class="adm-input" id="f-programsIntro" rows="3"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Nota final (closing note)</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
+     <div class="adm-section">Programas (bloques)</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Ordená con arrastre. Solo los publicados se muestran en la web.</p>
+     <div id="programCards"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+       <button class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir programa</button>
+       <button class="adm-btn adm-btn-save" onclick="saveSection('programs')">Guardar Programas</button>
+     </div>
+     <div class="adm-feedback" id="fb-programs">¡Guardado!</div>
+    </div>
+    <!-- VIDEOS -->
+    <div class="adm-panel" id="admPanel-vid">
+     <div class="adm-section">Videos</div>
+     <div id="vidCards"></div>
+     <button class="adm-btn adm-btn-save" onclick="saveSection('vid')">Guardar Videos</button>
+     <div class="adm-feedback" id="fb-vid">¡Guardado!</div>
+    </div>
+    <!-- PERFORMANCES -->
+    <div class="adm-panel" id="admPanel-perf">
+     <div class="adm-section">Apariencia</div>
+     <div class="adm-grid full"><div class="adm-col">
+       <label class="adm-label">Tamaño del mes — <span id="monthSizeLabel"></span></label>
+       <input type="range" id="monthSizeSlider" min="0.5" max="1.8" step="0.05"
+         style="width:100%;accent-color:var(--gold);margin:8px 0;touch-action:none"
+         oninput="previewMonthSize(this.value)">
+       <button class="adm-btn" style="margin-top:8px" onclick="saveMonthSize()">Guardar tamaño</button>
+     </div></div>
+     <div class="adm-section">Encabezado de Sección</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-perfH2"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Introducción</label><textarea class="adm-input" id="f-perfIntro" rows="3"></textarea></div></div>
+     <button class="adm-btn" style="margin-bottom:20px" onclick="savePerfHeader()">Guardar Encabezado</button>
+     <div class="adm-section">Agregar nueva fecha</div>
+     <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Día</label><input class="adm-input" id="pDay" placeholder="15 o TBA"></div>
+      <div class="adm-col"><label class="adm-label">Mes / Período</label><input class="adm-input" id="pMonth" placeholder="Jun 2025"></div>
+     </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Horario (opcional)</label><input class="adm-input" id="pTime" placeholder="20:00 · o · 19:30 – 21:30"></div></div>
+     <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Tipo de evento</label>
+        <select class="adm-select" id="pType">
+          <option value="concert">Concierto / Concert</option>
+          <option value="opera">Ópera / Opera</option>
+          <option value="recital">Recital / Liederabend</option>
+          <option value="show">Show</option>
+          <option value="gala">Gala</option>
+          <option value="houseconcert">House Concert / Hauskonzert</option>
+          <option value="tango">Tango Night</option>
+          <option value="collaboration">Colaboración / Collaboration</option>
+          <option value="other">Otro / Other</option>
+        </select>
+      </div>
+      <div class="adm-col"><label class="adm-label">Estado</label>
+        <select class="adm-select" id="pStatus">
+          <option value="upcoming">Próximo</option>
+          <option value="current">Producción actual</option>
+          <option value="past">Pasado</option>
+        </select>
+      </div>
+     </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="pTitle" placeholder="Der Vetter aus Dingsda"></div></div>
+     <div class="adm-grid full"><div class="adm-col">
+       <label class="adm-label">Detalle <span style="color:var(--text-faint);font-weight:400">(cualquier idioma — se traducirá automáticamente)</span></label>
+       <div style="display:flex;gap:8px;align-items:center">
+         <input class="adm-input" id="pDetail" placeholder="E. Künneke · Roderich de Weert · Regie: N.N." style="flex:1">
+         <button type="button" onclick="autoTranslateDetail()" id="translateBtn"
+           style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;transition:all .2s;flex-shrink:0">
+           ✦ Auto-traducir
+         </button>
+       </div>
+       <div id="translateStatus" style="font-size:.7rem;color:var(--text-faint);margin-top:6px;min-height:16px"></div>
+       <div id="translatePreviews" style="display:none;margin-top:10px;border:1px solid rgba(212,168,67,.15);border-radius:4px;padding:10px;font-size:.75rem;line-height:1.8">
+         <div style="font-family:var(--ff-caps);font-size:.55rem;color:var(--gold);margin-bottom:6px;letter-spacing:.1em">TRADUCCIONES GENERADAS</div>
+         <div id="tp-en"></div><div id="tp-de"></div>
+         <div id="tp-es"></div><div id="tp-it"></div><div id="tp-fr"></div>
+       </div>
+       <!-- hidden storage fields -->
+       <input type="hidden" id="pDetail_de">
+       <input type="hidden" id="pDetail_es">
+       <input type="hidden" id="pDetail_it">
+       <input type="hidden" id="pDetail_fr">
+       <input type="hidden" id="pDetail_en">
+     </div></div>
+     <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Venue</label><input class="adm-input" id="pVenue" placeholder="Kammeroper Frankfurt"></div>
+      <div class="adm-col"><label class="adm-label">Ciudad</label><input class="adm-input" id="pCity" placeholder="Frankfurt, Germany"></div>
+     </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Foto del venue (URL, opcional)</label><input class="adm-input" id="pVenuePhoto" placeholder="https://example.com/venue.jpg"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Opacidad de la imagen <span id="pVenueOpacityVal" style="color:var(--gold)">50%</span></label><input type="range" min="30" max="100" value="50" id="pVenueOpacity" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pVenueOpacityVal').textContent=this.value+'%'"></div></div>
 
+     <div class="adm-section" style="margin-top:16px;font-size:.7rem">Información detallada (opcional)</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción extendida</label><textarea class="adm-input" id="pExtDesc" rows="3" placeholder="Descripción completa del evento, programa, elenco..."></textarea></div></div>
+     <div class="adm-grid"><div class="adm-col"><label class="adm-label">Precio entradas</label><input class="adm-input" id="pTicketPrice" placeholder="€15 / €25 / Gratis"></div><div class="adm-col"><label class="adm-label">Link del evento (Veranstalter)</label><input class="adm-input" id="pEventLink" placeholder="https://..."></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto del botón del link</label><input class="adm-input" id="pEventLinkLabel" placeholder="Tickets & Info"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Flyer / imagen del evento (URL)</label><input class="adm-input" id="pFlyerImg" placeholder="https://example.com/flyer.jpg"></div></div>
+     <div class="adm-grid"><div class="adm-col"><label class="adm-label">Imagen header del modal (URL, opcional)</label><input class="adm-input" id="pModalImg" placeholder="Vacío = usa foto del venue"></div><div class="adm-col" style="display:flex;align-items:end;padding-bottom:6px"><label style="display:flex;align-items:center;gap:8px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="pModalImgHide" style="accent-color:var(--gold);cursor:pointer"> Sin imagen en modal</label></div></div>
+
+     <button class="adm-btn adm-btn-save" onclick="addPerf()">+ Agregar fecha</button>
+     <div class="adm-feedback" id="fb-perf">¡Agregado!</div>
+     <div class="adm-section" style="margin-top:28px">Fechas actuales</div>
+     <div id="admPerfList"></div>
+    </div>
+    <!-- PHOTOS -->
+    <div class="adm-panel" id="admPanel-photos">
+     <div class="adm-section">Retratos de Estudio</div>
+     <div id="admStudioSlots"></div>
+     <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+       <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+         + Subir foto estudio<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('s',this)">
+       </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="URL de imagen" id="studioUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addPhotoByUrl('s','studioUrlInput')">+ URL</button>
+     </div>
+     <div class="adm-section" style="margin-top:24px">Fotos en Escena</div>
+     <div id="admStageSlots"></div>
+     <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+       <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+         + Subir foto escena<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('t',this)">
+       </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="URL de imagen" id="stageUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addPhotoByUrl('t','stageUrlInput')">+ URL</button>
+     </div>
+     <div class="adm-section" style="margin-top:24px">Backstage</div>
+     <div id="admBackstageSlots"></div>
+     <div style="margin-top:12px">
+       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+       <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
+         + Subir foto<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
+       </label>
+       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:200px" placeholder="URL de imagen (img/foto.jpg)" id="backstageUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addBackstageByUrl()">+ Agregar URL</button>
+       </div>
+     </div>
+     <div class="adm-feedback" id="fb-photos">¡Foto actualizada!</div>
+    </div>
+    <!-- PRESS -->
+    <div class="adm-panel" id="admPanel-press">
+     <div class="adm-section">Prensa · Reseñas</div>
+     <div id="pressAdmList"></div>
+     <div class="adm-section" style="margin-top:24px">Agregar nueva cita</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita (sin comillas)</label><textarea class="adm-input" id="pa-quote" rows="3" placeholder="Das spielfreudige Ensemble begeistert..."></textarea></div></div>
+     <div class="adm-grid">
+       <div class="adm-col"><label class="adm-label">Fuente / Medio</label><input class="adm-input" id="pa-source" placeholder="HR2 · Hessischer Rundfunk"></div>
+       <div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" id="pa-production" placeholder="Der Vetter aus Dingsda · 2025"></div>
+     </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">URL del artículo (opcional)</label><input class="adm-input" id="pa-url" placeholder="https://..."></div></div>
+     <button class="adm-btn adm-btn-save" onclick="addPressQuote()" style="margin-top:16px">+ Agregar cita</button>
+     <div class="adm-feedback" id="fb-press">¡Guardado!</div>
+    </div>
+    <!-- CONTACT -->
+    <div class="adm-panel" id="admPanel-contact">
+     <div class="adm-section">Contacto</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-contactTitle"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><textarea class="adm-input" id="f-contactSub" rows="3"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><input class="adm-input" id="f-contactQuote"></div></div>
+     <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Email</label><input class="adm-input" id="f-contactEmail" placeholder="rolandoguy@gmail.com"></div>
+      <div class="adm-col"><label class="adm-label">Texto botón email</label><input class="adm-input" id="f-contactEmailBtn"></div>
+     </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto botón website</label><input class="adm-input" id="f-contactWebBtn"></div></div>
+     <button class="adm-btn adm-btn-save" onclick="saveSection('contact')">Guardar Contacto</button>
+     <div class="adm-feedback" id="fb-contact">¡Guardado!</div>
+    </div>
+   <div class="adm-panel" id="admPanel-epk">
+
+     <!-- ── BIOS ─────────────────────────────────────────── -->
+     <div class="adm-section">Biografías (Bio Texts)</div>
+     <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
+       Editá los textos en cada idioma. Los cambios se guardan por idioma.
+     </p>
+
+     <!-- Language selector for bios -->
+     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+       <span style="font-size:.7rem;color:var(--text-dim);align-self:center">Idioma:</span>
+       <button class="adm-lang-btn active" id="epkBioLangBtn-en" onclick="epkSetBioLang('en')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--gold);color:#000;border:none;cursor:pointer">EN</button>
+       <button class="adm-lang-btn" id="epkBioLangBtn-de" onclick="epkSetBioLang('de')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">DE</button>
+       <button class="adm-lang-btn" id="epkBioLangBtn-es" onclick="epkSetBioLang('es')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">ES</button>
+       <button class="adm-lang-btn" id="epkBioLangBtn-it" onclick="epkSetBioLang('it')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">IT</button>
+       <button class="adm-lang-btn" id="epkBioLangBtn-fr" onclick="epkSetBioLang('fr')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">FR</button>
+     </div>
+
+     <input type="hidden" id="epkBioActiveLang" value="en">
+
+     <div class="adm-grid full">
+       <div class="adm-col">
+         <label class="adm-label">Bio 50 palabras <span id="epkBio50Count" style="color:var(--gold)"></span></label>
+         <textarea class="adm-input" id="f-epkBio50" rows="3" oninput="epkCountWords('epkBio50Count','f-epkBio50')"></textarea>
+       </div>
+     </div>
+     <div class="adm-grid full">
+       <div class="adm-col">
+         <label class="adm-label">Bio 150 palabras <span id="epkBio150Count" style="color:var(--gold)"></span></label>
+         <textarea class="adm-input" id="f-epkBio150" rows="5" oninput="epkCountWords('epkBio150Count','f-epkBio150')"></textarea>
+       </div>
+     </div>
+     <div class="adm-grid full">
+       <div class="adm-col">
+         <label class="adm-label">Bio completa — Párrafo 1</label>
+         <textarea class="adm-input" id="f-epkBio300p1" rows="4"></textarea>
+       </div>
+     </div>
+     <div class="adm-grid full">
+       <div class="adm-col">
+         <label class="adm-label">Bio completa — Párrafo 2</label>
+         <textarea class="adm-input" id="f-epkBio300p2" rows="4"></textarea>
+       </div>
+     </div>
+     <div class="adm-grid full">
+       <div class="adm-col">
+         <label class="adm-label">Bio completa — Párrafo 3</label>
+         <textarea class="adm-input" id="f-epkBio300p3" rows="4"></textarea>
+       </div>
+     </div>
+     <div class="adm-grid full">
+       <div class="adm-col">
+         <label class="adm-label">Bio completa — Párrafo 4</label>
+         <textarea class="adm-input" id="f-epkBio300p4" rows="4"></textarea>
+       </div>
+     </div>
+     <div class="adm-row" style="margin-bottom:32px">
+       <button class="adm-save" onclick="saveEpkBios()">Guardar Biografías</button>
+       <div class="adm-feedback" id="fb-epkBios">¡Guardado!</div>
+     </div>
+
+     <!-- ── HIGH-RES PHOTOS ─────────────────────────────── -->
+     <div class="adm-section" style="margin-top:24px">Fotos de Prensa (High-Res)</div>
+     <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
+       Agregá URLs de fotos de alta resolución para descargar en la sección Press & Contact.
+     </p>
+     <div id="epkPhotoAdminList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
+     <button onclick="addEpkPhoto()" style="background:transparent;border:1px dashed var(--gold);color:var(--gold);padding:8px 18px;cursor:pointer;font-size:.75rem;width:100%">+ Agregar foto</button>
+     <div class="adm-row" style="margin-top:12px">
+       <button class="adm-save" onclick="saveEpkPhotos()">Guardar Fotos</button>
+       <div class="adm-feedback" id="fb-epkPhotos">¡Guardado!</div>
+     </div>
+
+   </div><!-- admPanel-epk -->
+   </div><!-- adm-body -->
+  </div><!-- admContent -->
+ </div><!-- adm-wrap -->
+</div><!-- adm -->
 <!-- Firebase SDK -->
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
