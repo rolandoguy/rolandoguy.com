@@ -3892,7 +3892,10 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
   document.body.style.opacity = '0';
   document.body.style.transition = 'opacity 0.4s ease';
   try {
-    await loadFromFirestore();
+    await Promise.race([
+      loadFromFirestore(),
+      new Promise(resolve => setTimeout(resolve, 1500))
+    ]);
   } catch(e) {
     console.warn('Could not load from Firestore, using defaults:', e);
   }
