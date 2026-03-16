@@ -370,6 +370,34 @@ section{position:relative;z-index:2}
 .rep-tab:hover{background:var(--surface2);color:var(--text-dim)}
 .rep-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold);cursor:default}
 .rep-desc{font-size:.9rem;color:var(--text-dim);line-height:1.85;max-width:42em;margin:0 0 2.25rem;padding:0}
+.rep-status-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin:-.75rem 0 1.5rem;
+}
+.rep-status-filter-btn{
+  background:transparent;
+  border:none;
+  padding:2px 0;
+  font-family:var(--ff-caps);
+  font-size:.52rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  cursor:pointer;
+  border-bottom:1px solid transparent;
+  transition:color .2s,border-color .2s;
+}
+.rep-status-filter-btn:hover{
+  color:var(--text);
+  border-color:rgba(212,168,67,.18);
+}
+.rep-status-filter-btn.active{
+  color:var(--gold);
+  border-color:var(--gold);
+}
 .opera-grid{display:block;margin-top:0}
 .opera-card{background:var(--surface);padding:28px 24px;transition:background .3s;position:relative;overflow:hidden}
 .opera-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .3s;transform-origin:left}
@@ -514,8 +542,25 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
 /* ── ADMIN ── */
 .admin-trigger{position:fixed;bottom:16px;right:20px;font-family:var(--ff-caps);font-size:.42rem;letter-spacing:.2em;color:transparent;background:transparent;border:1px solid transparent;cursor:none;padding:6px 10px;z-index:500;transition:all .3s}
 .admin-trigger:hover{color:rgba(212,168,67,.3);border-color:rgba(212,168,67,.2)}
-.adm{position:fixed;inset:0;z-index:3000;background:rgba(8,8,12,.97);display:flex;align-items:stretch;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(14px)}
-.adm.open{opacity:1;pointer-events:all}
+/* Admin overlay: fully hidden by default to avoid any flash in public view */
+.adm{
+  position:fixed;
+  inset:0;
+  z-index:3000;
+  background:rgba(8,8,12,.97);
+  display:none;
+  align-items:stretch;
+  justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s;
+  backdrop-filter:blur(14px);
+}
+.adm.open{
+  display:flex;
+  opacity:1;
+  pointer-events:all;
+}
 .adm-wrap{width:min(820px,96vw);display:flex;flex-direction:column;margin:auto;max-height:92vh}
 .adm-head{display:flex;align-items:center;justify-content:space-between;padding:22px 32px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
 .adm-head-title{font-family:var(--ff-caps);font-size:.7rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase}
@@ -682,6 +727,30 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .rep-cell-role { color: var(--text); font-weight: 500; }
 .rep-cell-work { color: var(--text); }
 .rep-cell-composer { color: var(--text-faint); font-size: .8rem; }
+.rep-status{
+  display:inline-block;
+  margin-left:.5em;
+  padding:1px 6px;
+  border-radius:999px;
+  font-family:var(--ff-caps);
+  font-size:.48rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  border:1px solid rgba(120,120,120,.6);
+}
+.rep-status-performed{
+  color:#dcd7c2;
+  border-color:rgba(140,140,140,.9);
+}
+.rep-status-prepared{
+  color:#c0bab0;
+  border-color:rgba(120,120,120,.7);
+}
+.rep-status-studying{
+  color:rgba(180,180,180,.8);
+  border-color:rgba(110,110,110,.5);
+  font-style:italic;
+}
 .rep-empty{padding:1.5rem 1.25rem;border:1px solid var(--border);background:var(--surface);font-size:.88rem;color:var(--text-dim);font-style:italic;text-align:center}
 @media(max-width:600px){
   .rep-table td { padding: .55rem .6rem; font-size: .8rem; }
@@ -990,6 +1059,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <button type="button" class="rep-tab" id="repTabTango" role="tab" aria-selected="false" onclick="setRepCategory('tango')" data-i18n="rep.tabTango">Tango</button>
     </div>
     <p class="rep-desc reveal rd2" id="repIntro" aria-live="polite"></p>
+    <div class="rep-status-filters" id="repStatusFilters" aria-label="Filter opera roles by status">
+      <button type="button" class="rep-status-filter-btn active" data-filter="all" onclick="setRepStatusFilter('all')">All</button>
+      <button type="button" class="rep-status-filter-btn" data-filter="performed" onclick="setRepStatusFilter('performed')">Performed</button>
+      <button type="button" class="rep-status-filter-btn" data-filter="prepared" onclick="setRepStatusFilter('prepared')">Prepared</button>
+      <button type="button" class="rep-status-filter-btn" data-filter="studying" onclick="setRepStatusFilter('studying')">Studying</button>
+    </div>
     <div class="opera-grid" id="operaGrid"></div>
   </div>
 </section>
@@ -1240,9 +1315,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <option value="studying">Studying primero</option>
       </select>
      </div>
-     <div id="repCards-opera"></div>
-     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+    <div id="repCards-opera"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
       <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
+      <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)">✨ Auto-Ordenar (Estado + Compositor)</button>
       <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Guardar</button>
      </div>
      <div class="adm-feedback" id="fb-rep-opera">¡Guardado!</div>
@@ -2051,6 +2127,7 @@ function renderBio() {
 
 // ── Render Repertoire ──
 const NUMS=['I','II','III','IV','V','VI'];
+let repStatusFilter = 'all'; // 'all' | 'performed' | 'prepared' | 'studying'
 function renderRep() {
   const d = getRep();
   const cat = currentRepCategory || 'opera';
@@ -2065,7 +2142,7 @@ function renderRep() {
 
   const allCards = d.cards || [];
   // Filter by category and ignore completely empty placeholder rows
-  const catCards = allCards
+  let catCards = allCards
     .filter(c => {
       const hasContent =
         (c.composer && c.composer.trim()) ||
@@ -2073,20 +2150,39 @@ function renderRep() {
         (c.role && c.role.trim());
       return hasContent && ((c.cat || 'opera') === cat);
     })
-    .slice()
-    .sort((a,b)=>{
-      const dir = repSortDir === 'asc' ? 1 : -1;
-      let va = '', vb = '';
-      if (repSortBy === 'composer') { va = (a.composer||'').toLowerCase(); vb = (b.composer||'').toLowerCase(); }
-      else if (repSortBy === 'opera') { va = (a.opera||'').toLowerCase(); vb = (b.opera||'').toLowerCase(); }
-      else { va = (a.role||'').toLowerCase(); vb = (b.role||'').toLowerCase(); }
-      if (va < vb) return -dir; if (va > vb) return dir;
-      const ac = (a.composer||'').toLowerCase(), bc = (b.composer||'').toLowerCase();
-      if (ac < bc) return -dir; if (ac > bc) return dir;
-      const ao = (a.opera||'').toLowerCase(), bo = (b.opera||'').toLowerCase();
-      if (ao < bo) return -dir; if (ao > bo) return dir;
-      return 0;
-    });
+    .slice();
+
+  // Apply status filter only for Opera Roles
+  if (cat === 'opera' && repStatusFilter !== 'all') {
+    const wanted = repStatusFilter;
+    catCards = catCards.filter(c => (c.status || '').toLowerCase() === wanted);
+  }
+
+  // Sort: for Opera with "All" filter, group by status first, then by current sort key
+  catCards = catCards.sort((a,b)=>{
+    const dir = repSortDir === 'asc' ? 1 : -1;
+    const getStatusOrder = (c)=>{
+      const s = String(c.status||'').toLowerCase();
+      if (s === 'performed') return 0;
+      if (s === 'prepared') return 1;
+      if (s === 'studying') return 2;
+      return 3;
+    };
+    if (cat === 'opera' && repStatusFilter === 'all') {
+      const sa = getStatusOrder(a), sb = getStatusOrder(b);
+      if (sa !== sb) return (sa - sb);
+    }
+    let va = '', vb = '';
+    if (repSortBy === 'composer') { va = (a.composer||'').toLowerCase(); vb = (b.composer||'').toLowerCase(); }
+    else if (repSortBy === 'opera') { va = (a.opera||'').toLowerCase(); vb = (b.opera||'').toLowerCase(); }
+    else { va = (a.role||'').toLowerCase(); vb = (b.role||'').toLowerCase(); }
+    if (va < vb) return -dir; if (va > vb) return dir;
+    const ac = (a.composer||'').toLowerCase(), bc = (b.composer||'').toLowerCase();
+    if (ac < bc) return -dir; if (ac > bc) return dir;
+    const ao = (a.opera||'').toLowerCase(), bo = (b.opera||'').toLowerCase();
+    if (ao < bo) return -dir; if (ao > bo) return dir;
+    return 0;
+  });
 
   if(!catCards.length){
     const emptyMsg = (Ti[currentLang] || Ti.en)['rep.empty'] || 'No repertoire has been added yet for this category.';
@@ -2095,6 +2191,9 @@ function renderRep() {
   }
 
   const isOpera = (cat === 'opera');
+  // Show status filters only for Opera Roles
+  const filtersEl = document.getElementById('repStatusFilters');
+  if (filtersEl) filtersEl.style.display = isOpera ? 'flex' : 'none';
   const thWork = isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work');
   const tableHead = isOpera
     ? `<thead><tr>
@@ -2108,8 +2207,15 @@ function renderRep() {
       </tr></thead>`;
 
   const esc = (s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const statusBadge = (card) => {
+    const s = String(card.status||'').toLowerCase();
+    if (s === 'performed') return '<span class="rep-status rep-status-performed">Performed</span>';
+    if (s === 'prepared')  return '<span class="rep-status rep-status-prepared">Prepared</span>';
+    if (s === 'studying')  return '<span class="rep-status rep-status-studying">Studying</span>';
+    return '';
+  };
   const row = (card) => isOpera
-    ? `<tr><td class="rep-cell-role">${esc(card.role)}</td><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`
+    ? `<tr><td class="rep-cell-role">${esc(card.role)} ${statusBadge(card)}</td><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`
     : `<tr><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`;
 
   g.innerHTML = `<div class="rep-category">
@@ -2136,12 +2242,24 @@ function setRepCategory(cat){
     btn.classList.toggle('active', isActive);
     btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
+  // Reset status filter when changing category
+  if (cat !== 'opera') repStatusFilter = 'all';
   renderRep();
 }
 
 function setRepSort(col){
   if (repSortBy === col) repSortDir = repSortDir === 'asc' ? 'desc' : 'asc';
   else { repSortBy = col; repSortDir = 'asc'; }
+  renderRep();
+}
+
+function setRepStatusFilter(filter){
+  repStatusFilter = filter || 'all';
+  const buttons = document.querySelectorAll('.rep-status-filter-btn');
+  buttons.forEach(btn=>{
+    const val = btn.getAttribute('data-filter');
+    btn.classList.toggle('active', val === repStatusFilter);
+  });
   renderRep();
 }
 
@@ -2591,6 +2709,26 @@ function duplicateRepCard(cat, localIdx) {
   allCards.splice(globalIdx + 1, 0, copy);
   save('rg_rep_cards', allCards);
   admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
+}
+
+function autoSortOperaRoles() {
+  const allCards = (getRep().cards || []).slice();
+  const opera = allCards.filter(c => (c.cat || 'opera') === 'opera');
+  const others = allCards.filter(c => (c.cat || 'opera') !== 'opera');
+  const statusOrder = {performed:0, prepared:1, studying:2};
+  opera.sort((a,b)=>{
+    const sa = statusOrder[(a.status||'performed').toLowerCase()] ?? 3;
+    const sb = statusOrder[(b.status||'performed').toLowerCase()] ?? 3;
+    if (sa !== sb) return sa - sb;
+    const ca = (a.composer||'').toLowerCase();
+    const cb = (b.composer||'').toLowerCase();
+    if (ca < cb) return -1;
+    if (ca > cb) return 1;
+    return 0;
+  });
+  const newCards = others.concat(opera);
+  save('rg_rep_cards', newCards);
+  admTab('rep-opera');
 }
 
 // ── Programs admin helpers ──
