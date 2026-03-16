@@ -547,7 +547,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
   position:fixed;
   inset:0;
   z-index:3000;
-  background:rgba(8,8,12,.97);
+  background:var(--bg);
   display:none;
   align-items:stretch;
   justify-content:center;
@@ -561,7 +561,13 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
   opacity:1;
   pointer-events:all;
 }
-.adm-wrap{width:min(820px,96vw);display:flex;flex-direction:column;margin:auto;max-height:92vh}
+.adm-wrap{
+  width:100%;
+  max-width:1200px;
+  display:flex;
+  flex-direction:column;
+  max-height:100vh;
+}
 .adm-head{display:flex;align-items:center;justify-content:space-between;padding:22px 32px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
 .adm-head-title{font-family:var(--ff-caps);font-size:.7rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase}
 .adm-close{font-size:1rem;cursor:none;color:var(--text-faint);background:none;border:none;transition:color .2s;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.15em;padding:4px 10px}
@@ -575,7 +581,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
   overflow-x:auto;
   flex-wrap:nowrap;
 }
-.adm-tabs::-webkit-scrollbar{height:0}
+.adm-tabs::-webkit-scrollbar{display:none}
 .adm-tab{
   font-family:var(--ff-caps);
   font-size:.52rem;
@@ -1243,32 +1249,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
   </div>
 </section>
-<footer>
-  <div class="footer-inner">
-    <div>
-      <div class="footer-logo">Rolando Guy · Tenor</div>
-      <div class="footer-tagline" data-i18n="footer.tagline">Argentinian/Italian Tenor based in Berlin</div>
-      <div style="display:flex;gap:12px;margin-top:14px;align-items:center;justify-content:flex-start;flex-wrap:wrap">
-        <a href="https://www.instagram.com/rolando.guy.tenor/" target="_blank" rel="noopener" style="color:var(--text-faint);text-decoration:none;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--border);padding:6px 16px;transition:all .3s;cursor:none" onmouseenter="this.style.color='var(--gold)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--text-faint)';this.style.borderColor='var(--border)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="vertical-align:middle;margin-right:5px"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>Instagram</a>
-        <a href="https://www.youtube.com/@rolandoguytenor" target="_blank" rel="noopener" style="color:var(--text-faint);text-decoration:none;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--border);padding:6px 16px;transition:all .3s;cursor:none" onmouseenter="this.style.color='var(--gold)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--text-faint)';this.style.borderColor='var(--border)'"><svg width="14" height="10" viewBox="0 0 24 17" fill="currentColor" style="vertical-align:middle;margin-right:5px"><path d="M23.5 2.7s-.3-1.9-1.1-2.6C21.4-.8 20.3-.8 19.8-.7 16.5-1 12-1 12-1s-4.5 0-7.8.3c-.5 0-1.6.1-2.6 1.1C.8.9.5 2.8.5 2.8S.2 5 .2 7.2v2c0 2.2.3 4.4.3 4.4s.3 1.9 1.1 2.6c1 1 2.3.9 2.9 1C6.4 17.4 12 17.4 12 17.4s4.5 0 7.8-.2c.5-.1 1.6-.1 2.6-1.1.8-.7 1.1-2.6 1.1-2.6s.3-2.2.3-4.4v-2C23.8 5 23.5 2.7 23.5 2.7zM9.7 12V5.4l7 3.3-7 3.3z"/></svg>YouTube</a>
-        <a href="https://www.facebook.com/RolandoGuyTenor/" target="_blank" rel="noopener" style="color:var(--text-faint);text-decoration:none;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--border);padding:6px 16px;transition:all .3s;cursor:none" onmouseenter="this.style.color='var(--gold)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--text-faint)';this.style.borderColor='var(--border)'"><svg width="8" height="14" viewBox="0 0 10 18" fill="currentColor" style="vertical-align:middle;margin-right:5px"><path d="M9 0H6.5C4 0 2.5 1.5 2.5 4v2.5H0V9.5h2.5V18h3V9.5h2.5L8.5 6.5H5.5V4.2C5.5 3.4 5.9 3 6.7 3H9V0z"/></svg>Facebook</a>
-      </div>
-    </div>
-    <div>
-      <div class="footer-ornament">✦</div>
-      <div class="footer-copy">© 2026 Rolando Guy · <span data-i18n="footer.rights">All rights reserved</span></div>
-      <div class="footer-location">Buenos Aires · Berlin</div>
-    </div>
-    <div></div>
-  </div>
-</footer>
-<button class="admin-trigger" onclick="openAdmin()">✦ admin</button>
 <!-- ADMIN MODAL -->
 <div class="adm" id="adm" onclick="admBgClose(event)">
  <div class="adm-wrap">
   <div class="adm-head">
    <span class="adm-head-title">Panel de Administración · <span id="admLangInd" style="color:var(--text-dim)">EN</span></span>
-   <button class="adm-close" onclick="closeAdmin()">Cerrar ✕</button>
+   <a href="https://www.rolandoguy.com" target="_blank" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
   </div>
   <div id="admLockWrap" style="background:var(--surface);padding:40px 32px">
    <div class="adm-lock">
