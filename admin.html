@@ -566,8 +566,31 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
 .adm-head-title{font-family:var(--ff-caps);font-size:.7rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase}
 .adm-close{font-size:1rem;cursor:none;color:var(--text-faint);background:none;border:none;transition:color .2s;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.15em;padding:4px 10px}
 .adm-close:hover{color:var(--gold)}
-.adm-tabs{display:flex;gap:1px;background:var(--border);border-bottom:1px solid var(--border);flex-shrink:0}
-.adm-tab{font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--text-faint);text-transform:uppercase;padding:11px 18px;background:var(--surface);cursor:none;border:none;transition:all .25s;flex:1;text-align:center}
+.adm-tabs{
+  display:flex;
+  gap:1px;
+  background:var(--border);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  overflow-x:auto;
+  flex-wrap:nowrap;
+}
+.adm-tabs::-webkit-scrollbar{height:0}
+.adm-tab{
+  font-family:var(--ff-caps);
+  font-size:.52rem;
+  letter-spacing:.15em;
+  color:var(--text-faint);
+  text-transform:uppercase;
+  padding:11px 18px;
+  background:var(--surface);
+  cursor:none;
+  border:none;
+  transition:all .25s;
+  flex:0 0 auto;
+  white-space:nowrap;
+  text-align:center;
+}
 .adm-tab:hover{background:var(--surface2);color:var(--text-dim)}
 .adm-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold)}
 .adm-body{flex:1;overflow-y:auto;padding:28px 32px;background:var(--surface)}
@@ -4334,5 +4357,13 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
     </div>
   </div>
 </div>
+<script>
+  // Auto-open admin overlay on page load
+  if (typeof openAdmin === 'function') {
+    window.addEventListener('DOMContentLoaded', function () {
+      openAdmin();
+    });
+  }
+</script>
 </body>
 </html>
