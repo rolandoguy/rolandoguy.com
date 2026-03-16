@@ -2031,7 +2031,7 @@ function renderPerfs() {
         const timeFmts = {en:t=>t, de:t=>t+' Uhr', es:t=>t+' h', it:t=>'ore '+t, fr:t=>t.replace(':','h')};
         return '<div class="perf-time">' + (timeFmts[currentLang]||timeFmts.en)(cleanTime) + '</div>';
       })();
-      const venueCity = p.venue ? '<a href="https://www.google.com/maps/search/'+encodeURIComponent(p.venue+(p.city?' '+p.city:''))+'" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">\ud83d\udccd </span>'+p.venue+(p.city?' \u00b7 '+p.city:'')+' <span class="perf-maps-hint">\u2192 Maps</span></a>' : '';
+      const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ Maps</span></a>' : '';
       const detail = (p["detail_"+currentLang]||p.detail)||"";
       const pastClass = p.status==='past' ? ' perf-item-past' : '';
       const hasVenuePhoto = p.venuePhoto && p.venuePhoto.trim();
@@ -3183,7 +3183,7 @@ function openEventModal(perfId){
   // Maps link
   const mapsEl = document.getElementById('emMapsLink');
   if(p.venue){
-    mapsEl.href = 'https://www.google.com/maps/search/'+encodeURIComponent(p.venue+(p.city?' '+p.city:''));
+    mapsEl.href = 'https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : ''));
     mapsEl.style.display = '';
   } else { mapsEl.style.display = 'none'; }
   document.getElementById('eventModal').style.display = '';
