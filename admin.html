@@ -3154,18 +3154,29 @@ const Ti={
 };
 function setLang(lang){
   currentLang = lang;
-  ['en','de','es','it','fr'].forEach(l=>document.getElementById('btn-'+l).classList.toggle('active',l===lang));
+  ['en','de','es','it','fr'].forEach(l => {
+    const btn = document.getElementById('btn-'+l);
+    if (btn) btn.classList.toggle('active', l===lang);
+  });
   document.documentElement.lang=lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(Ti[lang]&&Ti[lang][k]!==undefined)el.innerHTML=Ti[lang][k];});
   document.querySelectorAll('[data-ph]').forEach(el=>{const k=el.getAttribute('data-ph');if(Ti[lang]&&Ti[lang][k]!==undefined)el.placeholder=Ti[lang][k];});
-  // Re-render all content sections with new language
-  renderHero(); renderBio(); renderRep(); renderPrograms(); renderPerfs(); renderContact(); renderEpk(); updatePressKitLink();
-  // Update admin lang indicator if panel is open
+  
+  // Re-render con cinturones de seguridad individuales
+  try{ if(typeof renderHero==='function') renderHero(); }catch(e){}
+  try{ if(typeof renderBio==='function') renderBio(); }catch(e){}
+  try{ if(typeof renderRep==='function') renderRep(); }catch(e){}
+  try{ if(typeof renderPrograms==='function') renderPrograms(); }catch(e){}
+  try{ if(typeof renderPerfs==='function') renderPerfs(); }catch(e){}
+  try{ if(typeof renderContact==='function') renderContact(); }catch(e){}
+  try{ if(typeof renderEpk==='function') renderEpk(); }catch(e){}
+  try{ if(typeof updatePressKitLink==='function') updatePressKitLink(); }catch(e){}
+
   const ind = document.getElementById('admLangInd');
   if(ind) ind.textContent = lang.toUpperCase();
-  // Re-populate admin if open and unlocked
-  if(admUnlocked) admPopulate(admCurTab);
-  // Sync mobile lang buttons
+  if(typeof admUnlocked !== 'undefined' && admUnlocked) {
+     try{ admPopulate(admCurTab); }catch(e){}
+  }
   ['en','de','es','it','fr'].forEach(l=>{
     const mb=document.getElementById('mob-btn-'+l);
     if(mb) mb.classList.toggle('active',l===lang);
@@ -4321,7 +4332,6 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
 
 // ── Async boot with Firestore ──
 (async () => {
-  // Show loading state
   document.body.style.opacity = '0';
   document.body.style.transition = 'opacity 0.4s ease';
   try {
@@ -4330,12 +4340,20 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
       new Promise(resolve => setTimeout(resolve, 1500))
     ]);
   } catch(e) {
-    console.warn('Could not load from Firestore, using defaults:', e);
+    console.warn('Firestore load timeout/error:', e);
   }
-  renderAll(); loadMonthSize();
-  setLang('en');
-  renderPhotoGallery();
-  document.body.style.opacity = '1';
+
+  try {
+    if(typeof renderAll === 'function') renderAll();
+    if(typeof loadMonthSize === 'function') loadMonthSize();
+    setLang('en');
+    if(typeof renderPhotoGallery === 'function') renderPhotoGallery();
+  } catch(e) {
+    console.error('Error rendering content:', e);
+  } finally {
+    // ESTA ES LA MAGIA: Pase lo que pase o falle lo que falle, la pantalla se encenderá SIEMPRE
+    document.body.style.opacity = '1';
+  }
 })();
 </script>
 
