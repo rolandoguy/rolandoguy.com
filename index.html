@@ -1717,16 +1717,18 @@ function renderBio() {
 const NUMS=['I','II','III','IV','V','VI'];
 let repStatusFilter = 'all'; // 'all' | 'performed' | 'prepared' | 'studying'
 function renderRep() {
-  const d = getRep();
+  const d = getRep ? getRep() : {h2:'', intro:'', cards:[]};
   const cat = currentRepCategory || 'opera';
   const t = Ti[currentLang] || Ti.en;
-  document.getElementById('repH2').innerHTML = d.h2;
+  const h2El = document.getElementById('repH2');
+  if (h2El) h2El.innerHTML = d.h2 || '';
   const repIntroLineEl = document.getElementById('repIntroLine');
   if (repIntroLineEl) repIntroLineEl.textContent = t['rep.introLine'] || '';
   const descKey = 'rep.desc' + (cat === 'opera' ? 'Opera' : cat === 'arias' ? 'Arias' : cat === 'operetta' ? 'Operetta' : cat === 'lied' ? 'Lied' : 'Tango');
   const repIntroEl = document.getElementById('repIntro');
   if (repIntroEl) repIntroEl.textContent = t[descKey] || '';
   const g = document.getElementById('operaGrid');
+  if (!g) return;
 
   const allCards = d.cards || [];
   // Filter by category and ignore completely empty placeholder rows
@@ -1985,7 +1987,7 @@ function translateMonth(monthStr) {
   return result;
 }
 function renderPerfs() {
-  const perfs = load('rg_perfs') || DEFAULTS.perfs;
+  const perfs = load('rg_perfs') || DEFAULTS.perfs || [];
   const list = document.getElementById('perfList');
   if(!list) return;
   const sortDate = p => {
@@ -1997,7 +1999,7 @@ function renderPerfs() {
   const upcoming = perfs.filter(p=>p.status!=='past').sort((a,b)=>sortDate(a)-sortDate(b));
   const past = perfs.filter(p=>p.status==='past').sort((a,b)=>sortDate(b)-sortDate(a));
   const visible = showPastPerfs ? [...upcoming,...past] : upcoming;
-  const perfLang = get('perf');
+  const perfLang = get('perf') || {};
   const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
   // Group by year
   const groups = {};
@@ -2019,7 +2021,7 @@ function renderPerfs() {
     html += '<div class="perf-year-group'+(g.past?' perf-row-past':'')+'">';
     html += '<div class="perf-year-label">'+g.year+'</div>';
     g.items.forEach((p,i) => {
-      const typeLabel = types[p.type] || p.type || types['concert'];
+      const typeLabel = types[p?.type] || p?.type || types['concert'];
       const badge = p.status==='current'
         ? '<div class="perf-badge">'+typeLabel+'</div>'
         : p.status==='past'
@@ -2604,8 +2606,20 @@ function injectEventSchema() {
   document.head.appendChild(script);
 }
 function renderAll() {
-  renderHero(); renderBio(); renderRep(); renderPrograms(); renderVideos(); renderPerfs(); renderPress(); renderContact(); renderEpk();
-  injectEventSchema();
+  const safe = (label, fn) => {
+    try { fn(); }
+    catch (e) { console.error('Error in '+label+':', e); }
+  };
+  safe('renderHero', () => renderHero && renderHero());
+  safe('renderBio', () => renderBio && renderBio());
+  safe('renderRep', () => renderRep && renderRep());
+  safe('renderPrograms', () => renderPrograms && renderPrograms());
+  safe('renderVideos', () => renderVideos && renderVideos());
+  safe('renderPerfs', () => renderPerfs && renderPerfs());
+  safe('renderPress', () => renderPress && renderPress());
+  safe('renderContact', () => renderContact && renderContact());
+  safe('renderEpk', () => renderEpk && renderEpk());
+  safe('injectEventSchema', () => injectEventSchema && injectEventSchema());
 }
 
 // ── Cursor ──

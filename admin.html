@@ -3025,8 +3025,20 @@ function injectEventSchema() {
   document.head.appendChild(script);
 }
 function renderAll() {
-  renderHero(); renderBio(); renderRep(); renderPrograms(); renderVideos(); renderPerfs(); renderPress(); renderContact(); renderEpk();
-  injectEventSchema();
+  const safe = (label, fn) => {
+    try { fn(); }
+    catch (e) { console.error('Error in '+label+':', e); }
+  };
+  safe('renderHero', () => renderHero && renderHero());
+  safe('renderBio', () => renderBio && renderBio());
+  safe('renderRep', () => renderRep && renderRep());
+  safe('renderPrograms', () => renderPrograms && renderPrograms());
+  safe('renderVideos', () => renderVideos && renderVideos());
+  safe('renderPerfs', () => renderPerfs && renderPerfs());
+  safe('renderPress', () => renderPress && renderPress());
+  safe('renderContact', () => renderContact && renderContact());
+  safe('renderEpk', () => renderEpk && renderEpk());
+  safe('injectEventSchema', () => injectEventSchema && injectEventSchema());
 }
 
 // ── Cursor ──
