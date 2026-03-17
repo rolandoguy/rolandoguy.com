@@ -2102,6 +2102,20 @@ let currentRepCategory = 'opera';
 let repSortBy = 'composer'; // 'role' | 'opera' | 'composer'
 let repSortDir = 'asc';     // 'asc' | 'desc'
 
+// Helper: normalise Firestore payloads that may be wrapped ({items:[]}, {perfs:[]}, etc.)
+function normalizeArrayData(raw, preferredKeys = []) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') {
+    for (const key of preferredKeys) {
+      if (Array.isArray(raw[key])) return raw[key];
+    }
+  }
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    console.warn('normalizeArrayData: unexpected object shape', raw);
+  }
+  return [];
+}
+
 // load() and save() defined above via Firebase
 
 // Get content: lang-specific custom override → lang default → fallback to 'en'
@@ -2145,8 +2159,14 @@ function getPrograms() {
 }
 function getRep() {
   const langData = get('rep');
-  let cards = load('rg_rep_cards') || DEFAULTS.rep.cards;
-  if (!Array.isArray(cards)) cards = [];
+  const raw = load('rg_rep_cards');
+  let cards = normalizeArrayData(raw, ['cards','items','value','data']);
+  if (!cards.length) {
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      console.warn('getRep: unexpected rg_rep_cards shape, falling back to DEFAULTS', raw);
+    }
+    cards = DEFAULTS.rep.cards || [];
+  }
   // Ensure every card has cat so filtering works (opera, arias, operetta, lied, tango)
   cards = cards.map(c => {
     const cat = (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera';
@@ -2596,13 +2616,23 @@ function translateMonth(monthStr) {
   });
   return result;
 }
+function getPerfs() {
+  const raw = load('rg_perfs');
+  const perfs = normalizeArrayData(raw, ['perfs','items','value','data']);
+  if (!perfs.length) {
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      console.warn('getPerfs: unexpected rg_perfs shape, falling back to DEFAULTS', raw);
+    }
+  }
+  return perfs.length ? perfs : (DEFAULTS.perfs || []);
+}
+
 function renderPerfs() {
   const list = document.getElementById('perfList');
   if(!list) return;
   // Clear immediately to avoid showing stale or default data before Firestore load
   list.innerHTML = '';
-  const loaded = load('rg_perfs');
-  const perfs = Array.isArray(loaded) ? loaded : (DEFAULTS.perfs || []);
+  const perfs = getPerfs();
   const sortDate = p => {
     if(p.sortDate) return new Date(p.sortDate);
     const str = (p.day && p.day!=='TBA' ? p.day+' ' : '1 ') + (p.month || 'Jan 2099');
@@ -4127,7 +4157,7 @@ function savePerfHeader(){
 }
 
 // ── Performances CRUD ──
-function getPerfs(){ return load('rg_perfs') || DEFAULTS.perfs; }
+// Admin helpers use the same getPerfs() implementation
 function savePerfs(arr){ save('rg_perfs', arr); }
 function nextPerfId(arr){return arr.length?Math.max(...arr.map(p=>p.id))+1:1;}
 
