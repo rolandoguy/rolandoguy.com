@@ -2071,7 +2071,12 @@ function getRep() {
   let cards = load('rg_rep_cards') || DEFAULTS.rep.cards;
   if (!Array.isArray(cards)) cards = [];
   // Ensure every card has cat so filtering works (opera, arias, operetta, lied, tango)
-  cards = cards.map(c => ({ ...c, cat: (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera' }));
+  cards = cards.map(c => {
+    const cat = (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera';
+    // For Lied & Art Song, ensure a category field exists so we can group on the frontend
+    const category = (cat === 'lied') ? (c.category || 'Deutsches Lied') : c.category;
+    return { ...c, cat, category };
+  });
   return { h2: langData.h2, intro: langData.intro, cards };
 }
 function renderHero() {
@@ -3643,6 +3648,13 @@ function admPopulate(name){
     const div = document.getElementById('repCards-'+tabSuffix);
     if (!div) return;
     const statusColors = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
+    const liedCategories = [
+      'Deutsches Lied',
+      'Italian Art Song & Canzone',
+      'Canción de Arte Argentina',
+      'Russian Art Song',
+      'English Art Song'
+    ];
     const repEsc = (s)=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     div.innerHTML = catCards.map((card, localIdx)=>`
       <div class="adm-card-preview drag-item" id="rc-card-${cat}-${localIdx}" draggable="true"
@@ -3675,6 +3687,14 @@ function admPopulate(name){
               ${['IT','DE','FR','EN','LA','ES'].map(l=>`<option value="${l}" ${(card.lang||'IT')===l?'selected':''}>${l}</option>`).join('')}
             </select>
           </div>
+          ${cat === 'lied' ? `
+          <div class="adm-col">
+            <label class="adm-label">Categoría</label>
+            <select class="adm-input" id="rc-${cat}-${localIdx}-category">
+              ${liedCategories.map(opt=>`<option value="${opt}" ${(card.category||'Deutsches Lied')===opt?'selected':''}>${opt}</option>`).join('')}
+            </select>
+          </div>
+          ` : ''}
           ${isOpera ? `
           <div class="adm-col"><label class="adm-label">Estado</label>
             <select class="adm-input" id="rc-${cat}-${localIdx}-status">
@@ -3810,6 +3830,7 @@ function saveSection(name){
         role: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'') : '',
         lang: (document.getElementById('rc-'+cat+'-'+localIdx+'-lang')||{}).value||'IT',
         status: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed') : 'performed',
+        category: (cat === 'lied') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-category')||{}).value||'Deutsches Lied') : (getRep().cards[localIdx]||{}).category,
         cat: cat
       });
     }

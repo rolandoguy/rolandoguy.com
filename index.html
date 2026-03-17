@@ -699,6 +699,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 /* ── Repertoire (curated list, no status) ── */
 .rep-category { margin-bottom: 0; }
+.rep-category-subtitle{
+  margin: 1.6rem 0 .4rem;
+  font-family: var(--ff-caps);
+  font-size: .62rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
 .rep-table {
   width: 100%; border-collapse: collapse;
   font-family: var(--ff-body); font-size: .84rem;
@@ -2151,7 +2159,11 @@ function getRep() {
   let cards = load('rg_rep_cards') || DEFAULTS.rep.cards;
   if (!Array.isArray(cards)) cards = [];
   // Ensure every card has cat so filtering works (opera, arias, operetta, lied, tango)
-  cards = cards.map(c => ({ ...c, cat: (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera' }));
+  cards = cards.map(c => {
+    const cat = (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera';
+    const category = (cat === 'lied') ? (c.category || 'Deutsches Lied') : c.category;
+    return { ...c, cat, category };
+  });
   return { h2: langData.h2, intro: langData.intro, cards };
 }
 function renderHero() {
@@ -2269,12 +2281,41 @@ function renderRep() {
     ? `<tr><td class="rep-cell-role">${esc(card.role)} ${statusBadge(card)}</td><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`
     : `<tr><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`;
 
-  g.innerHTML = `<div class="rep-category">
-    <table class="rep-table">
-      ${tableHead}
-      <tbody>${catCards.map(c => row(c)).join('')}</tbody>
-    </table>
-  </div>`;
+  // For Lied & Art Song, group entries by category with a small subtitle
+  if (cat === 'lied') {
+    const categoryOrder = [
+      'Deutsches Lied',
+      'Italian Art Song & Canzone',
+      'Canción de Arte Argentina',
+      'Russian Art Song',
+      'English Art Song'
+    ];
+    const groups = {};
+    catCards.forEach(card => {
+      const key = card.category || 'Deutsches Lied';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(card);
+    });
+    let html = '<div class="rep-category">';
+    categoryOrder.forEach(catName => {
+      const list = groups[catName];
+      if (!list || !list.length) return;
+      html += `<h3 class="rep-category-subtitle">${esc(catName)}</h3>
+      <table class="rep-table">
+        ${tableHead}
+        <tbody>${list.map(c => row(c)).join('')}</tbody>
+      </table>`;
+    });
+    html += '</div>';
+    g.innerHTML = html;
+  } else {
+    g.innerHTML = `<div class="rep-category">
+      <table class="rep-table">
+        ${tableHead}
+        <tbody>${catCards.map(c => row(c)).join('')}</tbody>
+      </table>
+    </div>`;
+  }
 
   document.querySelectorAll('#operaGrid .reveal').forEach(el=>obs.observe(el));
 }
