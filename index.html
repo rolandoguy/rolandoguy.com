@@ -2256,7 +2256,16 @@ function renderRep() {
   const isOpera = (cat === 'opera');
   // Show status filters only for Opera Roles
   const filtersEl = document.getElementById('repStatusFilters');
-  if (filtersEl) filtersEl.style.display = isOpera ? 'flex' : 'none';
+  if (filtersEl) {
+    filtersEl.style.display = isOpera ? 'flex' : 'none';
+    // Ocultar "Studying" si no hay ningún rol con ese estado
+    const studyingBtn = filtersEl.querySelector('[data-filter=\"studying\"]');
+    const hasStudying = allCards.some(c =>
+      (c.cat || 'opera') === 'opera' &&
+      String(c.status || '').toLowerCase() === 'studying'
+    );
+    if (studyingBtn) studyingBtn.style.display = hasStudying ? '' : 'none';
+  }
   const thWork = isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work');
   const tableHead = isOpera
     ? `<thead><tr>
