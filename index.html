@@ -429,17 +429,19 @@ section{position:relative;z-index:2}
 .videos-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px}
 .videos-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.1;color:var(--text)}
 .videos-header h2 em{font-style:italic;color:var(--gold)}
-.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.video-card{position:relative;overflow:hidden;cursor:none;background:var(--surface);text-decoration:none;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:2px;transition:border-color 0.3s}
-.video-card:hover{border-color:var(--gold)}
+.video-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.video-category{grid-column:1/-1;margin-bottom:26px}
+.video-category-title{margin:0 0 8px;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-dim)}
+.video-card{position:relative;overflow:hidden;cursor:none;background:var(--surface);text-decoration:none;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:4px;transition:border-color 0.3s,box-shadow 0.3s,transform 0.3s;box-shadow:0 8px 20px rgba(0,0,0,.35);margin:4px}
+.video-card:hover{border-color:var(--gold);box-shadow:0 14px 32px rgba(0,0,0,.55);transform:translateY(-2px)}
 .video-thumb-wrap{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,#1a1220,#0e0e18)}
 .video-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s,filter .5s;filter:brightness(.82)}
 .video-card:hover .video-thumb{transform:scale(1.04);filter:brightness(1)}
 .video-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2}
-.play-circle{width:58px;height:58px;border:1px solid rgba(212,168,67,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(13,13,18,.5);backdrop-filter:blur(4px);transition:all .3s}
+.play-circle{width:52px;height:52px;border:1px solid rgba(212,168,67,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(13,13,18,.5);backdrop-filter:blur(4px);transition:all .3s}
 .play-circle svg{fill:var(--gold);margin-left:4px}
-.video-card:hover .play-circle{background:rgba(212,168,67,.18);border-color:var(--gold);transform:scale(1.1)}
-.video-info-bar{padding:18px 24px;background:var(--surface);border-top:1px solid var(--border);flex-grow:1;display:flex;flex-direction:column;justify-content:center}
+.video-card:hover .play-circle{background:rgba(212,168,67,.18);border-color:var(--gold);transform:scale(1.08)}
+.video-info-bar{padding:14px 18px;background:var(--surface2);border-top:1px solid var(--border);flex-grow:1;display:flex;flex-direction:column;justify-content:center}
 .video-tag{font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:3px}
 .video-title{font-family:var(--ff-title);font-size:1.08rem;font-style:italic;color:var(--text);line-height:1.3}
 .video-sub{font-size:.73rem;color:var(--text-dim);margin-top:2px}
@@ -2056,10 +2058,12 @@ const DEFAULTS = {
   vid: {
     h2: 'On Stage &amp; <em>In Concert</em>',
     videos: [
-      {id:'zDgSZm9WvYc', tag:'Featured · 2024',    title:"Libiamo ne' lieti calici",    sub:'La Traviata · Verdi · Waldorf Astoria Berlin'},
-      {id:'wWmlrZ6BLK0', tag:'Opera · The Cast',   title:'Chi mi frena in tal momento', sub:'Lucia di Lammermoor · Donizetti'},
-      {id:'uSyL6iWLtmA', tag:'Competition · 2018', title:'Il lamento di Federico',      sub:"L'Arlesiana · Cilea · Eva Marton Competition"},
-      {id:'-t5fr1m_mnc', tag:'Recital · Lied',     title:'Die Lorelei',                 sub:'Franz Liszt · Recital', hidden:true},
+      // Opera & Lied
+      {id:'-t5fr1m_mnc', group:'opera_lied', tag:'Recital · Lied',     title:'Die Lorelei',                 sub:'Franz Liszt · Live recital'},
+      {id:'uSyL6iWLtmA', group:'opera_lied', tag:'Competition · 2018', title:'Il lamento di Federico',      sub:"L'Arlesiana · Cilea · Eva Marton Competition"},
+      {id:'wWmlrZ6BLK0', group:'opera_lied', tag:'Opera · The Cast',   title:'Chi mi frena in tal momento', sub:'Lucia di Lammermoor · Donizetti · Ensemble scene'},
+      // Gala & Cross-over
+      {id:'zDgSZm9WvYc', group:'gala_crossover', tag:'Gala · 2024',    title:"Libiamo ne' lieti calici",    sub:'La Traviata · Verdi · Waldorf Astoria Berlin'},
     ]
   },
   rep: {
@@ -2462,11 +2466,9 @@ function renderVideos() {
   const d = getVid();
   const vidH2 = (Ti[currentLang]&&Ti[currentLang]['vid.h2']) ? Ti[currentLang]['vid.h2'] : d.h2;
   document.getElementById('vidH2').innerHTML = vidH2;
-  const vids = d.videos;
+  const vids = Array.isArray(d.videos) ? d.videos.slice() : [];
   const grid = document.getElementById('videoGrid');
   const more = document.getElementById('videoMore');
-  const visible = vids.filter(v => !v.hidden);
-  const hidden  = vids.filter(v =>  v.hidden);
 
   function mkCard(v, i, hidden) {
     const cls = 'video-card reveal' + (i > 0 ? ' rd' + i : '');
@@ -2495,17 +2497,70 @@ function renderVideos() {
     </div>`;
   }
 
-  grid.innerHTML = visible.map((v, i) => mkCard(v, i, false)).join('');
+  // Normalise groups: default to Opera & Lied when not specified
+  const normalised = vids.map(v => {
+    let group = v.group || '';
+    if (!group) {
+      const title = String(v.title || '');
+      if (/libiamo/i.test(title)) group = 'gala_crossover';
+      else group = 'opera_lied';
+    }
+    return {...v, group};
+  });
 
-  if (hidden.length > 0) {
+  const groups = [
+    { key: 'opera_lied',     label: 'Opera & Lied' },
+    { key: 'gala_crossover', label: 'Gala & Cross-over' }
+  ];
+
+  let htmlVisible = '';
+  let htmlHidden  = '';
+
+  groups.forEach(gconf => {
+    let items = normalised.filter(v => (v.group || 'opera_lied') === gconf.key);
+    if (!items.length) return;
+
+    // Prioritise Liszt "Die Lorelei" inside Opera & Lied
+    if (gconf.key === 'opera_lied') {
+      items = items.slice().sort((a, b) => {
+        const isLiszt = v =>
+          v.id === '-t5fr1m_mnc' ||
+          /Die\s+Lorelei/i.test(String(v.title || ''));
+        const wa = isLiszt(a) ? 0 : 1;
+        const wb = isLiszt(b) ? 0 : 1;
+        return wa - wb;
+      });
+    }
+
+    const vis = items.filter(v => !v.hidden);
+    const hid = items.filter(v =>  v.hidden);
+
+    if (vis.length) {
+      htmlVisible += `<div class="video-category">
+        <h3 class="video-category-title">${gconf.label}</h3>
+        ${vis.map((v, i) => mkCard(v, i, false)).join('')}
+      </div>`;
+    }
+    if (hid.length) {
+      htmlHidden += `<div class="video-category">
+        <h3 class="video-category-title">${gconf.label}</h3>
+        ${hid.map((v, i) => mkCard(v, i, true)).join('')}
+      </div>`;
+    }
+  });
+
+  grid.innerHTML = htmlVisible;
+
+  if (htmlHidden) {
     const showMoreTxt = (Ti[currentLang] || Ti.en)['vid.showMore'] || '+ Show More Videos';
-    more.innerHTML = hidden.map((v, i) => mkCard(v, i, true)).join('') +
+    more.innerHTML = htmlHidden +
       `<div style="text-align:center;margin-top:20px">
         <button class="btn-secondary" id="moreBtn" onclick="toggleMore()">${showMoreTxt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</button>
       </div>`;
   } else {
     more.innerHTML = '';
   }
+
   document.querySelectorAll('#videoGrid .reveal, #videoMore .reveal').forEach(el => obs.observe(el));
 }
 
