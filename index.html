@@ -1791,19 +1791,25 @@ if(fauth){
   });
 }
 
-// Track whether Firestore finished loading (successfully or with data)
+// Track whether Firestore finished loading (or was skipped because it is unavailable)
 window.__rgFsLoaded = false;
 
 async function loadFromFirestore() {
-  if(!fsdb) return; // no Firebase, use defaults
+  if(!fsdb){
+    // Firebase not configured in this environment: consider data load "done"
+    window.__rgFsLoaded = true;
+    return;
+  }
   try {
     const snap = await fsdb.collection('rg').get();
     snap.forEach(doc => {
       try { DB[doc.id] = JSON.parse(doc.data().value); } catch(e) {}
     });
-    window.__rgFsLoaded = true;
   } catch(e) {
     console.warn('Firestore load error:', e);
+  } finally {
+    // Mark load attempt as finished (success or failure)
+    window.__rgFsLoaded = true;
   }
 }
 
