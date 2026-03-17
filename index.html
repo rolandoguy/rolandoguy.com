@@ -922,41 +922,500 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 #backstageGrid{background:transparent;border:none}
 #backstageGrid .photo-item{border:1px solid var(--border)}
+.print-only-media{display:none}
 
-/* ── Print: solo agenda (Ctrl+P without button) ── */
+/* ── Print: dossier completo + agenda ── */
+@page{
+  size:A4 portrait;
+  margin:2cm;
+}
 @media print{
-  /* Agenda-only print (Imprimir agenda uses new window; this applies to Ctrl+P without button) */
-  body:not(.print-full-site) *{visibility:hidden}
-  body:not(.print-full-site) #performances,body:not(.print-full-site) #performances *{visibility:visible}
-  body:not(.print-full-site) #performances{position:absolute;left:0;top:0;width:100%;max-width:210mm;margin:0 auto;padding:18mm 20mm;background:#fff;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;font-size:11pt;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .no-print{display:none !important}
-  .print-only{display:block !important}
-  body:not(.print-full-site) .print-only-header{margin-bottom:1.8em;padding-bottom:1em;border-bottom:1px solid #2a2a2a;text-align:center}
-  body:not(.print-full-site) .print-only-title{font-size:1.75rem;font-weight:400;margin:0;color:#1a1a1a;letter-spacing:.04em}
-  body:not(.print-full-site) .print-only-subtitle{font-size:.7rem;margin:.5em 0 0;color:#555;text-transform:uppercase;letter-spacing:.25em;font-weight:400}
-  body:not(.print-full-site) #performances .perf-header,body:not(.print-full-site) #performances .section-tag{display:none !important}
-  body:not(.print-full-site) #performances .perf-list{display:block;margin-top:0}
-  body:not(.print-full-site) #performances .perf-year-group{margin-bottom:2em;break-inside:auto}
-  body:not(.print-full-site) #performances .perf-year-label{font-size:1rem;font-weight:600;color:#2a2a2a;margin:0 0 .65em;padding-bottom:.35em;border-bottom:1px solid #d0d0d0;letter-spacing:.08em;break-after:avoid}
-  body:not(.print-full-site) #performances .perf-past-divider{font-size:.65rem;letter-spacing:.22em;color:#666;margin:2em 0 1.25em;padding:.5em 0;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;text-align:center}
-  body:not(.print-full-site) #performances .perf-item{break-inside:avoid;page-break-inside:avoid;margin-bottom:1.35em;padding-bottom:1.1em;border-bottom:1px solid #e5e5e5;display:block}
-  body:not(.print-full-site) #performances .perf-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:0}
-  body:not(.print-full-site) #performances .perf-date-box{display:block;margin-bottom:.5em;text-align:left}
-  body:not(.print-full-site) #performances .perf-day{font-size:1.15rem;font-weight:400;color:#1a1a1a;line-height:1.2}
-  body:not(.print-full-site) #performances .perf-month{font-size:.7rem;color:#555}
-  body:not(.print-full-site) #performances .perf-time{font-size:.75rem;color:#555;margin-top:.35em;padding-top:.35em;border-top:1px solid #eee}
-  body:not(.print-full-site) #performances .perf-badge,body:not(.print-full-site) #performances .perf-type{font-size:.6rem;letter-spacing:.14em;color:#666;margin-bottom:.4em;font-weight:500}
-  body:not(.print-full-site) #performances .perf-info-title{font-size:1.1rem;font-style:italic;font-weight:400;margin:0 0 .25em;color:#1a1a1a;line-height:1.3}
-  body:not(.print-full-site) #performances .perf-info-detail{font-size:.95rem;color:#333;line-height:1.5;margin-bottom:.4em}
-  body:not(.print-full-site) #performances .perf-venue-link{color:#444;text-decoration:none;border:0;pointer-events:none;font-size:.9rem;display:inline-block;margin-top:.2em}
-  body:not(.print-full-site) #performances .perf-venue-link::before{content:'Location: ';font-weight:600;color:#333;letter-spacing:.03em}
-  body:not(.print-full-site) #performances .perf-venue-emoji{display:none}
-  body:not(.print-full-site) #performances .perf-venue-link .perf-maps-hint{display:none}
-  body:not(.print-full-site) #performances .perf-venue-bg,body:not(.print-full-site) #performances .perf-past-stamp{display:none !important}
-  body:not(.print-full-site) #performances .perf-print-repertoire{margin-top:.65em;padding:.5em 0 0 .75em;border-left:2px solid #ccc;font-size:.9rem;color:#444;line-height:1.5;font-style:normal}
-  body:not(.print-full-site) #performances .perf-print-repertoire strong{font-size:.75rem;letter-spacing:.1em;color:#555;font-weight:600}
-  body:not(.print-full-site).print-upcoming-only .perf-past-divider,body:not(.print-full-site).print-upcoming-only .perf-year-group.perf-row-past{display:none !important}
-  nav,.lang-bar,footer,.admin-trigger,.adm,.cursor,.cursor-ring,.mobile-menu,.hamburger,[id^="adm"]{display:none !important}
+  /* Desactivar cualquier carrusel/slider de la galería para que se muestren todas las fotos */
+  .gallery-container,
+  .photo-grid-4,
+  .photo-grid-3{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    transform:none !important;
+    width:100% !important;
+    position:static !important;
+    overflow:visible !important;
+  }
+  .photo-item,
+  .gallery-image{
+    display:inline-block !important;
+    position:static !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    max-height:200px !important;
+    width:auto !important;
+    margin:5px !important;
+    page-break-inside:avoid !important;
+  }
+  /* Reset fondos e imágenes decorativas (incluye pseudo-elementos) */
+  *, ::before, ::after{
+    background:transparent !important;
+    background-color:transparent !important;
+    background-image:none !important;
+    box-shadow:none !important;
+  }
+  html,body{
+    background:#ffffff !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  /* Opción nuclear: todo texto en negro por defecto */
+  /* Opción nuclear: todo texto en negro por defecto */
+  *, p, span, a, td, th, li, div{
+    color:#000000 !important;
+  }
+  body{
+    font-family:Georgia,'Times New Roman',serif;
+    font-size:11pt;
+    line-height:1.5;
+  }
+  a{
+    text-decoration:none !important;
+    color:#000000 !important;
+  }
+  /* Excepción dorada para títulos / acentos */
+  h1,h2,h3,h4,
+  .rep-title,
+  .program-card-title,
+  .perf-day,
+  .perf-header h2,
+  .dorado,
+  .titulo-seccion{
+    color:#D4AF37 !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+    page-break-after:avoid;
+    break-after:avoid-page;
+  }
+  /* Tipografía ajustada a papel (pt) */
+  p, li, td, th, span, .agenda-item *{
+    font-size:11pt !important;
+    line-height:1.2 !important;
+  }
+  h1{font-size:20pt !important;}
+  h2{font-size:16pt !important;}
+  h3{font-size:14pt !important;}
+
+  /* Saltos de página sólo en unidades pequeñas (filas/items/fotos) */
+  tr,
+  #performances .perf-item,
+  .photo-item,
+  img{
+    page-break-inside:avoid !important;
+    break-inside:avoid !important;
+  }
+  /* Tamaño y comportamiento de imágenes permitidas (miniaturas elegantes, excepto QR) */
+  img:not(.qr-code-img):not(.print-qr){
+    max-height:250px !important;
+    max-width:100% !important;
+    width:auto !important;
+    object-fit:contain !important;
+    page-break-inside:avoid !important;
+    margin:10px !important;
+    display:inline-block !important;
+  }
+  /* Miniaturas elegantes para fotos de galería */
+  .gallery-image,
+  .photo-grid-4 img,
+  .photo-grid-3 img,
+  section#photos img:not(.qr-code-img):not(.print-qr){
+    max-height:250px !important;
+    max-width:100% !important;
+    width:auto !important;
+    object-fit:contain !important;
+    page-break-inside:avoid !important;
+    display:inline-block !important;
+    margin:10px !important;
+  }
+  /* Rescatar hero y biografía (primeras secciones) */
+  #hero,
+  .hero-content,
+  #about,
+  .about-text{
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    height:auto !important;
+    min-height:0 !important;
+    position:relative !important;
+    margin-top:0 !important;
+  }
+  /* Aniquilar min-height 100vh / layouts que generan espacios enormes */
+  *{
+    max-height:100000px !important;
+  }
+  section,
+  .section-inner,
+  .section-container,
+  .wrapper{
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:10px 0 !important;
+    page-break-inside:auto !important;
+  }
+  /* Hero y fondos decorativos fuera de impresión */
+  .hero-bg,
+  .hero-overlay{
+    display:none !important;
+  }
+  #programs img{
+    display:none !important;
+  }
+  /* Botones como texto plano en impresión */
+  .btn-primary,
+  .btn-secondary{
+    background:none !important;
+    border:none !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    color:#000000 !important;
+  }
+  /* Ocultar UI e interfaz interactiva */
+  nav,
+  .lang-bar,
+  footer,
+  .admin-trigger,
+  .adm,
+  .cursor,
+  .cursor-ring,
+  .mobile-menu,
+  .hamburger,
+  [id^="adm"],
+  .hero-scroll,
+  .no-print{
+    display:none !important;
+  }
+  /* Backstage: no imprimir */
+  #tab-backstage,
+  #panel-backstage{
+    display:none !important;
+  }
+  /* Tabs de repertorio y filtros: ocultar controles, mostrar contenido */
+  .rep-tabs,
+  #repStatusFilters{
+    display:none !important;
+  }
+  #operaGrid{
+    display:block !important;
+    visibility:visible !important;
+    height:auto !important;
+  }
+  /* Videos: ocultar players, mostrar QR informativo */
+  iframe,
+  video{
+    display:none !important;
+  }
+  #videos .video-grid,
+  #videos .video-more-wrap{
+    display:none !important;
+  }
+  .print-only-media{
+    display:block !important;
+    text-align:center !important;
+    margin:30px auto !important;
+    page-break-inside:avoid !important;
+    page-break-after:always !important;
+  }
+  .print-only-media p{
+    margin-bottom:12px !important;
+    font-size:0.95rem !important;
+  }
+  .print-only-media img,
+  .print-only-media canvas,
+  .print-only-media svg,
+  .print-qr,
+  .qr-code-img{
+    max-width:150px !important;
+    width:150px !important;
+    height:150px !important;
+    display:block !important;
+    margin:0 auto !important;
+    object-fit:contain !important;
+    page-break-inside:avoid !important;
+  }
+
+  /* Internacionalización del texto del QR: mostrar solo el que coincida con html[lang] */
+  .qr-text{
+    display:none !important;
+  }
+  html[lang="en"] .qr-text[lang="en"],
+  html[lang="de"] .qr-text[lang="de"],
+  html[lang="es"] .qr-text[lang="es"],
+  html[lang="it"] .qr-text[lang="it"],
+  html[lang="fr"] .qr-text[lang="fr"]{
+    display:block !important;
+  }
+  /* Contacto: ocultar formulario, dejar solo info */
+  #contact .contact-form,
+  #contact .contact-form input,
+  #contact .contact-form textarea,
+  #contact .contact-form button{
+    display:none !important;
+  }
+
+  /* Rescatar información de contacto (email / web) como texto visible y destacado */
+  .contact-ctas a,
+  .contact-left a[href^="mailto"],
+  .epk-email-link,
+  .epk-web-link{
+    display:block !important;
+    visibility:visible !important;
+    font-size:14pt !important;
+    font-weight:bold !important;
+    color:#000000 !important;
+  }
+
+  /* EPK / Press & Contact UI: ocultar bio corta, descargas y etiquetas */
+  #epk,
+  .epk-tabs,
+  .epk-bio-pane,
+  .epk-dl-col,
+  .epk-dl-group,
+  .epk-press-photos,
+  .epk-dl-link,
+  .epk-photo,
+  .epk-downloads{
+    display:none !important;
+  }
+
+  /* Limpiar tablas de repertorio: ocultar badges de estado */
+  .rep-status,
+  .rep-status-performed,
+  .rep-status-prepared,
+  .rep-status-studying{
+    display:none !important;
+  }
+
+  /* Limpiar textos residuales de UI / grandes números de sección */
+  .section-tag{
+    display:none !important;
+  }
+
+  /* Estilo limpio para agenda dentro del dossier completo */
+  #performances{
+    max-width:210mm;
+    margin:0 auto;
+  }
+  #performances .print-only-header{
+    display:block !important;
+    margin-bottom:1.8em;
+    padding-bottom:1em;
+    border-bottom:1px solid #2a2a2a;
+    text-align:center;
+  }
+  #performances .print-only-title{
+    font-size:1.75rem;
+    font-weight:400;
+    margin:0;
+    color:#1a1a1a;
+    letter-spacing:.04em;
+  }
+  #performances .print-only-subtitle{
+    font-size:.7rem;
+    margin:.5em 0 0;
+    color:#555;
+    text-transform:uppercase;
+    letter-spacing:.25em;
+    font-weight:400;
+  }
+  #performances .perf-item{
+    margin-bottom:1.35em;
+    padding-bottom:1.1em;
+    border-bottom:1px solid #e5e5e5;
+    display:block;
+  }
+  #performances .perf-item:last-child{
+    margin-bottom:0;
+    padding-bottom:0;
+    border-bottom:0;
+  }
+  #performances .perf-date-box{
+    display:block;
+    margin-bottom:.5em;
+    text-align:left;
+  }
+  #performances .perf-day{
+    font-size:1.15rem;
+    font-weight:400;
+    color:#1a1a1a;
+    line-height:1.2;
+  }
+  #performances .perf-month{
+    font-size:.7rem;
+    color:#555;
+  }
+  #performances .perf-time{
+    font-size:.75rem;
+    color:#555;
+    margin-top:.35em;
+    padding-top:.35em;
+    border-top:1px solid #eee;
+  }
+  #performances .perf-badge,
+  #performances .perf-type{
+    font-size:.6rem;
+    letter-spacing:.14em;
+    color:#666;
+    margin-bottom:.4em;
+    font-weight:500;
+  }
+  #performances .perf-info-title{
+    font-size:1.1rem;
+    font-style:italic;
+    font-weight:400;
+    margin:0 0 .25em;
+    color:#1a1a1a;
+    line-height:1.3;
+  }
+  #performances .perf-info-detail{
+    font-size:.95rem;
+    color:#333;
+    line-height:1.5;
+    margin-bottom:.4em;
+  }
+  #performances .perf-venue-link{
+    color:#444;
+    text-decoration:none;
+    border:0;
+    pointer-events:none;
+    font-size:.9rem;
+    display:inline-block;
+    margin-top:.2em;
+  }
+  #performances .perf-venue-link::before{
+    content:'Location: ';
+    font-weight:600;
+    color:#333;
+    letter-spacing:.03em;
+  }
+  #performances .perf-venue-emoji,
+  #performances .perf-venue-link .perf-maps-hint,
+  #performances .perf-venue-bg,
+  #performances .perf-past-stamp{
+    display:none !important;
+  }
+  #performances .perf-print-repertoire{
+    margin-top:.65em;
+    padding:.5em 0 0 .75em;
+    border-left:2px solid #ccc;
+    font-size:.9rem;
+    color:#444;
+    line-height:1.5;
+    font-style:normal;
+  }
+  #performances .perf-print-repertoire strong{
+    font-size:.75rem;
+    letter-spacing:.1em;
+    color:#555;
+    font-weight:600;
+  }
+  nav,.lang-bar,footer,.admin-trigger,.adm,.cursor,.cursor-ring,.mobile-menu,.hamburger,[id^="adm"],.epk-copy-btn{display:none !important}
+
+  /* Desactivar lazy loading / animaciones que ocultan fotos y agenda */
+  .reveal,
+  .photo-item,
+  .photo-panel,
+  #photos img,
+  .perf-item,
+  #perfList .perf-item,
+  .gallery-image,
+  .agenda-item,
+  .photo-container{
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    transition:none !important;
+    animation:none !important;
+  }
+
+  /* 1. Exterminar botones y enlaces de acción (incluyendo links de prensa),
+     pero NO el email principal de contacto */
+  button,
+  .btn,
+  .button,
+  .send-email,
+  .read-article,
+  .submit-btn,
+  .form-submit,
+  .press-card a,
+  .epk-press-dl,
+  .epk-press-preview{
+    display:none !important;
+  }
+
+  /* 2. Limpiar iconos / flechas de orden en encabezados de tablas de repertorio */
+  th svg,
+  th .icon,
+  th .sort-arrow,
+  th span.arrow,
+  th::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  /* 1. Eliminar padding/margen/transform superior del layout principal (evitar hueco inicial) */
+  html,
+  body,
+  main,
+  #root,
+  #app,
+  #main,
+  .wrapper,
+  #hero,
+  .hero-content,
+  #about{
+    margin-top:0 !important;
+    padding-top:0 !important;
+    transform:none !important;
+  }
+
+  /* Exterminar cabeceras de navegación que puedan reservar espacio */
+  header,
+  #nav,
+  .navbar{
+    display:none !important;
+    height:0 !important;
+    min-height:0 !important;
+    position:absolute !important;
+    overflow:hidden !important;
+  }
+
+  /* 2. Exterminar espaciadores y overlays residuales */
+  .spacer,
+  .overlay,
+  .divider,
+  [class*="spacer"],
+  [class*="overlay"],
+  .hero-overlay{
+    display:none !important;
+    height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+  }
+
+  /* 3. Evitar salto de página antes de la biografía */
+  .biography-section,
+  #biography,
+  .hero-content,
+  #about{
+    page-break-before:avoid !important;
+    break-before:avoid !important;
+    margin-top:0 !important;
+    padding-top:0 !important;
+  }
+
+  /* Ocultar texto de ayuda de la galería ("Click any image to view full size") */
+  #photos .photos-header p[data-i18n="photos.sub"]{
+    display:none !important;
+  }
 }
 </style>
 </head>
@@ -973,9 +1432,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <nav id="nav">
   <ul class="nav-links">
     <li><a href="#about" data-i18n="nav.bio">Biography</a></li>
-    <li><a href="#videos" data-i18n="nav.media">Media</a></li>
     <li><a href="#repertoire" data-i18n="nav.rep">Repertoire</a></li>
     <li><a href="#programs" data-i18n="nav.programs">Programs</a></li>
+    <li><a href="#videos" data-i18n="nav.media">Media</a></li>
     <li><a href="#performances" data-i18n="nav.cal">Calendar</a></li>
     <li><a href="#press" data-i18n="nav.press">Reviews</a></li>
     <li><a href="#contact" data-i18n="nav.epk">Press & Contact</a></li>
@@ -986,9 +1445,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </nav>
 <div class="mobile-menu" id="mobileMenu">
   <a href="#about" onclick="closeMenu()" data-i18n="nav.bio">Biography</a>
-  <a href="#videos" onclick="closeMenu()" data-i18n="nav.media">Media</a>
   <a href="#repertoire" onclick="closeMenu()" data-i18n="nav.rep">Repertoire</a>
   <a href="#programs" onclick="closeMenu()" data-i18n="nav.programs">Programs</a>
+  <a href="#videos" onclick="closeMenu()" data-i18n="nav.media">Media</a>
   <a href="#performances" onclick="closeMenu()" data-i18n="nav.cal">Calendar</a>
   <a href="#press" onclick="closeMenu()" data-i18n="nav.press">Reviews</a>
   <a href="#contact" onclick="closeMenu()" data-i18n="nav.epk">Press & Contact</a>
@@ -1087,6 +1546,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <div class="video-grid" id="videoGrid"></div>
     <div class="video-more-wrap" id="videoMore"></div>
+    <div class="print-only-media">
+      <p class="qr-text" lang="en">To listen to recordings and watch performance videos, scan the QR code or visit: www.rolandoguy.com</p>
+      <p class="qr-text" lang="de">Um Aufnahmen zu hören und Videos von Auftritten zu sehen, scannen Sie den QR-Code oder besuchen Sie: www.rolandoguy.com</p>
+      <p class="qr-text" lang="es">Para escuchar grabaciones y ver videos de presentaciones, escanea el código QR o visita: www.rolandoguy.com</p>
+      <p class="qr-text" lang="it">Per ascoltare le registrazioni e guardare i video delle esibizioni, scansiona il codice QR o visita: www.rolandoguy.com</p>
+      <p class="qr-text" lang="fr">Pour écouter des enregistrements et regarder des vidéos de représentations, scannez le code QR ou visitez : www.rolandoguy.com</p>
+      <img class="print-qr qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.rolandoguy.com" alt="Código QR a Rolando Guy Media" style="max-width:150px;height:auto;">
+    </div>
   </div>
 </section>
 <div class="lightbox" id="lightbox" onclick="closeLbOnBg(event)">
@@ -1783,13 +2250,13 @@ function renderRep() {
   const thWork = isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work');
   const tableHead = isOpera
     ? `<thead><tr>
-        <th class="rep-th-sort" onclick="setRepSort('role')" title="Sort by Role">${t['rep.thRole']||'Role'} ${repSortBy==='role'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-        <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${thWork} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-        <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'} ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+        <th class="rep-th-sort" onclick="setRepSort('role')" title="Sort by Role">${t['rep.thRole']||'Role'}</th>
+        <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${thWork}</th>
+        <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'}</th>
       </tr></thead>`
     : `<thead><tr>
-        <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${thWork} ${repSortBy==='opera'?(repSortDir==='asc'?'↑':'↓'):''}</th>
-        <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'} ${repSortBy==='composer'?(repSortDir==='asc'?'↑':'↓'):''}</th>
+        <th class="rep-th-sort" onclick="setRepSort('opera')" title="Sort by Work">${thWork}</th>
+        <th class="rep-th-sort" onclick="setRepSort('composer')" title="Sort by Composer">${t['rep.thComposer']||'Composer'}</th>
       </tr></thead>`;
 
   const esc = (s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1814,6 +2281,31 @@ function renderRep() {
   document.querySelectorAll('#operaGrid .reveal').forEach(el=>obs.observe(el));
 }
 
+let _repSavedForPrint = null;
+function renderRepAllCategoriesForPrint(){
+  const g = document.getElementById('operaGrid');
+  if (!g) return;
+  const d = getRep ? getRep() : {h2:'', intro:'', cards:[]};
+  const t = Ti[currentLang] || Ti.en;
+  const cats = ['opera','arias','operetta','lied','tango'];
+  let html = '';
+  cats.forEach(cat=>{
+    currentRepCategory = cat;
+    repStatusFilter = 'all';
+    renderRep();
+    const catHtml = g.innerHTML;
+    if (!catHtml || catHtml.indexOf('rep-empty') !== -1) return;
+    const tabKey =
+      cat==='opera' ? 'rep.tabOpera' :
+      cat==='arias' ? 'rep.tabArias' :
+      cat==='operetta' ? 'rep.tabOperetta' :
+      cat==='lied' ? 'rep.tabLied' : 'rep.tabTango';
+    const heading = t[tabKey] || '';
+    html += `<h3 class="rep-print-category-title">${heading}</h3>${catHtml}`;
+  });
+  g.innerHTML = html || g.innerHTML;
+}
+
 function setRepCategory(cat){
   currentRepCategory = cat;
   document.querySelectorAll('.rep-tab').forEach(btn=>{
@@ -1831,6 +2323,29 @@ function setRepCategory(cat){
   // Reset status filter when changing category
   if (cat !== 'opera') repStatusFilter = 'all';
   renderRep();
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeprint',()=>{
+    try{
+      const g = document.getElementById('operaGrid');
+      if (g) {
+        _repSavedForPrint = {
+          cat: currentRepCategory || 'opera',
+          html: g.innerHTML
+        };
+        renderRepAllCategoriesForPrint();
+      }
+    }catch(e){}
+  });
+  window.addEventListener('afterprint',()=>{
+    try{
+      if (_repSavedForPrint) {
+        setRepCategory(_repSavedForPrint.cat || 'opera');
+        _repSavedForPrint = null;
+      }
+    }catch(e){}
+  });
 }
 
 function setRepSort(col){
