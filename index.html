@@ -1435,7 +1435,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <li><a href="#videos" data-i18n="nav.media">Media</a></li>
     <li><a href="#performances" data-i18n="nav.cal">Calendar</a></li>
     <li><a href="#press" data-i18n="nav.press">Reviews</a></li>
-    <li><a href="#contact" data-i18n="nav.epk">Press & Contact</a></li>
+    <li><a href="#epk" data-i18n="nav.epk">Press</a></li>
   </ul>
   <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -1448,7 +1448,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <a href="#videos" onclick="closeMenu()" data-i18n="nav.media">Media</a>
   <a href="#performances" onclick="closeMenu()" data-i18n="nav.cal">Calendar</a>
   <a href="#press" onclick="closeMenu()" data-i18n="nav.press">Reviews</a>
-  <a href="#contact" onclick="closeMenu()" data-i18n="nav.epk">Press & Contact</a>
+  <a href="#epk" onclick="closeMenu()" data-i18n="nav.epk">Press</a>
   <div class="lang-row">
     <button onclick="setLang('en');closeMenu()" id="mob-btn-en" class="active">EN</button>
     <button onclick="setLang('de');closeMenu()" id="mob-btn-de">DE</button>
@@ -1471,7 +1471,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <a href="#photos" class="btn-secondary" data-i18n="nav.photos">Gallery</a>
       <a href="#contact" class="btn-secondary" id="heroCta2"></a>
       <a href="#programs" class="btn-secondary" data-i18n="nav.programs">Programs</a>
-      <a href="#contact" class="btn-secondary" id="heroEpkBtn" data-i18n="nav.epk.short">Press & Contact</a>
+      <a href="#epk" class="btn-secondary" id="heroEpkBtn" data-i18n="nav.epk.short">Press</a>
     </div>
   </div>
   <div class="hero-scroll"><span data-i18n="hero.scroll">Artist profile</span><div class="scroll-line"></div></div>
@@ -1650,7 +1650,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <!-- EPK SECTION -->
 <section id="epk">
   <div class="section-inner">
-    <p class="section-tag" data-num="06" data-i18n="epk.tag">Press & Contact</p>
+    <p class="section-tag" data-num="06" data-i18n="epk.tag">Press</p>
     <h2 class="reveal" id="epkTitle"></h2>
 
     <div class="epk-grid">
@@ -2163,7 +2163,7 @@ function renderHero() {
   const h = document.getElementById('heroName');
   h.innerHTML = 'Rolando<br><em>Guy</em>';
   const epkNavBtn = document.getElementById('heroEpkBtn');
-  if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'Press & Contact'; epkNavBtn.textContent = tl; }
+  if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'Press'; epkNavBtn.textContent = tl; }
 }
 
 // ── Render Bio ──
