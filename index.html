@@ -2067,9 +2067,32 @@ const DEFAULTS = {
     ]
   },
   rep: {
-    cards: []
+    cards: [
+      {composer:'W. A. Mozart',      opera:'Die Zauberflöte',          role:'Tamino',            lang:'DE', status:'performed', cat:'opera'},
+      {composer:'W. A. Mozart',      opera:'Così fan tutte',           role:'Ferrando',          lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Giacomo Puccini',   opera:'La Bohème',                role:'Rodolfo',           lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Giuseppe Verdi',    opera:'La Traviata',              role:'Alfredo / Gastone', lang:'IT', status:'performed', cat:'opera'},
+      {composer:'G. Donizetti',      opera:"L'elisir d'amore",         role:'Nemorino',          lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Eduard Künneke',    opera:'Der Vetter aus Dingsda',   role:'Roderich de Weert', lang:'DE', status:'performed', cat:'opera'},
+      {composer:'G. Donizetti',      opera:'Lucia di Lammermoor',      role:'Edgardo',           lang:'IT', status:'performed', cat:'opera'},
+      {composer:'Victor Massé',      opera:'Irma la douce',            role:'Nestor',            lang:'FR', status:'performed', cat:'opera'},
+      {composer:'W. A. Mozart',      opera:'Le nozze di Figaro',       role:'Don Ottavio',       lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'W. A. Mozart',      opera:'Don Giovanni',             role:'Don Ottavio',       lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Giuseppe Verdi',    opera:'Rigoletto',                role:'Il Duca di Mantova',lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'G. Donizetti',      opera:"L'elisir d'amore",         role:'Nemorino',          lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Gaetano Donizetti', opera:'Don Pasquale',             role:'Ernesto',           lang:'IT', status:'prepared',  cat:'opera'},
+      {composer:'Pietro Mascagni',   opera:'Cavalleria rusticana',     role:'Turiddu',           lang:'IT', status:'studying',  cat:'opera'},
+      {composer:'Ruggero Leoncavallo',opera:'Pagliacci',               role:'Canio',             lang:'IT', status:'studying',  cat:'opera'},
+    ]
   },
-  perfs: [],
+  perfs: [
+    {id:6,day:'TBA',month:'',title:'The Cast — Opera Band',detail:'Classical & Contemporary Opera · Tour',venue:'Germany & Europe',city:'',status:'upcoming',sortDate:'2099-12-01'},
+    {id:1,day:'25',month:'Jul 2025',title:'Der Vetter aus Dingsda',detail:'Eduard Künneke · Roderich de Weert',venue:'Kammeroper Frankfurt',city:'Frankfurt, Germany',status:'past',type:'opera',sortDate:'2025-07-25'},
+    {id:2,day:'03',month:'Mar 2025',title:'Recital Berlin',detail:'20:00 · Berlin',venue:'Berlin',city:'',status:'past',type:'recital',sortDate:'2025-03-03'},
+    {id:3,day:'17',month:'Dec 2024',title:'Concert with Die Goldvögel',detail:'Thematic concert · Grief & Loss',venue:'Kapelle St. Joseph Krankenhaus',city:'Berlin',status:'past',type:'concert',sortDate:'2024-12-17'},
+    {id:4,day:'07',month:'Dec 2024',title:'Tango Tenors',detail:'20:00 · Tango Loft Berlin',venue:'Tango Loft Berlin',city:'Berlin',status:'past',type:'show',sortDate:'2024-12-07'},
+    {id:5,day:'01',month:'Dec 2024',title:'Welt AIDS Tag',detail:'16:00 · Zwölf-Apostel-Kirche',venue:'Zwölf-Apostel-Kirche',city:'Berlin',status:'past',type:'concert',sortDate:'2024-12-01'},
+  ],
   programs: {
     title: 'Programs &amp; Collaborations',
     subtitle: 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.',
@@ -2589,7 +2612,8 @@ function renderPerfs() {
   if(!list) return;
   // Clear immediately to avoid showing stale or default data before Firestore load
   list.innerHTML = '';
-  const perfs = load('rg_perfs') || [];
+  const loaded = load('rg_perfs');
+  const perfs = Array.isArray(loaded) ? loaded : (DEFAULTS.perfs || []);
   const sortDate = p => {
     if(p.sortDate) return new Date(p.sortDate);
     const str = (p.day && p.day!=='TBA' ? p.day+' ' : '1 ') + (p.month || 'Jan 2099');
