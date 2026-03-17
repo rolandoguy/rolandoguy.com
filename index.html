@@ -1716,10 +1716,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
-// ── In-memory cache ──
-const DB = {};
+// ── Firebase persistence (clean) ──
 let fsdb = null;
 let fauth = null;
+const DB = {};
 
 try {
   const firebaseConfig = {
@@ -1730,12 +1730,45 @@ try {
     messagingSenderId: "276077748266",
     appId: "1:276077748266:web:f38a687ab3b526f0262353"
   };
-  if(typeof firebase !== 'undefined') {
+
+  if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
+  }
+
+  if (typeof firebase !== 'undefined') {
     fsdb = firebase.firestore();
     fauth = firebase.auth();
   }
-} catch(e) { console.warn('Firebase init error:', e); }
+} catch (e) {
+  console.warn('Firebase init error:', e);
+}
+
+async function loadFromFirestore() {
+  if (!fsdb) return;
+  try {
+    const snap = await fsdb.collection('rg').get();
+    snap.forEach(doc => {
+      try {
+        DB[doc.id] = JSON.parse(doc.data().value);
+      } catch (e) {
+        console.warn('Invalid JSON in Firestore doc:', doc.id, e);
+      }
+    });
+  } catch (e) {
+    console.warn('Firestore load error:', e);
+  }
+}
+
+function load(key) {
+  return (DB[key] !== undefined && DB[key] !== null) ? DB[key] : null;
+}
+
+function save(key, val) {
+  DB[key] = val;
+  if (!fsdb) return;
+  fsdb.collection('rg').doc(key).set({ value: JSON.stringify(val) })
+    .catch(e => console.warn('Firestore save error:', e));
+}
 
 // ── Admin auth (Google) ──
 // NOTE: This allowlist is only for UI gating. Real security must be enforced by Firestore Security Rules.
@@ -1789,39 +1822,6 @@ if(fauth){
       else msg.textContent = 'Sesión iniciada.';
     }
   });
-}
-
-// Track whether Firestore finished loading (or was skipped because it is unavailable)
-window.__rgFsLoaded = false;
-
-async function loadFromFirestore() {
-  if(!fsdb){
-    // Firebase not configured in this environment: consider data load "done"
-    window.__rgFsLoaded = true;
-    return;
-  }
-  try {
-    const snap = await fsdb.collection('rg').get();
-    snap.forEach(doc => {
-      try { DB[doc.id] = JSON.parse(doc.data().value); } catch(e) {}
-    });
-  } catch(e) {
-    console.warn('Firestore load error:', e);
-  } finally {
-    // Mark load attempt as finished (success or failure)
-    window.__rgFsLoaded = true;
-  }
-}
-
-function load(key) {
-  return (DB[key] !== undefined && DB[key] !== null) ? DB[key] : null;
-}
-
-function save(key, val) {
-  DB[key] = val;
-  if(!fsdb) return;
-  fsdb.collection('rg').doc(key).set({ value: JSON.stringify(val) })
-    .catch(e => console.warn('Firestore save error:', e));
 }
 </script>
 <script>
