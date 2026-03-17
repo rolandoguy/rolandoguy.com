@@ -11,8 +11,8 @@
 ════════════════════════════════════════════ -->
 
 <!-- Primary SEO -->
-<title>Rolando Guy · Argentine-Italian Lyric Tenor in Berlin | Opera, Recital, Tango &amp; Concert</title>
-<meta name="description" content="Rolando Guy is an Argentine-Italian lyric tenor based in Berlin. He appears in opera, oratorio, recitals, tango and bespoke concert programmes across Europe. For engagements and artistic collaborations, please get in touch directly at rolandoguy@gmail.com.">
+<title>Rolando Guy | Tenor</title>
+<meta name="description" content="Argentinian-Italian Lyric Tenor based in Berlin. Discover my operatic repertoire, operetta, art song, and Argentine tango performances.">
 <meta name="keywords" content="
 tenor berlin, lyric tenor berlin, opera singer berlin, classical singer europe, rolando guy, argentinian tenor, italian tenor, tango singer berlin, house concert berlin, mozart tenor, puccini tenor, verdi tenor, tango argentino berlin,
 oper sänger berlin, lyrischer tenor berlin, opernsänger berlin, konzertsänger berlin, liederabend tenor, hauskonzert sänger berlin, klassischer sänger deutschland, tango sänger berlin, tenor argentinien berlin,
@@ -54,12 +54,12 @@ ténor lyrique berlin, chanteur d'opéra berlin, ténor argentin berlin, concert
 <link rel="alternate" hreflang="zh" href="https://www.rolandoguy.com/">
 
 <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
-<meta property="og:type" content="profile">
-<meta property="og:title" content="Rolando Guy · Lyric Tenor | Berlin">
-<meta property="og:description" content="Argentine-Italian lyric tenor based in Berlin. Opera, recital, tango and curated concert programmes across Europe. Mozart · Puccini · Verdi · Tango Argentino.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rolando Guy | Tenor">
+<meta property="og:description" content="Argentinian-Italian Lyric Tenor based in Berlin. Repertoire, Media, and Contact.">
 <meta property="og:url" content="https://www.rolandoguy.com/">
 <meta property="og:site_name" content="Rolando Guy Tenor">
-<meta property="og:image" content="https://www.rolandoguy.com/og-image.jpg">
+<meta property="og:image" content="https://www.rolandoguy.com/img/hero-bg.webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Rolando Guy — Lyric Tenor, Berlin">
@@ -73,10 +73,10 @@ ténor lyrique berlin, chanteur d'opéra berlin, ténor argentin berlin, concert
 
 <!-- Twitter / X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Rolando Guy · Lyric Tenor | Berlin">
-<meta name="twitter:description" content="Argentine-Italian lyric tenor based in Berlin. Opera, recital, tango and curated concert programmes across Europe.">
+<meta name="twitter:title" content="Rolando Guy | Tenor">
+<meta name="twitter:description" content="Argentinian-Italian Lyric Tenor based in Berlin. Repertoire, Media, and Contact.">
 <meta name="twitter:site" content="@rolandoguytenor">
-<meta name="twitter:image" content="https://www.rolandoguy.com/og-image.jpg">
+<meta name="twitter:image" content="https://www.rolandoguy.com/img/hero-bg.webp">
 <meta name="twitter:image:alt" content="Rolando Guy — Lyric Tenor, Berlin">
 
 <!-- JSON-LD Structured Data (Google, AI search engines) -->
@@ -1524,7 +1524,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <button type="button" class="rep-status-filter-btn active" data-filter="all" onclick="setRepStatusFilter('all')">All</button>
       <button type="button" class="rep-status-filter-btn" data-filter="performed" onclick="setRepStatusFilter('performed')">Performed</button>
       <button type="button" class="rep-status-filter-btn" data-filter="prepared" onclick="setRepStatusFilter('prepared')">Prepared</button>
-      <button type="button" class="rep-status-filter-btn" data-filter="studying" onclick="setRepStatusFilter('studying')">Studying</button>
+      <!-- Studying button is injected dynamically from renderRep() only when needed -->
     </div>
     <div class="opera-grid" id="operaGrid"></div>
   </div>
@@ -2074,15 +2074,11 @@ const DEFAULTS = {
       {composer:'Victor Massé',      opera:'Irma la douce',            role:'Nestor',            lang:'FR', status:'performed', cat:'opera'},
       {composer:'W. A. Mozart',      opera:'Le nozze di Figaro',       role:'Don Ottavio',       lang:'IT', status:'prepared',  cat:'opera'},
       {composer:'W. A. Mozart',      opera:'Don Giovanni',             role:'Don Ottavio',       lang:'IT', status:'prepared',  cat:'opera'},
-      {composer:'Giacomo Puccini',   opera:'Tosca',                    role:'Cavaradossi',       lang:'IT', status:'prepared',  cat:'opera'},
-      {composer:'Giacomo Puccini',   opera:'Madama Butterfly',         role:'Pinkerton',         lang:'IT', status:'prepared',  cat:'opera'},
       {composer:'Giuseppe Verdi',    opera:'Rigoletto',                role:'Il Duca di Mantova',lang:'IT', status:'prepared',  cat:'opera'},
       {composer:'G. Donizetti',      opera:"L'elisir d'amore",         role:'Nemorino',          lang:'IT', status:'prepared',  cat:'opera'},
       {composer:'Gaetano Donizetti', opera:'Don Pasquale',             role:'Ernesto',           lang:'IT', status:'prepared',  cat:'opera'},
       {composer:'Pietro Mascagni',   opera:'Cavalleria rusticana',     role:'Turiddu',           lang:'IT', status:'studying',  cat:'opera'},
       {composer:'Ruggero Leoncavallo',opera:'Pagliacci',               role:'Canio',             lang:'IT', status:'studying',  cat:'opera'},
-      {composer:'Georges Bizet',     opera:'Carmen',                   role:'Don José',          lang:'FR', status:'studying',  cat:'opera'},
-      {composer:'Richard Strauss',   opera:'Der Rosenkavalier',       role:'Italian Singer',    lang:'DE', status:'studying',  cat:'opera'},
     ]
   },
   perfs: [
@@ -2258,13 +2254,22 @@ function renderRep() {
   const filtersEl = document.getElementById('repStatusFilters');
   if (filtersEl) {
     filtersEl.style.display = isOpera ? 'flex' : 'none';
-    // Ocultar "Studying" si no hay ningún rol con ese estado
-    const studyingBtn = filtersEl.querySelector('[data-filter=\"studying\"]');
-    const hasStudying = allCards.some(c =>
-      (c.cat || 'opera') === 'opera' &&
-      String(c.status || '').toLowerCase() === 'studying'
-    );
-    if (studyingBtn) studyingBtn.style.display = hasStudying ? '' : 'none';
+    // Render "Studying" filter button only if there is at least one studying role in current category
+    const existingStudyingBtn = filtersEl.querySelector('[data-filter=\"studying\"]');
+    const hasStudyingInCat = catCards.some(c => String(c.status || '').toLowerCase() === 'studying');
+    if (hasStudyingInCat) {
+      if (!existingStudyingBtn) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rep-status-filter-btn';
+        btn.setAttribute('data-filter', 'studying');
+        btn.textContent = 'Studying';
+        btn.onclick = function(){ setRepStatusFilter('studying'); };
+        filtersEl.appendChild(btn);
+      }
+    } else if (existingStudyingBtn) {
+      existingStudyingBtn.remove();
+    }
   }
   const thWork = isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work');
   const tableHead = isOpera
