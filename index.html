@@ -2239,13 +2239,8 @@ function renderRep() {
   });
 
   if(!catCards.length){
-    // Show a short loading hint while Firestore is still fetching
-    if (window.__rgFsLoaded === false) {
-      g.innerHTML = `<div class="rep-empty" role="status">Loading repertoire…</div>`;
-    } else {
-      const emptyMsg = (Ti[currentLang] || Ti.en)['rep.empty'] || 'No repertoire has been added yet for this category.';
-      g.innerHTML = `<div class="rep-empty" role="status">${emptyMsg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
-    }
+    const emptyMsg = (Ti[currentLang] || Ti.en)['rep.empty'] || 'No repertoire has been added yet for this category.';
+    g.innerHTML = `<div class="rep-empty" role="status">${emptyMsg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
     return;
   }
 
@@ -2681,24 +2676,19 @@ function renderPerfs() {
     });
     html += '</div>';
   });
-  // If there are no upcoming events at all, show loading or graceful placeholder
+  // If there are no upcoming events at all, show a graceful placeholder
   if (!visible.length) {
-    // Still waiting for Firestore: show a short loading hint
-    if (window.__rgFsLoaded === false) {
-      list.innerHTML = `<div class="perf-empty" role="status">Loading performances…</div>`;
-    } else {
-      const msgByLang = {
-        en: 'Upcoming dates to be announced soon.',
-        de: 'Neue Konzerttermine werden in Kürze bekanntgegeben.',
-        es: 'Próximas fechas a anunciarse próximamente.',
-        it: 'Le prossime date saranno annunciate a breve.',
-        fr: 'Les prochaines dates seront annoncées prochainement.'
-      };
-      const msg = msgByLang[currentLang] || msgByLang.en;
-      list.innerHTML = `<div class="perf-empty" role="status">${msg}</div>`;
-      const btn=document.getElementById('pastToggleBtn');
-      if(btn) btn.style.display='none';
-    }
+    const msgByLang = {
+      en: 'Upcoming dates to be announced soon.',
+      de: 'Neue Konzerttermine werden in Kürze bekanntgegeben.',
+      es: 'Próximas fechas a anunciarse próximamente.',
+      it: 'Le prossime date saranno annunciate a breve.',
+      fr: 'Les prochaines dates seront annoncées prochainement.'
+    };
+    const msg = msgByLang[currentLang] || msgByLang.en;
+    list.innerHTML = `<div class="perf-empty" role="status">${msg}</div>`;
+    const btn=document.getElementById('pastToggleBtn');
+    if(btn) btn.style.display='none';
     return;
   }
 
