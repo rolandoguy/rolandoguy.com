@@ -11,8 +11,8 @@
 ════════════════════════════════════════════ -->
 
 <!-- Primary SEO -->
-<title>Rolando Guy | Tenor</title>
-<meta name="description" content="Argentine-Italian lyric tenor based in Berlin. Discover my operatic repertoire, operetta, art song, and Argentine tango performances.">
+<title>Rolando Guy | Argentine-Italian Lyric Tenor in Berlin</title>
+<meta name="description" content="Argentine-Italian lyric tenor based in Berlin, available for opera, recital, concert, tango and curated vocal programmes across Europe.">
 <meta name="keywords" content="
 tenor berlin, lyric tenor berlin, opera singer berlin, classical singer europe, rolando guy, argentinian tenor, italian tenor, tango singer berlin, house concert berlin, mozart tenor, puccini tenor, verdi tenor, tango argentino berlin,
 oper sänger berlin, lyrischer tenor berlin, opernsänger berlin, konzertsänger berlin, liederabend tenor, hauskonzert sänger berlin, klassischer sänger deutschland, tango sänger berlin, tenor argentinien berlin,
@@ -55,11 +55,11 @@ ténor lyrique berlin, chanteur d'opéra berlin, ténor argentin berlin, concert
 
 <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Rolando Guy | Tenor">
-<meta property="og:description" content="Argentine-Italian lyric tenor based in Berlin. Repertoire, Media, and Contact.">
+<meta property="og:title" content="Rolando Guy | Argentine-Italian Lyric Tenor in Berlin">
+<meta property="og:description" content="Argentine-Italian lyric tenor based in Berlin, available for opera, recital, concert, tango and curated vocal programmes across Europe.">
 <meta property="og:url" content="https://www.rolandoguy.com/">
 <meta property="og:site_name" content="Rolando Guy Tenor">
-<meta property="og:image" content="https://www.rolandoguy.com/img/hero-bg.webp">
+<meta property="og:image" content="https://www.rolandoguy.com/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Rolando Guy — Lyric Tenor, Berlin">
@@ -73,10 +73,10 @@ ténor lyrique berlin, chanteur d'opéra berlin, ténor argentin berlin, concert
 
 <!-- Twitter / X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Rolando Guy | Tenor">
-<meta name="twitter:description" content="Argentine-Italian lyric tenor based in Berlin. Repertoire, Media, and Contact.">
+<meta name="twitter:title" content="Rolando Guy | Argentine-Italian Lyric Tenor in Berlin">
+<meta name="twitter:description" content="Argentine-Italian lyric tenor based in Berlin, available for opera, recital, concert, tango and curated vocal programmes across Europe.">
 <meta name="twitter:site" content="@rolandoguytenor">
-<meta name="twitter:image" content="https://www.rolandoguy.com/img/hero-bg.webp">
+<meta name="twitter:image" content="https://www.rolandoguy.com/og-image.jpg">
 <meta name="twitter:image:alt" content="Rolando Guy — Lyric Tenor, Berlin">
 
 <!-- JSON-LD Structured Data (Google, AI search engines) -->
@@ -89,7 +89,7 @@ ténor lyrique berlin, chanteur d'opéra berlin, ténor argentin berlin, concert
       "@id": "https://www.rolandoguy.com/#person",
       "name": "Rolando Guy",
       "alternateName": ["Rolando Guy Tenor", "Rolando Guy Tenore", "Tenor Rolando Guy"],
-      "description": "Rolando Guy is a professional lyric tenor based in Berlin, engaged for opera productions, classical recitals, tango projects, house concerts and curated programmes across Europe. Argentine-Italian nationality, trained in Buenos Aires and Berlin.",
+      "description": "Argentine-Italian lyric tenor based in Berlin, active in opera, recital, concert, operetta and Argentine tango.",
       "disambiguatingDescription": [
         "Professioneller lyrischer Tenor in Berlin, buchbar für Oper, Konzert, Liederabend, Tango und Hauskonzerte in Deutschland und Europa.",
         "Tenor lírico profesional en Berlín, disponible para contratar en Europa para ópera, recital, tango, gala y conciertos privados.",
@@ -931,500 +931,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
 #backstageGrid{background:transparent;border:none}
 #backstageGrid .photo-item{border:1px solid var(--border)}
 .print-only-media{display:none}
-
-/* ── Print: dossier completo + agenda ── */
-@page{
-  size:A4 portrait;
-  margin:2cm;
-}
-@media print{
-  /* Desactivar cualquier carrusel/slider de la galería para que se muestren todas las fotos */
-  .gallery-container,
-  .photo-grid-4,
-  .photo-grid-3{
-    display:flex !important;
-    flex-wrap:wrap !important;
-    transform:none !important;
-    width:100% !important;
-    position:static !important;
-    overflow:visible !important;
-  }
-  .photo-item,
-  .gallery-image{
-    display:inline-block !important;
-    position:static !important;
-    opacity:1 !important;
-    visibility:visible !important;
-    transform:none !important;
-    max-height:200px !important;
-    width:auto !important;
-    margin:5px !important;
-    page-break-inside:avoid !important;
-  }
-  /* Reset fondos e imágenes decorativas (incluye pseudo-elementos) */
-  *, ::before, ::after{
-    background:transparent !important;
-    background-color:transparent !important;
-    background-image:none !important;
-    box-shadow:none !important;
-  }
-  html,body{
-    background:#ffffff !important;
-    -webkit-print-color-adjust:exact !important;
-    print-color-adjust:exact !important;
-  }
-  /* Opción nuclear: todo texto en negro por defecto */
-  /* Opción nuclear: todo texto en negro por defecto */
-  *, p, span, a, td, th, li, div{
-    color:#000000 !important;
-  }
-  body{
-    font-family:Georgia,'Times New Roman',serif;
-    font-size:11pt;
-    line-height:1.5;
-  }
-  a{
-    text-decoration:none !important;
-    color:#000000 !important;
-  }
-  /* Excepción dorada para títulos / acentos */
-  h1,h2,h3,h4,
-  .rep-title,
-  .program-card-title,
-  .perf-day,
-  .perf-header h2,
-  .dorado,
-  .titulo-seccion{
-    color:#D4AF37 !important;
-    -webkit-print-color-adjust:exact !important;
-    print-color-adjust:exact !important;
-    page-break-after:avoid;
-    break-after:avoid-page;
-  }
-  /* Tipografía ajustada a papel (pt) */
-  p, li, td, th, span, .agenda-item *{
-    font-size:11pt !important;
-    line-height:1.2 !important;
-  }
-  h1{font-size:20pt !important;}
-  h2{font-size:16pt !important;}
-  h3{font-size:14pt !important;}
-
-  /* Saltos de página sólo en unidades pequeñas (filas/items/fotos) */
-  tr,
-  #performances .perf-item,
-  .photo-item,
-  img{
-    page-break-inside:avoid !important;
-    break-inside:avoid !important;
-  }
-  /* Tamaño y comportamiento de imágenes permitidas (miniaturas elegantes, excepto QR) */
-  img:not(.qr-code-img):not(.print-qr){
-    max-height:250px !important;
-    max-width:100% !important;
-    width:auto !important;
-    object-fit:contain !important;
-    page-break-inside:avoid !important;
-    margin:10px !important;
-    display:inline-block !important;
-  }
-  /* Miniaturas elegantes para fotos de galería */
-  .gallery-image,
-  .photo-grid-4 img,
-  .photo-grid-3 img,
-  section#photos img:not(.qr-code-img):not(.print-qr){
-    max-height:250px !important;
-    max-width:100% !important;
-    width:auto !important;
-    object-fit:contain !important;
-    page-break-inside:avoid !important;
-    display:inline-block !important;
-    margin:10px !important;
-  }
-  /* Rescatar hero y biografía (primeras secciones) */
-  #hero,
-  .hero-content,
-  #about,
-  .about-text{
-    display:block !important;
-    opacity:1 !important;
-    visibility:visible !important;
-    height:auto !important;
-    min-height:0 !important;
-    position:relative !important;
-    margin-top:0 !important;
-  }
-  /* Aniquilar min-height 100vh / layouts que generan espacios enormes */
-  *{
-    max-height:100000px !important;
-  }
-  section,
-  .section-inner,
-  .section-container,
-  .wrapper{
-    height:auto !important;
-    min-height:0 !important;
-    margin:0 !important;
-    padding:10px 0 !important;
-    page-break-inside:auto !important;
-  }
-  /* Hero y fondos decorativos fuera de impresión */
-  .hero-bg,
-  .hero-overlay{
-    display:none !important;
-  }
-  #programs img{
-    display:none !important;
-  }
-  /* Botones como texto plano en impresión */
-  .btn-primary,
-  .btn-secondary{
-    background:none !important;
-    border:none !important;
-    box-shadow:none !important;
-    padding:0 !important;
-    color:#000000 !important;
-  }
-  /* Ocultar UI e interfaz interactiva */
-  nav,
-  .lang-bar,
-  footer,
-  .admin-trigger,
-  .adm,
-  .cursor,
-  .cursor-ring,
-  .mobile-menu,
-  .hamburger,
-  [id^="adm"],
-  .hero-scroll,
-  .no-print{
-    display:none !important;
-  }
-  /* Backstage: no imprimir */
-  #tab-backstage,
-  #panel-backstage{
-    display:none !important;
-  }
-  /* Tabs de repertorio y filtros: ocultar controles, mostrar contenido */
-  .rep-tabs,
-  #repStatusFilters{
-    display:none !important;
-  }
-  #operaGrid{
-    display:block !important;
-    visibility:visible !important;
-    height:auto !important;
-  }
-  /* Videos: ocultar players, mostrar QR informativo */
-  iframe,
-  video{
-    display:none !important;
-  }
-  #videos .video-grid,
-  #videos .video-more-wrap{
-    display:none !important;
-  }
-  .print-only-media{
-    display:block !important;
-    text-align:center !important;
-    margin:30px auto !important;
-    page-break-inside:avoid !important;
-    page-break-after:always !important;
-  }
-  .print-only-media p{
-    margin-bottom:12px !important;
-    font-size:0.95rem !important;
-  }
-  .print-only-media img,
-  .print-only-media canvas,
-  .print-only-media svg,
-  .print-qr,
-  .qr-code-img{
-    max-width:150px !important;
-    width:150px !important;
-    height:150px !important;
-    display:block !important;
-    margin:0 auto !important;
-    object-fit:contain !important;
-    page-break-inside:avoid !important;
-  }
-
-  /* Internacionalización del texto del QR: mostrar solo el que coincida con html[lang] */
-  .qr-text{
-    display:none !important;
-  }
-  html[lang="en"] .qr-text[lang="en"],
-  html[lang="de"] .qr-text[lang="de"],
-  html[lang="es"] .qr-text[lang="es"],
-  html[lang="it"] .qr-text[lang="it"],
-  html[lang="fr"] .qr-text[lang="fr"]{
-    display:block !important;
-  }
-  /* Contacto: ocultar formulario, dejar solo info */
-  #contact .contact-form,
-  #contact .contact-form input,
-  #contact .contact-form textarea,
-  #contact .contact-form button{
-    display:none !important;
-  }
-
-  /* Rescatar información de contacto (email / web) como texto visible y destacado */
-  .contact-ctas a,
-  .contact-left a[href^="mailto"],
-  .epk-email-link,
-  .epk-web-link{
-    display:block !important;
-    visibility:visible !important;
-    font-size:14pt !important;
-    font-weight:bold !important;
-    color:#000000 !important;
-  }
-
-  /* EPK / Press & Contact UI: ocultar bio corta, descargas y etiquetas */
-  #epk,
-  .epk-tabs,
-  .epk-bio-pane,
-  .epk-dl-col,
-  .epk-dl-group,
-  .epk-press-photos,
-  .epk-dl-link,
-  .epk-photo,
-  .epk-downloads{
-    display:none !important;
-  }
-
-  /* Limpiar tablas de repertorio: ocultar badges de estado */
-  .rep-status,
-  .rep-status-performed,
-  .rep-status-prepared,
-  .rep-status-studying{
-    display:none !important;
-  }
-
-  /* Limpiar textos residuales de UI / grandes números de sección */
-  .section-tag{
-    display:none !important;
-  }
-
-  /* Estilo limpio para agenda dentro del dossier completo */
-  #performances{
-    max-width:210mm;
-    margin:0 auto;
-  }
-  #performances .print-only-header{
-    display:block !important;
-    margin-bottom:1.8em;
-    padding-bottom:1em;
-    border-bottom:1px solid #2a2a2a;
-    text-align:center;
-  }
-  #performances .print-only-title{
-    font-size:1.75rem;
-    font-weight:400;
-    margin:0;
-    color:#1a1a1a;
-    letter-spacing:.04em;
-  }
-  #performances .print-only-subtitle{
-    font-size:.7rem;
-    margin:.5em 0 0;
-    color:#555;
-    text-transform:uppercase;
-    letter-spacing:.25em;
-    font-weight:400;
-  }
-  #performances .perf-item{
-    margin-bottom:1.35em;
-    padding-bottom:1.1em;
-    border-bottom:1px solid #e5e5e5;
-    display:block;
-  }
-  #performances .perf-item:last-child{
-    margin-bottom:0;
-    padding-bottom:0;
-    border-bottom:0;
-  }
-  #performances .perf-date-box{
-    display:block;
-    margin-bottom:.5em;
-    text-align:left;
-  }
-  #performances .perf-day{
-    font-size:1.15rem;
-    font-weight:400;
-    color:#1a1a1a;
-    line-height:1.2;
-  }
-  #performances .perf-month{
-    font-size:.7rem;
-    color:#555;
-  }
-  #performances .perf-time{
-    font-size:.75rem;
-    color:#555;
-    margin-top:.35em;
-    padding-top:.35em;
-    border-top:1px solid #eee;
-  }
-  #performances .perf-badge,
-  #performances .perf-type{
-    font-size:.6rem;
-    letter-spacing:.14em;
-    color:#666;
-    margin-bottom:.4em;
-    font-weight:500;
-  }
-  #performances .perf-info-title{
-    font-size:1.1rem;
-    font-style:italic;
-    font-weight:400;
-    margin:0 0 .25em;
-    color:#1a1a1a;
-    line-height:1.3;
-  }
-  #performances .perf-info-detail{
-    font-size:.95rem;
-    color:#333;
-    line-height:1.5;
-    margin-bottom:.4em;
-  }
-  #performances .perf-venue-link{
-    color:#444;
-    text-decoration:none;
-    border:0;
-    pointer-events:none;
-    font-size:.9rem;
-    display:inline-block;
-    margin-top:.2em;
-  }
-  #performances .perf-venue-link::before{
-    content:'Location: ';
-    font-weight:600;
-    color:#333;
-    letter-spacing:.03em;
-  }
-  #performances .perf-venue-emoji,
-  #performances .perf-venue-link .perf-maps-hint,
-  #performances .perf-venue-bg,
-  #performances .perf-past-stamp{
-    display:none !important;
-  }
-  #performances .perf-print-repertoire{
-    margin-top:.65em;
-    padding:.5em 0 0 .75em;
-    border-left:2px solid #ccc;
-    font-size:.9rem;
-    color:#444;
-    line-height:1.5;
-    font-style:normal;
-  }
-  #performances .perf-print-repertoire strong{
-    font-size:.75rem;
-    letter-spacing:.1em;
-    color:#555;
-    font-weight:600;
-  }
-  nav,.lang-bar,footer,.admin-trigger,.adm,.cursor,.cursor-ring,.mobile-menu,.hamburger,[id^="adm"],.epk-copy-btn{display:none !important}
-
-  /* Desactivar lazy loading / animaciones que ocultan fotos y agenda */
-  .reveal,
-  .photo-item,
-  .photo-panel,
-  #photos img,
-  .perf-item,
-  #perfList .perf-item,
-  .gallery-image,
-  .agenda-item,
-  .photo-container{
-    display:block !important;
-    opacity:1 !important;
-    visibility:visible !important;
-    transform:none !important;
-    transition:none !important;
-    animation:none !important;
-  }
-
-  /* 1. Exterminar botones y enlaces de acción (incluyendo links de prensa),
-     pero NO el email principal de contacto */
-  button,
-  .btn,
-  .button,
-  .send-email,
-  .read-article,
-  .submit-btn,
-  .form-submit,
-  .press-card a,
-  .epk-press-dl,
-  .epk-press-preview{
-    display:none !important;
-  }
-
-  /* 2. Limpiar iconos / flechas de orden en encabezados de tablas de repertorio */
-  th svg,
-  th .icon,
-  th .sort-arrow,
-  th span.arrow,
-  th::after{
-    display:none !important;
-    content:none !important;
-  }
-
-  /* 1. Eliminar padding/margen/transform superior del layout principal (evitar hueco inicial) */
-  html,
-  body,
-  main,
-  #root,
-  #app,
-  #main,
-  .wrapper,
-  #hero,
-  .hero-content,
-  #about{
-    margin-top:0 !important;
-    padding-top:0 !important;
-    transform:none !important;
-  }
-
-  /* Exterminar cabeceras de navegación que puedan reservar espacio */
-  header,
-  #nav,
-  .navbar{
-    display:none !important;
-    height:0 !important;
-    min-height:0 !important;
-    position:absolute !important;
-    overflow:hidden !important;
-  }
-
-  /* 2. Exterminar espaciadores y overlays residuales */
-  .spacer,
-  .overlay,
-  .divider,
-  [class*="spacer"],
-  [class*="overlay"],
-  .hero-overlay{
-    display:none !important;
-    height:0 !important;
-    padding:0 !important;
-    margin:0 !important;
-  }
-
-  /* 3. Evitar salto de página antes de la biografía */
-  .biography-section,
-  #biography,
-  .hero-content,
-  #about{
-    page-break-before:avoid !important;
-    break-before:avoid !important;
-    margin-top:0 !important;
-    padding-top:0 !important;
-  }
-
-  /* Ocultar texto de ayuda de la galería ("Click any image to view full size") */
-  #photos .photos-header p[data-i18n="photos.sub"]{
-    display:none !important;
-  }
-}
 </style>
 </head>
 <body>
@@ -2559,31 +2065,6 @@ function renderRep() {
   document.querySelectorAll('#operaGrid .reveal').forEach(el=>obs.observe(el));
 }
 
-let _repSavedForPrint = null;
-function renderRepAllCategoriesForPrint(){
-  const g = document.getElementById('operaGrid');
-  if (!g) return;
-  const d = getRep ? getRep() : {h2:'', intro:'', cards:[]};
-  const t = Ti[currentLang] || Ti.en;
-  const cats = ['opera','arias','operetta','lied','tango'];
-  let html = '';
-  cats.forEach(cat=>{
-    currentRepCategory = cat;
-    repStatusFilter = 'all';
-    renderRep();
-    const catHtml = g.innerHTML;
-    if (!catHtml || catHtml.indexOf('rep-empty') !== -1) return;
-    const tabKey =
-      cat==='opera' ? 'rep.tabOpera' :
-      cat==='arias' ? 'rep.tabArias' :
-      cat==='operetta' ? 'rep.tabOperetta' :
-      cat==='lied' ? 'rep.tabLied' : 'rep.tabTango';
-    const heading = t[tabKey] || '';
-    html += `<h3 class="rep-print-category-title">${heading}</h3>${catHtml}`;
-  });
-  g.innerHTML = html || g.innerHTML;
-}
-
 function setRepCategory(cat){
   currentRepCategory = cat;
   document.querySelectorAll('.rep-tab').forEach(btn=>{
@@ -2601,29 +2082,6 @@ function setRepCategory(cat){
   // Reset status filter when changing category
   if (cat !== 'opera') repStatusFilter = 'all';
   renderRep();
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeprint',()=>{
-    try{
-      const g = document.getElementById('operaGrid');
-      if (g) {
-        _repSavedForPrint = {
-          cat: currentRepCategory || 'opera',
-          html: g.innerHTML
-        };
-        renderRepAllCategoriesForPrint();
-      }
-    }catch(e){}
-  });
-  window.addEventListener('afterprint',()=>{
-    try{
-      if (_repSavedForPrint) {
-        setRepCategory(_repSavedForPrint.cat || 'opera');
-        _repSavedForPrint = null;
-      }
-    }catch(e){}
-  });
 }
 
 function setRepSort(col){
@@ -2959,91 +2417,139 @@ function renderPerfs() {
 }
 function togglePastPerfs(){showPastPerfs=!showPastPerfs;renderPerfs();}
 
-function getPrintAgendaHtml(){
-  var loaded=load('rg_perfs');
-  var perfs=Array.isArray(loaded)?loaded:(DEFAULTS.perfs||[]);
-  var sortDate=function(p){
-    if(p.sortDate)return new Date(p.sortDate);
-    var str=(p.day&&p.day!=='TBA'?p.day+' ':'1 ')+(p.month||'Jan 2099');
-    var d=new Date(str);
-    return isNaN(d.getTime())?new Date('2099-01-01'):d;
-  };
-  var today=new Date();today.setHours(0,0,0,0);
-  var upcoming=perfs.filter(function(p){return sortDate(p)>=today;}).sort(function(a,b){return sortDate(a)-sortDate(b);});
-  var headerSub={en:'Upcoming performances',de:'Kommende Konzerttermine',es:'Próximas actuaciones',it:'Prossimi concerti',fr:'Prochains concerts'};
-  var headerSubText=headerSub[currentLang]||headerSub.en;
-  if(!upcoming.length){
-    var emptyCss='*{margin:0;padding:0}body{font-family:Georgia,serif;padding:22mm 24mm;max-width:200mm;margin:0 auto;background:#fff;color:#1a1a1a;font-size:11pt}.p-header{text-align:center;margin-bottom:2em;padding-bottom:1em;border-bottom:1px solid #c9c9c9}.p-header h1{font-size:1.65rem;font-weight:400;letter-spacing:.06em}.p-header-sub{font-size:.7rem;margin-top:.5em;color:#555;text-transform:uppercase;letter-spacing:.28em}.p-empty{color:#666;font-style:italic}';
-    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rolando Guy — Performance Calendar</title><style>'+emptyCss+'</style></head><body><header class="p-header"><h1>Rolando Guy</h1><p class="p-header-sub">'+String(headerSubText).replace(/&/g,'&amp;')+'</p></header><p class="p-empty">No upcoming events.</p></body></html>';
-  }
-  var perfLang=get('perf');
-  var types=perfLang.eventTypes||{opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
-  var groups={};
-  upcoming.forEach(function(p){
-    var sd=sortDate(p);
-    var yr=sd.getFullYear()>2090?'TBA':sd.getFullYear().toString();
-    if(!groups[yr])groups[yr]=[];
-    groups[yr].push(p);
-  });
-  var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
-  var timeFmt=function(t){
-    if(!t)return'';
-    var clean=t.replace(/\s*(uhr|h)\s*$/i,'').trim();
-    var fmts={en:function(x){return x;},de:function(x){return x+' Uhr';},es:function(x){return x+' h';},it:function(x){return x;},fr:function(x){return x.replace(':','h');}};
-    return(fmts[currentLang]||fmts.en)(clean);
-  };
-  var body='';
-  Object.keys(groups).sort().forEach(function(yr){
-    body+='<section class="p-year"><h2 class="p-year-title">'+esc(yr)+'</h2>';
-    groups[yr].forEach(function(p){
-      var typeLabel=types[p.type]||p.type||'Event';
-      var monthStr=translateMonth(p.month)||'';
-      var dateStr=esc(p.day)+'. '+esc(monthStr)+' '+esc(yr);
-      if(p.time){dateStr+=' · '+timeFmt(p.time);}
-      var venueCity=[p.venue,p.city].filter(Boolean).join(', ');
-      body+='<article class="p-event">'
-        +'<p class="p-event-meta">'+dateStr+'</p>'
-        +'<p class="p-event-type">'+esc(typeLabel)+'</p>'
-        +(p.title&&p.title.trim()?'<p class="p-event-title">'+esc(p.title)+'</p>':'')
-        +(venueCity?'<p class="p-event-venue">'+esc(venueCity)+'</p>':'')
-        +(p.ticketPrice&&p.ticketPrice.trim()?'<p class="p-event-price">'+esc(p.ticketPrice)+'</p>':'')
-        +'</article>';
-    });
-    body+='</section>';
-  });
-  var sub=(Ti[currentLang]||Ti.en)['perf.printSubtitle']||'Performance Calendar';
-  var css=
-    '*{box-sizing:border-box;margin:0;padding:0}'
-    +'html,body{height:auto;min-height:0;background:#fff;color:#1a1a1a;font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    +'body.p-body{padding:22mm 24mm;max-width:200mm;margin:0 auto}'
-    +'.p-header{text-align:center;margin-bottom:2.2em;padding-bottom:1.1em;border-bottom:1px solid #c9c9c9}'
-    +'.p-header h1{font-size:1.65rem;font-weight:400;letter-spacing:.06em;color:#1a1a1a}'
-    +'.p-header-sub{font-size:.7rem;margin-top:.55em;color:#555;text-transform:uppercase;letter-spacing:.28em;font-weight:500}'
-    +'.p-empty{color:#666;font-style:italic;margin-top:1em}'
-    +'.p-year{margin-bottom:2.5em}'
-    +'.p-year-title{font-size:.75rem;font-weight:600;color:#444;letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.25em;padding-bottom:.4em;border-bottom:1px solid #e5e5e5}'
-    +'.p-event{break-inside:avoid;page-break-inside:avoid;padding:1em 0;border-bottom:1px solid #ebebeb}'
-    +'.p-event:last-child{border-bottom:0}'
-    +'.p-event-meta{font-size:.95rem;color:#333;letter-spacing:.03em;margin-bottom:.25em}'
-    +'.p-event-type{font-size:.62rem;font-weight:600;font-variant:small-caps;letter-spacing:.16em;color:#666;margin-bottom:.4em}'
-    +'.p-event-title{font-size:1.08rem;font-weight:500;font-style:italic;color:#1a1a1a;line-height:1.4;margin-bottom:.35em}'
-    +'.p-event-venue{font-size:.88rem;color:#555;line-height:1.45}'
-    +'.p-event-price{font-size:.82rem;color:#555;margin-top:.3em}'
-    +'@media print{html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}}';
-  return '<!DOCTYPE html><html lang="'+currentLang+'"><head><meta charset="utf-8"><title>Rolando Guy — '+esc(sub)+'</title><style>'+css+'</style></head><body class="p-body"><header class="p-header"><h1>Rolando Guy</h1><p class="p-header-sub">'+esc(headerSubText)+'</p></header>'+body+'</body></html>';
-}
-
 function printAgenda(){
-  var html=getPrintAgendaHtml();
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var w=window.open(url,'_blank','noopener');
-  if(!w){URL.revokeObjectURL(url);return;}
-  w.onload=function(){
-    URL.revokeObjectURL(url);
-    w.addEventListener('afterprint',function(){w.close();});
-    setTimeout(function(){try{w.focus();w.print();}catch(e){w.close();}},100);
+  const perfs = (typeof getPerfs === 'function') ? getPerfs() : [];
+  const sortDate = p => {
+    if (p && p.sortDate) return new Date(p.sortDate);
+    const str = (p && p.day && p.day!=='TBA' ? p.day+' ' : '1 ') + ((p && p.month) || 'Jan 2099');
+    const d = new Date(str);
+    return isNaN(d) ? new Date('2099-01-01') : d;
   };
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const upcoming = (Array.isArray(perfs) ? perfs : [])
+    .filter(p => sortDate(p) >= today)
+    .sort((a,b)=>sortDate(a)-sortDate(b));
+
+  const esc = s => String(s || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+
+  const perfLang = (typeof get === 'function' && get('perf')) || {};
+  const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
+
+  const timeFmt = t => {
+    if (!t) return '';
+    const clean = String(t).replace(/\s*(uhr|h)\s*$/i, '').trim();
+    const fmts = {en:x=>x, de:x=>x+' Uhr', es:x=>x+' h', it:x=>'ore '+x, fr:x=>x.replace(':','h')};
+    return (fmts[currentLang] || fmts.en)(clean);
+  };
+
+  const monthOut = m => (typeof translateMonth === 'function') ? (translateMonth(m) || m || '') : (m || '');
+
+  let body = '';
+  if (!upcoming.length) {
+    body = `<p class="empty">${esc((Ti[currentLang]||Ti.en)['perf.emptyUpcoming'] || 'Upcoming dates to be announced soon.')}</p>`;
+  } else {
+    // Group by year for quick scanning
+    const groups = {};
+    upcoming.forEach(p => {
+      const sd = sortDate(p);
+      const yr = sd.getFullYear() > 2090 ? 'TBA' : sd.getFullYear().toString();
+      (groups[yr] ||= []).push(p);
+    });
+    Object.keys(groups).sort().forEach(yr => {
+      body += `<h2 class="year">${esc(yr)}</h2>`;
+      groups[yr].forEach(p => {
+        const typeLabel = types[p?.type] || p?.type || types.other || 'Event';
+        const monthStr = monthOut(p.month);
+        const yearStr = (sortDate(p).getFullYear() > 2090) ? '' : ' ' + (sortDate(p).getFullYear().toString());
+        const dateStr = (p.day && p.day !== 'TBA')
+          ? `${esc(p.day)} ${esc(monthStr)}${esc(yearStr)}`
+          : `${esc(monthStr)}${esc(yearStr)}`.trim() || 'TBA';
+        const tStr = timeFmt(p.time);
+        const when = tStr ? `${dateStr} · ${esc(tStr)}` : dateStr;
+        const title = (p.title || '').trim();
+        const detail = ((p['detail_'+currentLang] || p.detail) || '').trim();
+        const venueBits = [];
+        if ((p.venue || '').trim()) venueBits.push(String(p.venue).trim());
+        if ((p.city || '').trim()) venueBits.push(String(p.city).trim());
+        const venueLine = venueBits.join(' · ');
+        const moreInfo = (p.eventLink || '').trim();
+        body += `<article class="event">
+          <div class="meta">
+            <div class="when">${esc(when)}</div>
+            <div class="type">${esc(typeLabel)}</div>
+          </div>
+          ${title ? `<div class="title">${esc(title)}</div>` : ''}
+          ${detail ? `<div class="detail">${esc(detail)}</div>` : ''}
+          ${venueLine ? `<div class="venue">${esc(venueLine)}</div>` : ''}
+          ${moreInfo ? `<div class="more"><a href="${esc(moreInfo)}">${esc((Ti[currentLang]||Ti.en)['perf.moreInfoPrint'] || 'More info')}</a></div>` : ''}
+        </article>`;
+      });
+    });
+  }
+
+  const css = `
+    @page{ size:A4 portrait; margin:18mm 18mm 16mm; }
+    html,body{ height:auto; margin:0; padding:0; background:#fff; color:#111; }
+    body{ font-family: ui-serif, Georgia, "Times New Roman", Times, serif; font-size:11pt; line-height:1.45; }
+    *{ box-sizing:border-box; }
+    .wrap{ max-width: 180mm; margin:0 auto; }
+    header{ text-align:center; padding: 0 0 10mm; border-bottom:1px solid #d7d7d7; margin-bottom:8mm; }
+    .name{ font-size:18pt; letter-spacing:.06em; font-weight:500; margin:0; }
+    .h1{ font-size:13pt; font-weight:600; letter-spacing:.12em; text-transform:uppercase; margin:4mm 0 0; }
+    .sub{ font-size:9.5pt; color:#444; margin:2mm 0 0; }
+    .year{ font-size:9.5pt; letter-spacing:.16em; text-transform:uppercase; color:#444; margin:7mm 0 3mm; padding-top:4mm; border-top:1px solid #ececec; }
+    .event{ padding: 4mm 0; border-bottom:1px solid #ededed; break-inside:avoid; page-break-inside:avoid; }
+    .event:last-child{ border-bottom:0; }
+    .meta{ display:flex; justify-content:space-between; gap:8mm; align-items:baseline; }
+    .when{ font-size:10.5pt; color:#111; }
+    .type{ font-size:8.5pt; letter-spacing:.14em; text-transform:uppercase; color:#555; white-space:nowrap; }
+    .title{ margin-top:1.5mm; font-size:12pt; font-style:italic; color:#111; }
+    .detail{ margin-top:1.5mm; color:#333; }
+    .venue{ margin-top:1.5mm; color:#444; }
+    .more{ margin-top:2mm; font-size:9pt; }
+    a{ color:#111; text-decoration:none; border-bottom:1px solid #bbb; }
+    .empty{ color:#555; font-style:italic; margin:10mm 0 0; text-align:center; }
+  `;
+
+  const html = `<!doctype html>
+  <html lang="${esc(currentLang || 'en')}">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Rolando Guy — Performance Calendar</title>
+      <style>${css}</style>
+    </head>
+    <body>
+      <div class="wrap">
+        <header>
+          <h1 class="name">Rolando Guy</h1>
+          <div class="h1">Performance Calendar</div>
+          <div class="sub">Selected engagements and concerts</div>
+        </header>
+        ${body}
+      </div>
+      <script>
+        window.addEventListener('load', function(){
+          try{ window.focus(); }catch(e){}
+          setTimeout(function(){
+            try{ window.print(); }catch(e){}
+          }, 50);
+        });
+        window.addEventListener('afterprint', function(){ try{ window.close(); }catch(e){} });
+      <\/script>
+    </body>
+  </html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!w) { URL.revokeObjectURL(url); return; }
+  w.addEventListener('load', () => { try { URL.revokeObjectURL(url); } catch(e) {} });
 }
 
 // ── Auto-translate event detail via Anthropic API ────────────

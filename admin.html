@@ -1252,6 +1252,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <div class="adm-head">
    <span class="adm-head-title">Panel de Administración · <span id="admLangInd" style="color:var(--text-dim)">EN</span></span>
    <div style="display:flex; gap:12px; align-items:center;">
+    <div id="admSavePill" style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);padding:5px 10px;border-radius:999px;min-width:140px;text-align:center">Saved</div>
+    <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
+    <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
     <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Cerrar Sesión</button>
     <a href="https://www.rolandoguy.com" target="_blank" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
    </div>
@@ -1618,6 +1621,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
    </div><!-- admPanel-epk -->
    </div><!-- adm-body -->
+   <div id="admActivityWrap" style="border-top:1px solid var(--border);background:rgba(13,13,18,.85);backdrop-filter:blur(10px);padding:10px 16px">
+     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+       <div style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)">Activity log</div>
+       <button onclick="admClearLog()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.55rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Clear</button>
+     </div>
+     <div id="admActivityLog" style="margin-top:8px;font-size:.78rem;line-height:1.5;color:var(--text-dim);max-height:120px;overflow:auto;white-space:pre-wrap"></div>
+     <div id="admActivityErr" style="display:none;margin-top:8px;padding:10px 12px;border:1px solid rgba(220,80,80,.45);background:rgba(220,80,80,.08);color:#ffb0b0;font-size:.78rem;line-height:1.5;white-space:pre-wrap"></div>
+   </div>
   </div><!-- admContent -->
  </div><!-- adm-wrap -->
 </div><!-- adm -->
@@ -1747,12 +1758,17 @@ function save(key, val) {
   DB[key] = val;
   if(!fsdb) {
     console.warn('[RG ADMIN] save skipped: fsdb not initialized', { key });
+    if (typeof rgSaveFailed === 'function') rgSaveFailed(key, { code: 'no-fsdb', message: 'Firestore not initialized' });
     return;
   }
   const user = (fauth && fauth.currentUser) ? fauth.currentUser : null;
   console.info('[RG ADMIN] save()', { key, authed: !!user, email: user && user.email ? user.email : null });
+  if (typeof rgSaveStart === 'function') rgSaveStart(key);
   fsdb.collection('rg').doc(key).set({ value: JSON.stringify(val) })
-    .then(() => console.info('[RG ADMIN] save OK', { key }))
+    .then(() => {
+      console.info('[RG ADMIN] save OK', { key });
+      if (typeof rgSaveOk === 'function') rgSaveOk(key);
+    })
     .catch(e => {
       console.warn('[RG ADMIN] Firestore save error', {
         key,
@@ -1761,8 +1777,258 @@ function save(key, val) {
         authed: !!user,
         email: user && user.email ? user.email : null
       });
+      if (typeof rgSaveFailed === 'function') rgSaveFailed(key, e);
     });
 }
+
+// ── Admin UX: Save status + activity log + helpers ──
+const __admLog = [];
+let __admSaveState = 'saved'; // 'saved' | 'saving' | 'unsaved' | 'failed'
+let __admLastKey = null;
+
+function __admNow() {
+  const d = new Date();
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+function __admRenderLog() {
+  const el = document.getElementById('admActivityLog');
+  if (!el) return;
+  const lines = __admLog.slice(-25).map(x => `[${x.t}] ${x.level.toUpperCase()} ${x.msg}${x.key ? ' · ' + x.key : ''}`);
+  el.textContent = lines.join('\n');
+}
+function __admShowErr(msg) {
+  const el = document.getElementById('admActivityErr');
+  if (!el) return;
+  if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+function admLog(level, msg, meta = {}) {
+  __admLog.push({ t: __admNow(), level: level || 'info', msg: String(msg || ''), key: meta.key || null, meta });
+  __admRenderLog();
+}
+function admClearLog() {
+  __admLog.length = 0;
+  __admRenderLog();
+  __admShowErr('');
+}
+
+function __admSetPill(state, detail = '') {
+  __admSaveState = state;
+  const pill = document.getElementById('admSavePill');
+  if (!pill) return;
+  const map = {
+    saved:   { text: 'Saved',           color: 'var(--text-faint)', border: 'var(--border)', bg: 'transparent' },
+    saving:  { text: 'Saving...',       color: 'var(--gold)',      border: 'var(--gold)',  bg: 'rgba(212,168,67,.08)' },
+    unsaved: { text: 'Unsaved changes', color: '#ffd7a8',          border: 'rgba(255,215,168,.35)', bg: 'rgba(255,215,168,.06)' },
+    failed:  { text: 'Save failed',     color: '#ffb0b0',          border: 'rgba(220,80,80,.45)',  bg: 'rgba(220,80,80,.08)' }
+  };
+  const cfg = map[state] || map.saved;
+  pill.textContent = detail ? `${cfg.text} · ${detail}` : cfg.text;
+  pill.style.color = cfg.color;
+  pill.style.borderColor = cfg.border;
+  pill.style.background = cfg.bg;
+}
+
+function rgSaveStart(key) {
+  __admLastKey = key;
+  __admSetPill('saving', key);
+  __admShowErr('');
+  admLog('info', 'Saving', { key });
+}
+function rgSaveOk(key) {
+  __admLastKey = key;
+  __admSetPill('saved', key);
+  admLog('info', 'Saved', { key });
+}
+function rgSaveFailed(key, err) {
+  __admLastKey = key;
+  __admSetPill('failed', key);
+  const code = err && err.code ? err.code : '';
+  const message = err && err.message ? err.message : (typeof err === 'string' ? err : JSON.stringify(err));
+  const full = `${key}${code ? ' · ' + code : ''}\n${message || ''}`.trim();
+  __admShowErr(full);
+  admLog('error', code ? `Save failed (${code})` : 'Save failed', { key });
+}
+
+function rgMarkUnsaved(reason = '') {
+  if (__admSaveState === 'saving') return;
+  __admSetPill('unsaved', reason || '');
+}
+
+// Mark unsaved on any admin input change
+document.addEventListener('input', (e) => {
+  const root = document.getElementById('admContent');
+  if (!root || root.style.display === 'none') return;
+  if (!root.contains(e.target)) return;
+  rgMarkUnsaved('form');
+}, true);
+document.addEventListener('change', (e) => {
+  const root = document.getElementById('admContent');
+  if (!root || root.style.display === 'none') return;
+  if (!root.contains(e.target)) return;
+  rgMarkUnsaved('form');
+}, true);
+
+function __admSafeDownload(filename, text, mime = 'application/json') {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+function admExportJSON() {
+  try {
+    const keys = Object.keys(DB || {}).sort();
+    const editableKeys = keys.filter(k =>
+      k === 'rg_rep_cards' ||
+      k === 'rg_vid' ||
+      k === 'rg_perfs' ||
+      k === 'rg_press' ||
+      k === 'rg_epk_bios' ||
+      k === 'rg_epk_photos' ||
+      k === 'rg_epk_cvs' ||
+      k === 'rg_photos' ||
+      k === 'rg_photo_captions' ||
+      k.startsWith('hero_') ||
+      k.startsWith('bio_') ||
+      k.startsWith('contact_') ||
+      k.startsWith('perf_') ||
+      k.startsWith('programs_') ||
+      k.startsWith('rg_programs_')
+    );
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      origin: (typeof location !== 'undefined' ? location.origin : ''),
+      keys: editableKeys,
+      data: Object.fromEntries(editableKeys.map(k => [k, DB[k]]))
+    };
+    __admSafeDownload(`rg_admin_export_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`, JSON.stringify(payload, null, 2));
+    admLog('info', 'Exported JSON', { key: '' });
+  } catch (e) {
+    rgSaveFailed('export', e);
+  }
+}
+
+function restoreDefaults(section) {
+  const ok = confirm(`Restore defaults for "${section}"?\n\nThis will overwrite the saved value for this section (only) by resetting it to the built-in fallback.`);
+  if (!ok) return;
+  const lang = currentLang || 'en';
+  const clear = (key) => save(key, null);
+  try {
+    if (section === 'hero') clear('hero_' + lang);
+    else if (section === 'bio') clear('bio_' + lang);
+    else if (section === 'contact') clear('contact_' + lang);
+    else if (section === 'calendar') { clear('perf_' + lang); clear('rg_perfs'); }
+    else if (section === 'programs') { clear('rg_programs_' + lang); clear('programs_' + lang); }
+    else if (section === 'videos') clear('rg_vid');
+    else if (section === 'press') clear('rg_press');
+    else if (section === 'epk-bios') clear('rg_epk_bios');
+    else if (section === 'epk-photos') clear('rg_epk_photos');
+    else if (section === 'repertoire') clear('rg_rep_cards');
+    else if (section === 'photos') { clear('rg_photos'); clear('rg_photo_captions'); }
+    admLog('info', 'Restore defaults requested', { key: section });
+    // Refresh UI
+    try { if (typeof renderAll === 'function') renderAll(); } catch(e) {}
+    try { if (typeof renderEpk === 'function') renderEpk(); } catch(e) {}
+    try { if (typeof renderPress === 'function') renderPress(); } catch(e) {}
+    try { if (typeof admPopulate === 'function') admPopulate(admCurTab); } catch(e) {}
+  } catch (e) {
+    rgSaveFailed('restore_defaults', e);
+  }
+}
+
+function __admInjectPanelTools() {
+  const panelMap = {
+    'admPanel-hero': 'hero',
+    'admPanel-bio': 'bio',
+    'admPanel-rep-opera': 'repertoire',
+    'admPanel-rep-arias': 'repertoire',
+    'admPanel-rep-operetta': 'repertoire',
+    'admPanel-rep-lived': 'repertoire',
+    'admPanel-rep-tango': 'repertoire',
+    'admPanel-programs': 'programs',
+    'admPanel-vid': 'videos',
+    'admPanel-photos': 'photos',
+    'admPanel-perf': 'calendar',
+    'admPanel-press': 'press',
+    'admPanel-contact': 'contact',
+    'admPanel-epk': 'epk-bios'
+  };
+  const autosavePanels = new Set(['admPanel-press', 'admPanel-epk', 'admPanel-perf', 'admPanel-photos']);
+  document.querySelectorAll('.adm-panel').forEach(panel => {
+    const sec = panel.querySelector('.adm-section');
+    if (!sec) return;
+    if (sec.dataset.toolsInjected === '1') return;
+    sec.dataset.toolsInjected = '1';
+    const right = document.createElement('span');
+    right.style.float = 'right';
+    right.style.display = 'inline-flex';
+    right.style.gap = '8px';
+    right.style.alignItems = 'center';
+    const mode = document.createElement('span');
+    mode.textContent = autosavePanels.has(panel.id) ? 'Auto-save' : 'Manual save';
+    mode.style.fontFamily = 'var(--ff-caps)';
+    mode.style.fontSize = '.52rem';
+    mode.style.letterSpacing = '.14em';
+    mode.style.textTransform = 'uppercase';
+    mode.style.color = 'var(--text-faint)';
+    mode.style.border = '1px solid var(--border)';
+    mode.style.padding = '3px 8px';
+    mode.style.borderRadius = '999px';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = (panelMap[panel.id] === 'photos') ? 'Clear custom data' : 'Restore defaults';
+    btn.style.fontFamily = 'var(--ff-caps)';
+    btn.style.fontSize = '.52rem';
+    btn.style.letterSpacing = '.14em';
+    btn.style.textTransform = 'uppercase';
+    btn.style.color = 'var(--text-faint)';
+    btn.style.background = 'transparent';
+    btn.style.border = '1px solid var(--border)';
+    btn.style.padding = '3px 8px';
+    btn.style.cursor = 'pointer';
+    btn.onmouseenter = () => { btn.style.color = 'var(--gold)'; btn.style.borderColor = 'var(--gold)'; };
+    btn.onmouseleave = () => { btn.style.color = 'var(--text-faint)'; btn.style.borderColor = 'var(--border)'; };
+    btn.onclick = () => restoreDefaults(panelMap[panel.id] || panel.id);
+    right.appendChild(mode);
+    right.appendChild(btn);
+    sec.appendChild(right);
+  });
+}
+
+function admCheckContent() {
+  try {
+    const issues = [];
+    const s = JSON.stringify(DB || {});
+    const push = (msg) => issues.push(msg);
+    if (/Argentinian-Italian/i.test(s) || /Argentinian\/Italian/i.test(s)) push('Found “Argentinian-Italian” (prefer “Argentine-Italian”).');
+    if (/Weinachtskonzert/i.test(s)) push('Found “Weinachtskonzert” (should be “Weihnachtskonzert”).');
+    if (/BERLIN,GERMANY/.test(s)) push('Found “BERLIN,GERMANY” (missing space).');
+    if (/\bDanilo\b/.test(s)) push('Found “Danilo” in bios (remove from role list).');
+    if (/\bSPRING\b/i.test(s)) push('Found “Spring” in date fields (check Calendar).');
+    if (/\bSHOW\b/.test(s)) push('Found “SHOW” type label (prefer “Private Event” in EN mapping).');
+    if (!issues.length) admLog('info', 'Check content: OK', {});
+    else {
+      issues.forEach(m => admLog('warn', 'Check: ' + m, {}));
+      __admShowErr(issues.join('\n'));
+    }
+  } catch(e) {
+    rgSaveFailed('check_content', e);
+  }
+}
+
+// One-time init
+setTimeout(() => {
+  __admSetPill('saved', '');
+  __admRenderLog();
+  __admInjectPanelTools();
+}, 0);
 </script>
 <script>
 // ══════════════════════════════════════════════
@@ -2808,6 +3074,49 @@ function renderContact() {
 // ── EPK Section ──────────────────────────────────────────────
 
 
+const EPK_BIOS = {
+  en: {
+    b50: "Argentine-Italian lyric tenor Rolando Guy, based in Berlin, trained in Buenos Aires at the National Conservatory and with private teachers connected to Teatro Colón. His work spans opera, operetta, recital and concert. Recent engagements include Kammeroper Frankfurt and Opernwerkstatt am Rhein, alongside performances across Germany and Europe.",
+    b150: "Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his training privately with distinguished teachers connected to Teatro Colón. Based in Berlin since 2019, he has continued to refine his technique and expand his repertoire in Germany. His recent engagements include Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in 2025 and Tamino in a children’s production of Die Zauberflöte with Opernwerkstatt am Rhein in 2023. He has also appeared as tenor soloist at the Apollo-Saal of the Staatsoper Berlin, performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office and Notre-Dame in Strasbourg. His repertoire and concert work range from opera and Lied to sacred music and Argentine tango.",
+    b300p1: "Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his musical development through private studies in voice and music theory with distinguished teachers connected to Teatro Colón. He also developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub. In 2017, he participated in the Javier Camarena masterclass in Buenos Aires.",
+    b300p2: "Based in Berlin since 2019, he first studied with Maestro Reiner Goldberg and has continued refining his technique and expanding his repertoire in Germany. He currently works with Maestro Stephan von Cron Catalano and has also received artistic guidance from Uwe Griem, Jack Li Vigni and Francesco Anile.",
+    b300p3: "His recent engagements include Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in July 2025 under the musical direction of Stanislav Rosenberg, and Tamino in a children’s production of Die Zauberflöte with Opernwerkstatt am Rhein in 2023. In Buenos Aires, he has appeared in roles including Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone and Borsa.",
+    b300p4: "Alongside his stage work, Rolando Guy has developed an active concert profile in Berlin, Copenhagen and Strasbourg. He has performed with the ensemble Die Goldvögel, appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg, and given Lied recitals featuring Schubert, Strauss, Rachmaninov and Liszt, often in collaboration with pianist Marcelo Ayub. His artistic profile brings together opera, recital, sacred music and Argentine tango."
+  },
+  de: {
+    b50: "Der argentinisch-italienische lyrische Tenor Rolando Guy lebt in Berlin. Seine Ausbildung begann er in Buenos Aires am Nationalkonservatorium und setzte sie privat bei mit dem Teatro Colón verbundenen Gesangslehrern fort. Sein künstlerisches Profil umfasst Oper, Operette, Lied und Konzert. Jüngste Engagements führten ihn unter anderem an die Kammeroper Frankfurt und zur Opernwerkstatt am Rhein.",
+    b150: "Der argentinisch-italienische lyrische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalkonservatorium studierte und seine Ausbildung anschließend privat bei angesehenen, mit dem Teatro Colón verbundenen Gesangslehrern fortsetzte. Seit 2019 lebt er in Berlin und entwickelt dort seine Technik und sein Repertoire weiter. Zu seinen jüngeren Engagements zählen Zweiter Fremder in Der Vetter aus Dingsda an der Kammeroper Frankfurt im Jahr 2025 sowie Tamino in einer Kinderfassung der Zauberflöte bei der Opernwerkstatt am Rhein im Jahr 2023. Darüber hinaus trat er als Tenorsolist unter anderem im Apollo-Saal der Staatsoper Berlin auf, konzertierte mit dem Ensemble Die Goldvögel in Berlin und Kopenhagen und sang als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und in Notre-Dame in Straßburg. Sein Repertoire reicht von Oper und Lied bis zu geistlicher Musik und argentinischem Tango.",
+    b300p1: "Der argentinisch-italienische lyrische Tenor Rolando Guy wurde in Buenos Aires geboren. Dort studierte er am Nationalkonservatorium und vertiefte seine musikalische Ausbildung anschließend in privatem Gesangs- und Theoriestudium bei angesehenen Lehrern, die mit dem Teatro Colón verbunden sind. Sein Opernrepertoire erarbeitete er außerdem mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia und Marcelo Ayub. Im Jahr 2017 nahm er in Buenos Aires an der Masterclass von Javier Camarena teil.",
+    b300p2: "Seit 2019 lebt Rolando Guy in Berlin, wo er zunächst bei Maestro Reiner Goldberg studierte und seine technische und künstlerische Entwicklung in Deutschland fortsetzt. Derzeit arbeitet er mit Maestro Stephan von Cron Catalano und erhielt darüber hinaus künstlerische Impulse von Uwe Griem, Jack Li Vigni und Francesco Anile.",
+    b300p3: "Zu seinen jüngeren Engagements zählen Zweiter Fremder in Der Vetter aus Dingsda an der Kammeroper Frankfurt im Juli 2025 unter der musikalischen Leitung von Stanislav Rosenberg sowie Tamino in einer Kinderfassung der Zauberflöte bei der Opernwerkstatt am Rhein im Jahr 2023. In Buenos Aires sang er unter anderem die Partien Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone und Borsa.",
+    b300p4: "Neben seiner Bühnenarbeit pflegt Rolando Guy eine rege Konzerttätigkeit in Berlin, Kopenhagen und Straßburg. Er konzertierte mit dem Ensemble Die Goldvögel, trat als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und in Notre-Dame Straßburg auf und gestaltete Liederabende mit Werken von Schubert, Strauss, Rachmaninow und Liszt, häufig in Zusammenarbeit mit dem Pianisten Marcelo Ayub. Sein künstlerisches Profil verbindet Oper, Lied, geistliche Musik und argentinischen Tango."
+  },
+  es: {
+    b50: "Rolando Guy es un tenor lírico argentino-italiano radicado en Berlín. Inició su formación en Buenos Aires en el Conservatorio Nacional y la continuó de forma privada con maestros vinculados al Teatro Colón. Su actividad abarca ópera, opereta, lied y concierto. Entre sus compromisos recientes figuran Kammeroper Frankfurt y Opernwerkstatt am Rhein.",
+    b150: "Rolando Guy es un tenor lírico argentino-italiano nacido en Buenos Aires y radicado en Berlín desde 2019. Estudió en el Conservatorio Nacional y continuó su formación de manera privada con reconocidos maestros vinculados al Teatro Colón. Su trayectoria incluye ópera, opereta, recital y concierto. Entre sus compromisos recientes se encuentran Zweiter Fremder en Der Vetter aus Dingsda en la Kammeroper Frankfurt en 2025 y Tamino en una versión infantil de Die Zauberflöte con la Opernwerkstatt am Rhein en 2023. También se ha presentado como tenor solista en el Apollo-Saal de la Staatsoper Berlin, ha actuado con el ensemble Die Goldvögel en Berlín y Copenhague, y como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Relaciones Exteriores de Alemania y Notre-Dame de Estrasburgo. Su repertorio y actividad concertística abarcan desde la ópera y el lied hasta la música sacra y el tango argentino.",
+    b300p1: "Rolando Guy es un tenor lírico argentino-italiano nacido en Buenos Aires. Allí inició su formación musical en el Conservatorio Nacional y la profundizó posteriormente mediante estudios privados de canto y teoría con distinguidos maestros vinculados al Teatro Colón. Desarrolló además su repertorio operístico junto a Dante Ranieri, Susana Cardonnet, Rozita Zozoulia y Marcelo Ayub. En 2017 participó en la masterclass de Javier Camarena en Buenos Aires.",
+    b300p2: "Radicado en Berlín desde 2019, estudió inicialmente con el Maestro Reiner Goldberg y continuó desarrollando su técnica y ampliando su repertorio en Alemania. Actualmente trabaja con el Maestro Stephan von Cron Catalano y también ha recibido orientación artística de Uwe Griem, Jack Li Vigni y Francesco Anile.",
+    b300p3: "Entre sus compromisos recientes se encuentran Zweiter Fremder en Der Vetter aus Dingsda en la Kammeroper Frankfurt en julio de 2025, bajo la dirección musical de Stanislav Rosenberg, y Tamino en una versión infantil de Die Zauberflöte con la Opernwerkstatt am Rhein en 2023. En Buenos Aires interpretó, entre otros, los roles de Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone y Borsa.",
+    b300p4: "Junto a su actividad escénica, Rolando Guy desarrolla una intensa labor concertística en Berlín, Copenhague y Estrasburgo. Se ha presentado con el ensemble Die Goldvögel, ha actuado como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Relaciones Exteriores de Alemania y Notre-Dame de Estrasburgo, y ha ofrecido recitales de lied con obras de Schubert, Strauss, Rachmaninov y Liszt, a menudo en colaboración con el pianista Marcelo Ayub. Su perfil artístico reúne ópera, lied, música sacra y tango argentino."
+  },
+  it: {
+    b50: "Rolando Guy è un tenore lirico argentino-italiano residente a Berlino. Ha iniziato la sua formazione a Buenos Aires presso il Conservatorio Nazionale, proseguendola privatamente con maestri legati al Teatro Colón. La sua attività comprende opera, operetta, lied e concerto. Tra gli impegni recenti figurano la Kammeroper Frankfurt e l’Opernwerkstatt am Rhein.",
+    b150: "Rolando Guy è un tenore lirico argentino-italiano nato a Buenos Aires e residente a Berlino dal 2019. Ha studiato presso il Conservatorio Nazionale e ha proseguito la propria formazione privatamente con autorevoli maestri legati al Teatro Colón. La sua attività artistica comprende opera, operetta, recital e concerto. Tra gli impegni recenti figurano Zweiter Fremder in Der Vetter aus Dingsda alla Kammeroper Frankfurt nel 2025 e Tamino in una versione per bambini di Die Zauberflöte con l’Opernwerkstatt am Rhein nel 2023. Si è inoltre esibito come tenore solista all’Apollo-Saal della Staatsoper Berlin, ha collaborato con l’ensemble Die Goldvögel a Berlino e Copenaghen ed è stato solista con il Diplomatic Choir of Berlin presso il Berliner Dom, il Ministero degli Esteri tedesco e Notre-Dame a Strasburgo. Il suo repertorio spazia dall’opera e dal lied alla musica sacra e al tango argentino.",
+    b300p1: "Rolando Guy è un tenore lirico argentino-italiano nato a Buenos Aires. Ha iniziato la sua formazione musicale presso il Conservatorio Nazionale e l’ha poi approfondita attraverso studi privati di canto e teoria con autorevoli maestri legati al Teatro Colón. Ha inoltre sviluppato il proprio repertorio operistico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia e Marcelo Ayub. Nel 2017 ha partecipato alla masterclass di Javier Camarena a Buenos Aires.",
+    b300p2: "Residente a Berlino dal 2019, ha studiato inizialmente con il Maestro Reiner Goldberg e ha proseguito in Germania il proprio sviluppo tecnico e artistico. Attualmente lavora con il Maestro Stephan von Cron Catalano e ha inoltre ricevuto orientamento artistico da Uwe Griem, Jack Li Vigni e Francesco Anile.",
+    b300p3: "Tra gli impegni recenti figurano Zweiter Fremder in Der Vetter aus Dingsda alla Kammeroper Frankfurt nel luglio 2025, sotto la direzione musicale di Stanislav Rosenberg, e Tamino in una versione per bambini di Die Zauberflöte con l’Opernwerkstatt am Rhein nel 2023. A Buenos Aires ha interpretato, tra gli altri, i ruoli di Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone e Borsa.",
+    b300p4: "Accanto all’attività scenica, Rolando Guy svolge un’intensa attività concertistica a Berlino, Copenaghen e Strasburgo. Si è esibito con l’ensemble Die Goldvögel, è stato solista con il Diplomatic Choir of Berlin presso il Berliner Dom, il Ministero degli Esteri tedesco e Notre-Dame a Strasburgo, e ha tenuto recital di lied con musiche di Schubert, Strauss, Rachmaninov e Liszt, spesso in collaborazione con il pianista Marcelo Ayub. Il suo profilo artistico unisce opera, lied, musica sacra e tango argentino."
+  },
+  fr: {
+    b50: "Rolando Guy est un ténor lyrique argentino-italien basé à Berlin. Il a commencé sa formation à Buenos Aires au Conservatoire national, avant de la poursuivre en privé auprès de maîtres liés au Teatro Colón. Son activité comprend l’opéra, l’opérette, le lied et le concert. Parmi ses engagements récents figurent la Kammeroper Frankfurt et l’Opernwerkstatt am Rhein.",
+    b150: "Rolando Guy est un ténor lyrique argentino-italien né à Buenos Aires et installé à Berlin depuis 2019. Il a étudié au Conservatoire national et a poursuivi sa formation en privé auprès de maîtres reconnus liés au Teatro Colón. Son activité artistique comprend l’opéra, l’opérette, le récital et le concert. Parmi ses engagements récents figurent Zweiter Fremder dans Der Vetter aus Dingsda à la Kammeroper Frankfurt en 2025, ainsi que Tamino dans une version pour enfants de Die Zauberflöte avec l’Opernwerkstatt am Rhein en 2023. Il s’est également produit comme ténor soliste à l’Apollo-Saal de la Staatsoper Berlin, a chanté avec l’ensemble Die Goldvögel à Berlin et à Copenhague, et s’est produit en soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au ministère allemand des Affaires étrangères et à Notre-Dame de Strasbourg. Son répertoire s’étend de l’opéra et du lied à la musique sacrée et au tango argentin.",
+    b300p1: "Rolando Guy est un ténor lyrique argentino-italien né à Buenos Aires. Il y a commencé sa formation musicale au Conservatoire national, avant de l’approfondir par des études privées de chant et de théorie auprès de maîtres reconnus liés au Teatro Colón. Il a également développé son répertoire lyrique avec Dante Ranieri, Susana Cardonnet, Rozita Zozoulia et Marcelo Ayub. En 2017, il a participé à la masterclass de Javier Camarena à Buenos Aires.",
+    b300p2: "Installé à Berlin depuis 2019, il a d’abord étudié avec le Maestro Reiner Goldberg et a poursuivi en Allemagne son développement technique et artistique. Il travaille actuellement avec le Maestro Stephan von Cron Catalano et a également bénéficié de l’accompagnement artistique de Uwe Griem, Jack Li Vigni et Francesco Anile.",
+    b300p3: "Parmi ses engagements récents figurent Zweiter Fremder dans Der Vetter aus Dingsda à la Kammeroper Frankfurt en juillet 2025, sous la direction musicale de Stanislav Rosenberg, ainsi que Tamino dans une version pour enfants de Die Zauberflöte avec l’Opernwerkstatt am Rhein en 2023. À Buenos Aires, il a interprété notamment les rôles de Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone et Borsa.",
+    b300p4: "Parallèlement à son activité scénique, Rolando Guy mène une activité de concert soutenue à Berlin, Copenhague et Strasbourg. Il s’est produit avec l’ensemble Die Goldvögel, a chanté en soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au ministère allemand des Affaires étrangères et à Notre-Dame de Strasbourg, et a donné des récitals de lied consacrés à Schubert, Strauss, Rachmaninov et Liszt, souvent en collaboration avec le pianiste Marcelo Ayub. Son profil artistique réunit l’opéra, le lied, la musique sacrée et le tango argentin."
+  }
+};
+
 const EPK_CVS = {
   EN: { label:'CV – English',  filename:'RolandoGuy_CV_EN.pdf',  b64:'docs/RolandoGuy_CV_EN.pdf' },
   DE: { label:'CV – Deutsch',  filename:'RolandoGuy_CV_DE.pdf',  b64:'docs/RolandoGuy_CV_DE.pdf' },
@@ -2843,7 +3152,7 @@ function epkCopyBio() {
 
 function renderEpk() {
   const lang = currentLang || 'en';
-  const bios = EPK_BIOS[lang] || EPK_BIOS.en;
+  const bios = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || { b50:'', b150:'', b300p1:'', b300p2:'', b300p3:'', b300p4:'' };
   const ti = Ti[lang] || Ti.en;
 
   // Title
@@ -2858,7 +3167,14 @@ function renderEpk() {
 
   // Bio texts — use stored overrides if available
   const storedBios = (load('rg_epk_bios') || {})[lang] || {};
-  const activeBios = Object.assign({}, bios, storedBios);
+  const activeBios = {
+    b50: storedBios.b50 || bios.b50 || '',
+    b150: storedBios.b150 || bios.b150 || '',
+    b300p1: storedBios.b300p1 || bios.b300p1 || '',
+    b300p2: storedBios.b300p2 || bios.b300p2 || '',
+    b300p3: storedBios.b300p3 || bios.b300p3 || '',
+    b300p4: storedBios.b300p4 || bios.b300p4 || ''
+  };
   const b50el = document.getElementById('bio50Text');
   const b150el = document.getElementById('bio150Text');
   if (b50el) b50el.textContent = activeBios.b50;
@@ -3929,7 +4245,43 @@ function savePerfHeader(){
 
 // ── Performances CRUD ──
 function getPerfs(){ return load('rg_perfs') || DEFAULTS.perfs; }
-function savePerfs(arr){ save('rg_perfs', arr); }
+function savePerfs(arr){
+  const warnings = [];
+  const norm = (s) => (typeof s === 'string' ? s.replace(/\s+/g,' ').trim() : s);
+  const normComma = (s) => (typeof s === 'string' ? s.replace(/,\s*/g, ', ').replace(/\s+/g,' ').trim() : s);
+  const cleanTitle = (s) => (typeof s === 'string' ? s.replace(/Weinachtskonzert/g, 'Weihnachtskonzert') : s);
+  const allowedTypes = new Set(['concert','opera','recital','show','gala','houseconcert','tango','collaboration','other','operetta']);
+
+  const out = (Array.isArray(arr) ? arr : []).map(p => {
+    if(!p || typeof p !== 'object') return p;
+    const np = { ...p };
+    np.day = norm(np.day);
+    np.month = norm(np.month);
+    np.time = norm(np.time);
+    np.title = cleanTitle(norm(np.title));
+    np.detail = norm(np.detail);
+    np.venue = normComma(np.venue);
+    np.city = normComma(np.city);
+    np.status = norm(np.status) || 'upcoming';
+    np.type = norm(np.type) || 'concert';
+    if (!allowedTypes.has(np.type)) {
+      warnings.push(`Unknown type "${np.type}" for "${np.title || 'Untitled'}" (id ${np.id || '?'})`);
+    }
+    // Basic suspicious patterns
+    if ((np.month || '').toLowerCase().includes('spring')) warnings.push(`Suspicious month "${np.month}" for "${np.title || 'Untitled'}" (id ${np.id || '?'})`);
+    if ((np.day || '').toUpperCase() === 'TBA' && np.status !== 'upcoming') warnings.push(`TBA day with status "${np.status}" for "${np.title || 'Untitled'}" (id ${np.id || '?'})`);
+    if (!np.title) warnings.push(`Missing title (id ${np.id || '?'})`);
+    return np;
+  });
+
+  if (warnings.length) {
+    try {
+      if (typeof admLog === 'function') warnings.slice(0, 10).forEach(w => admLog('warn', w, { key: 'rg_perfs' }));
+      if (warnings.length > 10 && typeof admLog === 'function') admLog('warn', `(${warnings.length - 10} more warnings)`, { key: 'rg_perfs' });
+    } catch(e) {}
+  }
+  save('rg_perfs', out);
+}
 function nextPerfId(arr){return arr.length?Math.max(...arr.map(p=>p.id))+1:1;}
 
 function addPerf(){
