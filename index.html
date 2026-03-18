@@ -336,6 +336,7 @@ section{position:relative;z-index:2}
 .section-tag{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.35em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:13px;margin-bottom:48px}
 .section-tag::before{content:attr(data-num);font-size:.51rem;color:var(--text-faint)}
 .section-tag::after{content:'';flex:1;height:1px;background:var(--border);max-width:80px}
+#press .section-sub{color:var(--text-dim)}
 #about{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .about-grid{display:grid;grid-template-columns:1fr 1.45fr;gap:80px;align-items:start}
 .about-photo-wrap{position:relative}
@@ -1354,7 +1355,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <section id="press">
   <div class="section-inner">
     <div class="section-tag" data-num="04" data-i18n="press.tag">Reviews</div>
-    <p class="section-sub" data-i18n="reviewsIntro">&nbsp;</p>
+    <p class="section-sub reveal rd1" data-i18n="reviewsIntro">&nbsp;</p>
     <div class="press-grid" id="pressGrid"></div>
   </div>
 </section>
@@ -3593,6 +3594,7 @@ Ti.es['reviewsIntro']  = 'Selección de reseñas de prensa sobre producciones y 
 Ti.it['reviewsIntro']  = 'Selezione di recensioni della stampa su recenti produzioni e performance.';
 Ti.fr['reviewsIntro']  = 'Sélection de critiques de presse sur des productions et prestations récentes.';
 Ti.it['rep.thWorkLied'] = 'Brano';
+Ti.it['rep.thWork'] = 'Titolo';
 // Repertoire status labels (i18n for public repertoire filters + badges)
 Ti.en['rep.status.all'] = 'All';
 Ti.en['rep.status.performed'] = 'Performed';
