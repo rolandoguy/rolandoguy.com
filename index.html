@@ -1247,9 +1247,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <p class="rep-desc reveal rd2" id="repIntro" aria-live="polite"></p>
     <div class="rep-status-filters" id="repStatusFilters" aria-label="Filter opera roles by status">
-      <button type="button" class="rep-status-filter-btn active" data-filter="all" onclick="setRepStatusFilter('all')">All</button>
-      <button type="button" class="rep-status-filter-btn" data-filter="performed" onclick="setRepStatusFilter('performed')">Performed</button>
-      <button type="button" class="rep-status-filter-btn" data-filter="prepared" onclick="setRepStatusFilter('prepared')">Prepared</button>
+      <button type="button" class="rep-status-filter-btn active" data-filter="all" data-i18n="rep.status.all" onclick="setRepStatusFilter('all')">All</button>
+      <button type="button" class="rep-status-filter-btn" data-filter="performed" data-i18n="rep.status.performed" onclick="setRepStatusFilter('performed')">Performed</button>
+      <button type="button" class="rep-status-filter-btn" data-filter="prepared" data-i18n="rep.status.prepared" onclick="setRepStatusFilter('prepared')">Prepared</button>
       <!-- Studying button is injected dynamically from renderRep() only when needed -->
     </div>
     <div class="opera-grid" id="operaGrid"></div>
@@ -1354,7 +1354,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <section id="press">
   <div class="section-inner">
     <div class="section-tag" data-num="04" data-i18n="press.tag">Reviews</div>
-    <p class="section-sub" data-i18n="press.sub">Selected press responses to recent productions and performances.</p>
+    <p class="section-sub" data-i18n="reviewsIntro">&nbsp;</p>
     <div class="press-grid" id="pressGrid"></div>
   </div>
 </section>
@@ -2264,7 +2264,7 @@ function renderRep() {
         btn.type = 'button';
         btn.className = 'rep-status-filter-btn';
         btn.setAttribute('data-filter', 'studying');
-        btn.textContent = 'Studying';
+        btn.textContent = t['rep.status.studying'] || 'Studying';
         btn.onclick = function(){ setRepStatusFilter('studying'); };
         filtersEl.appendChild(btn);
       }
@@ -2272,7 +2272,11 @@ function renderRep() {
       existingStudyingBtn.remove();
     }
   }
-  const thWork = isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work');
+  // For Lied (Italian in particular) "Work" translations like "Opera" can be misleading.
+  // If a Lied-specific label exists, use it; otherwise fall back to the shared label.
+  const thWork = (cat === 'lied')
+    ? ((t['rep.thWorkLied'] || t['rep.thWork'] || 'Work'))
+    : (isOpera ? (t['rep.thOpera']||'Opera') : (t['rep.thWork']||'Work'));
   const tableHead = isOpera
     ? `<thead><tr>
         <th class="rep-th-sort" onclick="setRepSort('role')" title="Sort by Role">${t['rep.thRole']||'Role'}</th>
@@ -2287,9 +2291,9 @@ function renderRep() {
   const esc = (s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const statusBadge = (card) => {
     const s = String(card.status||'').toLowerCase();
-    if (s === 'performed') return '<span class="rep-status rep-status-performed">Performed</span>';
-    if (s === 'prepared')  return '<span class="rep-status rep-status-prepared">Prepared</span>';
-    if (s === 'studying')  return '<span class="rep-status rep-status-studying">Studying</span>';
+    if (s === 'performed') return '<span class="rep-status rep-status-performed">' + (t['rep.status.performed'] || 'Performed') + '</span>';
+    if (s === 'prepared')  return '<span class="rep-status rep-status-prepared">' + (t['rep.status.prepared'] || 'Prepared') + '</span>';
+    if (s === 'studying')  return '<span class="rep-status rep-status-studying">' + (t['rep.status.studying'] || 'Studying') + '</span>';
     return '';
   };
   const row = (card) => isOpera
@@ -2413,6 +2417,7 @@ function renderPrograms() {
 // ── Render Videos ──
 function renderVideos() {
   const d = getVid();
+  const t = Ti[currentLang] || Ti.en;
   const vidH2 = (Ti[currentLang]&&Ti[currentLang]['vid.h2']) ? Ti[currentLang]['vid.h2'] : d.h2;
   document.getElementById('vidH2').innerHTML = vidH2;
   const vids = Array.isArray(d.videos) ? d.videos.slice() : [];
@@ -2467,8 +2472,8 @@ function renderVideos() {
   });
 
   const groups = [
-    { key: 'opera_lied',     label: 'Opera & Art Song' },
-    { key: 'gala_crossover', label: 'Gala & Crossover' }
+    { key: 'opera_lied',     label: t['vid.cat.opera_lied'] || 'Opera & Art Song' },
+    { key: 'gala_crossover', label: t['vid.cat.gala_crossover'] || 'Gala & Crossover' }
   ];
 
   let htmlVisible = '';
@@ -2733,6 +2738,7 @@ function renderPerfs() {
   const visible = showPastPerfs ? [...upcoming,...past] : upcoming;
   const perfLang = get('perf') || {};
   const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
+  const mapsWord = (Ti[currentLang] || Ti.en)['perf.maps'] || 'Maps';
   // Group by year
   const groups = {};
   visible.forEach(p => {
@@ -2765,7 +2771,7 @@ function renderPerfs() {
         const timeFmts = {en:t=>t, de:t=>t+' Uhr', es:t=>t+' h', it:t=>'ore '+t, fr:t=>t.replace(':','h')};
         return '<div class="perf-time">' + (timeFmts[currentLang]||timeFmts.en)(cleanTime) + '</div>';
       })();
-      const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ Maps</span></a>' : '';
+      const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ ' + mapsWord + '</span></a>' : '';
       const detail = (p["detail_"+currentLang]||p.detail)||"";
       const pastClass = p.status==='past' ? ' perf-item-past' : '';
       const hasVenuePhoto = p.venuePhoto && p.venuePhoto.trim();
@@ -3580,6 +3586,77 @@ const Ti={
   it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Recensioni','press.tag':'Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi articolo','nav.media':'Media','nav.cal':'Calendario','nav.epk':'Stampa','nav.epk.short':'Stampa','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa','epk.tag':'Stampa','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica hi-res','epk.preview':'Anteprima','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie d\'opera','rep.tabOperetta':'Operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango','rep.descOpera':'Parti da tenore del repertorio operistico, preparate per scena e concerto.','rep.descArias':'Selezione di arie per concerti, programmi da gala e audizioni.','rep.descOperetta':'Opere rappresentative del repertorio operettistico: eleganza, chiarezza e stile teatrale.','rep.descLied':'Repertorio da recital per voce e pianoforte dalla tradizione tedesca, francese e internazionale.','rep.descTango':'Repertorio di tango argentino con espressione lirica e forte identità stilistica.','rep.empty':'Non è ancora stato aggiunto repertorio per questa categoria.','rep.introLine':'Una selezione di repertorio per scena, recital e concerto.','rep.thTitle':'Titolo','rep.thWork':'Opera','contact.pressKitPdf':'Press kit (PDF)','epk.photosIntro':'Immagini ufficiali per stampa, programmi e media. Uso libero con crediti.','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno','perf.printAgenda':'Stampa calendario','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendario','perf.printRepertoire':'Repertorio',},
   fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Critiques','press.tag':'Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l\'article','nav.media':'Médias','nav.cal':'Calendrier','nav.epk':'Presse','nav.epk.short':'Presse','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse','epk.tag':'Presse','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger hi-res','epk.preview':'Aperçu','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias d\'opéra','rep.tabOperetta':'Opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango','rep.descOpera':'Rôles de ténor du répertoire lyrique, préparés pour la scène et le concert.','rep.descArias':'Sélection d\'arias pour concerts, galas et auditions.','rep.descOperetta':'Œuvres représentatives du répertoire d\'opérette : élégance, clarté et style théâtral.','rep.descLied':'Répertoire de récital pour voix et piano des traditions allemande, française et internationale.','rep.descTango':'Répertoire de tango argentin avec expression lyrique et forte identité stylistique.','rep.empty':'Aucun répertoire n\'a encore été ajouté pour cette catégorie.','rep.introLine':'Une sélection de répertoire pour la scène, le récital et le concert.','rep.thTitle':'Titre','rep.thWork':'Œuvre','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photosIntro':'Images officielles pour presse, programmes et médias. Libre avec crédit.','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins','perf.printAgenda':'Imprimer le calendrier','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendrier','perf.printRepertoire':'Répertoire',},
 };
+// Reviews section intro (fully internationalized)
+Ti.en['reviewsIntro']  = 'Selected press responses to recent productions and performances.';
+Ti.de['reviewsIntro']  = 'Ausgewählte Pressestimmen zu jüngsten Produktionen und Auftritten.';
+Ti.es['reviewsIntro']  = 'Selección de reseñas de prensa sobre producciones y presentaciones recientes.';
+Ti.it['reviewsIntro']  = 'Selezione di recensioni della stampa su recenti produzioni e performance.';
+Ti.fr['reviewsIntro']  = 'Sélection de critiques de presse sur des productions et prestations récentes.';
+Ti.it['rep.thWorkLied'] = 'Brano';
+// Repertoire status labels (i18n for public repertoire filters + badges)
+Ti.en['rep.status.all'] = 'All';
+Ti.en['rep.status.performed'] = 'Performed';
+Ti.en['rep.status.prepared'] = 'Prepared';
+Ti.en['rep.status.studying'] = 'Studying';
+Ti.de['rep.status.all'] = 'Alle';
+Ti.de['rep.status.performed'] = 'Aufgeführt';
+Ti.de['rep.status.prepared'] = 'Vorbereitet';
+Ti.de['rep.status.studying'] = 'Im Studium';
+Ti.es['rep.status.all'] = 'Todos';
+Ti.es['rep.status.performed'] = 'Interpretados';
+Ti.es['rep.status.prepared'] = 'Preparados';
+Ti.es['rep.status.studying'] = 'En estudio';
+Ti.it['rep.status.all'] = 'Tutti';
+Ti.it['rep.status.performed'] = 'Interpretati';
+Ti.it['rep.status.prepared'] = 'Preparati';
+Ti.it['rep.status.studying'] = 'In studio';
+Ti.fr['rep.status.all'] = 'Tous';
+Ti.fr['rep.status.performed'] = 'Interprétés';
+Ti.fr['rep.status.prepared'] = 'Préparés';
+Ti.fr['rep.status.studying'] = 'En étude';
+// Video category subtitles (fully internationalized)
+Ti.en['vid.cat.opera_lied'] = 'Opera & Art Song';
+Ti.en['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.de['vid.cat.opera_lied'] = 'Oper & Kunstlied';
+Ti.de['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.es['vid.cat.opera_lied'] = 'Ópera y Canción de Arte';
+Ti.es['vid.cat.gala_crossover'] = 'Gala y Crossover';
+Ti.it['vid.cat.opera_lied'] = "Opera e Canzone d'Arte";
+Ti.it['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.fr['vid.cat.opera_lied'] = "Opéra & Mélodies d'Art";
+Ti.fr['vid.cat.gala_crossover'] = 'Gala & Crossover';
+// Calendar maps label (used in Calendar list + event modal)
+Ti.en['perf.maps'] = 'Maps';
+Ti.de['perf.maps'] = 'Karten';
+Ti.es['perf.maps'] = 'Mapas';
+Ti.it['perf.maps'] = 'Mappe';
+Ti.fr['perf.maps'] = 'Cartes';
+// Press link label
+Ti.de['press.readMore'] = 'Artikel lesen';
+Ti.es['press.readMore'] = 'Leer artículo';
+Ti.it['press.readMore'] = 'Leggi articolo';
+Ti.fr['press.readMore'] = "Lire l'article";
+// Calendar event link label fallback (modal)
+Ti.de['perf.ticketsInfo'] = 'Tickets & Informationen';
+Ti.es['perf.ticketsInfo'] = 'Entradas e información';
+Ti.it['perf.ticketsInfo'] = 'Biglietti e informazioni';
+Ti.fr['perf.ticketsInfo'] = 'Billets et informations';
+// Calendar print button labels (so the UI never falls back to English)
+Ti.de['perf.printAgenda'] = 'Kalender drucken';
+Ti.de['perf.printSubtitle'] = 'Kalender';
+Ti.de['perf.printRepertoire'] = 'Repertoire';
+
+Ti.es['perf.printAgenda'] = 'Imprimir calendario';
+Ti.es['perf.printSubtitle'] = 'Calendario';
+Ti.es['perf.printRepertoire'] = 'Repertorio';
+
+Ti.it['perf.printAgenda'] = 'Stampa calendario';
+Ti.it['perf.printSubtitle'] = 'Calendario';
+Ti.it['perf.printRepertoire'] = 'Repertorio';
+
+Ti.fr['perf.printAgenda'] = 'Imprimer le calendrier';
+Ti.fr['perf.printSubtitle'] = 'Calendrier';
+Ti.fr['perf.printRepertoire'] = 'Répertoire';
 function setLang(lang){
   currentLang = lang;
   ['en','de','es','it','fr'].forEach(l => {
@@ -3595,6 +3672,7 @@ function setLang(lang){
   try{ if(typeof renderBio==='function') renderBio(); }catch(e){}
   try{ if(typeof renderRep==='function') renderRep(); }catch(e){}
   try{ if(typeof renderPrograms==='function') renderPrograms(); }catch(e){}
+  try{ if(typeof renderVideos==='function') renderVideos(); }catch(e){}
   try{ if(typeof renderPerfs==='function') renderPerfs(); }catch(e){}
   try{ if(typeof renderContact==='function') renderContact(); }catch(e){}
   try{ if(typeof renderEpk==='function') renderEpk(); }catch(e){}
@@ -4046,7 +4124,13 @@ function openEventModal(perfId){
   const linkEl = document.getElementById('emEventLink');
   if(p.eventLink && p.eventLink.trim()){
     linkEl.href = p.eventLink;
-    linkEl.textContent = p.eventLinkLabel || 'Tickets & Info';
+    const t = Ti[currentLang] || Ti.en;
+    // If the stored label is the legacy English default, localize it.
+    const legacyEnglish = 'Tickets & Info';
+    const storedLabel = (p.eventLinkLabel || '').trim();
+    linkEl.textContent = storedLabel && storedLabel !== legacyEnglish
+      ? storedLabel
+      : (t['perf.ticketsInfo'] || legacyEnglish);
     linkEl.style.display = '';
   } else { linkEl.style.display = 'none'; }
   // Flyer image
@@ -4060,6 +4144,9 @@ function openEventModal(perfId){
   const mapsEl = document.getElementById('emMapsLink');
   if(p.venue){
     mapsEl.href = 'https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : ''));
+    const t = Ti[currentLang] || Ti.en;
+    const mapsLabel = t['perf.maps'] || ({en:'Maps',de:'Karten',es:'Mapas',it:'Mappe',fr:'Cartes'}[currentLang] || 'Maps');
+    mapsEl.innerHTML = '📍 ' + mapsLabel;
     mapsEl.style.display = '';
   } else { mapsEl.style.display = 'none'; }
   document.getElementById('eventModal').style.display = '';
