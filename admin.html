@@ -4113,11 +4113,26 @@ function admPopulate(name){
         ondrop="onDropVideo(${i},event)">
         <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px"><span style="color:var(--gold);font-size:1.1rem">⠿</span> Video ${i+1}${v.hidden?' (oculto)':''}</div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">YouTube ID</label><input class="adm-input" id="vc-${i}-id" value="${v.id}"></div>
-          <div class="adm-col"><label class="adm-label">Tag</label><input class="adm-input" id="vc-${i}-tag" value="${v.tag}"></div>
+          <div class="adm-col"><label class="adm-label">YouTube ID</label><input class="adm-input" id="vc-${i}-id" value="${v.id||''}"></div>
+          <div class="adm-col"><label class="adm-label">Tag</label><input class="adm-input" id="vc-${i}-tag" value="${v.tag||''}"></div>
+        </div>
+        <div class="adm-grid">
+          <div class="adm-col"><label class="adm-label">Grupo</label>
+            <select class="adm-select" id="vc-${i}-group">
+              <option value="opera_lied"${(v.group||'opera_lied')==='opera_lied'?' selected':''}>Opera &amp; Art Song</option>
+              <option value="gala_crossover"${(v.group||'opera_lied')==='gala_crossover'?' selected':''}>Gala &amp; Crossover</option>
+            </select>
+          </div>
+          <div class="adm-col"><label class="adm-label">Destacado</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-dim)">
+              <input type="checkbox" id="vc-${i}-featured" ${v.featured ? 'checked' : ''}>
+              <span>Marcar como featured</span>
+            </label>
+          </div>
         </div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="vc-${i}-title" value="${v.title}"></div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="vc-${i}-sub" value="${v.sub}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Imagen personalizada (URL opcional)</label><input class="adm-input" id="vc-${i}-thumb" placeholder="https://example.com/thumbnail.jpg" value="${v.customThumb||''}"></div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visibilidad</label>
           <select class="adm-select" id="vc-${i}-hidden">
             <option value="false"${!v.hidden?' selected':''}>Visible</option>
@@ -4223,7 +4238,16 @@ function saveSection(name){
   }
   else if(name==='vid'){
     const d=getVid();
-    d.videos=d.videos.map((_,i)=>({id:document.getElementById(`vc-${i}-id`).value,tag:document.getElementById(`vc-${i}-tag`).value,title:document.getElementById(`vc-${i}-title`).value,sub:document.getElementById(`vc-${i}-sub`).value,hidden:document.getElementById(`vc-${i}-hidden`).value==='true'}));
+    d.videos=d.videos.map((v,i)=>({
+      id:document.getElementById(`vc-${i}-id`).value,
+      tag:document.getElementById(`vc-${i}-tag`).value,
+      title:document.getElementById(`vc-${i}-title`).value,
+      sub:document.getElementById(`vc-${i}-sub`).value,
+      hidden:document.getElementById(`vc-${i}-hidden`).value==='true',
+      group:(document.getElementById(`vc-${i}-group`).value||v.group||'opera_lied'),
+      featured:document.getElementById(`vc-${i}-featured`).checked||false,
+      customThumb:document.getElementById(`vc-${i}-thumb`).value||''
+    }));
     save('rg_vid',d); renderVideos();
   }
   else if(name==='contact'){
