@@ -1647,6 +1647,25 @@ try {
   }
 } catch(e) { console.warn('Firebase init error:', e); }
 
+// ── Debug logs (temporary, console only) ──
+console.info('[RG ADMIN] Firebase init', {
+  firebaseDefined: typeof firebase !== 'undefined',
+  fsdb: !!fsdb,
+  fauth: !!fauth,
+  origin: (typeof location !== 'undefined' ? location.origin : ''),
+  href: (typeof location !== 'undefined' ? location.href : '')
+});
+try {
+  if (fauth) {
+    const u = fauth.currentUser;
+    console.info('[RG ADMIN] Auth currentUser (init)', {
+      exists: !!u,
+      email: u && u.email ? u.email : null,
+      uid: u && u.uid ? u.uid : null
+    });
+  }
+} catch(e) { console.warn('[RG ADMIN] Auth currentUser read failed', e); }
+
 // ── Admin auth (Google) ──
 // NOTE: This allowlist is only for UI gating. Real security must be enforced by Firestore Security Rules.
 const ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
@@ -1677,7 +1696,10 @@ async function admSignInGoogle(){
   if(!fauth){ alert('Auth no disponible (Firebase no inicializado).'); return; }
   const provider = new firebase.auth.GoogleAuthProvider();
   try{
+    console.info('[RG ADMIN] Sign-in start');
     await fauth.signInWithPopup(provider);
+    const u = fauth.currentUser;
+    console.info('[RG ADMIN] Sign-in success', { email: u && u.email ? u.email : null, uid: u && u.uid ? u.uid : null });
   }catch(e){
     console.warn('Google sign-in failed:', e);
     alert('No se pudo iniciar sesión con Google. Revisá que el dominio esté autorizado en Firebase Authentication.');
@@ -1691,6 +1713,12 @@ if(fauth){
   fauth.onAuthStateChanged(user=>{
     // Keep UI responsive even if not authorized (shows email + message)
     const ok = isAdminUser(user);
+    console.info('[RG ADMIN] onAuthStateChanged', {
+      user: !!user,
+      email: user && user.email ? user.email : null,
+      ok,
+      origin: (typeof location !== 'undefined' ? location.origin : '')
+    });
     admSetUnlocked(ok, user);
     const msg = document.getElementById('admAuthMsg');
     if(msg){
@@ -1717,9 +1745,23 @@ function load(key) {
 
 function save(key, val) {
   DB[key] = val;
-  if(!fsdb) return;
+  if(!fsdb) {
+    console.warn('[RG ADMIN] save skipped: fsdb not initialized', { key });
+    return;
+  }
+  const user = (fauth && fauth.currentUser) ? fauth.currentUser : null;
+  console.info('[RG ADMIN] save()', { key, authed: !!user, email: user && user.email ? user.email : null });
   fsdb.collection('rg').doc(key).set({ value: JSON.stringify(val) })
-    .catch(e => console.warn('Firestore save error:', e));
+    .then(() => console.info('[RG ADMIN] save OK', { key }))
+    .catch(e => {
+      console.warn('[RG ADMIN] Firestore save error', {
+        key,
+        code: e && e.code ? e.code : null,
+        message: e && e.message ? e.message : e,
+        authed: !!user,
+        email: user && user.email ? user.email : null
+      });
+    });
 }
 </script>
 <script>
