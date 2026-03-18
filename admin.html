@@ -1658,25 +1658,6 @@ try {
   }
 } catch(e) { console.warn('Firebase init error:', e); }
 
-// ── Debug logs (temporary, console only) ──
-console.info('[RG ADMIN] Firebase init', {
-  firebaseDefined: typeof firebase !== 'undefined',
-  fsdb: !!fsdb,
-  fauth: !!fauth,
-  origin: (typeof location !== 'undefined' ? location.origin : ''),
-  href: (typeof location !== 'undefined' ? location.href : '')
-});
-try {
-  if (fauth) {
-    const u = fauth.currentUser;
-    console.info('[RG ADMIN] Auth currentUser (init)', {
-      exists: !!u,
-      email: u && u.email ? u.email : null,
-      uid: u && u.uid ? u.uid : null
-    });
-  }
-} catch(e) { console.warn('[RG ADMIN] Auth currentUser read failed', e); }
-
 // ── Admin auth (Google) ──
 // NOTE: This allowlist is only for UI gating. Real security must be enforced by Firestore Security Rules.
 const ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
@@ -1754,8 +1735,16 @@ function load(key) {
   return (DB[key] !== undefined && DB[key] !== null) ? DB[key] : null;
 }
 
+// Fuente canónica: Firestore. save() escribe en DB, en localStorage (fallback) y en Firestore.
+// La escritura a Firestore puede fallar con permission-denied si las reglas exigen auth y el contexto
+// no la cumple (p. ej. file://, dominio no autorizado en Firebase Auth, o usuario no logueado).
+// Revisar consola: "[RG ADMIN] save OK" = persistió; "Firestore save error" + code = causa (e.g. permission-denied).
 function save(key, val) {
   DB[key] = val;
+  // Fallback de resiliencia: el frontend (index) aplica este override si Firestore falla o llega tarde.
+  try {
+    localStorage.setItem('rg_local_' + key, JSON.stringify({ ts: Date.now(), value: val }));
+  } catch (e) {}
   if(!fsdb) {
     console.warn('[RG ADMIN] save skipped: fsdb not initialized', { key });
     if (typeof rgSaveFailed === 'function') rgSaveFailed(key, { code: 'no-fsdb', message: 'Firestore not initialized' });
@@ -1767,6 +1756,7 @@ function save(key, val) {
   fsdb.collection('rg').doc(key).set({ value: JSON.stringify(val) })
     .then(() => {
       console.info('[RG ADMIN] save OK', { key });
+      try { localStorage.removeItem('rg_local_' + key); } catch (e) {}
       if (typeof rgSaveOk === 'function') rgSaveOk(key);
     })
     .catch(e => {

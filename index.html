@@ -1451,6 +1451,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
 let fsdb = null;
 let fauth = null;
 const DB = {};
+// Fallback de resiliencia: override local (localStorage). NO es la fuente principal.
+// Se usa solo cuando hay un valor guardado desde el admin y (Firestore no ha devuelto datos o devuelve algo distinto).
+// Fuente canónica: Firestore → DB. Si el write a Firestore falla (p. ej. permission-denied), el admin escribe aquí
+// para que este frontend pueda mostrar el último intento de guardado hasta que Firestore persista.
+const RG_LOCAL_PREFIX = 'rg_local_';
 
 try {
   const firebaseConfig = {
@@ -1474,6 +1479,7 @@ try {
   console.warn('Firebase init error:', e);
 }
 
+// Fuente principal de datos para el sitio público: llena DB desde Firestore (colección rg).
 async function loadFromFirestore() {
   if (!fsdb) return;
   try {
@@ -1496,9 +1502,37 @@ function load(key) {
 
 function save(key, val) {
   DB[key] = val;
+  // Fallback resiliencia: guardar también en localStorage. Si el write a Firestore falla, applyLocalOverrides
+  // podrá rellenar DB con este valor en el frontend. Tras un write exitoso, el override se borra.
+  try {
+    localStorage.setItem(RG_LOCAL_PREFIX + key, JSON.stringify({ ts: Date.now(), value: val }));
+  } catch (e) {}
   if (!fsdb) return;
   fsdb.collection('rg').doc(key).set({ value: JSON.stringify(val) })
+    .then(() => {
+      try { localStorage.removeItem(RG_LOCAL_PREFIX + key); } catch (e) {}
+    })
     .catch(e => console.warn('Firestore save error:', e));
+}
+
+// Fallback de resiliencia: aplica overrides guardados en localStorage (rg_local_*) sobre DB.
+// Regla: solo sobrescribe DB[key] si no existe valor en DB o si el valor en DB es distinto al del override.
+// No es la fuente principal; la canónica es Firestore. Ver comentario RG_LOCAL_PREFIX.
+function applyLocalOverrides(keys = []) {
+  keys.forEach(key => {
+    let raw = null;
+    try { raw = localStorage.getItem(RG_LOCAL_PREFIX + key); } catch (e) {}
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+      const localVal = parsed.value;
+      const current = DB[key];
+      if (current === undefined || current === null || JSON.stringify(current) !== JSON.stringify(localVal)) {
+        DB[key] = localVal;
+      }
+    } catch (e) {}
+  });
 }
 
 // ── Admin auth (Google) ──
@@ -4730,21 +4764,32 @@ function updatePressKitLink() {
 document.getElementById('heroBg').style.backgroundImage="url('img/hero-bg.webp')";
 document.getElementById('bioPhoto').src="img/studio-1.jpg";
 
-// ── Async boot with Firestore ──
+// ── Boot: fuente principal Firestore; evitar primer render con DEFAULTS cuando exista rg_vid ──
+// Esperamos hasta RG_FIRESTORE_WAIT_MS para que loadFromFirestore() llene DB antes del primer paint.
+// Así no mostramos videos/agenda con datos por defecto si el servidor tiene datos pero responde lento.
+// Fallback: applyLocalOverrides aplica intentos de guardado del admin (localStorage) si DB sigue vacío o distinto.
+const RG_FIRESTORE_WAIT_MS = 6000;
+
 (async () => {
   document.body.style.opacity = '0';
   document.body.style.transition = 'opacity 0.4s ease';
+  let __firestoreResolved = false;
+  const __firestorePromise = loadFromFirestore().then(() => { __firestoreResolved = true; });
   try {
     await Promise.race([
-      loadFromFirestore(),
-      new Promise(resolve => setTimeout(resolve, 1500))
+      __firestorePromise,
+      new Promise(resolve => setTimeout(resolve, RG_FIRESTORE_WAIT_MS))
     ]);
   } catch(e) {
     console.warn('Firestore load timeout/error:', e);
   }
 
   try {
-    try { migratePersistedContent(); } catch(e) { console.warn('Migration error:', e); }
+    try {
+      // Fallback resiliencia (NO fuente principal): aplicar override local si existe y DB vacío o distinto.
+      applyLocalOverrides(['rg_vid']);
+      migratePersistedContent();
+    } catch(e) { console.warn('Migration error:', e); }
     if(typeof renderAll === 'function') renderAll();
     if(typeof loadMonthSize === 'function') loadMonthSize();
     setLang('en');
@@ -4752,8 +4797,20 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
   } catch(e) {
     console.error('Error rendering content:', e);
   } finally {
-    // ESTA ES LA MAGIA: Pase lo que pase o falle lo que falle, la pantalla se encenderá SIEMPRE
     document.body.style.opacity = '1';
+  }
+
+  // Si Firestore terminó después del timeout, actualizar con datos del servidor (y de nuevo fallback local).
+  if (!__firestoreResolved) {
+    __firestorePromise.then(() => {
+      try {
+        applyLocalOverrides(['rg_vid']);
+        migratePersistedContent();
+        if(typeof renderAll === 'function') renderAll();
+      } catch(e) {
+        console.warn('Post-Firestore re-render error:', e);
+      }
+    }).catch(e => console.warn('Post-Firestore re-render promise error:', e));
   }
 })();
 </script>
