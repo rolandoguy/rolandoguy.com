@@ -173,9 +173,7 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
       "areaServed": {"@type": "Place", "name": "Europe"},
       "availableChannel": {
         "@type": "ServiceChannel",
-        "serviceUrl": "https://www.rolandoguy.com/#contact",
-        "servicePhone": "",
-        "serviceSmsNumber": ""
+        "serviceUrl": "https://www.rolandoguy.com/#contact"
       },
       "url": "https://www.rolandoguy.com/#contact"
     },
@@ -230,6 +228,33 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
       "inLanguage": ["en", "de", "es", "it", "fr"],
       "publisher": {"@id": "https://www.rolandoguy.com/#person"},
       "about": {"@id": "https://www.rolandoguy.com/#person"}
+    },
+    {
+      "@type": "MusicEvent",
+      "name": "Pasiones del Sur – Stimmen der Leidenschaft",
+      "startDate": "2026-09-01T19:00:00+02:00",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "location": {
+        "@type": "Place",
+        "name": "Schwartzsche Villa",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Grunewaldstraße 55",
+          "addressLocality": "Berlin",
+          "postalCode": "12165",
+          "addressCountry": "DE"
+        }
+      },
+      "performer": [
+        { "@type": "Person", "name": "Rolando Guy", "jobTitle": "Tenor" },
+        { "@type": "Person", "name": "Hongyu Chen", "jobTitle": "Baritone" },
+        { "@type": "Person", "name": "Anna Anstett", "jobTitle": "Piano" }
+      ],
+      "organizer": { "@type": "Person", "name": "Rolando Guy", "url": "https://www.rolandoguy.com" },
+      "image": "https://www.rolandoguy.com/og-image.jpg",
+      "url": "https://www.rolandoguy.com/#performances",
+      "description": "An evening of passion and poetry: Argentine and Spanish song, opera arias and tango. Featuring tenor Rolando Guy, baritone Hongyu Chen and pianist Anna Anstett."
     },
     {
       "@type": "FAQPage",
@@ -821,7 +846,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 /* Press resources column */
 .epk-dl-col { display: flex; flex-direction: column; gap: 2rem; }
-.epk-dl-group {}
 .epk-dl-label {
   font-family: var(--ff-caps); font-size: .6rem; letter-spacing: .15em;
   text-transform: uppercase; color: var(--gold); margin-bottom: .4rem;
@@ -1035,7 +1059,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <div class="hero-overlay"></div>
   <div class="hero-content">
     <p class="hero-eyebrow" id="heroEyebrow"></p>
-    <h1 class="hero-name" id="heroName"></h1>
+    <h1 class="hero-name" id="heroName">Rolando Guy – Lyric Tenor</h1>
     <p class="hero-subtitle" id="heroSubtitle"></p>
     <div class="hero-cta">
       <a href="#videos" class="btn-primary"><span id="heroCta1"></span></a>
