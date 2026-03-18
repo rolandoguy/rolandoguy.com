@@ -4113,30 +4113,51 @@ function admPopulate(name){
         ondrop="onDropVideo(${i},event)">
         <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px"><span style="color:var(--gold);font-size:1.1rem">⠿</span> Video ${i+1}${v.hidden?' (oculto)':''}</div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">YouTube ID</label><input class="adm-input" id="vc-${i}-id" value="${v.id||''}"></div>
-          <div class="adm-col"><label class="adm-label">Tag</label><input class="adm-input" id="vc-${i}-tag" value="${v.tag||''}"></div>
+          <div class="adm-col">
+            <label class="adm-label">YouTube ID</label>
+            <input class="adm-input" id="vc-${i}-id" value="${v.id||''}">
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Solo el ID del video, no la URL completa.</div>
+          </div>
+          <div class="adm-col">
+            <label class="adm-label">Etiqueta breve</label>
+            <input class="adm-input" id="vc-${i}-tag" value="${v.tag||''}">
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Ej.: OPERA, RECITAL, GALA 2024.</div>
+          </div>
         </div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Grupo</label>
+          <div class="adm-col">
+            <label class="adm-label">Grupo</label>
             <select class="adm-select" id="vc-${i}-group">
               <option value="opera_lied"${(v.group||'opera_lied')==='opera_lied'?' selected':''}>Opera &amp; Art Song</option>
               <option value="gala_crossover"${(v.group||'opera_lied')==='gala_crossover'?' selected':''}>Gala &amp; Crossover</option>
             </select>
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Define la familia visual del video.</div>
           </div>
-          <div class="adm-col"><label class="adm-label">Destacado</label>
+          <div class="adm-col"><label class="adm-label">Destacar video</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-dim)">
               <input type="checkbox" id="vc-${i}-featured" ${v.featured ? 'checked' : ''}>
-              <span>Marcar como featured</span>
+              <span>Mostrar este video como destacado.</span>
             </label>
           </div>
         </div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="vc-${i}-title" value="${v.title}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="vc-${i}-sub" value="${v.sub}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Imagen personalizada (URL opcional)</label><input class="adm-input" id="vc-${i}-thumb" placeholder="https://example.com/thumbnail.jpg" value="${v.customThumb||''}"></div></div>
+        <div class="adm-grid full"><div class="adm-col">
+          <label class="adm-label">Título</label>
+          <input class="adm-input" id="vc-${i}-title" value="${v.title}">
+        </div></div>
+        <div class="adm-grid full"><div class="adm-col">
+          <label class="adm-label">Subtítulo</label>
+          <input class="adm-input" id="vc-${i}-sub" value="${v.sub}">
+          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Obra · compositor · contexto breve.</div>
+        </div></div>
+        <div class="adm-grid full"><div class="adm-col">
+          <label class="adm-label">Imagen personalizada (URL opcional)</label>
+          <input class="adm-input" id="vc-${i}-thumb" placeholder="https://example.com/thumbnail.jpg" value="${v.customThumb||''}">
+          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Opcional. Si se deja vacío, se usa el fondo editorial automático.</div>
+        </div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visibilidad</label>
           <select class="adm-select" id="vc-${i}-hidden">
             <option value="false"${!v.hidden?' selected':''}>Visible</option>
-            <option value="true"${v.hidden?' selected':''}>Oculto (Show More)</option>
+            <option value="true"${v.hidden?' selected':''}>Oculto</option>
           </select>
         </div></div>
       </div>`).join('');

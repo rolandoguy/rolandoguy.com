@@ -640,6 +640,57 @@ section{position:relative;z-index:2}
 .lb-nav:hover{background:rgba(212,168,67,.1);border-color:var(--gold)}
 .lb-prev{left:16px}.lb-next{right:16px}
 .lb-counter{font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.2em;color:var(--text-faint);margin-top:8px}
+
+/* Video modal (mobile playback) */
+.video-modal{
+  position:fixed;
+  inset:0;
+  z-index:1600;
+  background:rgba(5,5,10,.96);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(18px);
+}
+.video-modal.open{
+  display:flex;
+}
+.video-modal-inner{
+  position:relative;
+  width:100%;
+  max-width:860px;
+  margin:0 18px;
+}
+.video-modal-frame{
+  position:relative;
+  width:100%;
+  padding-top:56.25%; /* 16:9 */
+  border:1px solid var(--border);
+  border-radius:4px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.8);
+}
+.video-modal-close{
+  position:absolute;
+  top:-32px;
+  right:4px;
+  font-family:var(--ff-caps);
+  font-size:.5rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:rgba(10,10,16,.9);
+  color:var(--text-faint);
+  cursor:pointer;
+  transition:all .25s;
+}
+.video-modal-close:hover{
+  color:var(--gold);
+  border-color:var(--gold);
+}
+
 #performances{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .perf-header{display:grid;grid-template-columns:1fr 1fr;gap:72px;margin-bottom:56px;align-items:end}
 .perf-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
@@ -1237,6 +1288,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
   </div>
 </section>
+<div id="videoModal" class="video-modal" onclick="if(event.target===this)closeVideoModal()">
+  <div class="video-modal-inner">
+    <button type="button" class="video-modal-close" onclick="closeVideoModal()">Close ✕</button>
+    <div class="video-modal-frame" id="videoModalFrame"></div>
+  </div>
+</div>
 <div class="lightbox" id="lightbox" onclick="closeLbOnBg(event)">
   <button class="lightbox-close" onclick="closeLb()">Close ✕</button>
   <button class="lb-nav lb-prev" onclick="navLb(-1)">&#8592;</button>
@@ -2435,6 +2492,21 @@ function toggleMore() {
 function playVideo(videoId) {
   const wrap = document.getElementById('vwrap-' + videoId);
   if (!wrap) return;
+  const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
+
+  // In local file:// context, opening directly on YouTube is often más fiable que intentar un embed.
+  if (location.protocol === 'file:') {
+    window.open(youtubeUrl, '_blank', 'noopener');
+    return;
+  }
+
+  // En móvil / tablet pequeña usar modal en lugar de inline
+  if (window.innerWidth < 768) {
+    openVideoModal(videoId);
+    return;
+  }
+
+  // Desktop: reproducción inline dentro de la card
   // Cerrar cualquier otro video que esté reproduciéndose
   document.querySelectorAll('.video-thumb-wrap[data-playing="1"]').forEach(el => {
     const openId = el.id && el.id.startsWith('vwrap-') ? el.id.slice(6) : null;
@@ -2443,13 +2515,6 @@ function playVideo(videoId) {
     }
   });
   if (wrap.dataset.playing === '1') return;
-  const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
-
-  // In local file:// context, opening directly on YouTube is often más fiable que intentar un embed.
-  if (location.protocol === 'file:') {
-    window.open(youtubeUrl, '_blank', 'noopener');
-    return;
-  }
 
   wrap.style.cursor = 'default';
   if (!wrap.dataset.original) {
@@ -2499,6 +2564,63 @@ function playVideo(videoId) {
       fb.style.display = 'flex';
     }
   }
+}
+
+function openVideoModal(videoId){
+  const modal = document.getElementById('videoModal');
+  const frame = document.getElementById('videoModalFrame');
+  if (!modal || !frame) return;
+  const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
+
+  frame.innerHTML =
+    '<iframe src="https://www.youtube.com/embed/' + videoId +
+    '?autoplay=1&rel=0&modestbranding=1"' +
+    ' frameborder="0"' +
+    ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
+    ' allowfullscreen' +
+    ' style="position:absolute;inset:0;width:100%;height:100%"></iframe>' +
+    '<div class="video-embed-fallback" data-yt-id="' + videoId + '" style="display:none;position:absolute;inset:0;">' +
+      '<span class="vfb-op">Video player unavailable</span>' +
+      '<button class="btn-secondary" style="margin-top:6px" onclick="window.open(\'' + youtubeUrl + '\',\'_blank\',\'noopener\')">Open on YouTube</button>' +
+    '</div>';
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const iframe = frame.querySelector('iframe');
+    const fb = frame.querySelector('.video-embed-fallback');
+    if (!iframe || !fb) return;
+
+    const markLoaded = () => { iframe.dataset.loaded = '1'; };
+    iframe.addEventListener('load', markLoaded);
+    iframe.addEventListener('error', () => {
+      iframe.remove();
+      fb.style.display = 'flex';
+    });
+
+    setTimeout(() => {
+      if (!iframe.dataset.loaded) {
+        try{ iframe.remove(); }catch(e){}
+        fb.style.display = 'flex';
+      }
+    }, 6000);
+  } catch(e) {
+    const fb = frame.querySelector('.video-embed-fallback');
+    if (fb) {
+      const iframe = frame.querySelector('iframe');
+      if (iframe) try{ iframe.remove(); }catch(_){}
+      fb.style.display = 'flex';
+    }
+  }
+}
+
+function closeVideoModal(){
+  const modal = document.getElementById('videoModal');
+  const frame = document.getElementById('videoModalFrame');
+  if (frame) frame.innerHTML = '';
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 function stopVideo(videoId){
@@ -3823,7 +3945,11 @@ function closeAdmin(){
 }
 function admBgClose(e){ if(e.target.id==='adm') closeAdmin(); }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ closeAdmin(); closeLb(); }
+  if(e.key==='Escape'){
+    closeAdmin();
+    closeLb();
+    closeVideoModal();
+  }
 });
 
 
