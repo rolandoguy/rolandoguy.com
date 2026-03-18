@@ -1958,23 +1958,35 @@ function migratePersistedContent() {
   });
 
   // 2) Videos (rg_vid overrides)
+  // Rule: only fill empty/legacy fields; never overwrite values set by the admin (title, group, featured, customThumb, hidden).
   const vid = load('rg_vid');
   if (vid && typeof vid === 'object') {
     const next = JSON.parse(JSON.stringify(vid));
-    if (typeof next.h2 === 'string' && next.h2.includes('On Stage')) {
-      next.h2 = 'Stage, Concert &amp; Recital Highlights';
+    // Section-level h2: only replace when it's exactly the known old value (never overwrite custom admin text)
+    if (typeof next.h2 === 'string') {
+      const t = next.h2.trim();
+      if (t === 'On Stage & In Concert' || t === 'On Stage &amp; In Concert') {
+        next.h2 = 'Stage, Concert &amp; Recital Highlights';
+      }
     }
     if (Array.isArray(next.videos)) {
       next.videos = next.videos.map(v => {
         if (!v || typeof v !== 'object') return v;
         const nv = { ...v };
-        if (typeof nv.sub === 'string') nv.sub = nv.sub.replace(/EVA MARTIN COMPETITION/gi, 'Eva Marton Competition');
+        // We do NOT touch: title, group, featured, customThumb, hidden — admin edits are final.
+        const hasTag = (typeof nv.tag === 'string' && nv.tag.trim().length > 0);
+        // sub: only fix known typo in place; never overwrite the whole field
+        if (typeof nv.sub === 'string' && nv.sub.includes('EVA MARTIN')) {
+          nv.sub = nv.sub.replace(/EVA MARTIN COMPETITION/gi, 'Eva Marton Competition');
+        }
+        // tag: normalize spelling only (in-place); then fill from canonical only when tag is empty
         if (typeof nv.tag === 'string') nv.tag = nv.tag.replace(/CROSS-OVER/gi, 'Crossover');
-        // Normalize known legacy tags
-        if (nv.title === 'Chi mi frena in tal momento') nv.tag = 'OPERA · SOLOIST WITH ORCHESTRA';
-        if (nv.title === 'Il lamento di Federico') nv.tag = 'OPERA ARIA · 2018';
-        if (nv.title === 'Die Lorelei') nv.tag = 'RECITAL · ART SONG';
-        if (nv.title && nv.title.includes("Libiamo")) nv.tag = 'GALA · 2024';
+        if (!hasTag) {
+          if (nv.title === 'Chi mi frena in tal momento') nv.tag = 'OPERA · SOLOIST WITH ORCHESTRA';
+          if (nv.title === 'Il lamento di Federico') nv.tag = 'OPERA ARIA · 2018';
+          if (nv.title === 'Die Lorelei') nv.tag = 'RECITAL · ART SONG';
+          if (nv.title && nv.title.includes('Libiamo')) nv.tag = 'GALA · 2024';
+        }
         return nv;
       });
     }
