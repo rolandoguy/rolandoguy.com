@@ -3472,7 +3472,7 @@ function renderPress(){
   el.innerHTML = items.map(p => `
     <div class="press-card">
       <div class="press-source">${p.source}</div>
-      <div class="press-quote">${pickLang(p, 'quote')}</div>
+      <div class="press-quote">${(typeof p.quote === 'string' && p.quote.trim()) ? p.quote : pickLang(p, 'quote')}</div>
       <div class="press-production">${pickLang(p, 'production')}</div>
       ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${(Ti[currentLang]&&Ti[currentLang]['press.readMore'])||'Read article'} ↗</a>` : ''}
     </div>`).join('');
@@ -3726,8 +3726,8 @@ Ti.fr['perf.maps'] = 'Cartes';
 // Press link label
 Ti.de['press.readMore'] = 'Artikel lesen';
 Ti.es['press.readMore'] = 'Leer artículo';
-Ti.it['press.readMore'] = 'Leggi articolo';
-Ti.fr['press.readMore'] = "Lire l'article";
+Ti.it['press.readMore'] = 'Leggi l’articolo';
+Ti.fr['press.readMore'] = 'Lire l’article';
 // Calendar event link label fallback (modal)
 Ti.de['perf.ticketsInfo'] = 'Tickets & Informationen';
 Ti.es['perf.ticketsInfo'] = 'Entradas e información';
