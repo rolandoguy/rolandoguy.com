@@ -11,7 +11,7 @@
 ════════════════════════════════════════════ -->
 
 <!-- Primary SEO -->
-<title>Rolando Guy · Argentine-Italian Lyric Tenor in Berlin | Opera, Recital, Tango & Concert</title>
+<title>Rolando Guy | Argentine-Italian Lyric Tenor in Berlin</title>
 <meta name="description" content="Rolando Guy is an Argentine-Italian lyric tenor based in Berlin. He is available for opera productions, oratorio, recitals, tango and bespoke concert programmes across Europe. For engagements and artistic collaborations, please get in touch directly at rolandoguy@gmail.com.">
 <meta name="keywords" content="
 tenor berlin, lyric tenor berlin, opera singer berlin, classical singer europe, rolando guy, argentinian tenor, italian tenor, tango singer berlin, house concert berlin, mozart tenor, puccini tenor, verdi tenor, tango argentino berlin,
@@ -54,29 +54,20 @@ ténor lyrique berlin, chanteur d'opéra berlin, ténor argentin berlin, concert
 <link rel="alternate" hreflang="zh" href="https://www.rolandoguy.com/">
 
 <!-- Open Graph -->
-<meta property="og:type" content="profile">
-<meta property="og:title" content="Rolando Guy · Lyric Tenor | Berlin">
-<meta property="og:description" content="Argentinian-Italian lyric tenor based in Berlin. Opera, concert, tango and house concert bookings. Mozart · Puccini · Verdi · Tango Argentino.">
+<meta property="og:type" content="website">
 <meta property="og:url" content="https://www.rolandoguy.com/">
-<meta property="og:site_name" content="Rolando Guy Tenor">
-<meta property="og:image" content="https://www.rolandoguy.com/og-image.jpg">
+<meta property="og:title" content="Rolando Guy | Argentine-Italian Lyric Tenor in Berlin">
+<meta property="og:description" content="Official website of Rolando Guy, Argentine-Italian lyric tenor based in Berlin. Opera, concerts, sacred music and tango across Europe.">
+<meta property="og:image" content="https://rolandoguy.com/img/studio-1.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Rolando Guy — Lyric Tenor, Berlin">
 <meta property="og:locale" content="en_US">
-<meta property="og:locale:alternate" content="de_DE">
-<meta property="og:locale:alternate" content="es_AR">
-<meta property="og:locale:alternate" content="it_IT">
-<meta property="og:locale:alternate" content="fr_FR">
-<meta property="profile:first_name" content="Rolando">
-<meta property="profile:last_name" content="Guy">
+<meta property="og:site_name" content="Rolando Guy Tenor">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Rolando Guy · Lyric Tenor | Berlin">
-<meta name="twitter:description" content="Argentinian-Italian lyric tenor based in Berlin. Opera, concert, tango and house concert bookings.">
-<meta name="twitter:site" content="@rolandoguytenor">
-<meta name="twitter:image" content="https://www.rolandoguy.com/og-image.jpg">
-<meta name="twitter:image:alt" content="Rolando Guy — Lyric Tenor, Berlin">
+<meta name="twitter:title" content="Rolando Guy | Argentine-Italian Lyric Tenor in Berlin">
+<meta name="twitter:description" content="Official website of Rolando Guy, lyric tenor based in Berlin. Opera, concerts and tango across Europe.">
+<meta name="twitter:image" content="https://rolandoguy.com/img/studio-1.jpg">
 
 <!-- JSON-LD Structured Data (Google, AI search engines) -->
 <script type="application/ld+json">
@@ -1250,8 +1241,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <h2 class="reveal" id="bioH2"></h2>
         <p class="reveal rd1" id="bioP1"></p>
         <p class="reveal rd2" id="bioP2"></p>
-
-        
+        <div class="about-quote reveal rd3" id="bioQuoteWrap" style="display:none">
+          <p id="bioQuote"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -1394,9 +1386,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="contact-left reveal">
         <h2 id="contactTitle"></h2>
         <p id="contactSub"></p>
-        
+        <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
+          <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
+        </div>
         <div class="contact-ctas">
           <a id="contactEmailBtn" class="btn-secondary"></a>
+          <a id="contactWebBtn" class="btn-secondary" href="https://www.rolandoguy.com" target="_blank" style="display:none"></a>
         </div>
       </div>
       <div class="contact-form reveal rd2">
@@ -2188,12 +2183,20 @@ function getRep() {
 }
 function renderHero() {
   const d = get('hero');
-  document.getElementById('heroEyebrow').textContent = d.eyebrow;
-  document.getElementById('heroSubtitle').textContent = d.subtitle;
-  document.getElementById('heroCta1').textContent = d.cta1;
-  document.getElementById('heroCta2').textContent = d.cta2;
+  const heroEyebrow = document.getElementById('heroEyebrow');
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  const heroCta1 = document.getElementById('heroCta1');
+  const heroCta2 = document.getElementById('heroCta2');
+  if (heroEyebrow) heroEyebrow.textContent = d.eyebrow || '';
+  if (heroSubtitle) heroSubtitle.textContent = d.subtitle || '';
+  if (heroCta1) heroCta1.textContent = d.cta1 || '';
+  if (heroCta2) heroCta2.textContent = d.cta2 || '';
   const h = document.getElementById('heroName');
-  h.innerHTML = 'Rolando<br><em>Guy</em>';
+  if (h) h.innerHTML = 'Rolando<br><em>Guy</em>';
+  const hb = document.getElementById('heroBg');
+  if (hb && d && d.bgImage && String(d.bgImage).trim()) {
+    hb.style.backgroundImage = "url('" + String(d.bgImage).trim() + "')";
+  }
   const epkNavBtn = document.getElementById('heroEpkBtn');
   if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'Press'; epkNavBtn.textContent = tl; }
 }
@@ -2201,9 +2204,22 @@ function renderHero() {
 // ── Render Bio ──
 function renderBio() {
   const d = get('bio');
-  document.getElementById('bioH2').innerHTML = d.h2;
-  document.getElementById('bioP1').textContent = d.p1;
-  document.getElementById('bioP2').textContent = d.p2;
+  const bioH2 = document.getElementById('bioH2');
+  const bioP1 = document.getElementById('bioP1');
+  const bioP2 = document.getElementById('bioP2');
+  if (bioH2) bioH2.innerHTML = d.h2 || '';
+  if (bioP1) bioP1.textContent = d.p1 || '';
+  if (bioP2) bioP2.textContent = d.p2 || '';
+  const bioQEl = document.getElementById('bioQuote');
+  const bioQWrap = document.getElementById('bioQuoteWrap');
+  if (bioQEl && bioQWrap) {
+    if (d.quote && d.quote.trim()) {
+      bioQEl.textContent = d.quote;
+      bioQWrap.style.display = '';
+    } else {
+      bioQWrap.style.display = 'none';
+    }
+  }
 }
 
 // ── Render Repertoire ──
@@ -3198,14 +3214,36 @@ function duplicateProgramCard(idx) {
 // ── Render Contact ──
 function renderContact() {
   const d = get('contact');
-  document.getElementById('contactTitle').innerHTML = d.title;
-  document.getElementById('contactSub').textContent = d.sub;
+  const contactTitle = document.getElementById('contactTitle');
+  const contactSub = document.getElementById('contactSub');
+  if (contactTitle) contactTitle.innerHTML = d.title || '';
+  if (contactSub) contactSub.textContent = d.sub || '';
+  const cqEl = document.getElementById('contactQuoteText');
+  const cqWrap = document.getElementById('contactQuoteWrap');
+  if (cqEl && cqWrap) {
+    if (d.quote && d.quote.trim()) {
+      cqEl.textContent = d.quote;
+      cqWrap.style.display = '';
+    } else {
+      cqWrap.style.display = 'none';
+    }
+  }
 
   const eb = document.getElementById('contactEmailBtn');
-  eb.textContent = d.emailBtn;
-  eb.href = 'mailto:rolandoguy@gmail.com';
-  document.getElementById('perfH2').innerHTML = get('perf').h2;
-  document.getElementById('perfIntro').textContent = get('perf').intro;
+  if (eb) {
+    eb.textContent = d.emailBtn || '';
+    const email = (d.email && d.email.trim()) ? d.email.trim() : 'rolandoguy@gmail.com';
+    eb.href = 'mailto:' + email;
+  }
+  const wb = document.getElementById('contactWebBtn');
+  if (wb) {
+    wb.textContent = d.webBtn || 'Official Website';
+    wb.style.display = (d.webBtn && d.webBtn.trim()) ? '' : 'none';
+  }
+  const perfH2 = document.getElementById('perfH2');
+  const perfIntro = document.getElementById('perfIntro');
+  if (perfH2) perfH2.innerHTML = get('perf').h2;
+  if (perfIntro) perfIntro.textContent = get('perf').intro;
 }
 
 // ── EPK Section ──────────────────────────────────────────────
@@ -4373,7 +4411,11 @@ function admPopulate(name){
 function saveSection(name){
   let data;
   if(name==='hero'){
-    data={eyebrow:document.getElementById('f-heroEyebrow').value,subtitle:document.getElementById('f-heroSubtitle').value,cta1:document.getElementById('f-heroCta1').value,cta2:document.getElementById('f-heroCta2').value};
+    const bgInput = (document.getElementById('f-heroBg') || { value: '' }).value || '';
+    const bgCurrent = ((document.getElementById('heroBg') || { style: { backgroundImage: '' } }).style.backgroundImage || '')
+      .replace(/url\(['"]?|['"]?\)/g, '')
+      .trim();
+    data={eyebrow:document.getElementById('f-heroEyebrow').value,subtitle:document.getElementById('f-heroSubtitle').value,cta1:document.getElementById('f-heroCta1').value,cta2:document.getElementById('f-heroCta2').value,bgImage:(bgInput.trim() || bgCurrent || 'img/hero-bg.webp')};
     save('hero_'+currentLang,data); renderHero();
   }
   else if(name==='bio'){
@@ -4874,14 +4916,22 @@ function updatePressKitLink() {
   btn.href = PK_URLS[currentLang] || PK_EN;
   btn.download = PK_FILENAMES[currentLang] || 'RolandoGuy_PressKit_2026_EN.pdf';
 }// ── Boot ──
-document.getElementById('heroBg').style.backgroundImage="url('img/hero-bg.webp')";
-document.getElementById('bioPhoto').src="img/studio-1.jpg";
+const __heroBgNode = document.getElementById('heroBg');
+if (__heroBgNode) __heroBgNode.style.backgroundImage="url('img/hero-bg.webp')";
+const __bioPhotoNode = document.getElementById('bioPhoto');
+if (__bioPhotoNode) __bioPhotoNode.src="img/studio-1.jpg";
 
 // ── Boot: fuente principal Firestore; evitar primer render con DEFAULTS cuando exista rg_vid ──
 // Esperamos hasta RG_FIRESTORE_WAIT_MS para que loadFromFirestore() llene DB antes del primer paint.
 // Así no mostramos videos/agenda con datos por defecto si el servidor tiene datos pero responde lento.
 // Fallback: applyLocalOverrides aplica intentos de guardado del admin (localStorage) si DB sigue vacío o distinto.
 const RG_FIRESTORE_WAIT_MS = 6000;
+const RG_PUBLIC_LOCAL_OVERRIDE_KEYS = [
+  'rg_vid',
+  'hero_en','hero_de','hero_es','hero_it','hero_fr',
+  'bio_en','bio_de','bio_es','bio_it','bio_fr',
+  'contact_en','contact_de','contact_es','contact_it','contact_fr'
+];
 
 (async () => {
   document.body.style.opacity = '0';
@@ -4900,7 +4950,7 @@ const RG_FIRESTORE_WAIT_MS = 6000;
   try {
     try {
       // Fallback resiliencia (NO fuente principal): aplicar override local si existe y DB vacío o distinto.
-      applyLocalOverrides(['rg_vid']);
+      applyLocalOverrides(RG_PUBLIC_LOCAL_OVERRIDE_KEYS);
       migratePersistedContent();
     } catch(e) { console.warn('Migration error:', e); }
     if(typeof renderAll === 'function') renderAll();
@@ -4917,7 +4967,7 @@ const RG_FIRESTORE_WAIT_MS = 6000;
   if (!__firestoreResolved) {
     __firestorePromise.then(() => {
       try {
-        applyLocalOverrides(['rg_vid']);
+        applyLocalOverrides(RG_PUBLIC_LOCAL_OVERRIDE_KEYS);
         migratePersistedContent();
         if(typeof renderAll === 'function') renderAll();
       } catch(e) {

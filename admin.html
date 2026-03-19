@@ -29,7 +29,7 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
 <meta name="description:fr" content="Rolando Guy est un ténor lyrique professionnel basé à Berlin, disponible à l'engagement en Europe pour des opéras, récitals, soirées tango, galas et événements privés.">
 <meta name="description:ja" content="ローランド・ガイはベルリンを拠点とするプロのテノール歌手です。オペラ、リサイタル、タンゴ、コンサート、ガラ公演のブッキングを受け付けています。">
 <meta name="description:zh" content="罗兰多·盖伊是一位驻柏林的职业男高音，可在欧洲受聘演出歌剧、独唱音乐会、探戈表演、晚宴音乐会及私人活动。">
-<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="robots" content="noindex, nofollow">
 <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large">
 <meta name="rating" content="general">
 <meta name="language" content="en, de, es, it, fr">
@@ -173,7 +173,9 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
       "areaServed": {"@type": "Place", "name": "Europe"},
       "availableChannel": {
         "@type": "ServiceChannel",
-        "serviceUrl": "https://www.rolandoguy.com/#contact"
+        "serviceUrl": "https://www.rolandoguy.com/#contact",
+        "servicePhone": "",
+        "serviceSmsNumber": ""
       },
       "url": "https://www.rolandoguy.com/#contact"
     },
@@ -228,33 +230,6 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
       "inLanguage": ["en", "de", "es", "it", "fr"],
       "publisher": {"@id": "https://www.rolandoguy.com/#person"},
       "about": {"@id": "https://www.rolandoguy.com/#person"}
-    },
-    {
-      "@type": "MusicEvent",
-      "name": "Pasiones del Sur – Stimmen der Leidenschaft",
-      "startDate": "2026-09-01T19:00:00+02:00",
-      "eventStatus": "https://schema.org/EventScheduled",
-      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-      "location": {
-        "@type": "Place",
-        "name": "Schwartzsche Villa",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Grunewaldstraße 55",
-          "addressLocality": "Berlin",
-          "postalCode": "12165",
-          "addressCountry": "DE"
-        }
-      },
-      "performer": [
-        { "@type": "Person", "name": "Rolando Guy", "jobTitle": "Tenor" },
-        { "@type": "Person", "name": "Hongyu Chen", "jobTitle": "Baritone" },
-        { "@type": "Person", "name": "Anna Anstett", "jobTitle": "Piano" }
-      ],
-      "organizer": { "@type": "Person", "name": "Rolando Guy", "url": "https://www.rolandoguy.com" },
-      "image": "https://www.rolandoguy.com/og-image.jpg",
-      "url": "https://www.rolandoguy.com/#performances",
-      "description": "An evening of passion and poetry: Argentine and Spanish song, opera arias and tango. Featuring tenor Rolando Guy, baritone Hongyu Chen and pianist Anna Anstett."
     },
     {
       "@type": "FAQPage",
@@ -694,8 +669,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .perf-item{grid-template-columns:minmax(90px,120px) 1fr;gap:16px}
   .contact-grid{grid-template-columns:1fr;gap:32px}
   .footer-inner{grid-template-columns:1fr;text-align:center;gap:20px}
-  .adm-wrap{width:96vw}
-  .adm-tabs{flex-wrap:wrap}
+  .adm-wrap{width:100%;max-width:100%;border-radius:0}
   .adm-grid{grid-template-columns:1fr}
 }
 
@@ -737,8 +711,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .video-title{font-size:.9rem}
   .lb-nav{padding:8px 12px;font-size:1.1rem}
   .lightbox-img{max-width:95vw;max-height:80vh}
-  .adm-body{padding:20px 16px}
-  .adm-head{padding:16px 18px 12px}
+  .adm-body{padding:16px 12px}
+  .adm-head{padding:10px 12px 8px;flex-wrap:wrap;gap:8px;align-items:flex-start}
+  .adm-head-title{width:100%}
+  .adm-head > div{flex-wrap:wrap !important;gap:5px !important;width:100%}
+  .adm-tab{padding:10px 13px !important;font-size:.47rem !important}
+  #admCheckBtn{display:none}
 }/* ── PRESS ── */
 #press{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .press-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-top:32px}
@@ -846,6 +824,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 /* Press resources column */
 .epk-dl-col { display: flex; flex-direction: column; gap: 2rem; }
+.epk-dl-group {}
 .epk-dl-label {
   font-family: var(--ff-caps); font-size: .6rem; letter-spacing: .15em;
   text-transform: uppercase; color: var(--gold); margin-bottom: .4rem;
@@ -1059,7 +1038,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <div class="hero-overlay"></div>
   <div class="hero-content">
     <p class="hero-eyebrow" id="heroEyebrow"></p>
-    <h1 class="hero-name" id="heroName">Rolando Guy – Lyric Tenor</h1>
+    <h1 class="hero-name" id="heroName"></h1>
     <p class="hero-subtitle" id="heroSubtitle"></p>
     <div class="hero-cta">
       <a href="#videos" class="btn-primary"><span id="heroCta1"></span></a>
@@ -1088,8 +1067,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <h2 class="reveal" id="bioH2"></h2>
         <p class="reveal rd1" id="bioP1"></p>
         <p class="reveal rd2" id="bioP2"></p>
-
-        
+        <div class="about-quote reveal rd3" id="bioQuoteWrap" style="display:none">
+          <p id="bioQuote"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -1217,9 +1197,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="contact-left reveal">
         <h2 id="contactTitle"></h2>
         <p id="contactSub"></p>
-        
+        <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
+          <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
+        </div>
         <div class="contact-ctas">
           <a id="contactEmailBtn" class="btn-secondary"></a>
+          <a id="contactWebBtn" class="btn-secondary" href="https://www.rolandoguy.com" target="_blank" style="display:none"></a>
         </div>
       </div>
       <div class="contact-form reveal rd2">
@@ -1274,8 +1257,17 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <div class="adm" id="adm" onclick="admBgClose(event)">
  <div class="adm-wrap">
   <div class="adm-head">
-   <span class="adm-head-title">Panel de Administración · <span id="admLangInd" style="color:var(--text-dim)">EN</span></span>
-   <div style="display:flex; gap:12px; align-items:center;">
+   <span class="adm-head-title">Panel de Administración</span>
+   <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex;gap:2px;align-items:center">
+      <span style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.1em;color:var(--text-faint);margin-right:3px">LANG:</span>
+      <button onclick="admSetLang('en')" id="admLangBtn-en" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:2px">EN</button>
+      <button onclick="admSetLang('de')" id="admLangBtn-de" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">DE</button>
+      <button onclick="admSetLang('es')" id="admLangBtn-es" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">ES</button>
+      <button onclick="admSetLang('it')" id="admLangBtn-it" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">IT</button>
+      <button onclick="admSetLang('fr')" id="admLangBtn-fr" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">FR</button>
+    </div>
+    <span id="admLangInd" style="display:none">EN</span>
     <div id="admSavePill" style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);padding:5px 10px;border-radius:999px;min-width:140px;text-align:center">Saved</div>
     <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
     <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
@@ -1318,7 +1310,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
    <div class="adm-body">
     <!-- HERO -->
     <div class="adm-panel active" id="admPanel-hero">
-     <div class="adm-section">Hero</div>
+     <div class="adm-section">Hero <span id="heroLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <div class="adm-grid full"><div class="adm-col">
+       <label class="adm-label">Imagen de fondo del Hero (URL o ruta)</label>
+       <input class="adm-input" id="f-heroBg" placeholder="img/hero-bg.webp">
+       <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Ruta relativa (img/hero-bg.webp) o URL absoluta. Se aplica al guardar.</div>
+     </div></div>
      <div class="adm-grid">
       <div class="adm-col"><label class="adm-label">Eyebrow</label><input class="adm-input" id="f-heroEyebrow"></div>
       <div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-heroSubtitle"></div>
@@ -1330,7 +1327,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <!-- BIO -->
     <div class="adm-panel" id="admPanel-bio">
-     <div class="adm-section">Biografía</div>
+     <div class="adm-section">Biografía <span id="bioLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-bioH2"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 1</label><textarea class="adm-input" id="f-bioP1" rows="4"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 2</label><textarea class="adm-input" id="f-bioP2" rows="4"></textarea></div></div>
@@ -1401,7 +1398,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <!-- PROGRAMS & COLLABORATIONS -->
     <div class="adm-panel" id="admPanel-programs">
-     <div class="adm-section">Programs &amp; Collaborations — Encabezado</div>
+     <div class="adm-section">Programs &amp; Collaborations <span id="programsLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-programsTitle" placeholder="Programs & Collaborations"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-programsSubtitle"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro (párrafo)</label><textarea class="adm-input" id="f-programsIntro" rows="3"></textarea></div></div>
@@ -1416,10 +1413,13 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-feedback" id="fb-programs">¡Guardado!</div>
     </div>
     <!-- VIDEOS -->
-    <div class="adm-panel" id="admPanel-vid">
+     <div class="adm-panel" id="admPanel-vid">
      <div class="adm-section">Videos</div>
      <div id="vidCards"></div>
-     <button class="adm-btn adm-btn-save" onclick="saveSection('vid')">Guardar Videos</button>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+       <button class="adm-btn" onclick="addVidCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir video</button>
+       <button class="adm-btn adm-btn-save" onclick="saveSection('vid')">Guardar Videos</button>
+     </div>
      <div class="adm-feedback" id="fb-vid">¡Guardado!</div>
     </div>
     <!-- PERFORMANCES -->
@@ -1547,7 +1547,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="adm-section">Reseñas</div>
      <div id="pressAdmList"></div>
      <div class="adm-section" style="margin-top:24px">Agregar nueva cita</div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita (sin comillas)</label><textarea class="adm-input" id="pa-quote" rows="3" placeholder="Das spielfreudige Ensemble begeistert..."></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col">
+       <label class="adm-label">Cita (sin comillas)</label>
+       <textarea class="adm-input" id="pa-quote" rows="3" placeholder="Das spielfreudige Ensemble begeistert..."></textarea>
+       <button type="button" onclick="autoTranslateNewPressQuote()" style="margin-top:6px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;padding:7px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer">✦ Auto-traducir cita</button>
+       <div id="pa-translateStatus" style="font-size:.7rem;color:var(--text-faint);margin-top:4px;min-height:14px"></div>
+       <input type="hidden" id="pa-qi18n-en"><input type="hidden" id="pa-qi18n-de">
+       <input type="hidden" id="pa-qi18n-es"><input type="hidden" id="pa-qi18n-it"><input type="hidden" id="pa-qi18n-fr">
+     </div></div>
      <div class="adm-grid">
        <div class="adm-col"><label class="adm-label">Fuente / Medio</label><input class="adm-input" id="pa-source" placeholder="HR2 · Hessischer Rundfunk"></div>
        <div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" id="pa-production" placeholder="Der Vetter aus Dingsda · 2025"></div>
@@ -1558,7 +1565,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <!-- CONTACT -->
     <div class="adm-panel" id="admPanel-contact">
-     <div class="adm-section">Contacto</div>
+     <div class="adm-section">Contacto <span id="contactLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-contactTitle"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><textarea class="adm-input" id="f-contactSub" rows="3"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><input class="adm-input" id="f-contactQuote"></div></div>
@@ -1589,6 +1596,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
      </div>
 
      <input type="hidden" id="epkBioActiveLang" value="en">
+     <div id="epkBioSafeBadge" style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.1em;color:#4CAF50;opacity:0;transition:opacity .4s;margin-bottom:6px;height:14px"></div>
 
      <div class="adm-grid full">
        <div class="adm-col">
@@ -1627,8 +1635,19 @@ textarea.adm-input{resize:vertical;min-height:80px}
        </div>
      </div>
      <div class="adm-row" style="margin-bottom:32px">
-       <button class="adm-save" onclick="saveEpkBios()">Guardar Biografías</button>
+       <button class="adm-btn adm-btn-save" onclick="saveEpkBios()">Guardar Biografías</button>
        <div class="adm-feedback" id="fb-epkBios">¡Guardado!</div>
+     </div>
+
+     <!-- ── CVs ── -->
+     <div class="adm-section" style="margin-top:24px">CVs por Idioma (PDF)</div>
+     <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
+       Subí un PDF de CV para cada idioma. Sin uno personalizado se usa el archivo por defecto de docs/.
+     </p>
+     <div id="epkCvAdminList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+     <div style="margin-bottom:24px;display:flex;gap:12px;align-items:center">
+       <button class="adm-btn adm-btn-save" onclick="saveEpkCvs()">Guardar CVs</button>
+       <div class="adm-feedback" id="fb-epkCvs" style="display:none">¡Guardado!</div>
      </div>
 
      <!-- ── HIGH-RES PHOTOS ─────────────────────────────── -->
@@ -1639,7 +1658,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div id="epkPhotoAdminList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
      <button onclick="addEpkPhoto()" style="background:transparent;border:1px dashed var(--gold);color:var(--gold);padding:8px 18px;cursor:pointer;font-size:.75rem;width:100%">+ Agregar foto</button>
      <div class="adm-row" style="margin-top:12px">
-       <button class="adm-save" onclick="saveEpkPhotos()">Guardar Fotos</button>
+       <button class="adm-btn adm-btn-save" onclick="saveEpkPhotos()">Guardar Fotos</button>
        <div class="adm-feedback" id="fb-epkPhotos">¡Guardado!</div>
      </div>
 
@@ -2411,6 +2430,7 @@ function renderHero() {
   h.innerHTML = 'Rolando<br><em>Guy</em>';
   const epkNavBtn = document.getElementById('heroEpkBtn');
   if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'Press'; epkNavBtn.textContent = tl; }
+  if(d.bgImage&&d.bgImage.trim()){const hb=document.getElementById('heroBg');if(hb)hb.style.backgroundImage="url('"+d.bgImage.trim()+"')";}
 }
 
 // ── Render Bio ──
@@ -2419,6 +2439,16 @@ function renderBio() {
   document.getElementById('bioH2').innerHTML = d.h2;
   document.getElementById('bioP1').textContent = d.p1;
   document.getElementById('bioP2').textContent = d.p2;
+  const bioQEl = document.getElementById('bioQuote');
+  const bioQWrap = document.getElementById('bioQuoteWrap');
+  if (bioQEl && bioQWrap) {
+    if (d.quote && d.quote.trim()) {
+      bioQEl.textContent = d.quote;
+      bioQWrap.style.display = '';
+    } else {
+      bioQWrap.style.display = 'none';
+    }
+  }
 }
 
 // ── Render Repertoire ──
@@ -2607,8 +2637,13 @@ function renderVideos() {
   const vids = d.videos;
   const grid = document.getElementById('videoGrid');
   const more = document.getElementById('videoMore');
-  const visible = vids.filter(v => !v.hidden);
-  const hidden  = vids.filter(v =>  v.hidden);
+  const ordered = [...vids].sort((a, b) => {
+    if (a.hidden !== b.hidden) return a.hidden ? 1 : -1;
+    if (a.featured !== b.featured) return a.featured ? -1 : 1;
+    return 0;
+  });
+  const visible = ordered.filter(v => !v.hidden);
+  const hidden  = ordered.filter(v =>  v.hidden);
 
   function mkCard(v, i, hidden) {
     const cls = 'video-card reveal' + (i > 0 ? ' rd' + i : '');
@@ -2616,7 +2651,7 @@ function renderVideos() {
     return `<div class="${cls}" ${st}>
       <div class="video-thumb-wrap" id="vwrap-${v.id}">
         <img class="video-thumb"
-          src="https://img.youtube.com/vi/${v.id}/maxresdefault.jpg"
+          src="${v.customThumb && v.customThumb.trim() ? v.customThumb : 'https://img.youtube.com/vi/' + v.id + '/maxresdefault.jpg'}"
           alt="${v.title}" loading="lazy"
           onerror="if(this.dataset.retry!='1'){this.dataset.retry='1';this.src='https://img.youtube.com/vi/${v.id}/hqdefault.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
         <div class="video-thumb-fallback" style="display:none">
@@ -2630,7 +2665,7 @@ function renderVideos() {
         </div>
       </div>
       <div class="video-info-bar">
-        <div class="video-tag">${v.tag}</div>
+        <div class="video-tag">${v.featured ? '★ Featured · ' : ''}${v.tag}</div>
         <div class="video-title">${v.title}</div>
         <div class="video-sub">${v.sub}</div>
       </div>
@@ -3078,9 +3113,27 @@ function renderContact() {
   document.getElementById('contactTitle').innerHTML = d.title;
   document.getElementById('contactSub').textContent = d.sub;
 
+  // Cita de contacto
+  const cqEl = document.getElementById('contactQuoteText');
+  const cqWrap = document.getElementById('contactQuoteWrap');
+  if (cqEl && cqWrap) {
+    if (d.quote && d.quote.trim()) { cqEl.textContent = d.quote; cqWrap.style.display = ''; }
+    else { cqWrap.style.display = 'none'; }
+  }
+
+  // Email dinámico
   const eb = document.getElementById('contactEmailBtn');
+  const email = (d.email && d.email.trim()) ? d.email.trim() : 'rolandoguy@gmail.com';
   eb.textContent = d.emailBtn;
-  eb.href = 'mailto:rolandoguy@gmail.com';
+  eb.href = 'mailto:' + email;
+
+  // Botón website dinámico
+  const wb = document.getElementById('contactWebBtn');
+  if (wb) {
+    wb.textContent = d.webBtn || 'Official Website';
+    wb.style.display = (d.webBtn && d.webBtn.trim()) ? '' : 'none';
+  }
+
   document.getElementById('perfH2').innerHTML = get('perf').h2;
   document.getElementById('perfIntro').textContent = get('perf').intro;
 }
@@ -3522,31 +3575,97 @@ function setLang(lang){
 
 
 // ── Press CRUD ──
+function togglePressEdit(id){
+  const el=document.getElementById('pressedit-'+id);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+function savePressEdit(id){
+  const items=getPress();
+  const idx=items.findIndex(p=>p.id===id);
+  if(idx<0)return;
+  const quote=(document.getElementById('pe-pquote-'+id)||{}).value||items[idx].quote;
+  items[idx]={...items[idx],
+    quote,
+    source:(document.getElementById('pe-psource-'+id)||{}).value||items[idx].source,
+    production:(document.getElementById('pe-pprod-'+id)||{}).value||items[idx].production,
+    url:(document.getElementById('pe-purl-'+id)||{}).value||''
+  };
+  if(!items[idx].quotes_i18n)items[idx].quotes_i18n={};
+  ['en','de','es','it','fr'].forEach(l=>{if(!items[idx].quotes_i18n[l]||items[idx].quotes_i18n[l]===items[idx].quote)items[idx].quotes_i18n[l]=quote;});
+  save('rg_press',items);renderPress();admRenderPressList();
+  const fb=document.getElementById('fb-pressedit-'+id);
+  if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);}
+}
+async function autoTranslatePressEdit(id, btnEl){
+  const textEl=document.getElementById('pe-pquote-'+id);
+  if(!textEl||!textEl.value.trim()){alert('Escribí la cita primero.');return;}
+  const btn=btnEl;btn.textContent='⏳…';btn.disabled=true;
+  try{
+    const t=await callAnthropicTranslate(textEl.value.trim());
+    const items=getPress();const idx=items.findIndex(p=>p.id===id);
+    if(idx>=0){if(!items[idx].quotes_i18n)items[idx].quotes_i18n={};['en','de','es','it','fr'].forEach(l=>{items[idx].quotes_i18n[l]=t[l]||textEl.value;});save('rg_press',items);renderPress();}
+    btn.textContent='✓';setTimeout(()=>{btn.textContent='✦ Auto-traducir';btn.disabled=false;},2000);
+  }catch(e){btn.textContent='✦ Auto-traducir';btn.disabled=false;alert('Error: '+e.message);}
+}
 function admRenderPressList(){
   const el=document.getElementById('pressAdmList');
   if(!el) return;
   const items=getPress();
   if(!items.length){ el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No hay citas aún.</div>'; return; }
   el.innerHTML=items.map(p=>`
-    <div class="adm-row">
-      <div class="adm-row-info">
-        <div class="adm-row-title" style="font-style:italic">"${p.quote.substring(0,80)}${p.quote.length>80?'…':''}"</div>
-        <div class="adm-row-meta">${p.source} · ${p.production}</div>
+    <div class="adm-row" style="flex-direction:column;align-items:stretch;gap:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div class="adm-row-info" style="cursor:pointer" onclick="togglePressEdit(${p.id})">
+          <div class="adm-row-title" style="font-style:italic">"${p.quote.substring(0,80)}${p.quote.length>80?'…':''}"</div>
+          <div class="adm-row-meta">${p.source} · ${p.production}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="adm-btn-sm" onclick="togglePressEdit(${p.id})" style="background:rgba(212,168,67,.12);border-color:var(--gold-dim);color:var(--gold)">Editar</button>
+          <button class="adm-btn-sm adm-btn-danger" onclick="deletePressQuote(${p.id})">Eliminar</button>
+        </div>
       </div>
-      <button class="adm-btn-sm adm-btn-danger" onclick="deletePressQuote(${p.id})">Eliminar</button>
+      <div id="pressedit-${p.id}" style="display:none;padding:14px 0 6px;margin-top:10px;border-top:1px solid var(--border)">
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><textarea class="adm-input" id="pe-pquote-${p.id}" rows="3">${p.quote}</textarea></div></div>
+        <div class="adm-grid">
+          <div class="adm-col"><label class="adm-label">Fuente</label><input class="adm-input" id="pe-psource-${p.id}" value="${p.source||''}"></div>
+          <div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" id="pe-pprod-${p.id}" value="${p.production||''}"></div>
+        </div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">URL artículo</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+          <button class="adm-btn" onclick="savePressEdit(${p.id})">Guardar</button>
+          <button class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-traducir</button>
+          <button class="adm-btn" onclick="togglePressEdit(${p.id})" style="background:transparent">Cancelar</button>
+        </div>
+        <div id="fb-pressedit-${p.id}" class="adm-feedback" style="display:none">¡Guardado!</div>
+      </div>
     </div>`).join('');
 }
 
+async function autoTranslateNewPressQuote(){
+  const text=(document.getElementById('pa-quote')||{}).value.trim();
+  if(!text){alert('Escribí la cita primero.');return;}
+  const status=document.getElementById('pa-translateStatus');
+  if(status)status.textContent='Traduciendo…';
+  try{
+    const t=await callAnthropicTranslate(text);
+    ['en','de','es','it','fr'].forEach(l=>{const el=document.getElementById('pa-qi18n-'+l);if(el)el.value=t[l]||text;});
+    if(status)status.innerHTML='<span style="color:#4CAF50">✓ 5 traducciones listas — se guardarán con la cita</span>';
+  }catch(e){
+    if(status)status.innerHTML='<span style="color:#e57373">✗ '+e.message+'</span>';
+  }
+}
 function addPressQuote(){
   const quote=document.getElementById('pa-quote').value.trim();
   const source=document.getElementById('pa-source').value.trim();
   if(!quote||!source){alert('La cita y la fuente son obligatorias');return;}
   const items=getPress();
   const newId=items.length?Math.max(...items.map(p=>p.id))+1:1;
-  items.unshift({id:newId,quote,source,production:document.getElementById('pa-production').value.trim(),url:document.getElementById('pa-url').value.trim()});
+  const _qi18n={};['en','de','es','it','fr'].forEach(l=>{const el=document.getElementById('pa-qi18n-'+l);_qi18n[l]=(el&&el.value.trim())?el.value.trim():quote;});
+  items.unshift({id:newId,quote,quotes_i18n:_qi18n,source,production:document.getElementById('pa-production').value.trim(),url:document.getElementById('pa-url').value.trim()});
   save('rg_press',items);
   renderPress();admRenderPressList();
-  ['pa-quote','pa-source','pa-production','pa-url'].forEach(id=>document.getElementById(id).value='');
+  ['pa-quote','pa-source','pa-production','pa-url','pa-qi18n-en','pa-qi18n-de','pa-qi18n-es','pa-qi18n-it','pa-qi18n-fr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const _pts=document.getElementById('pa-translateStatus');if(_pts)_pts.textContent='';
   const fb=document.getElementById('fb-press');fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);
 }
 
@@ -3620,6 +3739,8 @@ function epkSetBioLang(lang) {
   // Save current values to temp before switching
   const curLang = document.getElementById('epkBioActiveLang').value;
   epkSaveBioToTemp(curLang);
+  const safeBadge=document.getElementById('epkBioSafeBadge');
+  if(safeBadge){safeBadge.textContent='✓ '+curLang.toUpperCase()+' guardado en memoria';safeBadge.style.opacity='1';setTimeout(()=>safeBadge.style.opacity='0',2000);}
 
   // Update active button style
   ['en','de','es','it','fr'].forEach(l => {
@@ -3764,10 +3885,13 @@ function epkRenderPhotosAdmin() {
   }
 
   container.innerHTML = photos.map((ph, i) => `
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px;background:var(--surface2);border:1px solid var(--border)">
-      <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="URL de la foto (https://...)" value="${ph.url||''}" onchange="epkUpdatePhoto(${i},'url',this.value)">
-      <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="Pie de foto / Credit" value="${ph.credit||''}" onchange="epkUpdatePhoto(${i},'credit',this.value)">
-      <button onclick="epkRemovePhoto(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:6px 10px;cursor:pointer;font-size:.7rem">✕</button>
+    <div style="display:flex;flex-direction:column;gap:5px;padding:10px;background:var(--surface2);border:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
+        <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="URL de la foto (https://...)" value="${ph.url||''}" onchange="epkUpdatePhoto(${i},'url',this.value)">
+        <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="© Crédito fotógrafo" value="${ph.credit||''}" onchange="epkUpdatePhoto(${i},'credit',this.value)">
+        <button onclick="epkRemovePhoto(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:6px 10px;cursor:pointer;font-size:.7rem">✕</button>
+      </div>
+      <input class="adm-input" style="font-size:.75rem;padding:5px" placeholder="Etiqueta visible (ej: Retrato de estudio · 2024)" value="${ph.label||''}" onchange="epkUpdatePhoto(${i},'label',this.value)">
     </div>
   `).join('');
 }
@@ -3833,6 +3957,13 @@ function onDropVideo(dstIdx, e) {
   admPopulate('vid');
   return false;
 }
+function addVidCard() {
+  const d = getVid();
+  d.videos.push({ id: '', tag: '', title: '', sub: '', hidden: false, group: 'opera_lied', featured: false, customThumb: '' });
+  save('rg_vid', d);
+  admTab('vid');
+  setTimeout(() => { const body = document.querySelector('.adm-body'); if (body) body.scrollTop = body.scrollHeight; }, 200);
+}
 function onDropPerf(dstIdx, e) {
   e.stopPropagation();
   const srcIdx = parseInt(dragSrc.dataset.perfIdx);
@@ -3882,6 +4013,17 @@ function saveMonthSize() {
   fb.textContent = ' ✓ Guardado'; fb.style.color = 'var(--gold)'; fb.style.fontSize = '.7rem';
   const btn = document.querySelector('[onclick="saveMonthSize()"]');
   btn.after(fb); setTimeout(() => fb.remove(), 2000);
+}
+function admSetLang(lang){
+  setLang(lang);
+  ['en','de','es','it','fr'].forEach(l=>{
+    const btn=document.getElementById('admLangBtn-'+l);
+    if(!btn)return;
+    if(l===lang){btn.style.background='var(--gold)';btn.style.color='#000';btn.style.border='none';}
+    else{btn.style.background='var(--surface2)';btn.style.color='var(--text-dim)';btn.style.border='1px solid var(--border)';}
+  });
+  // Actualizar badges de idioma en paneles
+  ['hero','bio','contact','programs'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=lang.toUpperCase();});
 }
 function openAdmin(){
   document.getElementById('adm').classList.add('open');
@@ -3989,8 +4131,13 @@ function admTab(name){
 }
 
 function admPopulate(name){
+  ['hero','bio','contact','programs'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=currentLang.toUpperCase();});
   if(name==='hero'){
     const d=get('hero');
+    const bgEl=document.getElementById('f-heroBg');
+    const curBg=(document.getElementById('heroBg')||{}).style.backgroundImage||'';
+    const curBgClean=curBg.replace(/url\(['"]?|['"]?\)/g,'');
+    if(bgEl)bgEl.value=d.bgImage||curBgClean||'img/hero-bg.webp';
     document.getElementById('f-heroEyebrow').value = d.eyebrow||'';
     document.getElementById('f-heroSubtitle').value = d.subtitle||'';
     document.getElementById('f-heroCta1').value = d.cta1||'';
@@ -4216,8 +4363,10 @@ function admPopulate(name){
 function saveSection(name){
   let data;
   if(name==='hero'){
-    data={eyebrow:document.getElementById('f-heroEyebrow').value,subtitle:document.getElementById('f-heroSubtitle').value,cta1:document.getElementById('f-heroCta1').value,cta2:document.getElementById('f-heroCta2').value};
-    save('hero_'+currentLang,data); renderHero();
+    data={eyebrow:document.getElementById('f-heroEyebrow').value,subtitle:document.getElementById('f-heroSubtitle').value,cta1:document.getElementById('f-heroCta1').value,cta2:document.getElementById('f-heroCta2').value,bgImage:(document.getElementById('f-heroBg')||{value:''}).value.trim()||'img/hero-bg.webp',};
+    save('hero_'+currentLang,data);
+    if(data.bgImage){const hb=document.getElementById('heroBg');if(hb)hb.style.backgroundImage="url('"+data.bgImage+"')";}
+    renderHero();
   }
   else if(name==='bio'){
     data={h2:document.getElementById('f-bioH2').value,p1:document.getElementById('f-bioP1').value,p2:document.getElementById('f-bioP2').value,quote:document.getElementById('f-bioQuote').value,cite:get('bio').cite};
@@ -4348,21 +4497,51 @@ function addPerf(){
   const title=document.getElementById('pTitle').value.trim();
   if(!title){alert('El título es obligatorio');return;}
   const perfs=getPerfs();
-  const newPerf = {id:nextPerfId(perfs),day,month:document.getElementById('pMonth').value.trim(),time:document.getElementById('pTime').value.trim(),title,detail:document.getElementById('pDetail').value.trim(),venue:document.getElementById('pVenue').value.trim(),city:document.getElementById('pCity').value.trim(),venuePhoto:(document.getElementById('pVenuePhoto')||{value:''}).value.trim(),venueOpacity:parseInt((document.getElementById('pVenueOpacity')||{value:15}).value)||15,status:document.getElementById('pStatus').value,type:document.getElementById('pType').value,extDesc:(document.getElementById('pExtDesc')||{value:''}).value.trim(),ticketPrice:(document.getElementById('pTicketPrice')||{value:''}).value.trim(),eventLink:(document.getElementById('pEventLink')||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pEventLinkLabel')||{value:''}).value.trim()||'Tickets & Info',flyerImg:(document.getElementById('pFlyerImg','pModalImg')||{value:''}).value.trim(),modalImg:(document.getElementById('pModalImg')||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pModalImgHide')||{}).checked};
-  // Translations come from hidden fields populated by autoTranslateDetail()
+  const _month=document.getElementById('pMonth').value.trim();
+  const _status=document.getElementById('pStatus').value;
+  const _calcSD=(d,m,st)=>{
+    if(!m)return st==='past'?'2000-01-01':'2099-12-01';
+    const parsed=new Date((d&&d!=='TBA'?d+' ':'1 ')+m);
+    return isNaN(parsed)?st==='past'?'2000-01-01':'2099-12-01':parsed.toISOString().split('T')[0];
+  };
+  const newPerf = {
+    id:nextPerfId(perfs),day,month:_month,
+    time:document.getElementById('pTime').value.trim(),
+    title,
+    detail:document.getElementById('pDetail').value.trim(),
+    venue:document.getElementById('pVenue').value.trim(),
+    city:document.getElementById('pCity').value.trim(),
+    venuePhoto:(document.getElementById('pVenuePhoto')||{value:''}).value.trim(),
+    venueOpacity:parseInt((document.getElementById('pVenueOpacity')||{value:50}).value)||50,
+    status:_status,
+    type:document.getElementById('pType').value,
+    sortDate:_calcSD(day,_month,_status),
+    extDesc:(document.getElementById('pExtDesc')||{value:''}).value.trim(),
+    ticketPrice:(document.getElementById('pTicketPrice')||{value:''}).value.trim(),
+    eventLink:(document.getElementById('pEventLink')||{value:''}).value.trim(),
+    eventLinkLabel:(document.getElementById('pEventLinkLabel')||{value:''}).value.trim()||'Tickets & Info',
+    flyerImg:(document.getElementById('pFlyerImg')||{value:''}).value.trim(),
+    modalImg:(document.getElementById('pModalImg')||{value:''}).value.trim(),
+    modalImgHide:!!(document.getElementById('pModalImgHide')||{}).checked
+  };
   const d_en=(document.getElementById('pDetail_en')||{}).value||'';
   const d_de=(document.getElementById('pDetail_de')||{}).value||'';
   const d_es=(document.getElementById('pDetail_es')||{}).value||'';
   const d_it=(document.getElementById('pDetail_it')||{}).value||'';
   const d_fr=(document.getElementById('pDetail_fr')||{}).value||'';
-  if(d_en) newPerf.detail_en=d_en;
-  if(d_de) newPerf.detail_de=d_de;
-  if(d_es) newPerf.detail_es=d_es;
-  if(d_it) newPerf.detail_it=d_it;
-  if(d_fr) newPerf.detail_fr=d_fr;
+  if(d_en)newPerf.detail_en=d_en;
+  if(d_de)newPerf.detail_de=d_de;
+  if(d_es)newPerf.detail_es=d_es;
+  if(d_it)newPerf.detail_it=d_it;
+  if(d_fr)newPerf.detail_fr=d_fr;
   perfs.unshift(newPerf);
   savePerfs(perfs);renderPerfs();admRenderPerfList();
-  ['pDay','pMonth','pTime','pTitle','pDetail','pDetail_de','pDetail_es','pDetail_it','pDetail_fr','pVenue','pCity','pVenuePhoto','pExtDesc','pTicketPrice','pEventLink','pEventLinkLabel','pFlyerImg','pModalImg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['pDay','pMonth','pTime','pTitle','pDetail','pDetail_en','pDetail_de','pDetail_es','pDetail_it','pDetail_fr','pVenue','pCity','pVenuePhoto','pExtDesc','pTicketPrice','pEventLink','pEventLinkLabel','pFlyerImg','pModalImg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const opSl=document.getElementById('pVenueOpacity');if(opSl){opSl.value=50;const opV=document.getElementById('pVenueOpacityVal');if(opV)opV.textContent='50%';}
+  const hChk=document.getElementById('pModalImgHide');if(hChk)hChk.checked=false;
+  const tPrev=document.getElementById('translatePreviews');if(tPrev)tPrev.style.display='none';
+  const tStat=document.getElementById('translateStatus');if(tStat)tStat.textContent='';
+  const tBtn=document.getElementById('translateBtn');if(tBtn){tBtn.textContent='✦ Auto-traducir';tBtn.disabled=false;}
   const fb=document.getElementById('fb-perf');fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);
 }
 
@@ -4375,8 +4554,10 @@ function deletePerf(id){
 function admRenderPerfList(){
   const el=document.getElementById('admPerfList');
   if(!el)return;
-  const perfs=getPerfs();
-  if(!perfs.length){el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No hay fechas.</div>';return;}
+  const _raw=getPerfs();
+  if(!_raw.length){el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No hay fechas.</div>';return;}
+  const _toD=p=>p.sortDate?new Date(p.sortDate):new Date('2099-01-01');
+  const perfs=[..._raw].sort((a,b)=>_toD(b)-_toD(a));
   el.innerHTML=perfs.map((p,pi)=>`
     <div class="adm-perf-item drag-item" id="perfitem-${p.id}" draggable="true" data-perf-idx="${pi}"
       ondragstart="dragSrc=this;this.style.opacity='0.5'"
@@ -4485,10 +4666,13 @@ function savePerf(id){
     detail_it:(document.getElementById('pe-detail_it-'+id)||{}).value||'',
     detail_fr:(document.getElementById('pe-detail_fr-'+id)||{}).value||'',
     venue:document.getElementById('pe-venue-'+id).value.trim(),
-    city:document.getElementById('pe-city-'+id).value.trim(),venuePhoto:(document.getElementById('pe-venuePhoto-'+id)||{value:''}).value.trim(),venueOpacity:parseInt((document.getElementById('pe-venueOpacity-'+id)||{value:15}).value)||15,extDesc:(document.getElementById('pe-extDesc-'+id)||{value:''}).value.trim(),ticketPrice:(document.getElementById('pe-ticketPrice-'+id)||{value:''}).value.trim(),eventLink:(document.getElementById('pe-eventLink-'+id)||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pe-eventLinkLabel-'+id)||{value:''}).value.trim()||'Tickets & Info',flyerImg:(document.getElementById('pe-flyerImg-'+id)||{value:''}).value.trim(),modalImg:(document.getElementById('pe-modalImg-'+id)||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pe-modalImgHide-'+id)||{}).checked,
+    city:document.getElementById('pe-city-'+id).value.trim(),venuePhoto:(document.getElementById('pe-venuePhoto-'+id)||{value:''}).value.trim(),venueOpacity:parseInt((document.getElementById('pe-venueOpacity-'+id)||{value:50}).value)||50,extDesc:(document.getElementById('pe-extDesc-'+id)||{value:''}).value.trim(),ticketPrice:(document.getElementById('pe-ticketPrice-'+id)||{value:''}).value.trim(),eventLink:(document.getElementById('pe-eventLink-'+id)||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pe-eventLinkLabel-'+id)||{value:''}).value.trim()||'Tickets & Info',flyerImg:(document.getElementById('pe-flyerImg-'+id)||{value:''}).value.trim(),modalImg:(document.getElementById('pe-modalImg-'+id)||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pe-modalImgHide-'+id)||{}).checked,
     status:document.getElementById('pe-status-'+id).value,
     type:document.getElementById('pe-type-'+id).value
   };
+  const _sDay=perfs[idx].day, _sMon=perfs[idx].month, _sStat=perfs[idx].status;
+  const _cSD=(d,m,st)=>{if(!m)return st==='past'?'2000-01-01':'2099-12-01';const p=new Date((d&&d!=='TBA'?d+' ':'1 ')+m);return isNaN(p)?st==='past'?'2000-01-01':'2099-12-01':p.toISOString().split('T')[0];};
+  perfs[idx].sortDate=_cSD(_sDay,_sMon,_sStat);
   savePerfs(perfs);
   renderPerfs();
   admRenderPerfList();
