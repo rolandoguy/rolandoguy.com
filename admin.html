@@ -3393,7 +3393,7 @@ async function openShortProfileCleanExport() {
     admLog('warn', 'Short export bio image optimization failed', { key: 'export-short-img' });
   }
   const sections = [];
-  sections.push(buildFullExportBioHtml(bioOpt));
+  sections.push(buildFullExportBioHtml(bioOpt, { narrativeMode: 'short' }));
   sections.push(buildShortExportRepertoireHtml());
   sections.push(buildFullExportProgramsHtml());
   sections.push(buildFullExportCalendarHtml({ maxItems: 8 }));
@@ -3430,7 +3430,7 @@ async function openSelectedProfileCleanExport() {
   if (sel.programs) blocks.push(buildFullExportProgramsHtml());
   if (sel.calendar) blocks.push(buildFullExportCalendarHtml());
   if (sel.press) blocks.push(buildFullExportPressHtml());
-  if (sel.epk) blocks.push(buildFullExportEpkHtml({ omitEmbeddedPress: !!sel.press, epkPhotoSrcOverrides }));
+  if (sel.epk) blocks.push(buildFullExportEpkHtml({ omitEmbeddedPress: !!sel.press, epkPhotoSrcOverrides, omitEpkBioBox: !!sel.bio }));
   if (sel.contact) blocks.push(buildFullExportContactHtml());
   const body = `<header class="exp-doc-head">
     <h1 class="exp-h1">Rolando Guy</h1>
@@ -3502,7 +3502,24 @@ function exportProgramLeadLine(i0) {
   return `${w} ${i0 + 1}`;
 }
 
-function buildFullExportBioHtml(bioImageSrcOverride) {
+/** EPK / dossier bios (50 / 150 / full) for the active language — same source as Dossier export */
+function getEpkBioTextsForExport() {
+  const lang = currentLang || 'en';
+  const base = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || {};
+  const stored = (load('rg_epk_bios') || {})[lang] || {};
+  const b50 = exportStripHtml(stored.b50 || base.b50 || '');
+  const b150 = exportStripHtml(stored.b150 || base.b150 || '');
+  const fullBio = [stored.b300p1 || base.b300p1 || '', stored.b300p2 || base.b300p2 || '', stored.b300p3 || base.b300p3 || '', stored.b300p4 || base.b300p4 || ''].map(exportStripHtml).filter(Boolean).join(' ');
+  return { b50, b150, fullBio };
+}
+
+/**
+ * @param bioImageSrcOverride optional optimized image src/data URL
+ * @param narrativeOpts optional { narrativeMode: 'site' | 'short' | 'full' } — site = default (web p1/p2); short = single commercial bio (150→50→full→site); full = single documentary bio (full EPK→150→50→site)
+ */
+function buildFullExportBioHtml(bioImageSrcOverride, narrativeOpts) {
+  narrativeOpts = narrativeOpts || {};
+  const narrativeMode = narrativeOpts.narrativeMode;
   const d = get('bio') || {};
   const t = Ti[currentLang] || Ti.en;
   const title = exportStripHtml(d.h2 || t['nav.bio'] || 'Biography');
@@ -3514,11 +3531,35 @@ function buildFullExportBioHtml(bioImageSrcOverride) {
   const bioImg = (typeof bioImageSrcOverride === 'string' && bioImageSrcOverride.trim())
     ? bioImageSrcOverride.trim()
     : fallbackBio;
+  let narrativeHtml = '';
+  if (narrativeMode === 'short') {
+    const { b50, b150, fullBio } = getEpkBioTextsForExport();
+    const epkOne = b150 || b50 || fullBio;
+    if (epkOne) {
+      narrativeHtml += `<p class="exp-p">${exportEsc(epkOne)}</p>`;
+    } else {
+      const siteOne = [p1, p2].filter(Boolean).join(' ');
+      if (siteOne) narrativeHtml += `<p class="exp-p">${exportEsc(siteOne)}</p>`;
+    }
+  } else if (narrativeMode === 'full') {
+    const { b50, b150, fullBio } = getEpkBioTextsForExport();
+    if (fullBio) {
+      narrativeHtml += `<p class="exp-p">${exportEsc(fullBio)}</p>`;
+    } else if (b150 || b50) {
+      const line = [b150, b50].filter(Boolean).join(' ');
+      narrativeHtml += `<p class="exp-p">${exportEsc(line)}</p>`;
+    } else {
+      if (p1) narrativeHtml += `<p class="exp-p">${exportEsc(p1)}</p>`;
+      if (p2) narrativeHtml += `<p class="exp-p">${exportEsc(p2)}</p>`;
+    }
+  } else {
+    if (p1) narrativeHtml += `<p class="exp-p">${exportEsc(p1)}</p>`;
+    if (p2) narrativeHtml += `<p class="exp-p">${exportEsc(p2)}</p>`;
+  }
   return `<section class="exp-section exp-bio-open">
     <h2 class="exp-h2">${exportEsc(title)}</h2>
     ${bioImg ? `<figure class="exp-fig exp-bio-photo"><img src="${exportEsc(bioImg)}" alt="${exportEsc(title || 'Biography photo')}" loading="eager" decoding="sync" style="max-width:300px;width:100%;height:auto"><figcaption class="exp-cap">Rolando Guy</figcaption></figure>` : ''}
-    ${p1 ? `<p class="exp-p">${exportEsc(p1)}</p>` : ''}
-    ${p2 ? `<p class="exp-p">${exportEsc(p2)}</p>` : ''}
+    ${narrativeHtml}
     ${quote ? `<blockquote class="exp-callout">"${exportEsc(quote)}"</blockquote>` : ''}
   </section>`;
 }
@@ -3642,6 +3683,7 @@ function buildFullExportCalendarHtml(opts) {
 function buildFullExportEpkHtml(opts) {
   opts = opts || {};
   const omitEmbeddedPress = !!opts.omitEmbeddedPress;
+  const omitEpkBioBox = !!opts.omitEpkBioBox;
   const lang = currentLang || 'en';
   const ti = Ti[lang] || Ti.en;
   const base = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || {};
@@ -3649,6 +3691,7 @@ function buildFullExportEpkHtml(opts) {
   const b50 = exportStripHtml(stored.b50 || base.b50 || '');
   const b150 = exportStripHtml(stored.b150 || base.b150 || '');
   const fullBio = [stored.b300p1 || base.b300p1 || '', stored.b300p2 || base.b300p2 || '', stored.b300p3 || base.b300p3 || '', stored.b300p4 || base.b300p4 || ''].map(exportStripHtml).filter(Boolean).join(' ');
+  const showEpkBioBox = !omitEpkBioBox && !!(b50 || b150 || fullBio);
   const photos = (load('rg_epk_photos') || []).filter(ph => ph && ph.url);
   const press = omitEmbeddedPress ? [] : (typeof getPress === 'function' ? getPress() : []).filter(p => p.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0)).slice(0, 4);
   const pressCards = press.length ? press.map((p) => {
@@ -3691,12 +3734,12 @@ function buildFullExportEpkHtml(opts) {
   const artist = getDoc('artistSheet');
   return `<section class="exp-section exp-dossier-stack">
     <h2 class="exp-h2">${exportEsc(exportStripHtml(ti['epk.title'] || 'Dossier'))}</h2>
-    <div class="exp-dossier-box exp-block">
+    ${showEpkBioBox ? `<div class="exp-dossier-box exp-block">
       <h3 class="exp-h3">Bios</h3>
       ${b50 ? `<p class="exp-p exp-kv" style="margin:0 0 .65rem"><strong>${exportEsc(exportStripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${exportEsc(b50)}</p>` : ''}
       ${b150 ? `<p class="exp-p exp-kv" style="margin:0 0 .65rem"><strong>${exportEsc(exportStripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${exportEsc(b150)}</p>` : ''}
       ${fullBio ? `<p class="exp-p exp-kv" style="margin:0"><strong>${exportEsc(exportStripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${exportEsc(fullBio)}</p>` : ''}
-    </div>
+    </div>` : ''}
     ${(!omitEmbeddedPress && pressCards) ? `<div class="exp-block" style="margin:0 0 1.25rem"><h3 class="exp-h3">${exportEsc(epkReviewsTitle)}</h3>${pressCards}</div>` : ''}
     ${photoCards ? `<div class="exp-block" style="margin:0 0 1.25rem"><h3 class="exp-h3">${exportEsc(exportStripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h3><div class="exp-photo-grid">${photoCards}</div></div>` : ''}
     ${(dossier || artist) ? `<div><h3 class="exp-h3">Documents</h3>${dossier ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${exportEsc(dossier)}</p>` : ''}${artist ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${exportEsc(artist)}</p>` : ''}</div>` : ''}
@@ -3764,11 +3807,11 @@ async function openFullProfileCleanExport() {
     epkPhotoSrcOverrides = photos.map((ph) => resolveExportImageUrl(ph.url || ''));
   }
   const blocks = [];
-  blocks.push(buildFullExportBioHtml(bioForExport));
+  blocks.push(buildFullExportBioHtml(bioForExport, { narrativeMode: 'full' }));
   blocks.push(buildFullExportRepertoireHtml());
   blocks.push(buildFullExportProgramsHtml());
   blocks.push(buildFullExportCalendarHtml({ relaxedCalendar: true }));
-  blocks.push(buildFullExportEpkHtml({ omitEmbeddedPress: true, epkPhotoSrcOverrides }));
+  blocks.push(buildFullExportEpkHtml({ omitEmbeddedPress: true, omitEpkBioBox: true, epkPhotoSrcOverrides }));
   blocks.push(buildFullExportPressHtml());
   blocks.push(buildFullExportContactHtml());
   const body = `<header class="exp-doc-head">
