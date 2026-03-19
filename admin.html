@@ -1335,7 +1335,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" type="button" onclick="copyFullProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy selected sections</button>
-      <button class="adm-btn" type="button" onclick="openFullProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+      <button class="adm-btn" type="button" onclick="openSelectedProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+      <button class="adm-btn" type="button" onclick="copyShortProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy short profile</button>
+      <button class="adm-btn" type="button" onclick="openShortProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open short clean export</button>
+      <button class="adm-btn" type="button" onclick="openFullProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open full clean export</button>
     </div>
    </div>
    <div class="adm-tabs">
@@ -3309,6 +3312,107 @@ function buildFullProfilePlainText() {
   return buildSelectedFullProfilePlainText();
 }
 
+function buildShortRepertoirePlainText() {
+  const d = getRep();
+  const cards = Array.isArray(d.cards) ? d.cards : [];
+  const ti = Ti[currentLang] || Ti.en;
+  const categories = [
+    { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), max: 4, role: true, status: true },
+    { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), max: 3, role: true, status: false },
+    { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), max: 2, role: false, status: false },
+    { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), max: 2, role: false, status: false }
+  ];
+  const lines = ['Selected Repertoire'];
+  categories.forEach((cat) => {
+    const list = cards.filter(c => (c.cat || 'opera') === cat.key).filter(c => exportStripHtml(c.opera || c.role || c.composer)).slice(0, cat.max);
+    if (!list.length) return;
+    lines.push('');
+    lines.push(cat.label);
+    list.forEach((it) => {
+      const parts = [exportStripHtml(it.opera || '')].filter(Boolean);
+      if (cat.role && exportStripHtml(it.role || '')) parts.push(`Role: ${exportStripHtml(it.role || '')}`);
+      if (exportStripHtml(it.composer || '')) parts.push(`Composer: ${exportStripHtml(it.composer || '')}`);
+      if (cat.status && exportStripHtml(it.status || '')) parts.push(`Status: ${exportStripHtml(it.status || '')}`);
+      lines.push(`- ${parts.join(' · ')}`);
+    });
+  });
+  return lines.join('\n').trim();
+}
+
+function buildShortProfilePlainText() {
+  const parts = [
+    buildBioPlainText(),
+    buildShortRepertoirePlainText(),
+    buildProgramsPlainText(),
+    buildCalendarPlainText(),
+    buildContactPlainText()
+  ].map(s => String(s || '').trim()).filter(Boolean);
+  return parts.join('\n\n────────────────────\n\n').trim();
+}
+
+function buildShortExportRepertoireHtml() {
+  const d = getRep();
+  const cards = Array.isArray(d.cards) ? d.cards : [];
+  const ti = Ti[currentLang] || Ti.en;
+  const categories = [
+    { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), max: 4, role: true, status: true },
+    { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), max: 3, role: true, status: false },
+    { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), max: 2, role: false, status: false },
+    { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), max: 2, role: false, status: false }
+  ];
+  const blocks = categories.map((cat) => {
+    const list = cards.filter(c => (c.cat || 'opera') === cat.key).filter(c => exportStripHtml(c.opera || c.role || c.composer)).slice(0, cat.max);
+    if (!list.length) return '';
+    const items = list.map((it) => {
+      const work = exportStripHtml(it.opera || '');
+      const role = exportStripHtml(it.role || '');
+      const composer = exportStripHtml(it.composer || '');
+      const status = exportStripHtml(it.status || '');
+      return `<li style="margin:0 0 6px 0;color:#222;line-height:1.6">${exportEsc(work)}${cat.role && role ? ` · <strong>Role:</strong> ${exportEsc(role)}` : ''}${composer ? ` · <strong>Composer:</strong> ${exportEsc(composer)}` : ''}${cat.status && status ? ` · <strong>Status:</strong> ${exportEsc(status)}` : ''}</li>`;
+    }).join('');
+    return `<div style="margin:0 0 12px 0"><h3 style="margin:0 0 6px 0;font-size:17px;color:#111">${exportEsc(cat.label)}</h3><ul style="margin:0;padding-left:18px">${items}</ul></div>`;
+  }).filter(Boolean).join('');
+  return `<section style="margin:0 0 28px 0;padding:0 0 20px 0;border-bottom:1px solid #e3e3e3">
+    <h2 style="margin:0 0 10px 0;font-size:24px;color:#111">Selected Repertoire</h2>
+    ${blocks || `<p style="margin:0;color:#444">No repertoire items available.</p>`}
+  </section>`;
+}
+
+async function copyShortProfilePlainText() {
+  await copyPlainTextWithFallback(buildShortProfilePlainText(), 'Short profile copied', 'short-profile');
+}
+
+function openShortProfileCleanExport() {
+  const sections = [];
+  sections.push(buildFullExportBioHtml());
+  sections.push(buildShortExportRepertoireHtml());
+  sections.push(buildFullExportProgramsHtml());
+  sections.push(buildFullExportCalendarHtml());
+  sections.push(buildFullExportContactHtml());
+  const body = `<header style="margin:0 0 22px 0;padding:0 0 14px 0;border-bottom:2px solid #dcdcdc">
+    <h1 style="margin:0;font-size:30px;line-height:1.2;color:#111">Rolando Guy</h1>
+    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Short commercial profile</p>
+  </header>${sections.join('')}`;
+  openCleanExportWindow('Short clean export', body);
+}
+
+function openSelectedProfileCleanExport() {
+  const sel = getSelectedFullExportSections();
+  const blocks = [];
+  if (sel.bio) blocks.push(buildFullExportBioHtml());
+  if (sel.repertoire) blocks.push(buildFullExportRepertoireHtml());
+  if (sel.programs) blocks.push(buildFullExportProgramsHtml());
+  if (sel.calendar) blocks.push(buildFullExportCalendarHtml());
+  if (sel.press) blocks.push(buildFullExportPressHtml());
+  if (sel.epk) blocks.push(buildFullExportEpkHtml());
+  if (sel.contact) blocks.push(buildFullExportContactHtml());
+  const body = `<header style="margin:0 0 24px 0;padding:0 0 14px 0;border-bottom:2px solid #dcdcdc">
+    <h1 style="margin:0;font-size:30px;line-height:1.2;color:#111">Rolando Guy</h1>
+    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Custom selected profile export</p>
+  </header>${blocks.join('') || `<p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`}`;
+  openCleanExportWindow('Selected clean export', body);
+}
+
 function resolveExportImageUrl(src) {
   const raw = String(src || '').trim();
   if (!raw) return '';
@@ -3461,7 +3565,16 @@ function buildFullExportEpkHtml() {
       ${q ? `<p style="margin:0;color:#222;line-height:1.65;font-style:italic">"${exportEsc(q)}"</p>` : ''}
     </article>`;
   }).join('');
-  const photoList = photos.map((ph, i) => `<li style="margin:0 0 4px 0">${exportEsc(exportStripHtml(ph.label || ('Portrait ' + (i + 1))))}${ph.credit ? ` — ${exportEsc(exportStripHtml(ph.credit))}` : ''}</li>`).join('');
+  const photoCards = photos.map((ph, i) => {
+    const src = resolveExportImageUrl(ph.url || '');
+    if (!src) return '';
+    const label = exportStripHtml(ph.label || ('Portrait ' + (i + 1)));
+    const credit = exportStripHtml(ph.credit || '');
+    return `<figure style="margin:0">
+      <img src="${exportEsc(src)}" alt="${exportEsc(label)}" loading="lazy" style="display:block;width:100%;height:110px;object-fit:cover;border:1px solid #ddd">
+      <figcaption style="margin-top:5px;font-size:12px;line-height:1.45;color:#444">${exportEsc(label)}${credit ? ` · ${exportEsc(credit)}` : ''}</figcaption>
+    </figure>`;
+  }).filter(Boolean).join('');
   const docs = getPublicPdfs();
   const k = String(lang).toUpperCase();
   const getDoc = (kind) => {
@@ -3481,7 +3594,7 @@ function buildFullExportEpkHtml() {
       ${fullBio ? `<p style="margin:0;color:#222;line-height:1.7"><strong>${exportEsc(exportStripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${exportEsc(fullBio)}</p>` : ''}
     </div>
     ${pressCards ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Selected reviews</h3>${pressCards}</div>` : ''}
-    ${photoList ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">${exportEsc(exportStripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h3><ul style="margin:0;padding-left:18px;color:#222;line-height:1.6">${photoList}</ul></div>` : ''}
+    ${photoCards ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">${exportEsc(exportStripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">${photoCards}</div></div>` : ''}
     ${(dossier || artist) ? `<div style="margin:0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Documents</h3>${dossier ? `<p style="margin:0 0 5px 0;color:#222"><strong>${exportEsc(exportStripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${exportEsc(dossier)}</p>` : ''}${artist ? `<p style="margin:0;color:#222"><strong>${exportEsc(exportStripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${exportEsc(artist)}</p>` : ''}</div>` : ''}
   </section>`;
 }
@@ -3528,18 +3641,17 @@ async function copyFullProfilePlainText() {
 }
 
 function openFullProfileCleanExport() {
-  const sel = getSelectedFullExportSections();
   const blocks = [];
-  if (sel.bio) blocks.push(buildFullExportBioHtml());
-  if (sel.repertoire) blocks.push(buildFullExportRepertoireHtml());
-  if (sel.programs) blocks.push(buildFullExportProgramsHtml());
-  if (sel.calendar) blocks.push(buildFullExportCalendarHtml());
-  if (sel.press) blocks.push(buildFullExportPressHtml());
-  if (sel.epk) blocks.push(buildFullExportEpkHtml());
-  if (sel.contact) blocks.push(buildFullExportContactHtml());
+  blocks.push(buildFullExportBioHtml());
+  blocks.push(buildFullExportRepertoireHtml());
+  blocks.push(buildFullExportProgramsHtml());
+  blocks.push(buildFullExportCalendarHtml());
+  blocks.push(buildFullExportEpkHtml());
+  blocks.push(buildFullExportPressHtml());
+  blocks.push(buildFullExportContactHtml());
   const body = `<header style="margin:0 0 26px 0;padding:0 0 16px 0;border-bottom:2px solid #d9d9d9">
     <h1 style="margin:0;font-size:32px;line-height:1.2;color:#111">Rolando Guy</h1>
-    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Selected profile export</p>
+    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Full documentary profile export</p>
   </header>` + (blocks.filter(Boolean).join('') || `<p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`);
   openCleanExportWindow('Full clean export', body);
 }
