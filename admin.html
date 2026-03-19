@@ -4244,23 +4244,30 @@ function openCleanExportWindow(title, bodyHtml, opts) {
     </div>
     <main class="exp-doc${extraMainClass}">${safeBody}</main>
   </body></html>`;
-  const w = window.open('', '_blank');
-  if (!w) { admLog('warn', 'Export popup blocked by browser', { key: 'export-popup' }); return; }
-  try { w.opener = null; } catch (e) {}
-  const minimal = `<!doctype html><html><head><meta charset="utf-8"><title>${exportEsc(safeTitle)}</title></head><body style="margin:24px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif"><h1 style="font-size:28px;margin:0 0 12px 0">${exportEsc(safeTitle)}</h1><p style="margin:0;color:#333">No content available for export.</p></body></html>`;
+  /* Stable export: navigate to a blob: URL once. Avoid document.write (second write after load can blank the tab; huge base64 HTML + write/close is fragile in some engines). */
+  let blobUrl = '';
   try {
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   } catch (e) {
-    admLog('warn', 'Export write failed, minimal static fallback applied', { key: 'export-write-failed' });
-    try {
-      w.document.open();
-      w.document.write(minimal);
-      w.document.close();
-    } catch (err) {
-      admLog('warn', 'Export fallback write failed', { key: 'export-fallback-failed' });
-    }
+    admLog('warn', 'Export Blob URL failed', { key: 'export-blob', err: String(e && e.message) });
+  }
+  const w = blobUrl ? window.open(blobUrl, '_blank', 'noopener') : null;
+  if (w && blobUrl) {
+    try { w.opener = null; } catch (e) {}
+    /* Do not revokeObjectURL immediately — revoking before commit can blank WebKit/Chromium tabs; leak is tiny per export. */
+    return;
+  }
+  if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (e) {} }
+  admLog('warn', 'Export blob window failed, using legacy write fallback', { key: 'export-popup' });
+  const w2 = window.open('', '_blank', 'noopener');
+  if (!w2) { admLog('warn', 'Export popup blocked by browser', { key: 'export-popup' }); return; }
+  try { w2.opener = null; } catch (e) {}
+  try {
+    w2.document.open();
+    w2.document.write(html);
+    w2.document.close();
+  } catch (e) {
+    admLog('warn', 'Export write failed', { key: 'export-write-failed', err: String(e && e.message) });
   }
 }
 
