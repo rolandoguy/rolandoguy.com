@@ -4074,14 +4074,42 @@ function epkGetStoredPhotos() {
 function epkGetStoredPublicPdfs() {
   const raw = load('rg_public_pdfs') || {};
   const out = JSON.parse(JSON.stringify(PUBLIC_PDF_DEFAULTS));
+  const langs = ['EN','DE','ES','IT','FR'];
   ['dossier','artistSheet'].forEach(kind => {
     const src = raw[kind];
     if (!src || typeof src !== 'object') return;
-    ['default','EN','DE','ES','IT','FR'].forEach(k => {
-      if (typeof src[k] === 'string') out[kind][k] = src[k];
+    langs.forEach(k => {
+      const v = src[k];
+      if (typeof v === 'string') {
+        if (/^data:application\/pdf/i.test(v.trim())) out[kind][k].data = v.trim();
+        else out[kind][k].url = v.trim();
+        return;
+      }
+      if (v && typeof v === 'object') {
+        if (typeof v.url === 'string') out[kind][k].url = v.url.trim();
+        if (typeof v.data === 'string') out[kind][k].data = v.data.trim();
+      }
     });
   });
   return out;
+}
+
+function epkClearDossierEnRemainder() {
+  const raw = load('rg_public_pdfs');
+  if (!raw || typeof raw !== 'object') return false;
+  const next = JSON.parse(JSON.stringify(raw));
+  if (!next.dossier || typeof next.dossier !== 'object') next.dossier = {};
+  const current = next.dossier.EN;
+  let hadValue = false;
+  if (typeof current === 'string') {
+    hadValue = !!current.trim();
+  } else if (current && typeof current === 'object') {
+    hadValue = !!String(current.url || '').trim() || !!String(current.data || '').trim();
+  }
+  if (!hadValue) return false;
+  next.dossier.EN = { url: '', data: '' };
+  save('rg_public_pdfs', next);
+  return true;
 }
 
 function epkCountWords(countId, fieldId) {
@@ -4218,10 +4246,18 @@ function epkSetPublicPdfUrl(kind, langKey, url) {
 function epkLoadPublicPdf(event, kind, langKey) {
   const file = event && event.target ? event.target.files[0] : null;
   if (!file) return;
+  const MAX_PUBLIC_PDF_BYTES = 350 * 1024; // 350 KB guardrail for Firestore JSON/base64 payloads
   const isPdfMime = file.type === 'application/pdf';
   const isPdfName = /\.pdf$/i.test(file.name || '');
   if (!isPdfMime && !isPdfName) {
     alert('Only PDF files are allowed.');
+    if (event && event.target) event.target.value = '';
+    return;
+  }
+  if (file.size > MAX_PUBLIC_PDF_BYTES) {
+    const msg = 'PDF too large to store in Firestore. Please upload the file to Storage/hosting and paste its public URL instead.';
+    try { if (typeof admLog === 'function') admLog('warn', msg, { key: 'rg_public_pdfs' }); } catch(e) {}
+    alert(msg);
     if (event && event.target) event.target.value = '';
     return;
   }
@@ -4784,6 +4820,8 @@ function admPopulate(name){
     document.getElementById('f-contactEmailBtn').value = d.emailBtn||'';
   }
   if(name==='epk'){
+    // One-time cleanup requested: keep dossier.EN empty (no active test file).
+    try { epkClearDossierEnRemainder(); } catch(e) {}
     // Load bio fields for default lang (en)
     document.getElementById('epkBioActiveLang').value = 'en';
     ['en','de','es','it','fr'].forEach(l => {
