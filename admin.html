@@ -3368,13 +3368,13 @@ function buildShortExportRepertoireHtml() {
       const role = exportStripHtml(it.role || '');
       const composer = exportStripHtml(it.composer || '');
       const status = exportStripHtml(it.status || '');
-      return `<li style="margin:0 0 6px 0;color:#222;line-height:1.6">${exportEsc(work)}${cat.role && role ? ` · <strong>Role:</strong> ${exportEsc(role)}` : ''}${composer ? ` · <strong>Composer:</strong> ${exportEsc(composer)}` : ''}${cat.status && status ? ` · <strong>Status:</strong> ${exportEsc(status)}` : ''}</li>`;
+      return `<li class="exp-rep-li" style="margin:0 0 .45rem;line-height:var(--exp-line)">${exportEsc(work)}${cat.role && role ? ` · <strong>Role:</strong> ${exportEsc(role)}` : ''}${composer ? ` · <strong>Composer:</strong> ${exportEsc(composer)}` : ''}${cat.status && status ? ` · <strong>Status:</strong> ${exportEsc(status)}` : ''}</li>`;
     }).join('');
-    return `<div style="margin:0 0 12px 0"><h3 style="margin:0 0 6px 0;font-size:17px;color:#111">${exportEsc(cat.label)}</h3><ul style="margin:0;padding-left:18px">${items}</ul></div>`;
+    return `<div class="exp-block" style="margin:0 0 1rem"><h3 class="exp-h3">${exportEsc(cat.label)}</h3><ul style="margin:0;padding-left:1.1rem;list-style:disc">${items}</ul></div>`;
   }).filter(Boolean).join('');
-  return `<section style="margin:0 0 28px 0;padding:0 0 20px 0;border-bottom:1px solid #e3e3e3">
-    <h2 style="margin:0 0 10px 0;font-size:24px;color:#111">Selected Repertoire</h2>
-    ${blocks || `<p style="margin:0;color:#444">No repertoire items available.</p>`}
+  return `<section class="exp-section">
+    <h2 class="exp-h2">Selected Repertoire</h2>
+    ${blocks || `<p class="exp-p exp-muted">No repertoire items available.</p>`}
   </section>`;
 }
 
@@ -3387,13 +3387,13 @@ function openShortProfileCleanExport() {
   sections.push(buildFullExportBioHtml());
   sections.push(buildShortExportRepertoireHtml());
   sections.push(buildFullExportProgramsHtml());
-  sections.push(buildFullExportCalendarHtml());
+  sections.push(buildFullExportCalendarHtml({ maxItems: 8 }));
   sections.push(buildFullExportContactHtml());
-  const body = `<header style="margin:0 0 22px 0;padding:0 0 14px 0;border-bottom:2px solid #dcdcdc">
-    <h1 style="margin:0;font-size:30px;line-height:1.2;color:#111">Rolando Guy</h1>
-    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Short commercial profile</p>
+  const body = `<header class="exp-doc-head">
+    <h1 class="exp-h1">Rolando Guy</h1>
+    <p class="exp-doc-sub">Short commercial profile</p>
   </header>${sections.join('')}`;
-  openCleanExportWindow('Short clean export', body);
+  openCleanExportWindow('Short clean export', body, { variant: 'short' });
 }
 
 function openSelectedProfileCleanExport() {
@@ -3406,10 +3406,10 @@ function openSelectedProfileCleanExport() {
   if (sel.press) blocks.push(buildFullExportPressHtml());
   if (sel.epk) blocks.push(buildFullExportEpkHtml());
   if (sel.contact) blocks.push(buildFullExportContactHtml());
-  const body = `<header style="margin:0 0 24px 0;padding:0 0 14px 0;border-bottom:2px solid #dcdcdc">
-    <h1 style="margin:0;font-size:30px;line-height:1.2;color:#111">Rolando Guy</h1>
-    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Custom selected profile export</p>
-  </header>${blocks.join('') || `<p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`}`;
+  const body = `<header class="exp-doc-head">
+    <h1 class="exp-h1">Rolando Guy</h1>
+    <p class="exp-doc-sub">Custom selected profile export</p>
+  </header>${blocks.join('') || `<p class="exp-p">No content available for export.</p>`}`;
   openCleanExportWindow('Selected clean export', body);
 }
 
@@ -3428,12 +3428,12 @@ function buildFullExportBioHtml() {
   const quote = exportStripHtml(d.quote || '');
   const bioImgEl = document.getElementById('bioPhoto');
   const bioImg = resolveExportImageUrl((bioImgEl && bioImgEl.src) ? bioImgEl.src : 'img/studio-1.jpg');
-  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
-    <h2 style="margin:0 0 16px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
-    ${bioImg ? `<div style="margin:0 0 16px 0;text-align:center"><img src="${exportEsc(bioImg)}" alt="${exportEsc(title || 'Biography photo')}" loading="eager" decoding="sync" style="display:inline-block;width:100%;max-width:340px;height:auto;border:1px solid #d9d9d9"></div>` : ''}
-    ${p1 ? `<p style="margin:0 0 12px 0;color:#222;line-height:1.75">${exportEsc(p1)}</p>` : ''}
-    ${p2 ? `<p style="margin:0 0 12px 0;color:#222;line-height:1.75">${exportEsc(p2)}</p>` : ''}
-    ${quote ? `<blockquote style="margin:14px 0 0 0;padding:10px 14px;border-left:3px solid #bdbdbd;color:#333;line-height:1.7;font-style:italic">"${exportEsc(quote)}"</blockquote>` : ''}
+  return `<section class="exp-section">
+    <h2 class="exp-h2">${exportEsc(title)}</h2>
+    ${bioImg ? `<figure class="exp-fig"><img src="${exportEsc(bioImg)}" alt="${exportEsc(title || 'Biography photo')}" loading="eager" decoding="sync" style="max-width:320px;width:100%;height:auto"><figcaption class="exp-cap">Rolando Guy</figcaption></figure>` : ''}
+    ${p1 ? `<p class="exp-p">${exportEsc(p1)}</p>` : ''}
+    ${p2 ? `<p class="exp-p">${exportEsc(p2)}</p>` : ''}
+    ${quote ? `<blockquote class="exp-callout">"${exportEsc(quote)}"</blockquote>` : ''}
   </section>`;
 }
 
@@ -3464,28 +3464,28 @@ function buildFullExportRepertoireHtml() {
       const composer = exportStripHtml(it.composer || '');
       const status = cat.status ? statusLabel(it.status) : '';
       return `<tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#111">${exportEsc(work)}</td>
-        ${cat.role ? `<td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#222">${exportEsc(role)}</td>` : ''}
-        <td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#222">${exportEsc(composer)}</td>
-        ${cat.status ? `<td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#444">${exportEsc(status)}</td>` : ''}
+        <td style="color:#111">${exportEsc(work)}</td>
+        ${cat.role ? `<td style="color:#262626">${exportEsc(role)}</td>` : ''}
+        <td style="color:#262626">${exportEsc(composer)}</td>
+        ${cat.status ? `<td style="color:#444">${exportEsc(status)}</td>` : ''}
       </tr>`;
     }).join('');
-    return `<div style="margin:0 0 18px 0">
-      <h3 style="margin:0 0 8px 0;font-size:18px;line-height:1.35;color:#111">${exportEsc(cat.label)}</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.55">
+    return `<div class="exp-table-wrap exp-block">
+      <h3 class="exp-h3">${exportEsc(cat.label)}</h3>
+      <table class="exp-table">
         <thead><tr>
-          <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">${exportEsc(exportStripHtml(ti['rep.thWork'] || 'Work'))}</th>
-          ${cat.role ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">${exportEsc(exportStripHtml(ti['rep.thRole'] || 'Role'))}</th>` : ''}
-          <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">${exportEsc(exportStripHtml(ti['rep.thComposer'] || 'Composer'))}</th>
-          ${cat.status ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">Status</th>` : ''}
+          <th>${exportEsc(exportStripHtml(ti['rep.thWork'] || 'Work'))}</th>
+          ${cat.role ? `<th>${exportEsc(exportStripHtml(ti['rep.thRole'] || 'Role'))}</th>` : ''}
+          <th>${exportEsc(exportStripHtml(ti['rep.thComposer'] || 'Composer'))}</th>
+          ${cat.status ? `<th>Status</th>` : ''}
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
   }).filter(Boolean).join('');
-  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
-    <h2 style="margin:0 0 14px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
-    ${blocks || `<p style="margin:0;color:#444">No repertoire items available.</p>`}
+  return `<section class="exp-section">
+    <h2 class="exp-h2">${exportEsc(title)}</h2>
+    ${blocks || `<p class="exp-p exp-muted">No repertoire items available.</p>`}
   </section>`;
 }
 
@@ -3497,25 +3497,27 @@ function buildFullExportProgramsHtml() {
   const cards = list.map((p, i) => {
     const forms = Array.isArray(p.formations) ? p.formations.map(exportStripHtml).filter(Boolean) : [];
     const ideal = Array.isArray(p.idealFor) ? p.idealFor.map(exportStripHtml).filter(Boolean) : [];
-    return `<article style="margin:0 0 20px 0;padding:0 0 16px 0;border-bottom:1px solid #e8e8e8">
-      <div style="font-size:12px;letter-spacing:.08em;color:#777;text-transform:uppercase;margin-bottom:4px">Program ${i + 1}</div>
-      <h3 style="margin:0 0 8px 0;font-size:20px;line-height:1.35;color:#111">${exportEsc(exportStripHtml(p.title || ''))}</h3>
-      ${p.description ? `<p style="margin:0 0 10px 0;color:#222;line-height:1.7">${exportEsc(exportStripHtml(p.description))}</p>` : ''}
-      ${forms.length ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${exportEsc(exportStripHtml(t['programs.formation'] || 'Formation'))}:</strong> ${exportEsc(forms.join(' · '))}</p>` : ''}
-      ${p.duration ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${exportEsc(exportStripHtml(t['programs.duration'] || 'Duration'))}:</strong> ${exportEsc(exportStripHtml(p.duration))}</p>` : ''}
-      ${ideal.length ? `<p style="margin:0;color:#333;line-height:1.6"><strong>${exportEsc(exportStripHtml(t['programs.idealFor'] || 'Ideal for'))}:</strong> ${exportEsc(ideal.join(' · '))}</p>` : ''}
+    return `<article class="exp-card exp-block">
+      <div class="exp-lead">Program ${i + 1}</div>
+      <h3 class="exp-h3">${exportEsc(exportStripHtml(p.title || ''))}</h3>
+      ${p.description ? `<p class="exp-p">${exportEsc(exportStripHtml(p.description))}</p>` : ''}
+      ${forms.length ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(t['programs.formation'] || 'Formation'))}:</strong> ${exportEsc(forms.join(' · '))}</p>` : ''}
+      ${p.duration ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(t['programs.duration'] || 'Duration'))}:</strong> ${exportEsc(exportStripHtml(p.duration))}</p>` : ''}
+      ${ideal.length ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(t['programs.idealFor'] || 'Ideal for'))}:</strong> ${exportEsc(ideal.join(' · '))}</p>` : ''}
     </article>`;
   }).join('');
-  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
-    <h2 style="margin:0 0 12px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
-    ${d.subtitle ? `<p style="margin:0 0 8px 0;color:#444;line-height:1.65">${exportEsc(exportStripHtml(d.subtitle))}</p>` : ''}
-    ${d.intro ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.7">${exportEsc(exportStripHtml(d.intro))}</p>` : ''}
-    ${cards || `<p style="margin:0;color:#444">No published programs available.</p>`}
-    ${d.closingNote ? `<p style="margin:14px 0 0 0;color:#333;line-height:1.7">${exportEsc(exportStripHtml(d.closingNote))}</p>` : ''}
+  return `<section class="exp-section">
+    <h2 class="exp-h2">${exportEsc(title)}</h2>
+    ${d.subtitle ? `<p class="exp-p exp-muted">${exportEsc(exportStripHtml(d.subtitle))}</p>` : ''}
+    ${d.intro ? `<p class="exp-p exp-intro">${exportEsc(exportStripHtml(d.intro))}</p>` : ''}
+    ${cards || `<p class="exp-p exp-muted">No published programs available.</p>`}
+    ${d.closingNote ? `<p class="exp-p" style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid #eaeaea;color:#333">${exportEsc(exportStripHtml(d.closingNote))}</p>` : ''}
   </section>`;
 }
 
-function buildFullExportCalendarHtml() {
+function buildFullExportCalendarHtml(opts) {
+  opts = opts || {};
+  const maxItems = typeof opts.maxItems === 'number' && opts.maxItems > 0 ? opts.maxItems : null;
   const t = Ti[currentLang] || Ti.en;
   const perfs = (typeof getPerfs === 'function' ? getPerfs() : []).filter(p => p.status !== 'past');
   const sortDate = (p) => {
@@ -3524,24 +3526,29 @@ function buildFullExportCalendarHtml() {
     const d = new Date(str);
     return isNaN(d) ? new Date('2099-01-01') : d;
   };
-  const list = perfs.slice().sort((a, b) => sortDate(a) - sortDate(b));
+  let list = perfs.slice().sort((a, b) => sortDate(a) - sortDate(b));
+  if (maxItems) list = list.slice(0, maxItems);
   const cards = list.map((p) => {
     const dayMonth = [exportStripHtml(p.day || ''), exportStripHtml(translateMonth(p.month || ''))].filter(Boolean).join(' ');
     const timeTxt = exportStripHtml(p.time || '');
     const detail = exportStripHtml((p['detail_' + currentLang] || p.detail || ''));
     const venue = [exportStripHtml(p.venue || ''), exportStripHtml(p.city || '')].filter(Boolean).join(' · ');
-    return `<article style="display:grid;grid-template-columns:120px 1fr;gap:14px;margin:0 0 14px 0;padding:0 0 12px 0;border-bottom:1px solid #e9e9e9">
-      <div style="font-size:14px;line-height:1.4;color:#222;font-weight:600">${exportEsc(dayMonth || 'TBA')}${timeTxt ? `<div style="font-size:12px;color:#666;font-weight:500;margin-top:2px">${exportEsc(timeTxt)}</div>` : ''}</div>
+    return `<article class="exp-card exp-block exp-cal-row">
+      <div class="exp-cal-date">${exportEsc(dayMonth || 'TBA')}${timeTxt ? `<div class="exp-cal-time">${exportEsc(timeTxt)}</div>` : ''}</div>
       <div>
-        <h3 style="margin:0 0 4px 0;font-size:18px;line-height:1.35;color:#111">${exportEsc(exportStripHtml(p.title || ''))}</h3>
-        ${venue ? `<p style="margin:0 0 4px 0;color:#444;line-height:1.6">${exportEsc(venue)}</p>` : ''}
-        ${detail ? `<p style="margin:0;color:#222;line-height:1.7">${exportEsc(detail)}</p>` : ''}
+        <h3 class="exp-h3">${exportEsc(exportStripHtml(p.title || ''))}</h3>
+        ${venue ? `<p class="exp-p exp-muted" style="margin:0 0 .35rem;font-size:.875rem">${exportEsc(venue)}</p>` : ''}
+        ${detail ? `<p class="exp-p" style="margin:0;font-size:.9375rem">${exportEsc(detail)}</p>` : ''}
       </div>
     </article>`;
   }).join('');
-  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
-    <h2 style="margin:0 0 12px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(exportStripHtml(t['nav.cal'] || 'Calendar'))}</h2>
-    ${cards || `<p style="margin:0;color:#444">No upcoming engagements available.</p>`}
+  const moreNote = (maxItems && perfs.length > maxItems)
+    ? `<p class="exp-p exp-muted" style="margin-top:1rem;font-size:.875rem;font-style:italic">Showing ${maxItems} of ${perfs.length} upcoming engagements.</p>`
+    : '';
+  return `<section class="exp-section">
+    <h2 class="exp-h2">${exportEsc(exportStripHtml(t['nav.cal'] || 'Calendar'))}</h2>
+    ${cards || `<p class="exp-p exp-muted">No upcoming engagements available.</p>`}
+    ${moreNote}
   </section>`;
 }
 
@@ -3559,10 +3566,10 @@ function buildFullExportEpkHtml() {
     const q = exportStripHtml((p.quotes_i18n || {})[lang] || (p.quotes_i18n || {}).en || p.quote || '');
     const src = exportStripHtml(p.source || '');
     const prod = exportStripHtml((p.production_i18n || {})[lang] || (p.production_i18n || {}).en || p.production || '');
-    return `<article style="margin:0 0 10px 0;padding:0 0 8px 0;border-bottom:1px solid #ececec">
-      <p style="margin:0 0 3px 0;color:#111;font-weight:600">${exportEsc(src)}</p>
-      ${prod ? `<p style="margin:0 0 4px 0;color:#555">${exportEsc(prod)}</p>` : ''}
-      ${q ? `<p style="margin:0;color:#222;line-height:1.65;font-style:italic">"${exportEsc(q)}"</p>` : ''}
+    return `<article class="exp-card exp-block" style="border-color:#eee;margin-bottom:1rem;padding-bottom:.85rem">
+      <p class="exp-p" style="margin:0 0 .25rem;font-family:Arial,Helvetica,sans-serif;font-weight:600;font-size:.875rem;color:#111">${exportEsc(src)}</p>
+      ${prod ? `<p class="exp-p exp-muted" style="margin:0 0 .35rem;font-size:.875rem">${exportEsc(prod)}</p>` : ''}
+      ${q ? `<p class="exp-p" style="margin:0;font-style:italic;color:#222">"${exportEsc(q)}"</p>` : ''}
     </article>`;
   }).join('');
   const photoCards = photos.map((ph, i) => {
@@ -3570,9 +3577,11 @@ function buildFullExportEpkHtml() {
     if (!src) return '';
     const label = exportStripHtml(ph.label || ('Portrait ' + (i + 1)));
     const credit = exportStripHtml(ph.credit || '');
-    return `<figure style="margin:0">
-      <img src="${exportEsc(src)}" alt="${exportEsc(label)}" loading="lazy" style="display:block;width:100%;height:110px;object-fit:cover;border:1px solid #ddd">
-      <figcaption style="margin-top:5px;font-size:12px;line-height:1.45;color:#444">${exportEsc(label)}${credit ? ` · ${exportEsc(credit)}` : ''}</figcaption>
+    return `<figure class="exp-photo-cell">
+      <div class="exp-photo-frame">
+        <img src="${exportEsc(src)}" alt="${exportEsc(label)}" loading="lazy">
+      </div>
+      <figcaption class="exp-photo-cap">${exportEsc(label)}${credit ? ` · ${exportEsc(credit)}` : ''}</figcaption>
     </figure>`;
   }).filter(Boolean).join('');
   const docs = getPublicPdfs();
@@ -3585,17 +3594,17 @@ function buildFullExportEpkHtml() {
   };
   const dossier = getDoc('dossier');
   const artist = getDoc('artistSheet');
-  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
-    <h2 style="margin:0 0 14px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(exportStripHtml(ti['epk.title'] || 'Dossier'))}</h2>
-    <div style="margin:0 0 14px 0;padding:10px 12px;border:1px solid #ececec;background:#fafafa">
-      <h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Bios</h3>
-      ${b50 ? `<p style="margin:0 0 6px 0;color:#222;line-height:1.65"><strong>${exportEsc(exportStripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${exportEsc(b50)}</p>` : ''}
-      ${b150 ? `<p style="margin:0 0 6px 0;color:#222;line-height:1.65"><strong>${exportEsc(exportStripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${exportEsc(b150)}</p>` : ''}
-      ${fullBio ? `<p style="margin:0;color:#222;line-height:1.7"><strong>${exportEsc(exportStripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${exportEsc(fullBio)}</p>` : ''}
+  return `<section class="exp-section exp-dossier-stack">
+    <h2 class="exp-h2">${exportEsc(exportStripHtml(ti['epk.title'] || 'Dossier'))}</h2>
+    <div class="exp-dossier-box exp-block">
+      <h3 class="exp-h3">Bios</h3>
+      ${b50 ? `<p class="exp-p exp-kv" style="margin:0 0 .65rem"><strong>${exportEsc(exportStripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${exportEsc(b50)}</p>` : ''}
+      ${b150 ? `<p class="exp-p exp-kv" style="margin:0 0 .65rem"><strong>${exportEsc(exportStripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${exportEsc(b150)}</p>` : ''}
+      ${fullBio ? `<p class="exp-p exp-kv" style="margin:0"><strong>${exportEsc(exportStripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${exportEsc(fullBio)}</p>` : ''}
     </div>
-    ${pressCards ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Selected reviews</h3>${pressCards}</div>` : ''}
-    ${photoCards ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">${exportEsc(exportStripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">${photoCards}</div></div>` : ''}
-    ${(dossier || artist) ? `<div style="margin:0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Documents</h3>${dossier ? `<p style="margin:0 0 5px 0;color:#222"><strong>${exportEsc(exportStripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${exportEsc(dossier)}</p>` : ''}${artist ? `<p style="margin:0;color:#222"><strong>${exportEsc(exportStripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${exportEsc(artist)}</p>` : ''}</div>` : ''}
+    ${pressCards ? `<div class="exp-block" style="margin:0 0 1.25rem"><h3 class="exp-h3">Selected reviews</h3>${pressCards}</div>` : ''}
+    ${photoCards ? `<div class="exp-block" style="margin:0 0 1.25rem"><h3 class="exp-h3">${exportEsc(exportStripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h3><div class="exp-photo-grid">${photoCards}</div></div>` : ''}
+    ${(dossier || artist) ? `<div><h3 class="exp-h3">Documents</h3>${dossier ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${exportEsc(dossier)}</p>` : ''}${artist ? `<p class="exp-meta exp-kv"><strong>${exportEsc(exportStripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${exportEsc(artist)}</p>` : ''}</div>` : ''}
   </section>`;
 }
 
@@ -3607,15 +3616,15 @@ function buildFullExportPressHtml() {
     const source = exportStripHtml(p.source || '');
     const production = exportStripHtml((p.production_i18n || {})[lang] || (p.production_i18n || {}).en || p.production || '');
     const quote = exportStripHtml((p.quotes_i18n || {})[lang] || (p.quotes_i18n || {}).en || p.quote || '');
-    return `<article style="margin:0 0 14px 0;padding:12px;border:1px solid #ececec;background:#fafafa">
-      ${source ? `<p style="margin:0 0 4px 0;color:#111;font-weight:600">${exportEsc(source)}</p>` : ''}
-      ${production ? `<p style="margin:0 0 6px 0;color:#555;line-height:1.6">${exportEsc(production)}</p>` : ''}
-      ${quote ? `<p style="margin:0;color:#222;line-height:1.7;font-style:italic">"${exportEsc(quote)}"</p>` : ''}
+    return `<article class="exp-card exp-block" style="padding:.85rem 1rem;background:#fafafa;border:1px solid #eaeaea;border-radius:2px;margin-bottom:1.1rem">
+      ${source ? `<p class="exp-p" style="margin:0 0 .35rem;font-family:Arial,Helvetica,sans-serif;font-weight:600;font-size:.875rem;color:#111">${exportEsc(source)}</p>` : ''}
+      ${production ? `<p class="exp-p exp-muted" style="margin:0 0 .45rem;font-size:.875rem">${exportEsc(production)}</p>` : ''}
+      ${quote ? `<p class="exp-p" style="margin:0;font-style:italic">"${exportEsc(quote)}"</p>` : ''}
     </article>`;
   }).join('');
-  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
-    <h2 style="margin:0 0 12px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(exportStripHtml(ti['nav.press'] || 'Reviews'))}</h2>
-    ${cards || `<p style="margin:0;color:#444">${exportEsc(exportStripHtml(ti['press.empty'] || 'No press quotes yet.'))}</p>`}
+  return `<section class="exp-section">
+    <h2 class="exp-h2">${exportEsc(exportStripHtml(ti['nav.press'] || 'Reviews'))}</h2>
+    ${cards || `<p class="exp-p exp-muted">${exportEsc(exportStripHtml(ti['press.empty'] || 'No press quotes yet.'))}</p>`}
   </section>`;
 }
 
@@ -3627,11 +3636,11 @@ function buildFullExportContactHtml() {
   const sub = exportStripHtml(d.sub || '');
   const quote = exportStripHtml(d.quote || '');
   const email = exportStripHtml((d.email || '').trim() || 'rolandoguy@gmail.com');
-  return `<section style="margin:0 0 20px 0">
-    <h2 style="margin:0 0 10px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
-    ${sub ? `<p style="margin:0 0 10px 0;color:#222;line-height:1.7">${exportEsc(sub)}</p>` : ''}
-    ${quote ? `<p style="margin:0 0 10px 0;color:#444;line-height:1.65;font-style:italic">"${exportEsc(quote)}"</p>` : ''}
-    <p style="margin:0;color:#111;line-height:1.6"><strong>Email:</strong> <span style="font-weight:600">${exportEsc(email)}</span></p>
+  return `<section class="exp-section" style="margin-bottom:0;padding-bottom:2.5rem">
+    <h2 class="exp-h2">${exportEsc(title)}</h2>
+    ${sub ? `<p class="exp-p">${exportEsc(sub)}</p>` : ''}
+    ${quote ? `<blockquote class="exp-callout">"${exportEsc(quote)}"</blockquote>` : ''}
+    <p class="exp-p" style="margin-top:.85rem;font-family:Arial,Helvetica,sans-serif;font-size:.9375rem"><strong>Email:</strong> <span style="font-weight:600">${exportEsc(email)}</span></p>
   </section>`;
 }
 
@@ -3649,10 +3658,10 @@ function openFullProfileCleanExport() {
   blocks.push(buildFullExportEpkHtml());
   blocks.push(buildFullExportPressHtml());
   blocks.push(buildFullExportContactHtml());
-  const body = `<header style="margin:0 0 26px 0;padding:0 0 16px 0;border-bottom:2px solid #d9d9d9">
-    <h1 style="margin:0;font-size:32px;line-height:1.2;color:#111">Rolando Guy</h1>
-    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Full documentary profile export</p>
-  </header>` + (blocks.filter(Boolean).join('') || `<p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`);
+  const body = `<header class="exp-doc-head">
+    <h1 class="exp-h1">Rolando Guy</h1>
+    <p class="exp-doc-sub">Full documentary profile export</p>
+  </header>` + (blocks.filter(Boolean).join('') || `<p class="exp-p">No content available for export.</p>`);
   openCleanExportWindow('Full clean export', body);
 }
 
@@ -3715,21 +3724,22 @@ function openProgramsCleanExport() {
   const cards = list.map((p, i) => {
     const forms = Array.isArray(p.formations) ? p.formations : [];
     const ideal = Array.isArray(p.idealFor) ? p.idealFor : [];
-    return `<article style="margin:0 0 20px 0;padding:0 0 14px 0;border-bottom:1px solid #ddd">
-      <h3 style="margin:0 0 8px 0;font-size:19px;line-height:1.35;font-weight:600;color:#111">${esc(`${i + 1}. ${stripHtml(p.title || '')}`)}</h3>
-      ${p.description ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.65">${esc(stripHtml(p.description))}</p>` : ''}
-      ${forms.length ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${esc(lblFormation)}:</strong> ${esc(forms.map(stripHtml).join(' · '))}</p>` : ''}
-      ${p.duration ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${esc(lblDuration)}:</strong> ${esc(stripHtml(p.duration))}</p>` : ''}
-      ${ideal.length ? `<p style="margin:0;color:#333;line-height:1.6"><strong>${esc(lblIdealFor)}:</strong> ${esc(ideal.map(stripHtml).join(' · '))}</p>` : ''}
+    return `<article class="exp-card exp-block">
+      <div class="exp-lead">Program ${i + 1}</div>
+      <h3 class="exp-h3">${esc(stripHtml(p.title || ''))}</h3>
+      ${p.description ? `<p class="exp-p">${esc(stripHtml(p.description))}</p>` : ''}
+      ${forms.length ? `<p class="exp-meta exp-kv"><strong>${esc(lblFormation)}:</strong> ${esc(forms.map(stripHtml).join(' · '))}</p>` : ''}
+      ${p.duration ? `<p class="exp-meta exp-kv"><strong>${esc(lblDuration)}:</strong> ${esc(stripHtml(p.duration))}</p>` : ''}
+      ${ideal.length ? `<p class="exp-meta exp-kv"><strong>${esc(lblIdealFor)}:</strong> ${esc(ideal.map(stripHtml).join(' · '))}</p>` : ''}
     </article>`;
   }).join('');
   const title = stripHtml(d.title || 'Programs & Collaborations');
   const body = `
-    <h1 style="margin:0 0 10px 0;font-size:28px;line-height:1.25;color:#111">${esc(title)}</h1>
-    ${d.subtitle ? `<p style="margin:0 0 10px 0;color:#444;line-height:1.65">${esc(stripHtml(d.subtitle))}</p>` : ''}
-    ${d.intro ? `<p style="margin:0 0 18px 0;color:#222;line-height:1.7">${esc(stripHtml(d.intro))}</p>` : ''}
+    <h1 class="exp-h1">${esc(title)}</h1>
+    ${d.subtitle ? `<p class="exp-p exp-muted">${esc(stripHtml(d.subtitle))}</p>` : ''}
+    ${d.intro ? `<p class="exp-p exp-intro">${esc(stripHtml(d.intro))}</p>` : ''}
     ${cards}
-    ${d.closingNote ? `<p style="margin:16px 0 0 0;color:#333;line-height:1.7">${esc(stripHtml(d.closingNote))}</p>` : ''}`;
+    ${d.closingNote ? `<p class="exp-p" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #eaeaea">${esc(stripHtml(d.closingNote))}</p>` : ''}`;
   openCleanExportWindow(title || 'Programs & Collaborations', body);
 }
 
@@ -3777,13 +3787,14 @@ function openBioCleanExport() {
   const p2 = stripHtml(d.p2 || '');
   const quote = stripHtml(d.quote || '');
   const bioImgEl = document.getElementById('bioPhoto');
-  const bioImgSrc = (bioImgEl && typeof bioImgEl.src === 'string') ? bioImgEl.src.trim() : '';
+  const bioImgRaw = (bioImgEl && typeof bioImgEl.src === 'string') ? bioImgEl.src.trim() : '';
+  const bioImgSrc = bioImgRaw ? resolveExportImageUrl(bioImgRaw) : '';
   const body = `
-    <h1 style="margin:0 0 16px 0;font-size:28px;line-height:1.25;color:#111">${esc(title)}</h1>
-    ${bioImgSrc ? `<figure style="margin:0 0 16px 0"><img src="${esc(bioImgSrc)}" alt="${esc(title || 'Biography photo')}" style="display:block;width:100%;max-width:360px;height:auto;border:1px solid #ddd"><figcaption style="margin-top:6px;color:#666;font-size:13px;line-height:1.5">Rolando Guy</figcaption></figure>` : ''}
-    ${p1 ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.75">${esc(p1)}</p>` : ''}
-    ${p2 ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.75">${esc(p2)}</p>` : ''}
-    ${quote ? `<blockquote style="margin:12px 0 0 0;padding:12px 14px;border-left:3px solid #bbb;color:#333;line-height:1.7;font-style:italic">"${esc(quote)}"</blockquote>` : ''}`;
+    <h1 class="exp-h1">${esc(title)}</h1>
+    ${bioImgSrc ? `<figure class="exp-fig"><img src="${esc(bioImgSrc)}" alt="${esc(title || 'Biography photo')}" style="max-width:320px;width:100%;height:auto"><figcaption class="exp-cap">Rolando Guy</figcaption></figure>` : ''}
+    ${p1 ? `<p class="exp-p">${esc(p1)}</p>` : ''}
+    ${p2 ? `<p class="exp-p">${esc(p2)}</p>` : ''}
+    ${quote ? `<blockquote class="exp-callout">"${esc(quote)}"</blockquote>` : ''}`;
   openCleanExportWindow(title || 'Biography', body);
 }
 
@@ -3916,16 +3927,18 @@ function openEpkCleanExport() {
     const quote = stripHtml(qmap[lang] || qmap.en || p.quote || '');
     const prod = stripHtml(prodMap[lang] || prodMap.en || p.production || '');
     const source = stripHtml(p.source || '');
-    return `<article style="margin:0 0 12px 0;padding:0 0 10px 0;border-bottom:1px solid #e2e2e2">
-      <p style="margin:0 0 4px 0;color:#111;font-weight:600">${esc(source)}</p>
-      ${prod ? `<p style="margin:0 0 4px 0;color:#444">${esc(prod)}</p>` : ''}
-      ${quote ? `<p style="margin:0;color:#222;line-height:1.65;font-style:italic">"${esc(quote)}"</p>` : ''}
+    return `<article class="exp-card exp-block" style="border-color:#eee;margin-bottom:1rem;padding-bottom:.85rem">
+      <p class="exp-p" style="margin:0 0 .25rem;font-family:Arial,Helvetica,sans-serif;font-weight:600;font-size:.875rem;color:#111">${esc(source)}</p>
+      ${prod ? `<p class="exp-p exp-muted" style="margin:0 0 .35rem;font-size:.875rem">${esc(prod)}</p>` : ''}
+      ${quote ? `<p class="exp-p" style="margin:0;font-style:italic">"${esc(quote)}"</p>` : ''}
     </article>`;
   }).join('');
   const htmlPhotos = photos.map((ph, i) => {
     const label = stripHtml(ph.label || (`Portrait ${i + 1}`));
     const credit = stripHtml(ph.credit || '');
-    return `<li style="margin:0 0 4px 0">${esc(label)}${credit ? ` — ${esc(credit)}` : ''}</li>`;
+    const srcU = resolveExportImageUrl(ph.url || '');
+    if (!srcU) return `<figure class="exp-photo-cell"><figcaption class="exp-photo-cap">${esc(label)}${credit ? ` — ${esc(credit)}` : ''}</figcaption></figure>`;
+    return `<figure class="exp-photo-cell"><div class="exp-photo-frame"><img src="${esc(srcU)}" alt="${esc(label)}" loading="lazy"></div><figcaption class="exp-photo-cap">${esc(label)}${credit ? ` · ${esc(credit)}` : ''}</figcaption></figure>`;
   }).join('');
   const pdfs = getPublicPdfs();
   const langKey = String(lang).toUpperCase();
@@ -3938,13 +3951,15 @@ function openEpkCleanExport() {
   const dossierUrl = entryUrl('dossier');
   const artistUrl = entryUrl('artistSheet');
   const body = `
-    <h1 style="margin:0 0 14px 0;font-size:28px;line-height:1.25;color:#111">${esc(title)}</h1>
-    ${b50 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(stripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${esc(b50)}</p>` : ''}
-    ${b150 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(stripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${esc(b150)}</p>` : ''}
-    ${fullBio ? `<p style="margin:0 0 16px 0;color:#222;line-height:1.75"><strong>${esc(stripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${esc(fullBio)}</p>` : ''}
-    ${htmlPress ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">Selected reviews</h2>${htmlPress}${translatedNote ? `<p style="margin:8px 0 0 0;color:#666;line-height:1.6;font-size:13px;font-style:italic">${esc(stripHtml(translatedNote))}</p>` : ''}</section>` : ''}
-    ${htmlPhotos ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">${esc(stripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h2><ul style="margin:0;padding-left:18px;color:#222;line-height:1.6">${htmlPhotos}</ul></section>` : ''}
-    ${(dossierUrl || artistUrl) ? `<section style="margin:12px 0 0 0"><h2 style="margin:0 0 8px 0;font-size:18px">Documents</h2>${dossierUrl ? `<p style="margin:0 0 6px 0"><strong>${esc(stripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${esc(dossierUrl)}</p>` : ''}${artistUrl ? `<p style="margin:0"><strong>${esc(stripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${esc(artistUrl)}</p>` : ''}</section>` : ''}`;
+    <h1 class="exp-h1">${esc(title)}</h1>
+    <div class="exp-dossier-box exp-block" style="margin-top:1rem">
+      ${b50 ? `<p class="exp-p exp-kv" style="margin:0 0 .65rem"><strong>${esc(stripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${esc(b50)}</p>` : ''}
+      ${b150 ? `<p class="exp-p exp-kv" style="margin:0 0 .65rem"><strong>${esc(stripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${esc(b150)}</p>` : ''}
+      ${fullBio ? `<p class="exp-p exp-kv" style="margin:0"><strong>${esc(stripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${esc(fullBio)}</p>` : ''}
+    </div>
+    ${htmlPress ? `<section class="exp-block exp-dossier-stack" style="margin:1.25rem 0"><h2 class="exp-h2">Selected reviews</h2>${htmlPress}${translatedNote ? `<p class="exp-p exp-press-note">${esc(stripHtml(translatedNote))}</p>` : ''}</section>` : ''}
+    ${htmlPhotos ? `<section class="exp-block" style="margin:1.25rem 0"><h2 class="exp-h2">${esc(stripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h2><div class="exp-photo-grid">${htmlPhotos}</div></section>` : ''}
+    ${(dossierUrl || artistUrl) ? `<section class="exp-block" style="margin-top:1.25rem"><h2 class="exp-h2">Documents</h2>${dossierUrl ? `<p class="exp-meta exp-kv"><strong>${esc(stripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${esc(dossierUrl)}</p>` : ''}${artistUrl ? `<p class="exp-meta exp-kv"><strong>${esc(stripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${esc(artistUrl)}</p>` : ''}</section>` : ''}`;
   openCleanExportWindow(title || 'Dossier', body);
 }
 
@@ -3982,19 +3997,101 @@ async function copyPlainTextWithFallback(text, logMessage, logKey) {
   }
 }
 
-function openCleanExportWindow(title, bodyHtml) {
+function openCleanExportWindow(title, bodyHtml, opts) {
+  opts = opts || {};
   const safeTitle = String(title || 'Export').trim() || 'Export';
   const safeBody = (typeof bodyHtml === 'string' && bodyHtml.trim())
     ? bodyHtml
-    : `<h1 style="margin:0 0 12px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(safeTitle)}</h1><p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`;
+    : `<h1 class="exp-h1">${exportEsc(safeTitle)}</h1><p class="exp-p exp-muted">No content available for export.</p>`;
   if (safeBody !== bodyHtml) admLog('warn', 'Clean export fallback rendered', { key: 'export-empty' });
+  const variant = String(opts.variant || '').trim();
+  const extraMainClass = variant === 'short' ? ' exp-short' : '';
   const html = `<!doctype html><html lang="${exportEsc(currentLang || 'en')}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${exportEsc(safeTitle)}</title><style>
-    @media print{.export-toolbar{display:none !important}}
-  </style></head><body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif">
+    :root{
+      --exp-text:#1a1a1a;--exp-muted:#555;--exp-faint:#757575;--exp-border:#ddd;--exp-soft:#f6f6f6;--exp-line:1.65;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:#fff;color:var(--exp-text);-webkit-font-smoothing:antialiased}
+    .exp-doc{
+      max-width:42rem;margin:0 auto;padding:1.75rem 1.35rem 3.75rem;
+      font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:var(--exp-line);hyphens:auto;-webkit-hyphens:auto;
+    }
+    .exp-doc h1,.exp-doc h2,.exp-doc h3,.exp-doc .exp-lead{font-family:Arial,Helvetica,sans-serif}
+    .exp-h1,.exp-doc>h1:first-child{font-size:1.875rem;line-height:1.12;font-weight:700;letter-spacing:-.02em;margin:0 0 .35rem;color:#111}
+    .exp-doc>.exp-h1:first-child{margin-bottom:1.1rem}
+    .exp-doc-head{margin:0 0 2rem;padding:0 0 1.25rem;border-bottom:2px solid #ccc;break-inside:avoid;page-break-inside:avoid}
+    .exp-doc-head .exp-h1{margin:0}
+    .exp-doc-sub{margin:.5rem 0 0;font-size:.9375rem;line-height:1.5;color:var(--exp-muted);font-weight:400}
+    .exp-section{margin:0 0 2.5rem;padding:0 0 2rem;border-bottom:1px solid var(--exp-border);break-inside:auto}
+    .exp-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .exp-section>.exp-h2:first-child,.exp-h2{
+      font-size:1.375rem;line-height:1.22;font-weight:700;margin:0 0 1rem;color:#111;
+      break-after:avoid;page-break-after:avoid;orphans:3;widows:3
+    }
+    .exp-h3{font-size:1.0625rem;line-height:1.32;font-weight:600;margin:1.25rem 0 .5rem;color:#161616;break-after:avoid;page-break-after:avoid}
+    .exp-section .exp-h3:first-child{margin-top:0}
+    .exp-p,.exp-doc p{margin:0 0 .85rem;color:var(--exp-text)}
+    .exp-p:last-child,.exp-doc p:last-child{margin-bottom:0}
+    .exp-muted{color:var(--exp-muted)}
+    .exp-faint{color:var(--exp-faint)}
+    .exp-lead{
+      font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;color:var(--exp-faint);font-weight:700;margin:0 0 .35rem
+    }
+    .exp-callout{
+      margin:1rem 0 0;padding:.65rem .9rem;border-left:3px solid #b0b0b0;color:#333;font-style:italic;line-height:var(--exp-line);
+      break-inside:avoid;page-break-inside:avoid;background:#fafafa
+    }
+    .exp-card{
+      break-inside:avoid;page-break-inside:avoid;margin:0 0 1.75rem;padding:0 0 1.25rem;border-bottom:1px solid #ebebeb
+    }
+    .exp-card:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .exp-card .exp-h3,.exp-card>h3{font-size:1.125rem;margin:0 0 .5rem;font-weight:600}
+    .exp-cal-date{font-size:.875rem;line-height:1.4;font-weight:600;color:#222}
+    .exp-cal-time{font-size:.75rem;color:var(--exp-faint);font-weight:600;margin-top:.2rem}
+    .exp-meta{margin:.35rem 0;color:#333;font-size:.875rem;line-height:1.55}
+    .exp-meta strong,.exp-kv strong{
+      font-family:Arial,Helvetica,sans-serif;font-size:.8125rem;letter-spacing:.01em;text-transform:none;color:#333;font-weight:600
+    }
+    .exp-table-wrap{margin:.5rem 0 1.25rem;break-inside:auto}
+    .exp-table-wrap .exp-h3{margin-bottom:.65rem}
+    table.exp-table{width:100%;border-collapse:collapse;font-size:.875rem;line-height:1.5;font-family:Arial,Helvetica,sans-serif}
+    thead{display:table-header-group}
+    table.exp-table thead{break-inside:avoid;page-break-inside:avoid}
+    table.exp-table th{text-align:left;padding:.5rem .65rem .55rem;border-bottom:2px solid #c8c8c8;color:#111;font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+    table.exp-table td{padding:.48rem .65rem;border-bottom:1px solid #ececec;vertical-align:top}
+    table.exp-table tbody tr{break-inside:avoid;page-break-inside:avoid}
+    .exp-press-note{font-size:.8125rem;color:var(--exp-faint);font-style:italic;line-height:1.55;margin:.65rem 0 0}
+    .exp-fig{margin:0 0 1rem;break-inside:avoid;page-break-inside:avoid;text-align:center}
+    .exp-fig>img{max-width:100%;height:auto;border:1px solid #cfcfcf}
+    .exp-cap{margin-top:.45rem;font-size:.8125rem;line-height:1.45;color:var(--exp-muted);text-align:left}
+    .exp-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:14px;margin-top:.75rem}
+    .exp-photo-cell{margin:0;min-width:0;display:flex;flex-direction:column;break-inside:avoid;page-break-inside:avoid}
+    .exp-photo-frame{
+      box-sizing:border-box;width:100%;height:108px;background:var(--exp-soft);border:1px solid #e3e3e3;border-radius:2px;
+      display:flex;align-items:center;justify-content:center;padding:6px
+    }
+    .exp-photo-frame img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;object-position:center}
+    .exp-photo-cap{margin-top:.45rem;font-size:.75rem;line-height:1.42;color:var(--exp-muted)}
+    .exp-dossier-box{margin:0 0 1.25rem;padding:.85rem 1rem;border:1px solid #eaeaea;background:#fafafa;break-inside:avoid;page-break-inside:avoid}
+    .exp-dossier-stack>*+*{margin-top:1rem}
+    .exp-doc.exp-short .exp-section{margin-bottom:1.85rem;padding-bottom:1.35rem}
+    .exp-doc.exp-short .exp-h2{margin-bottom:.65rem}
+    .exp-doc.exp-short .exp-card{margin-bottom:1.35rem;padding-bottom:1rem}
+    .exp-doc.exp-short .exp-section .exp-p.intro,.exp-doc.exp-short .exp-intro{margin-bottom:.75rem!important}
+    .exp-cal-row{display:grid;grid-template-columns:108px 1fr;gap:14px;align-items:start}
+    @media print{
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      @page{size:auto;margin:12mm 11mm 14mm 11mm}
+      .export-toolbar{display:none!important}
+      .exp-doc{padding:0 0 6mm;max-width:none}
+      .exp-doc header,.exp-doc .exp-block,.exp-doc .exp-card,.exp-doc .exp-fig,.exp-doc .exp-callout,.exp-doc .exp-dossier-box,.exp-doc .exp-photo-cell,.exp-doc blockquote{break-inside:avoid;page-break-inside:avoid}
+      .exp-doc h1,.exp-doc h2,.exp-doc h3,.exp-doc .exp-h1,.exp-doc .exp-h2,.exp-doc .exp-h3{break-after:avoid;page-break-after:avoid}
+    }
+  </style></head><body>
     <div class="export-toolbar" style="position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #e5e5e5;padding:10px 16px;display:flex;justify-content:flex-end">
       <button type="button" onclick="window.print()" style="font:600 13px Arial,Helvetica,sans-serif;letter-spacing:.02em;padding:6px 12px;background:#fff;color:#222;border:1px solid #cfcfcf;cursor:pointer">Print</button>
     </div>
-    <main style="max-width:920px;margin:0 auto;padding:24px 24px 44px">${safeBody}</main>
+    <main class="exp-doc${extraMainClass}">${safeBody}</main>
   </body></html>`;
   const w = window.open('', '_blank');
   if (!w) { admLog('warn', 'Export popup blocked by browser', { key: 'export-popup' }); return; }
@@ -4052,12 +4149,12 @@ function openContactCleanExport() {
   const email = exportStripHtml((d.email || '').trim() || 'rolandoguy@gmail.com');
   const enquiryText = exportStripHtml(d.emailBtn || '');
   const body = `
-    <h1 style="margin:0 0 14px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(title || 'Contact')}</h1>
-    ${sub ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.75">${exportEsc(sub)}</p>` : ''}
-    ${quote ? `<blockquote style="margin:0 0 16px 0;padding:12px 14px;border-left:3px solid #bbb;color:#333;line-height:1.7;font-style:italic">"${exportEsc(quote)}"</blockquote>` : ''}
-    ${(email || enquiryText) ? `<section style="margin:4px 0 0 0">
-      ${email ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.6"><strong>Email:</strong> ${exportEsc(email)}</p>` : ''}
-      ${enquiryText ? `<p style="margin:0;color:#222;line-height:1.6"><strong>Booking / Enquiries:</strong> ${exportEsc(enquiryText)}</p>` : ''}
+    <h1 class="exp-h1">${exportEsc(title || 'Contact')}</h1>
+    ${sub ? `<p class="exp-p">${exportEsc(sub)}</p>` : ''}
+    ${quote ? `<blockquote class="exp-callout">"${exportEsc(quote)}"</blockquote>` : ''}
+    ${(email || enquiryText) ? `<section class="exp-block" style="margin-top:.5rem">
+      ${email ? `<p class="exp-p" style="font-family:Arial,Helvetica,sans-serif;font-size:.9375rem"><strong>Email:</strong> ${exportEsc(email)}</p>` : ''}
+      ${enquiryText ? `<p class="exp-p" style="font-family:Arial,Helvetica,sans-serif;font-size:.9375rem"><strong>Booking / Enquiries:</strong> ${exportEsc(enquiryText)}</p>` : ''}
     </section>` : ''}`;
   openCleanExportWindow(title || 'Contact', body);
 }
@@ -4153,21 +4250,21 @@ function openRepertoireCleanExport() {
       const composer = exportStripHtml(item.composer || '');
       const status = cat.includeStatus ? statusLabel(item.status) : '';
       return `<tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#111">${exportEsc(work)}</td>
-        ${cat.includeRole ? `<td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#222">${exportEsc(role)}</td>` : ''}
-        <td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#222">${exportEsc(composer)}</td>
-        ${cat.includeStatus ? `<td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#333">${exportEsc(status)}</td>` : ''}
+        <td style="color:#111">${exportEsc(work)}</td>
+        ${cat.includeRole ? `<td style="color:#262626">${exportEsc(role)}</td>` : ''}
+        <td style="color:#262626">${exportEsc(composer)}</td>
+        ${cat.includeStatus ? `<td style="color:#444">${exportEsc(status)}</td>` : ''}
       </tr>`;
     }).join('');
-    return `<section style="margin:0 0 20px 0">
-      <h2 style="margin:0 0 10px 0;font-size:20px;line-height:1.35;color:#111">${exportEsc(cat.label)}</h2>
-      <table style="width:100%;border-collapse:collapse;font-size:15px;line-height:1.55">
+    return `<section class="exp-section exp-table-wrap">
+      <h2 class="exp-h2">${exportEsc(cat.label)}</h2>
+      <table class="exp-table">
         <thead>
           <tr>
-            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(exportStripHtml(ti['rep.thWork'] || 'Work'))}</th>
-            ${cat.includeRole ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(exportStripHtml(ti['rep.thRole'] || 'Role'))}</th>` : ''}
-            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(exportStripHtml(ti['rep.thComposer'] || 'Composer'))}</th>
-            ${cat.includeStatus ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">Status</th>` : ''}
+            <th>${exportEsc(exportStripHtml(ti['rep.thWork'] || 'Work'))}</th>
+            ${cat.includeRole ? `<th>${exportEsc(exportStripHtml(ti['rep.thRole'] || 'Role'))}</th>` : ''}
+            <th>${exportEsc(exportStripHtml(ti['rep.thComposer'] || 'Composer'))}</th>
+            ${cat.includeStatus ? `<th>Status</th>` : ''}
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -4175,8 +4272,8 @@ function openRepertoireCleanExport() {
     </section>`;
   }).filter(Boolean).join('');
   const body = `
-    <h1 style="margin:0 0 18px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(title || 'Repertoire')}</h1>
-    ${blocks || `<p style="margin:0;color:#444">No repertoire items available.</p>`}`;
+    <h1 class="exp-h1">${exportEsc(title || 'Repertoire')}</h1>
+    ${blocks || `<p class="exp-p exp-muted">No repertoire items available.</p>`}`;
   openCleanExportWindow(title || 'Repertoire', body);
 }
 
@@ -4241,17 +4338,17 @@ function openPressCleanExport() {
     const production = exportStripHtml(productionMap[lang] || productionMap.en || p.production || '');
     const visibleQuote = pickPressVisibleQuote(p, lang, translatedNote);
     const url = exportStripHtml(p.url || '');
-    return `<article style="margin:0 0 14px 0;padding:0 0 12px 0;border-bottom:1px solid #dfdfdf">
-      ${source ? `<p style="margin:0 0 4px 0;font-weight:600;color:#111">${exportEsc(source)}</p>` : ''}
-      ${production ? `<p style="margin:0 0 6px 0;color:#444">${exportEsc(production)}</p>` : ''}
-      ${visibleQuote.quote ? `<p style="margin:0 0 6px 0;color:#222;line-height:1.65;font-style:italic">"${exportEsc(visibleQuote.quote)}"</p>` : ''}
-      ${visibleQuote.note ? `<p style="margin:0 0 6px 0;color:#666;line-height:1.6;font-size:13px;font-style:italic">${exportEsc(visibleQuote.note)}</p>` : ''}
-      ${url ? `<p style="margin:0;color:#333;line-height:1.6;font-size:14px"><strong>URL:</strong> ${exportEsc(url)}</p>` : ''}
+    return `<article class="exp-card exp-block" style="padding:.85rem 1rem;background:#fafafa;border:1px solid #ebebeb;border-radius:2px;margin-bottom:1.1rem">
+      ${source ? `<p class="exp-p" style="margin:0 0 .35rem;font-family:Arial,Helvetica,sans-serif;font-weight:600;font-size:.875rem">${exportEsc(source)}</p>` : ''}
+      ${production ? `<p class="exp-p exp-muted" style="margin:0 0 .45rem;font-size:.875rem">${exportEsc(production)}</p>` : ''}
+      ${visibleQuote.quote ? `<p class="exp-p" style="margin:0 0 .45rem;font-style:italic">"${exportEsc(visibleQuote.quote)}"</p>` : ''}
+      ${visibleQuote.note ? `<p class="exp-p exp-press-note" style="margin:0 0 .45rem">${exportEsc(visibleQuote.note)}</p>` : ''}
+      ${url ? `<p class="exp-meta" style="margin:0;font-size:.8125rem"><strong>URL:</strong> ${exportEsc(url)}</p>` : ''}
     </article>`;
   }).join('');
   const body = `
-    <h1 style="margin:0 0 16px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(title)}</h1>
-    ${cards || `<p style="margin:0;color:#444">${exportEsc((ti['press.empty'] || 'No press quotes yet.'))}</p>`}`;
+    <h1 class="exp-h1">${exportEsc(title)}</h1>
+    ${cards || `<p class="exp-p exp-muted">${exportEsc((ti['press.empty'] || 'No press quotes yet.'))}</p>`}`;
   openCleanExportWindow(title || 'Reviews', body);
 }
 
