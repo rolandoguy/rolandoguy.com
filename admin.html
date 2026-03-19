@@ -3533,16 +3533,20 @@ function openCleanExportWindow(title, bodyHtml) {
   const w = window.open('', '_blank');
   if (!w) { admLog('warn', 'Export popup blocked by browser', { key: 'export-popup' }); return; }
   try { w.opener = null; } catch (e) {}
+  const minimal = `<!doctype html><html><head><meta charset="utf-8"><title>${exportEsc(safeTitle)}</title></head><body style="margin:24px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif"><h1 style="font-size:28px;margin:0 0 12px 0">${exportEsc(safeTitle)}</h1><p style="margin:0;color:#333">No content available for export.</p></body></html>`;
   try {
     w.document.open();
     w.document.write(html);
     w.document.close();
   } catch (e) {
-    admLog('warn', 'Export write failed, fallback applied', { key: 'export-write-failed' });
+    admLog('warn', 'Export write failed, minimal static fallback applied', { key: 'export-write-failed' });
     try {
-      const minimal = `<!doctype html><html><head><meta charset="utf-8"><title>${exportEsc(safeTitle)}</title></head><body style="margin:24px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif"><h1 style="font-size:28px;margin:0 0 12px 0">${exportEsc(safeTitle)}</h1><p style="margin:0;color:#333">No content available for export.</p></body></html>`;
-      w.location.replace('data:text/html;charset=utf-8,' + encodeURIComponent(minimal));
-    } catch (err) {}
+      w.document.open();
+      w.document.write(minimal);
+      w.document.close();
+    } catch (err) {
+      admLog('warn', 'Export fallback write failed', { key: 'export-fallback-failed' });
+    }
   }
 }
 
