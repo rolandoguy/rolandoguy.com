@@ -3309,13 +3309,217 @@ function buildFullProfilePlainText() {
   return buildSelectedFullProfilePlainText();
 }
 
-function plainTextSectionToCleanHtml(text) {
-  const lines = String(text || '').split('\n');
-  if (!lines.length) return '';
-  const heading = exportEsc(lines[0] || '');
-  const rest = lines.slice(1).map(l => l.trim());
-  const body = rest.filter(Boolean).map(l => `<p style="margin:0 0 8px 0;color:#222;line-height:1.7">${exportEsc(l)}</p>`).join('');
-  return `<section style="margin:0 0 20px 0;padding:0 0 14px 0;border-bottom:1px solid #e2e2e2"><h2 style="margin:0 0 10px 0;font-size:22px;line-height:1.3;color:#111">${heading}</h2>${body || `<p style="margin:0;color:#444">No content available.</p>`}</section>`;
+function resolveExportImageUrl(src) {
+  const raw = String(src || '').trim();
+  if (!raw) return '';
+  try { return new URL(raw, window.location.href).href; } catch (e) { return raw; }
+}
+
+function buildFullExportBioHtml() {
+  const d = get('bio') || {};
+  const t = Ti[currentLang] || Ti.en;
+  const title = exportStripHtml(d.h2 || t['nav.bio'] || 'Biography');
+  const p1 = exportStripHtml(d.p1 || '');
+  const p2 = exportStripHtml(d.p2 || '');
+  const quote = exportStripHtml(d.quote || '');
+  const bioImgEl = document.getElementById('bioPhoto');
+  const bioImg = resolveExportImageUrl((bioImgEl && bioImgEl.src) ? bioImgEl.src : 'img/studio-1.jpg');
+  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
+    <h2 style="margin:0 0 16px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
+    ${bioImg ? `<div style="margin:0 0 16px 0;text-align:center"><img src="${exportEsc(bioImg)}" alt="${exportEsc(title || 'Biography photo')}" loading="eager" decoding="sync" style="display:inline-block;width:100%;max-width:340px;height:auto;border:1px solid #d9d9d9"></div>` : ''}
+    ${p1 ? `<p style="margin:0 0 12px 0;color:#222;line-height:1.75">${exportEsc(p1)}</p>` : ''}
+    ${p2 ? `<p style="margin:0 0 12px 0;color:#222;line-height:1.75">${exportEsc(p2)}</p>` : ''}
+    ${quote ? `<blockquote style="margin:14px 0 0 0;padding:10px 14px;border-left:3px solid #bdbdbd;color:#333;line-height:1.7;font-style:italic">"${exportEsc(quote)}"</blockquote>` : ''}
+  </section>`;
+}
+
+function buildFullExportRepertoireHtml() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const d = getRep();
+  const cards = Array.isArray(d.cards) ? d.cards : [];
+  const title = exportStripHtml(d.h2 || ti['nav.rep'] || 'Repertoire');
+  const cats = [
+    { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), role: true, status: true },
+    { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), role: true, status: false },
+    { key: 'operetta', label: exportStripHtml(ti['rep.tabOperetta'] || 'Operetta'), role: false, status: false },
+    { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), role: false, status: false },
+    { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), role: false, status: false }
+  ];
+  const statusLabel = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    if (!v) return '';
+    return v.charAt(0).toUpperCase() + v.slice(1);
+  };
+  const blocks = cats.map((cat) => {
+    const list = cards.filter((c) => (c.cat || 'opera') === cat.key).filter((c) => exportStripHtml(c.opera || c.role || c.composer));
+    if (!list.length) return '';
+    const rows = list.map((it) => {
+      const work = exportStripHtml(it.opera || '');
+      const role = exportStripHtml(it.role || '');
+      const composer = exportStripHtml(it.composer || '');
+      const status = cat.status ? statusLabel(it.status) : '';
+      return `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#111">${exportEsc(work)}</td>
+        ${cat.role ? `<td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#222">${exportEsc(role)}</td>` : ''}
+        <td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#222">${exportEsc(composer)}</td>
+        ${cat.status ? `<td style="padding:8px 10px;border-bottom:1px solid #ececec;color:#444">${exportEsc(status)}</td>` : ''}
+      </tr>`;
+    }).join('');
+    return `<div style="margin:0 0 18px 0">
+      <h3 style="margin:0 0 8px 0;font-size:18px;line-height:1.35;color:#111">${exportEsc(cat.label)}</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.55">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">${exportEsc(exportStripHtml(ti['rep.thWork'] || 'Work'))}</th>
+          ${cat.role ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">${exportEsc(exportStripHtml(ti['rep.thRole'] || 'Role'))}</th>` : ''}
+          <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">${exportEsc(exportStripHtml(ti['rep.thComposer'] || 'Composer'))}</th>
+          ${cat.status ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #d6d6d6;color:#111">Status</th>` : ''}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).filter(Boolean).join('');
+  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
+    <h2 style="margin:0 0 14px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
+    ${blocks || `<p style="margin:0;color:#444">No repertoire items available.</p>`}
+  </section>`;
+}
+
+function buildFullExportProgramsHtml() {
+  const d = getPrograms();
+  const t = Ti[currentLang] || Ti.en;
+  const list = (d.programs || []).filter(p => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const title = exportStripHtml(d.title || 'Programs & Collaborations');
+  const cards = list.map((p, i) => {
+    const forms = Array.isArray(p.formations) ? p.formations.map(exportStripHtml).filter(Boolean) : [];
+    const ideal = Array.isArray(p.idealFor) ? p.idealFor.map(exportStripHtml).filter(Boolean) : [];
+    return `<article style="margin:0 0 20px 0;padding:0 0 16px 0;border-bottom:1px solid #e8e8e8">
+      <div style="font-size:12px;letter-spacing:.08em;color:#777;text-transform:uppercase;margin-bottom:4px">Program ${i + 1}</div>
+      <h3 style="margin:0 0 8px 0;font-size:20px;line-height:1.35;color:#111">${exportEsc(exportStripHtml(p.title || ''))}</h3>
+      ${p.description ? `<p style="margin:0 0 10px 0;color:#222;line-height:1.7">${exportEsc(exportStripHtml(p.description))}</p>` : ''}
+      ${forms.length ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${exportEsc(exportStripHtml(t['programs.formation'] || 'Formation'))}:</strong> ${exportEsc(forms.join(' · '))}</p>` : ''}
+      ${p.duration ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${exportEsc(exportStripHtml(t['programs.duration'] || 'Duration'))}:</strong> ${exportEsc(exportStripHtml(p.duration))}</p>` : ''}
+      ${ideal.length ? `<p style="margin:0;color:#333;line-height:1.6"><strong>${exportEsc(exportStripHtml(t['programs.idealFor'] || 'Ideal for'))}:</strong> ${exportEsc(ideal.join(' · '))}</p>` : ''}
+    </article>`;
+  }).join('');
+  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
+    <h2 style="margin:0 0 12px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
+    ${d.subtitle ? `<p style="margin:0 0 8px 0;color:#444;line-height:1.65">${exportEsc(exportStripHtml(d.subtitle))}</p>` : ''}
+    ${d.intro ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.7">${exportEsc(exportStripHtml(d.intro))}</p>` : ''}
+    ${cards || `<p style="margin:0;color:#444">No published programs available.</p>`}
+    ${d.closingNote ? `<p style="margin:14px 0 0 0;color:#333;line-height:1.7">${exportEsc(exportStripHtml(d.closingNote))}</p>` : ''}
+  </section>`;
+}
+
+function buildFullExportCalendarHtml() {
+  const t = Ti[currentLang] || Ti.en;
+  const perfs = (typeof getPerfs === 'function' ? getPerfs() : []).filter(p => p.status !== 'past');
+  const sortDate = (p) => {
+    if (p.sortDate) return new Date(p.sortDate);
+    const str = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'Jan 2099');
+    const d = new Date(str);
+    return isNaN(d) ? new Date('2099-01-01') : d;
+  };
+  const list = perfs.slice().sort((a, b) => sortDate(a) - sortDate(b));
+  const cards = list.map((p) => {
+    const dayMonth = [exportStripHtml(p.day || ''), exportStripHtml(translateMonth(p.month || ''))].filter(Boolean).join(' ');
+    const timeTxt = exportStripHtml(p.time || '');
+    const detail = exportStripHtml((p['detail_' + currentLang] || p.detail || ''));
+    const venue = [exportStripHtml(p.venue || ''), exportStripHtml(p.city || '')].filter(Boolean).join(' · ');
+    return `<article style="display:grid;grid-template-columns:120px 1fr;gap:14px;margin:0 0 14px 0;padding:0 0 12px 0;border-bottom:1px solid #e9e9e9">
+      <div style="font-size:14px;line-height:1.4;color:#222;font-weight:600">${exportEsc(dayMonth || 'TBA')}${timeTxt ? `<div style="font-size:12px;color:#666;font-weight:500;margin-top:2px">${exportEsc(timeTxt)}</div>` : ''}</div>
+      <div>
+        <h3 style="margin:0 0 4px 0;font-size:18px;line-height:1.35;color:#111">${exportEsc(exportStripHtml(p.title || ''))}</h3>
+        ${venue ? `<p style="margin:0 0 4px 0;color:#444;line-height:1.6">${exportEsc(venue)}</p>` : ''}
+        ${detail ? `<p style="margin:0;color:#222;line-height:1.7">${exportEsc(detail)}</p>` : ''}
+      </div>
+    </article>`;
+  }).join('');
+  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
+    <h2 style="margin:0 0 12px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(exportStripHtml(t['nav.cal'] || 'Calendar'))}</h2>
+    ${cards || `<p style="margin:0;color:#444">No upcoming engagements available.</p>`}
+  </section>`;
+}
+
+function buildFullExportEpkHtml() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const base = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || {};
+  const stored = (load('rg_epk_bios') || {})[lang] || {};
+  const b50 = exportStripHtml(stored.b50 || base.b50 || '');
+  const b150 = exportStripHtml(stored.b150 || base.b150 || '');
+  const fullBio = [stored.b300p1 || base.b300p1 || '', stored.b300p2 || base.b300p2 || '', stored.b300p3 || base.b300p3 || '', stored.b300p4 || base.b300p4 || ''].map(exportStripHtml).filter(Boolean).join(' ');
+  const photos = (load('rg_epk_photos') || []).filter(ph => ph && ph.url);
+  const press = (typeof getPress === 'function' ? getPress() : []).filter(p => p.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0)).slice(0, 4);
+  const pressCards = press.map((p) => {
+    const q = exportStripHtml((p.quotes_i18n || {})[lang] || (p.quotes_i18n || {}).en || p.quote || '');
+    const src = exportStripHtml(p.source || '');
+    const prod = exportStripHtml((p.production_i18n || {})[lang] || (p.production_i18n || {}).en || p.production || '');
+    return `<article style="margin:0 0 10px 0;padding:0 0 8px 0;border-bottom:1px solid #ececec">
+      <p style="margin:0 0 3px 0;color:#111;font-weight:600">${exportEsc(src)}</p>
+      ${prod ? `<p style="margin:0 0 4px 0;color:#555">${exportEsc(prod)}</p>` : ''}
+      ${q ? `<p style="margin:0;color:#222;line-height:1.65;font-style:italic">"${exportEsc(q)}"</p>` : ''}
+    </article>`;
+  }).join('');
+  const photoList = photos.map((ph, i) => `<li style="margin:0 0 4px 0">${exportEsc(exportStripHtml(ph.label || ('Portrait ' + (i + 1))))}${ph.credit ? ` — ${exportEsc(exportStripHtml(ph.credit))}` : ''}</li>`).join('');
+  const docs = getPublicPdfs();
+  const k = String(lang).toUpperCase();
+  const getDoc = (kind) => {
+    const e = ((docs || {})[kind] || {})[k];
+    if (!e) return '';
+    if (typeof e === 'string') return /^https?:\/\//i.test(e) ? e : '';
+    return String(e.url || '').trim();
+  };
+  const dossier = getDoc('dossier');
+  const artist = getDoc('artistSheet');
+  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
+    <h2 style="margin:0 0 14px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(exportStripHtml(ti['epk.title'] || 'Dossier'))}</h2>
+    <div style="margin:0 0 14px 0;padding:10px 12px;border:1px solid #ececec;background:#fafafa">
+      <h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Bios</h3>
+      ${b50 ? `<p style="margin:0 0 6px 0;color:#222;line-height:1.65"><strong>${exportEsc(exportStripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${exportEsc(b50)}</p>` : ''}
+      ${b150 ? `<p style="margin:0 0 6px 0;color:#222;line-height:1.65"><strong>${exportEsc(exportStripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${exportEsc(b150)}</p>` : ''}
+      ${fullBio ? `<p style="margin:0;color:#222;line-height:1.7"><strong>${exportEsc(exportStripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${exportEsc(fullBio)}</p>` : ''}
+    </div>
+    ${pressCards ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Selected reviews</h3>${pressCards}</div>` : ''}
+    ${photoList ? `<div style="margin:0 0 14px 0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">${exportEsc(exportStripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h3><ul style="margin:0;padding-left:18px;color:#222;line-height:1.6">${photoList}</ul></div>` : ''}
+    ${(dossier || artist) ? `<div style="margin:0"><h3 style="margin:0 0 8px 0;font-size:17px;color:#111">Documents</h3>${dossier ? `<p style="margin:0 0 5px 0;color:#222"><strong>${exportEsc(exportStripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${exportEsc(dossier)}</p>` : ''}${artist ? `<p style="margin:0;color:#222"><strong>${exportEsc(exportStripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${exportEsc(artist)}</p>` : ''}</div>` : ''}
+  </section>`;
+}
+
+function buildFullExportPressHtml() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const items = getPress().filter(p => p.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const cards = items.map((p) => {
+    const source = exportStripHtml(p.source || '');
+    const production = exportStripHtml((p.production_i18n || {})[lang] || (p.production_i18n || {}).en || p.production || '');
+    const quote = exportStripHtml((p.quotes_i18n || {})[lang] || (p.quotes_i18n || {}).en || p.quote || '');
+    return `<article style="margin:0 0 14px 0;padding:12px;border:1px solid #ececec;background:#fafafa">
+      ${source ? `<p style="margin:0 0 4px 0;color:#111;font-weight:600">${exportEsc(source)}</p>` : ''}
+      ${production ? `<p style="margin:0 0 6px 0;color:#555;line-height:1.6">${exportEsc(production)}</p>` : ''}
+      ${quote ? `<p style="margin:0;color:#222;line-height:1.7;font-style:italic">"${exportEsc(quote)}"</p>` : ''}
+    </article>`;
+  }).join('');
+  return `<section style="margin:0 0 34px 0;padding:0 0 24px 0;border-bottom:1px solid #dfdfdf">
+    <h2 style="margin:0 0 12px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(exportStripHtml(ti['nav.press'] || 'Reviews'))}</h2>
+    ${cards || `<p style="margin:0;color:#444">${exportEsc(exportStripHtml(ti['press.empty'] || 'No press quotes yet.'))}</p>`}
+  </section>`;
+}
+
+function buildFullExportContactHtml() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const d = get('contact') || {};
+  const title = exportStripHtml(d.title || ti['nav.contact'] || 'Contact');
+  const sub = exportStripHtml(d.sub || '');
+  const quote = exportStripHtml(d.quote || '');
+  const email = exportStripHtml((d.email || '').trim() || 'rolandoguy@gmail.com');
+  return `<section style="margin:0 0 20px 0">
+    <h2 style="margin:0 0 10px 0;font-size:26px;line-height:1.25;color:#111">${exportEsc(title)}</h2>
+    ${sub ? `<p style="margin:0 0 10px 0;color:#222;line-height:1.7">${exportEsc(sub)}</p>` : ''}
+    ${quote ? `<p style="margin:0 0 10px 0;color:#444;line-height:1.65;font-style:italic">"${exportEsc(quote)}"</p>` : ''}
+    <p style="margin:0;color:#111;line-height:1.6"><strong>Email:</strong> <span style="font-weight:600">${exportEsc(email)}</span></p>
+  </section>`;
 }
 
 async function copyFullProfilePlainText() {
@@ -3326,14 +3530,17 @@ async function copyFullProfilePlainText() {
 function openFullProfileCleanExport() {
   const sel = getSelectedFullExportSections();
   const blocks = [];
-  if (sel.bio) blocks.push(plainTextSectionToCleanHtml(buildBioPlainText()));
-  if (sel.repertoire) blocks.push(plainTextSectionToCleanHtml(buildRepertoirePlainText()));
-  if (sel.programs) blocks.push(plainTextSectionToCleanHtml(buildProgramsPlainText()));
-  if (sel.calendar) blocks.push(plainTextSectionToCleanHtml(buildCalendarPlainText()));
-  if (sel.press) blocks.push(plainTextSectionToCleanHtml(buildPressPlainText()));
-  if (sel.epk) blocks.push(plainTextSectionToCleanHtml(buildEpkPlainText()));
-  if (sel.contact) blocks.push(plainTextSectionToCleanHtml(buildContactPlainText()));
-  const body = blocks.filter(Boolean).join('') || `<h1 style="margin:0 0 12px 0;font-size:28px;line-height:1.25;color:#111">Full clean export</h1><p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`;
+  if (sel.bio) blocks.push(buildFullExportBioHtml());
+  if (sel.repertoire) blocks.push(buildFullExportRepertoireHtml());
+  if (sel.programs) blocks.push(buildFullExportProgramsHtml());
+  if (sel.calendar) blocks.push(buildFullExportCalendarHtml());
+  if (sel.press) blocks.push(buildFullExportPressHtml());
+  if (sel.epk) blocks.push(buildFullExportEpkHtml());
+  if (sel.contact) blocks.push(buildFullExportContactHtml());
+  const body = `<header style="margin:0 0 26px 0;padding:0 0 16px 0;border-bottom:2px solid #d9d9d9">
+    <h1 style="margin:0;font-size:32px;line-height:1.2;color:#111">Rolando Guy</h1>
+    <p style="margin:8px 0 0 0;color:#555;line-height:1.6">Selected profile export</p>
+  </header>` + (blocks.filter(Boolean).join('') || `<p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`);
   openCleanExportWindow('Full clean export', body);
 }
 
