@@ -1363,7 +1363,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 1</label><textarea class="adm-input" id="f-bioP1" rows="4"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 2</label><textarea class="adm-input" id="f-bioP2" rows="4"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><textarea class="adm-input" id="f-bioQuote" rows="3"></textarea></div></div>
-     <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Guardar Biografía</button>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Guardar Biografía</button>
+      <button class="adm-btn" type="button" onclick="copyBioPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+      <button class="adm-btn" type="button" onclick="openBioCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+     </div>
      <div class="adm-feedback" id="fb-bio">¡Guardado!</div>
     </div>
     <!-- REPERTOIRE: Opera -->
@@ -1384,6 +1388,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
       <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)">✨ Auto-Ordenar (Estado + Compositor)</button>
       <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Guardar</button>
+     <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-rep-opera">¡Guardado!</div>
     </div>
@@ -1394,6 +1400,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
       <button class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Guardar</button>
+     <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-rep-arias">¡Guardado!</div>
     </div>
@@ -1404,6 +1412,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
       <button class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Guardar</button>
+     <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-rep-operetta">¡Guardado!</div>
     </div>
@@ -1414,6 +1424,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
       <button class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Guardar</button>
+     <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-rep-lived">¡Guardado!</div>
     </div>
@@ -1424,6 +1436,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
       <button class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Guardar</button>
+     <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-rep-tango">¡Guardado!</div>
     </div>
@@ -1442,6 +1456,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
        <button class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir programa</button>
        <button class="adm-btn adm-btn-save" onclick="saveSection('programs')">Guardar Programas</button>
+       <button class="adm-btn" type="button" onclick="copyProgramsPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+       <button class="adm-btn" type="button" onclick="openProgramsCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-programs">¡Guardado!</div>
     </div>
@@ -1583,6 +1599,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <textarea class="adm-input" id="f-pressTranslatedNote" rows="2" placeholder="Translated from the original German review."></textarea>
        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
          <button class="adm-btn adm-btn-save" onclick="savePressMeta()">Guardar nota</button>
+        <button class="adm-btn" type="button" onclick="copyPressPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+        <button class="adm-btn" type="button" onclick="openPressCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
          <div class="adm-feedback" id="fb-pressMeta" style="opacity:0;transition:opacity .3s">¡Guardado!</div>
        </div>
      </div></div>
@@ -1615,7 +1633,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="adm-col"><label class="adm-label">Texto botón email</label><input class="adm-input" id="f-contactEmailBtn"></div>
      </div>
     <div class="adm-grid full" style="display:none"><div class="adm-col"><label class="adm-label">Texto botón website</label><input class="adm-input" id="f-contactWebBtn"></div></div>
+    <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
      <button class="adm-btn adm-btn-save" onclick="saveSection('contact')">Guardar Contacto</button>
+     <button class="adm-btn" type="button" onclick="copyContactPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openContactCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+    </div>
      <div class="adm-feedback" id="fb-contact">¡Guardado!</div>
     </div>
    <div class="adm-panel" id="admPanel-epk">
@@ -1678,6 +1700,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-row" style="margin-bottom:32px">
        <button class="adm-btn adm-btn-save" onclick="saveEpkBios()">Guardar Biografías</button>
        <div class="adm-feedback" id="fb-epkBios">¡Guardado!</div>
+     </div>
+     <div style="margin:-8px 0 20px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" type="button" onclick="copyEpkPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+      <button class="adm-btn" type="button" onclick="openEpkCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
 
      <!-- ── PUBLIC PDFs ── -->
@@ -3169,6 +3195,592 @@ function duplicateProgramCard(idx) {
   programs.forEach((p, i) => { p.order = i; });
   save('rg_programs_' + currentLang, { ...data, programs });
   admTab('programs');
+}
+
+function buildProgramsPlainText() {
+  const d = getPrograms();
+  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const lines = [];
+  const sectionTitle = stripHtml(d.title || 'Programs & Collaborations');
+  if (sectionTitle) lines.push(sectionTitle);
+  if (d.subtitle) lines.push(stripHtml(d.subtitle));
+  if (d.intro) lines.push(stripHtml(d.intro));
+  lines.push('');
+
+  const t = Ti[currentLang] || Ti.en;
+  const lblFormation = t['programs.formation'] || 'Formation';
+  const lblDuration = t['programs.duration'] || 'Duration';
+  const lblIdealFor = t['programs.idealFor'] || 'Ideal for';
+  const list = (d.programs || []).filter(p => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  list.forEach((p, i) => {
+    lines.push(`${i + 1}. ${stripHtml(p.title || '')}`);
+    if (p.description) lines.push(stripHtml(p.description));
+    if (Array.isArray(p.formations) && p.formations.length) lines.push(`${lblFormation}: ${p.formations.map(x => stripHtml(x)).join(' · ')}`);
+    if (p.duration) lines.push(`${lblDuration}: ${stripHtml(p.duration)}`);
+    if (Array.isArray(p.idealFor) && p.idealFor.length) lines.push(`${lblIdealFor}: ${p.idealFor.map(x => stripHtml(x)).join(' · ')}`);
+    lines.push('');
+  });
+  if (d.closingNote) lines.push(stripHtml(d.closingNote));
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyProgramsPlainText() {
+  const text = buildProgramsPlainText();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    admLog('info', 'Programs plain text copied', { key: 'programs' });
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    admLog('warn', 'Clipboard fallback used for Programs export', { key: 'programs' });
+  }
+}
+
+function openProgramsCleanExport() {
+  const d = getPrograms();
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const t = Ti[currentLang] || Ti.en;
+  const lblFormation = t['programs.formation'] || 'Formation';
+  const lblDuration = t['programs.duration'] || 'Duration';
+  const lblIdealFor = t['programs.idealFor'] || 'Ideal for';
+  const list = (d.programs || []).filter(p => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const cards = list.map((p, i) => {
+    const forms = Array.isArray(p.formations) ? p.formations : [];
+    const ideal = Array.isArray(p.idealFor) ? p.idealFor : [];
+    return `<article style="margin:0 0 20px 0;padding:0 0 14px 0;border-bottom:1px solid #ddd">
+      <h3 style="margin:0 0 8px 0;font-size:19px;line-height:1.35;font-weight:600;color:#111">${esc(`${i + 1}. ${stripHtml(p.title || '')}`)}</h3>
+      ${p.description ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.65">${esc(stripHtml(p.description))}</p>` : ''}
+      ${forms.length ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${esc(lblFormation)}:</strong> ${esc(forms.map(stripHtml).join(' · '))}</p>` : ''}
+      ${p.duration ? `<p style="margin:0 0 6px 0;color:#333;line-height:1.6"><strong>${esc(lblDuration)}:</strong> ${esc(stripHtml(p.duration))}</p>` : ''}
+      ${ideal.length ? `<p style="margin:0;color:#333;line-height:1.6"><strong>${esc(lblIdealFor)}:</strong> ${esc(ideal.map(stripHtml).join(' · '))}</p>` : ''}
+    </article>`;
+  }).join('');
+  const html = `<!doctype html><html lang="${esc(currentLang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(stripHtml(d.title || 'Programs & Collaborations'))}</title></head><body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif">
+    <main style="max-width:900px;margin:0 auto;padding:32px 24px 40px">
+      <h1 style="margin:0 0 10px 0;font-size:28px;line-height:1.25;color:#111">${esc(stripHtml(d.title || 'Programs & Collaborations'))}</h1>
+      ${d.subtitle ? `<p style="margin:0 0 10px 0;color:#444;line-height:1.65">${esc(stripHtml(d.subtitle))}</p>` : ''}
+      ${d.intro ? `<p style="margin:0 0 18px 0;color:#222;line-height:1.7">${esc(stripHtml(d.intro))}</p>` : ''}
+      ${cards}
+      ${d.closingNote ? `<p style="margin:16px 0 0 0;color:#333;line-height:1.7">${esc(stripHtml(d.closingNote))}</p>` : ''}
+    </main>
+  </body></html>`;
+  const w = window.open('', '_blank', 'noopener');
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+function buildBioPlainText() {
+  const d = get('bio') || {};
+  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const lines = [];
+  const title = stripHtml(d.h2 || (Ti[currentLang] || Ti.en)['nav.bio'] || 'Biography');
+  if (title) lines.push(title);
+  if (d.p1) lines.push(stripHtml(d.p1));
+  if (d.p2) lines.push(stripHtml(d.p2));
+  if (d.quote && String(d.quote).trim()) {
+    lines.push('');
+    lines.push(`"${stripHtml(d.quote)}"`);
+  }
+  return lines.join('\n\n').trim();
+}
+
+async function copyBioPlainText() {
+  const text = buildBioPlainText();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    admLog('info', 'Biography plain text copied', { key: 'bio' });
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    admLog('warn', 'Clipboard fallback used for Biography export', { key: 'bio' });
+  }
+}
+
+function openBioCleanExport() {
+  const d = get('bio') || {};
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const title = stripHtml(d.h2 || (Ti[currentLang] || Ti.en)['nav.bio'] || 'Biography');
+  const p1 = stripHtml(d.p1 || '');
+  const p2 = stripHtml(d.p2 || '');
+  const quote = stripHtml(d.quote || '');
+  const html = `<!doctype html><html lang="${esc(currentLang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title || 'Biography')}</title></head><body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif">
+    <main style="max-width:900px;margin:0 auto;padding:32px 24px 40px">
+      <h1 style="margin:0 0 16px 0;font-size:28px;line-height:1.25;color:#111">${esc(title)}</h1>
+      ${p1 ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.75">${esc(p1)}</p>` : ''}
+      ${p2 ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.75">${esc(p2)}</p>` : ''}
+      ${quote ? `<blockquote style="margin:12px 0 0 0;padding:12px 14px;border-left:3px solid #bbb;color:#333;line-height:1.7;font-style:italic">"${esc(quote)}"</blockquote>` : ''}
+    </main>
+  </body></html>`;
+  const w = window.open('', '_blank', 'noopener');
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+function buildEpkPlainText() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const lines = [];
+  const title = stripHtml(ti['epk.title'] || 'Dossier');
+  if (title) lines.push(title);
+
+  const base = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || {};
+  const stored = (load('rg_epk_bios') || {})[lang] || {};
+  const b50 = stripHtml(stored.b50 || base.b50 || '');
+  const b150 = stripHtml(stored.b150 || base.b150 || '');
+  const p1 = stripHtml(stored.b300p1 || base.b300p1 || '');
+  const p2 = stripHtml(stored.b300p2 || base.b300p2 || '');
+  const p3 = stripHtml(stored.b300p3 || base.b300p3 || '');
+  const p4 = stripHtml(stored.b300p4 || base.b300p4 || '');
+  if (b50 || b150 || p1 || p2 || p3 || p4) {
+    lines.push('');
+    lines.push('Bios');
+    if (b50) lines.push(`- ${ti['epk.bio50lbl'] || '50-word Bio'}: ${b50}`);
+    if (b150) lines.push(`- ${ti['epk.bio150lbl'] || '150-word Bio'}: ${b150}`);
+    const fullBio = [p1, p2, p3, p4].filter(Boolean).join(' ');
+    if (fullBio) lines.push(`- ${ti['epk.bio300lbl'] || 'Full Biography'}: ${fullBio}`);
+  }
+
+  const press = (typeof getPress === 'function' ? getPress() : [])
+    .filter(p => p.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .slice(0, 4);
+  if (press.length) {
+    lines.push('');
+    lines.push('Selected reviews');
+    const pickLang = (obj, key) => {
+      const map = obj && obj[key + '_i18n'];
+      if (map && typeof map === 'object') return String(map[lang] || map.en || '').trim();
+      return String(obj && obj[key] || '').trim();
+    };
+    press.forEach((p, i) => {
+      const source = stripHtml(p.source || '');
+      const quote = stripHtml(pickLang(p, 'quote') || p.quote || '');
+      const prod = stripHtml(pickLang(p, 'production') || p.production || '');
+      lines.push(`${i + 1}. ${source}${prod ? ` — ${prod}` : ''}`);
+      if (quote) lines.push(`   "${quote}"`);
+    });
+  }
+
+  const pressMeta = (typeof getPressMeta === 'function' ? getPressMeta() : {}) || {};
+  const translatedNote = (((pressMeta[lang] || {}).translatedNote) || '').trim();
+  if (translatedNote) {
+    lines.push('');
+    lines.push(`Editorial note: ${stripHtml(translatedNote)}`);
+  }
+
+  const photos = load('rg_epk_photos') || [];
+  const validPhotos = photos.filter(ph => ph && ph.url);
+  if (validPhotos.length) {
+    lines.push('');
+    lines.push('High-res photos');
+    validPhotos.forEach((ph, i) => {
+      const label = stripHtml(ph.label || (`Portrait ${i + 1}`));
+      const credit = stripHtml(ph.credit || '');
+      lines.push(`- ${label}${credit ? ` — ${credit}` : ''}`);
+    });
+  }
+
+  const pdfs = getPublicPdfs();
+  const langKey = String(lang).toUpperCase();
+  const entryUrl = (kind) => {
+    const e = ((pdfs || {})[kind] || {})[langKey];
+    if (!e) return '';
+    if (typeof e === 'string') return /^https?:\/\//i.test(e) ? e : '';
+    return String(e.url || '').trim();
+  };
+  const dossierUrl = entryUrl('dossier');
+  const artistUrl = entryUrl('artistSheet');
+  if (dossierUrl || artistUrl) {
+    lines.push('');
+    lines.push('Public documents');
+    if (dossierUrl) lines.push(`- ${ti['epk.downloadDossier'] || 'Download dossier'}: ${dossierUrl}`);
+    if (artistUrl) lines.push(`- ${ti['epk.downloadArtistSheet'] || 'Download artist sheet'}: ${artistUrl}`);
+  }
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyEpkPlainText() {
+  const text = buildEpkPlainText();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    admLog('info', 'Dossier plain text copied', { key: 'epk' });
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    admLog('warn', 'Clipboard fallback used for Dossier export', { key: 'epk' });
+  }
+}
+
+function openEpkCleanExport() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const title = stripHtml(ti['epk.title'] || 'Dossier');
+  const base = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || {};
+  const stored = (load('rg_epk_bios') || {})[lang] || {};
+  const b50 = stripHtml(stored.b50 || base.b50 || '');
+  const b150 = stripHtml(stored.b150 || base.b150 || '');
+  const fullBio = [stored.b300p1 || base.b300p1 || '', stored.b300p2 || base.b300p2 || '', stored.b300p3 || base.b300p3 || '', stored.b300p4 || base.b300p4 || ''].map(stripHtml).filter(Boolean).join(' ');
+  const photos = (load('rg_epk_photos') || []).filter(ph => ph && ph.url);
+  const press = (typeof getPress === 'function' ? getPress() : [])
+    .filter(p => p.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .slice(0, 4);
+  const pressMeta = (typeof getPressMeta === 'function' ? getPressMeta() : {}) || {};
+  const translatedNote = (((pressMeta[lang] || {}).translatedNote) || '').trim();
+  const htmlPress = press.map((p) => {
+    const qmap = p.quotes_i18n || {};
+    const prodMap = p.production_i18n || {};
+    const quote = stripHtml(qmap[lang] || qmap.en || p.quote || '');
+    const prod = stripHtml(prodMap[lang] || prodMap.en || p.production || '');
+    const source = stripHtml(p.source || '');
+    return `<article style="margin:0 0 12px 0;padding:0 0 10px 0;border-bottom:1px solid #e2e2e2">
+      <p style="margin:0 0 4px 0;color:#111;font-weight:600">${esc(source)}</p>
+      ${prod ? `<p style="margin:0 0 4px 0;color:#444">${esc(prod)}</p>` : ''}
+      ${quote ? `<p style="margin:0;color:#222;line-height:1.65;font-style:italic">"${esc(quote)}"</p>` : ''}
+    </article>`;
+  }).join('');
+  const htmlPhotos = photos.map((ph, i) => {
+    const label = stripHtml(ph.label || (`Portrait ${i + 1}`));
+    const credit = stripHtml(ph.credit || '');
+    return `<li style="margin:0 0 4px 0">${esc(label)}${credit ? ` — ${esc(credit)}` : ''}</li>`;
+  }).join('');
+  const pdfs = getPublicPdfs();
+  const langKey = String(lang).toUpperCase();
+  const entryUrl = (kind) => {
+    const e = ((pdfs || {})[kind] || {})[langKey];
+    if (!e) return '';
+    if (typeof e === 'string') return /^https?:\/\//i.test(e) ? e : '';
+    return String(e.url || '').trim();
+  };
+  const dossierUrl = entryUrl('dossier');
+  const artistUrl = entryUrl('artistSheet');
+  const html = `<!doctype html><html lang="${esc(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head><body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif">
+    <main style="max-width:900px;margin:0 auto;padding:32px 24px 40px">
+      <h1 style="margin:0 0 14px 0;font-size:28px;line-height:1.25;color:#111">${esc(title)}</h1>
+      ${b50 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(ti['epk.bio50lbl'] || '50-word Bio')}:</strong> ${esc(b50)}</p>` : ''}
+      ${b150 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(ti['epk.bio150lbl'] || '150-word Bio')}:</strong> ${esc(b150)}</p>` : ''}
+      ${fullBio ? `<p style="margin:0 0 16px 0;color:#222;line-height:1.75"><strong>${esc(ti['epk.bio300lbl'] || 'Full Biography')}:</strong> ${esc(fullBio)}</p>` : ''}
+      ${htmlPress ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">Selected reviews</h2>${htmlPress}${translatedNote ? `<p style="margin:8px 0 0 0;color:#666;line-height:1.6;font-size:13px;font-style:italic">${esc(stripHtml(translatedNote))}</p>` : ''}</section>` : ''}
+      ${htmlPhotos ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">${esc(ti['epk.photos'] || 'High-Res Photos')}</h2><ul style="margin:0;padding-left:18px;color:#222;line-height:1.6">${htmlPhotos}</ul></section>` : ''}
+      ${(dossierUrl || artistUrl) ? `<section style="margin:12px 0 0 0"><h2 style="margin:0 0 8px 0;font-size:18px">Documents</h2>${dossierUrl ? `<p style="margin:0 0 6px 0"><strong>${esc(ti['epk.downloadDossier'] || 'Download dossier')}:</strong> ${esc(dossierUrl)}</p>` : ''}${artistUrl ? `<p style="margin:0"><strong>${esc(ti['epk.downloadArtistSheet'] || 'Download artist sheet')}:</strong> ${esc(artistUrl)}</p>` : ''}</section>` : ''}
+    </main>
+  </body></html>`;
+  const w = window.open('', '_blank', 'noopener');
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+function exportStripHtml(s) {
+  return String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function exportEsc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function copyPlainTextWithFallback(text, logMessage, logKey) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    admLog('info', logMessage, { key: logKey });
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    admLog('warn', 'Clipboard fallback used for section export', { key: logKey });
+  }
+}
+
+function openCleanExportWindow(title, bodyHtml) {
+  const html = `<!doctype html><html lang="${exportEsc(currentLang || 'en')}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${exportEsc(title || 'Export')}</title></head><body style="margin:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif">
+    <main style="max-width:920px;margin:0 auto;padding:34px 24px 44px">${bodyHtml}</main>
+  </body></html>`;
+  const w = window.open('', '_blank', 'noopener');
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+function buildContactPlainText() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const d = get('contact') || {};
+  const lines = [];
+  const title = exportStripHtml(d.title || ti['nav.contact'] || 'Contact');
+  const sub = exportStripHtml(d.sub || '');
+  const quote = exportStripHtml(d.quote || '');
+  const email = exportStripHtml((d.email || '').trim() || 'rolandoguy@gmail.com');
+  const enquiryText = exportStripHtml(d.emailBtn || '');
+
+  if (title) lines.push(title);
+  if (sub) lines.push(sub);
+  if (quote) lines.push(`"${quote}"`);
+  if (email || enquiryText) {
+    lines.push('');
+    if (email) lines.push(`Email: ${email}`);
+    if (enquiryText) lines.push(`Booking / Enquiries: ${enquiryText}`);
+  }
+  return lines.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyContactPlainText() {
+  await copyPlainTextWithFallback(buildContactPlainText(), 'Contact plain text copied', 'contact');
+}
+
+function openContactCleanExport() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const d = get('contact') || {};
+  const title = exportStripHtml(d.title || ti['nav.contact'] || 'Contact');
+  const sub = exportStripHtml(d.sub || '');
+  const quote = exportStripHtml(d.quote || '');
+  const email = exportStripHtml((d.email || '').trim() || 'rolandoguy@gmail.com');
+  const enquiryText = exportStripHtml(d.emailBtn || '');
+  const body = `
+    <h1 style="margin:0 0 14px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(title || 'Contact')}</h1>
+    ${sub ? `<p style="margin:0 0 14px 0;color:#222;line-height:1.75">${exportEsc(sub)}</p>` : ''}
+    ${quote ? `<blockquote style="margin:0 0 16px 0;padding:12px 14px;border-left:3px solid #bbb;color:#333;line-height:1.7;font-style:italic">"${exportEsc(quote)}"</blockquote>` : ''}
+    ${(email || enquiryText) ? `<section style="margin:4px 0 0 0">
+      ${email ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.6"><strong>Email:</strong> ${exportEsc(email)}</p>` : ''}
+      ${enquiryText ? `<p style="margin:0;color:#222;line-height:1.6"><strong>Booking / Enquiries:</strong> ${exportEsc(enquiryText)}</p>` : ''}
+    </section>` : ''}`;
+  openCleanExportWindow(title || 'Contact', body);
+}
+
+function buildRepertoirePlainText() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const d = getRep();
+  const cards = Array.isArray(d.cards) ? d.cards : [];
+  const lines = [];
+  const title = exportStripHtml(d.h2 || ti['nav.rep'] || 'Repertoire');
+  const categories = [
+    { key: 'opera', label: ti['rep.tabOpera'] || 'Opera Roles', includeRole: true, includeStatus: true },
+    { key: 'arias', label: ti['rep.tabArias'] || 'Opera Arias', includeRole: true, includeStatus: false },
+    { key: 'operetta', label: ti['rep.tabOperetta'] || 'Operetta', includeRole: false, includeStatus: false },
+    { key: 'lied', label: ti['rep.tabLied'] || 'Lied & Art Song', includeRole: false, includeStatus: false },
+    { key: 'tango', label: ti['rep.tabTango'] || 'Tango', includeRole: false, includeStatus: false }
+  ];
+  const statusLabel = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    if (!v) return '';
+    return v.charAt(0).toUpperCase() + v.slice(1);
+  };
+
+  if (title) lines.push(title);
+  categories.forEach((cat) => {
+    const list = cards.filter((c) => (c.cat || 'opera') === cat.key).filter((c) => exportStripHtml(c.opera || c.role || c.composer)).sort((a, b) => {
+      const ao = exportStripHtml(a.opera || '').toLowerCase();
+      const bo = exportStripHtml(b.opera || '').toLowerCase();
+      if (ao < bo) return -1;
+      if (ao > bo) return 1;
+      const ac = exportStripHtml(a.composer || '').toLowerCase();
+      const bc = exportStripHtml(b.composer || '').toLowerCase();
+      return ac.localeCompare(bc);
+    });
+    if (!list.length) return;
+    lines.push('');
+    lines.push(cat.label);
+    list.forEach((item) => {
+      const work = exportStripHtml(item.opera || '');
+      const role = exportStripHtml(item.role || '');
+      const composer = exportStripHtml(item.composer || '');
+      const parts = [];
+      if (work) parts.push(work);
+      if (cat.includeRole && role) parts.push(`Role: ${role}`);
+      if (composer) parts.push(`Composer: ${composer}`);
+      if (cat.includeStatus) {
+        const s = statusLabel(item.status);
+        if (s) parts.push(`Status: ${s}`);
+      }
+      if (parts.length) lines.push(`- ${parts.join(' · ')}`);
+    });
+  });
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyRepertoirePlainText() {
+  await copyPlainTextWithFallback(buildRepertoirePlainText(), 'Repertoire plain text copied', 'repertoire');
+}
+
+function openRepertoireCleanExport() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const d = getRep();
+  const cards = Array.isArray(d.cards) ? d.cards : [];
+  const title = exportStripHtml(d.h2 || ti['nav.rep'] || 'Repertoire');
+  const categories = [
+    { key: 'opera', label: ti['rep.tabOpera'] || 'Opera Roles', includeRole: true, includeStatus: true },
+    { key: 'arias', label: ti['rep.tabArias'] || 'Opera Arias', includeRole: true, includeStatus: false },
+    { key: 'operetta', label: ti['rep.tabOperetta'] || 'Operetta', includeRole: false, includeStatus: false },
+    { key: 'lied', label: ti['rep.tabLied'] || 'Lied & Art Song', includeRole: false, includeStatus: false },
+    { key: 'tango', label: ti['rep.tabTango'] || 'Tango', includeRole: false, includeStatus: false }
+  ];
+  const statusLabel = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    if (!v) return '';
+    return v.charAt(0).toUpperCase() + v.slice(1);
+  };
+  const blocks = categories.map((cat) => {
+    const list = cards.filter((c) => (c.cat || 'opera') === cat.key).filter((c) => exportStripHtml(c.opera || c.role || c.composer)).sort((a, b) => {
+      const ao = exportStripHtml(a.opera || '').toLowerCase();
+      const bo = exportStripHtml(b.opera || '').toLowerCase();
+      if (ao < bo) return -1;
+      if (ao > bo) return 1;
+      const ac = exportStripHtml(a.composer || '').toLowerCase();
+      const bc = exportStripHtml(b.composer || '').toLowerCase();
+      return ac.localeCompare(bc);
+    });
+    if (!list.length) return '';
+    const rows = list.map((item) => {
+      const work = exportStripHtml(item.opera || '');
+      const role = exportStripHtml(item.role || '');
+      const composer = exportStripHtml(item.composer || '');
+      const status = cat.includeStatus ? statusLabel(item.status) : '';
+      return `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#111">${exportEsc(work)}</td>
+        ${cat.includeRole ? `<td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#222">${exportEsc(role)}</td>` : ''}
+        <td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#222">${exportEsc(composer)}</td>
+        ${cat.includeStatus ? `<td style="padding:8px 10px;border-bottom:1px solid #e6e6e6;color:#333">${exportEsc(status)}</td>` : ''}
+      </tr>`;
+    }).join('');
+    return `<section style="margin:0 0 20px 0">
+      <h2 style="margin:0 0 10px 0;font-size:20px;line-height:1.35;color:#111">${exportEsc(cat.label)}</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:15px;line-height:1.55">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(ti['rep.thWork'] || 'Work')}</th>
+            ${cat.includeRole ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(ti['rep.thRole'] || 'Role')}</th>` : ''}
+            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(ti['rep.thComposer'] || 'Composer')}</th>
+            ${cat.includeStatus ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">Status</th>` : ''}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </section>`;
+  }).filter(Boolean).join('');
+  const body = `
+    <h1 style="margin:0 0 18px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(title || 'Repertoire')}</h1>
+    ${blocks || `<p style="margin:0;color:#444">No repertoire items available.</p>`}`;
+  openCleanExportWindow(title || 'Repertoire', body);
+}
+
+function pickPressVisibleQuote(pressItem, lang, translatedNote) {
+  const original = (typeof pressItem.quote === 'string' ? pressItem.quote.trim() : '');
+  const qmap = (pressItem && pressItem.quotes_i18n && typeof pressItem.quotes_i18n === 'object') ? pressItem.quotes_i18n : {};
+  let shown = original;
+  let usedTranslation = false;
+  if (lang !== 'de') {
+    const tQuote = (typeof qmap[lang] === 'string' && qmap[lang].trim())
+      ? qmap[lang].trim()
+      : ((typeof qmap.en === 'string' && qmap.en.trim()) ? qmap.en.trim() : '');
+    if (tQuote) {
+      shown = tQuote;
+      usedTranslation = !!original && tQuote !== original;
+    }
+  }
+  if (!shown) shown = original;
+  return {
+    quote: exportStripHtml(shown || ''),
+    note: (lang !== 'de' && usedTranslation && translatedNote) ? exportStripHtml(translatedNote) : ''
+  };
+}
+
+function buildPressPlainText() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const items = getPress().filter(p => p.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const meta = getPressMeta();
+  const translatedNote = (((meta[lang] || {}).translatedNote) || '').trim();
+  const lines = [];
+  lines.push(exportStripHtml(ti['nav.press'] || 'Reviews'));
+  items.forEach((p, i) => {
+    const source = exportStripHtml(p.source || '');
+    const productionMap = (p && p.production_i18n && typeof p.production_i18n === 'object') ? p.production_i18n : {};
+    const production = exportStripHtml(productionMap[lang] || productionMap.en || p.production || '');
+    const visibleQuote = pickPressVisibleQuote(p, lang, translatedNote);
+    const url = exportStripHtml(p.url || '');
+    lines.push('');
+    lines.push(`${i + 1}. ${source}${production ? ` — ${production}` : ''}`);
+    if (visibleQuote.quote) lines.push(`"${visibleQuote.quote}"`);
+    if (visibleQuote.note) lines.push(visibleQuote.note);
+    if (url) lines.push(`URL: ${url}`);
+  });
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyPressPlainText() {
+  await copyPlainTextWithFallback(buildPressPlainText(), 'Press plain text copied', 'press');
+}
+
+function openPressCleanExport() {
+  const lang = currentLang || 'en';
+  const ti = Ti[lang] || Ti.en;
+  const items = getPress().filter(p => p.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const meta = getPressMeta();
+  const translatedNote = (((meta[lang] || {}).translatedNote) || '').trim();
+  const title = exportStripHtml(ti['nav.press'] || 'Reviews');
+  const cards = items.map((p) => {
+    const source = exportStripHtml(p.source || '');
+    const productionMap = (p && p.production_i18n && typeof p.production_i18n === 'object') ? p.production_i18n : {};
+    const production = exportStripHtml(productionMap[lang] || productionMap.en || p.production || '');
+    const visibleQuote = pickPressVisibleQuote(p, lang, translatedNote);
+    const url = exportStripHtml(p.url || '');
+    return `<article style="margin:0 0 14px 0;padding:0 0 12px 0;border-bottom:1px solid #dfdfdf">
+      ${source ? `<p style="margin:0 0 4px 0;font-weight:600;color:#111">${exportEsc(source)}</p>` : ''}
+      ${production ? `<p style="margin:0 0 6px 0;color:#444">${exportEsc(production)}</p>` : ''}
+      ${visibleQuote.quote ? `<p style="margin:0 0 6px 0;color:#222;line-height:1.65;font-style:italic">"${exportEsc(visibleQuote.quote)}"</p>` : ''}
+      ${visibleQuote.note ? `<p style="margin:0 0 6px 0;color:#666;line-height:1.6;font-size:13px;font-style:italic">${exportEsc(visibleQuote.note)}</p>` : ''}
+      ${url ? `<p style="margin:0;color:#333;line-height:1.6;font-size:14px"><strong>URL:</strong> ${exportEsc(url)}</p>` : ''}
+    </article>`;
+  }).join('');
+  const body = `
+    <h1 style="margin:0 0 16px 0;font-size:28px;line-height:1.25;color:#111">${exportEsc(title)}</h1>
+    ${cards || `<p style="margin:0;color:#444">${exportEsc((ti['press.empty'] || 'No press quotes yet.'))}</p>`}`;
+  openCleanExportWindow(title || 'Reviews', body);
 }
 
 // ── Render Contact ──
