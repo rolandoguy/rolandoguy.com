@@ -4294,7 +4294,9 @@ function openCleanExportWindow(title, bodyHtml, opts) {
   } catch (e) {
     admLog('warn', 'Export Blob URL failed', { key: 'export-blob', err: String(e && e.message) });
   }
-  const w = blobUrl ? window.open(blobUrl, '_blank', 'noopener') : null;
+  /* Do not pass noopener in features: many engines return null even when the tab opened, which triggered
+     a bogus fallback (second window.open → about:blank) and could revoke the blob while the first tab loaded. */
+  const w = blobUrl ? window.open(blobUrl, '_blank') : null;
   if (w && blobUrl) {
     try { w.opener = null; } catch (e) {}
     /* Do not revokeObjectURL immediately — revoking before commit can blank WebKit/Chromium tabs; leak is tiny per export. */
@@ -4302,7 +4304,7 @@ function openCleanExportWindow(title, bodyHtml, opts) {
   }
   if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (e) {} }
   admLog('warn', 'Export blob window failed, using legacy write fallback', { key: 'export-popup' });
-  const w2 = window.open('', '_blank', 'noopener');
+  const w2 = window.open('', '_blank');
   if (!w2) { admLog('warn', 'Export popup blocked by browser', { key: 'export-popup' }); return; }
   try { w2.opener = null; } catch (e) {}
   try {
