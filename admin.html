@@ -842,6 +842,26 @@ textarea.adm-input{resize:vertical;min-height:80px}
   text-decoration: none; transition: all .2s; display: inline-block;
 }
 .epk-dl-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,.05); }
+.epk-dl-btn.is-disabled{
+  color: var(--text-dim);
+  border-color: rgba(212,168,67,.2);
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+.epk-dl-btn.is-disabled:hover{
+  border-color: rgba(212,168,67,.2);
+  color: var(--text-dim);
+  background: transparent;
+}
+.epk-pdf-note{
+  display:none;
+  width:100%;
+  margin-top:2px;
+  font-size:.62rem;
+  line-height:1.4;
+  color:var(--text-faint);
+}
 
 /* Contact info */
 .epk-contact-info { display: flex; flex-direction: column; gap: .5rem; }
@@ -1054,6 +1074,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </section>
 <section id="about">
   <div class="section-inner">
+    <p class="section-tag" data-num="01" data-i18n="nav.bio">Biography</p>
     <div class="about-grid">
       <div class="about-photo-wrap reveal">
         <div class="about-photo">
@@ -1063,7 +1084,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <div class="about-photo-border"></div>
       </div>
       <div class="about-text">
-        <p class="section-tag" data-num="04" data-i18n="nav.bio">Biography</p>
         <h2 class="reveal" id="bioH2"></h2>
         <p class="reveal rd1" id="bioP1"></p>
         <p class="reveal rd2" id="bioP2"></p>
@@ -1103,7 +1123,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </section>
 <section id="programs">
   <div class="section-inner">
-    <p class="section-tag" data-num="02b" data-i18n="programs.sectionTag">Programs &amp; Collaborations</p>
+    <p class="section-tag" data-num="08" data-i18n="programs.sectionTag">Programs &amp; Collaborations</p>
     <div class="programs-header">
       <h2 class="reveal" id="programsTitle"></h2>
       <p class="reveal rd1" id="programsSubtitle"></p>
@@ -1117,7 +1137,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <div class="section-inner">
     <div class="videos-header">
       <div>
-        <p class="section-tag" data-i18n="nav.vid">Videos</p>
+        <p class="section-tag" data-num="03" data-i18n="nav.vid">Videos</p>
         <h2 class="reveal" id="vidH2"></h2>
       </div>
       <a href="https://www.youtube.com/results?search_query=Rolando+Guy+tenor" class="btn-secondary reveal" target="_blank">YouTube</a>
@@ -1139,11 +1159,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </div>
 <section id="photos">
   <div class="section-inner">
+    <p class="section-tag" data-num="04" data-i18n="nav.photos">Photos</p>
     <div class="photos-header">
-      <div>
-        <p class="section-tag" data-i18n="nav.photos">Photos</p>
-        <h2 class="reveal" data-i18n="photos.h2">Studio &amp; <em>On Stage</em></h2>
-      </div>
+      <h2 class="reveal" data-i18n="photos.h2">Studio &amp; <em>On Stage</em></h2>
       <p class="reveal rd1" data-i18n="photos.sub">Portrait and stage photography. Click any image to view full size.</p>
     </div>
     <div class="photo-tabs">
@@ -1169,11 +1187,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <h1 class="print-only-title">Rolando Guy</h1>
       <p class="print-only-subtitle" id="perfPrintSubtitle">Agenda</p>
     </div>
+    <p class="section-tag" data-num="05" data-i18n="nav.cal">Calendar</p>
     <div class="perf-header">
-      <div>
-        <p class="section-tag" data-num="03" data-i18n="nav.cal">Calendar</p>
-        <h2 class="reveal" id="perfH2"></h2>
-      </div>
+      <h2 class="reveal" id="perfH2"></h2>
       <p class="reveal rd1" id="perfIntro"></p>
     </div>
     <div class="perf-list" id="perfList"></div>
@@ -1185,7 +1201,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 </section>
 <section id="press">
   <div class="section-inner">
-    <div class="section-tag" data-num="04" data-i18n="press.tag">Reviews</div>
+    <div class="section-tag" data-num="06" data-i18n="press.tag">Reviews</div>
     <div class="press-grid" id="pressGrid"></div>
   </div>
 </section>
@@ -1195,7 +1211,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 <section id="contact">
   <div class="section-inner">
-    <p class="section-tag" data-num="05" data-i18n="nav.contact">Contact</p>
+    <p class="section-tag" data-num="09" data-i18n="nav.contact">Contact</p>
     <div class="contact-grid">
       <div class="contact-left reveal">
         <h2 id="contactTitle"></h2>
@@ -1225,7 +1241,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <!-- EPK SECTION -->
 <section id="epk">
   <div class="section-inner">
-    <p class="section-tag" data-num="06" data-i18n="epk.tag">Press</p>
+    <p class="section-tag" data-num="07" data-i18n="epk.tag">Press</p>
     <h2 class="reveal" id="epkTitle"></h2>
 
     <div class="epk-grid">
@@ -1255,7 +1271,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
           <div class="epk-dl-label" data-i18n="epk.docs">Documents</div>
           <div class="epk-dl-links" style="margin-top:8px">
             <a id="epkDossierBtn" class="epk-dl-btn" href="#" target="_blank" rel="noopener" data-i18n="epk.downloadDossier">Download dossier</a>
+            <span id="epkDossierSoon" class="epk-pdf-note"></span>
             <a id="epkArtistSheetBtn" class="epk-dl-btn" href="#" target="_blank" rel="noopener" data-i18n="epk.downloadArtistSheet">Download artist sheet</a>
+            <span id="epkArtistSoon" class="epk-pdf-note"></span>
           </div>
         </div>
       </div>
@@ -3350,22 +3368,57 @@ function renderEpk() {
   const artistUrl = resolvePdf('artistSheet');
   const dossierBtn = document.getElementById('epkDossierBtn');
   const artistBtn = document.getElementById('epkArtistSheetBtn');
-  const bindPdfBtn = (btn, url, fallbackName) => {
+  const dossierSoon = document.getElementById('epkDossierSoon');
+  const artistSoon = document.getElementById('epkArtistSoon');
+  const soonByLang = {
+    en: 'Available soon',
+    de: 'Bald verfügbar',
+    es: 'Disponible pronto',
+    it: 'Disponibile a breve',
+    fr: 'Disponible prochainement'
+  };
+  const isValidPdfUrl = (url) => {
+    const u = String(url || '').trim();
+    if (!u) return false;
+    if (/^(#|javascript:|about:blank)$/i.test(u)) return false;
+    if (/placeholder|todo|coming[-_\s]?soon/i.test(u)) return false;
+    // Temporary guard: keep legacy placeholder pack disabled until real files are provided.
+    if (/RolandoGuy_PressKit_EN\.pdf$/i.test(u)) return false;
+    if (/^data:application\/pdf/i.test(u)) return true;
+    if (/^https?:\/\//i.test(u)) return /\.pdf(\?|#|$)/i.test(u) || /\/download/i.test(u);
+    return /\.pdf(\?|#|$)/i.test(u);
+  };
+  const bindPdfBtn = (btn, noteEl, url, fallbackName) => {
     if (!btn) return;
-    if (url) {
-      btn.href = url;
-      btn.setAttribute('download', (url.split('/').pop() || fallbackName));
-      btn.style.opacity = '';
-      btn.style.pointerEvents = '';
+    if (isValidPdfUrl(url)) {
+      const safeUrl = String(url).trim();
+      btn.href = safeUrl;
+      btn.setAttribute('download', (safeUrl.split('/').pop() || fallbackName));
+      btn.setAttribute('target', '_blank');
+      btn.setAttribute('rel', 'noopener');
+      btn.classList.remove('is-disabled');
+      btn.removeAttribute('aria-disabled');
+      btn.removeAttribute('tabindex');
+      if (noteEl) {
+        noteEl.style.display = 'none';
+        noteEl.textContent = '';
+      }
     } else {
       btn.removeAttribute('href');
       btn.removeAttribute('download');
-      btn.style.opacity = '.5';
-      btn.style.pointerEvents = 'none';
+      btn.removeAttribute('target');
+      btn.removeAttribute('rel');
+      btn.classList.add('is-disabled');
+      btn.setAttribute('aria-disabled', 'true');
+      btn.setAttribute('tabindex', '-1');
+      if (noteEl) {
+        noteEl.textContent = soonByLang[lang] || soonByLang.en;
+        noteEl.style.display = 'block';
+      }
     }
   };
-  bindPdfBtn(dossierBtn, dossierUrl, 'Dossier.pdf');
-  bindPdfBtn(artistBtn, artistUrl, 'ArtistSheet.pdf');
+  bindPdfBtn(dossierBtn, dossierSoon, dossierUrl, 'Dossier.pdf');
+  bindPdfBtn(artistBtn, artistSoon, artistUrl, 'ArtistSheet.pdf');
 
   // Copy button label update
   const copyBtn = document.getElementById('epkCopyBtn');
