@@ -1322,6 +1322,22 @@ textarea.adm-input{resize:vertical;min-height:80px}
    </div>
   </div>
   <div id="admContent" style="display:none;flex-direction:column;overflow:hidden">
+   <div id="admFullExportWrap" style="border-bottom:1px solid var(--border);padding:10px 16px;background:rgba(212,168,67,.04)">
+    <div style="font-family:var(--ff-caps);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Full clean export</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-bio" onchange="saveFullExportSectionPrefs()"> Biography</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-repertoire" onchange="saveFullExportSectionPrefs()"> Repertoire</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-programs" onchange="saveFullExportSectionPrefs()"> Programs &amp; Collaborations</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-calendar" onchange="saveFullExportSectionPrefs()"> Calendar / Upcoming engagements</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-press" onchange="saveFullExportSectionPrefs()"> Reviews / Press</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-epk" onchange="saveFullExportSectionPrefs()"> Dossier / EPK</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-contact" onchange="saveFullExportSectionPrefs()"> Contact</label>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" type="button" onclick="copyFullProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy selected sections</button>
+      <button class="adm-btn" type="button" onclick="openFullProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+    </div>
+   </div>
    <div class="adm-tabs">
     <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
     <button class="adm-tab" onclick="admTab('bio')">Biografía</button>
@@ -3197,9 +3213,133 @@ function duplicateProgramCard(idx) {
   admTab('programs');
 }
 
+const FULL_EXPORT_SECTION_STORAGE_KEY = 'rg_export_sections';
+const FULL_EXPORT_SECTION_DEFAULTS = {
+  bio: true,
+  repertoire: false,
+  programs: true,
+  calendar: true,
+  press: false,
+  epk: true,
+  contact: true
+};
+
+function getFullExportSectionPrefs() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(FULL_EXPORT_SECTION_STORAGE_KEY) || 'null'); } catch (e) {}
+  const out = Object.assign({}, FULL_EXPORT_SECTION_DEFAULTS);
+  if (saved && typeof saved === 'object') {
+    Object.keys(out).forEach((k) => {
+      if (typeof saved[k] === 'boolean') out[k] = saved[k];
+    });
+  }
+  return out;
+}
+
+function applyFullExportSectionPrefs() {
+  const prefs = getFullExportSectionPrefs();
+  Object.keys(FULL_EXPORT_SECTION_DEFAULTS).forEach((k) => {
+    const el = document.getElementById('expSel-' + k);
+    if (el) el.checked = !!prefs[k];
+  });
+}
+
+function saveFullExportSectionPrefs() {
+  const prefs = Object.assign({}, FULL_EXPORT_SECTION_DEFAULTS);
+  Object.keys(FULL_EXPORT_SECTION_DEFAULTS).forEach((k) => {
+    const el = document.getElementById('expSel-' + k);
+    if (el) prefs[k] = !!el.checked;
+  });
+  try { localStorage.setItem(FULL_EXPORT_SECTION_STORAGE_KEY, JSON.stringify(prefs)); } catch (e) {}
+}
+
+function getSelectedFullExportSections() {
+  const prefs = getFullExportSectionPrefs();
+  Object.keys(prefs).forEach((k) => {
+    const el = document.getElementById('expSel-' + k);
+    if (el) prefs[k] = !!el.checked;
+  });
+  return prefs;
+}
+
+function buildCalendarPlainText() {
+  const t = Ti[currentLang] || Ti.en;
+  const title = exportStripHtml(t['nav.cal'] || 'Calendar');
+  const perfs = (typeof getPerfs === 'function' ? getPerfs() : []).filter(p => p.status !== 'past');
+  const sortDate = (p) => {
+    if (p.sortDate) return new Date(p.sortDate);
+    const str = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'Jan 2099');
+    const d = new Date(str);
+    return isNaN(d) ? new Date('2099-01-01') : d;
+  };
+  const list = perfs.slice().sort((a, b) => sortDate(a) - sortDate(b));
+  const lines = [title];
+  if (!list.length) return lines.join('\n');
+  list.forEach((p, i) => {
+    const dateTxt = [exportStripHtml(p.day || ''), exportStripHtml(translateMonth(p.month || ''))].filter(Boolean).join(' ');
+    const timeTxt = exportStripHtml(p.time || '');
+    const head = [dateTxt, timeTxt].filter(Boolean).join(' · ');
+    const venue = [exportStripHtml(p.venue || ''), exportStripHtml(p.city || '')].filter(Boolean).join(' · ');
+    const detail = exportStripHtml((p['detail_' + currentLang] || p.detail || ''));
+    lines.push('');
+    lines.push(`${i + 1}. ${exportStripHtml(p.title || '')}`);
+    if (head) lines.push(head);
+    if (venue) lines.push(venue);
+    if (detail) lines.push(detail);
+  });
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function buildSelectedFullProfilePlainText() {
+  const sel = getSelectedFullExportSections();
+  const chunks = [];
+  if (sel.bio) chunks.push(buildBioPlainText());
+  if (sel.repertoire) chunks.push(buildRepertoirePlainText());
+  if (sel.programs) chunks.push(buildProgramsPlainText());
+  if (sel.calendar) chunks.push(buildCalendarPlainText());
+  if (sel.press) chunks.push(buildPressPlainText());
+  if (sel.epk) chunks.push(buildEpkPlainText());
+  if (sel.contact) chunks.push(buildContactPlainText());
+  const clean = chunks.map(s => String(s || '').trim()).filter(Boolean);
+  if (!clean.length) return 'No content available for export.';
+  return clean.join('\n\n────────────────────\n\n').trim();
+}
+
+function buildFullProfilePlainText() {
+  return buildSelectedFullProfilePlainText();
+}
+
+function plainTextSectionToCleanHtml(text) {
+  const lines = String(text || '').split('\n');
+  if (!lines.length) return '';
+  const heading = exportEsc(lines[0] || '');
+  const rest = lines.slice(1).map(l => l.trim());
+  const body = rest.filter(Boolean).map(l => `<p style="margin:0 0 8px 0;color:#222;line-height:1.7">${exportEsc(l)}</p>`).join('');
+  return `<section style="margin:0 0 20px 0;padding:0 0 14px 0;border-bottom:1px solid #e2e2e2"><h2 style="margin:0 0 10px 0;font-size:22px;line-height:1.3;color:#111">${heading}</h2>${body || `<p style="margin:0;color:#444">No content available.</p>`}</section>`;
+}
+
+async function copyFullProfilePlainText() {
+  const text = buildFullProfilePlainText();
+  await copyPlainTextWithFallback(text, 'Selected full profile copied', 'full-profile');
+}
+
+function openFullProfileCleanExport() {
+  const sel = getSelectedFullExportSections();
+  const blocks = [];
+  if (sel.bio) blocks.push(plainTextSectionToCleanHtml(buildBioPlainText()));
+  if (sel.repertoire) blocks.push(plainTextSectionToCleanHtml(buildRepertoirePlainText()));
+  if (sel.programs) blocks.push(plainTextSectionToCleanHtml(buildProgramsPlainText()));
+  if (sel.calendar) blocks.push(plainTextSectionToCleanHtml(buildCalendarPlainText()));
+  if (sel.press) blocks.push(plainTextSectionToCleanHtml(buildPressPlainText()));
+  if (sel.epk) blocks.push(plainTextSectionToCleanHtml(buildEpkPlainText()));
+  if (sel.contact) blocks.push(plainTextSectionToCleanHtml(buildContactPlainText()));
+  const body = blocks.filter(Boolean).join('') || `<h1 style="margin:0 0 12px 0;font-size:28px;line-height:1.25;color:#111">Full clean export</h1><p style="margin:0;color:#333;line-height:1.7">No content available for export.</p>`;
+  openCleanExportWindow('Full clean export', body);
+}
+
 function buildProgramsPlainText() {
   const d = getPrograms();
-  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const stripHtml = (s) => exportStripHtml(s);
   const lines = [];
   const sectionTitle = stripHtml(d.title || 'Programs & Collaborations');
   if (sectionTitle) lines.push(sectionTitle);
@@ -3208,9 +3348,9 @@ function buildProgramsPlainText() {
   lines.push('');
 
   const t = Ti[currentLang] || Ti.en;
-  const lblFormation = t['programs.formation'] || 'Formation';
-  const lblDuration = t['programs.duration'] || 'Duration';
-  const lblIdealFor = t['programs.idealFor'] || 'Ideal for';
+  const lblFormation = stripHtml(t['programs.formation'] || 'Formation');
+  const lblDuration = stripHtml(t['programs.duration'] || 'Duration');
+  const lblIdealFor = stripHtml(t['programs.idealFor'] || 'Ideal for');
   const list = (d.programs || []).filter(p => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   list.forEach((p, i) => {
     lines.push(`${i + 1}. ${stripHtml(p.title || '')}`);
@@ -3247,11 +3387,11 @@ async function copyProgramsPlainText() {
 function openProgramsCleanExport() {
   const d = getPrograms();
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const stripHtml = (s) => exportStripHtml(s);
   const t = Ti[currentLang] || Ti.en;
-  const lblFormation = t['programs.formation'] || 'Formation';
-  const lblDuration = t['programs.duration'] || 'Duration';
-  const lblIdealFor = t['programs.idealFor'] || 'Ideal for';
+  const lblFormation = stripHtml(t['programs.formation'] || 'Formation');
+  const lblDuration = stripHtml(t['programs.duration'] || 'Duration');
+  const lblIdealFor = stripHtml(t['programs.idealFor'] || 'Ideal for');
   const list = (d.programs || []).filter(p => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const cards = list.map((p, i) => {
     const forms = Array.isArray(p.formations) ? p.formations : [];
@@ -3276,7 +3416,7 @@ function openProgramsCleanExport() {
 
 function buildBioPlainText() {
   const d = get('bio') || {};
-  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const stripHtml = (s) => exportStripHtml(s);
   const lines = [];
   const title = stripHtml(d.h2 || (Ti[currentLang] || Ti.en)['nav.bio'] || 'Biography');
   if (title) lines.push(title);
@@ -3312,7 +3452,7 @@ async function copyBioPlainText() {
 function openBioCleanExport() {
   const d = get('bio') || {};
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const stripHtml = (s) => exportStripHtml(s);
   const title = stripHtml(d.h2 || (Ti[currentLang] || Ti.en)['nav.bio'] || 'Biography');
   const p1 = stripHtml(d.p1 || '');
   const p2 = stripHtml(d.p2 || '');
@@ -3331,7 +3471,7 @@ function openBioCleanExport() {
 function buildEpkPlainText() {
   const lang = currentLang || 'en';
   const ti = Ti[lang] || Ti.en;
-  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const stripHtml = (s) => exportStripHtml(s);
   const lines = [];
   const title = stripHtml(ti['epk.title'] || 'Dossier');
   if (title) lines.push(title);
@@ -3347,10 +3487,10 @@ function buildEpkPlainText() {
   if (b50 || b150 || p1 || p2 || p3 || p4) {
     lines.push('');
     lines.push('Bios');
-    if (b50) lines.push(`- ${ti['epk.bio50lbl'] || '50-word Bio'}: ${b50}`);
-    if (b150) lines.push(`- ${ti['epk.bio150lbl'] || '150-word Bio'}: ${b150}`);
+    if (b50) lines.push(`- ${stripHtml(ti['epk.bio50lbl'] || '50-word Bio')}: ${b50}`);
+    if (b150) lines.push(`- ${stripHtml(ti['epk.bio150lbl'] || '150-word Bio')}: ${b150}`);
     const fullBio = [p1, p2, p3, p4].filter(Boolean).join(' ');
-    if (fullBio) lines.push(`- ${ti['epk.bio300lbl'] || 'Full Biography'}: ${fullBio}`);
+    if (fullBio) lines.push(`- ${stripHtml(ti['epk.bio300lbl'] || 'Full Biography')}: ${fullBio}`);
   }
 
   const press = (typeof getPress === 'function' ? getPress() : [])
@@ -3406,8 +3546,8 @@ function buildEpkPlainText() {
   if (dossierUrl || artistUrl) {
     lines.push('');
     lines.push('Public documents');
-    if (dossierUrl) lines.push(`- ${ti['epk.downloadDossier'] || 'Download dossier'}: ${dossierUrl}`);
-    if (artistUrl) lines.push(`- ${ti['epk.downloadArtistSheet'] || 'Download artist sheet'}: ${artistUrl}`);
+    if (dossierUrl) lines.push(`- ${stripHtml(ti['epk.downloadDossier'] || 'Download dossier')}: ${dossierUrl}`);
+    if (artistUrl) lines.push(`- ${stripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet')}: ${artistUrl}`);
   }
 
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -3437,7 +3577,7 @@ function openEpkCleanExport() {
   const lang = currentLang || 'en';
   const ti = Ti[lang] || Ti.en;
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const stripHtml = (s) => exportStripHtml(s);
   const title = stripHtml(ti['epk.title'] || 'Dossier');
   const base = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || {};
   const stored = (load('rg_epk_bios') || {})[lang] || {};
@@ -3480,17 +3620,24 @@ function openEpkCleanExport() {
   const artistUrl = entryUrl('artistSheet');
   const body = `
     <h1 style="margin:0 0 14px 0;font-size:28px;line-height:1.25;color:#111">${esc(title)}</h1>
-    ${b50 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(ti['epk.bio50lbl'] || '50-word Bio')}:</strong> ${esc(b50)}</p>` : ''}
-    ${b150 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(ti['epk.bio150lbl'] || '150-word Bio')}:</strong> ${esc(b150)}</p>` : ''}
-    ${fullBio ? `<p style="margin:0 0 16px 0;color:#222;line-height:1.75"><strong>${esc(ti['epk.bio300lbl'] || 'Full Biography')}:</strong> ${esc(fullBio)}</p>` : ''}
+    ${b50 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(stripHtml(ti['epk.bio50lbl'] || '50-word Bio'))}:</strong> ${esc(b50)}</p>` : ''}
+    ${b150 ? `<p style="margin:0 0 8px 0;color:#222;line-height:1.7"><strong>${esc(stripHtml(ti['epk.bio150lbl'] || '150-word Bio'))}:</strong> ${esc(b150)}</p>` : ''}
+    ${fullBio ? `<p style="margin:0 0 16px 0;color:#222;line-height:1.75"><strong>${esc(stripHtml(ti['epk.bio300lbl'] || 'Full Biography'))}:</strong> ${esc(fullBio)}</p>` : ''}
     ${htmlPress ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">Selected reviews</h2>${htmlPress}${translatedNote ? `<p style="margin:8px 0 0 0;color:#666;line-height:1.6;font-size:13px;font-style:italic">${esc(stripHtml(translatedNote))}</p>` : ''}</section>` : ''}
-    ${htmlPhotos ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">${esc(ti['epk.photos'] || 'High-Res Photos')}</h2><ul style="margin:0;padding-left:18px;color:#222;line-height:1.6">${htmlPhotos}</ul></section>` : ''}
-    ${(dossierUrl || artistUrl) ? `<section style="margin:12px 0 0 0"><h2 style="margin:0 0 8px 0;font-size:18px">Documents</h2>${dossierUrl ? `<p style="margin:0 0 6px 0"><strong>${esc(ti['epk.downloadDossier'] || 'Download dossier')}:</strong> ${esc(dossierUrl)}</p>` : ''}${artistUrl ? `<p style="margin:0"><strong>${esc(ti['epk.downloadArtistSheet'] || 'Download artist sheet')}:</strong> ${esc(artistUrl)}</p>` : ''}</section>` : ''}`;
+    ${htmlPhotos ? `<section style="margin:12px 0 16px 0"><h2 style="margin:0 0 8px 0;font-size:18px">${esc(stripHtml(ti['epk.photos'] || 'High-Res Photos'))}</h2><ul style="margin:0;padding-left:18px;color:#222;line-height:1.6">${htmlPhotos}</ul></section>` : ''}
+    ${(dossierUrl || artistUrl) ? `<section style="margin:12px 0 0 0"><h2 style="margin:0 0 8px 0;font-size:18px">Documents</h2>${dossierUrl ? `<p style="margin:0 0 6px 0"><strong>${esc(stripHtml(ti['epk.downloadDossier'] || 'Download dossier'))}:</strong> ${esc(dossierUrl)}</p>` : ''}${artistUrl ? `<p style="margin:0"><strong>${esc(stripHtml(ti['epk.downloadArtistSheet'] || 'Download artist sheet'))}:</strong> ${esc(artistUrl)}</p>` : ''}</section>` : ''}`;
   openCleanExportWindow(title || 'Dossier', body);
 }
 
+function exportDecodeHtmlEntities(s) {
+  const el = document.createElement('textarea');
+  el.innerHTML = String(s || '');
+  return el.value;
+}
+
 function exportStripHtml(s) {
-  return String(s || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const decoded = exportDecodeHtmlEntities(s);
+  return String(decoded).replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
 
 function exportEsc(s) {
@@ -3604,11 +3751,11 @@ function buildRepertoirePlainText() {
   const lines = [];
   const title = exportStripHtml(d.h2 || ti['nav.rep'] || 'Repertoire');
   const categories = [
-    { key: 'opera', label: ti['rep.tabOpera'] || 'Opera Roles', includeRole: true, includeStatus: true },
-    { key: 'arias', label: ti['rep.tabArias'] || 'Opera Arias', includeRole: true, includeStatus: false },
-    { key: 'operetta', label: ti['rep.tabOperetta'] || 'Operetta', includeRole: false, includeStatus: false },
-    { key: 'lied', label: ti['rep.tabLied'] || 'Lied & Art Song', includeRole: false, includeStatus: false },
-    { key: 'tango', label: ti['rep.tabTango'] || 'Tango', includeRole: false, includeStatus: false }
+    { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), includeRole: true, includeStatus: true },
+    { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), includeRole: true, includeStatus: false },
+    { key: 'operetta', label: exportStripHtml(ti['rep.tabOperetta'] || 'Operetta'), includeRole: false, includeStatus: false },
+    { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), includeRole: false, includeStatus: false },
+    { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), includeRole: false, includeStatus: false }
   ];
   const statusLabel = (s) => {
     const v = String(s || '').trim().toLowerCase();
@@ -3659,11 +3806,11 @@ function openRepertoireCleanExport() {
   const cards = Array.isArray(d.cards) ? d.cards : [];
   const title = exportStripHtml(d.h2 || ti['nav.rep'] || 'Repertoire');
   const categories = [
-    { key: 'opera', label: ti['rep.tabOpera'] || 'Opera Roles', includeRole: true, includeStatus: true },
-    { key: 'arias', label: ti['rep.tabArias'] || 'Opera Arias', includeRole: true, includeStatus: false },
-    { key: 'operetta', label: ti['rep.tabOperetta'] || 'Operetta', includeRole: false, includeStatus: false },
-    { key: 'lied', label: ti['rep.tabLied'] || 'Lied & Art Song', includeRole: false, includeStatus: false },
-    { key: 'tango', label: ti['rep.tabTango'] || 'Tango', includeRole: false, includeStatus: false }
+    { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), includeRole: true, includeStatus: true },
+    { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), includeRole: true, includeStatus: false },
+    { key: 'operetta', label: exportStripHtml(ti['rep.tabOperetta'] || 'Operetta'), includeRole: false, includeStatus: false },
+    { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), includeRole: false, includeStatus: false },
+    { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), includeRole: false, includeStatus: false }
   ];
   const statusLabel = (s) => {
     const v = String(s || '').trim().toLowerCase();
@@ -3698,9 +3845,9 @@ function openRepertoireCleanExport() {
       <table style="width:100%;border-collapse:collapse;font-size:15px;line-height:1.55">
         <thead>
           <tr>
-            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(ti['rep.thWork'] || 'Work')}</th>
-            ${cat.includeRole ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(ti['rep.thRole'] || 'Role')}</th>` : ''}
-            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(ti['rep.thComposer'] || 'Composer')}</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(exportStripHtml(ti['rep.thWork'] || 'Work'))}</th>
+            ${cat.includeRole ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(exportStripHtml(ti['rep.thRole'] || 'Role'))}</th>` : ''}
+            <th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">${exportEsc(exportStripHtml(ti['rep.thComposer'] || 'Composer'))}</th>
             ${cat.includeStatus ? `<th style="text-align:left;padding:8px 10px;border-bottom:2px solid #cfcfcf;color:#111">Status</th>` : ''}
           </tr>
         </thead>
@@ -5114,6 +5261,7 @@ function admSetLang(lang){
 function openAdmin(){
   document.getElementById('adm').classList.add('open');
   document.body.style.overflow = 'hidden';
+  applyFullExportSectionPrefs();
   // UI gating is handled by Firebase auth state; keep the lock visible by default.
   if(!admUnlocked){
     const lock = document.getElementById('admLockWrap');
