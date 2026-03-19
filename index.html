@@ -3243,8 +3243,7 @@ function renderContact() {
   }
   const wb = document.getElementById('contactWebBtn');
   if (wb) {
-    wb.textContent = d.webBtn || 'Official Website';
-    wb.style.display = (d.webBtn && d.webBtn.trim()) ? '' : 'none';
+    wb.style.display = 'none';
   }
   const perfH2 = document.getElementById('perfH2');
   const perfIntro = document.getElementById('perfIntro');
@@ -3451,12 +3450,53 @@ const DEFAULT_PRESS = [
   }
 ];
 
-function getPress(){ return load('rg_press') || DEFAULT_PRESS; }
+function getPress(){
+  const raw = load('rg_press') || DEFAULT_PRESS;
+  const arr = Array.isArray(raw) ? raw : [];
+  const byId = Object.fromEntries((DEFAULT_PRESS || []).map(p => [String(p.id), p]));
+  return arr.map((p, idx) => {
+    const base = byId[String(p && p.id)] || {};
+    const quote = (typeof p?.quote === 'string' && p.quote.trim()) ? p.quote.trim() : ((typeof base.quote === 'string' && base.quote.trim()) ? base.quote.trim() : '');
+    const qi = Object.assign({}, (base.quotes_i18n && typeof base.quotes_i18n === 'object') ? base.quotes_i18n : {}, (p?.quotes_i18n && typeof p.quotes_i18n === 'object') ? p.quotes_i18n : {});
+    if (!qi.de && quote) qi.de = quote;
+    const pi = Object.assign({}, (base.production_i18n && typeof base.production_i18n === 'object') ? base.production_i18n : {}, (p?.production_i18n && typeof p.production_i18n === 'object') ? p.production_i18n : {});
+    const production = (typeof p?.production === 'string' && p.production.trim()) ? p.production.trim() : ((typeof pi.en === 'string' && pi.en.trim()) ? pi.en.trim() : ((typeof base.production === 'string' && base.production.trim()) ? base.production.trim() : ''));
+    if (!pi.en && production) pi.en = production;
+    return Object.assign({}, base, p, {
+      quote,
+      quotes_i18n: qi,
+      production,
+      production_i18n: pi,
+      source: (typeof p?.source === 'string' && p.source.trim()) ? p.source.trim() : (base.source || ''),
+      url: (typeof p?.url === 'string') ? p.url.trim() : (base.url || ''),
+      visible: p?.visible !== false,
+      order: Number.isFinite(Number(p?.order)) ? Number(p.order) : idx
+    });
+  });
+}
+const DEFAULT_PRESS_META = {
+  en: { translatedNote: 'Translated from the original German review.' },
+  de: { translatedNote: '' },
+  es: { translatedNote: 'Traducción de la reseña original en alemán.' },
+  it: { translatedNote: 'Traduzione dalla recensione originale in tedesco.' },
+  fr: { translatedNote: "Traduction de la critique originale en allemand." }
+};
+function getPressMeta(){
+  const raw = load('rg_press_meta');
+  const out = JSON.parse(JSON.stringify(DEFAULT_PRESS_META));
+  if (raw && typeof raw === 'object') {
+    ['en','de','es','it','fr'].forEach(l => {
+      const note = raw[l] && typeof raw[l].translatedNote === 'string' ? raw[l].translatedNote : '';
+      if (note || note === '') out[l].translatedNote = note;
+    });
+  }
+  return out;
+}
 
 function renderPress(){
   const el = document.getElementById('pressGrid');
   if(!el) return;
-  const items = getPress();
+  const items = getPress().filter(p => p.visible !== false).sort((a,b)=>(a.order||0)-(b.order||0));
   const defaultById = Object.fromEntries((DEFAULT_PRESS || []).map(p => [String(p.id), p]));
   const lang = currentLang || 'en';
   const pickLang = (obj, baseKey) => {
@@ -3472,6 +3512,8 @@ function renderPress(){
     const baseVal = obj[baseKey];
     return (typeof baseVal === 'string') ? baseVal : '';
   };
+  const pressMeta = getPressMeta();
+  const translatedNote = (((pressMeta[lang]||{}).translatedNote)||'').trim();
   const ensureProdI18n = (p) => {
     const fallback = defaultById[String(p && p.id)] || {};
     const base = (p && typeof p.production === 'string' && p.production.trim()) ? p.production : (fallback.production || '');
@@ -3492,7 +3534,23 @@ function renderPress(){
   el.innerHTML = items.map(p => `
     <div class="press-card">
       <div class="press-source">${p.source}</div>
-      <div class="press-quote">${(typeof p.quote === 'string' && p.quote.trim()) ? p.quote : pickLang(p, 'quote')}</div>
+      <div class="press-quote">${(() => {
+        const original = (typeof p.quote === 'string' ? p.quote.trim() : '');
+        const qmap = (p && p.quotes_i18n && typeof p.quotes_i18n === 'object') ? p.quotes_i18n : {};
+        let shown = original;
+        let usedTranslation = false;
+        if (lang !== 'de') {
+          const tQuote = (typeof qmap[lang] === 'string' && qmap[lang].trim())
+            ? qmap[lang].trim()
+            : ((typeof qmap.en === 'string' && qmap.en.trim()) ? qmap.en.trim() : '');
+          if (tQuote) {
+            shown = tQuote;
+            usedTranslation = !!original && tQuote !== original;
+          }
+        }
+        if (!shown) shown = pickLang(p, 'quote') || '';
+        return shown + ((lang !== 'de' && usedTranslation && translatedNote) ? `<div style="margin-top:8px;font-size:.66rem;color:var(--text-faint);line-height:1.5;font-style:italic">${translatedNote}</div>` : '');
+      })()}</div>
       <div class="press-production">${pickLang(Object.assign({}, p, { production_i18n: ensureProdI18n(p) }), 'production')}</div>
       ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${((Ti[lang]&&Ti[lang]['press.readMore'])||(Ti.en&&Ti.en['press.readMore'])||'Read article')} ↗</a>` : ''}
     </div>`).join('');
@@ -3800,6 +3858,7 @@ function setLang(lang){
   try{ if(typeof renderContact==='function') renderContact(); }catch(e){}
   try{ if(typeof renderEpk==='function') renderEpk(); }catch(e){}
   try{ if(typeof updatePressKitLink==='function') updatePressKitLink(); }catch(e){}
+  try{ if(typeof applyEditorialTexts==='function') applyEditorialTexts(); }catch(e){}
 
   const ind = document.getElementById('admLangInd');
   if(ind) ind.textContent = lang.toUpperCase();
@@ -3810,6 +3869,19 @@ function setLang(lang){
     const mb=document.getElementById('mob-btn-'+l);
     if(mb) mb.classList.toggle('active',l===lang);
   });
+}
+
+function getEditorial(){
+  const raw = load('rg_editorial_' + currentLang) || {};
+  return {
+    repProgramsLink: (typeof raw.repProgramsLink === 'string' && raw.repProgramsLink.trim()) ? raw.repProgramsLink.trim() : ((Ti[currentLang]||Ti.en)['rep.programsLink'] || ''),
+    epkProgramsLink: (typeof raw.epkProgramsLink === 'string' && raw.epkProgramsLink.trim()) ? raw.epkProgramsLink.trim() : ((Ti[currentLang]||Ti.en)['epk.programsLink'] || '')
+  };
+}
+function applyEditorialTexts(){
+  const ed = getEditorial();
+  document.querySelectorAll('[data-i18n="rep.programsLink"]').forEach(el => { el.textContent = ed.repProgramsLink; });
+  document.querySelectorAll('[data-i18n="epk.programsLink"]').forEach(el => { el.textContent = ed.epkProgramsLink; });
 }
 
 
@@ -4442,6 +4514,9 @@ function admPopulate(name){
   }
   else if(name==='press'){
     admRenderPressList();
+    const pm = getPressMeta();
+    const noteEl = document.getElementById('f-pressTranslatedNote');
+    if (noteEl) noteEl.value = ((pm[currentLang]||{}).translatedNote || '');
   }
   else if(name==='contact'){
     const d=get('contact');
@@ -4450,7 +4525,7 @@ function admPopulate(name){
     document.getElementById('f-contactQuote').value = d.quote||'';
     document.getElementById('f-contactEmail').value = d.email||'';
     document.getElementById('f-contactEmailBtn').value = d.emailBtn||'';
-    document.getElementById('f-contactWebBtn').value = d.webBtn||'';
+    const w = document.getElementById('f-contactWebBtn'); if (w) w.value = d.webBtn||'';
   }
   if(name==='epk'){
     // Load bio fields for default lang (en)
@@ -4526,7 +4601,16 @@ function saveSection(name){
       });
     }
     save('rg_programs_' + currentLang, { title, subtitle, intro, closingNote, programs });
+    const repLinkEl = document.getElementById('f-repProgramsLink');
+    const epkLinkEl = document.getElementById('f-epkProgramsLink');
+    if (repLinkEl || epkLinkEl) {
+      save('rg_editorial_' + currentLang, {
+        repProgramsLink: ((repLinkEl||{}).value || '').trim(),
+        epkProgramsLink: ((epkLinkEl||{}).value || '').trim()
+      });
+    }
     if (typeof renderPrograms === 'function') renderPrograms();
+    if (typeof applyEditorialTexts === 'function') applyEditorialTexts();
   }
   else if(name==='vid'){
     const d=getVid();
@@ -4534,7 +4618,7 @@ function saveSection(name){
     save('rg_vid',d); renderVideos();
   }
   else if(name==='contact'){
-    data={title:document.getElementById('f-contactTitle').value,sub:document.getElementById('f-contactSub').value,quote:document.getElementById('f-contactQuote').value,email:document.getElementById('f-contactEmail').value,emailBtn:document.getElementById('f-contactEmailBtn').value,webBtn:document.getElementById('f-contactWebBtn').value};
+    data={title:document.getElementById('f-contactTitle').value,sub:document.getElementById('f-contactSub').value,quote:document.getElementById('f-contactQuote').value,email:document.getElementById('f-contactEmail').value,emailBtn:document.getElementById('f-contactEmailBtn').value};
     save('contact_'+currentLang,data); renderContact();
   }
   const fb=document.getElementById('fb-'+name);

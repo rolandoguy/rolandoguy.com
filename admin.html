@@ -1409,6 +1409,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-programsSubtitle"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro (párrafo)</label><textarea class="adm-input" id="f-programsIntro" rows="3"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Nota final (closing note)</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link contextual desde Repertoire</label><input class="adm-input" id="f-repProgramsLink"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link contextual desde Dossier</label><input class="adm-input" id="f-epkProgramsLink"></div></div>
      <div class="adm-section">Programas (bloques)</div>
      <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Ordená con arrastre. Solo los publicados se muestran en la web.</p>
      <div id="programCards"></div>
@@ -1551,6 +1553,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <!-- PRESS -->
     <div class="adm-panel" id="admPanel-press">
       <div class="adm-section">Reseñas</div>
+     <div class="adm-grid full" style="margin-bottom:12px"><div class="adm-col">
+       <label class="adm-label">Nota de traducción (idioma activo)</label>
+       <textarea class="adm-input" id="f-pressTranslatedNote" rows="2" placeholder="Translated from the original German review."></textarea>
+       <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+         <button class="adm-btn adm-btn-save" onclick="savePressMeta()">Guardar nota</button>
+         <div class="adm-feedback" id="fb-pressMeta" style="opacity:0;transition:opacity .3s">¡Guardado!</div>
+       </div>
+     </div></div>
      <div id="pressAdmList"></div>
      <div class="adm-section" style="margin-top:24px">Agregar nueva cita</div>
      <div class="adm-grid full"><div class="adm-col">
@@ -1579,7 +1589,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="adm-col"><label class="adm-label">Email</label><input class="adm-input" id="f-contactEmail" placeholder="rolandoguy@gmail.com"></div>
       <div class="adm-col"><label class="adm-label">Texto botón email</label><input class="adm-input" id="f-contactEmailBtn"></div>
      </div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto botón website</label><input class="adm-input" id="f-contactWebBtn"></div></div>
+    <div class="adm-grid full" style="display:none"><div class="adm-col"><label class="adm-label">Texto botón website</label><input class="adm-input" id="f-contactWebBtn"></div></div>
      <button class="adm-btn adm-btn-save" onclick="saveSection('contact')">Guardar Contacto</button>
      <div class="adm-feedback" id="fb-contact">¡Guardado!</div>
     </div>
@@ -3136,8 +3146,7 @@ function renderContact() {
   // Botón website dinámico
   const wb = document.getElementById('contactWebBtn');
   if (wb) {
-    wb.textContent = d.webBtn || 'Official Website';
-    wb.style.display = (d.webBtn && d.webBtn.trim()) ? '' : 'none';
+    wb.style.display = 'none';
   }
 
   document.getElementById('perfH2').innerHTML = get('perf').h2;
@@ -3344,12 +3353,63 @@ const DEFAULT_PRESS = [
   }
 ];
 
-function getPress(){ return load('rg_press') || DEFAULT_PRESS; }
+function getPress(){
+  const raw = load('rg_press') || DEFAULT_PRESS;
+  const arr = Array.isArray(raw) ? raw : [];
+  const byId = Object.fromEntries((DEFAULT_PRESS || []).map(p => [String(p.id), p]));
+  return arr.map((p, idx) => {
+    const base = byId[String(p && p.id)] || {};
+    const quote = (typeof p?.quote === 'string' && p.quote.trim()) ? p.quote.trim() : ((typeof base.quote === 'string' && base.quote.trim()) ? base.quote.trim() : '');
+    const qi = Object.assign({}, (base.quotes_i18n && typeof base.quotes_i18n === 'object') ? base.quotes_i18n : {}, (p?.quotes_i18n && typeof p.quotes_i18n === 'object') ? p.quotes_i18n : {});
+    if (!qi.de && quote) qi.de = quote;
+    const pi = Object.assign({}, (base.production_i18n && typeof base.production_i18n === 'object') ? base.production_i18n : {}, (p?.production_i18n && typeof p.production_i18n === 'object') ? p.production_i18n : {});
+    const production = (typeof p?.production === 'string' && p.production.trim()) ? p.production.trim() : ((typeof pi.en === 'string' && pi.en.trim()) ? pi.en.trim() : ((typeof base.production === 'string' && base.production.trim()) ? base.production.trim() : ''));
+    if (!pi.en && production) pi.en = production;
+    return Object.assign({}, base, p, {
+      quote,
+      quotes_i18n: qi,
+      production,
+      production_i18n: pi,
+      source: (typeof p?.source === 'string' && p.source.trim()) ? p.source.trim() : (base.source || ''),
+      url: (typeof p?.url === 'string') ? p.url.trim() : (base.url || ''),
+      visible: p?.visible !== false,
+      order: Number.isFinite(Number(p?.order)) ? Number(p.order) : idx
+    });
+  });
+}
+const DEFAULT_PRESS_META = {
+  en: { translatedNote: 'Translated from the original German review.' },
+  de: { translatedNote: '' },
+  es: { translatedNote: 'Traducción de la reseña original en alemán.' },
+  it: { translatedNote: 'Traduzione dalla recensione originale in tedesco.' },
+  fr: { translatedNote: "Traduction de la critique originale en allemand." }
+};
+function getPressMeta(){
+  const raw = load('rg_press_meta');
+  const out = JSON.parse(JSON.stringify(DEFAULT_PRESS_META));
+  if (raw && typeof raw === 'object') {
+    ['en','de','es','it','fr'].forEach(l => {
+      const note = raw[l] && typeof raw[l].translatedNote === 'string' ? raw[l].translatedNote : '';
+      if (note || note === '') out[l].translatedNote = note;
+    });
+  }
+  return out;
+}
+function savePressMeta(){
+  const lang = currentLang || 'en';
+  const meta = getPressMeta();
+  if (!meta[lang]) meta[lang] = { translatedNote: '' };
+  meta[lang].translatedNote = ((document.getElementById('f-pressTranslatedNote')||{}).value || '').trim();
+  save('rg_press_meta', meta);
+  renderPress();
+  const fb = document.getElementById('fb-pressMeta');
+  if (fb) { fb.style.opacity = '1'; setTimeout(()=>{ fb.style.opacity = '0'; }, 1600); }
+}
 
 function renderPress(){
   const el = document.getElementById('pressGrid');
   if(!el) return;
-  const items = getPress();
+  const items = getPress().filter(p => p.visible !== false).sort((a,b)=>(a.order||0)-(b.order||0));
   const defaultById = Object.fromEntries((DEFAULT_PRESS || []).map(p => [String(p.id), p]));
   const lang = currentLang || 'en';
   const pickLang = (obj, baseKey) => {
@@ -3365,6 +3425,8 @@ function renderPress(){
     const baseVal = obj[baseKey];
     return (typeof baseVal === 'string') ? baseVal : '';
   };
+  const pressMeta = getPressMeta();
+  const translatedNote = (((pressMeta[lang]||{}).translatedNote)||'').trim();
   const ensureProdI18n = (p) => {
     const fallback = defaultById[String(p && p.id)] || {};
     const base = (p && typeof p.production === 'string' && p.production.trim()) ? p.production : (fallback.production || '');
@@ -3385,7 +3447,23 @@ function renderPress(){
   el.innerHTML = items.map(p => `
     <div class="press-card">
       <div class="press-source">${p.source}</div>
-      <div class="press-quote">${(typeof p.quote === 'string' && p.quote.trim()) ? p.quote : pickLang(p, 'quote')}</div>
+      <div class="press-quote">${(() => {
+        const original = (typeof p.quote === 'string' ? p.quote.trim() : '');
+        const qmap = (p && p.quotes_i18n && typeof p.quotes_i18n === 'object') ? p.quotes_i18n : {};
+        let shown = original;
+        let usedTranslation = false;
+        if (lang !== 'de') {
+          const tQuote = (typeof qmap[lang] === 'string' && qmap[lang].trim())
+            ? qmap[lang].trim()
+            : ((typeof qmap.en === 'string' && qmap.en.trim()) ? qmap.en.trim() : '');
+          if (tQuote) {
+            shown = tQuote;
+            usedTranslation = !!original && tQuote !== original;
+          }
+        }
+        if (!shown) shown = pickLang(p, 'quote') || '';
+        return shown + ((lang !== 'de' && usedTranslation && translatedNote) ? `<div style="margin-top:8px;font-size:.66rem;color:var(--text-faint);line-height:1.5;font-style:italic">${translatedNote}</div>` : '');
+      })()}</div>
       <div class="press-production">${pickLang(Object.assign({}, p, { production_i18n: ensureProdI18n(p) }), 'production')}</div>
       ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${((Ti[lang]&&Ti[lang]['press.readMore'])||(Ti.en&&Ti.en['press.readMore'])||'Read article')} ↗</a>` : ''}
     </div>`).join('');
@@ -3624,6 +3702,7 @@ function setLang(lang){
   try{ if(typeof renderContact==='function') renderContact(); }catch(e){}
   try{ if(typeof renderEpk==='function') renderEpk(); }catch(e){}
   try{ if(typeof updatePressKitLink==='function') updatePressKitLink(); }catch(e){}
+  try{ if(typeof applyEditorialTexts==='function') applyEditorialTexts(); }catch(e){}
 
   const ind = document.getElementById('admLangInd');
   if(ind) ind.textContent = lang.toUpperCase();
@@ -3634,6 +3713,19 @@ function setLang(lang){
     const mb=document.getElementById('mob-btn-'+l);
     if(mb) mb.classList.toggle('active',l===lang);
   });
+}
+
+function getEditorial(){
+  const raw = load('rg_editorial_' + currentLang) || {};
+  return {
+    repProgramsLink: (typeof raw.repProgramsLink === 'string' && raw.repProgramsLink.trim()) ? raw.repProgramsLink.trim() : ((Ti[currentLang]||Ti.en)['rep.programsLink'] || ''),
+    epkProgramsLink: (typeof raw.epkProgramsLink === 'string' && raw.epkProgramsLink.trim()) ? raw.epkProgramsLink.trim() : ((Ti[currentLang]||Ti.en)['epk.programsLink'] || '')
+  };
+}
+function applyEditorialTexts(){
+  const ed = getEditorial();
+  document.querySelectorAll('[data-i18n="rep.programsLink"]').forEach(el => { el.textContent = ed.repProgramsLink; });
+  document.querySelectorAll('[data-i18n="epk.programsLink"]').forEach(el => { el.textContent = ed.epkProgramsLink; });
 }
 
 
@@ -3647,14 +3739,24 @@ function savePressEdit(id){
   const idx=items.findIndex(p=>p.id===id);
   if(idx<0)return;
   const quote=(document.getElementById('pe-pquote-'+id)||{}).value||items[idx].quote;
+  const qi18n = {};
+  const pi18n = {};
+  ['en','de','es','it','fr'].forEach(l=>{
+    qi18n[l] = ((document.getElementById('pe-pquote-'+l+'-'+id)||{}).value || (items[idx].quotes_i18n||{})[l] || '').trim();
+    pi18n[l] = ((document.getElementById('pe-pprod-'+l+'-'+id)||{}).value || (items[idx].production_i18n||{})[l] || '').trim();
+  });
   items[idx]={...items[idx],
-    quote,
+    quote: String(quote||'').trim(),
+    quotes_i18n: qi18n,
     source:(document.getElementById('pe-psource-'+id)||{}).value||items[idx].source,
     production:(document.getElementById('pe-pprod-'+id)||{}).value||items[idx].production,
-    url:(document.getElementById('pe-purl-'+id)||{}).value||''
+    production_i18n: pi18n,
+    url:(document.getElementById('pe-purl-'+id)||{}).value||'',
+    visible: !!((document.getElementById('pe-pvisible-'+id)||{}).checked),
+    order: Number((document.getElementById('pe-porder-'+id)||{}).value || 0) || 0
   };
-  if(!items[idx].quotes_i18n)items[idx].quotes_i18n={};
-  ['en','de','es','it','fr'].forEach(l=>{if(!items[idx].quotes_i18n[l]||items[idx].quotes_i18n[l]===items[idx].quote)items[idx].quotes_i18n[l]=quote;});
+  if(!items[idx].quotes_i18n.de) items[idx].quotes_i18n.de = items[idx].quote;
+  if(!items[idx].production_i18n.en) items[idx].production_i18n.en = items[idx].production;
   save('rg_press',items);renderPress();admRenderPressList();
   const fb=document.getElementById('fb-pressedit-'+id);
   if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);}
@@ -3673,14 +3775,14 @@ async function autoTranslatePressEdit(id, btnEl){
 function admRenderPressList(){
   const el=document.getElementById('pressAdmList');
   if(!el) return;
-  const items=getPress();
+  const items=getPress().sort((a,b)=>(a.order||0)-(b.order||0));
   if(!items.length){ el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No hay citas aún.</div>'; return; }
   el.innerHTML=items.map(p=>`
     <div class="adm-row" style="flex-direction:column;align-items:stretch;gap:0">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <div class="adm-row-info" style="cursor:pointer" onclick="togglePressEdit(${p.id})">
           <div class="adm-row-title" style="font-style:italic">"${p.quote.substring(0,80)}${p.quote.length>80?'…':''}"</div>
-          <div class="adm-row-meta">${p.source} · ${p.production}</div>
+          <div class="adm-row-meta">${p.source} · ${p.production}${p.visible===false?' · oculta':''}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="adm-btn-sm" onclick="togglePressEdit(${p.id})" style="background:rgba(212,168,67,.12);border-color:var(--gold-dim);color:var(--gold)">Editar</button>
@@ -3689,9 +3791,27 @@ function admRenderPressList(){
       </div>
       <div id="pressedit-${p.id}" style="display:none;padding:14px 0 6px;margin-top:10px;border-top:1px solid var(--border)">
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><textarea class="adm-input" id="pe-pquote-${p.id}" rows="3">${p.quote}</textarea></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita por idioma (EN / DE / ES / IT / FR)</label>
+          <input class="adm-input" id="pe-pquote-en-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.en)||''}" style="margin-bottom:6px" placeholder="EN">
+          <input class="adm-input" id="pe-pquote-de-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.de)||''}" style="margin-bottom:6px" placeholder="DE">
+          <input class="adm-input" id="pe-pquote-es-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.es)||''}" style="margin-bottom:6px" placeholder="ES">
+          <input class="adm-input" id="pe-pquote-it-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.it)||''}" style="margin-bottom:6px" placeholder="IT">
+          <input class="adm-input" id="pe-pquote-fr-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.fr)||''}" placeholder="FR">
+        </div></div>
         <div class="adm-grid">
           <div class="adm-col"><label class="adm-label">Fuente</label><input class="adm-input" id="pe-psource-${p.id}" value="${p.source||''}"></div>
           <div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" id="pe-pprod-${p.id}" value="${p.production||''}"></div>
+        </div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Producción por idioma (EN / DE / ES / IT / FR)</label>
+          <input class="adm-input" id="pe-pprod-en-${p.id}" value="${(p.production_i18n&&p.production_i18n.en)||''}" style="margin-bottom:6px" placeholder="EN">
+          <input class="adm-input" id="pe-pprod-de-${p.id}" value="${(p.production_i18n&&p.production_i18n.de)||''}" style="margin-bottom:6px" placeholder="DE">
+          <input class="adm-input" id="pe-pprod-es-${p.id}" value="${(p.production_i18n&&p.production_i18n.es)||''}" style="margin-bottom:6px" placeholder="ES">
+          <input class="adm-input" id="pe-pprod-it-${p.id}" value="${(p.production_i18n&&p.production_i18n.it)||''}" style="margin-bottom:6px" placeholder="IT">
+          <input class="adm-input" id="pe-pprod-fr-${p.id}" value="${(p.production_i18n&&p.production_i18n.fr)||''}" placeholder="FR">
+        </div></div>
+        <div class="adm-grid">
+          <div class="adm-col"><label class="adm-label">Orden</label><input class="adm-input" id="pe-porder-${p.id}" type="number" value="${Number.isFinite(Number(p.order))?Number(p.order):0}"></div>
+          <div class="adm-col"><label class="adm-label">Visible</label><input type="checkbox" id="pe-pvisible-${p.id}" ${p.visible!==false?'checked':''}></div>
         </div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">URL artículo</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
@@ -3724,7 +3844,10 @@ function addPressQuote(){
   const items=getPress();
   const newId=items.length?Math.max(...items.map(p=>p.id))+1:1;
   const _qi18n={};['en','de','es','it','fr'].forEach(l=>{const el=document.getElementById('pa-qi18n-'+l);_qi18n[l]=(el&&el.value.trim())?el.value.trim():quote;});
-  items.unshift({id:newId,quote,quotes_i18n:_qi18n,source,production:document.getElementById('pa-production').value.trim(),url:document.getElementById('pa-url').value.trim()});
+  const prod=(document.getElementById('pa-production').value||'').trim();
+  const _pi18n={en:prod,de:prod,es:prod,it:prod,fr:prod};
+  const nextOrder = items.length ? (Math.max(...items.map(p=>Number(p.order)||0)) + 1) : 0;
+  items.unshift({id:newId,quote,quotes_i18n:_qi18n,source,production:prod,production_i18n:_pi18n,url:document.getElementById('pa-url').value.trim(),visible:true,order:nextOrder});
   save('rg_press',items);
   renderPress();admRenderPressList();
   ['pa-quote','pa-source','pa-production','pa-url','pa-qi18n-en','pa-qi18n-de','pa-qi18n-es','pa-qi18n-it','pa-qi18n-fr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -4295,6 +4418,9 @@ function admPopulate(name){
     const es = document.getElementById('f-programsSubtitle'); if(es) es.value = d.subtitle || '';
     const ei = document.getElementById('f-programsIntro'); if(ei) ei.value = d.intro || '';
     const ec = document.getElementById('f-programsClosing'); if(ec) ec.value = d.closingNote || '';
+    const ed = getEditorial();
+    const er = document.getElementById('f-repProgramsLink'); if(er) er.value = ed.repProgramsLink || '';
+    const ee = document.getElementById('f-epkProgramsLink'); if(ee) ee.value = ed.epkProgramsLink || '';
     const div = document.getElementById('programCards');
     if(!div) return;
     const progEsc = (s)=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -4398,6 +4524,9 @@ function admPopulate(name){
   }
   else if(name==='press'){
     admRenderPressList();
+    const pm = getPressMeta();
+    const noteEl = document.getElementById('f-pressTranslatedNote');
+    if (noteEl) noteEl.value = ((pm[currentLang]||{}).translatedNote || '');
   }
   else if(name==='contact'){
     const d=get('contact');
@@ -4406,7 +4535,6 @@ function admPopulate(name){
     document.getElementById('f-contactQuote').value = d.quote||'';
     document.getElementById('f-contactEmail').value = d.email||'';
     document.getElementById('f-contactEmailBtn').value = d.emailBtn||'';
-    document.getElementById('f-contactWebBtn').value = d.webBtn||'';
   }
   if(name==='epk'){
     // Load bio fields for default lang (en)
@@ -4481,7 +4609,12 @@ function saveSection(name){
       });
     }
     save('rg_programs_' + currentLang, { title, subtitle, intro, closingNote, programs });
+    save('rg_editorial_' + currentLang, {
+      repProgramsLink: ((document.getElementById('f-repProgramsLink')||{}).value || '').trim(),
+      epkProgramsLink: ((document.getElementById('f-epkProgramsLink')||{}).value || '').trim()
+    });
     if (typeof renderPrograms === 'function') renderPrograms();
+    if (typeof applyEditorialTexts === 'function') applyEditorialTexts();
   }
   else if(name==='vid'){
     const d=getVid();
@@ -4498,7 +4631,7 @@ function saveSection(name){
     save('rg_vid',d); renderVideos();
   }
   else if(name==='contact'){
-    data={title:document.getElementById('f-contactTitle').value,sub:document.getElementById('f-contactSub').value,quote:document.getElementById('f-contactQuote').value,email:document.getElementById('f-contactEmail').value,emailBtn:document.getElementById('f-contactEmailBtn').value,webBtn:document.getElementById('f-contactWebBtn').value};
+    data={title:document.getElementById('f-contactTitle').value,sub:document.getElementById('f-contactSub').value,quote:document.getElementById('f-contactQuote').value,email:document.getElementById('f-contactEmail').value,emailBtn:document.getElementById('f-contactEmailBtn').value};
     save('contact_'+currentLang,data); renderContact();
   }
   const fb=document.getElementById('fb-'+name);
