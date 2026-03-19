@@ -3255,18 +3255,28 @@ const EPK_CVS = {
   FR: { label:'CV – Français', filename:'RolandoGuy_CV_FR.pdf',  b64:'docs/RolandoGuy_CV_FR.pdf' },
 };
 const PUBLIC_PDF_DEFAULTS = {
-  dossier: { default: 'docs/RolandoGuy_PressKit_EN.pdf', EN:'', DE:'', ES:'', IT:'', FR:'' },
-  artistSheet: { default: '', EN:'', DE:'', ES:'', IT:'', FR:'' }
+  dossier: { EN:{url:'',data:''}, DE:{url:'',data:''}, ES:{url:'',data:''}, IT:{url:'',data:''}, FR:{url:'',data:''} },
+  artistSheet: { EN:{url:'',data:''}, DE:{url:'',data:''}, ES:{url:'',data:''}, IT:{url:'',data:''}, FR:{url:'',data:''} }
 };
 function getPublicPdfs(){
   const raw = load('rg_public_pdfs');
   const out = JSON.parse(JSON.stringify(PUBLIC_PDF_DEFAULTS));
+  const langs = ['EN','DE','ES','IT','FR'];
   if (raw && typeof raw === 'object') {
     ['dossier','artistSheet'].forEach(kind => {
       const src = raw[kind];
       if (!src || typeof src !== 'object') return;
-      ['default','EN','DE','ES','IT','FR'].forEach(k => {
-        if (typeof src[k] === 'string') out[kind][k] = src[k];
+      langs.forEach(k => {
+        const v = src[k];
+        if (typeof v === 'string') {
+          if (/^data:application\/pdf/i.test(v.trim())) out[kind][k].data = v.trim();
+          else out[kind][k].url = v.trim();
+          return;
+        }
+        if (v && typeof v === 'object') {
+          if (typeof v.url === 'string') out[kind][k].url = v.url.trim();
+          if (typeof v.data === 'string') out[kind][k].data = v.data.trim();
+        }
       });
     });
   }
@@ -3372,7 +3382,12 @@ function renderEpk() {
   const langKey = String(lang || 'en').toUpperCase();
   const resolvePdf = (kind) => {
     const block = (pdfs && pdfs[kind]) ? pdfs[kind] : {};
-    return block[langKey] || block.EN || block.default || '';
+    // Strict language mapping: only the exact language key activates the button.
+    // No automatic fallback to EN/default to avoid serving wrong-language PDFs.
+    const entry = block[langKey];
+    if (typeof entry === 'string') return entry;
+    if (entry && typeof entry === 'object') return (entry.url || entry.data || '');
+    return '';
   };
   const dossierUrl = resolvePdf('dossier');
   const artistUrl = resolvePdf('artistSheet');
@@ -4166,18 +4181,22 @@ function epkRenderPublicPdfsAdmin() {
 
   container.innerHTML = docs.map(doc => {
     const rows = langs.map(langKey => {
-      const value = (((data[doc.key] || {})[langKey]) || '').trim();
-      const hasUploaded = !!value;
-      const status = hasUploaded ? 'using uploaded file' : 'no file uploaded';
-      const statusColor = hasUploaded ? '#4CAF50' : 'var(--text-faint)';
-      const btnLabel = hasUploaded ? 'Replace PDF' : 'Upload PDF';
+      const value = ((data[doc.key] || {})[langKey]) || { url:'', data:'' };
+      const urlVal = (value.url || '').trim();
+      const dataVal = (value.data || '').trim();
+      const hasAny = !!(urlVal || dataVal);
+      const status = urlVal ? 'using manual URL' : (dataVal ? 'using uploaded file' : 'no file uploaded');
+      const statusColor = hasAny ? '#4CAF50' : 'var(--text-faint)';
+      const btnLabel = dataVal ? 'Replace PDF' : 'Upload PDF';
       const inputId = `epkPublicPdfInput-${doc.key}-${langKey}`;
+      const urlId = `epkPublicPdfUrl-${doc.key}-${langKey}`;
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border)">
         <span style="font-family:var(--ff-caps);font-size:.68rem;letter-spacing:.1em;min-width:30px;color:var(--gold)">${langKey}</span>
-        <span style="font-size:.72rem;color:${statusColor};flex:1">${status}</span>
+        <span style="font-size:.72rem;color:${statusColor};min-width:160px">${status}</span>
+        <input id="${urlId}" class="adm-input" type="url" placeholder="PDF URL" value="${String(urlVal).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}" style="flex:1;min-width:220px;font-size:.7rem;padding:5px 8px" onchange="epkSetPublicPdfUrl('${doc.key}','${langKey}',this.value)">
         <button type="button" onclick="document.getElementById('${inputId}').click()" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:4px 10px;cursor:pointer;font-size:.66rem;font-family:var(--ff-caps)">${btnLabel}</button>
         <input id="${inputId}" type="file" accept="application/pdf" style="display:none" onchange="epkLoadPublicPdf(event, '${doc.key}', '${langKey}')">
-        <button type="button" onclick="epkRemovePublicPdf('${doc.key}', '${langKey}')" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:4px 8px;cursor:pointer;font-size:.65rem;${hasUploaded ? '' : 'opacity:.45;pointer-events:none;'}">Delete</button>
+        <button type="button" onclick="epkRemovePublicPdf('${doc.key}', '${langKey}')" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:4px 8px;cursor:pointer;font-size:.65rem;${hasAny ? '' : 'opacity:.45;pointer-events:none;'}">Delete</button>
       </div>`;
     }).join('');
     return `<div style="display:flex;flex-direction:column;gap:8px">
@@ -4185,6 +4204,15 @@ function epkRenderPublicPdfsAdmin() {
       ${rows}
     </div>`;
   }).join('');
+}
+
+function epkSetPublicPdfUrl(kind, langKey, url) {
+  const data = epkGetStoredPublicPdfs();
+  const next = String(url || '').trim();
+  data[kind][langKey] = Object.assign({}, data[kind][langKey] || { url:'', data:'' }, { url: next });
+  save('rg_public_pdfs', data);
+  renderEpk();
+  epkRenderPublicPdfsAdmin();
 }
 
 function epkLoadPublicPdf(event, kind, langKey) {
@@ -4200,7 +4228,7 @@ function epkLoadPublicPdf(event, kind, langKey) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const data = epkGetStoredPublicPdfs();
-    data[kind][langKey] = String(e.target.result || '');
+    data[kind][langKey] = Object.assign({}, data[kind][langKey] || { url:'', data:'' }, { data: String(e.target.result || '') });
     save('rg_public_pdfs', data);
     renderEpk();
     epkRenderPublicPdfsAdmin();
@@ -4210,7 +4238,7 @@ function epkLoadPublicPdf(event, kind, langKey) {
 
 function epkRemovePublicPdf(kind, langKey) {
   const data = epkGetStoredPublicPdfs();
-  data[kind][langKey] = '';
+  data[kind][langKey] = { url:'', data:'' };
   save('rg_public_pdfs', data);
   renderEpk();
   epkRenderPublicPdfsAdmin();

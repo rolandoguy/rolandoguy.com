@@ -3342,18 +3342,28 @@ const EPK_CVS = {
   FR: { label:'CV – Français', filename:'RolandoGuy_CV_FR.pdf',  b64:'docs/RolandoGuy_CV_FR.pdf' },
 };
 const PUBLIC_PDF_DEFAULTS = {
-  dossier: { default: 'docs/RolandoGuy_PressKit_EN.pdf', EN:'', DE:'', ES:'', IT:'', FR:'' },
-  artistSheet: { default: '', EN:'', DE:'', ES:'', IT:'', FR:'' }
+  dossier: { EN:{url:'',data:''}, DE:{url:'',data:''}, ES:{url:'',data:''}, IT:{url:'',data:''}, FR:{url:'',data:''} },
+  artistSheet: { EN:{url:'',data:''}, DE:{url:'',data:''}, ES:{url:'',data:''}, IT:{url:'',data:''}, FR:{url:'',data:''} }
 };
 function getPublicPdfs(){
   const raw = load('rg_public_pdfs');
   const out = JSON.parse(JSON.stringify(PUBLIC_PDF_DEFAULTS));
+  const langs = ['EN','DE','ES','IT','FR'];
   if (raw && typeof raw === 'object') {
     ['dossier','artistSheet'].forEach(kind => {
       const src = raw[kind];
       if (!src || typeof src !== 'object') return;
-      ['default','EN','DE','ES','IT','FR'].forEach(k => {
-        if (typeof src[k] === 'string') out[kind][k] = src[k];
+      langs.forEach(k => {
+        const v = src[k];
+        if (typeof v === 'string') {
+          if (/^data:application\/pdf/i.test(v.trim())) out[kind][k].data = v.trim();
+          else out[kind][k].url = v.trim();
+          return;
+        }
+        if (v && typeof v === 'object') {
+          if (typeof v.url === 'string') out[kind][k].url = v.url.trim();
+          if (typeof v.data === 'string') out[kind][k].data = v.data.trim();
+        }
       });
     });
   }
@@ -3459,7 +3469,12 @@ function renderEpk() {
   const langKey = String(lang || 'en').toUpperCase();
   const resolvePdf = (kind) => {
     const block = (pdfs && pdfs[kind]) ? pdfs[kind] : {};
-    return block[langKey] || block.EN || block.default || '';
+    // Strict language mapping: only the exact language key activates the button.
+    // No automatic fallback to EN/default to avoid serving wrong-language PDFs.
+    const entry = block[langKey];
+    if (typeof entry === 'string') return entry;
+    if (entry && typeof entry === 'object') return (entry.url || entry.data || '');
+    return '';
   };
   const dossierUrl = resolvePdf('dossier');
   const artistUrl = resolvePdf('artistSheet');
