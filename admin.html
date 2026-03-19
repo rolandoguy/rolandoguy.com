@@ -1096,6 +1096,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <button type="button" class="rep-status-filter-btn" data-filter="studying" onclick="setRepStatusFilter('studying')">Studying</button>
     </div>
     <div class="opera-grid" id="operaGrid"></div>
+    <p class="reveal rd2" style="margin-top:18px;text-align:center">
+      <a href="#programs" data-i18n="rep.programsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">Explore concert programmes and artistic collaborations</a>
+    </p>
   </div>
 </section>
 <section id="programs">
@@ -1251,6 +1254,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       </div>
 
     </div>
+    <p class="reveal rd1" style="margin-top:18px;text-align:center">
+      <a href="#programs" data-i18n="epk.programsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">See programmes and artistic collaborations</a>
+    </p>
   </div>
 </section>
 <!-- ADMIN MODAL -->
@@ -2102,8 +2108,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programs &amp; Collaborations',
-      subtitle: 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.',
-      intro: 'These performance formats are available for presenters, festivals, cultural institutions, salons, and collaborative concert settings. Each program can be tailored to venue, occasion, and ensemble.',
+      subtitle: 'Recital programmes for concert halls, cultural institutions, salons, private events, and artistic collaborations.',
+      intro: 'These programmes are available for presenters, festivals, cultural institutions, and salons. Each programme can be adapted to the venue, occasion, and ensemble.',
       closingNote: 'All programs may be adapted in length, language focus, and repertoire selection according to venue, audience, occasion, and collaborating artists.',
       items: [
         { id: 1, order: 0, published: true, title: 'Opera Gala: Arias & Duets', description: 'A versatile concert program built around celebrated tenor arias and selected ensemble scenes. Available as a solo recital with piano or in collaboration with soprano and baritone, this format combines dramatic contrast, lyrical expression, and audience-friendly repertoire from the operatic tradition.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Baritone + Piano'], duration: '30, 45, or 60 minutes', idealFor: ['Gala concerts', 'chamber series', 'cultural institutions', 'churches', 'private salons'] },
@@ -2142,15 +2148,15 @@ const LANG_CONTENT = {
     },
     contact: {
       title: 'Lass uns etwas<br><em>Unvergessliches schaffen</em>',
-      sub: 'Für Buchungen, künstlerische Kooperationen, private Konzerte und Opernabende wenden Sie sich bitte direkt an uns. Alle Nachrichten werden persönlich beantwortet.',
+      sub: 'Für Buchungen, künstlerische Projekte, private Konzerte und Opernabende wenden Sie sich bitte direkt an uns. Alle Nachrichten werden persönlich beantwortet.',
       email: 'rolandoguy@gmail.com',
       emailBtn: 'E-Mail senden',
       webBtn: 'Offizielle Website',
     },
     programs: {
-      title: 'Programme &amp; Kooperationen',
-      subtitle: 'Kuratierte Rezitalformate für Konzerthäuser, Kultureinrichtungen, Salons, private Veranstaltungen und künstlerische Kooperationen.',
-      intro: 'Diese Programmformate stehen Veranstaltern, Festivals, Kultureinrichtungen, Salons und konzertanten Kooperationen zur Verfügung. Jedes Programm kann an Ort, Anlass und Besetzung angepasst werden.',
+      title: 'Programme &amp; künstlerische Projekte',
+      subtitle: 'Rezitalprogramme für Konzerthäuser, Kultureinrichtungen, Salons, private Veranstaltungen und gemeinsame musikalische Projekte.',
+      intro: 'Diese Programme stehen Veranstaltern, Festivals, Kultureinrichtungen und Salons zur Verfügung. Jedes Programm kann an Ort, Anlass und Besetzung angepasst werden.',
       closingNote: 'Alle Programme können in Länge, Sprachschwerpunkt und Repertoireauswahl an Spielstätte, Publikum, Anlass und mitwirkende Künstler angepasst werden.',
       items: [
         { id: 1, order: 0, published: true, title: 'Operngala: Arien & Duette', description: 'Ein vielseitiges Konzertprogramm mit bekannten Tenorarien und ausgewählten Ensembleszenen. Als Solorezital mit Klavier oder in Zusammenarbeit mit Sopran und Bariton verbindet dieses Format dramatischen Kontrast, lyrischen Ausdruck und publikumsnahes Repertoire aus der Operntradition.', formations: ['Tenor + Klavier', 'Tenor + Sopran + Klavier', 'Tenor + Bariton + Klavier'], duration: '30, 45 oder 60 Minuten', idealFor: ['Galakonzerte', 'Kammermusikreihen', 'Kultureinrichtungen', 'Kirchen', 'private Salons'] },
@@ -2196,8 +2202,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programas y colaboraciones',
-      subtitle: 'Formatos de recital para salas de concierto, instituciones culturales, salones, eventos privados y actuaciones en colaboración.',
-      intro: 'Estos formatos están disponibles para programadores, festivales, instituciones culturales, salones y conciertos en colaboración. Cada programa puede adaptarse al espacio, ocasión y formación.',
+      subtitle: 'Programas de recital para salas de concierto, instituciones culturales, salones, eventos privados y colaboraciones artísticas.',
+      intro: 'Estos programas están disponibles para programadores, festivales, instituciones culturales y salones. Cada programa puede adaptarse al espacio, la ocasión y la formación.',
       closingNote: 'Todos los programas pueden adaptarse en duración, idioma y repertorio según el espacio, el público, la ocasión y los artistas colaboradores.',
       items: [
         { id: 1, order: 0, published: true, title: 'Gala de ópera: arias y dúos', description: 'Un programa de concierto versátil en torno a arias de tenor y escenas de conjunto. Como recital con piano o en colaboración con soprano y barítono, este formato combina contraste dramático, expresión lírica y repertorio accesible de la tradición operística.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Barítono + Piano'], duration: '30, 45 o 60 minutos', idealFor: ['Conciertos de gala', 'series de cámara', 'instituciones culturales', 'iglesias', 'salones privados'] },
@@ -2243,8 +2249,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programmes &amp; collaborations',
-      subtitle: 'Formats de récital pour salles de concert, institutions culturelles, salons, événements privés et concerts en collaboration.',
-      intro: 'Ces formats sont disponibles pour programmateurs, festivals, institutions culturelles, salons et concerts en collaboration. Chaque programme peut être adapté au lieu, à l\'occasion et à l\'ensemble.',
+      subtitle: 'Programmes de récital pour salles de concert, institutions culturelles, salons, événements privés et collaborations artistiques.',
+      intro: 'Ces programmes sont proposés aux programmateurs, festivals, institutions culturelles et salons. Chaque programme peut être adapté au lieu, à l\'occasion et à l\'ensemble.',
       closingNote: 'Tous les programmes peuvent être adaptés en durée, langue et répertoire selon le lieu, le public, l\'occasion et les artistes collaborateurs.',
       items: [
         { id: 1, order: 0, published: true, title: 'Gala d\'opéra : airs et duos', description: 'Un programme de concert polyvalent autour d\'airs de ténor et de scènes d\'ensemble. En récital avec piano ou en collaboration avec soprano et baryton, ce format allie contraste dramatique, expression lyrique et répertoire accessible de la tradition opératique.', formations: ['Ténor + Piano', 'Ténor + Soprano + Piano', 'Ténor + Baryton + Piano'], duration: '30, 45 ou 60 minutes', idealFor: ['Concerts de gala', 'séries de musique de chambre', 'institutions culturelles', 'églises', 'salons privés'] },
@@ -2290,8 +2296,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programmi e collaborazioni',
-      subtitle: 'Formati di recital per sale da concerto, istituzioni culturali, salotti, eventi privati e performance in collaborazione.',
-      intro: 'Questi formati sono disponibili per programmatori, festival, istituzioni culturali, salotti e contesti concertistici in collaborazione. Ogni programma può essere adattato al luogo, all\'occasione e all\'organico.',
+      subtitle: 'Programmi di recital per sale da concerto, istituzioni culturali, salotti, eventi privati e collaborazioni artistiche.',
+      intro: 'Questi programmi sono disponibili per organizzatori, festival, istituzioni culturali e salotti. Ogni programma può essere adattato al luogo, all\'occasione e all\'organico.',
       closingNote: 'Tutti i programmi possono essere adattati in lunghezza, lingua e repertorio in base al luogo, al pubblico, all\'occasione e agli artisti collaboratori.',
       items: [
         { id: 1, order: 0, published: true, title: 'Gala d\'opera: arie e duetti', description: 'Un programma da concerto versatile costruito su arie per tenore e scene d\'insieme. Come recital con pianoforte o in collaborazione con soprano e baritono, questo formato unisce contrasto drammatico, espressione lirica e repertorio accessibile dalla tradizione operistica.', formations: ['Tenore + Pianoforte', 'Tenore + Soprano + Pianoforte', 'Tenore + Baritono + Pianoforte'], duration: '30, 45 o 60 minuti', idealFor: ['Concerti di gala', 'stagioni da camera', 'istituzioni culturali', 'chiese', 'salotti privati'] },
@@ -2348,8 +2354,8 @@ const DEFAULTS = {
   ],
   programs: {
     title: 'Programs &amp; Collaborations',
-    subtitle: 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.',
-    intro: 'These performance formats are available for presenters, festivals, cultural institutions, salons, and collaborative concert settings. Each program can be tailored to venue, occasion, and ensemble.',
+    subtitle: 'Recital programmes for concert halls, cultural institutions, salons, private events, and artistic collaborations.',
+    intro: 'These programmes are available for presenters, festivals, cultural institutions, and salons. Each programme can be adapted to the venue, occasion, and ensemble.',
     closingNote: 'All programs may be adapted in length, language focus, and repertoire selection according to venue, audience, occasion, and collaborating artists.',
     programs: [
       { id: 1, order: 0, published: true, title: 'Opera Gala: Arias & Duets', description: 'A versatile concert program built around celebrated tenor arias and selected ensemble scenes. Available as a solo recital with piano or in collaboration with soprano and baritone, this format combines dramatic contrast, lyrical expression, and audience-friendly repertoire from the operatic tradition.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Baritone + Piano'], duration: '30, 45, or 60 minutes', idealFor: ['Gala concerts', 'chamber series', 'cultural institutions', 'churches', 'private salons'] },
@@ -3305,13 +3311,13 @@ const DEFAULT_PRESS = [
       it: "Messo in scena con ironia e leggerezza, con grazioso kitsch olandese e un ensemble vivace — intrattenimento operettistico con cuore, wit e musica senza tempo.",
       fr: "Une mise en scène enjouée et légère, avec un kitsch hollandais charmant et un ensemble enthousiaste — un divertissement d'opérette plein de cœur, d'esprit et de musique intemporelle."
     },
-    production: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
+    production: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
     production_i18n: {
-      en: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      de: "Zu Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      es: "Sobre Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      it: "Su Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      fr: "À propos de Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)"
+      en: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      de: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      es: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      it: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      fr: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025"
     },
     url: "https://www.hessenschau.de/kultur/hr2-fruehkritik-operettencharme-mit-windmuehlen---vetter-aus-dingsda-von-der-kammeroper-frankfurt,audio-109446.html"
   },
@@ -3326,13 +3332,13 @@ const DEFAULT_PRESS = [
       it: "Puro giubilo — la Kammeroper Frankfurt fa vibrare il Palmengarten. Un intrattenimento glorioso, esaltante e coinvolgente.",
       fr: "Pure jubilation — la Kammeroper Frankfurt fait résonner le Palmengarten. Un divertissement glorieux, enivrant et captivant."
     },
-    production: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
+    production: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
     production_i18n: {
-      en: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      de: "Zu Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      es: "Sobre Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      it: "Su Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      fr: "À propos de Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)"
+      en: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      de: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      es: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      it: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      fr: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025"
     },
     url: "https://www.notate.news/der-vetter-aus-dingsda-gibts-den-noch/"
   }
@@ -3344,12 +3350,13 @@ function renderPress(){
   const el = document.getElementById('pressGrid');
   if(!el) return;
   const items = getPress();
+  const defaultById = Object.fromEntries((DEFAULT_PRESS || []).map(p => [String(p.id), p]));
   const lang = currentLang || 'en';
   const pickLang = (obj, baseKey) => {
     if (!obj || typeof obj !== 'object') return '';
     const i18nMap = obj[baseKey + '_i18n'];
     if (i18nMap && typeof i18nMap === 'object') {
-      return i18nMap[lang] || i18nMap.en || '';
+      return i18nMap[lang] || i18nMap.en || (typeof obj[baseKey] === 'string' ? obj[baseKey] : '');
     }
     const langField = obj[baseKey + '_' + lang];
     if (typeof langField === 'string' && langField.trim()) return langField;
@@ -3357,6 +3364,19 @@ function renderPress(){
     if (typeof enField === 'string' && enField.trim()) return enField;
     const baseVal = obj[baseKey];
     return (typeof baseVal === 'string') ? baseVal : '';
+  };
+  const ensureProdI18n = (p) => {
+    const fallback = defaultById[String(p && p.id)] || {};
+    const base = (p && typeof p.production === 'string' && p.production.trim()) ? p.production : (fallback.production || '');
+    const map = (p && p.production_i18n && typeof p.production_i18n === 'object') ? p.production_i18n : {};
+    const fMap = (fallback.production_i18n && typeof fallback.production_i18n === 'object') ? fallback.production_i18n : {};
+    return {
+      en: (typeof map.en === 'string' && map.en.trim()) ? map.en : ((typeof fMap.en === 'string' && fMap.en.trim()) ? fMap.en : base),
+      de: (typeof map.de === 'string' && map.de.trim()) ? map.de : ((typeof fMap.de === 'string' && fMap.de.trim()) ? fMap.de : ''),
+      es: (typeof map.es === 'string' && map.es.trim()) ? map.es : ((typeof fMap.es === 'string' && fMap.es.trim()) ? fMap.es : ''),
+      it: (typeof map.it === 'string' && map.it.trim()) ? map.it : ((typeof fMap.it === 'string' && fMap.it.trim()) ? fMap.it : ''),
+      fr: (typeof map.fr === 'string' && map.fr.trim()) ? map.fr : ((typeof fMap.fr === 'string' && fMap.fr.trim()) ? fMap.fr : '')
+    };
   };
   if(!items.length){
     el.innerHTML = '<div class="press-empty">'+(Ti[currentLang]&&Ti[currentLang]['press.empty']?Ti[currentLang]['press.empty']:'No press quotes yet.')+'</div>';
@@ -3366,8 +3386,8 @@ function renderPress(){
     <div class="press-card">
       <div class="press-source">${p.source}</div>
       <div class="press-quote">${(typeof p.quote === 'string' && p.quote.trim()) ? p.quote : pickLang(p, 'quote')}</div>
-      <div class="press-production">${pickLang(p, 'production')}</div>
-      ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${(Ti[currentLang]&&Ti[currentLang]['press.readMore'])||'Read article'} ↗</a>` : ''}
+      <div class="press-production">${pickLang(Object.assign({}, p, { production_i18n: ensureProdI18n(p) }), 'production')}</div>
+      ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${((Ti[lang]&&Ti[lang]['press.readMore'])||(Ti.en&&Ti.en['press.readMore'])||'Read article')} ↗</a>` : ''}
     </div>`).join('');
 }
 
@@ -3570,6 +3590,21 @@ const Ti={
   it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Recensioni','press.tag':'Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Studio &amp; <em>In Scena</em>','photos.sub':"Fotografia di ritratto e di scena. Clicca per la visualizzazione completa.",'photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Carica foto backstage dal pannello admin.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi l’articolo','nav.media':'Video','nav.cal':'Calendario','nav.epk':'Dossier','nav.epk.short':'Dossier','nav.book':'Ingaggio','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa','epk.tag':'Stampa','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica hi-res','epk.preview':'Anteprima','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie d\'opera','rep.tabOperetta':'Operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango','rep.descOpera':'Parti da tenore del repertorio operistico, preparate per scena e concerto.','rep.descArias':'Selezione di arie per concerti, programmi da gala e audizioni.','rep.descOperetta':'Opere rappresentative del repertorio operettistico: eleganza, chiarezza e stile teatrale.','rep.descLied':'Repertorio da recital per voce e pianoforte dalla tradizione tedesca, francese e internazionale.','rep.descTango':'Repertorio di tango argentino con espressione lirica e forte identità stilistica.','rep.empty':'Non è ancora stato aggiunto repertorio per questa categoria.','rep.introLine':'Una selezione di repertorio per scena, recital e concerto.','rep.thTitle':'Titolo','rep.thWork':'Opera','contact.pressKitPdf':'Press kit (PDF)','epk.photosIntro':'Immagini ufficiali per stampa, programmi e media. Uso libero con crediti.','epk.photoCredit':'Foto per stampa e programma. Crediti: Rolando Guy','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno','perf.printAgenda':'Stampa calendario','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendario','perf.printRepertoire':'Repertorio',},
   fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Critiques','press.tag':'Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Studio &amp; <em>Scène</em>','photos.sub':'Photographie de portrait et de scène. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Ajoutez des photos backstage via le panneau admin.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l’article','nav.media':'Médias','nav.cal':'Calendrier','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','nav.book':'Réserver','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger hi-res','epk.preview':'Aperçu','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias d\'opéra','rep.tabOperetta':'Opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango','rep.descOpera':'Rôles de ténor du répertoire lyrique, préparés pour la scène et le concert.','rep.descArias':'Sélection d\'arias pour concerts, galas et auditions.','rep.descOperetta':'Œuvres représentatives du répertoire d\'opérette : élégance, clarté et style théâtral.','rep.descLied':'Répertoire de récital pour voix et piano des traditions allemande, française et internationale.','rep.descTango':'Répertoire de tango argentin avec expression lyrique et forte identité stylistique.','rep.empty':'Aucun répertoire n\'a encore été ajouté pour cette catégorie.','rep.introLine':'Une sélection de répertoire pour la scène, le récital et le concert.','rep.thTitle':'Titre','rep.thWork':'Œuvre','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photosIntro':'Images officielles pour presse, programmes et médias. Libre avec crédit.','epk.photoCredit':'Photos pour presse et programme. Crédit : Rolando Guy','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins','perf.printAgenda':'Imprimer le calendrier','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendrier','perf.printRepertoire':'Répertoire',},
 };
+Ti.en['rep.programsLink'] = 'Explore concert programmes and artistic collaborations';
+Ti.de['rep.programsLink'] = 'Entdecken Sie Konzertprogramme und künstlerische Projekte';
+Ti.es['rep.programsLink'] = 'Explora formatos de concierto y colaboraciones artísticas';
+Ti.it['rep.programsLink'] = 'Esplora programmi da concerto e collaborazioni artistiche';
+Ti.fr['rep.programsLink'] = 'Découvrez des programmes de concert et des collaborations artistiques';
+Ti.en['press.readMore'] = 'Read article';
+Ti.de['press.readMore'] = 'Artikel lesen';
+Ti.es['press.readMore'] = 'Leer artículo';
+Ti.it['press.readMore'] = 'Leggi l’articolo';
+Ti.fr['press.readMore'] = 'Lire l’article';
+Ti.en['epk.programsLink'] = 'See programmes and artistic collaborations';
+Ti.de['epk.programsLink'] = 'Programme und künstlerische Projekte ansehen';
+Ti.es['epk.programsLink'] = 'Ver programas y colaboraciones artísticas';
+Ti.it['epk.programsLink'] = 'Scopri programmi e collaborazioni artistiche';
+Ti.fr['epk.programsLink'] = 'Voir les programmes et collaborations artistiques';
 function setLang(lang){
   currentLang = lang;
   ['en','de','es','it','fr'].forEach(l => {

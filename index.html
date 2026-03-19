@@ -1271,6 +1271,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <!-- Studying button is injected dynamically from renderRep() only when needed -->
     </div>
     <div class="opera-grid" id="operaGrid"></div>
+    <p class="reveal rd2" style="margin-top:18px;text-align:center">
+      <a href="#programs" data-i18n="rep.programsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">Explore concert programmes and artistic collaborations</a>
+    </p>
   </div>
 </section>
 <section id="videos">
@@ -1400,6 +1403,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       </div>
 
     </div>
+    <p class="reveal rd1" style="margin-top:18px;text-align:center">
+      <a href="#programs" data-i18n="epk.programsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">See programmes and artistic collaborations</a>
+    </p>
   </div>
 </section>
 <section id="programs">
@@ -1648,8 +1654,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programs &amp; Collaborations',
-      subtitle: 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.',
-      intro: 'These performance formats are available for presenters, festivals, cultural institutions, salons, and collaborative concert settings. Each program can be tailored to venue, occasion, and ensemble.',
+      subtitle: 'Recital programmes for concert halls, cultural institutions, salons, private events, and artistic collaborations.',
+      intro: 'These programmes are available for presenters, festivals, cultural institutions, and salons. Each programme can be adapted to the venue, occasion, and ensemble.',
       closingNote: 'All programs may be adapted in length, language focus, and repertoire selection according to venue, audience, occasion, and collaborating artists.',
       items: [
         { id: 1, order: 0, published: true, title: 'Opera Gala: Arias & Duets', description: 'A versatile concert program built around celebrated tenor arias and selected ensemble scenes. Available as a solo recital with piano or in collaboration with soprano and baritone, this format combines dramatic contrast, lyrical expression, and audience-friendly repertoire from the operatic tradition.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Baritone + Piano'], duration: '30, 45, or 60 minutes', idealFor: ['Gala concerts', 'chamber series', 'cultural institutions', 'churches', 'private salons'] },
@@ -1688,15 +1694,15 @@ const LANG_CONTENT = {
     },
     contact: {
       title: 'Buchungen &amp;<br><em>künstlerische Anfragen</em>',
-      sub: 'Für Buchungsanfragen, Konzertengagements, künstlerische Kooperationen, private Rezitale und Operngalas wenden Sie sich bitte direkt an uns. Alle Nachrichten werden persönlich beantwortet.',
+      sub: 'Für Buchungsanfragen, Konzertengagements, künstlerische Projekte, private Rezitale und Operngalas wenden Sie sich bitte direkt an uns. Alle Nachrichten werden persönlich beantwortet.',
       email: 'rolandoguy@gmail.com',
       emailBtn: 'E-Mail senden',
       webBtn: 'Offizielle Website',
     },
     programs: {
-      title: 'Programme &amp; Kooperationen',
-      subtitle: 'Kuratierte Rezitalformate für Konzerthäuser, Kultureinrichtungen, Salons, private Veranstaltungen und künstlerische Kooperationen.',
-      intro: 'Diese Programmformate stehen Veranstaltern, Festivals, Kultureinrichtungen, Salons und konzertanten Kooperationen zur Verfügung. Jedes Programm kann an Ort, Anlass und Besetzung angepasst werden.',
+      title: 'Programme &amp; künstlerische Projekte',
+      subtitle: 'Rezitalprogramme für Konzerthäuser, Kultureinrichtungen, Salons, private Veranstaltungen und gemeinsame musikalische Projekte.',
+      intro: 'Diese Programme stehen Veranstaltern, Festivals, Kultureinrichtungen und Salons zur Verfügung. Jedes Programm kann an Ort, Anlass und Besetzung angepasst werden.',
       closingNote: 'Alle Programme können in Länge, Sprachschwerpunkt und Repertoireauswahl an Spielstätte, Publikum, Anlass und mitwirkende Künstler angepasst werden.',
       items: [
         { id: 1, order: 0, published: true, title: 'Operngala: Arien & Duette', description: 'Ein vielseitiges Konzertprogramm mit bekannten Tenorarien und ausgewählten Ensembleszenen. Als Solorezital mit Klavier oder in Zusammenarbeit mit Sopran und Bariton verbindet dieses Format dramatischen Kontrast, lyrischen Ausdruck und publikumsnahes Repertoire aus der Operntradition.', formations: ['Tenor + Klavier', 'Tenor + Sopran + Klavier', 'Tenor + Bariton + Klavier'], duration: '30, 45 oder 60 Minuten', idealFor: ['Galakonzerte', 'Kammermusikreihen', 'Kultureinrichtungen', 'Kirchen', 'private Salons'] },
@@ -1742,8 +1748,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programas y colaboraciones',
-      subtitle: 'Formatos de recital para salas de concierto, instituciones culturales, salones, eventos privados y actuaciones en colaboración.',
-      intro: 'Estos formatos están disponibles para programadores, festivales, instituciones culturales, salones y conciertos en colaboración. Cada programa puede adaptarse al espacio, ocasión y formación.',
+      subtitle: 'Programas de recital para salas de concierto, instituciones culturales, salones, eventos privados y colaboraciones artísticas.',
+      intro: 'Estos programas están disponibles para programadores, festivales, instituciones culturales y salones. Cada programa puede adaptarse al espacio, la ocasión y la formación.',
       closingNote: 'Todos los programas pueden adaptarse en duración, idioma y repertorio según el espacio, el público, la ocasión y los artistas colaboradores.',
       items: [
         { id: 1, order: 0, published: true, title: 'Gala de ópera: arias y dúos', description: 'Un programa de concierto versátil en torno a arias de tenor y escenas de conjunto. Como recital con piano o en colaboración con soprano y barítono, este formato combina contraste dramático, expresión lírica y repertorio accesible de la tradición operística.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Barítono + Piano'], duration: '30, 45 o 60 minutos', idealFor: ['Conciertos de gala', 'series de cámara', 'instituciones culturales', 'iglesias', 'salones privados'] },
@@ -1789,8 +1795,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programmes &amp; collaborations',
-      subtitle: 'Formats de récital pour salles de concert, institutions culturelles, salons, événements privés et concerts en collaboration.',
-      intro: 'Ces formats sont disponibles pour programmateurs, festivals, institutions culturelles, salons et concerts en collaboration. Chaque programme peut être adapté au lieu, à l\'occasion et à l\'ensemble.',
+      subtitle: 'Programmes de récital pour salles de concert, institutions culturelles, salons, événements privés et collaborations artistiques.',
+      intro: 'Ces programmes sont proposés aux programmateurs, festivals, institutions culturelles et salons. Chaque programme peut être adapté au lieu, à l\'occasion et à l\'ensemble.',
       closingNote: 'Tous les programmes peuvent être adaptés en durée, langue et répertoire selon le lieu, le public, l\'occasion et les artistes collaborateurs.',
       items: [
         { id: 1, order: 0, published: true, title: 'Gala d\'opéra : airs et duos', description: 'Un programme de concert polyvalent autour d\'airs de ténor et de scènes d\'ensemble. En récital avec piano ou en collaboration avec soprano et baryton, ce format allie contraste dramatique, expression lyrique et répertoire accessible de la tradition opératique.', formations: ['Ténor + Piano', 'Ténor + Soprano + Piano', 'Ténor + Baryton + Piano'], duration: '30, 45 ou 60 minutes', idealFor: ['Concerts de gala', 'séries de musique de chambre', 'institutions culturelles', 'églises', 'salons privés'] },
@@ -1836,8 +1842,8 @@ const LANG_CONTENT = {
     },
     programs: {
       title: 'Programmi e collaborazioni',
-      subtitle: 'Formati di recital per sale da concerto, istituzioni culturali, salotti, eventi privati e performance in collaborazione.',
-      intro: 'Questi formati sono disponibili per programmatori, festival, istituzioni culturali, salotti e contesti concertistici in collaborazione. Ogni programma può essere adattato al luogo, all\'occasione e all\'organico.',
+      subtitle: 'Programmi di recital per sale da concerto, istituzioni culturali, salotti, eventi privati e collaborazioni artistiche.',
+      intro: 'Questi programmi sono disponibili per organizzatori, festival, istituzioni culturali e salotti. Ogni programma può essere adattato al luogo, all\'occasione e all\'organico.',
       closingNote: 'Tutti i programmi possono essere adattati in lunghezza, lingua e repertorio in base al luogo, al pubblico, all\'occasione e agli artisti collaboratori.',
       items: [
         { id: 1, order: 0, published: true, title: 'Gala d\'opera: arie e duetti', description: 'Un programma da concerto versatile costruito su arie per tenore e scene d\'insieme. Come recital con pianoforte o in collaborazione con soprano e baritono, questo formato unisce contrasto drammatico, espressione lirica e repertorio accessibile dalla tradizione operistica.', formations: ['Tenore + Pianoforte', 'Tenore + Soprano + Pianoforte', 'Tenore + Baritono + Pianoforte'], duration: '30, 45 o 60 minuti', idealFor: ['Concerti di gala', 'stagioni da camera', 'istituzioni culturali', 'chiese', 'salotti privati'] },
@@ -1893,7 +1899,7 @@ const DEFAULTS = {
   programs: {
     title: 'Programs &amp; Collaborations',
     subtitle: '',
-    intro: 'Curated recital formats for concert halls, cultural institutions, salons, private events and collaborative performances. Each program can be adapted in length, language focus and ensemble format according to venue, audience and occasion.',
+    intro: 'Recital programmes for concert halls, cultural institutions, salons, private events and artistic collaborations. Each programme can be adapted in length, language focus and ensemble according to venue, audience and occasion.',
     closingNote: 'All programs may be adapted in length, language focus and repertoire selection according to venue, audience, occasion and collaborating artists.',
     programs: [
       { id: 1, order: 0, published: true, title: 'Opera Gala: Arias & Duets', description: 'A flexible concert program built around celebrated tenor arias, lyrical highlights and selected ensemble scenes. Available as a solo recital with piano or in collaboration with soprano and baritone, it combines dramatic contrast, expressive immediacy and audience-friendly repertoire from the operatic tradition.', formations: ['Tenor + Piano', 'Tenor + Soprano + Piano', 'Tenor + Baritone + Piano'], duration: '30, 45, or 60 minutes', idealFor: ['Gala concerts', 'Chamber series', 'Cultural institutions', 'Churches', 'Private salons'] },
@@ -1968,7 +1974,7 @@ function migratePersistedContent() {
     const fixText = (s) => (typeof s === 'string' ? s : '');
     const oldIntro1 = 'Curated recital formats for concert halls, cultural institutions, salons, private events, and collaborative performances.';
     const oldIntro2 = 'These performance formats are available for presenters, festivals, cultural institutions, salons, and collaborative concert settings. Each program can be tailored to venue, occasion, and ensemble.';
-    const newIntro = 'Curated recital formats for concert halls, cultural institutions, salons, private events and collaborative performances. Each program can be adapted in length, language focus and ensemble format according to venue, audience and occasion.';
+    const newIntro = 'Recital programmes for concert halls, cultural institutions, salons, private events and artistic collaborations. Each programme can be adapted in length, language focus and ensemble according to venue, audience and occasion.';
     const newClosing = 'All programs may be adapted in length, language focus and repertoire selection according to venue, audience, occasion and collaborating artists.';
 
     if (typeof next.intro === 'string') {
@@ -3412,13 +3418,13 @@ const DEFAULT_PRESS = [
       it: "Messo in scena con ironia e leggerezza, con grazioso kitsch olandese e un ensemble vivace — intrattenimento operettistico con cuore, wit e musica senza tempo.",
       fr: "Une mise en scène enjouée et légère, avec un kitsch hollandais charmant et un ensemble enthousiaste — un divertissement d'opérette plein de cœur, d'esprit et de musique intemporelle."
     },
-    production: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
+    production: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
     production_i18n: {
-      en: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      de: "Zu Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      es: "Sobre Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      it: "Su Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      fr: "À propos de Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)"
+      en: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      de: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      es: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      it: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      fr: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025"
     },
     url: "https://www.hessenschau.de/kultur/hr2-fruehkritik-operettencharme-mit-windmuehlen---vetter-aus-dingsda-von-der-kammeroper-frankfurt,audio-109446.html"
   },
@@ -3433,13 +3439,13 @@ const DEFAULT_PRESS = [
       it: "Puro giubilo — la Kammeroper Frankfurt fa vibrare il Palmengarten. Un intrattenimento glorioso, esaltante e coinvolgente.",
       fr: "Pure jubilation — la Kammeroper Frankfurt fait résonner le Palmengarten. Un divertissement glorieux, enivrant et captivant."
     },
-    production: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
+    production: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
     production_i18n: {
-      en: "On Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      de: "Zu Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      es: "Sobre Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      it: "Su Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)",
-      fr: "À propos de Der Vetter aus Dingsda, Kammeroper Frankfurt (2025)"
+      en: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      de: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      es: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      it: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+      fr: "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025"
     },
     url: "https://www.notate.news/der-vetter-aus-dingsda-gibts-den-noch/"
   }
@@ -3451,12 +3457,13 @@ function renderPress(){
   const el = document.getElementById('pressGrid');
   if(!el) return;
   const items = getPress();
+  const defaultById = Object.fromEntries((DEFAULT_PRESS || []).map(p => [String(p.id), p]));
   const lang = currentLang || 'en';
   const pickLang = (obj, baseKey) => {
     if (!obj || typeof obj !== 'object') return '';
     const i18nMap = obj[baseKey + '_i18n'];
     if (i18nMap && typeof i18nMap === 'object') {
-      return i18nMap[lang] || i18nMap.en || '';
+      return i18nMap[lang] || i18nMap.en || (typeof obj[baseKey] === 'string' ? obj[baseKey] : '');
     }
     const langField = obj[baseKey + '_' + lang];
     if (typeof langField === 'string' && langField.trim()) return langField;
@@ -3464,6 +3471,19 @@ function renderPress(){
     if (typeof enField === 'string' && enField.trim()) return enField;
     const baseVal = obj[baseKey];
     return (typeof baseVal === 'string') ? baseVal : '';
+  };
+  const ensureProdI18n = (p) => {
+    const fallback = defaultById[String(p && p.id)] || {};
+    const base = (p && typeof p.production === 'string' && p.production.trim()) ? p.production : (fallback.production || '');
+    const map = (p && p.production_i18n && typeof p.production_i18n === 'object') ? p.production_i18n : {};
+    const fMap = (fallback.production_i18n && typeof fallback.production_i18n === 'object') ? fallback.production_i18n : {};
+    return {
+      en: (typeof map.en === 'string' && map.en.trim()) ? map.en : ((typeof fMap.en === 'string' && fMap.en.trim()) ? fMap.en : base),
+      de: (typeof map.de === 'string' && map.de.trim()) ? map.de : ((typeof fMap.de === 'string' && fMap.de.trim()) ? fMap.de : ''),
+      es: (typeof map.es === 'string' && map.es.trim()) ? map.es : ((typeof fMap.es === 'string' && fMap.es.trim()) ? fMap.es : ''),
+      it: (typeof map.it === 'string' && map.it.trim()) ? map.it : ((typeof fMap.it === 'string' && fMap.it.trim()) ? fMap.it : ''),
+      fr: (typeof map.fr === 'string' && map.fr.trim()) ? map.fr : ((typeof fMap.fr === 'string' && fMap.fr.trim()) ? fMap.fr : '')
+    };
   };
   if(!items.length){
     el.innerHTML = '<div class="press-empty">'+(Ti[currentLang]&&Ti[currentLang]['press.empty']?Ti[currentLang]['press.empty']:'No press quotes yet.')+'</div>';
@@ -3473,8 +3493,8 @@ function renderPress(){
     <div class="press-card">
       <div class="press-source">${p.source}</div>
       <div class="press-quote">${(typeof p.quote === 'string' && p.quote.trim()) ? p.quote : pickLang(p, 'quote')}</div>
-      <div class="press-production">${pickLang(p, 'production')}</div>
-      ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${(Ti[currentLang]&&Ti[currentLang]['press.readMore'])||'Read article'} ↗</a>` : ''}
+      <div class="press-production">${pickLang(Object.assign({}, p, { production_i18n: ensureProdI18n(p) }), 'production')}</div>
+      ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${((Ti[lang]&&Ti[lang]['press.readMore'])||(Ti.en&&Ti.en['press.readMore'])||'Read article')} ↗</a>` : ''}
     </div>`).join('');
 }
 
@@ -3683,6 +3703,17 @@ Ti.de['reviewsIntro']  = 'Ausgewählte Pressestimmen zu jüngsten Produktionen u
 Ti.es['reviewsIntro']  = 'Selección de reseñas de prensa sobre producciones y presentaciones recientes.';
 Ti.it['reviewsIntro']  = 'Selezione di recensioni della stampa su recenti produzioni e performance.';
 Ti.fr['reviewsIntro']  = 'Sélection de critiques de presse sur des productions et prestations récentes.';
+Ti.en['press.readMore'] = 'Read article';
+Ti.en['rep.programsLink'] = 'Explore concert programmes and artistic collaborations';
+Ti.de['rep.programsLink'] = 'Entdecken Sie Konzertprogramme und künstlerische Projekte';
+Ti.es['rep.programsLink'] = 'Explora formatos de concierto y colaboraciones artísticas';
+Ti.it['rep.programsLink'] = 'Esplora programmi da concerto e collaborazioni artistiche';
+Ti.fr['rep.programsLink'] = 'Découvrez des programmes de concert et des collaborations artistiques';
+Ti.en['epk.programsLink'] = 'See programmes and artistic collaborations';
+Ti.de['epk.programsLink'] = 'Programme und künstlerische Projekte ansehen';
+Ti.es['epk.programsLink'] = 'Ver programas y colaboraciones artísticas';
+Ti.it['epk.programsLink'] = 'Scopri programmi e collaborazioni artistiche';
+Ti.fr['epk.programsLink'] = 'Voir les programmes et collaborations artistiques';
 Ti.it['rep.thWorkLied'] = 'Brano';
 Ti.it['rep.thWork'] = 'Titolo';
 // Repertoire status labels (i18n for public repertoire filters + badges)
