@@ -4250,12 +4250,15 @@ let __admExportOverlayState = null;
 function closeAdmExportOverlay() {
   const ov = document.getElementById('admExportOverlay');
   const fr = document.getElementById('admExportFrame');
-  if (__admExportOverlayState && __admExportOverlayState.blobUrl) {
-    try { URL.revokeObjectURL(__admExportOverlayState.blobUrl); } catch (e) {}
-  }
+  /* Overlay document lives in iframe.srcdoc only — no blob: URL to revoke for the preview. */
   __admExportOverlayState = null;
   if (fr) {
-    try { fr.src = 'about:blank'; } catch (e) {}
+    try {
+      fr.removeAttribute('src');
+      fr.srcdoc = '';
+      fr.removeAttribute('srcdoc');
+      fr.src = 'about:blank';
+    } catch (e) {}
   }
   if (ov) {
     ov.classList.remove('open');
@@ -4263,21 +4266,30 @@ function closeAdmExportOverlay() {
   }
   document.body.style.overflow = '';
 }
-function openAdmExportOverlay(blobUrl, htmlStr, title) {
+/**
+ * Mobile overlay: load export HTML via iframe.srcdoc only (no blob: URL).
+ * WebKit/iOS often blanks iframe blob navigations after a few seconds; srcdoc stays stable until Close.
+ */
+function openAdmExportOverlay(htmlStr, title) {
   closeAdmExportOverlay();
-  __admExportOverlayState = {
-    blobUrl: blobUrl,
-    html: typeof htmlStr === 'string' ? htmlStr : '',
-    title: String(title || 'export').trim() || 'export'
-  };
+  const html = typeof htmlStr === 'string' ? htmlStr : '';
+  const safeTitle = String(title || 'export').trim() || 'export';
+  __admExportOverlayState = { html: html, title: safeTitle };
   const ov = document.getElementById('admExportOverlay');
   const fr = document.getElementById('admExportFrame');
-  if (!ov || !fr || !blobUrl) {
+  if (!ov || !fr || !html) {
     __admExportOverlayState = null;
-    admLog('warn', 'Export overlay missing DOM', { key: 'export-overlay' });
+    admLog('warn', 'Export overlay missing DOM or empty HTML', { key: 'export-overlay' });
     return false;
   }
-  fr.src = blobUrl;
+  try {
+    fr.removeAttribute('src');
+    fr.srcdoc = html;
+  } catch (e) {
+    __admExportOverlayState = null;
+    admLog('warn', 'Export iframe srcdoc failed', { key: 'export-srcdoc', err: String(e && e.message) });
+    return false;
+  }
   ov.classList.add('open');
   ov.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
@@ -4287,6 +4299,7 @@ function openAdmExportOverlay(blobUrl, htmlStr, title) {
 function admExportOverlayDownload() {
   if (!__admExportOverlayState || !__admExportOverlayState.html) return;
   const raw = __admExportOverlayState.title.replace(/[^\w\-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'export';
+  /* Blob sólo para la descarga (__admSafeDownload revoca esa URL ~500ms; no toca el srcdoc del iframe). */
   __admSafeDownload(raw + '.html', __admExportOverlayState.html, 'text/html;charset=utf-8');
 }
 function admExportOverlayPrint() {
@@ -4427,17 +4440,17 @@ function openCleanExportWindow(title, bodyHtml, opts) {
     </div>
     <main class="exp-doc${extraMainClass}">${safeBody}</main>
   </body></html>`;
-  /* Stable export: navigate to a blob: URL once. Avoid document.write (second write after load can blank the tab; huge base64 HTML + write/close is fragile in some engines). */
+  /* Mobile: overlay uses srcdoc (no blob in iframe) — avoids WebKit blanking blob:iframe after load. */
+  if (useOverlay) {
+    if (openAdmExportOverlay(html, safeTitle)) return;
+    admLog('warn', 'Export overlay open failed, falling back to window', { key: 'export-overlay-fallback' });
+  }
+  /* Desktop: navigate to a blob: URL once. Avoid document.write (second write after load can blank the tab; huge base64 HTML + write/close is fragile in some engines). */
   let blobUrl = '';
   try {
     blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   } catch (e) {
     admLog('warn', 'Export Blob URL failed', { key: 'export-blob', err: String(e && e.message) });
-  }
-  /* In-page overlay: same blob URL as desktop; avoids popup blockers / broken tabs on mobile Safari. */
-  if (useOverlay && blobUrl) {
-    if (openAdmExportOverlay(blobUrl, html, safeTitle)) return;
-    admLog('warn', 'Export overlay open failed, falling back to window', { key: 'export-overlay-fallback' });
   }
   /* Do not pass noopener in features: many engines return null even when the tab opened, which triggered
      a bogus fallback (second window.open → about:blank) and could revoke the blob while the first tab loaded. */
