@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0D12">
 <!-- ═══════════════════════════════════════════
      SEO & SOCIAL META TAGS
 ════════════════════════════════════════════ -->
@@ -320,6 +321,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .lang-btn:hover{color:var(--text-dim);border-color:var(--border)}
 .lang-btn.active{color:var(--gold);border-color:var(--gold);background:rgba(212,168,67,.08)}
 .lang-sep{color:var(--text-faint);font-size:.6rem;opacity:.3}
+.lang-btn:focus-visible,.nav-links a:focus-visible,.btn-primary:focus-visible,.btn-secondary:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.form-input:focus-visible,.form-submit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 nav{position:fixed;top:37px;left:0;right:0;z-index:100;padding:20px 60px;display:flex;justify-content:space-between;align-items:center;transition:background .4s,padding .4s}
 nav.scrolled{background:rgba(13,13,18,.95);backdrop-filter:blur(12px);padding:12px 60px;border-bottom:1px solid var(--border)}
 .nav-logo{font-family:var(--ff-caps);font-size:.9rem;letter-spacing:.2em;color:var(--gold);text-decoration:none;text-transform:uppercase}
@@ -347,6 +350,7 @@ nav.scrolled{background:rgba(13,13,18,.95);backdrop-filter:blur(12px);padding:12
 .hero-scroll{position:absolute;bottom:36px;right:56px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:9px;opacity:0;animation:fadeIn .8s ease forwards 1.4s}
 .hero-scroll span{font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.25em;color:var(--text-faint);text-transform:uppercase;writing-mode:vertical-rl}
 .scroll-line{width:1px;height:55px;background:linear-gradient(to bottom,var(--gold),transparent);animation:scrollPulse 2s ease-in-out infinite}
+@media(max-width:600px){.hero-scroll{display:none}}
 section{position:relative;z-index:2}
 .section-inner{max-width:1200px;margin:0 auto;padding:0 60px}
 .section-tag{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.35em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:13px;margin-bottom:48px}
@@ -1457,16 +1461,16 @@ textarea.adm-input{resize:vertical;min-height:80px}
         </div>
         <div class="contact-ctas">
           <a id="contactEmailBtn" class="btn-secondary"></a>
-          <a id="contactWebBtn" class="btn-secondary" href="https://www.rolandoguy.com" target="_blank" style="display:none"></a>
+          <a id="contactWebBtn" class="btn-secondary" href="https://www.rolandoguy.com" target="_blank" rel="noopener" style="display:none"></a>
         </div>
       </div>
       <div class="contact-form reveal rd2">
         <div class="form-row">
-          <div class="form-group"><label class="form-label" data-i18n="form.name">Name</label><input type="text" id="cf-name" class="form-input" placeholder="Your name" data-ph="form.namePh"></div>
-          <div class="form-group"><label class="form-label" data-i18n="form.email">Email</label><input type="email" id="cf-email" class="form-input" placeholder="your@email.com" data-ph="form.emailPh"></div>
+          <div class="form-group"><label class="form-label" for="cf-name" data-i18n="form.name">Name</label><input type="text" id="cf-name" class="form-input" placeholder="Your name" data-ph="form.namePh"></div>
+          <div class="form-group"><label class="form-label" for="cf-email" data-i18n="form.email">Email</label><input type="email" id="cf-email" class="form-input" placeholder="your@email.com" data-ph="form.emailPh"></div>
         </div>
-        <div class="form-group"><label class="form-label" data-i18n="form.subject">Subject</label><input type="text" id="cf-subject" class="form-input" placeholder="Booking inquiry" data-ph="form.subjectPh"></div>
-        <div class="form-group"><label class="form-label" data-i18n="form.message">Message</label><textarea id="cf-message" class="form-input" rows="5" placeholder="Tell me about your project..." data-ph="form.messagePh"></textarea></div>
+        <div class="form-group"><label class="form-label" for="cf-subject" data-i18n="form.subject">Subject</label><input type="text" id="cf-subject" class="form-input" placeholder="Booking inquiry" data-ph="form.subjectPh"></div>
+        <div class="form-group"><label class="form-label" for="cf-message" data-i18n="form.message">Message</label><textarea id="cf-message" class="form-input" rows="5" placeholder="Tell me about your project..." data-ph="form.messagePh"></textarea></div>
         <button class="form-submit" onclick="submitForm()"><span data-i18n="form.send">Send Message</span></button>
         <div class="form-success" id="formOk" data-i18n="form.success">Thank you! Your message has been sent.</div>
       </div>

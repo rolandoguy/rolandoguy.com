@@ -579,8 +579,14 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
   flex-shrink:0;
   overflow-x:auto;
   flex-wrap:nowrap;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scrollbar-color:var(--gold-dim) transparent;
 }
-.adm-tabs::-webkit-scrollbar{display:none}
+.adm-tabs::-webkit-scrollbar{height:4px}
+.adm-tabs::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px}
+.adm-tabs::-webkit-scrollbar-track{background:transparent}
 .adm-tab{
   font-family:var(--ff-caps);
   font-size:.52rem;
@@ -630,6 +636,36 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .adm-err{color:#c05050}
 .adm-card-preview{background:var(--surface2);border:1px solid var(--border);padding:16px 18px;margin-bottom:8px}
 .adm-card-idx{font-family:var(--ff-caps);font-size:.49rem;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+
+/* Clean export toolbar (admin top block) */
+.adm-export-bar{padding:10px 16px}
+.adm-export-sel{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px}
+.adm-export-sel label{font-size:.76rem}
+.adm-export-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Fullscreen export preview (mobile / touch Safari) */
+.adm-export-overlay{
+  display:none;position:fixed;inset:0;z-index:4500;
+  flex-direction:column;background:var(--bg);
+  opacity:0;pointer-events:none;transition:opacity .22s;
+}
+.adm-export-overlay.open{display:flex;opacity:1;pointer-events:auto}
+.adm-export-overlay-bar{
+  flex-shrink:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  background:rgba(13,13,18,.97);backdrop-filter:blur(12px);
+}
+.adm-export-overlay-bar button{
+  font-family:var(--ff-caps);font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:8px 14px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);
+  cursor:pointer;transition:border-color .2s,color .2s
+}
+.adm-export-overlay-bar button:hover{border-color:var(--gold);color:var(--gold)}
+.adm-export-overlay-bar button.adm-export-bar-primary{
+  background:var(--gold);color:var(--bg);border-color:var(--gold)
+}
+.adm-export-overlay-bar button.adm-export-bar-primary:hover{background:var(--copper);border-color:var(--copper);color:var(--bg)}
+.adm-export-frame{flex:1;width:100%;border:0;background:#fff}
 
 /* ── HAMBURGER MENU ── */
 .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none;z-index:300}
@@ -711,11 +747,25 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .video-title{font-size:.9rem}
   .lb-nav{padding:8px 12px;font-size:1.1rem}
   .lightbox-img{max-width:95vw;max-height:80vh}
-  .adm-body{padding:16px 12px}
-  .adm-head{padding:10px 12px 8px;flex-wrap:wrap;gap:8px;align-items:flex-start}
+  .adm-body{padding:14px 10px}
+  .adm-head{padding:8px 10px 6px;flex-wrap:wrap;gap:6px;align-items:flex-start}
+  .adm-head-title{font-size:.58rem !important;letter-spacing:.22em !important}
   .adm-head-title{width:100%}
-  .adm-head > div{flex-wrap:wrap !important;gap:5px !important;width:100%}
-  .adm-tab{padding:10px 13px !important;font-size:.47rem !important}
+  .adm-head > div{flex-wrap:wrap !important;gap:5px !important;width:100%;justify-content:flex-start !important}
+  .adm-head > div button[id^="admLangBtn"]{padding:4px 6px !important;font-size:.44rem !important}
+  .adm-head #admSavePill{font-size:.48rem !important;padding:4px 8px !important;min-width:0 !important}
+  .adm-tab{padding:9px 12px !important;font-size:.44rem !important;letter-spacing:.12em !important}
+  .adm-btn{font-size:.48rem !important;padding:8px 14px !important;letter-spacing:.12em !important;white-space:normal;text-align:center;line-height:1.35}
+  .adm-btn-sm{font-size:.42rem !important;padding:6px 10px !important}
+  .adm-input,.adm-select{font-size:.8rem !important;padding:7px 9px !important}
+  .adm-section{margin:14px 0 10px;font-size:.48rem !important}
+  .adm-export-bar{padding:8px 10px !important}
+  .adm-export-bar > div:first-child{margin-bottom:6px !important}
+  .adm-export-sel{flex-direction:column;gap:8px !important;align-items:stretch !important}
+  .adm-export-sel label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px solid rgba(212,168,67,.08)}
+  .adm-export-sel label:last-of-type{border-bottom:none}
+  .adm-export-actions{flex-direction:column}
+  .adm-export-actions .adm-btn{width:100%;justify-content:center}
   #admCheckBtn{display:none}
 }/* ── PRESS ── */
 #press{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -1303,7 +1353,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
     <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
     <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Cerrar Sesión</button>
-    <a href="https://www.rolandoguy.com" target="_blank" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
+    <a href="https://www.rolandoguy.com" target="_blank" rel="noopener" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
    </div>
   </div>
   <div id="admLockWrap" style="background:var(--surface);padding:40px 32px">
@@ -1322,9 +1372,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
    </div>
   </div>
   <div id="admContent" style="display:none;flex-direction:column;overflow:hidden">
-   <div id="admFullExportWrap" style="border-bottom:1px solid var(--border);padding:10px 16px;background:rgba(212,168,67,.04)">
+   <div id="admFullExportWrap" class="adm-export-bar" style="border-bottom:1px solid var(--border);padding:10px 16px;background:rgba(212,168,67,.04)">
     <div style="font-family:var(--ff-caps);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Full clean export</div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <div class="adm-export-sel">
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-bio" onchange="saveFullExportSectionPrefs()"> Biography</label>
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-repertoire" onchange="saveFullExportSectionPrefs()"> Repertoire</label>
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-programs" onchange="saveFullExportSectionPrefs()"> Programs &amp; Collaborations</label>
@@ -1333,7 +1383,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-epk" onchange="saveFullExportSectionPrefs()"> Dossier / EPK</label>
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-contact" onchange="saveFullExportSectionPrefs()"> Contact</label>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div class="adm-export-actions" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" type="button" onclick="copyFullProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy selected sections</button>
       <button class="adm-btn" type="button" onclick="openSelectedProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
       <button class="adm-btn" type="button" onclick="copyShortProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy short profile</button>
@@ -1768,6 +1818,16 @@ textarea.adm-input{resize:vertical;min-height:80px}
   </div><!-- admContent -->
  </div><!-- adm-wrap -->
 </div><!-- adm -->
+
+<!-- In-page export preview (avoids window.open on mobile Safari) -->
+<div id="admExportOverlay" class="adm-export-overlay" aria-hidden="true">
+  <div class="adm-export-overlay-bar">
+    <button type="button" class="adm-export-bar-primary" id="admExportOverlayPrint" onclick="admExportOverlayPrint()">Print / PDF</button>
+    <button type="button" id="admExportOverlayDownload" onclick="admExportOverlayDownload()">Download HTML</button>
+    <button type="button" id="admExportOverlayClose" onclick="closeAdmExportOverlay()">Close</button>
+  </div>
+  <iframe id="admExportFrame" class="adm-export-frame" title="Clean export preview"></iframe>
+</div>
 <!-- Firebase SDK -->
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -4173,6 +4233,81 @@ async function copyPlainTextWithFallback(text, logMessage, logKey) {
   }
 }
 
+function shouldUseAdminExportOverlay() {
+  try {
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let narrow = false;
+    try {
+      narrow = !!(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+    } catch (e) {}
+    return isIOS || narrow;
+  } catch (e) {
+    return false;
+  }
+}
+let __admExportOverlayState = null;
+function closeAdmExportOverlay() {
+  const ov = document.getElementById('admExportOverlay');
+  const fr = document.getElementById('admExportFrame');
+  if (__admExportOverlayState && __admExportOverlayState.blobUrl) {
+    try { URL.revokeObjectURL(__admExportOverlayState.blobUrl); } catch (e) {}
+  }
+  __admExportOverlayState = null;
+  if (fr) {
+    try { fr.src = 'about:blank'; } catch (e) {}
+  }
+  if (ov) {
+    ov.classList.remove('open');
+    ov.setAttribute('aria-hidden', 'true');
+  }
+  document.body.style.overflow = '';
+}
+function openAdmExportOverlay(blobUrl, htmlStr, title) {
+  closeAdmExportOverlay();
+  __admExportOverlayState = {
+    blobUrl: blobUrl,
+    html: typeof htmlStr === 'string' ? htmlStr : '',
+    title: String(title || 'export').trim() || 'export'
+  };
+  const ov = document.getElementById('admExportOverlay');
+  const fr = document.getElementById('admExportFrame');
+  if (!ov || !fr || !blobUrl) {
+    __admExportOverlayState = null;
+    admLog('warn', 'Export overlay missing DOM', { key: 'export-overlay' });
+    return false;
+  }
+  fr.src = blobUrl;
+  ov.classList.add('open');
+  ov.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  try { ov.querySelector('#admExportOverlayClose') && ov.querySelector('#admExportOverlayClose').focus(); } catch (e) {}
+  return true;
+}
+function admExportOverlayDownload() {
+  if (!__admExportOverlayState || !__admExportOverlayState.html) return;
+  const raw = __admExportOverlayState.title.replace(/[^\w\-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'export';
+  __admSafeDownload(raw + '.html', __admExportOverlayState.html, 'text/html;charset=utf-8');
+}
+function admExportOverlayPrint() {
+  const fr = document.getElementById('admExportFrame');
+  if (!fr || !fr.contentWindow) return;
+  try {
+    fr.contentWindow.focus();
+    fr.contentWindow.print();
+  } catch (e) {
+    admLog('warn', 'Export overlay print failed', { key: 'export-print', err: String(e && e.message) });
+  }
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  const ov = document.getElementById('admExportOverlay');
+  if (ov && ov.classList.contains('open')) {
+    e.preventDefault();
+    closeAdmExportOverlay();
+  }
+});
+
 function openCleanExportWindow(title, bodyHtml, opts) {
   opts = opts || {};
   const safeTitle = String(title || 'Export').trim() || 'Export';
@@ -4182,11 +4317,16 @@ function openCleanExportWindow(title, bodyHtml, opts) {
   if (safeBody !== bodyHtml) admLog('warn', 'Clean export fallback rendered', { key: 'export-empty' });
   const variant = String(opts.variant || '').trim();
   const extraMainClass = variant === 'short' ? ' exp-short' : '';
-  const html = `<!doctype html><html lang="${exportEsc(currentLang || 'en')}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${exportEsc(safeTitle)}</title><style>
+  const useOverlay = shouldUseAdminExportOverlay();
+  const htmlLangOpen = useOverlay
+    ? `<html class="adm-embed" lang="${exportEsc(currentLang || 'en')}">`
+    : `<html lang="${exportEsc(currentLang || 'en')}">`;
+  const html = `<!doctype html>${htmlLangOpen}<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${exportEsc(safeTitle)}</title><style>
     :root{
       --exp-text:#1a1a1a;--exp-muted:#555;--exp-faint:#757575;--exp-border:#ddd;--exp-soft:#f6f6f6;--exp-line:1.65;
     }
     *{box-sizing:border-box}
+    html.adm-embed .export-toolbar{display:none!important}
     body{margin:0;background:#fff;color:var(--exp-text);-webkit-font-smoothing:antialiased}
     .exp-doc{
       max-width:42rem;margin:0 auto;padding:1.75rem 1.35rem 3.75rem;
@@ -4293,6 +4433,11 @@ function openCleanExportWindow(title, bodyHtml, opts) {
     blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   } catch (e) {
     admLog('warn', 'Export Blob URL failed', { key: 'export-blob', err: String(e && e.message) });
+  }
+  /* In-page overlay: same blob URL as desktop; avoids popup blockers / broken tabs on mobile Safari. */
+  if (useOverlay && blobUrl) {
+    if (openAdmExportOverlay(blobUrl, html, safeTitle)) return;
+    admLog('warn', 'Export overlay open failed, falling back to window', { key: 'export-overlay-fallback' });
   }
   /* Do not pass noopener in features: many engines return null even when the tab opened, which triggered
      a bogus fallback (second window.open → about:blank) and could revoke the blob while the first tab loaded. */
