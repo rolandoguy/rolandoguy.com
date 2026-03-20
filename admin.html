@@ -6772,24 +6772,6 @@ function epkGetStoredPublicPdfs() {
   return out;
 }
 
-function epkClearDossierEnRemainder() {
-  const raw = load('rg_public_pdfs');
-  if (!raw || typeof raw !== 'object') return false;
-  const next = JSON.parse(JSON.stringify(raw));
-  if (!next.dossier || typeof next.dossier !== 'object') next.dossier = {};
-  const current = next.dossier.EN;
-  let hadValue = false;
-  if (typeof current === 'string') {
-    hadValue = !!current.trim();
-  } else if (current && typeof current === 'object') {
-    hadValue = !!String(current.url || '').trim() || !!String(current.data || '').trim();
-  }
-  if (!hadValue) return false;
-  next.dossier.EN = { url: '', data: '' };
-  save('rg_public_pdfs', next);
-  return true;
-}
-
 function epkCountWords(countId, fieldId) {
   const text = document.getElementById(fieldId).value.trim();
   const words = text ? text.split(/\s+/).length : 0;
@@ -7501,8 +7483,6 @@ function admPopulate(name){
     document.getElementById('f-contactEmailBtn').value = d.emailBtn||'';
   }
   if(name==='epk'){
-    // One-time cleanup requested: keep dossier.EN empty (no active test file).
-    try { epkClearDossierEnRemainder(); } catch(e) {}
     // Load bio fields for default lang (en)
     document.getElementById('epkBioActiveLang').value = 'en';
     ['en','de','es','it','fr'].forEach(l => {
