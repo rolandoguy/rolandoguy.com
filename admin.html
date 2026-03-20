@@ -1497,9 +1497,13 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <details class="adm-export-docfold" id="admExportDocFold">
       <summary class="adm-export-docfold-sum"><span data-i18n="export.doc.foldSummary">Artist Sheet / Dossier (PDF)</span></summary>
       <p class="adm-export-docfold-hint" style="margin:0 0 6px;font-size:.7rem;color:var(--text-faint);line-height:1.35" data-i18n="export.doc.barTitle">Document exports (print / PDF)</p>
+      <p class="adm-export-docfold-hint" style="margin:0 0 6px;font-size:.62rem;color:var(--text-faint);line-height:1.4" data-i18n="export.doc.pdfmakeHint">Final PDFs download via pdfmake (exact A4 filenames). HTML preview is optional; no print dialog required for the PDF file.</p>
+      <p class="adm-export-docfold-hint" style="margin:0 0 6px;font-size:.62rem;color:var(--text-faint);line-height:1.4;font-family:var(--ff-mono,monospace)">PDF debug outlines: <code style="font-size:.6rem">localStorage.setItem('rg_pdf_export_debug','1')</code> → reload admin → open export again. <code style="font-size:.6rem">removeItem(...)</code> to off.</p>
       <div class="adm-export-actions adm-export-doc-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="adm-btn" type="button" onclick="openArtistSheetExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenArtistSheet">Open Artist Sheet</button>
-        <button class="adm-btn" type="button" onclick="openDossierExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenDossier">Open Dossier</button>
+        <button class="adm-btn" type="button" onclick="openArtistSheetExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenArtistSheet">Download Artist Sheet (PDF)</button>
+        <button class="adm-btn" type="button" onclick="openDossierExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenDossier">Download Dossier (PDF)</button>
+        <button class="adm-btn" type="button" onclick="previewArtistSheetHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewArtistSheetHtml">Preview Artist Sheet (HTML)</button>
+        <button class="adm-btn" type="button" onclick="previewDossierHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewDossierHtml">Preview Dossier (HTML)</button>
         <button class="adm-btn" type="button" onclick="copyArtistSheetPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyArtistSheet">Copy Artist Sheet text</button>
         <button class="adm-btn" type="button" onclick="copyDossierPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyDossier">Copy Dossier text</button>
       </div>
@@ -1950,6 +1954,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.12/build/pdfmake.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.12/build/vfs_fonts.js"></script>
 <script>
 // ── In-memory cache ──
 const DB = {};
@@ -3948,10 +3954,17 @@ function buildDocBioMedium() {
   const site = get('bio') || {};
   const siteFull = [exportStripHtml(site.p1 || ''), exportStripHtml(site.p2 || '')].filter(Boolean).join(' ');
   let base = (fullBio || [b150, b50].filter(Boolean).join(' ') || siteFull).replace(/\s+/g, ' ').trim();
-  if (exportWordCount(base) < 95 && siteFull && base !== siteFull) {
-    base = (base + ' ' + siteFull).replace(/\s+/g, ' ').trim();
+  base = exportDedupeBioAdjacentSimilar(base.trim());
+  let trimmed = exportTrimBioToWordBudget(base, 90, 118);
+  if (exportWordCount(trimmed) < 90 && siteFull && base !== siteFull) {
+    const tail = exportStripRedundantBioContinuation(trimmed, siteFull);
+    if (tail) trimmed = exportDedupeBioAdjacentSimilar(exportTrimBioToWordBudget((trimmed + ' ' + tail).replace(/\s+/g, ' ').trim(), 88, 118));
   }
-  return exportTrimBioToWordBudget(base, 90, 118);
+  if (exportWordCount(trimmed) < 90 && fullBio) {
+    const tail = exportStripRedundantBioContinuation(trimmed, fullBio);
+    if (tail) trimmed = exportDedupeBioAdjacentSimilar(exportTrimBioToWordBudget((trimmed + ' ' + tail).replace(/\s+/g, ' ').trim(), 88, 118));
+  }
+  return exportDedupeBioAdjacentSimilar(String(trimmed || '').trim()).trim();
 }
 function repStatusRankForDoc(st) {
   const v = String(st || '').trim().toLowerCase();
@@ -4052,7 +4065,8 @@ function buildArtistSheetHtml(bioImgSrc) {
     const fs = exportDocProgramBlurb(p.description || '');
     return fs ? `<li><strong>${exportEsc(title)}</strong> — ${exportEsc(fs)}</li>` : `<li><strong>${exportEsc(title)}</strong></li>`;
   }).join('');
-  return `<div class="rg-sheet-inner">
+  return `<div class="pdf-page">
+    <div class="pdf-inner rg-sheet-inner">
       <header class="rg-sheet-head">
         <div>
           <h1 class="rg-name">Rolando Guy</h1>
@@ -4072,7 +4086,8 @@ function buildArtistSheetHtml(bioImgSrc) {
         <p class="rg-doc-kicker">${exportEsc(exportStripHtml(ti['export.doc.section.contact'] || 'Contact'))}</p>
         ${buildDocContactInnerHtml(ti)}
       </section>
-    </div>`;
+    </div>
+  </div>`;
 }
 function buildDossierHtml(bioImgSrc) {
   const ti = Ti[currentLang] || Ti.en;
@@ -4101,7 +4116,8 @@ function buildDossierHtml(bioImgSrc) {
   }).join('');
   const calHtml = buildFullExportCalendarHtml({ maxItems: 3, relaxedCalendar: false, suppressMoreNote: true, calTitleKey: 'export.doc.section.upcoming' });
   const mat = exportStripHtml(ti['export.doc.materialsNote'] || '');
-  return `<div class="rg-dossier-p1">
+  return `<div class="pdf-page rg-dossier-page1">
+    <div class="pdf-inner rg-dossier-p1">
       <header class="rg-sheet-head rg-sheet-head-lg">
         <div>
           <h1 class="rg-name">Rolando Guy</h1>
@@ -4117,7 +4133,9 @@ function buildDossierHtml(bioImgSrc) {
       ${lines.length ? `<section class="rg-doc-sec"><p class="rg-doc-kicker">${exportEsc(exportStripHtml(ti['export.doc.section.profile'] || 'Artistic profile'))}</p>${highlights}</section>` : ''}
       ${repHtml ? `<section class="rg-doc-sec"><p class="rg-doc-kicker">${exportEsc(exportStripHtml(ti['export.doc.section.rep'] || 'Selected repertoire'))}</p>${repHtml}</section>` : ''}
     </div>
-    <div class="rg-dossier-p2 rg-page-break">
+  </div>
+  <div class="pdf-page rg-dossier-page2">
+    <div class="pdf-inner rg-dossier-p2">
       ${progList.length ? `<section class="rg-doc-sec"><p class="rg-doc-kicker">${exportEsc(exportStripHtml(ti['export.doc.section.programsLong'] || 'Programs'))}</p><div class="rg-prog-stack">${progBlocks}</div></section>` : ''}
       <div class="rg-cal-wrap">${calHtml}</div>
       <section class="rg-doc-sec rg-doc-contact">
@@ -4125,7 +4143,8 @@ function buildDossierHtml(bioImgSrc) {
         ${buildDocContactInnerHtml(ti)}
       </section>
       ${mat ? `<p class="rg-doc-footnote">${exportEsc(mat)}</p>` : ''}
-    </div>`;
+    </div>
+  </div>`;
 }
 function buildArtistSheetPlainText() {
   const ti = Ti[currentLang] || Ti.en;
@@ -4227,7 +4246,458 @@ function buildDossierPlainText() {
   if (mat) lines.push('', mat);
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
+
+/**
+ * Normalize strings before pdfmake: NFC, strip invisible/control chars, unify spaces & dashes.
+ * Fixes e.g. "audience￾friendly" (U+FFFE etc. from pasted Word/CMS).
+ */
+function exportPdfNormalizeText(str) {
+  let s = String(str || '');
+  try {
+    s = s.normalize('NFC');
+  } catch (e) {}
+  s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u2028\u2029\u2060-\u2064\uFEFF\uFFFE\uFFFF]/g, '');
+  s = s.replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
+  s = s.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '\u2013');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+/**
+ * Agenda row detail/title sometimes stores leaked program "Ideal for" theme tags
+ * (comma + und lists). Source fields: getPerfs() items — `detail` / `detail_de` / `detail_*`, or `title`.
+ * Example CMS leak: "Opernarien, Tango argentino und Asiatische Vokalmusik"
+ * exportCalendarFieldDe previously did not filter this (unlike ES/FR/IT editorial cleanup).
+ */
+function exportPdfStripLeakedCalendarThemeLine(str) {
+  const t = exportPdfNormalizeText(str);
+  if (!t) return '';
+  const one = t.replace(/\s+/g, ' ').trim();
+  if (/^Opernarien\s*,\s*Tango\s*argentino\s+und\s+Asiatische\s+Vokalmusik\.?$/i.test(one)) return '';
+  if (one.length < 160 && /\bOpernarien\b/i.test(one) && /\bTango\s*argentino\b/i.test(one) && /\bAsiatische\s+Vokalmusik\b/i.test(one)) {
+    if (!/\b(in |im |am |zur |zum |bei |mit |für |vor |nach |aus )\b/i.test(one)) return '';
+  }
+  return t;
+}
+
+/** Controlled trim so pdfmake single-page / two-page layouts do not spill unpredictably. */
+function pdfExportHardTruncate(str, maxChars) {
+  const s = String(str || '').replace(/\s+/g, ' ').trim();
+  const n = typeof maxChars === 'number' && maxChars > 0 ? maxChars : 4000;
+  if (s.length <= n) return s;
+  let cut = s.slice(0, n);
+  const sp = cut.lastIndexOf(' ');
+  if (sp > n * 0.5) cut = cut.slice(0, sp);
+  return cut.trim() + '\u2026';
+}
+
+function adminDownloadPdfMake(docDefinition, filename) {
+  if (typeof pdfMake === 'undefined' || typeof pdfMake.createPdf !== 'function') {
+    admLog('error', 'pdfMake not available', { key: 'pdfmake-missing' });
+    return Promise.reject(new Error('pdfMake not loaded'));
+  }
+  return new Promise(function (resolve, reject) {
+    try {
+      pdfMake.createPdf(docDefinition).getBlob(function (blob) {
+        try {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            try { a.remove(); } catch (e2) {}
+          }, 800);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+/** Usable width inside A4 with 48pt side margins (~167mm). */
+const RG_PDF_INNER_W = 499;
+
+function rgPdfKicker(text, marginTop, marginBottom) {
+  const mt = typeof marginTop === 'number' ? marginTop : 14;
+  const mb = typeof marginBottom === 'number' ? marginBottom : 7;
+  return { text: exportPdfNormalizeText(String(text || '')).toUpperCase(), style: 'kicker', margin: [0, mt, 0, mb] };
+}
+
+function rgPdfBulletList(items, bottomMargin) {
+  const arr = (Array.isArray(items) ? items : []).map((x) => exportPdfNormalizeText(String(x || '').trim())).filter(Boolean);
+  if (!arr.length) return { text: '' };
+  const bm = typeof bottomMargin === 'number' ? bottomMargin : 11;
+  return {
+    ul: arr,
+    margin: [4, 2, 0, bm],
+    fontSize: 9.35,
+    lineHeight: 1.45,
+    color: '#252525',
+    markerColor: '#4a3f35'
+  };
+}
+
+/** Primary section rule — print-catalogue weight */
+function rgPdfRuleStrong() {
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: RG_PDF_INNER_W, y2: 0, lineWidth: 0.55, lineColor: '#8e867c' }], margin: [0, 0, 0, 0] };
+}
+
+/** Lighter rule between minor sections */
+function rgPdfRuleSoft(margin) {
+  const m = margin || [0, 0, 0, 0];
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: RG_PDF_INNER_W, y2: 0, lineWidth: 0.28, lineColor: '#d8d4ce' }], margin: m };
+}
+
+/**
+ * Header: restrained vertical accent + name / fach / location hierarchy (classical house style).
+ */
+function rgPdfHeaderColumns(payload, imageCol) {
+  const nameStack = [
+    { text: payload.name, style: 'hName', margin: [0, 0, 0, 6] },
+    { text: payload.fach, style: 'fach' }
+  ];
+  if (payload.loc) {
+    nameStack.push({ text: payload.loc, style: 'loc', margin: [0, 7, 0, 0] });
+  }
+  const accentCol = {
+    width: 3,
+    margin: [0, 5, 14, 0],
+    canvas: [{ type: 'line', x1: 1.2, y1: 0, x2: 1.2, y2: 76, lineWidth: 1.05, lineColor: '#5c4d42' }]
+  };
+  const textCol = { width: '*', stack: nameStack };
+  const cols = [accentCol, textCol];
+  if (imageCol) cols.push(imageCol);
+  return { columns: cols, columnGap: imageCol ? 14 : 0, margin: [0, 0, 0, 16] };
+}
+
+/** Contact — inset panel, typographic labels (not raw key:value dump). */
+function rgPdfContactPanel(payload) {
+  const emailLbl = payload.contact.lblEmail;
+  const webLbl = payload.contact.lblWebsite;
+  const rows = [
+    {
+      stack: [
+        { text: emailLbl.toUpperCase(), style: 'contactLbl', margin: [0, 0, 0, 3] },
+        { text: payload.contact.email, style: 'contactVal', margin: [0, 0, 0, 10] }
+      ]
+    },
+    {
+      stack: [
+        { text: webLbl.toUpperCase(), style: 'contactLbl', margin: [0, 0, 0, 3] },
+        { text: String(payload.contact.website || ''), style: 'contactVal', margin: [0, 0, 0, 0] }
+      ]
+    }
+  ];
+  if (payload.contact.bookingLine) {
+    rows.push({ text: payload.contact.bookingLine, style: 'smallItal', margin: [0, 12, 0, 0] });
+  }
+  const inner = { stack: rows, margin: [0, 0, 0, 0] };
+  return {
+    table: {
+      widths: ['*'],
+      body: [[inner]]
+    },
+    layout: {
+      hLineWidth: function () { return 0; },
+      vLineWidth: function () { return 0; },
+      paddingLeft: function () { return 14; },
+      paddingRight: function () { return 14; },
+      paddingTop: function () { return 12; },
+      paddingBottom: function () { return 12; },
+      fillColor: function () { return '#f5f3ef'; }
+    },
+    margin: [0, 6, 0, 0]
+  };
+}
+
+/**
+ * Final Artist Sheet export model — each field read once from admin state.
+ * @param {string} lang
+ */
+function buildArtistSheetPayload(lang) {
+  const prev = currentLang;
+  let L = String(lang || prev || 'en').toLowerCase().slice(0, 2) || 'en';
+  if (!Ti[L]) L = 'en';
+  currentLang = L;
+  try {
+    const ti = Ti[currentLang] || Ti.en;
+    const hero = get('hero') || {};
+    const fach = exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
+    const loc = exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
+    const bioText = exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioShort(), 1100));
+    const profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
+    const operaLines = pickOperaRolesForSheet(3).map(formatRepCardLineDoc);
+    const ariaLines = pickAriasForSheet(2).map(formatRepCardLineDoc);
+    const programs = getPrograms();
+    const progList = (programs.programs || []).filter((p) => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).slice(0, 2);
+    const progRows = progList.map((p) => {
+      const bl0 = exportDocProgramBlurb(p.description || '');
+      return {
+        title: exportPdfNormalizeText(exportStripHtml(p.title || '')),
+        blurb: exportPdfStripLeakedCalendarThemeLine(bl0)
+      };
+    });
+    const contact = get('contact') || {};
+    const email = exportPdfNormalizeText(exportStripHtml((contact.email || '').trim() || 'rolandoguy@gmail.com'));
+    return {
+      lang: L,
+      name: 'Rolando Guy',
+      fach,
+      loc,
+      labels: {
+        bio: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.bio'] || 'Biography')),
+        profile: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.profile'] || 'Artistic profile')),
+        rep: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.rep'] || 'Selected repertoire')),
+        programs: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.programsShort'] || 'Programs')),
+        contact: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.contact'] || 'Contact')),
+        repOpera: exportPdfNormalizeText(exportStripHtml(ti['export.doc.repOperaRoles'] || 'Opera roles')),
+        repAria: exportPdfNormalizeText(exportStripHtml(ti['export.doc.repAriasSheet'] || 'Concert & gala arias'))
+      },
+      bioText,
+      profileLines,
+      operaLines,
+      ariaLines,
+      programs: progRows,
+      contact: {
+        email,
+        website: exportPdfNormalizeText(getDocWebsiteUrl()),
+        bookingLine: exportPdfNormalizeText(exportStripHtml(ti['export.doc.bookingLine'] || '')),
+        lblEmail: exportPdfNormalizeText(exportStripHtml(ti['export.doc.labelEmail'] || 'Email')),
+        lblWebsite: exportPdfNormalizeText(exportStripHtml(ti['export.doc.website'] || 'Website'))
+      },
+      imageDataUrl: ''
+    };
+  } finally {
+    currentLang = prev;
+  }
+}
+
+/**
+ * Dossier export model — page split is logical only; pdf renderer forces page 2 start.
+ * @param {string} lang
+ */
+function buildDossierPayload(lang) {
+  const prev = currentLang;
+  let L = String(lang || prev || 'en').toLowerCase().slice(0, 2) || 'en';
+  if (!Ti[L]) L = 'en';
+  currentLang = L;
+  try {
+    const ti = Ti[currentLang] || Ti.en;
+    const hero = get('hero') || {};
+    const fach = exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
+    const loc = exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
+    const bioText = exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioMedium(), 1650));
+    const profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
+    const repGroups = pickRepGroupsForDossier().map((g) => ({
+      label: exportPdfNormalizeText(g.label),
+      items: (g.items || []).map((x) => exportPdfNormalizeText(String(x || '').trim())).filter(Boolean)
+    }));
+    const programs = getPrograms();
+    const progList = (programs.programs || []).filter((p) => p.published !== false).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).slice(0, 3);
+    const progRows = progList.map((p) => {
+      const d0 = exportDocProgramBlurb(p.description || '');
+      return {
+        title: exportPdfNormalizeText(exportStripHtml(p.title || '')),
+        desc: exportPdfStripLeakedCalendarThemeLine(d0)
+      };
+    });
+    const perfs = (typeof getPerfs === 'function' ? getPerfs() : []).filter((p) => p.status !== 'past');
+    const sortDate = (p) => {
+      if (p.sortDate) return new Date(p.sortDate);
+      const str = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'Jan 2099');
+      const d = new Date(str);
+      return isNaN(d) ? new Date('2099-01-01') : d;
+    };
+    const list = perfs.slice().sort((a, b) => sortDate(a) - sortDate(b)).slice(0, 3);
+    const calRows = list.map((p) => {
+      const dayMonth = [exportStripHtml(p.day || ''), exportTranslateMonthPdf(p.month || '')].filter(Boolean).join(' ');
+      const timeTxt = exportStripHtml(p.time || '');
+      const titleCal = exportCalendarLocalizePdfField(exportStripHtml(p.title || ''), 'title');
+      const detail = exportCalendarLocalizePdfField(exportStripHtml((p['detail_' + L] || p.detail || '')), 'meta');
+      const venue = [exportCalendarLocalizePdfField(exportStripHtml(p.venue || ''), 'meta'), exportCalendarLocalizePdfField(exportStripHtml(p.city || ''), 'meta')].filter(Boolean).join(' \u00b7 ');
+      return {
+        dayMonth: exportPdfNormalizeText(dayMonth || 'TBA'),
+        timeTxt: exportPdfNormalizeText(timeTxt),
+        titleCal: exportPdfNormalizeText(titleCal),
+        venue: exportPdfNormalizeText(venue),
+        detail: exportPdfNormalizeText(detail)
+      };
+    });
+    const tcal = Ti[L] || Ti.en;
+    const calTitle = exportPdfNormalizeText(exportStripHtml(tcal['export.doc.section.upcoming'] || tcal['nav.cal'] || 'Calendar'));
+    const calEmpty = exportPdfNormalizeText(exportStripHtml(tcal['export.cal.empty'] || '\u2014'));
+    const contact = get('contact') || {};
+    const email = exportPdfNormalizeText(exportStripHtml((contact.email || '').trim() || 'rolandoguy@gmail.com'));
+    const footnote = exportPdfNormalizeText(exportStripHtml(ti['export.doc.materialsNote'] || ''));
+    return {
+      lang: L,
+      name: 'Rolando Guy',
+      fach,
+      loc,
+      labels: {
+        bio: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.bio'] || 'Biography')),
+        profile: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.profile'] || 'Artistic profile')),
+        rep: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.rep'] || 'Selected repertoire')),
+        programs: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.programsLong'] || 'Programs')),
+        contact: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.contact'] || 'Contact')),
+        calTitle,
+        calEmpty
+      },
+      bioText,
+      profileLines,
+      repGroups,
+      programs: progRows,
+      calendarRows: calRows,
+      contact: {
+        email,
+        website: exportPdfNormalizeText(getDocWebsiteUrl()),
+        bookingLine: exportPdfNormalizeText(exportStripHtml(ti['export.doc.bookingLine'] || '')),
+        lblEmail: exportPdfNormalizeText(exportStripHtml(ti['export.doc.labelEmail'] || 'Email')),
+        lblWebsite: exportPdfNormalizeText(exportStripHtml(ti['export.doc.website'] || 'Website'))
+      },
+      footnote,
+      imageDataUrl: ''
+    };
+  } finally {
+    currentLang = prev;
+  }
+}
+
+const RG_PDFMAKE_STYLES = {
+  hName: { fontSize: 24, bold: true, color: '#080808', letterSpacing: 0.35 },
+  fach: { fontSize: 10.25, italics: true, color: '#3d3a36', bold: false, lineHeight: 1.32 },
+  loc: { fontSize: 8.9, color: '#66615c', letterSpacing: 0.45 },
+  kicker: { fontSize: 7.35, bold: true, color: '#535353', characterSpacing: 2.15 },
+  body: { fontSize: 9.35, color: '#1c1c18', lineHeight: 1.48 },
+  repLbl: { fontSize: 9.15, bold: true, color: '#303030', margin: [0, 0, 0, 4], italics: false },
+  progTitle: { fontSize: 10.15, bold: true, color: '#0f0f0f', margin: [0, 3, 0, 4], letterSpacing: 0.12 },
+  progDesc: { fontSize: 9.1, color: '#3a3a36', lineHeight: 1.46 },
+  smallItal: { fontSize: 9, italics: true, color: '#5a5652', lineHeight: 1.45 },
+  calH2: { fontSize: 11.25, bold: true, color: '#121210', margin: [0, 10, 0, 14], characterSpacing: 0.6 },
+  calDate: { fontSize: 9.05, bold: true, color: '#1e1e1c' },
+  calMeta: { fontSize: 8.55, color: '#6a6560', lineHeight: 1.42 },
+  foot: { fontSize: 8.55, italics: true, color: '#706c67', margin: [0, 14, 0, 0], lineHeight: 1.42 },
+  contactLbl: { fontSize: 6.6, bold: true, color: '#5c5854', characterSpacing: 1.65 },
+  contactVal: { fontSize: 9.2, color: '#20201c', lineHeight: 1.35 }
+};
+
+function buildArtistSheetPdfDefinition(payload /* , lang */) {
+  const imgCol = payload.imageDataUrl && /^data:image\//i.test(String(payload.imageDataUrl))
+    ? { width: 88, stack: [{ image: payload.imageDataUrl, width: 86, margin: [2, 4, 0, 0] }] }
+    : null;
+  const content = [
+    rgPdfHeaderColumns(payload, imgCol),
+    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 10] }),
+    rgPdfKicker(payload.labels.bio, 0, 8),
+    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 12] }
+  ];
+  if (payload.profileLines.length) {
+    content.push(rgPdfRuleSoft([0, 2, 0, 3]));
+    content.push(rgPdfKicker(payload.labels.profile, 8, 6));
+    content.push(rgPdfBulletList(payload.profileLines, 10));
+  }
+  if (payload.operaLines.length || payload.ariaLines.length) {
+    content.push(rgPdfKicker(payload.labels.rep, 14, 6));
+    if (payload.operaLines.length && payload.ariaLines.length) {
+      content.push({ text: payload.labels.repOpera, style: 'repLbl', margin: [0, 0, 0, 3] });
+      content.push(rgPdfBulletList(payload.operaLines, 8));
+      content.push({ text: payload.labels.repAria, style: 'repLbl', margin: [0, 6, 0, 3] });
+      content.push(rgPdfBulletList(payload.ariaLines, 10));
+    } else {
+      content.push(rgPdfBulletList(payload.operaLines.length ? payload.operaLines : payload.ariaLines, 10));
+    }
+  }
+  if (payload.programs.length) {
+    content.push(rgPdfKicker(payload.labels.programs, 12, 6));
+    const plines = payload.programs.map((p) => (p.blurb ? (p.title + ' \u2014 ' + p.blurb) : p.title));
+    content.push(rgPdfBulletList(plines, 8));
+  }
+  content.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 10, 0, 9] }));
+  content.push(rgPdfKicker(payload.labels.contact, 0, 5));
+  content.push(rgPdfContactPanel(payload));
+  return {
+    pageSize: 'A4',
+    pageMargins: [48, 48, 52, 48],
+    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1c1c18', lineHeight: 1.44 },
+    content,
+    styles: RG_PDFMAKE_STYLES
+  };
+}
+
+function buildDossierPdfDefinition(payload /* , lang */) {
+  const imgCol = payload.imageDataUrl && /^data:image\//i.test(String(payload.imageDataUrl))
+    ? { width: 94, stack: [{ image: payload.imageDataUrl, width: 92, margin: [2, 4, 0, 0] }] }
+    : null;
+  const p1 = [
+    rgPdfHeaderColumns(payload, imgCol),
+    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 10] }),
+    rgPdfKicker(payload.labels.bio, 0, 8),
+    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 11] }
+  ];
+  if (payload.profileLines.length) {
+    p1.push(rgPdfRuleSoft([0, 1, 0, 2]));
+    p1.push(rgPdfKicker(payload.labels.profile, 7, 6));
+    p1.push(rgPdfBulletList(payload.profileLines, 9));
+  }
+  if (payload.repGroups.length) {
+    p1.push(rgPdfKicker(payload.labels.rep, 11, 6));
+    payload.repGroups.forEach((g, gi) => {
+      p1.push({ text: g.label, style: 'repLbl', margin: [0, gi ? 6 : 2, 0, 3] });
+      const isLast = gi === payload.repGroups.length - 1;
+      p1.push(rgPdfBulletList(g.items, isLast ? 8 : 7));
+    });
+  }
+  const p2 = [];
+  if (payload.programs.length) {
+    p2.push(rgPdfKicker(payload.labels.programs, 10, 8));
+    payload.programs.forEach((pr, i) => {
+      p2.push({ text: pr.title, style: 'progTitle', margin: [0, i ? 5 : 2, 0, 3] });
+      if (pr.desc) p2.push({ text: pr.desc, style: 'progDesc', margin: [0, 0, 0, 8] });
+    });
+    p2.push(rgPdfRuleSoft([0, 4, 0, 3]));
+  }
+  p2.push({ text: payload.labels.calTitle, style: 'calH2' });
+  if (!payload.calendarRows.length) {
+    p2.push({ text: payload.labels.calEmpty, style: 'progDesc', margin: [0, 0, 0, 10] });
+  } else {
+    payload.calendarRows.forEach((ev) => {
+      const rightStack = [{ text: ev.titleCal, bold: true, fontSize: 10.05, color: '#171614', margin: [0, 0, 0, 4] }];
+      if (ev.venue) rightStack.push({ text: ev.venue, style: 'calMeta', margin: [0, 0, 0, 4] });
+      if (ev.detail) rightStack.push({ text: ev.detail, fontSize: 9.05, color: '#2c2c28', lineHeight: 1.44 });
+      p2.push({
+        columns: [
+          { width: 76, stack: [{ text: ev.dayMonth, style: 'calDate' }, ev.timeTxt ? { text: ev.timeTxt, fontSize: 7.6, color: '#7a756f', margin: [0, 3, 0, 0] } : { text: '' }] },
+          { width: '*', stack: rightStack }
+        ],
+        columnGap: 12,
+        margin: [0, 0, 0, 12]
+      });
+    });
+  }
+  p2.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 8, 0, 9] }));
+  p2.push(rgPdfKicker(payload.labels.contact, 0, 5));
+  p2.push(rgPdfContactPanel(payload));
+  if (payload.footnote) p2.push({ text: payload.footnote, style: 'foot' });
+  const content = p1.concat([{ text: '', pageBreak: 'before' }]).concat(p2);
+  return {
+    pageSize: 'A4',
+    pageMargins: [48, 48, 52, 48],
+    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1c1c18', lineHeight: 1.44 },
+    content,
+    styles: RG_PDFMAKE_STYLES
+  };
+}
+
 async function openArtistSheetExport() {
+  const lang = (currentLang || 'en').toLowerCase().slice(0, 2);
   const bioEl = document.getElementById('bioPhoto');
   const bioRaw = (bioEl && bioEl.src) ? bioEl.src.trim() : 'img/studio-1.jpg';
   let bioImg = '';
@@ -4238,9 +4708,18 @@ async function openArtistSheetExport() {
     admLog('warn', 'Artist sheet image optimize failed', { key: 'export-sheet-img', err: String(e && e.message) });
   }
   if (!bioImg) bioImg = resolveExportImageUrl(bioRaw);
-  openCleanExportWindow(exportDocPdfTitle('artistSheet'), buildArtistSheetHtml(bioImg), { docLayout: 'artist-sheet' });
+  try {
+    const payload = buildArtistSheetPayload(lang);
+    payload.imageDataUrl = bioImg || '';
+    const def = buildArtistSheetPdfDefinition(payload, lang);
+    await adminDownloadPdfMake(def, exportDocPdfFilename('artistSheet', lang));
+  } catch (e) {
+    admLog('error', 'Artist sheet PDF failed', { key: 'export-pdf-sheet', err: String(e && e.message) });
+    if (typeof alert === 'function') alert('Artist Sheet PDF could not be generated: ' + (e && e.message ? e.message : e));
+  }
 }
 async function openDossierExport() {
+  const lang = (currentLang || 'en').toLowerCase().slice(0, 2);
   const bioEl = document.getElementById('bioPhoto');
   const bioRaw = (bioEl && bioEl.src) ? bioEl.src.trim() : 'img/studio-1.jpg';
   let bioImg = '';
@@ -4251,7 +4730,45 @@ async function openDossierExport() {
     admLog('warn', 'Dossier doc image optimize failed', { key: 'export-dossier-img', err: String(e && e.message) });
   }
   if (!bioImg) bioImg = resolveExportImageUrl(bioRaw);
-  openCleanExportWindow(exportDocPdfTitle('dossierDoc'), buildDossierHtml(bioImg), { docLayout: 'dossier' });
+  try {
+    const payload = buildDossierPayload(lang);
+    payload.imageDataUrl = bioImg || '';
+    const def = buildDossierPdfDefinition(payload, lang);
+    await adminDownloadPdfMake(def, exportDocPdfFilename('dossierDoc', lang));
+  } catch (e) {
+    admLog('error', 'Dossier PDF failed', { key: 'export-pdf-dossier', err: String(e && e.message) });
+    if (typeof alert === 'function') alert('Dossier PDF could not be generated: ' + (e && e.message ? e.message : e));
+  }
+}
+
+/** Optional HTML preview (no auto-print). Final PDF uses pdfmake only. */
+async function previewArtistSheetHtmlExport() {
+  const lang = (currentLang || 'en').toLowerCase().slice(0, 2);
+  const bioEl = document.getElementById('bioPhoto');
+  const bioRaw = (bioEl && bioEl.src) ? bioEl.src.trim() : 'img/studio-1.jpg';
+  let bioImg = '';
+  try {
+    const { max, q } = EXPORT_IMG.bioSection;
+    bioImg = await exportRasterizeImageForPdf(bioRaw, max, q);
+  } catch (e) {
+    admLog('warn', 'Artist sheet preview image failed', { key: 'export-sheet-prev-img', err: String(e && e.message) });
+  }
+  if (!bioImg) bioImg = resolveExportImageUrl(bioRaw);
+  openCleanExportWindow(exportDocPdfTitle('artistSheet', lang), buildArtistSheetHtml(bioImg), { docLayout: 'artist-sheet', previewHtml: true });
+}
+async function previewDossierHtmlExport() {
+  const lang = (currentLang || 'en').toLowerCase().slice(0, 2);
+  const bioEl = document.getElementById('bioPhoto');
+  const bioRaw = (bioEl && bioEl.src) ? bioEl.src.trim() : 'img/studio-1.jpg';
+  let bioImg = '';
+  try {
+    const { max, q } = EXPORT_IMG.bioSection;
+    bioImg = await exportRasterizeImageForPdf(bioRaw, max, q);
+  } catch (e) {
+    admLog('warn', 'Dossier preview image failed', { key: 'export-dossier-prev-img', err: String(e && e.message) });
+  }
+  if (!bioImg) bioImg = resolveExportImageUrl(bioRaw);
+  openCleanExportWindow(exportDocPdfTitle('dossierDoc', lang), buildDossierHtml(bioImg), { docLayout: 'dossier', previewHtml: true });
 }
 async function copyArtistSheetPlainText() {
   await copyPlainTextWithFallback(buildArtistSheetPlainText(), 'Artist Sheet text copied', 'artist-sheet/plain');
@@ -4393,12 +4910,15 @@ function buildFullExportProgramsHtml() {
 function exportCalendarFieldDe(txt) {
   let s = exportStripHtml(txt || '');
   if (!s || (currentLang || 'en') !== 'de') return s;
-  return s
+  s = s
     .replace(/\bPrivate Event\b/gi, 'Privatveranstaltung')
     .replace(/\bHouse Concert\b/gi, 'Hauskonzert')
     .replace(/\bCorporate Event\b/gi, 'Firmenevent')
     .replace(/\bTango Night\b/gi, 'Tango-Abend')
-    .replace(/\bBerlin,\s*Germany\b/gi, 'Berlin (Deutschland)');
+    .replace(/\bBerlin,\s*Germany\b/gi, 'Berlin (Deutschland)')
+    .replace(/\bTango argentino\b/gi, 'Argentinischer Tango');
+  const stripped = exportPdfStripLeakedCalendarThemeLine(s);
+  return stripped || '';
 }
 /**
  * English PDF calendar: normalize stray German “Konzert” tokens from CMS.
@@ -4476,10 +4996,13 @@ function exportCalendarFieldEsFrIt(txt, field) {
 function exportCalendarLocalizePdfField(txt, field) {
   const lang = currentLang || 'en';
   const f = field === 'title' ? 'title' : 'meta';
-  if (lang === 'de') return exportCalendarFieldDe(txt);
-  if (lang === 'en') return exportCalendarFieldEn(txt, f);
-  if (lang === 'es' || lang === 'fr' || lang === 'it') return exportCalendarFieldEsFrIt(txt, f);
-  return exportStripHtml(txt || '');
+  let out = '';
+  if (lang === 'de') out = exportCalendarFieldDe(txt);
+  else if (lang === 'en') out = exportCalendarFieldEn(txt, f);
+  else if (lang === 'es' || lang === 'fr' || lang === 'it') out = exportCalendarFieldEsFrIt(txt, f);
+  else out = exportStripHtml(txt || '');
+  out = exportPdfStripLeakedCalendarThemeLine(out) || '';
+  return exportPdfNormalizeText(out);
 }
 function exportTranslateMonthPdf(monthRaw) {
   const raw = String(monthRaw || '').trim();
@@ -5044,10 +5567,12 @@ function exportWinTitle(kind) {
   const raw = ti[key] !== undefined ? ti[key] : (Ti.en[key] || 'Export');
   return String(exportStripHtml(String(raw))).trim() || 'Export';
 }
-/** Exact <title> / suggested PDF filename for documentary exports (print dialog). */
-function exportDocPdfTitle(docKind) {
-  const lang = String(currentLang || 'en').toLowerCase();
-  const L = lang.length === 2 ? lang : 'en';
+/** Exact PDF base name (no extension). langOpt overrides currentLang when set. */
+function exportDocPdfTitle(docKind, langOpt) {
+  const raw = (langOpt !== undefined && langOpt !== null && String(langOpt).trim() !== '')
+    ? String(langOpt).toLowerCase()
+    : String(currentLang || 'en').toLowerCase();
+  const L = raw.length >= 2 ? raw.slice(0, 2) : 'en';
   if (docKind === 'artistSheet') {
     const map = { en: 'RolandoGuy_ArtistSheet_EN', de: 'RolandoGuy_ArtistSheet_DE', es: 'RolandoGuy_ArtistSheet_ES', it: 'RolandoGuy_ArtistSheet_IT', fr: 'RolandoGuy_ArtistSheet_FR' };
     return map[L] || map.en;
@@ -5057,6 +5582,9 @@ function exportDocPdfTitle(docKind) {
     return map[L] || map.en;
   }
   return exportWinTitle(docKind);
+}
+function exportDocPdfFilename(docKind, langOpt) {
+  return exportDocPdfTitle(docKind, langOpt) + '.pdf';
 }
 function admExportIframeNeedsRestore(fr) {
   try {
@@ -5180,6 +5708,7 @@ function admExportOverlayPrint() {
   const fr = document.getElementById('admExportFrame');
   if (!fr || !fr.contentWindow) return;
   const snap = __admExportOverlayState && __admExportOverlayState.html ? __admExportOverlayState.html : '';
+  const parentTitle = (function () { try { return document.title; } catch (e) { return ''; } })();
   const restorePreview = function () {
     try {
       if (!snap || !__admExportOverlayState || __admExportOverlayState.html !== snap) return;
@@ -5190,16 +5719,33 @@ function admExportOverlayPrint() {
       fr.srcdoc = snap;
     } catch (e) {}
   };
+  const restoreParentTitle = function () {
+    try { if (parentTitle !== undefined) document.title = parentTitle; } catch (e) {}
+  };
   try {
     const cw = fr.contentWindow;
+    var iframeTitle = '';
+    try {
+      iframeTitle = (cw.document && cw.document.title) ? String(cw.document.title).trim() : '';
+    } catch (e) {}
+    if (!iframeTitle && __admExportOverlayState && __admExportOverlayState.title) {
+      iframeTitle = String(__admExportOverlayState.title).trim();
+    }
+    if (iframeTitle) {
+      try { document.title = iframeTitle; } catch (e) {}
+    }
     if (cw.addEventListener) {
-      cw.addEventListener('afterprint', restorePreview, { once: true });
+      cw.addEventListener('afterprint', function onAfter () {
+        restoreParentTitle();
+        restorePreview();
+      }, { once: true });
     }
     cw.focus();
     cw.print();
-    setTimeout(restorePreview, 400);
-    setTimeout(restorePreview, 1500);
+    setTimeout(function () { restoreParentTitle(); restorePreview(); }, 400);
+    setTimeout(function () { restoreParentTitle(); restorePreview(); }, 1500);
   } catch (e) {
+    restoreParentTitle();
     admLog('warn', 'Export overlay print failed', { key: 'export-print', err: String(e && e.message) });
   }
 }
@@ -5212,6 +5758,319 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
+/**
+ * Standalone A4 PDF/print document for Artist Sheet (1× A4) and Dossier (2× A4).
+ * Does not use .exp-doc screen layout or @page size:auto — fixed 210×297mm boxes only.
+ */
+function buildA4DocPdfHtml(title, bodyHtml, docLayout, printLabelEsc, useOverlay, exportOpts) {
+  exportOpts = exportOpts || {};
+  const previewOnly = !!exportOpts.previewHtml;
+  const pdfDebug = !!exportOpts.pdfDebug;
+  const pdfFileBase = String(exportOpts.pdfFileBase || title || 'export').trim().replace(/\.pdf$/i, '') || 'export';
+  const lang = exportEsc(currentLang || 'en');
+  const layoutAttr = docLayout === 'dossier' ? 'dossier' : 'artist-sheet';
+  const htmlCls = 'rg-doc-pdf' + (useOverlay ? ' adm-embed' : '') + (pdfDebug ? ' rg-pdf-debug' : '');
+  const layoutCss = docLayout === 'dossier' ? `
+    html[data-doc-layout="dossier"] .pdf-inner{font-size:9.05pt;line-height:1.39}
+    html[data-doc-layout="dossier"] .rg-sheet-head{display:grid;grid-template-columns:1fr 128px;gap:.48rem;align-items:start;margin-bottom:.38rem;padding-bottom:.38rem;border-bottom:1px solid #ccc;flex-shrink:0}
+    html[data-doc-layout="dossier"] .rg-name{font-family:Arial,Helvetica,sans-serif;font-size:17.5pt;font-weight:700;margin:0 0 .06rem;line-height:1.05;color:#111;orphans:3;widows:3}
+    html[data-doc-layout="dossier"] .rg-fach{font-family:Arial,Helvetica,sans-serif;font-size:9.4pt;font-weight:600;color:#222;margin:0}
+    html[data-doc-layout="dossier"] .rg-loc{font-size:8.6pt;color:#555;margin:.12rem 0 0;line-height:1.32}
+    html[data-doc-layout="dossier"] .rg-photo{margin:0}
+    html[data-doc-layout="dossier"] .rg-photo-lg img{width:100%;height:auto;max-height:138px;display:block;border:1px solid #cfcfcf;object-fit:cover}
+    html[data-doc-layout="dossier"] .rg-doc-kicker{font-family:Arial,Helvetica,sans-serif;font-size:6.6pt;letter-spacing:.1em;text-transform:uppercase;color:#666;font-weight:700;margin:0 0 .14rem}
+    html[data-doc-layout="dossier"] .rg-doc-sec{margin:0 0 .34rem;flex-shrink:0}
+    html[data-doc-layout="dossier"] .rg-doc-prose{margin:0;color:#1a1a1a}
+    html[data-doc-layout="dossier"] ul.rg-list{margin:.08rem 0 0;padding-left:1rem}
+    html[data-doc-layout="dossier"] ul.rg-list li{margin:0 0 .1rem;font-size:8.45pt;line-height:1.32;color:#222}
+    html[data-doc-layout="dossier"] ul.rg-list-tight li{margin-bottom:.08rem}
+    html[data-doc-layout="dossier"] .rg-rep-group-label{font-family:Arial,Helvetica,sans-serif;font-size:8.1pt;font-weight:700;color:#333;margin:.22rem 0 .1rem}
+    html[data-doc-layout="dossier"] .rg-rep-group-label:first-child{margin-top:0}
+    html[data-doc-layout="dossier"] .rg-prog-stack{display:flex;flex-direction:column;gap:.26rem}
+    html[data-doc-layout="dossier"] .rg-prog-title{font-family:Arial,Helvetica,sans-serif;font-size:9.35pt;font-weight:600;margin:0;color:#161616;line-height:1.16}
+    html[data-doc-layout="dossier"] .rg-prog-desc{margin:.1rem 0 0;font-size:8.35pt;line-height:1.36;color:#333}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-h2{font-family:Arial,Helvetica,sans-serif;font-size:11pt;margin:0 0 .26rem;line-height:1.2;font-weight:700;color:#111}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-h3{font-family:Arial,Helvetica,sans-serif;font-size:9.2pt;margin:.08rem 0 .14rem;line-height:1.2;font-weight:600;color:#161616}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-section{border-bottom:1px solid #ddd;margin-bottom:.36rem;padding-bottom:.32rem}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-cal-row{margin-bottom:.32rem;padding-bottom:.28rem}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-cal-date{font-size:8.35pt;line-height:1.35;font-weight:600;color:#222}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-cal-time{font-size:7.35pt;color:#555;font-weight:600;margin-top:.08rem}
+    html[data-doc-layout="dossier"] .rg-cal-wrap .exp-meta{font-size:8pt;line-height:1.42;color:#333}
+    html[data-doc-layout="dossier"] .rg-dossier-p2 .rg-doc-contact{margin-top:.28rem;padding-top:.42rem;border-top:1px solid #eaeaea;font-size:8.35pt;line-height:1.36}
+    html[data-doc-layout="dossier"] .rg-doc-footnote{margin:.32rem 0 0;font-size:7.85pt;line-height:1.34;color:#555;font-style:italic}
+    html[data-doc-layout="dossier"] .rg-cal-wrap{flex:1 1 auto;min-height:0}
+  ` : `
+    html[data-doc-layout="artist-sheet"] .pdf-inner{font-size:9.05pt;line-height:1.36}
+    html[data-doc-layout="artist-sheet"] .rg-sheet-head{display:grid;grid-template-columns:1fr 112px;gap:.45rem;align-items:start;margin-bottom:.32rem;padding-bottom:.32rem;border-bottom:1px solid #ccc;flex-shrink:0}
+    html[data-doc-layout="artist-sheet"] .rg-name{font-family:Arial,Helvetica,sans-serif;font-size:17pt;font-weight:700;margin:0 0 .06rem;line-height:1.05;color:#111;orphans:3;widows:3}
+    html[data-doc-layout="artist-sheet"] .rg-fach{font-family:Arial,Helvetica,sans-serif;font-size:9pt;font-weight:600;color:#222;margin:0}
+    html[data-doc-layout="artist-sheet"] .rg-loc{font-size:8.35pt;color:#555;margin:.1rem 0 0;line-height:1.3}
+    html[data-doc-layout="artist-sheet"] .rg-photo{margin:0}
+    html[data-doc-layout="artist-sheet"] .rg-photo img{width:100%;height:auto;max-height:118px;display:block;border:1px solid #cfcfcf;object-fit:cover}
+    html[data-doc-layout="artist-sheet"] .rg-doc-kicker{font-family:Arial,Helvetica,sans-serif;font-size:6.4pt;letter-spacing:.1em;text-transform:uppercase;color:#666;font-weight:700;margin:0 0 .1rem}
+    html[data-doc-layout="artist-sheet"] .rg-doc-sec{margin:0 0 .26rem;flex-shrink:0}
+    html[data-doc-layout="artist-sheet"] .rg-doc-prose{margin:0;color:#1a1a1a}
+    html[data-doc-layout="artist-sheet"] ul.rg-list{margin:.06rem 0 0;padding-left:.95rem}
+    html[data-doc-layout="artist-sheet"] ul.rg-list li{margin:0 0 .07rem;font-size:8.2pt;line-height:1.28;color:#222}
+    html[data-doc-layout="artist-sheet"] .rg-rep-group-label{font-family:Arial,Helvetica,sans-serif;font-size:7.85pt;font-weight:700;color:#333;margin:.18rem 0 .06rem}
+    html[data-doc-layout="artist-sheet"] .rg-rep-group-label:first-of-type{margin-top:0}
+    html[data-doc-layout="artist-sheet"] .rg-doc-sec.rg-doc-contact{margin-top:auto;padding-top:.32rem;border-top:1px solid #e8e8e8;font-size:8.2pt;line-height:1.34}
+  `;
+  const sharedContact = `
+    .rg-contact-lbl{font-family:Arial,Helvetica,sans-serif;font-weight:700;white-space:nowrap}
+    .rg-contact-val.rg-contact-mail{word-break:break-all}
+    .pdf-tight-gaps .rg-doc-sec{margin-bottom:.16rem!important}
+    .pdf-tight-gaps .rg-sheet-head{margin-bottom:.22rem!important;padding-bottom:.22rem!important}
+    .pdf-inner.pdf-sec-compact .rg-doc-sec{margin-bottom:.08rem!important}
+    .pdf-inner.pdf-sec-compact .rg-sheet-head{margin-bottom:.12rem!important;padding-bottom:.12rem!important}
+    .pdf-inner.pdf-sec-compact .rg-rep-group-label{margin:.12rem 0 .06rem!important}
+    .pdf-inner.pdf-gap-tighter{gap:.12rem!important}
+    .pdf-inner.pdf-gap-tighter .rg-prog-stack{gap:.16rem!important}
+    .pdf-inner.pdf-gap-tighter .rg-doc-kicker{margin-bottom:.08rem!important}
+    .pdf-ultra-tight,.pdf-ultra-tight .rg-doc-prose{line-height:1.22!important}
+    .pdf-ultra-tight ul.rg-list li{line-height:1.18!important}
+  `;
+  const pdfDebugCss = pdfDebug ? `
+    html.rg-pdf-debug .pdf-page{outline:3px solid #1565c0;outline-offset:-3px}
+    html.rg-pdf-debug .pdf-inner{outline:2px dashed #2e7d32}
+    html.rg-pdf-debug .pdf-inner::after{
+      content:'';position:absolute;left:0;right:0;bottom:0;height:0;
+      border-bottom:3px solid #c62828;pointer-events:none;z-index:6
+    }
+    html.rg-pdf-debug .rg-pdf-overflow-block{outline:3px solid #ef6c00!important;background:rgba(255,152,0,.14)!important}
+  ` : '';
+  const layoutKey = layoutAttr === 'dossier' ? 'dossier' : 'artist-sheet';
+  const titleEsc = exportEsc(pdfFileBase);
+  return `<!doctype html><html class="${htmlCls}" lang="${lang}" data-doc-layout="${layoutAttr}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${titleEsc}</title><style>
+    *{box-sizing:border-box}
+    @page{size:A4 portrait;margin:0}
+    html,body{
+      margin:0;padding:0;width:210mm;background:#fff;
+      color:#1a1a1a;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%
+    }
+    /* Screen only: overlay iframe uses adm-embed. If this applies to print, it beats @media print .rg-pdf-no-print (higher specificity) and the toolbar is rasterized into the PDF. */
+    @media screen{
+      html.rg-doc-pdf.adm-embed .rg-pdf-no-print{display:flex!important}
+    }
+    .rg-pdf-no-print.export-toolbar{position:sticky;top:0;z-index:3;background:#fff;border-bottom:1px solid #e5e5e5;padding:10px 16px;display:flex;justify-content:flex-end}
+    .pdf-screen-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 8px 28px}
+    .pdf-page{
+      width:210mm;height:297mm;box-sizing:border-box;overflow:hidden;position:relative;background:#fff;
+      page-break-after:always;break-after:page;box-shadow:0 1px 5px rgba(0,0,0,.08)
+    }
+    .pdf-page:last-child{page-break-after:auto;break-after:auto}
+    .pdf-inner{
+      box-sizing:border-box;width:100%;height:100%;padding:15mm;overflow:hidden;position:relative;
+      display:flex;flex-direction:column;gap:.22rem;
+      font-family:Georgia,'Times New Roman',serif;hyphens:none;-webkit-hyphens:none
+    }
+    ${sharedContact}
+    ${layoutCss}
+    ${pdfDebugCss}
+    @media print{
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      @page{size:A4 portrait;margin:0}
+      html.rg-pdf-debug .pdf-page,html.rg-pdf-debug .pdf-inner{outline:none!important}
+      html,body{width:210mm!important;margin:0!important;padding:0!important;background:#fff!important}
+      .rg-pdf-no-print,#rg-pdf-overflow-banner{display:none!important;visibility:hidden!important;height:0!important;max-height:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;position:absolute!important;width:0!important;margin:0!important;padding:0!important;border:0!important}
+      .pdf-screen-wrap{padding:0!important;gap:0!important;display:block!important}
+      .pdf-page{
+        width:210mm!important;height:297mm!important;box-sizing:border-box!important;
+        overflow:hidden!important;position:relative!important;background:#fff!important;
+        box-shadow:none!important;page-break-after:always!important;break-after:page!important
+      }
+      .pdf-page:last-child{page-break-after:auto!important;break-after:auto!important}
+      .pdf-inner{box-sizing:border-box!important;padding:15mm!important;overflow:hidden!important}
+    }
+  </style></head><body>
+    <div class="rg-pdf-no-print export-toolbar">
+      <button type="button" onclick="window.print()" style="font:600 13px Arial,Helvetica,sans-serif;letter-spacing:.02em;padding:6px 12px;background:#fff;color:#222;border:1px solid #cfcfcf;cursor:pointer">${printLabelEsc}</button>
+    </div>
+    <div class="pdf-screen-wrap rg-pdf-print-root">${bodyHtml}</div>
+    <script>
+(function(){
+  try{ document.title=${JSON.stringify(pdfFileBase)}; }catch(e){}
+  var LAYOUT="${layoutKey}";
+  var PDF_DEBUG=${pdfDebug ? 'true' : 'false'};
+  var PREVIEW_ONLY=${previewOnly ? 'true' : 'false'};
+  var TOL=4;
+  function measure(inner){
+    void inner.offsetHeight;
+    return {sh:inner.scrollHeight,ch:inner.clientHeight};
+  }
+  function overflows(inner){
+    var m=measure(inner);
+    return m.sh>m.ch+TOL;
+  }
+  function applyTightGaps(){
+    document.querySelectorAll(".pdf-inner").forEach(function(el){ el.classList.add("pdf-tight-gaps"); });
+  }
+  function applySecCompact(){
+    document.querySelectorAll(".pdf-inner").forEach(function(inner){
+      if(overflows(inner)) inner.classList.add("pdf-sec-compact");
+    });
+  }
+  function applyGapTighter(){
+    document.querySelectorAll(".pdf-inner").forEach(function(inner){
+      if(overflows(inner)) inner.classList.add("pdf-gap-tighter");
+    });
+  }
+  function reduceProseInInner(inner,minPx){
+    var pros=inner.querySelectorAll(".rg-doc-prose");
+    for(var pi=0;pi<pros.length;pi++){
+      var p=pros[pi];
+      var px=parseFloat(window.getComputedStyle(p).fontSize)||10;
+      while(overflows(inner)&&px>=minPx){
+        px-=0.5;
+        p.style.fontSize=px+"px";
+        void inner.offsetHeight;
+      }
+    }
+  }
+  function reduceAllProse(minPx){
+    document.querySelectorAll(".pdf-inner").forEach(function(inner){
+      if(overflows(inner)) reduceProseInInner(inner,minPx);
+    });
+  }
+  function reduceListInInner(inner,minPx){
+    var lis=inner.querySelectorAll("ul.rg-list li");
+    for(var i=0;i<lis.length;i++){
+      var li=lis[i];
+      var px=parseFloat(window.getComputedStyle(li).fontSize)||9;
+      while(overflows(inner)&&px>=minPx){
+        px-=0.5;
+        li.style.fontSize=px+"px";
+        void inner.offsetHeight;
+      }
+    }
+  }
+  function reduceAllLists(minPx){
+    document.querySelectorAll(".pdf-inner").forEach(function(inner){
+      if(overflows(inner)) reduceListInInner(inner,minPx);
+    });
+  }
+  function rebalanceDossierP1toP2(){
+    if(LAYOUT!=="dossier")return;
+    var p1=document.querySelector(".rg-dossier-p1"),p2=document.querySelector(".rg-dossier-p2");
+    if(!p1||!p2)return;
+    var i1=p1.querySelector(".pdf-inner"),i2=p2.querySelector(".pdf-inner");
+    if(!i1||!i2)return;
+    var guard=0;
+    while(guard++<8&&overflows(i1)){
+      var secs=i1.querySelectorAll(":scope > section.rg-doc-sec");
+      if(!secs.length)break;
+      i2.insertBefore(secs[secs.length-1],i2.firstChild);
+      void i1.offsetHeight;void i2.offsetHeight;
+    }
+  }
+  function fitGlobalInner(inner){
+    inner.style.fontSize="";
+    inner.classList.remove("pdf-ultra-tight");
+    void inner.offsetHeight;
+    var basePx=parseFloat(window.getComputedStyle(inner).fontSize)||14;
+    var minPct=LAYOUT==="dossier"?68:70;
+    if(!overflows(inner))return;
+    for(var pct=98;pct>=minPct;pct-=2){
+      inner.style.fontSize=(basePx*pct/100)+"px";
+      void inner.offsetHeight;
+      if(!overflows(inner))return;
+    }
+    if(overflows(inner)) inner.classList.add("pdf-ultra-tight");
+  }
+  function fitAllPagesGlobal(){
+    document.querySelectorAll(".pdf-page").forEach(function(page){
+      var inner=page.querySelector(".pdf-inner");
+      if(inner) fitGlobalInner(inner);
+    });
+  }
+  function runPipeline(){
+    applyTightGaps();
+    applySecCompact();
+    var proseMin=LAYOUT==="dossier"?7.6:7.9;
+    reduceAllProse(proseMin);
+    applyGapTighter();
+    rebalanceDossierP1toP2();
+    reduceAllProse(proseMin-0.3);
+    var listMin=LAYOUT==="dossier"?7:7.2;
+    reduceAllLists(listMin);
+    fitAllPagesGlobal();
+  }
+  function findOverflowPages(){
+    var out=[];
+    document.querySelectorAll(".pdf-page").forEach(function(page,idx){
+      var inner=page.querySelector(".pdf-inner");
+      if(!inner)return;
+      if(overflows(inner)){
+        var m=measure(inner);
+        out.push({page:idx+1,scrollHeight:m.sh,clientHeight:m.ch,excess:m.sh-m.ch});
+      }
+    });
+    return out;
+  }
+  function markOverflowBlocks(){
+    document.querySelectorAll(".pdf-page").forEach(function(page){
+      var inner=page.querySelector(".pdf-inner");
+      if(!inner||!overflows(inner))return;
+      var lim=inner.getBoundingClientRect().bottom-TOL;
+      Array.from(inner.children).forEach(function(ch){
+        var r=ch.getBoundingClientRect();
+        if(r.bottom>lim) ch.classList.add("rg-pdf-overflow-block");
+      });
+    });
+  }
+  function showOverflowBanner(problems){
+    var pages=problems.map(function(p){ return p.page; }).join(", ");
+    console.warn("[RG PDF Export] A4 safe-area overflow on page(s): "+pages+". Shorten biography / sections or printing may clip.",problems);
+    var el=document.createElement("div");
+    el.id="rg-pdf-overflow-banner";
+    el.setAttribute("role","alert");
+    el.innerHTML="A4 overflow: page(s) <strong>"+pages+"</strong> exceed the fixed safe height after fitting. Shorten EPK/sections or expect clipped PDF. Check console for details.";
+    el.style.cssText="width:100%;background:#b71c1c;color:#fff;padding:12px 16px;font:600 13px/1.45 Arial,sans-serif;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.2)";
+    var tb=document.querySelector(".export-toolbar");
+    if(tb&&tb.parentNode) tb.parentNode.insertBefore(el,tb);
+    else document.body.insertBefore(el,document.body.firstChild);
+    window.__RG_PDF_OVERFLOW__=problems;
+  }
+  function wrapPrint(){
+    if(window.__RG_PRINT_WRAPPED__)return;
+    window.__RG_PRINT_WRAPPED__=true;
+    var orig=window.print.bind(window);
+    window.print=function(){
+      if(window.__RG_PDF_OVERFLOW__&&window.__RG_PDF_OVERFLOW__.length){
+        var pages=window.__RG_PDF_OVERFLOW__.map(function(p){ return p.page; }).join(", ");
+        if(!window.confirm("Warning: page(s) "+pages+" still exceed the A4 safe area; PDF may clip. Print anyway?"))return;
+      }
+      return orig();
+    };
+  }
+  function go(){
+    runPipeline();
+    var probs=findOverflowPages();
+    if(probs.length){
+      showOverflowBanner(probs);
+      if(PDF_DEBUG) markOverflowBlocks();
+    }else{
+      window.__RG_PDF_OVERFLOW__=[];
+    }
+    wrapPrint();
+  }
+  function onReady(){
+    go();
+    if(PREVIEW_ONLY)return;
+    if(window.__RG_PDF_OVERFLOW__&&window.__RG_PDF_OVERFLOW__.length)return;
+    setTimeout(function(){ try{ window.focus(); window.print(); }catch(e){} },240);
+  }
+  window.addEventListener("beforeprint",function(){
+    var again=findOverflowPages();
+    if(again.length) console.warn("[RG PDF Export] beforeprint: overflow still present",again);
+  });
+  if(document.readyState==="complete") onReady();
+  else window.addEventListener("load",onReady);
+})();
+    <\/script>
+  </body></html>`;
+}
+
 function openCleanExportWindow(title, bodyHtml, opts) {
   opts = opts || {};
   const safeTitle = String(title || 'Export').trim() || 'Export';
@@ -5222,79 +6081,45 @@ function openCleanExportWindow(title, bodyHtml, opts) {
   const variant = String(opts.variant || '').trim();
   const extraMainClass = variant === 'short' ? ' exp-short' : '';
   const docLayout = String(opts.docLayout || '').trim();
-  let layoutMainClass = '';
-  let layoutExtraCss = '';
-  const hideDocPrint = (docLayout === 'artist-sheet' || docLayout === 'dossier');
   const printLblRaw = (Ti[currentLang] || Ti.en)['export.printPdf'] || 'Print / PDF';
   const printLbl = exportEsc(exportStripHtml(printLblRaw));
-  const showIframePrintBar = !hideDocPrint;
-  if (docLayout === 'artist-sheet') {
-    layoutMainClass = ' rg-layout-artist-sheet';
-    layoutExtraCss = `
-    .rg-layout-artist-sheet{max-width:34rem;padding-top:.35rem}
-    .rg-sheet-inner{max-width:100%}
-    .rg-layout-artist-sheet .rg-sheet-head{display:grid;grid-template-columns:1fr 132px;gap:.85rem;align-items:start;margin-bottom:.72rem;border-bottom:1px solid #ccc;padding-bottom:.72rem;break-inside:avoid;page-break-inside:avoid}
-    .rg-layout-artist-sheet .rg-name{font-family:Arial,Helvetica,sans-serif;font-size:1.52rem;font-weight:700;margin:0 0 .12rem;line-height:1.06;color:#111}
-    .rg-layout-artist-sheet .rg-fach{font-size:.84rem;font-weight:600;color:#222;margin:0}
-    .rg-layout-artist-sheet .rg-loc{font-size:.78rem;color:#555;margin:.22rem 0 0;line-height:1.34}
-    .rg-layout-artist-sheet .rg-photo{margin:0}
-    .rg-layout-artist-sheet .rg-photo img{width:100%;height:auto;display:block;border:1px solid #cfcfcf;object-fit:cover;aspect-ratio:3/4;max-height:152px}
-    .rg-doc-kicker{font-family:Arial,Helvetica,sans-serif;font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;color:#666;font-weight:700;margin:0 0 .22rem}
-    .rg-layout-artist-sheet .rg-doc-sec{margin:0 0 .48rem;break-inside:avoid;page-break-inside:avoid}
-    .rg-layout-artist-sheet .rg-doc-prose{margin:0;font-size:.815rem;line-height:1.4;color:#1a1a1a}
-    .rg-layout-artist-sheet ul.rg-list{margin:.1rem 0 0;padding-left:1.05rem}
-    .rg-layout-artist-sheet ul.rg-list li{margin:0 0 .15rem;font-size:.78rem;line-height:1.32;color:#222}
-    .rg-layout-artist-sheet .rg-rep-group-label{font-family:Arial,Helvetica,sans-serif;font-size:.68rem;font-weight:700;color:#333;margin:.3rem 0 .12rem}
-    .rg-layout-artist-sheet .rg-rep-group-label:first-of-type{margin-top:0}
-    .rg-layout-artist-sheet .rg-doc-contact{padding-top:.48rem;margin-top:.28rem;border-top:1px solid #e8e8e8;font-size:.78rem;line-height:1.38}
-    .rg-contact-lbl{font-family:Arial,Helvetica,sans-serif;font-weight:700;white-space:nowrap}
-    .rg-contact-val.rg-contact-mail{word-break:break-all}
-    .rg-layout-artist-sheet .rg-doc-kicker,.rg-layout-artist-sheet .rg-name{orphans:3;widows:3}
-    @media print{
-      @page{size:A4;margin:9mm 10mm 10mm 10mm}
-      .exp-doc.rg-layout-artist-sheet{padding:0 0 2mm!important;max-width:none!important;font-size:11.3px}
-      .rg-layout-artist-sheet .rg-sheet-head{grid-template-columns:1fr 124px;break-inside:avoid;page-break-inside:avoid}
-      .rg-layout-artist-sheet,.rg-layout-artist-sheet .rg-sheet-inner{page-break-after:avoid;page-break-inside:avoid}
-    }`;
-  } else if (docLayout === 'dossier') {
-    layoutMainClass = ' rg-layout-dossier';
-    layoutExtraCss = `
-    .rg-layout-dossier{max-width:40rem;padding-top:.25rem}
-    .rg-layout-dossier .rg-sheet-head{display:grid;grid-template-columns:1fr 152px;gap:1rem;align-items:start;margin-bottom:.88rem;border-bottom:1px solid #ccc;padding-bottom:.85rem;break-inside:avoid;page-break-inside:avoid}
-    .rg-layout-dossier .rg-sheet-head-lg .rg-photo-lg img{aspect-ratio:3/4;max-height:190px}
-    .rg-layout-dossier .rg-name{font-family:Arial,Helvetica,sans-serif;font-size:1.62rem;font-weight:700;margin:0 0 .12rem;line-height:1.06;color:#111}
-    .rg-layout-dossier .rg-fach{font-size:.88rem;font-weight:600;color:#222;margin:0}
-    .rg-layout-dossier .rg-loc{font-size:.8rem;color:#555;margin:.25rem 0 0;line-height:1.34}
-    .rg-layout-dossier .rg-photo{margin:0}
-    .rg-layout-dossier .rg-photo img{width:100%;height:auto;display:block;border:1px solid #cfcfcf;object-fit:cover}
-    .rg-contact-lbl{font-family:Arial,Helvetica,sans-serif;font-weight:700;white-space:nowrap}
-    .rg-contact-val.rg-contact-mail{word-break:break-all}
-    .rg-layout-dossier .rg-doc-kicker{font-family:Arial,Helvetica,sans-serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#666;font-weight:700;margin:0 0 .32rem}
-    .rg-layout-dossier .rg-doc-sec{margin:0 0 .82rem}
-    .rg-layout-dossier .rg-doc-prose{margin:0;font-size:.88rem;line-height:1.48;color:#1a1a1a}
-    .rg-layout-dossier ul.rg-list{margin:.2rem 0 0;padding-left:1.12rem}
-    .rg-layout-dossier ul.rg-list li{margin:0 0 .22rem;font-size:.82rem;line-height:1.38;color:#222}
-    .rg-layout-dossier ul.rg-list-tight li{margin-bottom:.16rem}
-    .rg-rep-group-label{font-family:Arial,Helvetica,sans-serif;font-size:.74rem;font-weight:700;color:#333;margin:.38rem 0 .18rem}
-    .rg-rep-group-label:first-child{margin-top:0}
-    .rg-page-break{break-before:page;page-break-before:always;padding-top:1rem}
-    .rg-layout-dossier .rg-prog-stack{display:flex;flex-direction:column;gap:.4rem}
-    .rg-prog-title{font-family:Arial,Helvetica,sans-serif;font-size:.92rem;font-weight:600;margin:0;color:#161616;line-height:1.18}
-    .rg-prog-desc{margin:.18rem 0 0;font-size:.8rem;line-height:1.42;color:#333}
-    .rg-layout-dossier .rg-cal-wrap .exp-h2{font-size:1.12rem;margin-bottom:.45rem}
-    .rg-layout-dossier .rg-cal-wrap .exp-h3{font-size:1rem;margin:.15rem 0 .25rem}
-    .rg-layout-dossier .rg-cal-wrap .exp-cal-row{margin-bottom:.72rem;padding-bottom:.65rem}
-    .rg-layout-dossier .rg-cal-wrap .exp-section{border-bottom:1px solid var(--exp-border);margin-bottom:.78rem;padding-bottom:.65rem}
-    .rg-layout-dossier .rg-dossier-p2 .rg-doc-contact{margin-top:.4rem;padding-top:.72rem;border-top:1px solid #eaeaea}
-    .rg-layout-dossier .rg-doc-footnote{margin:.75rem 0 0;font-size:.76rem;line-height:1.4;color:var(--exp-muted);font-style:italic}
-    @media print{
-      @page{size:A4;margin:10mm 11mm 11mm 11mm}
-      .exp-doc.rg-layout-dossier{padding:0 0 3mm!important;max-width:none!important;font-size:11.2px}
-      .rg-layout-dossier .rg-dossier-p1{break-after:auto}
-      .rg-page-break{padding-top:6mm}
-    }`;
-  }
   const useOverlay = shouldUseAdminExportOverlay();
+
+  if (docLayout === 'artist-sheet' || docLayout === 'dossier') {
+    let pdfExportDebug = false;
+    try { pdfExportDebug = localStorage.getItem('rg_pdf_export_debug') === '1'; } catch (e) {}
+    const pdfBase = docLayout === 'dossier' ? exportDocPdfTitle('dossierDoc') : exportDocPdfTitle('artistSheet');
+    const html = buildA4DocPdfHtml(pdfBase, safeBody, docLayout, printLbl, useOverlay, { pdfDebug: pdfExportDebug, pdfFileBase: pdfBase, previewHtml: !!opts.previewHtml });
+    if (useOverlay) {
+      if (openAdmExportOverlay(html, pdfBase, { hidePrint: true })) return;
+      admLog('warn', 'Export overlay open failed, falling back to window', { key: 'export-overlay-fallback' });
+    }
+    let blobUrl = '';
+    try {
+      blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    } catch (e) {
+      admLog('warn', 'Export Blob URL failed', { key: 'export-blob', err: String(e && e.message) });
+    }
+    const w = blobUrl ? window.open(blobUrl, '_blank') : null;
+    if (w && blobUrl) {
+      try { w.opener = null; } catch (e) {}
+      return;
+    }
+    if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (e) {} }
+    const w2 = window.open('', '_blank');
+    if (!w2) { admLog('warn', 'Export popup blocked by browser', { key: 'export-popup' }); return; }
+    try { w2.opener = null; } catch (e) {}
+    try {
+      w2.document.open();
+      w2.document.write(html);
+      w2.document.close();
+    } catch (e) {
+      admLog('warn', 'Export write failed', { key: 'export-write-failed', err: String(e && e.message) });
+    }
+    return;
+  }
+
+  const showIframePrintBar = true;
   const htmlLangOpen = useOverlay
     ? `<html class="adm-embed" lang="${exportEsc(currentLang || 'en')}">`
     : `<html lang="${exportEsc(currentLang || 'en')}">`;
@@ -5407,16 +6232,15 @@ function openCleanExportWindow(title, bodyHtml, opts) {
         max-height:none!important;max-width:100%!important;height:auto!important
       }
     }
-${layoutExtraCss}
   </style></head><body>
     ${showIframePrintBar ? `<div class="export-toolbar" style="position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #e5e5e5;padding:10px 16px;display:flex;justify-content:flex-end">
       <button type="button" onclick="window.print()" style="font:600 13px Arial,Helvetica,sans-serif;letter-spacing:.02em;padding:6px 12px;background:#fff;color:#222;border:1px solid #cfcfcf;cursor:pointer">${printLbl}</button>
     </div>` : ''}
-    <main class="exp-doc${extraMainClass}${layoutMainClass}">${safeBody}</main>
+    <main class="exp-doc${extraMainClass}">${safeBody}</main>
   </body></html>`;
   /* Mobile: overlay uses srcdoc (no blob in iframe) — avoids WebKit blanking blob:iframe after load. */
   if (useOverlay) {
-    if (openAdmExportOverlay(html, safeTitle, { hidePrint: hideDocPrint })) return;
+    if (openAdmExportOverlay(html, safeTitle, { hidePrint: false })) return;
     admLog('warn', 'Export overlay open failed, falling back to window', { key: 'export-overlay-fallback' });
   }
   /* Desktop: navigate to a blob: URL once. Avoid document.write (second write after load can blank the tab; huge base64 HTML + write/close is fragile in some engines). */
@@ -6394,10 +7218,13 @@ Ti.fr['export.winTitle.full'] = 'Export complet';
 Ti.fr['export.winTitle.selected'] = 'Export sélectionné';
 
 // Document layouts (Artist Sheet / Dossier) — section labels + actions (5 langs)
-Ti.en['export.doc.barTitle'] = 'Document exports (print / PDF)';
+Ti.en['export.doc.barTitle'] = 'Document exports (pdfmake PDF + optional HTML preview)';
+Ti.en['export.doc.pdfmakeHint'] = 'Final PDFs download via pdfmake (exact A4 filenames). HTML preview is optional; no print dialog is required for the PDF file.';
 Ti.en['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
-Ti.en['export.doc.btnOpenArtistSheet'] = 'Open Artist Sheet';
-Ti.en['export.doc.btnOpenDossier'] = 'Open Dossier';
+Ti.en['export.doc.btnOpenArtistSheet'] = 'Download Artist Sheet (PDF)';
+Ti.en['export.doc.btnOpenDossier'] = 'Download Dossier (PDF)';
+Ti.en['export.doc.btnPreviewArtistSheetHtml'] = 'Preview Artist Sheet (HTML)';
+Ti.en['export.doc.btnPreviewDossierHtml'] = 'Preview Dossier (HTML)';
 Ti.en['export.doc.btnCopyArtistSheet'] = 'Copy Artist Sheet text';
 Ti.en['export.doc.btnCopyDossier'] = 'Copy Dossier text';
 Ti.en['export.winTitle.artistSheet'] = 'Artist Sheet';
@@ -6419,10 +7246,13 @@ Ti.en['export.printPdf'] = 'Print / PDF';
 Ti.en['export.cal.empty'] = 'No upcoming engagements.';
 Ti.en['export.cal.moreUpcoming'] = 'Showing the next {{n}} of {{m}} upcoming engagements.';
 
-Ti.de['export.doc.barTitle'] = 'Dokumente (Druck / PDF)';
+Ti.de['export.doc.barTitle'] = 'Dokumente (pdfmake-PDF + optional HTML-Vorschau)';
+Ti.de['export.doc.pdfmakeHint'] = 'Fertige PDFs werden per pdfmake heruntergeladen (exakte A4-Dateinamen). HTML-Vorschau ist optional; für die PDF-Datei ist kein Druckdialog nötig.';
 Ti.de['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
-Ti.de['export.doc.btnOpenArtistSheet'] = 'Artist Sheet öffnen';
-Ti.de['export.doc.btnOpenDossier'] = 'Dossier öffnen';
+Ti.de['export.doc.btnOpenArtistSheet'] = 'Artist Sheet laden (PDF)';
+Ti.de['export.doc.btnOpenDossier'] = 'Dossier laden (PDF)';
+Ti.de['export.doc.btnPreviewArtistSheetHtml'] = 'Artist Sheet (HTML-Vorschau)';
+Ti.de['export.doc.btnPreviewDossierHtml'] = 'Dossier (HTML-Vorschau)';
 Ti.de['export.doc.btnCopyArtistSheet'] = 'Artist Sheet (Text kopieren)';
 Ti.de['export.doc.btnCopyDossier'] = 'Dossier (Text kopieren)';
 Ti.de['export.winTitle.artistSheet'] = 'Artist Sheet';
@@ -6444,10 +7274,13 @@ Ti.de['export.printPdf'] = 'Drucken / PDF';
 Ti.de['export.cal.empty'] = 'Keine kommenden Termine.';
 Ti.de['export.cal.moreUpcoming'] = 'Es werden die nächsten {{n}} von {{m}} Terminen angezeigt.';
 
-Ti.es['export.doc.barTitle'] = 'Documentos (impresión / PDF)';
+Ti.es['export.doc.barTitle'] = 'Documentos (PDF pdfmake + vista HTML opcional)';
+Ti.es['export.doc.pdfmakeHint'] = 'Los PDF finales se descargan con pdfmake (nombres A4 exactos). La vista HTML es opcional; no hace falta el cuadro de impresión para obtener el PDF.';
 Ti.es['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
-Ti.es['export.doc.btnOpenArtistSheet'] = 'Abrir Artist Sheet';
-Ti.es['export.doc.btnOpenDossier'] = 'Abrir dossier';
+Ti.es['export.doc.btnOpenArtistSheet'] = 'Descargar Artist Sheet (PDF)';
+Ti.es['export.doc.btnOpenDossier'] = 'Descargar dossier (PDF)';
+Ti.es['export.doc.btnPreviewArtistSheetHtml'] = 'Vista previa Artist Sheet (HTML)';
+Ti.es['export.doc.btnPreviewDossierHtml'] = 'Vista previa dossier (HTML)';
 Ti.es['export.doc.btnCopyArtistSheet'] = 'Copiar texto (Artist Sheet)';
 Ti.es['export.doc.btnCopyDossier'] = 'Copiar texto (dossier)';
 Ti.es['export.winTitle.artistSheet'] = 'Artist Sheet';
@@ -6469,10 +7302,13 @@ Ti.es['export.doc.repAriasSheet'] = 'Arias de concierto y gala';
 Ti.es['export.cal.empty'] = 'No hay próximos compromisos.';
 Ti.es['export.cal.moreUpcoming'] = 'Se muestran los próximos {{n}} de {{m}} compromisos.';
 
-Ti.it['export.doc.barTitle'] = 'Documenti (stampa / PDF)';
+Ti.it['export.doc.barTitle'] = 'Documenti (PDF pdfmake + anteprima HTML facoltativa)';
+Ti.it['export.doc.pdfmakeHint'] = 'I PDF finali si scaricano con pdfmake (nomi file A4 esatti). L’anteprima HTML è facoltativa; non serve la finestra di stampa per il file PDF.';
 Ti.it['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
-Ti.it['export.doc.btnOpenArtistSheet'] = 'Apri Artist Sheet';
-Ti.it['export.doc.btnOpenDossier'] = 'Apri dossier';
+Ti.it['export.doc.btnOpenArtistSheet'] = 'Scarica Artist Sheet (PDF)';
+Ti.it['export.doc.btnOpenDossier'] = 'Scarica dossier (PDF)';
+Ti.it['export.doc.btnPreviewArtistSheetHtml'] = 'Anteprima Artist Sheet (HTML)';
+Ti.it['export.doc.btnPreviewDossierHtml'] = 'Anteprima dossier (HTML)';
 Ti.it['export.doc.btnCopyArtistSheet'] = 'Copia testo (Artist Sheet)';
 Ti.it['export.doc.btnCopyDossier'] = 'Copia testo (dossier)';
 Ti.it['export.winTitle.artistSheet'] = 'Artist Sheet';
@@ -6494,10 +7330,13 @@ Ti.it['export.doc.repAriasSheet'] = 'Arie da concerto e di gala';
 Ti.it['export.cal.empty'] = 'Nessun impegno in programma.';
 Ti.it['export.cal.moreUpcoming'] = 'Elencati i prossimi {{n}} impegni su {{m}}.';
 
-Ti.fr['export.doc.barTitle'] = 'Documents (impression / PDF)';
+Ti.fr['export.doc.barTitle'] = 'Documents (PDF pdfmake + aperçu HTML optionnel)';
+Ti.fr['export.doc.pdfmakeHint'] = 'Les PDF finaux se téléchargent via pdfmake (noms de fichiers A4 exacts). L’aperçu HTML est optionnel ; la boîte d’impression n’est pas requise pour le fichier PDF.';
 Ti.fr['export.doc.foldSummary'] = 'Fiche artiste / Dossier (PDF)';
-Ti.fr['export.doc.btnOpenArtistSheet'] = 'Ouvrir la fiche artiste';
-Ti.fr['export.doc.btnOpenDossier'] = 'Ouvrir le dossier';
+Ti.fr['export.doc.btnOpenArtistSheet'] = 'Télécharger la fiche artiste (PDF)';
+Ti.fr['export.doc.btnOpenDossier'] = 'Télécharger le dossier (PDF)';
+Ti.fr['export.doc.btnPreviewArtistSheetHtml'] = 'Aperçu fiche artiste (HTML)';
+Ti.fr['export.doc.btnPreviewDossierHtml'] = 'Aperçu dossier (HTML)';
 Ti.fr['export.doc.btnCopyArtistSheet'] = 'Copier le texte (fiche artiste)';
 Ti.fr['export.doc.btnCopyDossier'] = 'Copier le texte (dossier)';
 Ti.fr['export.winTitle.artistSheet'] = 'Fiche artiste';
