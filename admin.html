@@ -567,8 +567,16 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
   flex-direction:column;
   max-height:100vh;
 }
-.adm-head{display:flex;align-items:center;justify-content:space-between;padding:22px 32px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.adm-head{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 32px 14px;border-bottom:1px solid var(--border);flex-shrink:0;gap:12px}
 .adm-head-title{font-family:var(--ff-caps);font-size:.7rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase}
+.adm-head-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+.adm-head-primary{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.adm-tools-toggle{
+  display:none;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;
+  width:100%;justify-content:space-between;align-items:center;margin:0;padding:8px 10px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text-dim);cursor:pointer;border-radius:2px;text-align:left
+}
+.adm-head-secondary{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .adm-close{font-size:1rem;cursor:none;color:var(--text-faint);background:none;border:none;transition:color .2s;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.15em;padding:4px 10px}
 .adm-close:hover{color:var(--gold)}
 .adm-tabs{
@@ -639,9 +647,24 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 /* Clean export toolbar (admin top block) */
 .adm-export-bar{padding:10px 16px}
+.adm-export-mobile-toggle{
+  display:none;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;
+  width:100%;margin:0 0 0;padding:8px 10px;border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);
+  color:var(--gold);cursor:pointer;border-radius:2px;text-align:left
+}
+.adm-export-bar-inner{display:block}
 .adm-export-sel{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px}
 .adm-export-sel label{font-size:.76rem}
 .adm-export-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Activity log — mobile collapse */
+.adm-activity-wrap{border-top:1px solid var(--border);background:rgba(13,13,18,.85);backdrop-filter:blur(10px);padding:10px 16px}
+.adm-activity-mobile-toggle{
+  display:none;font-family:var(--ff-caps);font-size:.46rem;letter-spacing:.12em;text-transform:uppercase;
+  width:100%;margin:0;padding:6px 8px;border:1px solid var(--border);background:transparent;color:var(--text-faint);
+  cursor:pointer;border-radius:2px;text-align:left
+}
+.adm-activity-panel{display:block}
 
 /* Fullscreen export preview (mobile / touch Safari) */
 .adm-export-overlay{
@@ -709,6 +732,17 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .adm-grid{grid-template-columns:1fr}
 }
 
+@media(min-width:601px){
+  .adm-tools-toggle{display:none!important}
+  .adm-head-secondary{display:flex!important;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;width:auto;padding:0;border:none;background:transparent}
+  .adm-head-secondary button{width:auto!important}
+  .adm-export-mobile-toggle{display:none!important}
+  .adm-export-bar .adm-export-bar-inner{display:block!important}
+  .adm-activity-mobile-toggle{display:none!important}
+  .adm-activity-wrap .adm-activity-panel{display:block!important}
+  .adm-tabs{position:static!important;box-shadow:none!important}
+}
+
 @media(max-width:600px){
   body{cursor:auto}
   .cursor,.cursor-ring{display:none}
@@ -747,25 +781,43 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .video-title{font-size:.9rem}
   .lb-nav{padding:8px 12px;font-size:1.1rem}
   .lightbox-img{max-width:95vw;max-height:80vh}
-  .adm-body{padding:14px 10px}
-  .adm-head{padding:8px 10px 6px;flex-wrap:wrap;gap:6px;align-items:flex-start}
-  .adm-head-title{font-size:.58rem !important;letter-spacing:.22em !important}
-  .adm-head-title{width:100%}
-  .adm-head > div{flex-wrap:wrap !important;gap:5px !important;width:100%;justify-content:flex-start !important}
-  .adm-head > div button[id^="admLangBtn"]{padding:4px 6px !important;font-size:.44rem !important}
-  .adm-head #admSavePill{font-size:.48rem !important;padding:4px 8px !important;min-width:0 !important}
-  .adm-tab{padding:9px 12px !important;font-size:.44rem !important;letter-spacing:.12em !important}
-  .adm-btn{font-size:.48rem !important;padding:8px 14px !important;letter-spacing:.12em !important;white-space:normal;text-align:center;line-height:1.35}
-  .adm-btn-sm{font-size:.42rem !important;padding:6px 10px !important}
-  .adm-input,.adm-select{font-size:.8rem !important;padding:7px 9px !important}
-  .adm-section{margin:14px 0 10px;font-size:.48rem !important}
-  .adm-export-bar{padding:8px 10px !important}
-  .adm-export-bar > div:first-child{margin-bottom:6px !important}
-  .adm-export-sel{flex-direction:column;gap:8px !important;align-items:stretch !important}
-  .adm-export-sel label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px solid rgba(212,168,67,.08)}
+  .adm-body{padding:10px 8px 12px}
+  .adm-head{padding:6px 8px 6px;flex-wrap:wrap;gap:6px;align-items:flex-start}
+  .adm-head-title{font-size:.58rem !important;letter-spacing:.22em !important;width:100%}
+  .adm-head-toolbar{width:100%;flex-direction:column;align-items:stretch;gap:6px}
+  .adm-head-primary{flex-wrap:wrap !important;gap:5px !important;width:100%;justify-content:flex-start !important}
+  .adm-head-primary button[id^="admLangBtn"]{padding:4px 6px !important;font-size:.44rem !important}
+  .adm-head #admSavePill{font-size:.48rem !important;padding:3px 8px !important;min-width:0 !important}
+  .adm-head-web{font-size:.52rem !important;padding:4px 8px !important;white-space:nowrap}
+  .adm-tools-toggle{display:flex !important}
+  .adm-head-secondary{display:none !important;flex-direction:column;align-items:stretch;gap:6px;padding:8px;border:1px solid var(--border);border-radius:2px;background:rgba(0,0,0,.12)}
+  .adm-head-secondary.adm-head-secondary-open{display:flex !important}
+  .adm-head-secondary button{width:100%;margin:0!important}
+  .adm-tabs{
+    position:sticky;top:0;z-index:25;
+    background:var(--surface);
+    box-shadow:0 3px 10px rgba(0,0,0,.35);
+  }
+  .adm-tab{padding:8px 10px !important;font-size:.42rem !important;letter-spacing:.1em !important}
+  .adm-btn{font-size:.46rem !important;padding:7px 12px !important;letter-spacing:.11em !important;white-space:normal;text-align:center;line-height:1.3}
+  .adm-btn-sm{font-size:.4rem !important;padding:5px 10px !important}
+  .adm-input,.adm-select{font-size:.78rem !important;padding:6px 8px !important}
+  .adm-section{margin:10px 0 8px;font-size:.46rem !important}
+  .adm-export-bar{padding:6px 8px !important}
+  .adm-export-mobile-toggle{display:flex !important;margin-bottom:0}
+  .adm-export-bar:not(.adm-export-open) .adm-export-bar-inner{display:none!important}
+  .adm-export-bar.adm-export-open .adm-export-mobile-toggle{border-color:var(--gold)}
+  .adm-export-desktop-title{margin-top:8px!important;margin-bottom:6px!important}
+  .adm-export-sel{flex-direction:column;gap:6px !important;align-items:stretch !important;margin-bottom:8px !important}
+  .adm-export-sel label{display:flex;gap:8px;align-items:flex-start;padding:3px 0;border-bottom:1px solid rgba(212,168,67,.08);font-size:.74rem}
   .adm-export-sel label:last-of-type{border-bottom:none}
-  .adm-export-actions{flex-direction:column}
-  .adm-export-actions .adm-btn{width:100%;justify-content:center}
+  .adm-export-actions{flex-direction:column;gap:6px!important}
+  .adm-export-actions .adm-btn{width:100%;justify-content:center;padding:7px 10px!important}
+  .adm-activity-wrap{padding:6px 8px!important}
+  .adm-activity-mobile-toggle{display:flex!important}
+  .adm-activity-wrap:not(.adm-activity-open) .adm-activity-panel{display:none!important}
+  .adm-activity-wrap.adm-activity-open .adm-activity-mobile-toggle{border-color:var(--gold-dim);color:var(--gold)}
+  .adm-activity-wrap .adm-activity-panel #admActivityLog{max-height:72px;font-size:.72rem}
   #admCheckBtn{display:none}
 }/* ── PRESS ── */
 #press{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -1339,21 +1391,26 @@ textarea.adm-input{resize:vertical;min-height:80px}
  <div class="adm-wrap">
   <div class="adm-head">
    <span class="adm-head-title">Panel de Administración</span>
-   <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-    <div style="display:flex;gap:2px;align-items:center">
-      <span style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.1em;color:var(--text-faint);margin-right:3px">LANG:</span>
-      <button onclick="admSetLang('en')" id="admLangBtn-en" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:2px">EN</button>
-      <button onclick="admSetLang('de')" id="admLangBtn-de" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">DE</button>
-      <button onclick="admSetLang('es')" id="admLangBtn-es" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">ES</button>
-      <button onclick="admSetLang('it')" id="admLangBtn-it" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">IT</button>
-      <button onclick="admSetLang('fr')" id="admLangBtn-fr" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">FR</button>
+   <div class="adm-head-toolbar">
+    <div class="adm-head-primary">
+      <div style="display:flex;gap:2px;align-items:center">
+        <span style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.1em;color:var(--text-faint);margin-right:3px">LANG:</span>
+        <button onclick="admSetLang('en')" id="admLangBtn-en" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:2px">EN</button>
+        <button onclick="admSetLang('de')" id="admLangBtn-de" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">DE</button>
+        <button onclick="admSetLang('es')" id="admLangBtn-es" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">ES</button>
+        <button onclick="admSetLang('it')" id="admLangBtn-it" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">IT</button>
+        <button onclick="admSetLang('fr')" id="admLangBtn-fr" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">FR</button>
+      </div>
+      <span id="admLangInd" style="display:none">EN</span>
+      <div id="admSavePill" style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);padding:5px 10px;border-radius:999px;min-width:140px;text-align:center">Saved</div>
+      <a href="https://www.rolandoguy.com" target="_blank" rel="noopener" class="adm-head-web" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
     </div>
-    <span id="admLangInd" style="display:none">EN</span>
-    <div id="admSavePill" style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);padding:5px 10px;border-radius:999px;min-width:140px;text-align:center">Saved</div>
-    <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
-    <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
-    <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Cerrar Sesión</button>
-    <a href="https://www.rolandoguy.com" target="_blank" rel="noopener" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
+    <button type="button" class="adm-tools-toggle" id="admToolsToggle" onclick="admToggleHeadTools()" aria-expanded="false" aria-controls="admHeadSecondary">Admin tools</button>
+    <div class="adm-head-secondary" id="admHeadSecondary">
+      <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
+      <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
+      <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Cerrar Sesión</button>
+    </div>
    </div>
   </div>
   <div id="admLockWrap" style="background:var(--surface);padding:40px 32px">
@@ -1371,9 +1428,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
    </div>
   </div>
-  <div id="admContent" style="display:none;flex-direction:column;overflow:hidden">
+  <div id="admContent" style="display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden">
    <div id="admFullExportWrap" class="adm-export-bar" style="border-bottom:1px solid var(--border);padding:10px 16px;background:rgba(212,168,67,.04)">
-    <div style="font-family:var(--ff-caps);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Full clean export</div>
+    <button type="button" class="adm-export-mobile-toggle" id="admExportToolsToggle" onclick="admToggleExportTools()" aria-expanded="false" aria-controls="admExportBarInner">Export tools</button>
+    <div class="adm-export-bar-inner" id="admExportBarInner">
+    <div class="adm-export-desktop-title" style="font-family:var(--ff-caps);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Full clean export</div>
     <div class="adm-export-sel">
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-bio" onchange="saveFullExportSectionPrefs()"> Biography</label>
       <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-repertoire" onchange="saveFullExportSectionPrefs()"> Repertoire</label>
@@ -1390,6 +1449,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <button class="adm-btn" type="button" onclick="openShortProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open short clean export</button>
       <button class="adm-btn" type="button" onclick="openFullProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open full clean export</button>
     </div>
+    </div><!-- adm-export-bar-inner -->
    </div>
    <div class="adm-tabs">
     <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
@@ -1807,13 +1867,16 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
    </div><!-- admPanel-epk -->
    </div><!-- adm-body -->
-   <div id="admActivityWrap" style="border-top:1px solid var(--border);background:rgba(13,13,18,.85);backdrop-filter:blur(10px);padding:10px 16px">
-     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+   <div id="admActivityWrap" class="adm-activity-wrap">
+     <button type="button" class="adm-activity-mobile-toggle" id="admActivityMobileToggle" onclick="admToggleActivityLog()" aria-expanded="false" aria-controls="admActivityPanel">Activity log</button>
+     <div class="adm-activity-panel" id="admActivityPanel">
+     <div class="adm-activity-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
        <div style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)">Activity log</div>
        <button onclick="admClearLog()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.55rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Clear</button>
      </div>
      <div id="admActivityLog" style="margin-top:8px;font-size:.78rem;line-height:1.5;color:var(--text-dim);max-height:120px;overflow:auto;white-space:pre-wrap"></div>
      <div id="admActivityErr" style="display:none;margin-top:8px;padding:10px 12px;border:1px solid rgba(220,80,80,.45);background:rgba(220,80,80,.08);color:#ffb0b0;font-size:.78rem;line-height:1.5;white-space:pre-wrap"></div>
+     </div>
    </div>
   </div><!-- admContent -->
  </div><!-- adm-wrap -->
@@ -1988,6 +2051,12 @@ function __admShowErr(msg) {
   if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
   el.style.display = 'block';
   el.textContent = msg;
+  try {
+    if (window.matchMedia && window.matchMedia('(max-width:600px)').matches) {
+      const aw = document.getElementById('admActivityWrap');
+      if (aw) aw.classList.add('adm-activity-open');
+    }
+  } catch (e) {}
 }
 function admLog(level, msg, meta = {}) {
   __admLog.push({ t: __admNow(), level: level || 'info', msg: String(msg || ''), key: meta.key || null, meta });
@@ -1997,6 +2066,31 @@ function admClearLog() {
   __admLog.length = 0;
   __admRenderLog();
   __admShowErr('');
+}
+
+function admToggleExportTools() {
+  var w = document.getElementById('admFullExportWrap');
+  var btn = document.getElementById('admExportToolsToggle');
+  if (!w || !btn) return;
+  var open = w.classList.toggle('adm-export-open');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn.textContent = open ? 'Export tools ▴' : 'Export tools ▾';
+}
+function admToggleHeadTools() {
+  var sec = document.getElementById('admHeadSecondary');
+  var btn = document.getElementById('admToolsToggle');
+  if (!sec || !btn) return;
+  var open = sec.classList.toggle('adm-head-secondary-open');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn.textContent = open ? 'Admin tools ▴' : 'Admin tools ▾';
+}
+function admToggleActivityLog() {
+  var w = document.getElementById('admActivityWrap');
+  var btn = document.getElementById('admActivityMobileToggle');
+  if (!w || !btn) return;
+  var open = w.classList.toggle('adm-activity-open');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn.textContent = open ? 'Activity log ▴' : 'Activity log ▾';
 }
 
 function __admSetPill(state, detail = '') {
