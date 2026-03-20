@@ -4280,6 +4280,21 @@ function exportPdfStripLeakedCalendarThemeLine(str) {
   return t;
 }
 
+/** EN pdfmake-only biographies (exact editorial text; not used on public site). */
+const RG_PDF_EN_ARTIST_SHEET_BIO =
+  'Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his training privately with distinguished teachers connected to Teatro Col\u00f3n. Based in Berlin since 2019, he has continued to refine his technique and expand his repertoire in Germany. His recent engagements include the role of Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in 2025 and Tamino in a children\u2019s production of Die Zauberfl\u00f6te with Opernwerkstatt am Rhein in 2023. He has also appeared as tenor soloist at the Apollosaal of the Staatsoper Unter den Linden in Berlin, performed with the ensemble Die Goldv\u00f6gel in Berlin and Copenhagen, and appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg. He has also received coaching from Jack Li Vigni in the United States and from tenor Francesco Anile in Rome.';
+
+const RG_PDF_EN_DOSSIER_BIO =
+  'Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his musical development through private studies in voice, vocal technique and music theory with distinguished teachers in Argentina, including Luis Bragato, Dar\u00edo Schmunck and Garbis Adiamanian. He further developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub. In 2017, he participated in the Javier Camarena masterclass in Buenos Aires. Based in Berlin since 2019, he began his vocal work in Germany with Maestro Reiner Goldberg and later continued his development with Uwe Griem. He currently studies with Maestro Stephan von Cron Catalano, who is his principal artistic guide. He has also received coaching in individual sessions with Jack Li Vigni in New York and with tenor Francesco Anile in Rome. His recent engagements include the role of Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in July 2025 under the musical direction of Stanislav Rosenberg, and Tamino in a children\u2019s production of Die Zauberfl\u00f6te with Opernwerkstatt am Rhein in 2023. In Buenos Aires, he has appeared in roles including Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone and Borsa. Alongside his stage work, Rolando Guy has developed an active concert profile in Berlin, Copenhagen and Strasbourg. He has performed with the ensemble Die Goldv\u00f6gel, appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg, and given Lied recitals featuring Schubert, Strauss, Rachmaninov and Liszt, often in collaboration with pianist Marcelo Ayub.';
+
+/** Parse agenda row date for pdf export (same basis as dossier sort). */
+function exportPdfPerfEventDate(p) {
+  if (p.sortDate) return new Date(p.sortDate);
+  const str = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'Jan 2099');
+  const d = new Date(str);
+  return isNaN(d) ? new Date('2099-01-01') : d;
+}
+
 /** Controlled trim so pdfmake single-page / two-page layouts do not spill unpredictably. */
 function pdfExportHardTruncate(str, maxChars) {
   const s = String(str || '').replace(/\s+/g, ' ').trim();
@@ -4337,9 +4352,9 @@ function rgPdfBulletList(items, bottomMargin) {
   const bm = typeof bottomMargin === 'number' ? bottomMargin : 11;
   return {
     ul: arr,
-    margin: [4, 2, 0, bm],
-    fontSize: 9.35,
-    lineHeight: 1.45,
+    margin: [4, 0, 0, bm],
+    fontSize: 9.2,
+    lineHeight: 1.38,
     color: '#252525',
     markerColor: '#4a3f35'
   };
@@ -4375,7 +4390,7 @@ function rgPdfHeaderColumns(payload, imageCol) {
   const textCol = { width: '*', stack: nameStack };
   const cols = [accentCol, textCol];
   if (imageCol) cols.push(imageCol);
-  return { columns: cols, columnGap: imageCol ? 14 : 0, margin: [0, 0, 0, 16] };
+  return { columns: cols, columnGap: imageCol ? 14 : 0, margin: [0, 0, 0, 12] };
 }
 
 /** Contact — inset panel, typographic labels (not raw key:value dump). */
@@ -4410,11 +4425,11 @@ function rgPdfContactPanel(payload) {
       vLineWidth: function () { return 0; },
       paddingLeft: function () { return 14; },
       paddingRight: function () { return 14; },
-      paddingTop: function () { return 12; },
-      paddingBottom: function () { return 12; },
+      paddingTop: function () { return 10; },
+      paddingBottom: function () { return 10; },
       fillColor: function () { return '#f5f3ef'; }
     },
-    margin: [0, 6, 0, 0]
+    margin: [0, 3, 0, 0]
   };
 }
 
@@ -4430,9 +4445,15 @@ function buildArtistSheetPayload(lang) {
   try {
     const ti = Ti[currentLang] || Ti.en;
     const hero = get('hero') || {};
-    const fach = exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
+    const fach =
+      L === 'en'
+        ? exportPdfNormalizeText('Argentine-Italian Lyric Tenor')
+        : exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
     const loc = exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
-    const bioText = exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioShort(), 1100));
+    const bioText =
+      L === 'en'
+        ? exportPdfNormalizeText(RG_PDF_EN_ARTIST_SHEET_BIO)
+        : exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioShort(), 1100));
     const profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
     const operaLines = pickOperaRolesForSheet(3).map(formatRepCardLineDoc);
     const ariaLines = pickAriasForSheet(2).map(formatRepCardLineDoc);
@@ -4492,10 +4513,32 @@ function buildDossierPayload(lang) {
   try {
     const ti = Ti[currentLang] || Ti.en;
     const hero = get('hero') || {};
-    const fach = exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
-    const loc = exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
-    const bioText = exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioMedium(), 1650));
-    const profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
+    const fach =
+      L === 'en'
+        ? exportPdfNormalizeText('Argentine-Italian Lyric Tenor based in Berlin')
+        : exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
+    const loc = L === 'en' ? '' : exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
+    const bioText =
+      L === 'en'
+        ? exportPdfNormalizeText(RG_PDF_EN_DOSSIER_BIO)
+        : exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioMedium(), 1650));
+    let profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
+    if (L === 'en') {
+      profileLines = profileLines
+        .map(function (ln) {
+          const s = String(ln || '').trim();
+          if (/training\s+rooted\s+in\s+south\s+american\s+conservatory\s+tradition/i.test(s)) {
+            return exportPdfNormalizeText('Training shaped by the conservatory tradition of Buenos Aires');
+          }
+          return ln;
+        })
+        .filter(function (ln) {
+          const s = String(ln || '').trim();
+          if (!s) return false;
+          if (/^languages?:/i.test(s) && /\bspanish\b/i.test(s) && /\bitalian\b/i.test(s) && /\bgerman\b/i.test(s) && /\benglish\b/i.test(s)) return false;
+          return true;
+        });
+    }
     const repGroups = pickRepGroupsForDossier().map((g) => ({
       label: exportPdfNormalizeText(g.label),
       items: (g.items || []).map((x) => exportPdfNormalizeText(String(x || '').trim())).filter(Boolean)
@@ -4510,13 +4553,12 @@ function buildDossierPayload(lang) {
       };
     });
     const perfs = (typeof getPerfs === 'function' ? getPerfs() : []).filter((p) => p.status !== 'past');
-    const sortDate = (p) => {
-      if (p.sortDate) return new Date(p.sortDate);
-      const str = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'Jan 2099');
-      const d = new Date(str);
-      return isNaN(d) ? new Date('2099-01-01') : d;
-    };
-    const list = perfs.slice().sort((a, b) => sortDate(a) - sortDate(b)).slice(0, 3);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    let list = perfs.slice().sort((a, b) => exportPdfPerfEventDate(a) - exportPdfPerfEventDate(b)).slice(0, 3);
+    if (L === 'en') {
+      list = list.filter((p) => exportPdfPerfEventDate(p) >= startOfToday);
+    }
     const calRows = list.map((p) => {
       const dayMonth = [exportStripHtml(p.day || ''), exportTranslateMonthPdf(p.month || '')].filter(Boolean).join(' ');
       const timeTxt = exportStripHtml(p.time || '');
@@ -4537,11 +4579,13 @@ function buildDossierPayload(lang) {
     const contact = get('contact') || {};
     const email = exportPdfNormalizeText(exportStripHtml((contact.email || '').trim() || 'rolandoguy@gmail.com'));
     const footnote = exportPdfNormalizeText(exportStripHtml(ti['export.doc.materialsNote'] || ''));
+    const includeCalendarSection = L !== 'en' || calRows.length > 0;
     return {
       lang: L,
       name: 'Rolando Guy',
       fach,
       loc,
+      includeCalendarSection,
       labels: {
         bio: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.bio'] || 'Biography')),
         profile: exportPdfNormalizeText(exportStripHtml(ti['export.doc.section.profile'] || 'Artistic profile')),
@@ -4595,38 +4639,38 @@ function buildArtistSheetPdfDefinition(payload /* , lang */) {
     : null;
   const content = [
     rgPdfHeaderColumns(payload, imgCol),
-    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 10] }),
-    rgPdfKicker(payload.labels.bio, 0, 8),
-    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 12] }
+    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 8] }),
+    rgPdfKicker(payload.labels.bio, 0, 6),
+    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 8] }
   ];
   if (payload.profileLines.length) {
-    content.push(rgPdfRuleSoft([0, 2, 0, 3]));
-    content.push(rgPdfKicker(payload.labels.profile, 8, 6));
-    content.push(rgPdfBulletList(payload.profileLines, 10));
+    content.push(rgPdfRuleSoft([0, 1, 0, 2]));
+    content.push(rgPdfKicker(payload.labels.profile, 6, 5));
+    content.push(rgPdfBulletList(payload.profileLines, 8));
   }
   if (payload.operaLines.length || payload.ariaLines.length) {
-    content.push(rgPdfKicker(payload.labels.rep, 14, 6));
+    content.push(rgPdfKicker(payload.labels.rep, 9, 4));
     if (payload.operaLines.length && payload.ariaLines.length) {
-      content.push({ text: payload.labels.repOpera, style: 'repLbl', margin: [0, 0, 0, 3] });
-      content.push(rgPdfBulletList(payload.operaLines, 8));
-      content.push({ text: payload.labels.repAria, style: 'repLbl', margin: [0, 6, 0, 3] });
-      content.push(rgPdfBulletList(payload.ariaLines, 10));
+      content.push({ text: payload.labels.repOpera, style: 'repLbl', margin: [0, 0, 0, 2] });
+      content.push(rgPdfBulletList(payload.operaLines, 6));
+      content.push({ text: payload.labels.repAria, style: 'repLbl', margin: [0, 4, 0, 2] });
+      content.push(rgPdfBulletList(payload.ariaLines, 8));
     } else {
-      content.push(rgPdfBulletList(payload.operaLines.length ? payload.operaLines : payload.ariaLines, 10));
+      content.push(rgPdfBulletList(payload.operaLines.length ? payload.operaLines : payload.ariaLines, 8));
     }
   }
   if (payload.programs.length) {
-    content.push(rgPdfKicker(payload.labels.programs, 12, 6));
+    content.push(rgPdfKicker(payload.labels.programs, 8, 4));
     const plines = payload.programs.map((p) => (p.blurb ? (p.title + ' \u2014 ' + p.blurb) : p.title));
-    content.push(rgPdfBulletList(plines, 8));
+    content.push(rgPdfBulletList(plines, 6));
   }
-  content.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 10, 0, 9] }));
-  content.push(rgPdfKicker(payload.labels.contact, 0, 5));
+  content.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 5, 0, 5] }));
+  content.push(rgPdfKicker(payload.labels.contact, 0, 4));
   content.push(rgPdfContactPanel(payload));
   return {
     pageSize: 'A4',
     pageMargins: [48, 48, 52, 48],
-    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1c1c18', lineHeight: 1.44 },
+    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1c1c18', lineHeight: 1.38 },
     content,
     styles: RG_PDFMAKE_STYLES
   };
@@ -4664,23 +4708,25 @@ function buildDossierPdfDefinition(payload /* , lang */) {
     });
     p2.push(rgPdfRuleSoft([0, 4, 0, 3]));
   }
-  p2.push({ text: payload.labels.calTitle, style: 'calH2' });
-  if (!payload.calendarRows.length) {
-    p2.push({ text: payload.labels.calEmpty, style: 'progDesc', margin: [0, 0, 0, 10] });
-  } else {
-    payload.calendarRows.forEach((ev) => {
-      const rightStack = [{ text: ev.titleCal, bold: true, fontSize: 10.05, color: '#171614', margin: [0, 0, 0, 4] }];
-      if (ev.venue) rightStack.push({ text: ev.venue, style: 'calMeta', margin: [0, 0, 0, 4] });
-      if (ev.detail) rightStack.push({ text: ev.detail, fontSize: 9.05, color: '#2c2c28', lineHeight: 1.44 });
-      p2.push({
-        columns: [
-          { width: 76, stack: [{ text: ev.dayMonth, style: 'calDate' }, ev.timeTxt ? { text: ev.timeTxt, fontSize: 7.6, color: '#7a756f', margin: [0, 3, 0, 0] } : { text: '' }] },
-          { width: '*', stack: rightStack }
-        ],
-        columnGap: 12,
-        margin: [0, 0, 0, 12]
+  if (payload.includeCalendarSection) {
+    p2.push({ text: payload.labels.calTitle, style: 'calH2' });
+    if (!payload.calendarRows.length) {
+      p2.push({ text: payload.labels.calEmpty, style: 'progDesc', margin: [0, 0, 0, 10] });
+    } else {
+      payload.calendarRows.forEach((ev) => {
+        const rightStack = [{ text: ev.titleCal, bold: true, fontSize: 10.05, color: '#171614', margin: [0, 0, 0, 4] }];
+        if (ev.venue) rightStack.push({ text: ev.venue, style: 'calMeta', margin: [0, 0, 0, 4] });
+        if (ev.detail) rightStack.push({ text: ev.detail, fontSize: 9.05, color: '#2c2c28', lineHeight: 1.44 });
+        p2.push({
+          columns: [
+            { width: 76, stack: [{ text: ev.dayMonth, style: 'calDate' }, ev.timeTxt ? { text: ev.timeTxt, fontSize: 7.6, color: '#7a756f', margin: [0, 3, 0, 0] } : { text: '' }] },
+            { width: '*', stack: rightStack }
+          ],
+          columnGap: 12,
+          margin: [0, 0, 0, 12]
+        });
       });
-    });
+    }
   }
   p2.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 8, 0, 9] }));
   p2.push(rgPdfKicker(payload.labels.contact, 0, 5));
