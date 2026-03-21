@@ -1803,7 +1803,7 @@ const LANG_CONTENT = {
       stat3num:'2+', stat3lbl:'Countries',
     },
     rep: {
-      h2: 'Repertoire <em>Highlights</em>',
+      h2: 'Selected <em>Repertoire</em>',
       intro: '',
     },
     perf: {
@@ -2146,7 +2146,7 @@ function formatRepertoireTitleStack(html) {
 function withTitleEmphasis(section, value){
   const raw = String(value || '');
   const fallback = {
-    en: { rep:'Repertoire <em>Highlights</em>', contact:'Bookings &amp; <em>Artistic Enquiries</em>', programs:'Programs &amp; <em>Collaborations</em>', vid:'Stage, Concert &amp; <em>Recital Highlights</em>' },
+    en: { rep:'Selected <em>Repertoire</em>', contact:'Bookings &amp; <em>Artistic Enquiries</em>', programs:'Programs &amp; <em>Collaborations</em>', vid:'Stage, Concert &amp; <em>Recital Highlights</em>' },
     de: { rep:'Repertoire <em>Überblick</em>', contact:'Buchungen &amp; <em>Anfragen</em>', programs:'Programme &amp; <em>Projekte</em>', vid:'Auf der Bühne &amp; <em>Im Konzert</em>' },
     es: { rep:'Repertorio <em>seleccionado</em>', contact:'<span class="title-amp-stack"><span class="title-line1">Contrataciones</span><span class="title-line2"><span class="title-amp">&amp;</span> <em>Consultas artísticas</em></span></span>', programs:'Programas &amp; <em>colaboraciones</em>', vid:'En Escena &amp; <em>En Concierto</em>' },
     it: { rep:'Repertorio <em>selezionato</em>', contact:'<span class="title-amp-stack"><span class="title-line1">Prenotazioni</span><span class="title-line2"><span class="title-amp">&amp;</span> <em>richieste artistiche</em></span></span>', programs:'Programmi &amp; <em>collaborazioni</em>', vid:'In Scena &amp; <em>In Concerto</em>' },
