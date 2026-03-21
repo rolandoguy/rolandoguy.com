@@ -2297,6 +2297,23 @@ function migratePersistedContent() {
     saveIfChanged('rg_vid', next);
   }
 
+  // 2b) Repertoire section title (rep_*): Firestore `rep_en` etc. override LANG_CONTENT via get('rep').
+  // Legacy EN: drop persisted doc when it only stored the old heading (so bundled default wins); otherwise rewrite h2 in place.
+  (function migrateRepEnHeading() {
+    const key = 'rep_en';
+    const rep = load(key);
+    if (!rep || typeof rep !== 'object' || typeof rep.h2 !== 'string') return;
+    const introEmpty = !rep.intro || !String(rep.intro).trim();
+    const h2 = rep.h2.trim();
+    const oldH2 = 'Repertoire <em>Highlights</em>';
+    if (h2 !== oldH2) return;
+    if (introEmpty) {
+      saveIfChanged(key, null);
+    } else {
+      saveIfChanged(key, { ...rep, h2: 'Selected <em>Repertoire</em>' });
+    }
+  })();
+
   // 3) Calendar / performances (perf_* section copy + rg_perfs data)
   const perfEn = load('perf_en');
   if (perfEn && typeof perfEn === 'object') {

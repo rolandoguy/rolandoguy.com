@@ -1687,7 +1687,15 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <!-- REPERTOIRE: Opera -->
     <div class="adm-panel" id="admPanel-rep-opera">
-     <div class="adm-section">Repertorio — Opera Roles</div>
+     <div class="adm-section">Repertorio — Opera Roles <span id="repLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <div class="adm-grid full"><div class="adm-col">
+       <label class="adm-label">Título de sección Repertorio (HTML, idioma actual)</label>
+       <input class="adm-input" id="f-repH2" placeholder="Selected &lt;em&gt;Repertoire&lt;/em&gt;" autocomplete="off">
+       <p style="font-size:.72rem;color:var(--text-faint);margin:.35rem 0 0">Mismo campo que el H2 público (<code>#repH2</code>). Usá <code>&lt;em&gt;…&lt;/em&gt;</code> para la línea dorada. Dejá vacío o igual al texto por defecto del sitio para quitar el override guardado y usar <code>LANG_CONTENT</code>.</p>
+     </div></div>
+     <div style="margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+       <button class="adm-btn" type="button" onclick="saveRepHeader()" style="background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold)">Guardar título Repertorio</button>
+     </div>
      <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
      <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <label class="adm-label" style="margin:0">Ordenar por estado:</label>
@@ -2373,7 +2381,8 @@ function admExportJSON() {
       k.startsWith('perf_') ||
       k.startsWith('programs_') ||
       k.startsWith('rg_programs_') ||
-      k.startsWith('rg_editorial_')
+      k.startsWith('rg_editorial_') ||
+      k.startsWith('rep_')
     );
     const payload = {
       exportedAt: new Date().toISOString(),
@@ -2403,7 +2412,7 @@ function restoreDefaults(section) {
     else if (section === 'press') clear('rg_press');
     else if (section === 'epk-bios') clear('rg_epk_bios');
     else if (section === 'epk-photos') clear('rg_epk_photos');
-    else if (section === 'repertoire') clear('rg_rep_cards');
+    else if (section === 'repertoire') { clear('rg_rep_cards'); clear('rep_' + lang); }
     else if (section === 'photos') { clear('rg_photos'); clear('rg_photo_captions'); }
     admLog('info', 'Restore defaults requested', { key: section });
     // Refresh UI
@@ -8556,6 +8565,10 @@ function admTab(name){
 
 function admPopulate(name){
   ['hero','bio','contact','programs'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=currentLang.toUpperCase();});
+  if (name && name.startsWith('rep-')) {
+    const rb = document.getElementById('repLangBadge');
+    if (rb) rb.textContent = currentLang.toUpperCase();
+  }
   if(name==='hero'){
     const d=get('hero');
     const bgEl=document.getElementById('f-heroBg');
@@ -8577,6 +8590,8 @@ function admPopulate(name){
     const cat = catMap[name] || 'opera';
     const tabSuffix = name.replace('rep-',''); // matches HTML ids: opera, arias, operetta, lived, tango
     const d = getRep();
+    const repH2Input = document.getElementById('f-repH2');
+    if (repH2Input) repH2Input.value = (d.h2 && String(d.h2).trim()) ? d.h2 : '';
     let catCards = (d.cards || []).filter(c => (c.cat || 'opera') === cat);
     const sortStatus = (document.getElementById('repSortStatus-'+tabSuffix)||{}).value || '';
     if (sortStatus) {
@@ -8791,6 +8806,30 @@ function admPopulate(name){
   }
 }
 
+/** Persist #repH2 source: Firestore key rep_{lang}. Empty or matching LANG_CONTENT.rep.h2 clears override. */
+function saveRepHeader(opts){
+  const silent = opts && opts.silent;
+  const key = 'rep_' + currentLang;
+  const rawStored = load(key);
+  const intro = (rawStored && typeof rawStored.intro === 'string') ? rawStored.intro : '';
+  const inputEl = document.getElementById('f-repH2');
+  const inputH2 = inputEl ? String(inputEl.value || '').trim() : '';
+  const lc = LANG_CONTENT[currentLang] && LANG_CONTENT[currentLang].rep;
+  const defaultH2 = (lc && lc.h2) ? String(lc.h2).trim() : '';
+  let next;
+  if (!inputH2 || (defaultH2 && inputH2 === defaultH2)) {
+    next = (!intro || !String(intro).trim()) ? null : { intro };
+  } else {
+    next = { h2: inputH2, intro: intro || '' };
+  }
+  save(key, next);
+  try { if (typeof renderRep === 'function') renderRep(); } catch (e) {}
+  if (!silent) {
+    const fb = document.getElementById('fb-rep-opera');
+    if (fb) { fb.style.display = 'block'; setTimeout(() => { fb.style.display = 'none'; }, 2200); }
+  }
+}
+
 function saveSection(name){
   let data;
   if(name==='hero'){
@@ -8804,6 +8843,7 @@ function saveSection(name){
     save('bio_'+currentLang,data); renderBio();
   }
   else if(name.startsWith('rep-')){
+    if (name === 'rep-opera') saveRepHeader({ silent: true });
     const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
     const cat = catMap[name] || 'opera';
     const allCards = (getRep().cards || []).slice();
@@ -9400,6 +9440,17 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
   }
 
   try {
+    (function admMigrateRepEnHeading(){
+      const key = 'rep_en';
+      const rep = load(key);
+      if (!rep || typeof rep !== 'object' || typeof rep.h2 !== 'string') return;
+      const introEmpty = !rep.intro || !String(rep.intro).trim();
+      const h2 = rep.h2.trim();
+      const oldH2 = 'Repertoire <em>Highlights</em>';
+      if (h2 !== oldH2) return;
+      if (introEmpty) save(key, null);
+      else save(key, { ...rep, h2: 'Selected <em>Repertoire</em>' });
+    })();
     if(typeof renderAll === 'function') renderAll();
     if(typeof loadMonthSize === 'function') loadMonthSize();
     setLang('en');
