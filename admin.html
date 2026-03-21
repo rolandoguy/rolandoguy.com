@@ -2902,6 +2902,44 @@ let currentRepCategory = 'opera';
 let repSortBy = 'composer'; // 'role' | 'opera' | 'composer'
 let repSortDir = 'asc';     // 'asc' | 'desc'
 
+/** Persisted site language: header/mobile selector (not admin content-language toolbar). */
+const RG_LANG_PREF_KEY = 'rg_lang_pref';
+const RG_SUPPORTED_LANGS = ['en', 'de', 'es', 'it', 'fr'];
+
+function normalizeBrowserLangTag(tag) {
+  if (!tag || typeof tag !== 'string') return '';
+  const primary = tag.trim().toLowerCase().split(/[-_]/)[0];
+  return /^[a-z]{2}$/.test(primary) ? primary : '';
+}
+
+function detectBrowserLang() {
+  const candidates = [];
+  const push = (t) => {
+    const p = normalizeBrowserLangTag(t);
+    if (p && candidates.indexOf(p) === -1) candidates.push(p);
+  };
+  try {
+    if (typeof navigator !== 'undefined' && navigator.languages && navigator.languages.length) {
+      navigator.languages.forEach(push);
+    } else if (typeof navigator !== 'undefined' && navigator.language) {
+      push(navigator.language);
+    }
+  } catch (e) {}
+  for (let i = 0; i < candidates.length; i++) {
+    if (RG_SUPPORTED_LANGS.indexOf(candidates[i]) !== -1) return candidates[i];
+  }
+  return null;
+}
+
+function resolveInitialLang() {
+  try {
+    const raw = localStorage.getItem(RG_LANG_PREF_KEY);
+    const saved = raw == null ? '' : String(raw).trim().toLowerCase();
+    if (saved && RG_SUPPORTED_LANGS.includes(saved)) return saved;
+  } catch (e) {}
+  return detectBrowserLang() || 'en';
+}
+
 // load() and save() defined above via Firebase
 
 // Get content: lang-specific custom override → lang default → fallback to 'en'
@@ -8265,8 +8303,13 @@ function saveSiteUiStrings(){
   }
 }
 
-function setLang(lang){
+function setLang(lang, opts = {}) {
+  if (!RG_SUPPORTED_LANGS.includes(lang)) lang = 'en';
   currentLang = lang;
+
+  if (opts.persist === true) {
+    try { localStorage.setItem(RG_LANG_PREF_KEY, lang); } catch (e) {}
+  }
   ['en','de','es','it','fr'].forEach(l => {
     const btn = document.getElementById('btn-'+l);
     if (btn) btn.classList.toggle('active', l===lang);
@@ -10066,7 +10109,7 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
     })();
     if(typeof renderAll === 'function') renderAll();
     if(typeof loadMonthSize === 'function') loadMonthSize();
-    setLang('en');
+    setLang(resolveInitialLang());
     if(typeof renderPhotoGallery === 'function') renderPhotoGallery();
   } catch(e) {
     console.error('Error rendering content:', e);

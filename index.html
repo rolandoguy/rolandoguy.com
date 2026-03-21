@@ -1333,11 +1333,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 <div class="lang-bar">
-  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">&#127468;&#127463; EN</button>
-  <button class="lang-btn" onclick="setLang('de')" id="btn-de">&#127465;&#127466; DE</button>
-  <button class="lang-btn" onclick="setLang('es')" id="btn-es">&#127466;&#127480; ES</button>
-  <button class="lang-btn" onclick="setLang('it')" id="btn-it">&#127470;&#127481; IT</button>
-  <button class="lang-btn" onclick="setLang('fr')" id="btn-fr">&#127467;&#127479; FR</button>
+  <button class="lang-btn active" onclick="setLang('en', { persist: true })" id="btn-en">&#127468;&#127463; EN</button>
+  <button class="lang-btn" onclick="setLang('de', { persist: true })" id="btn-de">&#127465;&#127466; DE</button>
+  <button class="lang-btn" onclick="setLang('es', { persist: true })" id="btn-es">&#127466;&#127480; ES</button>
+  <button class="lang-btn" onclick="setLang('it', { persist: true })" id="btn-it">&#127470;&#127481; IT</button>
+  <button class="lang-btn" onclick="setLang('fr', { persist: true })" id="btn-fr">&#127467;&#127479; FR</button>
 </div>
 <nav id="nav">
   <ul class="nav-links">
@@ -1362,11 +1362,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <a href="#epk" onclick="closeMenu()" data-i18n="nav.epk">Press</a>
   <a href="#contact" onclick="closeMenu()" data-i18n="nav.book">Book now</a>
   <div class="lang-row">
-    <button onclick="setLang('en');closeMenu()" id="mob-btn-en" class="active">EN</button>
-    <button onclick="setLang('de');closeMenu()" id="mob-btn-de">DE</button>
-    <button onclick="setLang('es');closeMenu()" id="mob-btn-es">ES</button>
-    <button onclick="setLang('it');closeMenu()" id="mob-btn-it">IT</button>
-    <button onclick="setLang('fr');closeMenu()" id="mob-btn-fr">FR</button>
+    <button onclick="setLang('en', { persist: true });closeMenu()" id="mob-btn-en" class="active">EN</button>
+    <button onclick="setLang('de', { persist: true });closeMenu()" id="mob-btn-de">DE</button>
+    <button onclick="setLang('es', { persist: true });closeMenu()" id="mob-btn-es">ES</button>
+    <button onclick="setLang('it', { persist: true });closeMenu()" id="mob-btn-it">IT</button>
+    <button onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr">FR</button>
   </div>
 </div>
 <section id="hero">
@@ -2082,6 +2082,44 @@ let currentLang = 'en';
 let currentRepCategory = 'opera';
 let repSortBy = 'composer'; // 'role' | 'opera' | 'composer'
 let repSortDir = 'asc';     // 'asc' | 'desc'
+
+/** Persisted site language: manual choice or first auto-detected language (localStorage). */
+const RG_LANG_PREF_KEY = 'rg_lang_pref';
+const RG_SUPPORTED_LANGS = ['en', 'de', 'es', 'it', 'fr'];
+
+function normalizeBrowserLangTag(tag) {
+  if (!tag || typeof tag !== 'string') return '';
+  const primary = tag.trim().toLowerCase().split(/[-_]/)[0];
+  return /^[a-z]{2}$/.test(primary) ? primary : '';
+}
+
+function detectBrowserLang() {
+  const candidates = [];
+  const push = (t) => {
+    const p = normalizeBrowserLangTag(t);
+    if (p && candidates.indexOf(p) === -1) candidates.push(p);
+  };
+  try {
+    if (typeof navigator !== 'undefined' && navigator.languages && navigator.languages.length) {
+      navigator.languages.forEach(push);
+    } else if (typeof navigator !== 'undefined' && navigator.language) {
+      push(navigator.language);
+    }
+  } catch (e) {}
+  for (let i = 0; i < candidates.length; i++) {
+    if (RG_SUPPORTED_LANGS.indexOf(candidates[i]) !== -1) return candidates[i];
+  }
+  return null;
+}
+
+function resolveInitialLang() {
+  try {
+    const raw = localStorage.getItem(RG_LANG_PREF_KEY);
+    const saved = raw == null ? '' : String(raw).trim().toLowerCase();
+    if (saved && RG_SUPPORTED_LANGS.includes(saved)) return saved;
+  } catch (e) {}
+  return detectBrowserLang() || 'en';
+}
 
 // Helper: normalise Firestore payloads that may be wrapped ({items:[]}, {perfs:[]}, etc.)
 function normalizeArrayData(raw, preferredKeys = []) {
@@ -4380,8 +4418,13 @@ function uiTable(lang){
   return merged;
 }
 
-function setLang(lang){
+function setLang(lang, opts = {}) {
+  if (!RG_SUPPORTED_LANGS.includes(lang)) lang = 'en';
   currentLang = lang;
+
+  if (opts.persist === true) {
+    try { localStorage.setItem(RG_LANG_PREF_KEY, lang); } catch (e) {}
+  }
   ['en','de','es','it','fr'].forEach(l => {
     const btn = document.getElementById('btn-'+l);
     if (btn) btn.classList.toggle('active', l===lang);
@@ -5679,7 +5722,7 @@ const RG_PUBLIC_LOCAL_OVERRIDE_KEYS = [
     } catch(e) { console.warn('Migration error:', e); }
     if(typeof renderAll === 'function') renderAll();
     if(typeof loadMonthSize === 'function') loadMonthSize();
-    setLang('en');
+    setLang(resolveInitialLang());
     if(typeof renderPhotoGallery === 'function') renderPhotoGallery();
   } catch(e) {
     console.error('Error rendering content:', e);
