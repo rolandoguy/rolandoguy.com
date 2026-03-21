@@ -2928,6 +2928,21 @@ function getRep() {
   });
   return { h2: langData.h2, intro: langData.intro, cards };
 }
+
+/** #f-repH2 display: non-empty persisted rep_{lang}.h2, else bundled default (matches effective public #repH2). */
+function admEffectiveRepH2Display() {
+  const key = 'rep_' + currentLang;
+  const stored = load(key);
+  if (stored && typeof stored === 'object' && typeof stored.h2 === 'string' && stored.h2.trim()) {
+    return stored.h2;
+  }
+  const lc = LANG_CONTENT[currentLang] && LANG_CONTENT[currentLang].rep;
+  if (lc && typeof lc.h2 === 'string' && lc.h2.trim()) return lc.h2;
+  const en = LANG_CONTENT.en && LANG_CONTENT.en.rep;
+  if (en && typeof en.h2 === 'string' && en.h2.trim()) return en.h2;
+  return '';
+}
+
 function renderHero() {
   const d = get('hero');
   document.getElementById('heroEyebrow').textContent = d.eyebrow;
@@ -8591,7 +8606,7 @@ function admPopulate(name){
     const tabSuffix = name.replace('rep-',''); // matches HTML ids: opera, arias, operetta, lived, tango
     const d = getRep();
     const repH2Input = document.getElementById('f-repH2');
-    if (repH2Input) repH2Input.value = (d.h2 && String(d.h2).trim()) ? d.h2 : '';
+    if (repH2Input) repH2Input.value = admEffectiveRepH2Display();
     let catCards = (d.cards || []).filter(c => (c.cat || 'opera') === cat);
     const sortStatus = (document.getElementById('repSortStatus-'+tabSuffix)||{}).value || '';
     if (sortStatus) {
@@ -8823,6 +8838,7 @@ function saveRepHeader(opts){
     next = { h2: inputH2, intro: intro || '' };
   }
   save(key, next);
+  if (inputEl) inputEl.value = admEffectiveRepH2Display();
   try { if (typeof renderRep === 'function') renderRep(); } catch (e) {}
   if (!silent) {
     const fb = document.getElementById('fb-rep-opera');
