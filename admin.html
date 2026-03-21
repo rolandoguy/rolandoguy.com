@@ -338,6 +338,12 @@ section{position:relative;z-index:2}
 .section-tag{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.35em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:13px;margin-bottom:48px}
 .section-tag::before{content:attr(data-num);font-size:.51rem;color:var(--text-faint)}
 .section-tag::after{content:'';flex:1;height:1px;background:var(--border);max-width:80px}
+.title-amp-stack{display:flex;flex-direction:column;align-items:flex-start;text-align:left;line-height:1.15}
+.title-line1,.title-line2{display:block;width:100%}
+.title-line2{margin-top:.14em}
+.title-amp{color:var(--gold);font-style:normal;font-weight:inherit}
+.section-tag .title-line2{margin-top:.32em;letter-spacing:.35em}
+.photos-header h2 .title-amp,.programs-header h2 .title-amp,.videos-header h2 .title-amp,.perf-header h2 .title-amp,.contact-left h2 .title-amp{color:var(--gold)}
 #about{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .about-grid{display:grid;grid-template-columns:1fr 1.45fr;gap:80px;align-items:start}
 .about-photo-wrap{position:relative}
@@ -345,7 +351,7 @@ section{position:relative;z-index:2}
 .about-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;filter:grayscale(20%) contrast(1.05)}
 .about-photo-border{position:absolute;top:16px;left:16px;right:-16px;bottom:-16px;border:1px solid var(--border);pointer-events:none;z-index:-1}
 .about-photo-label{position:absolute;bottom:0;left:0;right:0;padding:24px 18px 14px;background:linear-gradient(to top,rgba(13,13,18,.92),transparent);font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase}
-.about-text h2{font-family:var(--ff-title);font-size:clamp(2.4rem,3.6vw,3.9rem);font-weight:300;line-height:1.15;color:var(--text);margin-bottom:24px}
+.about-text h2{font-family:var(--ff-title);color:var(--text);margin-bottom:24px}
 .about-text h2 em{font-style:italic;color:var(--gold)}
 .about-text p{font-size:.98rem;color:var(--text-dim);line-height:1.9;margin-bottom:16px}
 .about-quote{border-left:2px solid var(--gold);padding:12px 0 12px 22px;margin:28px 0}
@@ -362,7 +368,7 @@ section{position:relative;z-index:2}
 #repertoire{padding:90px 0}
 .rep-header{margin-bottom:2rem}
 .rep-header .section-tag{margin-bottom:.5rem}
-.rep-title{font-family:var(--ff-title);font-size:clamp(2.2rem,3.2vw,3.5rem);font-weight:300;line-height:1.2;color:var(--text);margin:0}
+.rep-title{font-family:var(--ff-title);color:var(--text);margin:0}
 .rep-title em{font-style:italic;color:var(--gold)}
 .rep-intro-line{font-size:.9rem;color:var(--text-dim);line-height:1.7;max-width:38em;margin:.75rem 0 0;padding:0}
 .rep-tabs{display:flex;flex-wrap:wrap;gap:1px;margin-bottom:1.75rem;background:var(--border);border:1px solid var(--border);max-width:100%}
@@ -410,7 +416,7 @@ section{position:relative;z-index:2}
 .opera-role strong{color:var(--text);font-weight:400}
 #programs{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .programs-header{margin-bottom:28px}
-.programs-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
+.programs-header h2{font-family:var(--ff-title);color:var(--text)}
 .programs-header h2 em{font-style:italic;color:var(--gold)}
 .programs-header p{font-size:.91rem;color:var(--text-dim);line-height:1.9;margin-top:12px}
 .programs-intro{font-size:.92rem;color:var(--text-dim);line-height:1.85;max-width:720px;margin-bottom:48px}
@@ -429,7 +435,7 @@ section{position:relative;z-index:2}
 .programs-closing{font-size:.8rem;color:var(--text-faint);line-height:1.75;margin-top:40px;font-style:italic;max-width:680px}
 #videos{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .videos-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px}
-.videos-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.1;color:var(--text)}
+.videos-header h2{font-family:var(--ff-title);color:var(--text)}
 .videos-header h2 em{font-style:italic;color:var(--gold)}
 .video-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 .video-card{position:relative;overflow:hidden;cursor:none;background:var(--surface);text-decoration:none;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:2px;transition:border-color 0.3s}
@@ -450,10 +456,10 @@ section{position:relative;z-index:2}
 .vfb-title{font-family:var(--ff-title);font-size:1.15rem;font-style:italic;color:var(--text);line-height:1.3}
 .video-more-wrap{text-align:center;margin-top:20px}
 #photos{padding:90px 0}
-.photos-header{display:grid;grid-template-columns:1fr 1fr;gap:72px;margin-bottom:48px;align-items:end}
-.photos-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
+.photos-header{margin-bottom:48px}
+.photos-header h2{font-family:var(--ff-title);color:var(--text)}
 .photos-header h2 em{font-style:italic;color:var(--gold)}
-.photos-header p{font-size:.91rem;color:var(--text-dim);line-height:1.9;align-self:end}
+.photos-header p{font-size:.91rem;color:var(--text-dim);line-height:1.9;margin-top:12px}
 .photo-tabs{display:flex;gap:1px;margin-bottom:4px;background:var(--border)}
 .photo-tab{font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.2em;color:var(--text-faint);text-transform:uppercase;padding:12px 24px;background:var(--surface);cursor:none;border:none;transition:all .3s;flex:1;text-align:center}
 .photo-tab:hover{background:var(--surface2);color:var(--text-dim)}
@@ -475,10 +481,10 @@ section{position:relative;z-index:2}
 .lb-prev{left:16px}.lb-next{right:16px}
 .lb-counter{font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.2em;color:var(--text-faint);margin-top:8px}
 #performances{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.perf-header{display:grid;grid-template-columns:1fr 1fr;gap:72px;margin-bottom:56px;align-items:end}
-.perf-header h2{font-family:var(--ff-title);font-size:clamp(2.3rem,3.4vw,3.7rem);font-weight:300;line-height:1.15;color:var(--text)}
+.perf-header{margin-bottom:56px}
+.perf-header h2{font-family:var(--ff-title);color:var(--text)}
 .perf-header h2 em{font-style:italic;color:var(--gold)}
-.perf-header p{font-size:.91rem;color:var(--text-dim);line-height:1.9;align-self:end}
+.perf-header p{font-size:.91rem;color:var(--text-dim);line-height:1.9;margin-top:12px}
 .perf-list{display:flex;flex-direction:column}
 .perf-item{display:grid;grid-template-columns:minmax(100px,140px) 1fr;gap:32px;align-items:start;padding:24px 0;border-bottom:1px solid var(--border);transition:padding .3s}
 .perf-item:first-child{border-top:1px solid var(--border)}
@@ -502,11 +508,36 @@ section{position:relative;z-index:2}
 #contact{padding:90px 0;position:relative}
 #contact::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(212,168,67,.04) 0%,transparent 70%);pointer-events:none}
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;position:relative;z-index:1}
-.contact-left h2{font-family:var(--ff-title);font-size:clamp(2.4rem,3.6vw,4rem);font-weight:300;line-height:1.1;color:var(--text);margin-bottom:20px}
+.contact-left h2{font-family:var(--ff-title);color:var(--text);margin-bottom:20px}
 .contact-left h2 em{font-style:italic;color:var(--gold)}
 .contact-left p{font-size:.91rem;color:var(--text-dim);line-height:1.9;margin-bottom:28px}
 
-
+/* Section page titles: shared type scale, wrap width, balanced multi-line, stable two-line min height */
+.about-text h2,
+.rep-title,
+.programs-header h2,
+.videos-header h2,
+.photos-header h2,
+.perf-header h2,
+.contact-left h2{
+  font-family:var(--ff-title);
+  font-weight:300;
+  font-size:clamp(2.3rem,3.35vw,3.75rem);
+  line-height:1.13;
+  max-width:min(100%,22rem);
+  text-wrap:balance;
+}
+@supports (min-height:1lh){
+  .about-text h2,
+  .rep-title,
+  .programs-header h2,
+  .videos-header h2,
+  .photos-header h2,
+  .perf-header h2,
+  .contact-left h2{
+    min-height:2.35lh;
+  }
+}
 
 .contact-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px}
 .contact-form{background:var(--surface);border:1px solid var(--border);padding:36px 32px}
@@ -743,15 +774,23 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .achievements{grid-template-columns:1fr}
   .rep-tabs{flex-wrap:wrap}.rep-tab{flex:1 1 auto;min-width:7rem}
   .video-grid{grid-template-columns:1fr}
-  .photos-header{grid-template-columns:1fr;gap:18px}
   .photo-grid-4{grid-template-columns:1fr 1fr}
   .photo-grid-3{grid-template-columns:1fr 1fr}
-  .perf-header{grid-template-columns:1fr;gap:18px}
   .perf-item{grid-template-columns:minmax(90px,120px) 1fr;gap:16px}
   .contact-grid{grid-template-columns:1fr;gap:32px}
   .footer-inner{grid-template-columns:1fr;text-align:center;gap:20px}
   .adm-wrap{width:100%;max-width:100%;border-radius:0}
   .adm-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:768px){
+  .hero-cta{
+    justify-content:center;
+    align-items:center;
+    max-width:100%;
+    margin-left:auto;
+    margin-right:auto;
+  }
 }
 
 /* Admin “desktop” chrome: ≥769px — below this, export/tools/activity use collapsible mobile UI */
@@ -837,13 +876,20 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .hero-eyebrow{font-size:.52rem;letter-spacing:.2em}
   .hero-name{font-size:clamp(2.8rem,14vw,4.5rem)}
   .hero-subtitle{font-size:.6rem;letter-spacing:.18em}
-  .hero-cta{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .hero-cta a:first-child{grid-column:1/-1}
+  .hero-cta{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+    max-width:100%;
+    gap:10px;
+  }
+  .hero-cta a{width:100%;max-width:min(320px,100%);box-sizing:border-box}
   .btn-primary,.btn-secondary{font-size:.5rem;padding:9px 12px;letter-spacing:.14em;text-align:center;justify-content:center}
   .section-inner{padding:0 16px}
   #about,#repertoire,#programs,#videos,#photos,#performances,#contact,#epk{padding:90px 0}
   .section-tag{font-size:.52rem;margin-bottom:32px}
-  .about-text h2,.rep-title,.perf-header h2,.photos-header h2{font-size:clamp(2rem,9vw,2.8rem)}
+  .about-text h2,.rep-title,.programs-header h2,.videos-header h2,.perf-header h2,.photos-header h2,.contact-left h2{font-size:clamp(2rem,9vw,2.8rem);line-height:1.13;max-width:min(100%,20rem)}
   .about-text p{font-size:.87rem}
   
   
@@ -1397,13 +1443,13 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="epk-bio-col">
         <div class="epk-bio-tabs">
           <button class="epk-tab" onclick="epkTab(this,'bio50')" data-i18n="epk.bio50lbl">50-word Bio</button>
-          <button class="epk-tab" onclick="epkTab(this,'bio150')" data-i18n="epk.bio150lbl">150-word Bio</button>
-          <button class="epk-tab active" onclick="epkTab(this,'bio300')" data-i18n="epk.bio300lbl">Full Biography</button>
+          <button class="epk-tab active" onclick="epkTab(this,'bio150')" data-i18n="epk.bio150lbl">150-word Bio</button>
+          <button class="epk-tab" onclick="epkTab(this,'bio300')" data-i18n="epk.bio300lbl">Full Biography</button>
         </div>
         <div class="epk-bio-pane" id="bio50"><p id="bio50Text"></p></div>
-        <div class="epk-bio-pane" id="bio150"><p id="bio150Text"></p></div>
-        <div class="epk-bio-pane active" id="bio300"><p id="bio300TextP1"></p><p id="bio300TextP2"></p><p id="bio300TextP3"></p><p id="bio300TextP4"></p></div>
-        <button class="epk-copy-btn" onclick="epkCopyBio()" id="epkCopyBtn" data-i18n="epk.copyBio">⧉ Copy Bio</button>
+        <div class="epk-bio-pane active" id="bio150"><p id="bio150Text"></p></div>
+        <div class="epk-bio-pane" id="bio300"><p id="bio300TextP1"></p><p id="bio300TextP2"></p><p id="bio300TextP3"></p><p id="bio300TextP4"></p></div>
+        <button class="epk-copy-btn" onclick="epkCopyBio()" id="epkCopyBtn" data-i18n="epk.copyBio">⧉ Copy biography</button>
       </div>
 
       <!-- RIGHT: Press resources -->
@@ -1496,14 +1542,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <details class="adm-export-docfold" id="admExportDocFold">
       <summary class="adm-export-docfold-sum"><span data-i18n="export.doc.foldSummary">Artist Sheet / Dossier (PDF)</span></summary>
-      <p class="adm-export-docfold-hint" style="margin:0 0 6px;font-size:.7rem;color:var(--text-faint);line-height:1.35" data-i18n="export.doc.barTitle">Document exports (print / PDF)</p>
-      <p class="adm-export-docfold-hint" style="margin:0 0 6px;font-size:.62rem;color:var(--text-faint);line-height:1.4" data-i18n="export.doc.pdfmakeHint">Final PDFs download via pdfmake (exact A4 filenames). HTML preview is optional; no print dialog required for the PDF file.</p>
-      <p class="adm-export-docfold-hint" style="margin:0 0 6px;font-size:.62rem;color:var(--text-faint);line-height:1.4;font-family:var(--ff-mono,monospace)">PDF debug outlines: <code style="font-size:.6rem">localStorage.setItem('rg_pdf_export_debug','1')</code> → reload admin → open export again. <code style="font-size:.6rem">removeItem(...)</code> to off.</p>
+      <p class="adm-export-docfold-hint" style="margin:0 0 8px;font-size:.7rem;color:var(--text-faint);line-height:1.4" data-i18n="export.doc.pdfExportHint">PDF exports download directly as A4 files with the correct filename.</p>
       <div class="adm-export-actions adm-export-doc-actions" style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="adm-btn" type="button" onclick="openArtistSheetExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenArtistSheet">Download Artist Sheet (PDF)</button>
         <button class="adm-btn" type="button" onclick="openDossierExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenDossier">Download Dossier (PDF)</button>
+        <span id="admExportHtmlPreviewWrap" style="display:none">
         <button class="adm-btn" type="button" onclick="previewArtistSheetHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewArtistSheetHtml">Preview Artist Sheet (HTML)</button>
         <button class="adm-btn" type="button" onclick="previewDossierHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewDossierHtml">Preview Dossier (HTML)</button>
+        </span>
         <button class="adm-btn" type="button" onclick="copyArtistSheetPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyArtistSheet">Copy Artist Sheet text</button>
         <button class="adm-btn" type="button" onclick="copyDossierPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyDossier">Copy Dossier text</button>
       </div>
@@ -1993,6 +2039,7 @@ function admSetUnlocked(unlocked, user){
   if(lock) lock.style.display = unlocked ? 'none' : '';
   if(content) content.style.display = unlocked ? 'flex' : 'none';
   if (unlocked) try { admSyncExportDocFold(); } catch (e) {}
+  if (unlocked) try { admSyncHtmlPreviewExportBtns(); } catch (e) {}
 
   const emailEl = document.getElementById('admUserEmail');
   if(emailEl) emailEl.textContent = (user && user.email) ? user.email : '—';
@@ -2389,8 +2436,8 @@ const LANG_CONTENT = {
     },
     bio: {
       h2: 'A voice <em>forged</em><br>in tradition',
-      p1: 'Argentinian-Italian tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory of Music. He worked privately with Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck and Víctor Torres — all singers and coaches at the Teatro Colón — and developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) and Marcelo Ayub. In 2017 he participated in the prestigious Javier Camarena Masterclass in Buenos Aires.',
-      p2: 'Based in Berlin since 2019, he studied with Maestro Reiner Goldberg and Uwe Griem, and currently works on his technique and interpretation with Maestro Stephan von Cron Catalano, Austrian conductor and violinist. He has also worked with Jack Li Vigni (USA) and Francesco Anile (Italy). In 2025 he performed as Zweiter Fremder in Der Vetter aus Dingsda (Eduard Künneke) at Kammeroper Frankfurt under Stanislav Rosenberg, and in 2023 sang Tamino in Die Zauberflöte with Opernwerkstatt am Rhein. He has appeared as tenor soloist at the Staatsoper Berlin, performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office and Notre-Dame in Strasbourg. He has given Lieder recitals — Schubert, Strauss, Rachmaninov and Liszt — with pianist Marcelo Ayub.',
+      p1: 'Argentinian-Italian tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory of Music. He worked privately with Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck and Víctor Torres — all singers and coaches at the Teatro Colón — and developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) and Marcelo Ayub. Earlier in his artistic development, he also received coaching from Jack Li Vigni in New York and from tenor Francesco Anile in Rome. In 2017 he participated in the prestigious Javier Camarena Masterclass in Buenos Aires.',
+      p2: 'Based in Berlin since 2019, he studied with Maestro Reiner Goldberg and Uwe Griem, and currently works on his technique and interpretation with Maestro Stephan von Cron Catalano, Austrian conductor and violinist. In 2025 he performed as Zweiter Fremder in Der Vetter aus Dingsda (Eduard Künneke) at Kammeroper Frankfurt under Stanislav Rosenberg, and in 2023 sang Tamino in Die Zauberflöte with Opernwerkstatt am Rhein. He has appeared as tenor soloist at the Staatsoper Berlin, performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office and Notre-Dame in Strasbourg. He has given Lieder recitals — Schubert, Strauss, Rachmaninov and Liszt — with pianist Marcelo Ayub.',
       cite: 'Rolando Guy · Berlin',
       stat1num:'19', stat1lbl:'Opera Roles',
       stat2num:'3',  stat2lbl:"Int'l Competitions",
@@ -2406,7 +2453,7 @@ const LANG_CONTENT = {
       eventTypes: {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'},
     },
     contact: {
-      title: 'Bookings &amp;<br><em>Artistic Enquiries</em>',
+      title: 'Bookings &amp; <em>Artistic Enquiries</em>',
       sub: 'For bookings, artistic collaborations, private recitals and opera galas, please reach out directly. All messages are personally answered.',
       email: 'rolandoguy@gmail.com',
       emailBtn: 'Send Email',
@@ -2435,8 +2482,8 @@ const LANG_CONTENT = {
     },
     bio: {
       h2: 'Eine Stimme <em>geformt</em><br>in der Tradition',
-      p1: 'Der argentinisch-italienische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalen Konservatorium studierte. Er arbeitete privat mit Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck und Víctor Torres — allesamt Sänger und Lehrer am Teatro Colón — und erarbeitete sein Opernrepertoire mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russland) und Marcelo Ayub. 2017 nahm er an der renommierten Javier Camarena Meisterklasse in Buenos Aires teil.',
-      p2: 'Seit 2019 in Berlin studierte er bei Maestro Reiner Goldberg und Uwe Griem; derzeit arbeitet er an seiner Technik und Interpretation mit Maestro Stephan von Cron Catalano, österreichischer Dirigent und Geiger. Er arbeitete außerdem mit Jack Li Vigni (USA) und Francesco Anile (Italien). 2025 verkörperte er den Zweiten Fremden in Eduard Künneckes Der Vetter aus Dingsda an der Kammeroper Frankfurt unter Stanislav Rosenberg, und 2023 sang er den Tamino in Die Zauberflöte bei der Opernwerkstatt am Rhein. Er trat als Tenor-Solist in der Staatsoper Berlin auf, wirkte mit dem Ensemble Die Goldvögel in Berlin und Kopenhagen mit und sang als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und im Notre-Dame-Münster in Straßburg. Er gab zahlreiche Liederabende — Schubert, Strauss, Rachmaninov und Liszt — mit dem Pianisten Marcelo Ayub.',
+      p1: 'Der argentinisch-italienische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalen Konservatorium studierte. Er arbeitete privat mit Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck und Víctor Torres — allesamt Sänger und Lehrer am Teatro Colón — und erarbeitete sein Opernrepertoire mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russland) und Marcelo Ayub. In einer früheren Phase seiner künstlerischen Entwicklung erhielt er außerdem Coachings bei Jack Li Vigni in New York und bei dem Tenor Francesco Anile in Rom. 2017 nahm er an der renommierten Javier Camarena Meisterklasse in Buenos Aires teil.',
+      p2: 'Seit 2019 in Berlin studierte er bei Maestro Reiner Goldberg und Uwe Griem; derzeit arbeitet er an seiner Technik und Interpretation mit Maestro Stephan von Cron Catalano, österreichischer Dirigent und Geiger. 2025 verkörperte er den Zweiten Fremden in Eduard Künneckes Der Vetter aus Dingsda an der Kammeroper Frankfurt unter Stanislav Rosenberg, und 2023 sang er den Tamino in Die Zauberflöte bei der Opernwerkstatt am Rhein. Er trat als Tenor-Solist in der Staatsoper Berlin auf, wirkte mit dem Ensemble Die Goldvögel in Berlin und Kopenhagen mit und sang als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und im Notre-Dame-Münster in Straßburg. Er gab zahlreiche Liederabende — Schubert, Strauss, Rachmaninov und Liszt — mit dem Pianisten Marcelo Ayub.',
       cite: 'Rolando Guy · Berlin',
       stat1num:'19', stat1lbl:'Opernrollen',
       stat2num:'3',  stat2lbl:'Int. Wettbewerbe',
@@ -2453,14 +2500,14 @@ const LANG_CONTENT = {
       monthNames:{January:'Januar',February:'Februar',March:'März',April:'April',May:'Mai',June:'Juni',July:'Juli',August:'August',September:'September',October:'Oktober',November:'November',December:'Dezember',Spring:'Frühjahr',Summer:'Sommer',Autumn:'Herbst',Winter:'Winter',Fall:'Herbst'},
     },
     contact: {
-      title: 'Buchungen &amp;<br><em>künstlerische Anfragen</em>',
+      title: 'Buchungen &amp; <em>künstlerische Anfragen</em>',
       sub: 'Für Buchungen, künstlerische Projekte, private Konzerte und Opernabende können Sie sich gerne direkt an mich wenden. Ich beantworte jede Nachricht persönlich.',
       email: 'rolandoguy@gmail.com',
       emailBtn: 'E-Mail senden',
       webBtn: 'Offizielle Website',
     },
     programs: {
-      title: 'Programme &amp;<br><em>künstlerische Projekte</em>',
+      title: 'Programme &amp; <em>künstlerische Projekte</em>',
       subtitle: 'Rezitalprogramme für Konzerthäuser, Kultureinrichtungen, Salons, private Veranstaltungen und gemeinsame musikalische Projekte.',
       intro: 'Diese Programme stehen Veranstaltern, Festivals, Kultureinrichtungen und Salons zur Verfügung. Jedes Programm kann an Ort, Anlass und Besetzung angepasst werden.',
       closingNote: 'Alle Programme können in Länge, Sprachschwerpunkt und Repertoireauswahl an Spielstätte, Publikum, Anlass und mitwirkende Künstler angepasst werden.',
@@ -2482,8 +2529,8 @@ const LANG_CONTENT = {
     },
     bio: {
       h2: 'Una voz <em>forjada</em><br>en la tradición',
-      p1: 'El tenor argentino-italiano Rolando Guy nació en Buenos Aires, donde estudió en el Conservatorio Nacional de Música. Trabajó privadamente con Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck y Víctor Torres — todos cantantes y profesores del Teatro Colón — y desarrolló su repertorio operístico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Rusia) y Marcelo Ayub. En 2017 participó en la prestigiosa Masterclass de Javier Camarena en Buenos Aires.',
-      p2: 'Residente en Berlín desde 2019, estudió con el Maestro Reiner Goldberg y Uwe Griem, y actualmente trabaja su técnica e interpretación con el Maestro Stephan von Cron Catalano, director de orquesta y violinista austriaco. También ha trabajado con Jack Li Vigni (EE.UU.) y Francesco Anile (Italia). En 2025 interpretó al Zweiter Fremder en Der Vetter aus Dingsda de Eduard Künneke en la Kammeroper Frankfurt bajo la dirección de Stanislav Rosenberg, y en 2023 cantó Tamino en Die Zauberflöte con la Opernwerkstatt am Rhein. Ha actuado como tenor solista en la Staatsoper Berlín, con el ensemble Die Goldvögel en Berlín y Copenhague, y como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Exteriores y Notre-Dame de Estrasburgo. Ha ofrecido recitales de lieder — Schubert, Strauss, Rachmaninov y Liszt — con el pianista Marcelo Ayub.',
+      p1: 'El tenor argentino-italiano Rolando Guy nació en Buenos Aires, donde estudió en el Conservatorio Nacional de Música. Trabajó privadamente con Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck y Víctor Torres — todos cantantes y profesores del Teatro Colón — y desarrolló su repertorio operístico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Rusia) y Marcelo Ayub. En una etapa anterior de su desarrollo artístico, también recibió coachings con Jack Li Vigni en Nueva York y con el tenor Francesco Anile en Roma. En 2017 participó en la prestigiosa Masterclass de Javier Camarena en Buenos Aires.',
+      p2: 'Residente en Berlín desde 2019, estudió con el Maestro Reiner Goldberg y Uwe Griem, y actualmente trabaja su técnica e interpretación con el Maestro Stephan von Cron Catalano, director de orquesta y violinista austriaco. En 2025 interpretó al Zweiter Fremder en Der Vetter aus Dingsda de Eduard Künneke en la Kammeroper Frankfurt bajo la dirección de Stanislav Rosenberg, y en 2023 cantó Tamino en Die Zauberflöte con la Opernwerkstatt am Rhein. Ha actuado como tenor solista en la Staatsoper Berlín, con el ensemble Die Goldvögel en Berlín y Copenhague, y como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Exteriores y Notre-Dame de Estrasburgo. Ha ofrecido recitales de lieder — Schubert, Strauss, Rachmaninov y Liszt — con el pianista Marcelo Ayub.',
       cite: 'Rolando Guy · Berlín',
       stat1num:'19', stat1lbl:'Roles de Ópera',
       stat2num:'3',  stat2lbl:'Concursos Int.',
@@ -2529,8 +2576,8 @@ const LANG_CONTENT = {
     },
     bio: {
       h2: 'Une voix <em>forgée</em><br>dans la tradition',
-      p1: "Le ténor argentin-italien Rolando Guy est né à Buenos Aires, où il a étudié au Conservatoire National de Musique. Il a travaillé en privé avec Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck et Víctor Torres — tous chanteurs et professeurs du Teatro Colón — et a développé son répertoire lyrique avec Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russie) et Marcelo Ayub. En 2017 il a participé à la prestigieuse Masterclass de Javier Camarena à Buenos Aires.",
-      p2: "Basé à Berlin depuis 2019, il a étudié avec le Maestro Reiner Goldberg et Uwe Griem, et travaille actuellement sa technique et son interprétation avec le Maestro Stephan von Cron Catalano, chef d'orchestre et violoniste autrichien. Il a également collaboré avec Jack Li Vigni (États-Unis) et Francesco Anile (Italie). En 2025 il a interprété le Zweiter Fremder dans Der Vetter aus Dingsda d'Eduard Künneke à la Kammeroper Frankfurt sous la direction de Stanislav Rosenberg, et en 2023 a chanté Tamino dans Die Zauberflöte avec l'Opernwerkstatt am Rhein. Il s'est produit comme ténor soliste à la Staatsoper de Berlin, avec l'ensemble Die Goldvögel à Berlin et Copenhague, et comme soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au Ministère des Affaires étrangères et à Notre-Dame de Strasbourg. Il a donné des récitals de Lieder — Schubert, Strauss, Rachmaninov et Liszt — avec le pianiste Marcelo Ayub.",
+      p1: "Le ténor argentin-italien Rolando Guy est né à Buenos Aires, où il a étudié au Conservatoire National de Musique. Il a travaillé en privé avec Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck et Víctor Torres — tous chanteurs et professeurs du Teatro Colón — et a développé son répertoire lyrique avec Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russie) et Marcelo Ayub. À une étape antérieure de son développement artistique, il a également suivi des coachings avec Jack Li Vigni à New York et avec le ténor Francesco Anile à Rome. En 2017 il a participé à la prestigieuse Masterclass de Javier Camarena à Buenos Aires.",
+      p2: "Basé à Berlin depuis 2019, il a étudié avec le Maestro Reiner Goldberg et Uwe Griem, et travaille actuellement sa technique et son interprétation avec le Maestro Stephan von Cron Catalano, chef d'orchestre et violoniste autrichien. En 2025 il a interprété le Zweiter Fremder dans Der Vetter aus Dingsda d'Eduard Künneke à la Kammeroper Frankfurt sous la direction de Stanislav Rosenberg, et en 2023 a chanté Tamino dans Die Zauberflöte avec l'Opernwerkstatt am Rhein. Il s'est produit comme ténor soliste à la Staatsoper de Berlin, avec l'ensemble Die Goldvögel à Berlin et Copenhague, et comme soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au Ministère des Affaires étrangères et à Notre-Dame de Strasbourg. Il a donné des récitals de Lieder — Schubert, Strauss, Rachmaninov et Liszt — avec le pianiste Marcelo Ayub.",
       cite: 'Rolando Guy · Berlin',
       stat1num:'19', stat1lbl:'Rôles d\'Opéra',
       stat2num:'3',  stat2lbl:'Concours Int.',
@@ -2576,8 +2623,8 @@ const LANG_CONTENT = {
     },
     bio: {
       h2: 'Una voce <em>forgiata</em><br>nella tradizione',
-      p1: 'Il tenore argentino-italiano Rolando Guy è nato a Buenos Aires, dove ha studiato al Conservatorio Nazionale di Musica. Ha lavorato privatamente con Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck e Víctor Torres — tutti cantanti e insegnanti del Teatro Colón — e ha sviluppato il suo repertorio operistico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) e Marcelo Ayub. Nel 2017 ha partecipato alla prestigiosa Masterclass di Javier Camarena a Buenos Aires.',
-      p2: "Residente a Berlino dal 2019, ha studiato con il Maestro Reiner Goldberg e Uwe Griem, e attualmente lavora sulla sua tecnica e interpretazione con il Maestro Stephan von Cron Catalano, direttore d'orchestra e violinista austriaco. Ha collaborato anche con Jack Li Vigni (USA) e Francesco Anile (Italia). Nel 2025 ha interpretato lo Zweiter Fremder in Der Vetter aus Dingsda di Eduard Künneke alla Kammeroper Frankfurt sotto la direzione di Stanislav Rosenberg, e nel 2023 ha cantato Tamino nel Die Zauberflöte con l'Opernwerkstatt am Rhein. Si è esibito come tenore solista alla Staatsoper di Berlino, con l'ensemble Die Goldvögel a Berlino e Copenaghen, e come solista con il Diplomatic Choir of Berlin alla Berliner Dom, al Ministero degli Esteri e a Notre-Dame di Strasburgo. Ha tenuto recital di Lieder — Schubert, Strauss, Rachmaninov e Liszt — con il pianista Marcelo Ayub.",
+      p1: 'Il tenore argentino-italiano Rolando Guy è nato a Buenos Aires, dove ha studiato al Conservatorio Nazionale di Musica. Ha lavorato privatamente con Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck e Víctor Torres — tutti cantanti e insegnanti del Teatro Colón — e ha sviluppato il suo repertorio operistico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) e Marcelo Ayub. In una fase precedente del suo sviluppo artistico, ha inoltre seguito sessioni di coaching con Jack Li Vigni a New York e con il tenore Francesco Anile a Roma. Nel 2017 ha partecipato alla prestigiosa Masterclass di Javier Camarena a Buenos Aires.',
+      p2: "Residente a Berlino dal 2019, ha studiato con il Maestro Reiner Goldberg e Uwe Griem, e attualmente lavora sulla sua tecnica e interpretazione con il Maestro Stephan von Cron Catalano, direttore d'orchestra e violinista austriaco. Nel 2025 ha interpretato lo Zweiter Fremder in Der Vetter aus Dingsda di Eduard Künneke alla Kammeroper Frankfurt sotto la direzione di Stanislav Rosenberg, e nel 2023 ha cantato Tamino nel Die Zauberflöte con l'Opernwerkstatt am Rhein. Si è esibito come tenore solista alla Staatsoper di Berlino, con l'ensemble Die Goldvögel a Berlino e Copenaghen, e come solista con il Diplomatic Choir of Berlin alla Berliner Dom, al Ministero degli Esteri e a Notre-Dame di Strasburgo. Ha tenuto recital di Lieder — Schubert, Strauss, Rachmaninov e Liszt — con il pianista Marcelo Ayub.",
       cite: 'Rolando Guy · Berlino',
       stat1num:'19', stat1lbl:'Ruoli d\'Opera',
       stat2num:'3',  stat2lbl:'Concorsi Int.',
@@ -2686,17 +2733,46 @@ function get(key) {
   return load(langKey) || LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
 }
 
+/** Two-line section titles: line1 before &, line2 = gold & + rest (HTML). Idempotent. */
+function formatSectionTitleIfAmpersand(html, i18nKey) {
+  const s = String(html || '');
+  if (i18nKey === 'programs.sectionTag') return s;
+  if (!s || /class=["']title-amp-stack["']/.test(s)) return s;
+  let splitIdx = s.indexOf('&amp;');
+  let ampLen = 5;
+  if (splitIdx === -1) {
+    const m = s.match(/&(?!amp;|#?[0-9a-z]+;)/i);
+    if (!m || m.index == null) return s;
+    splitIdx = m.index;
+    ampLen = 1;
+  }
+  let left = s.slice(0, splitIdx);
+  let right = s.slice(splitIdx + ampLen);
+  left = left.replace(/<br\s*\/?>(\s*)/gi, ' ').replace(/&nbsp;/gi, ' ').trim();
+  right = right.replace(/^(\s|<br\s*\/?>|&nbsp;)+/i, '').trim();
+  const leftText = left.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '<span class="title-amp-stack"><span class="title-line1">' + esc(leftText) + '</span><span class="title-line2"><span class="title-amp">&amp;</span> ' + right + '</span></span>';
+}
+
 function withTitleEmphasis(section, value){
   const raw = String(value || '');
-  if (!raw.trim() || /<em[\s>]/i.test(raw)) return raw;
   const fallback = {
-    en: { rep:'Repertoire <em>Highlights</em>', contact:'Bookings &amp;<br><em>Artistic Enquiries</em>', programs:'Programs &amp; <em>Collaborations</em>', vid:'Stage, Concert &amp; <em>Recital Highlights</em>' },
-    de: { rep:'Repertoire <em>Überblick</em>', contact:'Buchungen &amp;<br><em>künstlerische Anfragen</em>', programs:'Programme &amp;<br><em>künstlerische Projekte</em>', vid:'Auf der Bühne &amp; <em>Im Konzert</em>' },
+    en: { rep:'Repertoire <em>Highlights</em>', contact:'Bookings &amp; <em>Artistic Enquiries</em>', programs:'Programs &amp; <em>Collaborations</em>', vid:'Stage, Concert &amp; <em>Recital Highlights</em>' },
+    de: { rep:'Repertoire <em>Überblick</em>', contact:'Buchungen &amp; <em>künstlerische Anfragen</em>', programs:'Programme &amp; <em>künstlerische Projekte</em>', vid:'Auf der Bühne &amp; <em>Im Konzert</em>' },
     es: { rep:'Repertorio <em>seleccionado</em>', contact:'Creemos juntos<br><em>algo inolvidable</em>', programs:'Programas y <em>colaboraciones</em>', vid:'En Escena &amp; <em>En Concierto</em>' },
     it: { rep:'Repertorio <em>selezionato</em>', contact:'Creiamo insieme<br><em>qualcosa di indimenticabile</em>', programs:'Programmi e <em>collaborazioni</em>', vid:'In Scena &amp; <em>In Concerto</em>' },
     fr: { rep:'Répertoire <em>sélectionné</em>', contact:'Créons ensemble<br><em>quelque chose d\'inoubliable</em>', programs:'Programmes &amp; <em>collaborations</em>', vid:'Sur Scène &amp; <em>En Concert</em>' }
   };
-  return (fallback[currentLang] && fallback[currentLang][section]) || raw;
+  let resolved = raw;
+  if (!raw.trim()) {
+    resolved = (fallback[currentLang] && fallback[currentLang][section]) || raw;
+  } else if (/<em[\s>]/i.test(raw)) {
+    resolved = raw;
+  } else {
+    resolved = (fallback[currentLang] && fallback[currentLang][section]) || raw;
+  }
+  return formatSectionTitleIfAmpersand(resolved);
 }
 
 function getVid() { return load('rg_vid') || DEFAULTS.vid; }
@@ -3729,6 +3805,14 @@ function getEpkBioTextsForExport() {
   return { b50, b150, fullBio };
 }
 
+/** Default biography for Dossier HTML preview + plain-text copy (150-word EPK; PDF/pdfmake path unchanged). */
+function buildDocBioDossierDefaultText() {
+  const { b150, b50 } = getEpkBioTextsForExport();
+  const s = (b150 || b50 || '').replace(/\s+/g, ' ').trim();
+  if (s) return s;
+  return buildDocBioMedium();
+}
+
 // ── Printable documentary layouts (Artist Sheet / Dossier) — not derived from full clean export ──
 function exportWordCount(s) {
   const m = String(s || '').trim().match(/\S+/g);
@@ -3893,6 +3977,30 @@ function linesAreProfileRedundant(a, b) {
   const base = Math.min(wa.size, wb.size);
   return base > 0 && inter / base > 0.55;
 }
+/** Hero eyebrow like “Lyric Tenor · Opera · Concert · Recital” — identity already in the PDF header. */
+function exportPdfHeroEyebrowIsGenreIdentityLine(s) {
+  const t = String(s || '').replace(/\s+/g, ' ').trim();
+  if (t.length < 10 || t.length > 160) return false;
+  if (!/[·•|｜]/.test(t)) return false;
+  if (!/\b(tenor|tenore|ténor)\b/i.test(t)) return false;
+  const chunks = t.split(/[·•|｜]/).map(function (x) { return x.trim(); }).filter(Boolean);
+  return chunks.length >= 3;
+}
+/** Drop profile bullets that only repeat header identity or the hero genre tagline (pdfmake exports only). */
+function exportPdfPruneArtisticProfileLines(profileLines, ctx) {
+  ctx = ctx || {};
+  const headerRefs = (ctx.headerRefs || []).filter(Boolean);
+  const dropEyebrow = ctx.dropGenreEyebrow !== false;
+  return (Array.isArray(profileLines) ? profileLines : []).filter(function (ln) {
+    const s = String(ln || '').trim();
+    if (!s) return false;
+    if (dropEyebrow && exportPdfHeroEyebrowIsGenreIdentityLine(s)) return false;
+    for (let i = 0; i < headerRefs.length; i++) {
+      if (linesAreProfileRedundant(headerRefs[i], s)) return false;
+    }
+    return true;
+  });
+}
 /**
  * Curated artistic profile (3–4 lines): priority order, deduped — not a raw collage.
  * Used for Artist Sheet and Dossier.
@@ -3965,6 +4073,104 @@ function buildDocBioMedium() {
     if (tail) trimmed = exportDedupeBioAdjacentSimilar(exportTrimBioToWordBudget((trimmed + ' ' + tail).replace(/\s+/g, ' ').trim(), 88, 118));
   }
   return exportDedupeBioAdjacentSimilar(String(trimmed || '').trim()).trim();
+}
+/**
+ * Longer narrative for dossier PDF when the locale uses CMS/EPK copy (not the fixed EN pdfmake block).
+ * Targets page-1 density closer to {@link RG_PDF_EN_DOSSIER_BIO} without changing EN.
+ */
+function buildDocBioForTranslatedDossierPdf() {
+  const { b50, b150, fullBio } = getEpkBioTextsForExport();
+  const site = get('bio') || {};
+  const siteFull = [exportStripHtml(site.p1 || ''), exportStripHtml(site.p2 || '')].filter(Boolean).join(' ');
+  let base = (fullBio || [b150, b50].filter(Boolean).join(' ') || siteFull).replace(/\s+/g, ' ').trim();
+  base = exportDedupeBioAdjacentSimilar(base.trim());
+  let trimmed = exportTrimBioToWordBudget(base, 175, 235);
+  if (exportWordCount(trimmed) < 175 && siteFull && base !== siteFull) {
+    const tail = exportStripRedundantBioContinuation(trimmed, siteFull);
+    if (tail) trimmed = exportDedupeBioAdjacentSimilar(exportTrimBioToWordBudget((trimmed + ' ' + tail).replace(/\s+/g, ' ').trim(), 165, 235));
+  }
+  if (exportWordCount(trimmed) < 175 && fullBio) {
+    const tail = exportStripRedundantBioContinuation(trimmed, fullBio);
+    if (tail) trimmed = exportDedupeBioAdjacentSimilar(exportTrimBioToWordBudget((trimmed + ' ' + tail).replace(/\s+/g, ' ').trim(), 165, 235));
+  }
+  return exportDedupeBioAdjacentSimilar(String(trimmed || '').trim()).trim();
+}
+/**
+ * Drop sentences that repeat the same opening clause as the first sentence (common when EPK + site merge).
+ */
+function exportCollapseRepeatedBioParagraph(text) {
+  const raw = String(text || '').replace(/\s+/g, ' ').trim();
+  const parts = exportSplitSentences(raw);
+  if (!parts.length) return '';
+  const out = [];
+  let kFirst = '';
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (!p) continue;
+    if (!out.length) {
+      out.push(p);
+      kFirst = exportBioOpeningKey(p, 12);
+      continue;
+    }
+    const kp = exportBioOpeningKey(p, 12);
+    if (kFirst && kp && kFirst === kp) continue;
+    if (linesAreProfileRedundant(out[out.length - 1], p)) continue;
+    const prevN = out[out.length - 1].replace(/\s+/g, ' ').trim().toLowerCase();
+    const curN = p.replace(/\s+/g, ' ').trim().toLowerCase();
+    if (prevN === curN) continue;
+    out.push(p);
+  }
+  return out.join(' ').replace(/\s+/g, ' ').trim();
+}
+/**
+ * Artist Sheet (non-EN): single merge path from EPK/site to avoid restarted / duplicated short-bio paragraphs.
+ */
+function buildDocBioForTranslatedArtistSheetPdf() {
+  const { b50, b150, fullBio } = getEpkBioTextsForExport();
+  const site = get('bio') || {};
+  const siteFull = [exportStripHtml(site.p1 || ''), exportStripHtml(site.p2 || '')].filter(Boolean).join(' ');
+  let base = (b150 || b50 || '').replace(/\s+/g, ' ').trim();
+  if (!base) base = (siteFull || fullBio || '').replace(/\s+/g, ' ').trim();
+  base = exportDedupeBioAdjacentSimilar(base);
+  if (exportWordCount(base) < 50 && fullBio) {
+    const tail = exportStripRedundantBioContinuation(base, fullBio);
+    if (tail) base = exportDedupeBioAdjacentSimilar((base + ' ' + tail).replace(/\s+/g, ' ').trim());
+  } else if (exportWordCount(base) < 50 && siteFull) {
+    const tail = exportStripRedundantBioContinuation(base, siteFull);
+    if (tail) base = exportDedupeBioAdjacentSimilar((base + ' ' + tail).replace(/\s+/g, ' ').trim());
+  }
+  base = exportCollapseRepeatedBioParagraph(base);
+  base = exportDedupeBioAdjacentSimilar(base);
+  return exportTrimBioToWordBudget(base, 50, 76).trim();
+}
+function exportPdfJackAnileDossierAnchorIndex(str, lang) {
+  const L = String(lang || '').toLowerCase().slice(0, 2);
+  const patterns = L === 'de' ? [/\bIm Jahr 2017\b/i, /\b2017 nahm\b/i] : L === 'it' ? [/\bNel 2017\b/i] : [/\bEn 2017\b/i];
+  for (let i = 0; i < patterns.length; i++) {
+    const m = str.match(patterns[i]);
+    if (m && m.index !== undefined) return m.index;
+  }
+  return -1;
+}
+/**
+ * Replace any Jack/Anile wording in translated dossier bios with the canonical earlier-career sentence.
+ */
+function exportPdfNormalizeJackAnileInTranslatedDossierBio(lang, text) {
+  const L = String(lang || '').toLowerCase().slice(0, 2);
+  const canon = RG_PDF_JACK_ANILE_DOSSIER[L];
+  if (!canon) return String(text || '');
+  let s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return s;
+  if (!/\bJack\s+Li\s+Vigni\b/i.test(s) && !/\bFrancesco\s+Anile\b/i.test(s)) return s;
+  const parts = exportSplitSentences(s);
+  const kept = parts.filter(function (p) {
+    return !/\bJack\s+Li\s+Vigni\b/i.test(p) && !/\bFrancesco\s+Anile\b/i.test(p);
+  });
+  s = kept.join(' ').replace(/\s+/g, ' ').trim();
+  const idx = exportPdfJackAnileDossierAnchorIndex(s, L);
+  if (idx >= 0) s = (s.slice(0, idx).trim() + ' ' + canon + ' ' + s.slice(idx).trim()).replace(/\s+/g, ' ').trim();
+  else s = (s + ' ' + canon).replace(/\s+/g, ' ').trim();
+  return exportDedupeBioAdjacentSimilar(s);
 }
 function repStatusRankForDoc(st) {
   const v = String(st || '').trim().toLowerCase();
@@ -4094,7 +4300,7 @@ function buildDossierHtml(bioImgSrc) {
   const hero = get('hero') || {};
   const fach = exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor');
   const loc = exportStripHtml(hero.subtitle || '');
-  const bioText = buildDocBioMedium();
+  const bioText = buildDocBioDossierDefaultText();
   const lines = buildDocProfileLines(3);
   const repGroups = pickRepGroupsForDossier();
   const programs = getPrograms();
@@ -4193,7 +4399,7 @@ function buildDossierPlainText() {
   const ti = Ti[currentLang] || Ti.en;
   const hero = get('hero') || {};
   const lines = ['Rolando Guy', exportStripHtml(ti['about.photoLabel'] || ''), exportStripHtml(hero.subtitle || '')].filter(Boolean);
-  lines.push('', (ti['export.doc.section.bio'] || '') + ':', buildDocBioMedium());
+  lines.push('', (ti['export.doc.section.bio'] || '') + ':', buildDocBioDossierDefaultText());
   const hl = buildDocProfileLines(3);
   if (hl.length) {
     lines.push('', (ti['export.doc.section.profile'] || '') + ':');
@@ -4268,11 +4474,39 @@ function exportPdfNormalizeText(str) {
  * (comma + und lists). Source fields: getPerfs() items — `detail` / `detail_de` / `detail_*`, or `title`.
  * Example CMS leak: "Opernarien, Tango argentino und Asiatische Vokalmusik"
  * exportCalendarFieldDe previously did not filter this (unlike ES/FR/IT editorial cleanup).
+ * Localized CMS copies (DE/ES/FR/IT) can appear as `detail_*` — strip those too.
  */
+function exportPdfCalendarDetailIsLeakedProgramTheme(s) {
+  const one = String(s || '').replace(/\s+/g, ' ').trim();
+  if (!one || one.length > 240 || one.length < 18) return false;
+  const opera =
+    /\bOpernarien\b/i.test(one) ||
+    /\bOpern-?Arien\b/i.test(one) ||
+    /\bArias\s+de\s+ópera\b/i.test(one) ||
+    /\bArias\s+de\s+opera\b/i.test(one) ||
+    /\bArie\s+d['\u2019´`]opera\b/i.test(one) ||
+    /\bAirs\s+d['\u2019´`]opéra\b/i.test(one) ||
+    /\bAirs\s+d['\u2019´`]opera\b/i.test(one);
+  const tango =
+    /\bTango\s+argentino\b/i.test(one) ||
+    /\bArgentinischer\s+Tango\b/i.test(one);
+  const asia =
+    /\bAsiatische\s+Vokalmusik\b/i.test(one) ||
+    /\bmúsica\s+vocal\s+asiática\b/i.test(one) ||
+    /\bmusica\s+vocale\s+asiatica\b/i.test(one) ||
+    /\bmusique\s+vocale\s+asiatique\b/i.test(one) ||
+    /\bAsian\s+vocal\s+music\b/i.test(one);
+  if (!(opera && tango && asia)) return false;
+  if (one.length > 200) return false;
+  const wc = exportWordCount(one);
+  if (wc > 28) return false;
+  return true;
+}
 function exportPdfStripLeakedCalendarThemeLine(str) {
   const t = exportPdfNormalizeText(str);
   if (!t) return '';
   const one = t.replace(/\s+/g, ' ').trim();
+  if (exportPdfCalendarDetailIsLeakedProgramTheme(one)) return '';
   if (/^Opernarien\s*,\s*Tango\s*argentino\s+und\s+Asiatische\s+Vokalmusik\.?$/i.test(one)) return '';
   if (one.length < 160 && /\bOpernarien\b/i.test(one) && /\bTango\s*argentino\b/i.test(one) && /\bAsiatische\s+Vokalmusik\b/i.test(one)) {
     if (!/\b(in |im |am |zur |zum |bei |mit |für |vor |nach |aus )\b/i.test(one)) return '';
@@ -4282,10 +4516,18 @@ function exportPdfStripLeakedCalendarThemeLine(str) {
 
 /** EN pdfmake-only biographies (exact editorial text; not used on public site). */
 const RG_PDF_EN_ARTIST_SHEET_BIO =
-  'Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his training privately with distinguished teachers connected to Teatro Col\u00f3n. Based in Berlin since 2019, he has continued to refine his technique and expand his repertoire in Germany. His recent engagements include the role of Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in 2025 and Tamino in a children\u2019s production of Die Zauberfl\u00f6te with Opernwerkstatt am Rhein in 2023. He has also appeared as tenor soloist at the Apollosaal of the Staatsoper Unter den Linden in Berlin, performed with the ensemble Die Goldv\u00f6gel in Berlin and Copenhagen, and appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg. He has also received coaching from Jack Li Vigni in the United States and from tenor Francesco Anile in Rome.';
+  'Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his training privately with distinguished teachers connected to Teatro Col\u00f3n. Based in Berlin since 2019, he has continued to refine his technique and expand his repertoire in Germany. His recent engagements include the role of Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in 2025 and Tamino in a children\u2019s production of Die Zauberfl\u00f6te with Opernwerkstatt am Rhein in 2023. He has also appeared as tenor soloist at the Apollosaal of the Staatsoper Unter den Linden in Berlin, performed with the ensemble Die Goldv\u00f6gel in Berlin and Copenhagen, and appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg.';
 
 const RG_PDF_EN_DOSSIER_BIO =
-  'Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his musical development through private studies in voice, vocal technique and music theory with distinguished teachers in Argentina, including Luis Bragato, Dar\u00edo Schmunck and Garbis Adiamanian. He further developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub. In 2017, he participated in the Javier Camarena masterclass in Buenos Aires. Based in Berlin since 2019, he began his vocal work in Germany with Maestro Reiner Goldberg and later continued his development with Uwe Griem. He currently studies with Maestro Stephan von Cron Catalano, who is his principal artistic guide. He has also received coaching in individual sessions with Jack Li Vigni in New York and with tenor Francesco Anile in Rome. His recent engagements include the role of Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in July 2025 under the musical direction of Stanislav Rosenberg, and Tamino in a children\u2019s production of Die Zauberfl\u00f6te with Opernwerkstatt am Rhein in 2023. In Buenos Aires, he has appeared in roles including Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone and Borsa. Alongside his stage work, Rolando Guy has developed an active concert profile in Berlin, Copenhagen and Strasbourg. He has performed with the ensemble Die Goldv\u00f6gel, appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg, and given Lied recitals featuring Schubert, Strauss, Rachmaninov and Liszt, often in collaboration with pianist Marcelo Ayub.';
+  'Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his musical development through private studies in voice, vocal technique and music theory with distinguished teachers in Argentina, including Luis Bragato, Dar\u00edo Schmunck and Garbis Adiamanian. He further developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub. Earlier in his artistic development, he also received coaching from Jack Li Vigni in New York and from tenor Francesco Anile in Rome. In 2017, he participated in the Javier Camarena masterclass in Buenos Aires. Based in Berlin since 2019, he began his vocal work in Germany with Maestro Reiner Goldberg and later continued his development with Uwe Griem. He currently studies with Maestro Stephan von Cron Catalano, who is his principal artistic guide. His recent engagements include the role of Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in July 2025 under the musical direction of Stanislav Rosenberg, and Tamino in a children\u2019s production of Die Zauberfl\u00f6te with Opernwerkstatt am Rhein in 2023. In Buenos Aires, he has appeared in roles including Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone and Borsa. Alongside his stage work, Rolando Guy has developed an active concert profile in Berlin, Copenhagen and Strasbourg. He has performed with the ensemble Die Goldv\u00f6gel, appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg, and given Lied recitals featuring Schubert, Strauss, Rachmaninov and Liszt, often in collaboration with pianist Marcelo Ayub.';
+
+/** Canonical earlier-career Jack Li Vigni / Francesco Anile clause for translated dossier PDF bios (pdfmake only). */
+const RG_PDF_JACK_ANILE_DOSSIER = {
+  de: 'In einer früheren Phase seiner künstlerischen Entwicklung erhielt er außerdem Coachings bei Jack Li Vigni in New York und bei dem Tenor Francesco Anile in Rom.',
+  es: 'En una etapa anterior de su desarrollo artístico, también recibió coachings con Jack Li Vigni en Nueva York y con el tenor Francesco Anile en Roma.',
+  it: 'In una fase precedente del suo sviluppo artistico, ha inoltre seguito sessioni di coaching con Jack Li Vigni a New York e con il tenore Francesco Anile a Roma.',
+  fr: 'À une étape antérieure de son développement artistique, il a également suivi des coachings avec Jack Li Vigni à New York et avec le ténor Francesco Anile à Rome.'
+};
 
 /** Parse agenda row date for pdf export (same basis as dossier sort). */
 function exportPdfPerfEventDate(p) {
@@ -4346,73 +4588,84 @@ function rgPdfKicker(text, marginTop, marginBottom) {
   return { text: exportPdfNormalizeText(String(text || '')).toUpperCase(), style: 'kicker', margin: [0, mt, 0, mb] };
 }
 
-function rgPdfBulletList(items, bottomMargin) {
+function rgPdfBulletList(items, bottomMargin, opts) {
+  opts = opts || {};
   const arr = (Array.isArray(items) ? items : []).map((x) => exportPdfNormalizeText(String(x || '').trim())).filter(Boolean);
   if (!arr.length) return { text: '' };
   const bm = typeof bottomMargin === 'number' ? bottomMargin : 11;
   return {
     ul: arr,
-    margin: [4, 0, 0, bm],
-    fontSize: 9.2,
-    lineHeight: 1.38,
-    color: '#252525',
-    markerColor: '#4a3f35'
+    margin: [typeof opts.marginLeft === 'number' ? opts.marginLeft : 4, 0, 0, bm],
+    fontSize: typeof opts.fontSize === 'number' ? opts.fontSize : 9.2,
+    lineHeight: typeof opts.lineHeight === 'number' ? opts.lineHeight : 1.38,
+    color: '#242220',
+    markerColor: '#52483d'
   };
 }
 
 /** Primary section rule — print-catalogue weight */
 function rgPdfRuleStrong() {
-  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: RG_PDF_INNER_W, y2: 0, lineWidth: 0.55, lineColor: '#8e867c' }], margin: [0, 0, 0, 0] };
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: RG_PDF_INNER_W, y2: 0, lineWidth: 0.48, lineColor: '#9a9288' }], margin: [0, 0, 0, 0] };
 }
 
 /** Lighter rule between minor sections */
 function rgPdfRuleSoft(margin) {
   const m = margin || [0, 0, 0, 0];
-  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: RG_PDF_INNER_W, y2: 0, lineWidth: 0.28, lineColor: '#d8d4ce' }], margin: m };
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: RG_PDF_INNER_W, y2: 0, lineWidth: 0.22, lineColor: '#e0dbd5' }], margin: m };
 }
 
 /**
  * Header: restrained vertical accent + name / fach / location hierarchy (classical house style).
  */
-function rgPdfHeaderColumns(payload, imageCol) {
+function rgPdfHeaderColumns(payload, imageCol, bottomMarginAfter) {
   const nameStack = [
-    { text: payload.name, style: 'hName', margin: [0, 0, 0, 6] },
-    { text: payload.fach, style: 'fach' }
+    { text: payload.name, style: 'hName', margin: [0, 0, 0, 7] },
+    { text: payload.fach, style: 'fach', margin: payload.loc ? [0, 0, 0, 1] : [0, 0, 0, 0] }
   ];
   if (payload.loc) {
-    nameStack.push({ text: payload.loc, style: 'loc', margin: [0, 7, 0, 0] });
+    nameStack.push({ text: payload.loc, style: 'loc', margin: [0, 4, 0, 0] });
   }
+  const accentH = payload.loc ? 78 : 72;
   const accentCol = {
     width: 3,
-    margin: [0, 5, 14, 0],
-    canvas: [{ type: 'line', x1: 1.2, y1: 0, x2: 1.2, y2: 76, lineWidth: 1.05, lineColor: '#5c4d42' }]
+    margin: [0, 4, 14, 0],
+    canvas: [{ type: 'line', x1: 1.1, y1: 0, x2: 1.1, y2: accentH, lineWidth: 0.9, lineColor: '#5a5048' }]
   };
   const textCol = { width: '*', stack: nameStack };
   const cols = [accentCol, textCol];
   if (imageCol) cols.push(imageCol);
-  return { columns: cols, columnGap: imageCol ? 14 : 0, margin: [0, 0, 0, 12] };
+  const mb = typeof bottomMarginAfter === 'number' ? bottomMarginAfter : 12;
+  return { columns: cols, columnGap: imageCol ? 14 : 0, margin: [0, 0, 0, mb] };
 }
 
 /** Contact — inset panel, typographic labels (not raw key:value dump). */
-function rgPdfContactPanel(payload) {
+function rgPdfContactPanel(payload, compact) {
+  compact = !!compact;
   const emailLbl = payload.contact.lblEmail;
   const webLbl = payload.contact.lblWebsite;
+  const lblGap = compact ? 2 : 3;
+  const emailGap = compact ? 3 : 10;
   const rows = [
     {
       stack: [
-        { text: emailLbl.toUpperCase(), style: 'contactLbl', margin: [0, 0, 0, 3] },
-        { text: payload.contact.email, style: 'contactVal', margin: [0, 0, 0, 10] }
+        { text: emailLbl.toUpperCase(), style: 'contactLbl', margin: [0, 0, 0, lblGap] },
+        { text: payload.contact.email, style: 'contactVal', margin: [0, 0, 0, emailGap] }
       ]
     },
     {
       stack: [
-        { text: webLbl.toUpperCase(), style: 'contactLbl', margin: [0, 0, 0, 3] },
+        { text: webLbl.toUpperCase(), style: 'contactLbl', margin: [0, 0, 0, lblGap] },
         { text: String(payload.contact.website || ''), style: 'contactVal', margin: [0, 0, 0, 0] }
       ]
     }
   ];
   if (payload.contact.bookingLine) {
-    rows.push({ text: payload.contact.bookingLine, style: 'smallItal', margin: [0, 12, 0, 0] });
+    const bl = { text: payload.contact.bookingLine, style: 'contactNote', margin: [0, compact ? 5 : 11, 0, 0] };
+    if (compact) {
+      bl.fontSize = 8.3;
+      bl.lineHeight = 1.34;
+    }
+    rows.push(bl);
   }
   const inner = { stack: rows, margin: [0, 0, 0, 0] };
   return {
@@ -4423,13 +4676,13 @@ function rgPdfContactPanel(payload) {
     layout: {
       hLineWidth: function () { return 0; },
       vLineWidth: function () { return 0; },
-      paddingLeft: function () { return 14; },
-      paddingRight: function () { return 14; },
-      paddingTop: function () { return 10; },
-      paddingBottom: function () { return 10; },
-      fillColor: function () { return '#f5f3ef'; }
+      paddingLeft: function () { return compact ? 12 : 16; },
+      paddingRight: function () { return compact ? 12 : 16; },
+      paddingTop: function () { return compact ? 5 : 11; },
+      paddingBottom: function () { return compact ? 5 : 11; },
+      fillColor: function () { return '#f6f2ec'; }
     },
-    margin: [0, 3, 0, 0]
+    margin: [0, compact ? 0 : 2, 0, 0]
   };
 }
 
@@ -4445,16 +4698,25 @@ function buildArtistSheetPayload(lang) {
   try {
     const ti = Ti[currentLang] || Ti.en;
     const hero = get('hero') || {};
+    const labelRaw = exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor');
+    const subtitleRaw = exportStripHtml(hero.subtitle || '');
     const fach =
       L === 'en'
-        ? exportPdfNormalizeText('Argentine-Italian Lyric Tenor')
-        : exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
-    const loc = exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
+        ? exportPdfNormalizeText('Argentine-Italian Lyric Tenor based in Berlin')
+        : exportPdfNormalizeText(labelRaw);
+    const loc = L === 'en' ? '' : exportPdfNormalizeText(subtitleRaw);
     const bioText =
       L === 'en'
         ? exportPdfNormalizeText(RG_PDF_EN_ARTIST_SHEET_BIO)
-        : exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioShort(), 1100));
-    const profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
+        : exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioForTranslatedArtistSheetPdf(), 1100));
+    let profileLines = buildDocProfileLines(L === 'en' ? 2 : 3)
+      .map((ln) => exportPdfNormalizeText(String(ln || '').trim()))
+      .filter(Boolean);
+    const sheetEnIdentity = 'Argentine-Italian Lyric Tenor based in Berlin';
+    profileLines = exportPdfPruneArtisticProfileLines(profileLines, {
+      headerRefs: L === 'en' ? [sheetEnIdentity] : [labelRaw, subtitleRaw],
+      dropGenreEyebrow: true
+    });
     const operaLines = pickOperaRolesForSheet(3).map(formatRepCardLineDoc);
     const ariaLines = pickAriasForSheet(2).map(formatRepCardLineDoc);
     const programs = getPrograms();
@@ -4513,15 +4775,19 @@ function buildDossierPayload(lang) {
   try {
     const ti = Ti[currentLang] || Ti.en;
     const hero = get('hero') || {};
+    const labelRaw = exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor');
+    const subtitleRaw = exportStripHtml(hero.subtitle || '');
     const fach =
       L === 'en'
         ? exportPdfNormalizeText('Argentine-Italian Lyric Tenor based in Berlin')
-        : exportPdfNormalizeText(exportStripHtml(ti['about.photoLabel'] || 'Lyric Tenor'));
-    const loc = L === 'en' ? '' : exportPdfNormalizeText(exportStripHtml(hero.subtitle || ''));
+        : exportPdfNormalizeText(labelRaw);
+    const loc = L === 'en' ? '' : exportPdfNormalizeText(subtitleRaw);
     const bioText =
       L === 'en'
         ? exportPdfNormalizeText(RG_PDF_EN_DOSSIER_BIO)
-        : exportPdfNormalizeText(pdfExportHardTruncate(buildDocBioMedium(), 1650));
+        : exportPdfNormalizeText(
+            pdfExportHardTruncate(exportPdfNormalizeJackAnileInTranslatedDossierBio(L, buildDocBioForTranslatedDossierPdf()), 3400)
+          );
     let profileLines = buildDocProfileLines(3).map((ln) => exportPdfNormalizeText(String(ln || '').trim())).filter(Boolean);
     if (L === 'en') {
       profileLines = profileLines
@@ -4539,6 +4805,14 @@ function buildDossierPayload(lang) {
           return true;
         });
     }
+    profileLines = profileLines.filter(function (ln) {
+      const s = String(ln || '');
+      return !/\bJack\s+Li\s+Vigni\b/i.test(s) && !/\bFrancesco\s+Anile\b/i.test(s);
+    });
+    profileLines = exportPdfPruneArtisticProfileLines(profileLines, {
+      headerRefs: L === 'en' ? [fach] : [labelRaw, subtitleRaw],
+      dropGenreEyebrow: true
+    });
     const repGroups = pickRepGroupsForDossier().map((g) => ({
       label: exportPdfNormalizeText(g.label),
       items: (g.items || []).map((x) => exportPdfNormalizeText(String(x || '').trim())).filter(Boolean)
@@ -4616,61 +4890,69 @@ function buildDossierPayload(lang) {
 }
 
 const RG_PDFMAKE_STYLES = {
-  hName: { fontSize: 24, bold: true, color: '#080808', letterSpacing: 0.35 },
-  fach: { fontSize: 10.25, italics: true, color: '#3d3a36', bold: false, lineHeight: 1.32 },
-  loc: { fontSize: 8.9, color: '#66615c', letterSpacing: 0.45 },
-  kicker: { fontSize: 7.35, bold: true, color: '#535353', characterSpacing: 2.15 },
-  body: { fontSize: 9.35, color: '#1c1c18', lineHeight: 1.48 },
-  repLbl: { fontSize: 9.15, bold: true, color: '#303030', margin: [0, 0, 0, 4], italics: false },
-  progTitle: { fontSize: 10.15, bold: true, color: '#0f0f0f', margin: [0, 3, 0, 4], letterSpacing: 0.12 },
-  progDesc: { fontSize: 9.1, color: '#3a3a36', lineHeight: 1.46 },
-  smallItal: { fontSize: 9, italics: true, color: '#5a5652', lineHeight: 1.45 },
+  hName: { fontSize: 24, bold: true, color: '#0c0b0a', letterSpacing: 0.42 },
+  fach: { fontSize: 10.35, italics: true, color: '#38342f', bold: false, lineHeight: 1.36 },
+  loc: { fontSize: 8.75, italics: true, color: '#5e5954', letterSpacing: 0.38, lineHeight: 1.28 },
+  kicker: { fontSize: 7.2, bold: true, color: '#4a4643', characterSpacing: 2.28 },
+  body: { fontSize: 9.35, color: '#1a1917', lineHeight: 1.48 },
+  repLbl: { fontSize: 9.15, bold: true, color: '#2e2c29', margin: [0, 0, 0, 4], italics: false },
+  progTitle: { fontSize: 10.15, bold: true, color: '#0f0e0d', margin: [0, 3, 0, 4], letterSpacing: 0.12 },
+  progDesc: { fontSize: 9.1, color: '#3a3835', lineHeight: 1.46 },
+  smallItal: { fontSize: 9, italics: true, color: '#56524e', lineHeight: 1.45 },
+  contactNote: { fontSize: 8.85, italics: true, color: '#5c5854', lineHeight: 1.42 },
   calH2: { fontSize: 11.25, bold: true, color: '#121210', margin: [0, 10, 0, 14], characterSpacing: 0.6 },
   calDate: { fontSize: 9.05, bold: true, color: '#1e1e1c' },
   calMeta: { fontSize: 8.55, color: '#6a6560', lineHeight: 1.42 },
-  foot: { fontSize: 8.55, italics: true, color: '#706c67', margin: [0, 14, 0, 0], lineHeight: 1.42 },
-  contactLbl: { fontSize: 6.6, bold: true, color: '#5c5854', characterSpacing: 1.65 },
-  contactVal: { fontSize: 9.2, color: '#20201c', lineHeight: 1.35 }
+  foot: { fontSize: 8.55, italics: true, color: '#6e6a65', margin: [0, 14, 0, 0], lineHeight: 1.42 },
+  contactLbl: { fontSize: 6.75, bold: true, color: '#6a6560', characterSpacing: 1.9 },
+  contactVal: { fontSize: 9.15, color: '#1c1a18', lineHeight: 1.38 }
 };
 
 function buildArtistSheetPdfDefinition(payload /* , lang */) {
+  const enSheet = payload.lang === 'en';
   const imgCol = payload.imageDataUrl && /^data:image\//i.test(String(payload.imageDataUrl))
     ? { width: 88, stack: [{ image: payload.imageDataUrl, width: 86, margin: [2, 4, 0, 0] }] }
     : null;
   const content = [
-    rgPdfHeaderColumns(payload, imgCol),
-    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 8] }),
-    rgPdfKicker(payload.labels.bio, 0, 6),
-    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 8] }
+    rgPdfHeaderColumns(payload, imgCol, enSheet ? 8 : 11),
+    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, enSheet ? 6 : 7] }),
+    rgPdfKicker(payload.labels.bio, 0, enSheet ? 5 : 5),
+    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, enSheet ? 6 : 7] }
   ];
   if (payload.profileLines.length) {
-    content.push(rgPdfRuleSoft([0, 1, 0, 2]));
-    content.push(rgPdfKicker(payload.labels.profile, 6, 5));
-    content.push(rgPdfBulletList(payload.profileLines, 8));
+    if (enSheet) {
+      content.push(rgPdfRuleSoft([0, 0, 0, 1]));
+      content.push(rgPdfKicker(payload.labels.profile, 3, 2));
+      content.push(rgPdfBulletList(payload.profileLines, 3, { fontSize: 9, lineHeight: 1.3, marginLeft: 3 }));
+    } else {
+      content.push(rgPdfRuleSoft([0, 1, 0, 2]));
+      content.push(rgPdfKicker(payload.labels.profile, 7, 4));
+      content.push(rgPdfBulletList(payload.profileLines, 7));
+    }
   }
   if (payload.operaLines.length || payload.ariaLines.length) {
-    content.push(rgPdfKicker(payload.labels.rep, 9, 4));
+    content.push(rgPdfKicker(payload.labels.rep, enSheet ? 6 : 8, enSheet ? 2 : 3));
     if (payload.operaLines.length && payload.ariaLines.length) {
-      content.push({ text: payload.labels.repOpera, style: 'repLbl', margin: [0, 0, 0, 2] });
-      content.push(rgPdfBulletList(payload.operaLines, 6));
-      content.push({ text: payload.labels.repAria, style: 'repLbl', margin: [0, 4, 0, 2] });
-      content.push(rgPdfBulletList(payload.ariaLines, 8));
+      content.push({ text: payload.labels.repOpera, style: 'repLbl', margin: [0, 0, 0, enSheet ? 1 : 2] });
+      content.push(rgPdfBulletList(payload.operaLines, enSheet ? 4 : 5));
+      content.push({ text: payload.labels.repAria, style: 'repLbl', margin: [0, enSheet ? 2 : 4, 0, enSheet ? 1 : 2] });
+      content.push(rgPdfBulletList(payload.ariaLines, enSheet ? 4 : 7));
     } else {
-      content.push(rgPdfBulletList(payload.operaLines.length ? payload.operaLines : payload.ariaLines, 8));
+      content.push(rgPdfBulletList(payload.operaLines.length ? payload.operaLines : payload.ariaLines, enSheet ? 5 : 7));
     }
   }
   if (payload.programs.length) {
-    content.push(rgPdfKicker(payload.labels.programs, 8, 4));
+    content.push(rgPdfKicker(payload.labels.programs, enSheet ? 5 : 7, enSheet ? 2 : 3));
     const plines = payload.programs.map((p) => (p.blurb ? (p.title + ' \u2014 ' + p.blurb) : p.title));
-    content.push(rgPdfBulletList(plines, 6));
+    content.push(rgPdfBulletList(plines, enSheet ? 3 : 5));
   }
-  content.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 5, 0, 5] }));
-  content.push(rgPdfKicker(payload.labels.contact, 0, 4));
-  content.push(rgPdfContactPanel(payload));
+  content.push(Object.assign({}, rgPdfRuleSoft(), { margin: enSheet ? [0, 1, 0, 1] : [0, 4, 0, 4] }));
+  content.push(rgPdfKicker(payload.labels.contact, 0, enSheet ? 1 : 3));
+  content.push(rgPdfContactPanel(payload, enSheet));
   return {
     pageSize: 'A4',
     pageMargins: [48, 48, 52, 48],
-    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1c1c18', lineHeight: 1.38 },
+    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1a1917', lineHeight: 1.38 },
     content,
     styles: RG_PDFMAKE_STYLES
   };
@@ -4681,32 +4963,32 @@ function buildDossierPdfDefinition(payload /* , lang */) {
     ? { width: 94, stack: [{ image: payload.imageDataUrl, width: 92, margin: [2, 4, 0, 0] }] }
     : null;
   const p1 = [
-    rgPdfHeaderColumns(payload, imgCol),
-    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 10] }),
-    rgPdfKicker(payload.labels.bio, 0, 8),
-    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 11] }
+    rgPdfHeaderColumns(payload, imgCol, 11),
+    Object.assign({}, rgPdfRuleStrong(), { margin: [0, 0, 0, 9] }),
+    rgPdfKicker(payload.labels.bio, 0, 7),
+    { text: payload.bioText, style: 'body', alignment: 'justify', margin: [0, 0, 0, 10] }
   ];
   if (payload.profileLines.length) {
-    p1.push(rgPdfRuleSoft([0, 1, 0, 2]));
-    p1.push(rgPdfKicker(payload.labels.profile, 7, 6));
-    p1.push(rgPdfBulletList(payload.profileLines, 9));
+    p1.push(rgPdfRuleSoft([0, 2, 0, 3]));
+    p1.push(rgPdfKicker(payload.labels.profile, 8, 5));
+    p1.push(rgPdfBulletList(payload.profileLines, 8));
   }
   if (payload.repGroups.length) {
-    p1.push(rgPdfKicker(payload.labels.rep, 11, 6));
+    p1.push(rgPdfKicker(payload.labels.rep, 10, 6));
     payload.repGroups.forEach((g, gi) => {
-      p1.push({ text: g.label, style: 'repLbl', margin: [0, gi ? 6 : 2, 0, 3] });
+      p1.push({ text: g.label, style: 'repLbl', margin: [0, gi ? 5 : 2, 0, 3] });
       const isLast = gi === payload.repGroups.length - 1;
-      p1.push(rgPdfBulletList(g.items, isLast ? 8 : 7));
+      p1.push(rgPdfBulletList(g.items, isLast ? 7 : 6));
     });
   }
   const p2 = [];
   if (payload.programs.length) {
-    p2.push(rgPdfKicker(payload.labels.programs, 10, 8));
+    p2.push(rgPdfKicker(payload.labels.programs, 9, 7));
     payload.programs.forEach((pr, i) => {
-      p2.push({ text: pr.title, style: 'progTitle', margin: [0, i ? 5 : 2, 0, 3] });
-      if (pr.desc) p2.push({ text: pr.desc, style: 'progDesc', margin: [0, 0, 0, 8] });
+      p2.push({ text: pr.title, style: 'progTitle', margin: [0, i ? 4 : 2, 0, 3] });
+      if (pr.desc) p2.push({ text: pr.desc, style: 'progDesc', margin: [0, 0, 0, 7] });
     });
-    p2.push(rgPdfRuleSoft([0, 4, 0, 3]));
+    p2.push(rgPdfRuleSoft([0, 3, 0, 3]));
   }
   if (payload.includeCalendarSection) {
     p2.push({ text: payload.labels.calTitle, style: 'calH2' });
@@ -4728,15 +5010,15 @@ function buildDossierPdfDefinition(payload /* , lang */) {
       });
     }
   }
-  p2.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 8, 0, 9] }));
-  p2.push(rgPdfKicker(payload.labels.contact, 0, 5));
+  p2.push(Object.assign({}, rgPdfRuleSoft(), { margin: [0, 7, 0, 8] }));
+  p2.push(rgPdfKicker(payload.labels.contact, 0, 4));
   p2.push(rgPdfContactPanel(payload));
   if (payload.footnote) p2.push({ text: payload.footnote, style: 'foot' });
   const content = p1.concat([{ text: '', pageBreak: 'before' }]).concat(p2);
   return {
     pageSize: 'A4',
     pageMargins: [48, 48, 52, 48],
-    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1c1c18', lineHeight: 1.44 },
+    defaultStyle: { font: 'Roboto', fontSize: 9.35, color: '#1a1917', lineHeight: 1.45 },
     content,
     styles: RG_PDFMAKE_STYLES
   };
@@ -5686,6 +5968,21 @@ function admSyncExportDocFold() {
   try { wide = !!(window.matchMedia && window.matchMedia('(min-width: 769px)').matches); } catch (e) {}
   d.open = wide;
 }
+/**
+ * Developer-only export toggles (not shown in the admin UI):
+ * - rg_pdf_export_debug=1 — debug outlines on HTML doc previews; reload admin after setItem.
+ * - rg_export_html_preview=1 — show HTML preview buttons in the PDF export fold; reload after setItem.
+ * Clear with localStorage.removeItem('rg_pdf_export_debug') / removeItem('rg_export_html_preview').
+ */
+function admSyncHtmlPreviewExportBtns() {
+  const wrap = document.getElementById('admExportHtmlPreviewWrap');
+  if (!wrap) return;
+  let dev = false;
+  try {
+    dev = localStorage.getItem('rg_export_html_preview') === '1';
+  } catch (e) {}
+  wrap.style.display = dev ? 'contents' : 'none';
+}
 function closeAdmExportOverlay() {
   const ov = document.getElementById('admExportOverlay');
   const fr = document.getElementById('admExportFrame');
@@ -6583,7 +6880,7 @@ function renderContact() {
     wb.style.display = 'none';
   }
 
-  document.getElementById('perfH2').innerHTML = get('perf').h2;
+  document.getElementById('perfH2').innerHTML = formatSectionTitleIfAmpersand(get('perf').h2 || '');
   document.getElementById('perfIntro').textContent = get('perf').intro;
 }
 
@@ -6594,40 +6891,40 @@ const EPK_BIOS = {
   en: {
     b50: "Argentine-Italian lyric tenor Rolando Guy, based in Berlin, trained in Buenos Aires at the National Conservatory and with private teachers connected to Teatro Colón. His work spans opera, operetta, recital and concert. Recent engagements include Kammeroper Frankfurt and Opernwerkstatt am Rhein, alongside performances across Germany and Europe.",
     b150: "Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his training privately with distinguished teachers connected to Teatro Colón. Based in Berlin since 2019, he has continued to refine his technique and expand his repertoire in Germany. His recent engagements include Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in 2025 and Tamino in a children’s production of Die Zauberflöte with Opernwerkstatt am Rhein in 2023. He has also appeared as tenor soloist at the Apollo-Saal of the Staatsoper Berlin, performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office and Notre-Dame in Strasbourg. His repertoire and concert work range from opera and Lied to sacred music and Argentine tango.",
-    b300p1: "Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his musical development through private studies in voice and music theory with distinguished teachers connected to Teatro Colón. He also developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub. In 2017, he participated in the Javier Camarena masterclass in Buenos Aires.",
-    b300p2: "Based in Berlin since 2019, he first studied with Maestro Reiner Goldberg and has continued refining his technique and expanding his repertoire in Germany. He currently works with Maestro Stephan von Cron Catalano and has also received artistic guidance from Uwe Griem, Jack Li Vigni and Francesco Anile.",
+    b300p1: "Argentine-Italian lyric tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory and continued his musical development through private studies in voice and music theory with distinguished teachers connected to Teatro Colón. He also developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub. Earlier in his artistic development, he also received coaching from Jack Li Vigni in New York and from tenor Francesco Anile in Rome. In 2017, he participated in the Javier Camarena masterclass in Buenos Aires.",
+    b300p2: "Based in Berlin since 2019, he first studied with Maestro Reiner Goldberg and has continued refining his technique and expanding his repertoire in Germany. He currently works with Maestro Stephan von Cron Catalano and has also received artistic guidance from Uwe Griem.",
     b300p3: "His recent engagements include Zweiter Fremder in Der Vetter aus Dingsda at Kammeroper Frankfurt in July 2025 under the musical direction of Stanislav Rosenberg, and Tamino in a children’s production of Die Zauberflöte with Opernwerkstatt am Rhein in 2023. In Buenos Aires, he has appeared in roles including Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone and Borsa.",
     b300p4: "Alongside his stage work, Rolando Guy has developed an active concert profile in Berlin, Copenhagen and Strasbourg. He has performed with the ensemble Die Goldvögel, appeared as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the German Federal Foreign Office and Notre-Dame in Strasbourg, and given Lied recitals featuring Schubert, Strauss, Rachmaninov and Liszt, often in collaboration with pianist Marcelo Ayub. His artistic profile brings together opera, recital, sacred music and Argentine tango."
   },
   de: {
     b50: "Der argentinisch-italienische lyrische Tenor Rolando Guy lebt in Berlin. Seine Ausbildung begann er in Buenos Aires am Nationalkonservatorium und setzte sie privat bei mit dem Teatro Colón verbundenen Gesangslehrern fort. Sein künstlerisches Profil umfasst Oper, Operette, Lied und Konzert. Jüngste Engagements führten ihn unter anderem an die Kammeroper Frankfurt und zur Opernwerkstatt am Rhein.",
     b150: "Der argentinisch-italienische lyrische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalkonservatorium studierte und seine Ausbildung anschließend privat bei angesehenen, mit dem Teatro Colón verbundenen Gesangslehrern fortsetzte. Seit 2019 lebt er in Berlin und entwickelt dort seine Technik und sein Repertoire weiter. Zu seinen jüngeren Engagements zählen Zweiter Fremder in Der Vetter aus Dingsda an der Kammeroper Frankfurt im Jahr 2025 sowie Tamino in einer Kinderfassung der Zauberflöte bei der Opernwerkstatt am Rhein im Jahr 2023. Darüber hinaus trat er als Tenorsolist unter anderem im Apollo-Saal der Staatsoper Berlin auf, konzertierte mit dem Ensemble Die Goldvögel in Berlin und Kopenhagen und sang als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und in Notre-Dame in Straßburg. Sein Repertoire reicht von Oper und Lied bis zu geistlicher Musik und argentinischem Tango.",
-    b300p1: "Der argentinisch-italienische lyrische Tenor Rolando Guy wurde in Buenos Aires geboren. Dort studierte er am Nationalkonservatorium und vertiefte seine musikalische Ausbildung anschließend in privatem Gesangs- und Theoriestudium bei angesehenen Lehrern, die mit dem Teatro Colón verbunden sind. Sein Opernrepertoire erarbeitete er außerdem mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia und Marcelo Ayub. Im Jahr 2017 nahm er in Buenos Aires an der Masterclass von Javier Camarena teil.",
-    b300p2: "Seit 2019 lebt Rolando Guy in Berlin, wo er zunächst bei Maestro Reiner Goldberg studierte und seine technische und künstlerische Entwicklung in Deutschland fortsetzt. Derzeit arbeitet er mit Maestro Stephan von Cron Catalano und erhielt darüber hinaus künstlerische Impulse von Uwe Griem, Jack Li Vigni und Francesco Anile.",
+    b300p1: "Der argentinisch-italienische lyrische Tenor Rolando Guy wurde in Buenos Aires geboren. Dort studierte er am Nationalkonservatorium und vertiefte seine musikalische Ausbildung anschließend in privatem Gesangs- und Theoriestudium bei angesehenen Lehrern, die mit dem Teatro Colón verbunden sind. Sein Opernrepertoire erarbeitete er außerdem mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia und Marcelo Ayub. In einer früheren Phase seiner künstlerischen Entwicklung erhielt er außerdem Coachings bei Jack Li Vigni in New York und bei dem Tenor Francesco Anile in Rom. Im Jahr 2017 nahm er in Buenos Aires an der Masterclass von Javier Camarena teil.",
+    b300p2: "Seit 2019 lebt Rolando Guy in Berlin, wo er zunächst bei Maestro Reiner Goldberg studierte und seine technische und künstlerische Entwicklung in Deutschland fortsetzt. Derzeit arbeitet er mit Maestro Stephan von Cron Catalano und erhielt darüber hinaus künstlerische Impulse von Uwe Griem.",
     b300p3: "Zu seinen jüngeren Engagements zählen Zweiter Fremder in Der Vetter aus Dingsda an der Kammeroper Frankfurt im Juli 2025 unter der musikalischen Leitung von Stanislav Rosenberg sowie Tamino in einer Kinderfassung der Zauberflöte bei der Opernwerkstatt am Rhein im Jahr 2023. In Buenos Aires sang er unter anderem die Partien Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone und Borsa.",
     b300p4: "Neben seiner Bühnenarbeit pflegt Rolando Guy eine rege Konzerttätigkeit in Berlin, Kopenhagen und Straßburg. Er konzertierte mit dem Ensemble Die Goldvögel, trat als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und in Notre-Dame Straßburg auf und gestaltete Liederabende mit Werken von Schubert, Strauss, Rachmaninow und Liszt, häufig in Zusammenarbeit mit dem Pianisten Marcelo Ayub. Sein künstlerisches Profil verbindet Oper, Lied, geistliche Musik und argentinischen Tango."
   },
   es: {
     b50: "Rolando Guy es un tenor lírico argentino-italiano radicado en Berlín. Inició su formación en Buenos Aires en el Conservatorio Nacional y la continuó de forma privada con maestros vinculados al Teatro Colón. Su actividad abarca ópera, opereta, lied y concierto. Entre sus compromisos recientes figuran Kammeroper Frankfurt y Opernwerkstatt am Rhein.",
     b150: "Rolando Guy es un tenor lírico argentino-italiano nacido en Buenos Aires y radicado en Berlín desde 2019. Estudió en el Conservatorio Nacional y continuó su formación de manera privada con reconocidos maestros vinculados al Teatro Colón. Su trayectoria incluye ópera, opereta, recital y concierto. Entre sus compromisos recientes se encuentran Zweiter Fremder en Der Vetter aus Dingsda en la Kammeroper Frankfurt en 2025 y Tamino en una versión infantil de Die Zauberflöte con la Opernwerkstatt am Rhein en 2023. También se ha presentado como tenor solista en el Apollo-Saal de la Staatsoper Berlin, ha actuado con el ensemble Die Goldvögel en Berlín y Copenhague, y como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Relaciones Exteriores de Alemania y Notre-Dame de Estrasburgo. Su repertorio y actividad concertística abarcan desde la ópera y el lied hasta la música sacra y el tango argentino.",
-    b300p1: "Rolando Guy es un tenor lírico argentino-italiano nacido en Buenos Aires. Allí inició su formación musical en el Conservatorio Nacional y la profundizó posteriormente mediante estudios privados de canto y teoría con distinguidos maestros vinculados al Teatro Colón. Desarrolló además su repertorio operístico junto a Dante Ranieri, Susana Cardonnet, Rozita Zozoulia y Marcelo Ayub. En 2017 participó en la masterclass de Javier Camarena en Buenos Aires.",
-    b300p2: "Radicado en Berlín desde 2019, estudió inicialmente con el Maestro Reiner Goldberg y continuó desarrollando su técnica y ampliando su repertorio en Alemania. Actualmente trabaja con el Maestro Stephan von Cron Catalano y también ha recibido orientación artística de Uwe Griem, Jack Li Vigni y Francesco Anile.",
+    b300p1: "Rolando Guy es un tenor lírico argentino-italiano nacido en Buenos Aires. Allí inició su formación musical en el Conservatorio Nacional y la profundizó posteriormente mediante estudios privados de canto y teoría con distinguidos maestros vinculados al Teatro Colón. Desarrolló además su repertorio operístico junto a Dante Ranieri, Susana Cardonnet, Rozita Zozoulia y Marcelo Ayub. En una etapa anterior de su desarrollo artístico, también recibió coachings con Jack Li Vigni en Nueva York y con el tenor Francesco Anile en Roma. En 2017 participó en la masterclass de Javier Camarena en Buenos Aires.",
+    b300p2: "Radicado en Berlín desde 2019, estudió inicialmente con el Maestro Reiner Goldberg y continuó desarrollando su técnica y ampliando su repertorio en Alemania. Actualmente trabaja con el Maestro Stephan von Cron Catalano y también ha recibido orientación artística de Uwe Griem.",
     b300p3: "Entre sus compromisos recientes se encuentran Zweiter Fremder en Der Vetter aus Dingsda en la Kammeroper Frankfurt en julio de 2025, bajo la dirección musical de Stanislav Rosenberg, y Tamino en una versión infantil de Die Zauberflöte con la Opernwerkstatt am Rhein en 2023. En Buenos Aires interpretó, entre otros, los roles de Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone y Borsa.",
     b300p4: "Junto a su actividad escénica, Rolando Guy desarrolla una intensa labor concertística en Berlín, Copenhague y Estrasburgo. Se ha presentado con el ensemble Die Goldvögel, ha actuado como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Relaciones Exteriores de Alemania y Notre-Dame de Estrasburgo, y ha ofrecido recitales de lied con obras de Schubert, Strauss, Rachmaninov y Liszt, a menudo en colaboración con el pianista Marcelo Ayub. Su perfil artístico reúne ópera, lied, música sacra y tango argentino."
   },
   it: {
     b50: "Rolando Guy è un tenore lirico argentino-italiano residente a Berlino. Ha iniziato la sua formazione a Buenos Aires presso il Conservatorio Nazionale, proseguendola privatamente con maestri legati al Teatro Colón. La sua attività comprende opera, operetta, lied e concerto. Tra gli impegni recenti figurano la Kammeroper Frankfurt e l’Opernwerkstatt am Rhein.",
     b150: "Rolando Guy è un tenore lirico argentino-italiano nato a Buenos Aires e residente a Berlino dal 2019. Ha studiato presso il Conservatorio Nazionale e ha proseguito la propria formazione privatamente con autorevoli maestri legati al Teatro Colón. La sua attività artistica comprende opera, operetta, recital e concerto. Tra gli impegni recenti figurano Zweiter Fremder in Der Vetter aus Dingsda alla Kammeroper Frankfurt nel 2025 e Tamino in una versione per bambini di Die Zauberflöte con l’Opernwerkstatt am Rhein nel 2023. Si è inoltre esibito come tenore solista all’Apollo-Saal della Staatsoper Berlin, ha collaborato con l’ensemble Die Goldvögel a Berlino e Copenaghen ed è stato solista con il Diplomatic Choir of Berlin presso il Berliner Dom, il Ministero degli Esteri tedesco e Notre-Dame a Strasburgo. Il suo repertorio spazia dall’opera e dal lied alla musica sacra e al tango argentino.",
-    b300p1: "Rolando Guy è un tenore lirico argentino-italiano nato a Buenos Aires. Ha iniziato la sua formazione musicale presso il Conservatorio Nazionale e l’ha poi approfondita attraverso studi privati di canto e teoria con autorevoli maestri legati al Teatro Colón. Ha inoltre sviluppato il proprio repertorio operistico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia e Marcelo Ayub. Nel 2017 ha partecipato alla masterclass di Javier Camarena a Buenos Aires.",
-    b300p2: "Residente a Berlino dal 2019, ha studiato inizialmente con il Maestro Reiner Goldberg e ha proseguito in Germania il proprio sviluppo tecnico e artistico. Attualmente lavora con il Maestro Stephan von Cron Catalano e ha inoltre ricevuto orientamento artistico da Uwe Griem, Jack Li Vigni e Francesco Anile.",
+    b300p1: "Rolando Guy è un tenore lirico argentino-italiano nato a Buenos Aires. Ha iniziato la sua formazione musicale presso il Conservatorio Nazionale e l’ha poi approfondita attraverso studi privati di canto e teoria con autorevoli maestri legati al Teatro Colón. Ha inoltre sviluppato il proprio repertorio operistico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia e Marcelo Ayub. In una fase precedente del suo sviluppo artistico, ha inoltre seguito sessioni di coaching con Jack Li Vigni a New York e con il tenore Francesco Anile a Roma. Nel 2017 ha partecipato alla masterclass di Javier Camarena a Buenos Aires.",
+    b300p2: "Residente a Berlino dal 2019, ha studiato inizialmente con il Maestro Reiner Goldberg e ha proseguito in Germania il proprio sviluppo tecnico e artistico. Attualmente lavora con il Maestro Stephan von Cron Catalano e ha inoltre ricevuto orientamento artistico da Uwe Griem.",
     b300p3: "Tra gli impegni recenti figurano Zweiter Fremder in Der Vetter aus Dingsda alla Kammeroper Frankfurt nel luglio 2025, sotto la direzione musicale di Stanislav Rosenberg, e Tamino in una versione per bambini di Die Zauberflöte con l’Opernwerkstatt am Rhein nel 2023. A Buenos Aires ha interpretato, tra gli altri, i ruoli di Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone e Borsa.",
     b300p4: "Accanto all’attività scenica, Rolando Guy svolge un’intensa attività concertistica a Berlino, Copenaghen e Strasburgo. Si è esibito con l’ensemble Die Goldvögel, è stato solista con il Diplomatic Choir of Berlin presso il Berliner Dom, il Ministero degli Esteri tedesco e Notre-Dame a Strasburgo, e ha tenuto recital di lied con musiche di Schubert, Strauss, Rachmaninov e Liszt, spesso in collaborazione con il pianista Marcelo Ayub. Il suo profilo artistico unisce opera, lied, musica sacra e tango argentino."
   },
   fr: {
     b50: "Rolando Guy est un ténor lyrique argentino-italien basé à Berlin. Il a commencé sa formation à Buenos Aires au Conservatoire national, avant de la poursuivre en privé auprès de maîtres liés au Teatro Colón. Son activité comprend l’opéra, l’opérette, le lied et le concert. Parmi ses engagements récents figurent la Kammeroper Frankfurt et l’Opernwerkstatt am Rhein.",
     b150: "Rolando Guy est un ténor lyrique argentino-italien né à Buenos Aires et installé à Berlin depuis 2019. Il a étudié au Conservatoire national et a poursuivi sa formation en privé auprès de maîtres reconnus liés au Teatro Colón. Son activité artistique comprend l’opéra, l’opérette, le récital et le concert. Parmi ses engagements récents figurent Zweiter Fremder dans Der Vetter aus Dingsda à la Kammeroper Frankfurt en 2025, ainsi que Tamino dans une version pour enfants de Die Zauberflöte avec l’Opernwerkstatt am Rhein en 2023. Il s’est également produit comme ténor soliste à l’Apollo-Saal de la Staatsoper Berlin, a chanté avec l’ensemble Die Goldvögel à Berlin et à Copenhague, et s’est produit en soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au ministère allemand des Affaires étrangères et à Notre-Dame de Strasbourg. Son répertoire s’étend de l’opéra et du lied à la musique sacrée et au tango argentin.",
-    b300p1: "Rolando Guy est un ténor lyrique argentino-italien né à Buenos Aires. Il y a commencé sa formation musicale au Conservatoire national, avant de l’approfondir par des études privées de chant et de théorie auprès de maîtres reconnus liés au Teatro Colón. Il a également développé son répertoire lyrique avec Dante Ranieri, Susana Cardonnet, Rozita Zozoulia et Marcelo Ayub. En 2017, il a participé à la masterclass de Javier Camarena à Buenos Aires.",
-    b300p2: "Installé à Berlin depuis 2019, il a d’abord étudié avec le Maestro Reiner Goldberg et a poursuivi en Allemagne son développement technique et artistique. Il travaille actuellement avec le Maestro Stephan von Cron Catalano et a également bénéficié de l’accompagnement artistique de Uwe Griem, Jack Li Vigni et Francesco Anile.",
+    b300p1: "Rolando Guy est un ténor lyrique argentino-italien né à Buenos Aires. Il y a commencé sa formation musicale au Conservatoire national, avant de l’approfondir par des études privées de chant et de théorie auprès de maîtres reconnus liés au Teatro Colón. Il a également développé son répertoire lyrique avec Dante Ranieri, Susana Cardonnet, Rozita Zozoulia et Marcelo Ayub. À une étape antérieure de son développement artistique, il a également suivi des coachings avec Jack Li Vigni à New York et avec le ténor Francesco Anile à Rome. En 2017, il a participé à la masterclass de Javier Camarena à Buenos Aires.",
+    b300p2: "Installé à Berlin depuis 2019, il a d’abord étudié avec le Maestro Reiner Goldberg et a poursuivi en Allemagne son développement technique et artistique. Il travaille actuellement avec le Maestro Stephan von Cron Catalano et a également bénéficié de l’accompagnement artistique de Uwe Griem.",
     b300p3: "Parmi ses engagements récents figurent Zweiter Fremder dans Der Vetter aus Dingsda à la Kammeroper Frankfurt en juillet 2025, sous la direction musicale de Stanislav Rosenberg, ainsi que Tamino dans une version pour enfants de Die Zauberflöte avec l’Opernwerkstatt am Rhein en 2023. À Buenos Aires, il a interprété notamment les rôles de Rodolfo, Nemorino, Ferrando, Tamino, Basilio, Gastone et Borsa.",
     b300p4: "Parallèlement à son activité scénique, Rolando Guy mène une activité de concert soutenue à Berlin, Copenhague et Strasbourg. Il s’est produit avec l’ensemble Die Goldvögel, a chanté en soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au ministère allemand des Affaires étrangères et à Notre-Dame de Strasbourg, et a donné des récitals de lied consacrés à Schubert, Strauss, Rachmaninov et Liszt, souvent en collaboration avec le pianiste Marcelo Ayub. Son profil artistique réunit l’opéra, le lied, la musique sacrée et le tango argentin."
   }
@@ -6669,7 +6966,7 @@ function getPublicPdfs(){
   return out;
 }
 
-let epkActiveBio = 'bio300';
+let epkActiveBio = 'bio150';
 
 function epkTab(btn, pane) {
   document.querySelectorAll('.epk-tab').forEach(b => b.classList.remove('active'));
@@ -6833,7 +7130,7 @@ function renderEpk() {
 
   // Copy button label update
   const copyBtn = document.getElementById('epkCopyBtn');
-  if (copyBtn) copyBtn.textContent = (Ti[currentLang] || Ti.en)['epk.copyBio'] || '⧉ Copy Bio';
+  if (copyBtn) copyBtn.textContent = (Ti[currentLang] || Ti.en)['epk.copyBio'] || '⧉ Copy biography';
 }
 
 // ── Init all sections ──
@@ -7227,6 +7524,11 @@ Ti.de['epk.downloadArtistSheet'] = 'Artist Sheet herunterladen';
 Ti.es['epk.downloadArtistSheet'] = 'Descargar artist sheet';
 Ti.it['epk.downloadArtistSheet'] = 'Scarica artist sheet';
 Ti.fr['epk.downloadArtistSheet'] = 'Télécharger l’artiste sheet';
+Ti.en['epk.copyBio'] = '⧉ Copy biography';
+Ti.de['epk.copyBio'] = '⧉ Biografie kopieren';
+Ti.es['epk.copyBio'] = '⧉ Copiar biografía';
+Ti.it['epk.copyBio'] = '⧉ Copia biografia';
+Ti.fr['epk.copyBio'] = '⧉ Copier la biographie';
 
 Ti.en['export.docSub.short'] = 'Short commercial profile';
 Ti.en['export.docSub.full'] = 'Full documentary profile export';
@@ -7264,8 +7566,7 @@ Ti.fr['export.winTitle.full'] = 'Export complet';
 Ti.fr['export.winTitle.selected'] = 'Export sélectionné';
 
 // Document layouts (Artist Sheet / Dossier) — section labels + actions (5 langs)
-Ti.en['export.doc.barTitle'] = 'Document exports (pdfmake PDF + optional HTML preview)';
-Ti.en['export.doc.pdfmakeHint'] = 'Final PDFs download via pdfmake (exact A4 filenames). HTML preview is optional; no print dialog is required for the PDF file.';
+Ti.en['export.doc.pdfExportHint'] = 'PDF exports download directly as A4 files with the correct filename.';
 Ti.en['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
 Ti.en['export.doc.btnOpenArtistSheet'] = 'Download Artist Sheet (PDF)';
 Ti.en['export.doc.btnOpenDossier'] = 'Download Dossier (PDF)';
@@ -7292,8 +7593,7 @@ Ti.en['export.printPdf'] = 'Print / PDF';
 Ti.en['export.cal.empty'] = 'No upcoming engagements.';
 Ti.en['export.cal.moreUpcoming'] = 'Showing the next {{n}} of {{m}} upcoming engagements.';
 
-Ti.de['export.doc.barTitle'] = 'Dokumente (pdfmake-PDF + optional HTML-Vorschau)';
-Ti.de['export.doc.pdfmakeHint'] = 'Fertige PDFs werden per pdfmake heruntergeladen (exakte A4-Dateinamen). HTML-Vorschau ist optional; für die PDF-Datei ist kein Druckdialog nötig.';
+Ti.de['export.doc.pdfExportHint'] = 'PDFs werden direkt als A4-Dateien mit dem richtigen Dateinamen heruntergeladen.';
 Ti.de['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
 Ti.de['export.doc.btnOpenArtistSheet'] = 'Artist Sheet laden (PDF)';
 Ti.de['export.doc.btnOpenDossier'] = 'Dossier laden (PDF)';
@@ -7320,8 +7620,7 @@ Ti.de['export.printPdf'] = 'Drucken / PDF';
 Ti.de['export.cal.empty'] = 'Keine kommenden Termine.';
 Ti.de['export.cal.moreUpcoming'] = 'Es werden die nächsten {{n}} von {{m}} Terminen angezeigt.';
 
-Ti.es['export.doc.barTitle'] = 'Documentos (PDF pdfmake + vista HTML opcional)';
-Ti.es['export.doc.pdfmakeHint'] = 'Los PDF finales se descargan con pdfmake (nombres A4 exactos). La vista HTML es opcional; no hace falta el cuadro de impresión para obtener el PDF.';
+Ti.es['export.doc.pdfExportHint'] = 'Los PDF se descargan directamente como archivos A4 con el nombre correcto.';
 Ti.es['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
 Ti.es['export.doc.btnOpenArtistSheet'] = 'Descargar Artist Sheet (PDF)';
 Ti.es['export.doc.btnOpenDossier'] = 'Descargar dossier (PDF)';
@@ -7348,8 +7647,7 @@ Ti.es['export.doc.repAriasSheet'] = 'Arias de concierto y gala';
 Ti.es['export.cal.empty'] = 'No hay próximos compromisos.';
 Ti.es['export.cal.moreUpcoming'] = 'Se muestran los próximos {{n}} de {{m}} compromisos.';
 
-Ti.it['export.doc.barTitle'] = 'Documenti (PDF pdfmake + anteprima HTML facoltativa)';
-Ti.it['export.doc.pdfmakeHint'] = 'I PDF finali si scaricano con pdfmake (nomi file A4 esatti). L’anteprima HTML è facoltativa; non serve la finestra di stampa per il file PDF.';
+Ti.it['export.doc.pdfExportHint'] = 'I PDF si scaricano direttamente come file A4 con il nome file corretto.';
 Ti.it['export.doc.foldSummary'] = 'Artist Sheet / Dossier (PDF)';
 Ti.it['export.doc.btnOpenArtistSheet'] = 'Scarica Artist Sheet (PDF)';
 Ti.it['export.doc.btnOpenDossier'] = 'Scarica dossier (PDF)';
@@ -7376,8 +7674,7 @@ Ti.it['export.doc.repAriasSheet'] = 'Arie da concerto e di gala';
 Ti.it['export.cal.empty'] = 'Nessun impegno in programma.';
 Ti.it['export.cal.moreUpcoming'] = 'Elencati i prossimi {{n}} impegni su {{m}}.';
 
-Ti.fr['export.doc.barTitle'] = 'Documents (PDF pdfmake + aperçu HTML optionnel)';
-Ti.fr['export.doc.pdfmakeHint'] = 'Les PDF finaux se téléchargent via pdfmake (noms de fichiers A4 exacts). L’aperçu HTML est optionnel ; la boîte d’impression n’est pas requise pour le fichier PDF.';
+Ti.fr['export.doc.pdfExportHint'] = 'Les PDF se téléchargent directement au format A4 avec le nom de fichier correct.';
 Ti.fr['export.doc.foldSummary'] = 'Fiche artiste / Dossier (PDF)';
 Ti.fr['export.doc.btnOpenArtistSheet'] = 'Télécharger la fiche artiste (PDF)';
 Ti.fr['export.doc.btnOpenDossier'] = 'Télécharger le dossier (PDF)';
@@ -7413,6 +7710,13 @@ function setLang(lang){
   document.documentElement.lang=lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(Ti[lang]&&Ti[lang][k]!==undefined)el.innerHTML=Ti[lang][k];});
   document.querySelectorAll('[data-ph]').forEach(el=>{const k=el.getAttribute('data-ph');if(Ti[lang]&&Ti[lang][k]!==undefined)el.placeholder=Ti[lang][k];});
+  // Stacked gold-& titles: photos H2 only. programs.sectionTag ("08 PROGRAMS & …") stays one line — section-tag typography.
+  ['photos.h2'].forEach(k=>{
+    document.querySelectorAll('[data-i18n="'+k+'"]').forEach(el=>{
+      const h = el.innerHTML;
+      if (h.includes('&amp;')) el.innerHTML = formatSectionTitleIfAmpersand(h, k);
+    });
+  });
   
   // Re-render con cinturones de seguridad individuales
   try{ if(typeof renderHero==='function') renderHero(); }catch(e){}
@@ -8044,6 +8348,7 @@ function openAdmin(){
   document.body.style.overflow = 'hidden';
   applyFullExportSectionPrefs();
   if (admUnlocked) try { admSyncExportDocFold(); } catch (e) {}
+  if (admUnlocked) try { admSyncHtmlPreviewExportBtns(); } catch (e) {}
   // UI gating is handled by Firebase auth state; keep the lock visible by default.
   if (!admUnlocked) {
     const lock = document.getElementById('admLockWrap');
@@ -8473,7 +8778,7 @@ function saveSection(name){
 function savePerfHeader(){
   const data={h2:document.getElementById('f-perfH2').value,intro:document.getElementById('f-perfIntro').value};
   save('perf_'+currentLang,data);
-  document.getElementById('perfH2').innerHTML=data.h2;
+  document.getElementById('perfH2').innerHTML=formatSectionTitleIfAmpersand(data.h2);
   document.getElementById('perfIntro').textContent=data.intro;
   const fb=document.getElementById('fb-perf');
   if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);}
