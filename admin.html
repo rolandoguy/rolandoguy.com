@@ -731,6 +731,17 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .adm-export-docfold[open] .adm-export-docfold-sum{color:var(--gold-dim)}
 .adm-export-doc-actions{margin-top:2px}
 
+/* Calendar admin — collapsed advanced controls */
+.adm-advanced-fold{border-top:1px solid var(--border);margin:28px 0 0;padding-top:10px}
+.adm-advanced-fold-sum{
+  list-style:none;font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-faint);cursor:pointer;padding:8px 0;font-weight:600;display:flex;align-items:center;gap:8px
+}
+.adm-advanced-fold-sum::-webkit-details-marker{display:none}
+.adm-advanced-fold[open] .adm-advanced-fold-sum{color:var(--gold-dim)}
+.adm-advanced-inner{padding:4px 0 12px}
+.adm-perf-editorial-hint{font-size:.72rem;color:var(--text-faint);margin:-4px 0 14px;line-height:1.45;max-width:42rem}
+
 /* Activity log — mobile collapse */
 .adm-activity-wrap{border-top:1px solid var(--border);background:rgba(13,13,18,.85);backdrop-filter:blur(10px);padding:10px 16px}
 .adm-activity-mobile-toggle{
@@ -1363,6 +1374,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <p class="reveal rd2" id="bioP2"></p>
         <div class="about-quote reveal rd3" id="bioQuoteWrap" style="display:none">
           <p id="bioQuote"></p>
+          <cite id="bioCite"></cite>
         </div>
       </div>
     </div>
@@ -1562,11 +1574,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <div class="adm" id="adm" onclick="admBgClose(event)">
  <div class="adm-wrap">
   <div class="adm-head">
-   <span class="adm-head-title">Panel de Administración</span>
+   <span class="adm-head-title">Admin</span>
    <div class="adm-head-toolbar">
     <div class="adm-head-primary">
       <div style="display:flex;gap:2px;align-items:center">
-        <span style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.1em;color:var(--text-faint);margin-right:3px">LANG:</span>
+        <span style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.1em;color:var(--text-faint);margin-right:3px">Content:</span>
         <button onclick="admSetLang('en')" id="admLangBtn-en" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:2px">EN</button>
         <button onclick="admSetLang('de')" id="admLangBtn-de" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">DE</button>
         <button onclick="admSetLang('es')" id="admLangBtn-es" style="font-family:var(--ff-caps);font-size:.52rem;padding:3px 7px;background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);cursor:pointer;border-radius:2px">ES</button>
@@ -1575,28 +1587,28 @@ textarea.adm-input{resize:vertical;min-height:80px}
       </div>
       <span id="admLangInd" style="display:none">EN</span>
       <div id="admSavePill" style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);padding:5px 10px;border-radius:999px;min-width:140px;text-align:center">Saved</div>
-      <a href="https://www.rolandoguy.com" target="_blank" rel="noopener" class="adm-head-web" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">Ver sitio web ↗</a>
+      <a href="https://www.rolandoguy.com" target="_blank" rel="noopener" class="adm-head-web" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">View site ↗</a>
     </div>
     <button type="button" class="adm-tools-toggle" id="admToolsToggle" onclick="admToggleHeadTools()" aria-expanded="false" aria-controls="admHeadSecondary">Admin tools</button>
     <div class="adm-head-secondary" id="admHeadSecondary">
       <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
       <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
-      <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Cerrar Sesión</button>
+      <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Sign out</button>
     </div>
    </div>
   </div>
   <div id="admLockWrap" style="background:var(--surface);padding:40px 32px">
    <div class="adm-lock">
-    <p>Acceso administrador</p>
+    <p>Admin sign-in</p>
     <div style="font-size:.8rem;color:var(--text-dim);line-height:1.6;text-align:center">
-      Usuario: <span id="admUserEmail" style="color:var(--gold)">—</span>
+      Signed in as: <span id="admUserEmail" style="color:var(--gold)">—</span>
     </div>
     <div class="adm-lock-row" style="justify-content:center">
-     <button class="adm-btn" id="admSignInBtn" onclick="admSignInGoogle()">Entrar con Google</button>
-     <button class="adm-btn" id="admSignOutBtn" onclick="admSignOut()" style="display:none;background:transparent;color:var(--gold);border:1px solid var(--border)">Cerrar sesión</button>
+     <button class="adm-btn" id="admSignInBtn" onclick="admSignInGoogle()">Sign in with Google</button>
+     <button class="adm-btn" id="admSignOutBtn" onclick="admSignOut()" style="display:none;background:transparent;color:var(--gold);border:1px solid var(--border)">Sign out</button>
     </div>
     <div class="adm-feedback" id="admAuthErr" style="display:block">
-      <span id="admAuthMsg">Iniciá sesión con Google para acceder.</span>
+      <span id="admAuthMsg">Sign in with Google to continue.</span>
     </div>
    </div>
   </div>
@@ -1639,216 +1651,230 @@ textarea.adm-input{resize:vertical;min-height:80px}
    </div>
    <div class="adm-tabs">
     <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
-    <button class="adm-tab" onclick="admTab('bio')">Biografía</button>
+    <button class="adm-tab" onclick="admTab('bio')">Biography</button>
     <button class="adm-tab" onclick="admTab('rep-opera')">Opera</button>
     <button class="adm-tab" onclick="admTab('rep-arias')">Arias</button>
     <button class="adm-tab" onclick="admTab('rep-operetta')">Operetta</button>
     <button class="adm-tab" onclick="admTab('rep-lived')">Lied</button>
     <button class="adm-tab" onclick="admTab('rep-tango')">Tango</button>
-    <button class="adm-tab" onclick="admTab('programs')">Programas</button>
+    <button class="adm-tab" onclick="admTab('programs')">Programs</button>
     <button class="adm-tab" onclick="admTab('vid')">Videos</button>
-    <button class="adm-tab" onclick="admTab('photos')">Fotos</button>
-    <button class="adm-tab" onclick="admTab('perf')">Agenda</button>
-    <button class="adm-tab" onclick="admTab('press')">Reseñas</button>
-         <button class="adm-tab" onclick="admTab('contact')">Contacto</button>
-    <button class="adm-tab" onclick="admTab('epk')">Press</button>
+    <button class="adm-tab" onclick="admTab('photos')">Photos</button>
+    <button class="adm-tab" onclick="admTab('perf')">Calendar</button>
+    <button class="adm-tab" onclick="admTab('press')">Reviews</button>
+         <button class="adm-tab" onclick="admTab('contact')">Contact</button>
+    <button class="adm-tab" onclick="admTab('siteui')">UI / Site Strings</button>
+    <button class="adm-tab" onclick="admTab('epk')">Press kit</button>
    </div>
    <div class="adm-body">
     <!-- HERO -->
     <div class="adm-panel active" id="admPanel-hero">
      <div class="adm-section">Hero <span id="heroLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
      <div class="adm-grid full"><div class="adm-col">
-       <label class="adm-label">Imagen de fondo del Hero (URL o ruta)</label>
+       <label class="adm-label">Hero background image (URL or path)</label>
        <input class="adm-input" id="f-heroBg" placeholder="img/hero-bg.webp">
-       <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Ruta relativa (img/hero-bg.webp) o URL absoluta. Se aplica al guardar.</div>
+       <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Relative path (e.g. img/hero-bg.webp) or absolute URL. Applied when you save.</div>
      </div></div>
      <div class="adm-grid">
       <div class="adm-col"><label class="adm-label">Eyebrow</label><input class="adm-input" id="f-heroEyebrow"></div>
-      <div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-heroSubtitle"></div>
-      <div class="adm-col"><label class="adm-label">Botón 1</label><input class="adm-input" id="f-heroCta1"></div>
-      <div class="adm-col"><label class="adm-label">Botón 2</label><input class="adm-input" id="f-heroCta2"></div>
+      <div class="adm-col"><label class="adm-label">Subtitle</label><input class="adm-input" id="f-heroSubtitle"></div>
+      <div class="adm-col"><label class="adm-label">Button 1</label><input class="adm-input" id="f-heroCta1"></div>
+      <div class="adm-col"><label class="adm-label">Button 2</label><input class="adm-input" id="f-heroCta2"></div>
      </div>
-     <button class="adm-btn adm-btn-save" onclick="saveSection('hero')">Guardar Hero</button>
-     <div class="adm-feedback" id="fb-hero">¡Guardado!</div>
+     <button class="adm-btn adm-btn-save" onclick="saveSection('hero')">Save Hero</button>
+     <div class="adm-feedback" id="fb-hero">Saved!</div>
     </div>
     <!-- BIO -->
     <div class="adm-panel" id="admPanel-bio">
-     <div class="adm-section">Biografía <span id="bioLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-bioH2"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 1</label><textarea class="adm-input" id="f-bioP1" rows="4"></textarea></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Párrafo 2</label><textarea class="adm-input" id="f-bioP2" rows="4"></textarea></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><textarea class="adm-input" id="f-bioQuote" rows="3"></textarea></div></div>
+     <div class="adm-section">Biography <span id="bioLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title (HTML)</label><input class="adm-input" id="f-bioH2"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Paragraph 1</label><textarea class="adm-input" id="f-bioP1" rows="4"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Paragraph 2</label><textarea class="adm-input" id="f-bioP2" rows="4"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Quote</label><textarea class="adm-input" id="f-bioQuote" rows="3"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Attribution line (cite)</label><input class="adm-input" id="f-bioCite" placeholder="Rolando Guy · Berlin"></div></div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Shown under the quote on the public site (<code>&lt;cite&gt;</code>). Stored as <code>bio_{lang}.cite</code>.</p>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Guardar Biografía</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Save Biography</button>
       <button class="adm-btn" type="button" onclick="copyBioPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
       <button class="adm-btn" type="button" onclick="openBioCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-bio">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-bio">Saved!</div>
     </div>
     <!-- REPERTOIRE: Opera -->
     <div class="adm-panel" id="admPanel-rep-opera">
-     <div class="adm-section">Repertorio — Opera Roles <span id="repLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <div class="adm-section">Repertoire — Opera roles <span id="repLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
      <div class="adm-grid full"><div class="adm-col">
-       <label class="adm-label">Título de sección Repertorio (HTML, idioma actual)</label>
+       <label class="adm-label">Repertoire section title (HTML, current content language)</label>
        <input class="adm-input" id="f-repH2" placeholder="Selected &lt;em&gt;Repertoire&lt;/em&gt;" autocomplete="off">
-       <p style="font-size:.72rem;color:var(--text-faint);margin:.35rem 0 0">Mismo campo que el H2 público (<code>#repH2</code>). Usá <code>&lt;em&gt;…&lt;/em&gt;</code> para la línea dorada. Dejá vacío o igual al texto por defecto del sitio para quitar el override guardado y usar <code>LANG_CONTENT</code>.</p>
+       <p style="font-size:.72rem;color:var(--text-faint);margin:.35rem 0 0">Same field as the public H2 (<code>#repH2</code>). Use <code>&lt;em&gt;…&lt;/em&gt;</code> for the gold line. Leave empty or match the site default to clear the saved override and use <code>LANG_CONTENT</code>.</p>
      </div></div>
      <div style="margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-       <button class="adm-btn" type="button" onclick="saveRepHeader()" style="background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold)">Guardar título Repertorio</button>
+       <button class="adm-btn" type="button" onclick="saveRepHeader()" style="background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold)">Save repertoire title</button>
      </div>
+     <div class="adm-section" style="margin-top:.5rem">Editorial copy (repertoire)</div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Intro line and tab blurbs. Firestore: <code>rg_editorial_{lang}</code>. Empty = site default (<code>Ti</code>).</p>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Line under the H2</label><textarea class="adm-input" id="f-repIntroLine" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Opera</label><textarea class="adm-input" id="f-repDescOpera" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Arias</label><textarea class="adm-input" id="f-repDescArias" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Operetta</label><textarea class="adm-input" id="f-repDescOperetta" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Lied</label><textarea class="adm-input" id="f-repDescLied" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Tango</label><textarea class="adm-input" id="f-repDescTango" rows="2"></textarea></div></div>
+     <button class="adm-btn" type="button" onclick="saveRepEditorial()" style="margin-bottom:1rem">Save editorial copy</button>
+     <div class="adm-feedback" id="fb-rep-editorial" style="display:none">Saved!</div>
      <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
      <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <label class="adm-label" style="margin:0">Ordenar por estado:</label>
+      <label class="adm-label" style="margin:0">Sort by status:</label>
       <select class="adm-input" id="repSortStatus-opera" style="max-width:200px" onchange="admPopulate('rep-opera')">
-       <option value="">Orden actual</option>
-       <option value="performed">Performed primero</option>
-       <option value="prepared">Prepared primero</option>
-       <option value="studying">Studying primero</option>
+       <option value="">Current order</option>
+       <option value="performed">Performed first</option>
+       <option value="prepared">Prepared first</option>
+       <option value="studying">Studying first</option>
       </select>
      </div>
     <div id="repCards-opera"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
-      <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)">✨ Auto-Ordenar (Estado + Compositor)</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Guardar</button>
+      <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
+      <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)">✨ Auto-sort (status + composer)</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Save</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-rep-opera">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-rep-opera">Saved!</div>
     </div>
     <!-- REPERTOIRE: Arias -->
     <div class="adm-panel" id="admPanel-rep-arias">
-     <div class="adm-section">Repertorio — Opera Arias</div>
+     <div class="adm-section">Repertoire — Opera arias</div>
      <div id="repCards-arias"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Guardar</button>
+      <button class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Save</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-rep-arias">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-rep-arias">Saved!</div>
     </div>
     <!-- REPERTOIRE: Operetta -->
     <div class="adm-panel" id="admPanel-rep-operetta">
-     <div class="adm-section">Repertorio — Operetta</div>
+     <div class="adm-section">Repertoire — Operetta</div>
      <div id="repCards-operetta"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Guardar</button>
+      <button class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Save</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-rep-operetta">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-rep-operetta">Saved!</div>
     </div>
     <!-- REPERTOIRE: Lied -->
     <div class="adm-panel" id="admPanel-rep-lived">
-     <div class="adm-section">Repertorio — Lied &amp; Art Song</div>
+     <div class="adm-section">Repertoire — Lied &amp; art song</div>
      <div id="repCards-lived"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Guardar</button>
+      <button class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Save</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-rep-lived">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-rep-lived">Saved!</div>
     </div>
     <!-- REPERTOIRE: Tango -->
     <div class="adm-panel" id="admPanel-rep-tango">
-     <div class="adm-section">Repertorio — Tango</div>
+     <div class="adm-section">Repertoire — Tango</div>
      <div id="repCards-tango"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Guardar</button>
+      <button class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
+      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Save</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-rep-tango">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-rep-tango">Saved!</div>
     </div>
     <!-- PROGRAMS & COLLABORATIONS -->
     <div class="adm-panel" id="admPanel-programs">
-     <div class="adm-section">Programs &amp; Collaborations <span id="programsLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-programsTitle" placeholder="Programs & Collaborations"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><input class="adm-input" id="f-programsSubtitle"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro (párrafo)</label><textarea class="adm-input" id="f-programsIntro" rows="3"></textarea></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Nota final (closing note)</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link contextual desde Repertoire</label><input class="adm-input" id="f-repProgramsLink"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link contextual desde Dossier</label><input class="adm-input" id="f-epkProgramsLink"></div></div>
-     <div class="adm-section">Programas (bloques)</div>
-     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Ordená con arrastre. Solo los publicados se muestran en la web.</p>
+     <div class="adm-section">Programs <span id="programsLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title (HTML)</label><input class="adm-input" id="f-programsTitle" placeholder="Programs & Collaborations"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtitle</label><input class="adm-input" id="f-programsSubtitle"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro paragraph</label><textarea class="adm-input" id="f-programsIntro" rows="3"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Closing note</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Context link from Repertoire</label><input class="adm-input" id="f-repProgramsLink"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Context link from dossier / EPK</label><input class="adm-input" id="f-epkProgramsLink"></div></div>
+     <div class="adm-section">Program blocks</div>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Drag to reorder. Only published programs appear on the site.</p>
      <div id="programCards"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-       <button class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir programa</button>
-       <button class="adm-btn adm-btn-save" onclick="saveSection('programs')">Guardar Programas</button>
+       <button class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add program</button>
+       <button class="adm-btn adm-btn-save" onclick="saveSection('programs')">Save Programs</button>
        <button class="adm-btn" type="button" onclick="copyProgramsPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
        <button class="adm-btn" type="button" onclick="openProgramsCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
-     <div class="adm-feedback" id="fb-programs">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-programs">Saved!</div>
     </div>
     <!-- VIDEOS -->
      <div class="adm-panel" id="admPanel-vid">
      <div class="adm-section">Videos</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-vidH2" placeholder="Stage, Concert &amp; Recital Highlights"></div></div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Single source with the public site: <code>rg_vid.h2</code> (not <code>Ti['vid.h2']</code>).</p>
      <div id="vidCards"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-       <button class="adm-btn" onclick="addVidCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Añadir video</button>
-       <button class="adm-btn adm-btn-save" onclick="saveSection('vid')">Guardar Videos</button>
+       <button class="adm-btn" onclick="addVidCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add video</button>
+       <button class="adm-btn adm-btn-save" onclick="saveSection('vid')">Save Videos</button>
      </div>
-     <div class="adm-feedback" id="fb-vid">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-vid">Saved!</div>
     </div>
-    <!-- PERFORMANCES -->
+    <!-- PERFORMANCES / CALENDAR -->
     <div class="adm-panel" id="admPanel-perf">
-     <div class="adm-section">Apariencia</div>
-     <div class="adm-grid full"><div class="adm-col">
-       <label class="adm-label">Tamaño del mes — <span id="monthSizeLabel"></span></label>
-       <input type="range" id="monthSizeSlider" min="0.5" max="1.8" step="0.05"
-         style="width:100%;accent-color:var(--gold);margin:8px 0;touch-action:none"
-         oninput="previewMonthSize(this.value)">
-       <button class="adm-btn" style="margin-top:8px" onclick="saveMonthSize()">Guardar tamaño</button>
-     </div></div>
-     <div class="adm-section">Encabezado de Sección</div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-perfH2"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Introducción</label><textarea class="adm-input" id="f-perfIntro" rows="3"></textarea></div></div>
-     <button class="adm-btn" style="margin-bottom:20px" onclick="savePerfHeader()">Guardar Encabezado</button>
-     <div class="adm-section">Agregar nueva fecha</div>
-     <div class="adm-grid">
-      <div class="adm-col"><label class="adm-label">Día</label><input class="adm-input" id="pDay" placeholder="15 o TBA"></div>
-      <div class="adm-col"><label class="adm-label">Mes / Período</label><input class="adm-input" id="pMonth" placeholder="Jun 2025"></div>
+     <div class="adm-section">Calendar <span id="perfLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <p class="adm-perf-editorial-hint">Use the toolbar <strong>Content</strong> language (EN / DE / …) to edit this heading and intro for each site language.</p>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-perfH2" placeholder="Appears as the calendar section heading on the site"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro</label><textarea class="adm-input" id="f-perfIntro" rows="2" placeholder="Short line under the title (plain text)"></textarea></div></div>
+     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <button type="button" class="adm-btn" onclick="savePerfHeader()">Save calendar settings</button>
+      <div class="adm-feedback" id="fb-perf" style="display:none;margin:0;align-self:center">Saved!</div>
      </div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Horario (opcional)</label><input class="adm-input" id="pTime" placeholder="20:00 · o · 19:30 – 21:30"></div></div>
+     <div class="adm-section" style="margin-top:20px">Events</div>
+     <div id="admPerfList"></div>
+
+     <div class="adm-section" style="margin-top:24px">Add event</div>
      <div class="adm-grid">
-      <div class="adm-col"><label class="adm-label">Tipo de evento</label>
+      <div class="adm-col"><label class="adm-label">Day</label><input class="adm-input" id="pDay" placeholder="15 or TBA"></div>
+      <div class="adm-col"><label class="adm-label">Month / period</label><input class="adm-input" id="pMonth" placeholder="Jun 2025"></div>
+     </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Time (optional)</label><input class="adm-input" id="pTime" placeholder="20:00 or 19:30 – 21:30"></div></div>
+     <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Event type</label>
         <select class="adm-select" id="pType">
-          <option value="concert">Concierto / Concert</option>
-          <option value="opera">Ópera / Opera</option>
+          <option value="concert">Concert</option>
+          <option value="opera">Opera</option>
           <option value="recital">Recital / Liederabend</option>
           <option value="show">Show</option>
           <option value="gala">Gala</option>
-          <option value="houseconcert">House Concert / Hauskonzert</option>
-          <option value="tango">Tango Night</option>
-          <option value="collaboration">Colaboración / Collaboration</option>
-          <option value="other">Otro / Other</option>
+          <option value="houseconcert">House concert</option>
+          <option value="tango">Tango night</option>
+          <option value="collaboration">Collaboration</option>
+          <option value="other">Other</option>
         </select>
       </div>
-      <div class="adm-col"><label class="adm-label">Estado</label>
+      <div class="adm-col"><label class="adm-label">Status</label>
         <select class="adm-select" id="pStatus">
-          <option value="upcoming">Próximo</option>
-          <option value="current">Producción actual</option>
-          <option value="past">Pasado</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="current">Current production</option>
+          <option value="past">Past</option>
         </select>
       </div>
      </div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="pTitle" placeholder="Der Vetter aus Dingsda"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title</label><input class="adm-input" id="pTitle" placeholder="Der Vetter aus Dingsda"></div></div>
      <div class="adm-grid full"><div class="adm-col">
-       <label class="adm-label">Detalle <span style="color:var(--text-faint);font-weight:400">(cualquier idioma — se traducirá automáticamente)</span></label>
+       <label class="adm-label">Detail <span style="color:var(--text-faint);font-weight:400">(any language — auto-translated)</span></label>
        <div style="display:flex;gap:8px;align-items:center">
          <input class="adm-input" id="pDetail" placeholder="E. Künneke · Roderich de Weert · Regie: N.N." style="flex:1">
          <button type="button" onclick="autoTranslateDetail()" id="translateBtn"
            style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;transition:all .2s;flex-shrink:0">
-           ✦ Auto-traducir
+           ✦ Auto-translate
          </button>
        </div>
        <div id="translateStatus" style="font-size:.7rem;color:var(--text-faint);margin-top:6px;min-height:16px"></div>
        <div id="translatePreviews" style="display:none;margin-top:10px;border:1px solid rgba(212,168,67,.15);border-radius:4px;padding:10px;font-size:.75rem;line-height:1.8">
-         <div style="font-family:var(--ff-caps);font-size:.55rem;color:var(--gold);margin-bottom:6px;letter-spacing:.1em">TRADUCCIONES GENERADAS</div>
+         <div style="font-family:var(--ff-caps);font-size:.55rem;color:var(--gold);margin-bottom:6px;letter-spacing:.1em">GENERATED TRANSLATIONS</div>
          <div id="tp-en"></div><div id="tp-de"></div>
          <div id="tp-es"></div><div id="tp-it"></div><div id="tp-fr"></div>
        </div>
@@ -1861,43 +1887,61 @@ textarea.adm-input{resize:vertical;min-height:80px}
      </div></div>
      <div class="adm-grid">
       <div class="adm-col"><label class="adm-label">Venue</label><input class="adm-input" id="pVenue" placeholder="Kammeroper Frankfurt"></div>
-      <div class="adm-col"><label class="adm-label">Ciudad</label><input class="adm-input" id="pCity" placeholder="Frankfurt, Germany"></div>
+      <div class="adm-col"><label class="adm-label">City</label><input class="adm-input" id="pCity" placeholder="Frankfurt, Germany"></div>
      </div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Foto del venue (URL, opcional)</label><input class="adm-input" id="pVenuePhoto" placeholder="https://example.com/venue.jpg"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Opacidad de la imagen <span id="pVenueOpacityVal" style="color:var(--gold)">50%</span></label><input type="range" min="30" max="100" value="50" id="pVenueOpacity" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pVenueOpacityVal').textContent=this.value+'%'"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Venue photo (URL, optional)</label><input class="adm-input" id="pVenuePhoto" placeholder="https://example.com/venue.jpg"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Image opacity <span id="pVenueOpacityVal" style="color:var(--gold)">50%</span></label><input type="range" min="30" max="100" value="50" id="pVenueOpacity" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pVenueOpacityVal').textContent=this.value+'%'"></div></div>
 
-     <div class="adm-section" style="margin-top:16px;font-size:.7rem">Información detallada (opcional)</div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción extendida</label><textarea class="adm-input" id="pExtDesc" rows="3" placeholder="Descripción completa del evento, programa, elenco..."></textarea></div></div>
-     <div class="adm-grid"><div class="adm-col"><label class="adm-label">Precio entradas</label><input class="adm-input" id="pTicketPrice" placeholder="€15 / €25 / Gratis"></div><div class="adm-col"><label class="adm-label">Link del evento (Veranstalter)</label><input class="adm-input" id="pEventLink" placeholder="https://..."></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto del botón del link</label><input class="adm-input" id="pEventLinkLabel" placeholder="Tickets & Info"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Flyer / imagen del evento (URL)</label><input class="adm-input" id="pFlyerImg" placeholder="https://example.com/flyer.jpg"></div></div>
-     <div class="adm-grid"><div class="adm-col"><label class="adm-label">Imagen header del modal (URL, opcional)</label><input class="adm-input" id="pModalImg" placeholder="Vacío = usa foto del venue"></div><div class="adm-col" style="display:flex;align-items:end;padding-bottom:6px"><label style="display:flex;align-items:center;gap:8px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="pModalImgHide" style="accent-color:var(--gold);cursor:pointer"> Sin imagen en modal</label></div></div>
+     <div class="adm-section" style="margin-top:16px;font-size:.7rem">Optional details</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Extended description</label><textarea class="adm-input" id="pExtDesc" rows="3" placeholder="Full event description, program, cast…"></textarea></div></div>
+     <div class="adm-grid"><div class="adm-col"><label class="adm-label">Ticket price</label><input class="adm-input" id="pTicketPrice" placeholder="€15 / €25 / Free"></div><div class="adm-col"><label class="adm-label">Event link</label><input class="adm-input" id="pEventLink" placeholder="https://..."></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link button label</label><input class="adm-input" id="pEventLinkLabel" placeholder="Tickets & Info"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Flyer / event image (URL)</label><input class="adm-input" id="pFlyerImg" placeholder="https://example.com/flyer.jpg"></div></div>
+     <div class="adm-grid"><div class="adm-col"><label class="adm-label">Modal header image (URL, optional)</label><input class="adm-input" id="pModalImg" placeholder="Empty = use venue photo"></div><div class="adm-col" style="display:flex;align-items:end;padding-bottom:6px"><label style="display:flex;align-items:center;gap:8px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="pModalImgHide" style="accent-color:var(--gold);cursor:pointer"> No image in modal</label></div></div>
 
-     <button class="adm-btn adm-btn-save" onclick="addPerf()">+ Agregar fecha</button>
-     <div class="adm-feedback" id="fb-perf">¡Agregado!</div>
-     <div class="adm-section" style="margin-top:28px">Fechas actuales</div>
-     <div id="admPerfList"></div>
+     <button class="adm-btn adm-btn-save" onclick="addPerf()">+ Add event</button>
+
+     <details class="adm-advanced-fold" id="admPerfAdvancedFold">
+      <summary class="adm-advanced-fold-sum">Advanced · layout &amp; JSON overrides</summary>
+      <div class="adm-advanced-inner">
+       <p class="adm-perf-editorial-hint" style="margin-top:0;margin-bottom:12px">Optional. Most sites never need these. Use <strong>Save calendar settings</strong> at the top of this tab to store title, intro, and these JSON fields together.</p>
+       <div class="adm-section" style="margin-top:0">Month column size (all languages)</div>
+       <div class="adm-grid full"><div class="adm-col">
+        <label class="adm-label">Scale — <span id="monthSizeLabel"></span></label>
+        <input type="range" id="monthSizeSlider" min="0.5" max="1.8" step="0.05"
+          style="width:100%;accent-color:var(--gold);margin:8px 0;touch-action:none"
+          oninput="previewMonthSize(this.value)">
+        <button type="button" class="adm-btn" style="margin-top:4px;width:auto" onclick="saveMonthSize()">Save month size</button>
+       </div></div>
+       <div class="adm-section" style="margin-top:16px">Event type labels (JSON)</div>
+       <p class="adm-perf-editorial-hint" style="margin-bottom:10px">Maps internal keys to labels on cards and filters. Leave empty to keep stored values.</p>
+       <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Event types object</label><textarea class="adm-input" id="f-perfEventTypesJson" rows="4" spellcheck="false" placeholder='{"opera":"Opera","concert":"Concert"}'></textarea></div></div>
+       <div class="adm-section" style="margin-top:12px">Month names (JSON)</div>
+       <p class="adm-perf-editorial-hint" style="margin-bottom:10px">English keys (e.g. January) → display text for this content language. Leave empty to keep stored values.</p>
+       <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Month / season labels</label><textarea class="adm-input" id="f-perfMonthNamesJson" rows="4" spellcheck="false" placeholder='{"January":"Januar"}'></textarea></div></div>
+      </div>
+     </details>
     </div>
     <!-- PHOTOS -->
     <div class="adm-panel" id="admPanel-photos">
-     <div class="adm-section">Retratos de Estudio</div>
+     <div class="adm-section">Photos — studio portraits</div>
      <div id="admStudioSlots"></div>
      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
-         + Subir foto estudio<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('s',this)">
+         + Upload studio photo<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('s',this)">
        </label>
-       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
-       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="URL de imagen" id="studioUrlInput">
+       <span style="font-size:.6rem;color:var(--text-faint)">or</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="Image URL" id="studioUrlInput">
        <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addPhotoByUrl('s','studioUrlInput')">+ URL</button>
      </div>
-     <div class="adm-section" style="margin-top:24px">Fotos en Escena</div>
+     <div class="adm-section" style="margin-top:24px">Photos — on stage</div>
      <div id="admStageSlots"></div>
      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
-         + Subir foto escena<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('t',this)">
+         + Upload stage photo<input type="file" accept="image/*" style="display:none" onchange="addPhotoToSection('t',this)">
        </label>
-       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
-       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="URL de imagen" id="stageUrlInput">
+       <span style="font-size:.6rem;color:var(--text-faint)">or</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:180px" placeholder="Image URL" id="stageUrlInput">
        <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addPhotoByUrl('t','stageUrlInput')">+ URL</button>
      </div>
      <div class="adm-section" style="margin-top:24px">Backstage</div>
@@ -1905,75 +1949,84 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div style="margin-top:12px">
        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
-         + Subir foto<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
+         + Upload photo<input type="file" accept="image/*" style="display:none" onchange="addBackstagePhoto(this)">
        </label>
-       <span style="font-size:.6rem;color:var(--text-faint)">o</span>
-       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:200px" placeholder="URL de imagen (img/foto.jpg)" id="backstageUrlInput">
-       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addBackstageByUrl()">+ Agregar URL</button>
+       <span style="font-size:.6rem;color:var(--text-faint)">or</span>
+       <input class="adm-input" style="font-size:.7rem;padding:6px 10px;flex:1;min-width:200px" placeholder="Image URL (e.g. img/photo.jpg)" id="backstageUrlInput">
+       <button class="adm-btn" style="font-size:.48rem;padding:7px 14px" onclick="addBackstageByUrl()">+ Add URL</button>
        </div>
      </div>
-     <div class="adm-feedback" id="fb-photos">¡Foto actualizada!</div>
+     <div class="adm-feedback" id="fb-photos">Photo updated!</div>
     </div>
     <!-- PRESS -->
     <div class="adm-panel" id="admPanel-press">
-      <div class="adm-section">Reseñas</div>
+      <div class="adm-section">Press / reviews</div>
      <div class="adm-grid full" style="margin-bottom:12px"><div class="adm-col">
-       <label class="adm-label">Nota de traducción (idioma activo)</label>
+       <label class="adm-label">Translation note (active content language)</label>
        <textarea class="adm-input" id="f-pressTranslatedNote" rows="2" placeholder="Translated from the original German review."></textarea>
        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-         <button class="adm-btn adm-btn-save" onclick="savePressMeta()">Guardar nota</button>
+         <button class="adm-btn adm-btn-save" onclick="savePressMeta()">Save note</button>
         <button class="adm-btn" type="button" onclick="copyPressPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
         <button class="adm-btn" type="button" onclick="openPressCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
-         <div class="adm-feedback" id="fb-pressMeta" style="opacity:0;transition:opacity .3s">¡Guardado!</div>
+         <div class="adm-feedback" id="fb-pressMeta" style="opacity:0;transition:opacity .3s">Saved!</div>
        </div>
      </div></div>
      <div id="pressAdmList"></div>
-     <div class="adm-section" style="margin-top:24px">Agregar nueva cita</div>
+     <div class="adm-section" style="margin-top:24px">Add quote</div>
      <div class="adm-grid full"><div class="adm-col">
-       <label class="adm-label">Cita (sin comillas)</label>
+       <label class="adm-label">Quote (no quotation marks)</label>
        <textarea class="adm-input" id="pa-quote" rows="3" placeholder="Das spielfreudige Ensemble begeistert..."></textarea>
-       <button type="button" onclick="autoTranslateNewPressQuote()" style="margin-top:6px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;padding:7px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer">✦ Auto-traducir cita</button>
+       <button type="button" onclick="autoTranslateNewPressQuote()" style="margin-top:6px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;padding:7px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer">✦ Auto-translate quote</button>
        <div id="pa-translateStatus" style="font-size:.7rem;color:var(--text-faint);margin-top:4px;min-height:14px"></div>
        <input type="hidden" id="pa-qi18n-en"><input type="hidden" id="pa-qi18n-de">
        <input type="hidden" id="pa-qi18n-es"><input type="hidden" id="pa-qi18n-it"><input type="hidden" id="pa-qi18n-fr">
      </div></div>
      <div class="adm-grid">
-       <div class="adm-col"><label class="adm-label">Fuente / Medio</label><input class="adm-input" id="pa-source" placeholder="HR2 · Hessischer Rundfunk"></div>
-       <div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" id="pa-production" placeholder="Der Vetter aus Dingsda · 2025"></div>
+       <div class="adm-col"><label class="adm-label">Source / outlet</label><input class="adm-input" id="pa-source" placeholder="HR2 · Hessischer Rundfunk"></div>
+       <div class="adm-col"><label class="adm-label">Production</label><input class="adm-input" id="pa-production" placeholder="Der Vetter aus Dingsda · 2025"></div>
      </div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">URL del artículo (opcional)</label><input class="adm-input" id="pa-url" placeholder="https://..."></div></div>
-     <button class="adm-btn adm-btn-save" onclick="addPressQuote()" style="margin-top:16px">+ Agregar cita</button>
-     <div class="adm-feedback" id="fb-press">¡Guardado!</div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Article URL (optional)</label><input class="adm-input" id="pa-url" placeholder="https://..."></div></div>
+     <button class="adm-btn adm-btn-save" onclick="addPressQuote()" style="margin-top:16px">+ Add quote</button>
+     <div class="adm-feedback" id="fb-press">Saved!</div>
     </div>
     <!-- CONTACT -->
     <div class="adm-panel" id="admPanel-contact">
-     <div class="adm-section">Contacto <span id="contactLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (HTML)</label><input class="adm-input" id="f-contactTitle"></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtítulo</label><textarea class="adm-input" id="f-contactSub" rows="3"></textarea></div></div>
-     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><input class="adm-input" id="f-contactQuote"></div></div>
+     <div class="adm-section">Contact <span id="contactLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title (HTML)</label><input class="adm-input" id="f-contactTitle"></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Subtitle</label><textarea class="adm-input" id="f-contactSub" rows="3"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Quote</label><input class="adm-input" id="f-contactQuote"></div></div>
      <div class="adm-grid">
       <div class="adm-col"><label class="adm-label">Email</label><input class="adm-input" id="f-contactEmail" placeholder="rolandoguy@gmail.com"></div>
-      <div class="adm-col"><label class="adm-label">Texto botón email</label><input class="adm-input" id="f-contactEmailBtn"></div>
+      <div class="adm-col"><label class="adm-label">Email button label</label><input class="adm-input" id="f-contactEmailBtn"></div>
      </div>
-    <div class="adm-grid full" style="display:none"><div class="adm-col"><label class="adm-label">Texto botón website</label><input class="adm-input" id="f-contactWebBtn"></div></div>
+    <div class="adm-grid full" style="display:none"><div class="adm-col"><label class="adm-label">Website button label</label><input class="adm-input" id="f-contactWebBtn"></div></div>
     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-     <button class="adm-btn adm-btn-save" onclick="saveSection('contact')">Guardar Contacto</button>
+     <button class="adm-btn adm-btn-save" onclick="saveSection('contact')">Save Contact</button>
      <button class="adm-btn" type="button" onclick="copyContactPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openContactCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
     </div>
-     <div class="adm-feedback" id="fb-contact">¡Guardado!</div>
+     <div class="adm-feedback" id="fb-contact">Saved!</div>
+    </div>
+    <div class="adm-panel" id="admPanel-siteui">
+     <div class="adm-section">UI / Site Strings <span id="siteuiLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Public site copy per language (same Content EN/DE/… selector as Hero/Bio). Firestore / local: <code>rg_ui_{lang}</code>. Empty values or values matching the site default are not stored as overrides. Program links from Repertoire / EPK stay in <code>rg_editorial_{lang}</code>.</p>
+     <div id="siteUiFieldsRoot"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="adm-btn adm-btn-save" type="button" onclick="saveSiteUiStrings()">Save site strings</button>
+     </div>
+     <div class="adm-feedback" id="fb-siteui" style="display:none">Saved!</div>
     </div>
    <div class="adm-panel" id="admPanel-epk">
 
      <!-- ── BIOS ─────────────────────────────────────────── -->
-     <div class="adm-section">Biografías (Bio Texts)</div>
+     <div class="adm-section">Press kit — biography texts</div>
      <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
-       Editá los textos en cada idioma. Los cambios se guardan por idioma.
+       Edit each language separately. Changes are saved per language.
      </p>
 
      <!-- Language selector for bios -->
      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-       <span style="font-size:.7rem;color:var(--text-dim);align-self:center">Idioma:</span>
+       <span style="font-size:.7rem;color:var(--text-dim);align-self:center">Bio language:</span>
        <button class="adm-lang-btn active" id="epkBioLangBtn-en" onclick="epkSetBioLang('en')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--gold);color:#000;border:none;cursor:pointer">EN</button>
        <button class="adm-lang-btn" id="epkBioLangBtn-de" onclick="epkSetBioLang('de')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">DE</button>
        <button class="adm-lang-btn" id="epkBioLangBtn-es" onclick="epkSetBioLang('es')" style="font-family:var(--ff-caps);font-size:.65rem;letter-spacing:.1em;padding:4px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);cursor:pointer">ES</button>
@@ -1986,43 +2039,43 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
      <div class="adm-grid full">
        <div class="adm-col">
-         <label class="adm-label">Bio 50 palabras <span id="epkBio50Count" style="color:var(--gold)"></span></label>
+         <label class="adm-label">Bio — 50 words <span id="epkBio50Count" style="color:var(--gold)"></span></label>
          <textarea class="adm-input" id="f-epkBio50" rows="3" oninput="epkCountWords('epkBio50Count','f-epkBio50')"></textarea>
        </div>
      </div>
      <div class="adm-grid full">
        <div class="adm-col">
-         <label class="adm-label">Bio 150 palabras <span id="epkBio150Count" style="color:var(--gold)"></span></label>
+         <label class="adm-label">Bio — 150 words <span id="epkBio150Count" style="color:var(--gold)"></span></label>
          <textarea class="adm-input" id="f-epkBio150" rows="5" oninput="epkCountWords('epkBio150Count','f-epkBio150')"></textarea>
        </div>
      </div>
      <div class="adm-grid full">
        <div class="adm-col">
-         <label class="adm-label">Bio completa — Párrafo 1</label>
+         <label class="adm-label">Full bio — paragraph 1</label>
          <textarea class="adm-input" id="f-epkBio300p1" rows="4"></textarea>
        </div>
      </div>
      <div class="adm-grid full">
        <div class="adm-col">
-         <label class="adm-label">Bio completa — Párrafo 2</label>
+         <label class="adm-label">Full bio — paragraph 2</label>
          <textarea class="adm-input" id="f-epkBio300p2" rows="4"></textarea>
        </div>
      </div>
      <div class="adm-grid full">
        <div class="adm-col">
-         <label class="adm-label">Bio completa — Párrafo 3</label>
+         <label class="adm-label">Full bio — paragraph 3</label>
          <textarea class="adm-input" id="f-epkBio300p3" rows="4"></textarea>
        </div>
      </div>
      <div class="adm-grid full">
        <div class="adm-col">
-         <label class="adm-label">Bio completa — Párrafo 4</label>
+         <label class="adm-label">Full bio — paragraph 4</label>
          <textarea class="adm-input" id="f-epkBio300p4" rows="4"></textarea>
        </div>
      </div>
      <div class="adm-row" style="margin-bottom:32px">
-       <button class="adm-btn adm-btn-save" onclick="saveEpkBios()">Guardar Biografías</button>
-       <div class="adm-feedback" id="fb-epkBios">¡Guardado!</div>
+       <button class="adm-btn adm-btn-save" onclick="saveEpkBios()">Save biographies</button>
+       <div class="adm-feedback" id="fb-epkBios">Saved!</div>
      </div>
      <div style="margin:-8px 0 20px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="adm-btn" type="button" onclick="copyEpkPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
@@ -2037,26 +2090,26 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div id="epkPublicPdfAdminList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
 
      <!-- ── CVs ── -->
-     <div class="adm-section" style="margin-top:24px">CVs por Idioma (PDF)</div>
+     <div class="adm-section" style="margin-top:24px">CVs by language (PDF)</div>
      <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
-       Subí un PDF de CV para cada idioma. Sin uno personalizado se usa el archivo por defecto de docs/.
+       Upload a CV PDF per language. Without a custom file, the default in docs/ is used.
      </p>
      <div id="epkCvAdminList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
      <div style="margin-bottom:24px;display:flex;gap:12px;align-items:center">
-       <button class="adm-btn adm-btn-save" onclick="saveEpkCvs()">Guardar CVs</button>
-       <div class="adm-feedback" id="fb-epkCvs" style="display:none">¡Guardado!</div>
+       <button class="adm-btn adm-btn-save" onclick="saveEpkCvs()">Save CVs</button>
+       <div class="adm-feedback" id="fb-epkCvs" style="display:none">Saved!</div>
      </div>
 
      <!-- ── HIGH-RES PHOTOS ─────────────────────────────── -->
-     <div class="adm-section" style="margin-top:24px">Fotos de Prensa (High-Res)</div>
+     <div class="adm-section" style="margin-top:24px">Press photos (high-res)</div>
      <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
-     Agregá URLs de fotos de alta resolución para descargar en la sección Press.
+     Add high-resolution image URLs for download in the Press section.
      </p>
      <div id="epkPhotoAdminList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
-     <button onclick="addEpkPhoto()" style="background:transparent;border:1px dashed var(--gold);color:var(--gold);padding:8px 18px;cursor:pointer;font-size:.75rem;width:100%">+ Agregar foto</button>
+     <button onclick="addEpkPhoto()" style="background:transparent;border:1px dashed var(--gold);color:var(--gold);padding:8px 18px;cursor:pointer;font-size:.75rem;width:100%">+ Add photo</button>
      <div class="adm-row" style="margin-top:12px">
-       <button class="adm-btn adm-btn-save" onclick="saveEpkPhotos()">Guardar Fotos</button>
-       <div class="adm-feedback" id="fb-epkPhotos">¡Guardado!</div>
+       <button class="adm-btn adm-btn-save" onclick="saveEpkPhotos()">Save photos</button>
+       <div class="adm-feedback" id="fb-epkPhotos">Saved!</div>
      </div>
 
    </div><!-- admPanel-epk -->
@@ -2142,7 +2195,7 @@ function admSetUnlocked(unlocked, user){
   if(btnOut) btnOut.style.display = user ? '' : 'none';
 }
 async function admSignInGoogle(){
-  if(!fauth){ alert('Auth no disponible (Firebase no inicializado).'); return; }
+  if(!fauth){ alert('Authentication is unavailable (Firebase did not initialize).'); return; }
   const provider = new firebase.auth.GoogleAuthProvider();
   try{
     console.info('[RG ADMIN] Sign-in start');
@@ -2151,7 +2204,7 @@ async function admSignInGoogle(){
     console.info('[RG ADMIN] Sign-in success', { email: u && u.email ? u.email : null, uid: u && u.uid ? u.uid : null });
   }catch(e){
     console.warn('Google sign-in failed:', e);
-    alert('No se pudo iniciar sesión con Google. Revisá que el dominio esté autorizado en Firebase Authentication.');
+    alert('Could not sign in with Google. Check that this domain is allowed in Firebase Authentication.');
   }
 }
 async function admSignOut(){
@@ -2171,9 +2224,9 @@ if(fauth){
     admSetUnlocked(ok, user);
     const msg = document.getElementById('admAuthMsg');
     if(msg){
-      if(!user) msg.textContent = 'Iniciá sesión con Google para acceder.';
-      else if(!ok) msg.textContent = 'Tu cuenta no está autorizada para este panel.';
-      else msg.textContent = 'Sesión iniciada.';
+      if(!user) msg.textContent = 'Sign in with Google to continue.';
+      else if(!ok) msg.textContent = 'This account is not authorized for this admin panel.';
+      else msg.textContent = 'Signed in.';
     }
   });
 }
@@ -2192,10 +2245,10 @@ function load(key) {
   return (DB[key] !== undefined && DB[key] !== null) ? DB[key] : null;
 }
 
-// Fuente canónica: Firestore. save() escribe en DB, en localStorage (fallback) y en Firestore.
-// La escritura a Firestore puede fallar con permission-denied si las reglas exigen auth y el contexto
-// no la cumple (p. ej. file://, dominio no autorizado en Firebase Auth, o usuario no logueado).
-// Revisar consola: "[RG ADMIN] save OK" = persistió; "Firestore save error" + code = causa (e.g. permission-denied).
+// Canonical source: Firestore. save() writes to DB, localStorage (fallback), and Firestore.
+// Firestore writes can fail with permission-denied if rules require auth and the context does not satisfy them
+// (e.g. file://, domain not allowed in Firebase Auth, or user not signed in).
+// Check console: "[RG ADMIN] save OK" = persisted; "Firestore save error" + code = cause (e.g. permission-denied).
 function save(key, val) {
   DB[key] = val;
   // Fallback de resiliencia: el frontend (index) aplica este override si Firestore falla o llega tarde.
@@ -2226,6 +2279,37 @@ function save(key, val) {
       });
       if (typeof rgSaveFailed === 'function') rgSaveFailed(key, e);
     });
+}
+
+function getUiOverrides(lang){
+  try {
+    const raw = (typeof load === 'function') ? load('rg_ui_' + lang) : null;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw;
+  } catch (e) {}
+  return {};
+}
+function stripHtmlForUiAttr(s){
+  if (s == null) return '';
+  return String(s).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+function effectiveUiText(lang, key){
+  const ov = getUiOverrides(lang);
+  if (ov && typeof ov[key] === 'string' && ov[key].trim()) return ov[key];
+  if (typeof Ti === 'undefined' || !Ti) return undefined;
+  const t = Ti[lang] || Ti.en || {};
+  if (Object.prototype.hasOwnProperty.call(t, key)) return t[key];
+  const en = Ti.en || {};
+  if (Object.prototype.hasOwnProperty.call(en, key)) return en[key];
+  return undefined;
+}
+function uiTable(lang){
+  if (typeof Ti === 'undefined' || !Ti) return {};
+  const merged = Object.assign({}, Ti[lang] || Ti.en || {});
+  const ov = getUiOverrides(lang);
+  Object.keys(ov).forEach(k => {
+    if (typeof ov[k] === 'string' && ov[k].trim()) merged[k] = ov[k];
+  });
+  return merged;
 }
 
 // ── Admin UX: Save status + activity log + helpers ──
@@ -2382,6 +2466,7 @@ function admExportJSON() {
       k.startsWith('programs_') ||
       k.startsWith('rg_programs_') ||
       k.startsWith('rg_editorial_') ||
+      k.startsWith('rg_ui_') ||
       k.startsWith('rep_')
     );
     const payload = {
@@ -2406,6 +2491,7 @@ function restoreDefaults(section) {
     if (section === 'hero') clear('hero_' + lang);
     else if (section === 'bio') clear('bio_' + lang);
     else if (section === 'contact') clear('contact_' + lang);
+    else if (section === 'site-ui') { clear('rg_ui_' + lang); try { if (typeof setLang === 'function') setLang(lang); } catch (e) {} try { if (typeof renderAll === 'function') renderAll(); } catch (e) {} }
     else if (section === 'calendar') { clear('perf_' + lang); clear('rg_perfs'); }
     else if (section === 'programs') { clear('rg_programs_' + lang); clear('programs_' + lang); }
     else if (section === 'videos') clear('rg_vid');
@@ -2440,6 +2526,7 @@ function __admInjectPanelTools() {
     'admPanel-perf': 'calendar',
     'admPanel-press': 'press',
     'admPanel-contact': 'contact',
+    'admPanel-siteui': 'site-ui',
     'admPanel-epk': 'epk-bios'
   };
   const autosavePanels = new Set(['admPanel-press', 'admPanel-epk', 'admPanel-perf', 'admPanel-photos']);
@@ -2823,6 +2910,14 @@ function get(key) {
   return load(langKey) || LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
 }
 
+function getPerfMerged() {
+  const enBase = (LANG_CONTENT.en && LANG_CONTENT.en.perf) || {};
+  const locBase = (LANG_CONTENT[currentLang] && LANG_CONTENT[currentLang].perf) || {};
+  const st = load('perf_' + currentLang);
+  const stored = (st && typeof st === 'object') ? st : {};
+  return { ...enBase, ...locBase, ...stored };
+}
+
 /** Two-line section titles: line1 before &, line2 = gold & + rest (HTML). Idempotent. */
 function formatSectionTitleIfAmpersand(html, i18nKey) {
   const s = String(html || '');
@@ -2943,6 +3038,33 @@ function admEffectiveRepH2Display() {
   return '';
 }
 
+function admLangPick(obj, field) {
+  if (!obj || typeof obj !== 'object') return '';
+  const v = obj[field];
+  return (typeof v === 'string' && v.trim() !== '') ? v : '';
+}
+
+/** Hero / bio / contact field: non-empty Firestore override, else LANG_CONTENT (current lang then EN). */
+function admEffectiveSectionField(section, field) {
+  const k = section + '_' + currentLang;
+  const stored = load(k);
+  if (stored && typeof stored === 'object' && Object.prototype.hasOwnProperty.call(stored, field)) {
+    const v = stored[field];
+    if (typeof v === 'string' && v.trim() !== '') return v;
+  }
+  const lc = LANG_CONTENT[currentLang] && LANG_CONTENT[currentLang][section];
+  const a = admLangPick(lc, field);
+  if (a !== '') return a;
+  const en = LANG_CONTENT.en && LANG_CONTENT.en[section];
+  return admLangPick(en, field);
+}
+
+function admEffectiveVidH2() {
+  const d = getVid();
+  if (d && typeof d.h2 === 'string' && d.h2.trim()) return d.h2;
+  return (DEFAULTS.vid && DEFAULTS.vid.h2) ? DEFAULTS.vid.h2 : '';
+}
+
 function renderHero() {
   const d = get('hero');
   document.getElementById('heroEyebrow').textContent = d.eyebrow;
@@ -2952,7 +3074,7 @@ function renderHero() {
   const h = document.getElementById('heroName');
   h.innerHTML = 'Rolando<br><em>Guy</em>';
   const epkNavBtn = document.getElementById('heroEpkBtn');
-  if (epkNavBtn) { const tl = (Ti[currentLang]||Ti.en)['nav.epk.short']||'Press'; epkNavBtn.textContent = tl; }
+  if (epkNavBtn) { const tl = effectiveUiText(currentLang, 'nav.epk.short') || 'Press'; epkNavBtn.textContent = tl; }
   if(d.bgImage&&d.bgImage.trim()){const hb=document.getElementById('heroBg');if(hb)hb.style.backgroundImage="url('"+d.bgImage.trim()+"')";}
 }
 
@@ -2963,14 +3085,18 @@ function renderBio() {
   document.getElementById('bioP1').textContent = d.p1;
   document.getElementById('bioP2').textContent = d.p2;
   const bioQEl = document.getElementById('bioQuote');
+  const bioCiteEl = document.getElementById('bioCite');
   const bioQWrap = document.getElementById('bioQuoteWrap');
+  const hasQuote = d.quote && d.quote.trim();
+  const hasCite = d.cite && d.cite.trim();
   if (bioQEl && bioQWrap) {
-    if (d.quote && d.quote.trim()) {
-      bioQEl.textContent = d.quote;
-      bioQWrap.style.display = '';
-    } else {
-      bioQWrap.style.display = 'none';
+    if (hasQuote) bioQEl.textContent = d.quote;
+    else bioQEl.textContent = '';
+    if (bioCiteEl) {
+      if (hasCite) { bioCiteEl.textContent = d.cite; bioCiteEl.style.display = ''; }
+      else { bioCiteEl.textContent = ''; bioCiteEl.style.display = 'none'; }
     }
+    bioQWrap.style.display = (hasQuote || hasCite) ? '' : 'none';
   }
 }
 
@@ -2980,13 +3106,14 @@ let repStatusFilter = 'all'; // 'all' | 'performed' | 'prepared' | 'studying'
 function renderRep() {
   const d = getRep();
   const cat = currentRepCategory || 'opera';
-  const t = Ti[currentLang] || Ti.en;
+  const t = uiTable(currentLang);
+  const ed = getEditorial();
   document.getElementById('repH2').innerHTML = withTitleEmphasis('rep', d.h2 || '');
   const repIntroLineEl = document.getElementById('repIntroLine');
-  if (repIntroLineEl) repIntroLineEl.textContent = t['rep.introLine'] || '';
-  const descKey = 'rep.desc' + (cat === 'opera' ? 'Opera' : cat === 'arias' ? 'Arias' : cat === 'operetta' ? 'Operetta' : cat === 'lied' ? 'Lied' : 'Tango');
+  if (repIntroLineEl) repIntroLineEl.textContent = ed.repIntroLine || '';
+  const descMap = { opera: ed.repDescOpera, arias: ed.repDescArias, operetta: ed.repDescOperetta, lied: ed.repDescLied, tango: ed.repDescTango };
   const repIntroEl = document.getElementById('repIntro');
-  if (repIntroEl) repIntroEl.textContent = t[descKey] || '';
+  if (repIntroEl) repIntroEl.textContent = descMap[cat] || '';
   const g = document.getElementById('operaGrid');
 
   const allCards = d.cards || [];
@@ -3034,7 +3161,7 @@ function renderRep() {
   });
 
   if(!catCards.length){
-    const emptyMsg = (Ti[currentLang] || Ti.en)['rep.empty'] || 'No repertoire has been added yet for this category.';
+    const emptyMsg = t['rep.empty'] || 'No repertoire has been added yet for this category.';
     g.innerHTML = `<div class="rep-empty" role="status">${emptyMsg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
     return;
   }
@@ -3130,7 +3257,7 @@ function renderPrograms() {
     gridEl.innerHTML = '';
     return;
   }
-  const t = Ti[currentLang] || Ti.en;
+  const t = uiTable(currentLang);
   const lblFormation = t['programs.formation'] || 'Formation';
   const lblDuration = t['programs.duration'] || 'Duration';
   const lblIdealFor = t['programs.idealFor'] || 'Ideal for';
@@ -3155,7 +3282,7 @@ function renderPrograms() {
 // ── Render Videos ──
 function renderVideos() {
   const d = getVid();
-  const vidH2 = (Ti[currentLang]&&Ti[currentLang]['vid.h2']) ? Ti[currentLang]['vid.h2'] : d.h2;
+  const vidH2 = (d && typeof d.h2 === 'string' && d.h2.trim()) ? d.h2 : ((DEFAULTS.vid && DEFAULTS.vid.h2) || '');
   document.getElementById('vidH2').innerHTML = withTitleEmphasis('vid', vidH2);
   const vids = d.videos;
   const grid = document.getElementById('videoGrid');
@@ -3198,7 +3325,8 @@ function renderVideos() {
   grid.innerHTML = visible.map((v, i) => mkCard(v, i, false)).join('');
 
   if (hidden.length > 0) {
-    const showMoreTxt = (Ti[currentLang] || Ti.en)['vid.showMore'] || '+ Show More Videos';
+    const tVid = uiTable(currentLang);
+    const showMoreTxt = tVid['vid.showMore'] || '+ Show More Videos';
     more.innerHTML = hidden.map((v, i) => mkCard(v, i, true)).join('') +
       `<div style="text-align:center;margin-top:20px">
         <button class="btn-secondary" id="moreBtn" onclick="toggleMore()">${showMoreTxt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</button>
@@ -3218,7 +3346,7 @@ function toggleMore() {
     el.style.display = isHidden ? '' : 'none';
     if (isHidden) el.classList.add('visible'); // bypass IntersectionObserver
   });
-  const t = Ti[currentLang] || Ti.en;
+  const t = uiTable(currentLang);
   if (btn) btn.textContent = isHidden ? (t['vid.showLess'] || '− Show Less') : (t['vid.showMore'] || '+ Show More Videos');
 }
 
@@ -3240,7 +3368,7 @@ let showPastPerfs = false;
 
 function translateMonth(monthStr) {
   if (!monthStr) return '';
-  const mn = (get('perf').monthNames) || {};
+  const mn = (getPerfMerged().monthNames) || {};
   // Replace each English month/season word found in the string
   let result = monthStr;
   ['January','February','March','April','May','June','July','August',
@@ -3263,8 +3391,10 @@ function renderPerfs() {
   const upcoming = perfs.filter(p=>p.status!=='past').sort((a,b)=>sortDate(a)-sortDate(b));
   const past = perfs.filter(p=>p.status==='past').sort((a,b)=>sortDate(b)-sortDate(a));
   const visible = showPastPerfs ? [...upcoming,...past] : upcoming;
-  const perfLang = get('perf');
+  const perfLang = getPerfMerged();
   const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
+  const tPerf = uiTable(currentLang);
+  const mapsWord = tPerf['perf.maps'] || 'Maps';
   // Group by year
   const groups = {};
   visible.forEach(p => {
@@ -3274,7 +3404,7 @@ function renderPerfs() {
     if(!groups[key]) groups[key] = {year:yr, past:p.status==='past', items:[]};
     groups[key].items.push(p);
   });
-  const pastDivTxt = {'en':'Past Performances','de':'Vergangene Auftritte','es':'Actuaciones pasadas','it':'Spettacoli passati','fr':'Représentations passées'}[currentLang]||'Past Performances';
+  const pastDivTxt = tPerf['perf.pastDivider'] || 'Past Performances';
   let html = '';
   let addedPastDivider = false;
   Object.values(groups).forEach(g => {
@@ -3297,46 +3427,50 @@ function renderPerfs() {
         const timeFmts = {en:t=>t, de:t=>t+' Uhr', es:t=>t+' h', it:t=>'ore '+t, fr:t=>t.replace(':','h')};
         return '<div class="perf-time">' + (timeFmts[currentLang]||timeFmts.en)(cleanTime) + '</div>';
       })();
-      const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ Maps</span></a>' : '';
+      const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ ' + mapsWord + '</span></a>' : '';
       const detail = (p["detail_"+currentLang]||p.detail)||"";
       const pastClass = p.status==='past' ? ' perf-item-past' : '';
       const hasVenuePhoto = p.venuePhoto && p.venuePhoto.trim();
       html += '<div class="perf-item reveal'+(i>0?' rd'+(i%4+1):'') + pastClass + '">';
-      if(p.status==='past') html += '<div class="perf-past-stamp">'+({'en':'Past','de':'Vergangen','es':'Pasado','it':'Passato','fr':'Pass\u00e9'}[currentLang]||'Past')+'</div>';
+      if(p.status==='past') html += '<div class="perf-past-stamp">'+(tPerf['perf.pastStamp']||'Past')+'</div>';
       // Venue photo as subtle background accent (if available)
       if(hasVenuePhoto) { const op = (p.venueOpacity||50)/100; html += '<div class="perf-venue-bg" style="opacity:'+op+';background-image:url('+p.venuePhoto+')"></div>'; }
       html += '<div class="perf-date-box"><div class="perf-day">'+p.day+'</div><div class="perf-month">'+translateMonth(p.month)+'</div>'+timeHtml+'</div>';
       html += '<div>'+badge+'<div class="perf-info-title">'+p.title+'</div><div class="perf-info-detail">'+detail+'</div>'+venueCity+'</div>';
       // Print-only: repertoire / extended description (si existe)
-      const repLabel = ({en:'Repertoire',de:'Repertoire',es:'Repertorio',it:'Repertorio',fr:'Répertoire'}[currentLang]||'Repertoire');
+      const repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
       if(p.extDesc && p.extDesc.trim()) html += '<div class="perf-print-repertoire print-only"><strong>'+repLabel+':</strong> '+p.extDesc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div>';
       // More Info button (only if there's extra content)
       const hasExtra = (p.extDesc && p.extDesc.trim()) || (p.ticketPrice && p.ticketPrice.trim()) || (p.eventLink && p.eventLink.trim()) || (p.flyerImg && p.flyerImg.trim());
-      if(hasExtra) html += '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal('+p.id+')">'+({'en':'More Info','de':'Mehr Info','es':'Más Info','it':'Più Info','fr':"Plus d'Info"}[currentLang]||'More Info')+' →</button>';
+      if(hasExtra) html += '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal('+p.id+')">'+(tPerf['perf.moreInfo']||'More Info')+' →</button>';
       html += '</div>';
     });
     html += '</div>';
   });
+  if (!visible.length) {
+    const msg = tPerf['perf.calendarEmpty'] || tPerf['perf.emptyUpcoming'] || 'Upcoming dates to be announced soon.';
+    list.innerHTML = `<div class="perf-empty" role="status">${msg}</div>`;
+    const btn0 = document.getElementById('pastToggleBtn');
+    if (btn0) btn0.style.display = 'none';
+    return;
+  }
   list.innerHTML = html;
   if(past.length>0){
     const btn=document.getElementById('pastToggleBtn');
-    if(btn){btn.style.display='';const tPast = {
-      en:{show:'+ Show Past Performances',hide:'\u2212 Hide Past Performances'},
-      de:{show:'+ Vergangene Auftritte zeigen',hide:'\u2212 Vergangene Auftritte verbergen'},
-      es:{show:'+ Mostrar actuaciones pasadas',hide:'\u2212 Ocultar actuaciones pasadas'},
-      it:{show:'+ Mostra spettacoli passati',hide:'\u2212 Nascondi spettacoli passati'},
-      fr:{show:'+ Voir les repr\u00e9sentations pass\u00e9es',hide:'\u2212 Masquer les repr\u00e9sentations pass\u00e9es'},
-    }[currentLang]||{show:'+ Show Past',hide:'\u2212 Hide Past'};
-    btn.textContent=showPastPerfs?tPast.hide:tPast.show;}
+    if(btn){btn.style.display='';
+    const tPastToggle = uiTable(currentLang);
+    const showPast = tPastToggle['perf.pastShow'] || '+ Show Past Performances';
+    const hidePast = tPastToggle['perf.pastHide'] || '\u2212 Hide Past Performances';
+    btn.textContent=showPastPerfs?hidePast:showPast;}
   } else {
     const btn=document.getElementById('pastToggleBtn');
     if(btn) btn.style.display='none';
   }
-  var t = Ti[currentLang] || Ti.en;
+  var t = uiTable(currentLang);
   var printBtnText = document.getElementById('perfPrintBtnText');
   if(printBtnText) printBtnText.textContent = t['perf.printAgenda'] || 'Print calendar';
   var printSub = document.getElementById('perfPrintSubtitle');
-  if(printSub) printSub.textContent = t['perf.printSubtitle'] || 'Calendario';
+  if(printSub) printSub.textContent = t['perf.printSubtitle'] || 'Calendar';
   document.querySelectorAll('#perfList .reveal:not(.visible)').forEach(el=>{
     const ob=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting){en.target.classList.add('visible');ob.unobserve(en.target);}});},{threshold:0.1});
     ob.observe(el);
@@ -3359,7 +3493,7 @@ function getPrintAgendaHtml(){
     var emptyCss='*{margin:0;padding:0}body{font-family:Georgia,serif;padding:22mm 24mm;max-width:200mm;margin:0 auto;background:#fff;color:#1a1a1a;font-size:11pt}.p-header{text-align:center;margin-bottom:2em;padding-bottom:1em;border-bottom:1px solid #c9c9c9}.p-header h1{font-size:1.65rem;font-weight:400;letter-spacing:.06em}.p-header-sub{font-size:.7rem;margin-top:.5em;color:#555;text-transform:uppercase;letter-spacing:.28em}.p-empty{color:#666;font-style:italic}';
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rolando Guy — Performance Calendar</title><style>'+emptyCss+'</style></head><body><header class="p-header"><h1>Rolando Guy</h1><p class="p-header-sub">'+String(headerSubText).replace(/&/g,'&amp;')+'</p></header><p class="p-empty">No upcoming events.</p></body></html>';
   }
-  var perfLang=get('perf');
+  var perfLang=getPerfMerged();
   var types=perfLang.eventTypes||{opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
   var groups={};
   upcoming.forEach(function(p){
@@ -3394,7 +3528,7 @@ function getPrintAgendaHtml(){
     });
     body+='</section>';
   });
-  var sub=(Ti[currentLang]||Ti.en)['perf.printSubtitle']||'Performance Calendar';
+  var sub=(uiTable(currentLang)['perf.printSubtitle'])||'Performance Calendar';
   var css=
     '*{box-sizing:border-box;margin:0;padding:0}'
     +'html,body{height:auto;min-height:0;background:#fff;color:#1a1a1a;font-family:Georgia,"Times New Roman",serif;font-size:11pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
@@ -3464,15 +3598,15 @@ Respond ONLY with valid JSON, no markdown, no explanation:
 // ── For the "Add event" form ──
 async function autoTranslateDetail() {
   const text = (document.getElementById('pDetail') || {}).value?.trim();
-  if (!text) { alert('Escribe el detalle primero.'); return; }
+  if (!text) { alert('Enter the detail text first.'); return; }
 
   const btn = document.getElementById('translateBtn');
   const status = document.getElementById('translateStatus');
   const previews = document.getElementById('translatePreviews');
 
-  btn.textContent = '⏳ Traduciendo…';
+  btn.textContent = '⏳ Translating…';
   btn.disabled = true;
-  status.textContent = 'Detectando idioma y generando traducciones…';
+  status.textContent = 'Detecting language and generating translations…';
   previews.style.display = 'none';
 
   try {
@@ -3493,11 +3627,11 @@ async function autoTranslateDetail() {
       if (el) el.innerHTML = `<span style="color:var(--gold);font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.08em">${flags[l]} ${names[l]}</span> <span style="color:var(--text-dim)">${t[l]||''}</span><br>`;
     });
 
-    status.innerHTML = '<span style="color:#4CAF50">✓ 5 traducciones generadas — se guardarán con el evento</span>';
-    btn.textContent = '✓ Traducido';
+    status.innerHTML = '<span style="color:#4CAF50">✓ 5 translations generated — they will be saved with the event</span>';
+    btn.textContent = '✓ Translated';
   } catch(e) {
     status.innerHTML = '<span style="color:#e57373">✗ Error: ' + e.message + '</span>';
-    btn.textContent = '✦ Auto-traducir';
+    btn.textContent = '✦ Auto-translate';
     btn.disabled = false;
   }
 }
@@ -3505,14 +3639,14 @@ async function autoTranslateDetail() {
 // ── For the "Edit event" form ──
 async function autoTranslateEditDetail(id) {
   const text = (document.getElementById('pe-detail-' + id) || {}).value?.trim();
-  if (!text) { alert('Escribe el detalle primero.'); return; }
+  if (!text) { alert('Enter the detail text first.'); return; }
 
   const btn = document.getElementById('etBtn-' + id);
   const status = document.getElementById('etStatus-' + id);
 
   btn.textContent = '⏳…';
   btn.disabled = true;
-  if (status) status.textContent = 'Traduciendo…';
+  if (status) status.textContent = 'Translating…';
 
   try {
     const t = await callAnthropicTranslate(text);
@@ -3528,10 +3662,10 @@ async function autoTranslateEditDetail(id) {
       status.innerHTML = '<span style="color:#4CAF50">✓</span> ' +
         ['en','de','es','it','fr'].map(l => `${flags[l]} ${t[l]||''}`).join(' · ');
     }
-    btn.textContent = '✓ Listo';
+    btn.textContent = '✓ Done';
   } catch(e) {
     if (status) status.innerHTML = '<span style="color:#e57373">✗ ' + e.message + '</span>';
-    btn.textContent = '✦ Traducir';
+    btn.textContent = '✦ Translate';
     btn.disabled = false;
   }
 }
@@ -3545,7 +3679,7 @@ function addRepCard(cat) {
   admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
 }
 function removeRepCard(cat, localIdx) {
-  if (!confirm('¿Eliminar esta entrada?')) return;
+  if (!confirm('Remove this entry?')) return;
   const allCards = (getRep().cards || []).slice();
   const globalIndices = allCards.reduce((acc, c, i) => ((c.cat||'opera')===cat ? acc.concat(i) : acc), []);
   const removeAt = globalIndices[localIdx];
@@ -3609,7 +3743,7 @@ function addProgramCard() {
   admTab('programs');
 }
 function removeProgramCard(idx) {
-  if (!confirm('¿Eliminar este programa?')) return;
+  if (!confirm('Remove this program?')) return;
   const data = getPrograms();
   const programs = (data.programs || []).slice();
   programs.splice(Number(idx), 1);
@@ -7002,8 +7136,9 @@ function renderContact() {
     wb.style.display = 'none';
   }
 
-  document.getElementById('perfH2').innerHTML = formatSectionTitleIfAmpersand(get('perf').h2 || '');
-  document.getElementById('perfIntro').textContent = get('perf').intro;
+  const perfM = getPerfMerged();
+  document.getElementById('perfH2').innerHTML = formatSectionTitleIfAmpersand(perfM.h2 || '');
+  document.getElementById('perfIntro').textContent = perfM.intro || '';
 }
 
 // ── EPK Section ──────────────────────────────────────────────
@@ -7108,15 +7243,16 @@ function epkCopyBio() {
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('epkCopyBtn');
     const prev = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    setTimeout(() => btn.textContent = prev, 2000);
+    const copiedMsg = effectiveUiText(lang, 'ui.copied') || '✓ Copied!';
+    btn.textContent = copiedMsg;
+    setTimeout(() => { btn.textContent = prev; }, 2000);
   });
 }
 
 function renderEpk() {
   const lang = currentLang || 'en';
   const bios = (typeof EPK_BIOS !== 'undefined' && (EPK_BIOS[lang] || EPK_BIOS.en)) || { b50:'', b150:'', b300p1:'', b300p2:'', b300p3:'', b300p4:'' };
-  const ti = Ti[lang] || Ti.en;
+  const ti = uiTable(lang);
 
   // Title
   const titleEl = document.getElementById('epkTitle');
@@ -7158,7 +7294,7 @@ function renderEpk() {
     if (epkPhotos.length === 0) {
       photosContainer.innerHTML = '';
     } else {
-      const t = Ti[currentLang] || Ti.en;
+      const t = uiTable(currentLang);
       const downloadLbl = (t['epk.downloadPhoto'] || 'Download hi-res').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const previewLbl = (t['epk.preview'] || 'Preview').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       photosContainer.innerHTML = epkPhotos.filter(ph => ph.url).map((ph, i) => {
@@ -7252,7 +7388,7 @@ function renderEpk() {
 
   // Copy button label update
   const copyBtn = document.getElementById('epkCopyBtn');
-  if (copyBtn) copyBtn.textContent = (Ti[currentLang] || Ti.en)['epk.copyBio'] || '⧉ Copy biography';
+  if (copyBtn) copyBtn.textContent = effectiveUiText(currentLang, 'epk.copyBio') || '⧉ Copy biography';
 }
 
 // ── Init all sections ──
@@ -7389,7 +7525,7 @@ function renderPress(){
     };
   };
   if(!items.length){
-    el.innerHTML = '<div class="press-empty">'+(Ti[currentLang]&&Ti[currentLang]['press.empty']?Ti[currentLang]['press.empty']:'No press quotes yet.')+'</div>';
+    el.innerHTML = '<div class="press-empty">'+(effectiveUiText(lang, 'press.empty') || 'No press quotes yet.')+'</div>';
     return;
   }
   el.innerHTML = items.map(p => `
@@ -7413,7 +7549,7 @@ function renderPress(){
         return shown + ((lang !== 'de' && usedTranslation && translatedNote) ? `<div style="margin-top:8px;font-size:.66rem;color:var(--text-faint);line-height:1.5;font-style:italic">${translatedNote}</div>` : '');
       })()}</div>
       <div class="press-production">${pickLang(Object.assign({}, p, { production_i18n: ensureProdI18n(p) }), 'production')}</div>
-      ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${((Ti[lang]&&Ti[lang]['press.readMore'])||(Ti.en&&Ti.en['press.readMore'])||'Read article')} ↗</a>` : ''}
+      ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;margin-top:12px;display:inline-block;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">${(effectiveUiText(lang, 'press.readMore') || 'Read article')} ↗</a>` : ''}
     </div>`).join('');
 }
 
@@ -7579,7 +7715,7 @@ async function submitForm(){
   });
   if(!ok) return;
   const btn = document.querySelector('.form-submit');
-  const t = Ti[currentLang] || Ti.en;
+  const t = uiTable(currentLang);
   btn.disabled = true; btn.style.opacity = '.5';
   btn.querySelector('span').textContent = t['form.sending'] || 'Sending...';
   try {
@@ -7616,6 +7752,31 @@ const Ti={
   it:{'nav.bio':'Biografia','nav.rep':'Repertorio','nav.programs':'Programmi','nav.vid':'Video','nav.photos':'Foto','nav.perf':'Spettacoli','nav.press':'Recensioni','press.tag':'Recensioni','press.empty':'Nessuna citazione stampa ancora.','nav.contact':'Contatto','export.programLead':'Programma','hero.scroll':'Scopri','about.photoLabel':'Tenore Lirico','photos.h2':'Ritratti, Scena &amp; <em>Backstage</em>','photos.sub':'Fotografia di ritratto, scena e backstage. Clicca per la visualizzazione completa.','photos.studio':'Ritratti in Studio','photos.stage':'In Scena','photos.backstage':'Backstage','photos.backstageEmpty':'Gli aggiornamenti della galleria backstage sono pubblicati nella sezione stampa.','form.name':'Nome','form.email':'Email','form.subject':'Oggetto','form.message':'Messaggio','form.send':'Invia Messaggio','form.success':'Grazie! Il tuo messaggio è stato inviato.','form.namePh':'Il tuo nome','form.emailPh':'tua@email.it','form.subjectPh':'Richiesta di prenotazione','form.messagePh':'Raccontami del tuo progetto...','footer.tagline':'Tenore Argentino/Italiano a Berlino','footer.rights':'Tutti i diritti riservati','vid.h2':'In Scena &amp; <em>In Concerto</em>','press.readMore':'Leggi l’articolo','nav.media':'Video','nav.cal':'Calendario','nav.epk':'Dossier','nav.epk.short':'Dossier','nav.book':'Ingaggio','rep.thComposer':'Compositore','rep.thOpera':'Opera / Lavoro','rep.thRole':'Ruolo','rep.thLang':'Ling.','epk.title':'Stampa','epk.tag':'Stampa','epk.bio50lbl':'Bio 50 parole','epk.bio150lbl':'Bio 150 parole','epk.bio300lbl':'Biografia completa','epk.photos':'Foto in alta risoluzione','epk.downloadPhoto':'Scarica hi-res','epk.preview':'Anteprima','epk.cv':'Scarica CV','epk.contact':'Contatto booking','programs.formation':'Formazione','programs.duration':'Durata','programs.idealFor':'Ideale per','about.photoLabel':'Tenore Lirico','rep.allRoles':'Repertorio Operistico Completo','programs.sectionTag':'Programmi e collaborazioni','rep.tabOpera':'Ruoli d\'opera','rep.tabArias':'Arie d\'opera','rep.tabOperetta':'Operetta','rep.tabLied':'Lied e canzone d\'arte','rep.tabTango':'Tango','rep.descOpera':'Parti da tenore del repertorio operistico, preparate per scena e concerto.','rep.descArias':'Selezione di arie per concerti, programmi da gala e audizioni.','rep.descOperetta':'Opere rappresentative del repertorio operettistico: eleganza, chiarezza e stile teatrale.','rep.descLied':'Repertorio da recital per voce e pianoforte dalla tradizione tedesca, francese e internazionale.','rep.descTango':'Repertorio di tango argentino con espressione lirica e forte identità stilistica.','rep.empty':'Non è ancora stato aggiunto repertorio per questa categoria.','rep.introLine':'Una selezione di repertorio per scena, recital e concerto.','rep.thTitle':'Titolo','rep.thWork':'Opera','contact.pressKitPdf':'Press kit (PDF)','epk.photosIntro':'Immagini ufficiali per stampa, programmi e media. Uso libero con crediti.','epk.photoCredit':'Foto stampa e di programma. Crediti fotografici indicati a seconda dell\u2019immagine.','epk.copyBio':'⧉ Copia bio','form.sending':'Invio in corso...','form.errorSend':'Errore nell\'invio. Scrivere a rolandoguy@gmail.com.','vid.showMore':'+ Altri video','vid.showLess':'− Mostra meno','perf.printAgenda':'Stampa calendario','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendario','perf.printRepertoire':'Repertorio',},
   fr:{'nav.bio':'Biographie','nav.rep':'Répertoire','nav.programs':'Programmes','nav.vid':'Vidéos','nav.photos':'Photos','nav.perf':'Représentations','nav.press':'Critiques','press.tag':'Critiques','press.empty':'Pas encore de citations presse.','nav.contact':'Contact','export.programLead':'Programme','hero.scroll':'Découvrir','about.photoLabel':'Ténor Lyrique','photos.h2':'Portraits, Scène &amp; <em>Backstage</em>','photos.sub':'Photographie de portrait, de scène et backstage. Cliquer pour agrandir.','photos.studio':'Portraits Studio','photos.stage':'Sur Scène','photos.backstage':'Backstage','photos.backstageEmpty':'Les nouvelles photos backstage sont publiées via l’espace presse.','form.name':'Nom','form.email':'Email','form.subject':'Sujet','form.message':'Message','form.send':'Envoyer le Message','form.success':'Merci ! Votre message a été envoyé.','form.namePh':'Votre nom','form.emailPh':'votre@email.fr','form.subjectPh':'Demande de réservation','form.messagePh':'Parlez-moi de votre projet...','footer.tagline':'Ténor Argentin/Italien basé à Berlin','footer.rights':'Tous droits réservés','vid.h2':'Sur Scène &amp; <em>En Concert</em>','press.readMore':'Lire l’article','nav.media':'Médias','nav.cal':'Calendrier','nav.epk':'Presse & Contact','nav.epk.short':'Presse & Contact','nav.book':'Réserver','rep.thComposer':'Compositeur','rep.thOpera':'Opéra / Œuvre','rep.thRole':'Rôle','rep.thLang':'Langue','epk.title':'Presse & <em>Contact</em>','epk.tag':'Presse & Contact','epk.bio50lbl':'Bio 50 mots','epk.bio150lbl':'Bio 150 mots','epk.bio300lbl':'Biographie complète','epk.photos':'Photos haute résolution','epk.downloadPhoto':'Télécharger hi-res','epk.preview':'Aperçu','epk.cv':'Télécharger CV','epk.contact':'Contact booking','programs.formation':'Formation','programs.duration':'Durée','programs.idealFor':'Idéal pour','about.photoLabel':'Ténor Lyrique','rep.allRoles':'Répertoire Opératique Complet','programs.sectionTag':'Programmes &amp; collaborations','rep.tabOpera':'Rôles d\'opéra','rep.tabArias':'Arias d\'opéra','rep.tabOperetta':'Opérette','rep.tabLied':'Lied &amp; mélodie','rep.tabTango':'Tango','rep.descOpera':'Rôles de ténor du répertoire lyrique, préparés pour la scène et le concert.','rep.descArias':'Sélection d\'arias pour concerts, galas et auditions.','rep.descOperetta':'Œuvres représentatives du répertoire d\'opérette : élégance, clarté et style théâtral.','rep.descLied':'Répertoire de récital pour voix et piano des traditions allemande, française et internationale.','rep.descTango':'Répertoire de tango argentin avec expression lyrique et forte identité stylistique.','rep.empty':'Aucun répertoire n\'a encore été ajouté pour cette catégorie.','rep.introLine':'Répertoire sélectionné pour la scène, le récital et le concert.','rep.thTitle':'Titre','rep.thWork':'Œuvre','contact.pressKitPdf':'Dossier de presse (PDF)','epk.photosIntro':'Images officielles pour presse, programmes et médias. Libre avec crédit.','epk.photoCredit':'Photos de presse et de programme. Crédits photo indiqués selon les images.','epk.copyBio':'⧉ Copier la bio','form.sending':'Envoi en cours...','form.errorSend':'Erreur d\'envoi. Merci d\'écrire à rolandoguy@gmail.com.','vid.showMore':'+ Plus de vidéos','vid.showLess':'− Voir moins','perf.printAgenda':'Imprimer le calendrier','perf.printTitle':'Rolando Guy','perf.printSubtitle':'Calendrier','perf.printRepertoire':'Répertoire',},
 };
+Ti.en['perf.maps'] = 'Maps';
+Ti.de['perf.maps'] = 'Karten';
+Ti.es['perf.maps'] = 'Mapas';
+Ti.it['perf.maps'] = 'Mappe';
+Ti.fr['perf.maps'] = 'Cartes';
+(function(){
+  const pack = {
+    en: { emptyUpcoming: 'Upcoming dates to be announced soon.', calendarEmpty: 'Upcoming dates to be announced soon.', pastDivider: 'Past Performances', pastStamp: 'Past', moreInfo: 'More Info', pastShow: '+ Show Past Performances', pastHide: '\u2212 Hide Past Performances', repertoireLabel: 'Repertoire' },
+    de: { emptyUpcoming: 'Neue Konzerttermine werden in Kürze bekanntgegeben.', calendarEmpty: 'Neue Konzerttermine werden in Kürze bekanntgegeben.', pastDivider: 'Vergangene Auftritte', pastStamp: 'Vergangen', moreInfo: 'Mehr Info', pastShow: '+ Vergangene Auftritte zeigen', pastHide: '\u2212 Vergangene Auftritte verbergen', repertoireLabel: 'Repertoire' },
+    es: { emptyUpcoming: 'Próximas fechas a anunciarse próximamente.', calendarEmpty: 'Próximas fechas a anunciarse próximamente.', pastDivider: 'Actuaciones pasadas', pastStamp: 'Pasado', moreInfo: 'Más Info', pastShow: '+ Mostrar actuaciones pasadas', pastHide: '\u2212 Ocultar actuaciones pasadas', repertoireLabel: 'Repertorio' },
+    it: { emptyUpcoming: 'Le prossime date saranno annunciate a breve.', calendarEmpty: 'Le prossime date saranno annunciate a breve.', pastDivider: 'Spettacoli passati', pastStamp: 'Passato', moreInfo: 'Più Info', pastShow: '+ Mostra spettacoli passati', pastHide: '\u2212 Nascondi spettacoli passati', repertoireLabel: 'Repertorio' },
+    fr: { emptyUpcoming: 'Les prochaines dates seront annoncées prochainement.', calendarEmpty: 'Les prochaines dates seront annoncées prochainement.', pastDivider: 'Représentations passées', pastStamp: 'Passé', moreInfo: "Plus d'Info", pastShow: '+ Voir les représentations passées', pastHide: '\u2212 Masquer les représentations passées', repertoireLabel: 'Répertoire' },
+  };
+  Object.keys(pack).forEach(l => {
+    const p = pack[l];
+    Ti[l]['perf.emptyUpcoming'] = p.emptyUpcoming;
+    Ti[l]['perf.calendarEmpty'] = p.calendarEmpty;
+    Ti[l]['perf.pastDivider'] = p.pastDivider;
+    Ti[l]['perf.pastStamp'] = p.pastStamp;
+    Ti[l]['perf.moreInfo'] = p.moreInfo;
+    Ti[l]['perf.pastShow'] = p.pastShow;
+    Ti[l]['perf.pastHide'] = p.pastHide;
+    Ti[l]['perf.repertoireLabel'] = p.repertoireLabel;
+  });
+})();
 Ti.en['rep.programsLink'] = 'Explore concert programmes and artistic collaborations';
 Ti.de['rep.programsLink'] = 'Entdecken Sie Konzertprogramme und künstlerische Projekte';
 Ti.es['rep.programsLink'] = 'Explora formatos de concierto y colaboraciones artísticas';
@@ -7828,6 +7989,282 @@ Ti.fr['export.doc.repAriasSheet'] = 'Airs de concert et de gala';
 Ti.fr['export.cal.empty'] = 'Aucun engagement à venir.';
 Ti.fr['export.cal.moreUpcoming'] = 'Affichage des {{n}} prochains engagements sur {{m}}.';
 
+Ti.en['reviewsIntro'] = 'Selected press responses to recent productions and performances.';
+Ti.de['reviewsIntro'] = 'Ausgewählte Pressestimmen zu jüngsten Produktionen und Auftritten.';
+Ti.es['reviewsIntro'] = 'Selección de reseñas de prensa sobre producciones y presentaciones recientes.';
+Ti.it['reviewsIntro'] = 'Selezione di recensioni della stampa su recenti produzioni e performance.';
+Ti.fr['reviewsIntro'] = 'Sélection de critiques de presse sur des productions et prestations récentes.';
+Ti.it['rep.thWorkLied'] = 'Brano';
+Ti.it['rep.thWork'] = 'Titolo';
+Ti.en['rep.status.all'] = 'All';
+Ti.en['rep.status.performed'] = 'Performed';
+Ti.en['rep.status.prepared'] = 'Prepared';
+Ti.en['rep.status.studying'] = 'Studying';
+Ti.de['rep.status.all'] = 'Alle';
+Ti.de['rep.status.performed'] = 'Aufgeführt';
+Ti.de['rep.status.prepared'] = 'Vorbereitet';
+Ti.de['rep.status.studying'] = 'Im Studium';
+Ti.es['rep.status.all'] = 'Todos';
+Ti.es['rep.status.performed'] = 'Interpretados';
+Ti.es['rep.status.prepared'] = 'Preparados';
+Ti.es['rep.status.studying'] = 'En estudio';
+Ti.it['rep.status.all'] = 'Tutti';
+Ti.it['rep.status.performed'] = 'Interpretati';
+Ti.it['rep.status.prepared'] = 'Preparati';
+Ti.it['rep.status.studying'] = 'In studio';
+Ti.fr['rep.status.all'] = 'Tous';
+Ti.fr['rep.status.performed'] = 'Interprétés';
+Ti.fr['rep.status.prepared'] = 'Préparés';
+Ti.fr['rep.status.studying'] = 'En étude';
+Ti.en['vid.cat.opera_lied'] = 'Opera & Art Song';
+Ti.en['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.de['vid.cat.opera_lied'] = 'Oper & Kunstlied';
+Ti.de['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.es['vid.cat.opera_lied'] = 'Ópera y Canción de Arte';
+Ti.es['vid.cat.gala_crossover'] = 'Gala y Crossover';
+Ti.it['vid.cat.opera_lied'] = "Opera e Canzone d'Arte";
+Ti.it['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.fr['vid.cat.opera_lied'] = "Opéra & Mélodies d'Art";
+Ti.fr['vid.cat.gala_crossover'] = 'Gala & Crossover';
+Ti.en['perf.moreInfoPrint'] = 'More info';
+Ti.de['perf.moreInfoPrint'] = 'Mehr Infos';
+Ti.es['perf.moreInfoPrint'] = 'Más información';
+Ti.it['perf.moreInfoPrint'] = 'Maggiori informazioni';
+Ti.fr['perf.moreInfoPrint'] = "Plus d'infos";
+Ti.en['perf.ticketsInfo'] = 'Tickets & Info';
+Ti.de['perf.ticketsInfo'] = 'Tickets & Infos';
+Ti.es['perf.ticketsInfo'] = 'Entradas e información';
+Ti.it['perf.ticketsInfo'] = 'Biglietti e informazioni';
+Ti.fr['perf.ticketsInfo'] = 'Billets & infos';
+Ti.en['ui.close'] = 'Close ✕';
+Ti.de['ui.close'] = 'Schließen ✕';
+Ti.es['ui.close'] = 'Cerrar ✕';
+Ti.it['ui.close'] = 'Chiudi ✕';
+Ti.fr['ui.close'] = 'Fermer ✕';
+Ti.en['ui.menu'] = 'Menu';
+Ti.de['ui.menu'] = 'Menü';
+Ti.es['ui.menu'] = 'Menú';
+Ti.it['ui.menu'] = 'Menu';
+Ti.fr['ui.menu'] = 'Menu';
+Ti.en['ui.copied'] = '✓ Copied!';
+Ti.de['ui.copied'] = '✓ Kopiert!';
+Ti.es['ui.copied'] = '✓ ¡Copiado!';
+Ti.it['ui.copied'] = '✓ Copiato!';
+Ti.fr['ui.copied'] = '✓ Copié !';
+Ti.en['ui.closeEmbed'] = '× Close';
+Ti.de['ui.closeEmbed'] = '× Schließen';
+Ti.es['ui.closeEmbed'] = '× Cerrar';
+Ti.it['ui.closeEmbed'] = '× Chiudi';
+Ti.fr['ui.closeEmbed'] = '× Fermer';
+Ti.en['ui.closeVideoAria'] = 'Close video';
+Ti.de['ui.closeVideoAria'] = 'Video schließen';
+Ti.es['ui.closeVideoAria'] = 'Cerrar vídeo';
+Ti.it['ui.closeVideoAria'] = 'Chiudi video';
+Ti.fr['ui.closeVideoAria'] = 'Fermer la vidéo';
+Ti.en['vid.embedUnavailable'] = 'Video player unavailable';
+Ti.de['vid.embedUnavailable'] = 'Videoplayer nicht verfügbar';
+Ti.es['vid.embedUnavailable'] = 'Reproductor de vídeo no disponible';
+Ti.it['vid.embedUnavailable'] = 'Lettore video non disponibile';
+Ti.fr['vid.embedUnavailable'] = 'Lecteur vidéo indisponible';
+Ti.en['vid.openYoutube'] = 'Open on YouTube';
+Ti.de['vid.openYoutube'] = 'Auf YouTube öffnen';
+Ti.es['vid.openYoutube'] = 'Abrir en YouTube';
+Ti.it['vid.openYoutube'] = 'Apri su YouTube';
+Ti.fr['vid.openYoutube'] = 'Ouvrir sur YouTube';
+
+const SITE_UI_PHASE2A_GROUPS = [
+  { title: 'Navigation & hero', rows: [
+    ['nav.bio', 'Main nav + section tag'],
+    ['nav.rep', 'Main nav + section tag'],
+    ['nav.media', 'Main nav · Media'],
+    ['nav.cal', 'Main nav + calendar section tag'],
+    ['nav.press', 'Main nav · Reviews'],
+    ['nav.epk', 'Main nav · Press / dossier'],
+    ['nav.epk.short', 'Hero secondary button'],
+    ['nav.book', 'Main nav · Book'],
+    ['nav.vid', 'Videos section tag'],
+    ['nav.photos', 'Photos section tag + hero'],
+    ['nav.contact', 'Contact section tag'],
+    ['nav.programs', 'Programs anchor label'],
+    ['hero.scroll', 'Hero scroll hint'],
+  ]},
+  { title: 'Section tags & chrome', rows: [
+    ['programs.sectionTag', 'Programs section tag (HTML)'],
+    ['press.tag', 'Press / reviews section tag'],
+    ['epk.tag', 'EPK section tag'],
+    ['reviewsIntro', 'Reviews block intro'],
+    ['about.photoLabel', 'Bio photo label'],
+  ]},
+  { title: 'Contact form', rows: [
+    ['form.name', 'Label'],
+    ['form.email', 'Label'],
+    ['form.subject', 'Label'],
+    ['form.message', 'Label'],
+    ['form.send', 'Submit button'],
+    ['form.success', 'Success message'],
+    ['form.namePh', 'Placeholder'],
+    ['form.emailPh', 'Placeholder'],
+    ['form.subjectPh', 'Placeholder'],
+    ['form.messagePh', 'Placeholder'],
+    ['form.sending', 'Sending state'],
+    ['form.errorSend', 'Error alert'],
+  ]},
+  { title: 'UI · modals & video', rows: [
+    ['ui.close', 'Lightbox / video modal close'],
+    ['ui.menu', 'Hamburger aria-label'],
+    ['ui.copied', 'EPK copy confirmation'],
+    ['ui.closeEmbed', 'Inline video close control'],
+    ['ui.closeVideoAria', 'Inline video close aria'],
+    ['vid.embedUnavailable', 'Embed fallback message'],
+    ['vid.openYoutube', 'Embed fallback button'],
+  ]},
+  { title: 'Footer', rows: [
+    ['footer.tagline', 'Tagline'],
+    ['footer.rights', 'Rights line'],
+  ]},
+  { title: 'Photos', rows: [
+    ['photos.h2', 'Gallery title (HTML)'],
+    ['photos.sub', 'Gallery subtitle'],
+    ['photos.studio', 'Tab'],
+    ['photos.stage', 'Tab'],
+    ['photos.backstage', 'Tab'],
+    ['photos.backstageEmpty', 'Empty backstage message'],
+  ]},
+  { title: 'Press & repertoire (public chrome)', rows: [
+    ['press.empty', 'Empty press grid'],
+    ['press.readMore', 'Article link'],
+    ['rep.empty', 'Empty repertoire message'],
+    ['rep.tabOpera', 'Tab'],
+    ['rep.tabArias', 'Tab'],
+    ['rep.tabOperetta', 'Tab'],
+    ['rep.tabLied', 'Tab'],
+    ['rep.tabTango', 'Tab'],
+    ['rep.status.all', 'Opera filter'],
+    ['rep.status.performed', 'Opera filter + badge'],
+    ['rep.status.prepared', 'Opera filter + badge'],
+    ['rep.status.studying', 'Opera filter + badge'],
+    ['rep.thComposer', 'Table header'],
+    ['rep.thOpera', 'Table header'],
+    ['rep.thRole', 'Table header'],
+    ['rep.thLang', 'Table header'],
+    ['rep.thWork', 'Table header'],
+    ['rep.thTitle', 'Table header'],
+    ['rep.thWorkLied', 'Lied table header (IT override)'],
+  ]},
+  { title: 'Programs cards', rows: [
+    ['programs.formation', 'Meta label'],
+    ['programs.duration', 'Meta label'],
+    ['programs.idealFor', 'Meta label'],
+  ]},
+  { title: 'EPK public copy', rows: [
+    ['epk.title', 'EPK block title (HTML)'],
+    ['epk.bio50lbl', 'Bio tab'],
+    ['epk.bio150lbl', 'Bio tab'],
+    ['epk.bio300lbl', 'Bio tab'],
+    ['epk.copyBio', 'Copy button'],
+    ['epk.photos', 'Photos column label'],
+    ['epk.photosIntro', 'Photos intro'],
+    ['epk.photoCredit', 'Photos credit note'],
+    ['epk.docs', 'Documents label'],
+    ['epk.downloadDossier', 'Dossier button'],
+    ['epk.downloadArtistSheet', 'Artist sheet button'],
+    ['epk.downloadPhoto', 'Hi-res photo link'],
+    ['epk.preview', 'Photo preview link'],
+  ]},
+  { title: 'Calendar', rows: [
+    ['perf.calendarEmpty', 'Empty calendar (primary)'],
+    ['perf.emptyUpcoming', 'Empty calendar / print fallback'],
+    ['perf.pastShow', 'Toggle past'],
+    ['perf.pastHide', 'Toggle past'],
+    ['perf.pastDivider', 'Past section divider'],
+    ['perf.pastStamp', 'Past badge on cards'],
+    ['perf.moreInfo', 'Card button'],
+    ['perf.moreInfoPrint', 'Print agenda link label'],
+    ['perf.maps', 'Venue maps hint + modal'],
+    ['perf.repertoireLabel', 'Print-only repertoire label'],
+    ['perf.ticketsInfo', 'Event modal default link label'],
+    ['perf.printAgenda', 'Print button'],
+    ['perf.printSubtitle', 'Print subtitle'],
+  ]},
+  { title: 'Videos', rows: [
+    ['vid.showMore', 'Show more hidden videos'],
+    ['vid.showLess', 'Collapse hidden videos'],
+    ['vid.cat.opera_lied', 'Category heading'],
+    ['vid.cat.gala_crossover', 'Category heading'],
+    ['vid.brand', 'Thumbnail brand line'],
+  ]},
+];
+
+function tiBundleDefault(lang, key){
+  const l = Ti[lang] || {};
+  if (Object.prototype.hasOwnProperty.call(l, key)) return l[key];
+  const e = Ti.en || {};
+  if (Object.prototype.hasOwnProperty.call(e, key)) return e[key];
+  return undefined;
+}
+function admEnsureSiteUiFields(){
+  const root = document.getElementById('siteUiFieldsRoot');
+  if (!root || root.getAttribute('data-built') === '1') return;
+  root.setAttribute('data-built', '1');
+  SITE_UI_PHASE2A_GROUPS.forEach(grp => {
+    const head = document.createElement('div');
+    head.className = 'adm-section';
+    head.style.marginTop = '1rem';
+    head.textContent = grp.title;
+    root.appendChild(head);
+    grp.rows.forEach(([key, hint]) => {
+      const grid = document.createElement('div');
+      grid.className = 'adm-grid full';
+      const col = document.createElement('div');
+      col.className = 'adm-col';
+      const lab = document.createElement('label');
+      lab.className = 'adm-label';
+      lab.innerHTML = '<code style="font-size:.62rem;opacity:.85">' + key.replace(/</g, '&lt;') + '</code> — ' + hint.replace(/</g, '&lt;');
+      const ta = document.createElement('textarea');
+      ta.className = 'adm-input adm-ui-str';
+      ta.setAttribute('data-ui-key', key);
+      ta.rows = (key === 'photos.h2' || key === 'programs.sectionTag' || key === 'epk.title' || key === 'reviewsIntro' || key === 'photos.sub' || key === 'epk.photosIntro' || key === 'epk.photoCredit' || key === 'form.messagePh') ? 3 : 2;
+      col.appendChild(lab);
+      col.appendChild(ta);
+      grid.appendChild(col);
+      root.appendChild(grid);
+    });
+  });
+}
+
+function saveSiteUiStrings(){
+  const lang = currentLang || 'en';
+  const panelKeys = [];
+  document.querySelectorAll('#admPanel-siteui .adm-ui-str').forEach(el => {
+    const k = el.getAttribute('data-ui-key');
+    if (k) panelKeys.push([k, el]);
+  });
+  const prev = load('rg_ui_' + lang) || {};
+  const next = {};
+  Object.keys(prev).forEach(k => {
+    if (!panelKeys.some(([pk]) => pk === k)) next[k] = prev[k];
+  });
+  panelKeys.forEach(([k, el]) => {
+    const trimmed = (el.value || '').trim();
+    if (!trimmed) return;
+    const def = tiBundleDefault(lang, k);
+    const defStr = def == null ? '' : String(def);
+    if (trimmed === defStr.trim()) return;
+    next[k] = trimmed;
+  });
+  try {
+    save('rg_ui_' + lang, Object.keys(next).length ? next : null);
+    const fb = document.getElementById('fb-siteui');
+    if (fb) { fb.style.display = 'block'; setTimeout(() => { fb.style.display = 'none'; }, 2200); }
+    if (typeof rgMarkUnsaved === 'function') rgMarkUnsaved('saved');
+    if (typeof setLang === 'function') setLang(lang);
+    try { if (typeof renderAll === 'function') renderAll(); } catch (e2) {}
+    admPopulate('siteui');
+  } catch (e) {
+    rgSaveFailed('site_ui', e);
+  }
+}
+
 function setLang(lang){
   currentLang = lang;
   ['en','de','es','it','fr'].forEach(l => {
@@ -7835,8 +8272,21 @@ function setLang(lang){
     if (btn) btn.classList.toggle('active', l===lang);
   });
   document.documentElement.lang=lang;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(Ti[lang]&&Ti[lang][k]!==undefined)el.innerHTML=Ti[lang][k];});
-  document.querySelectorAll('[data-ph]').forEach(el=>{const k=el.getAttribute('data-ph');if(Ti[lang]&&Ti[lang][k]!==undefined)el.placeholder=Ti[lang][k];});
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    const v = effectiveUiText(lang, k);
+    if (v !== undefined) el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+    const k=el.getAttribute('data-i18n-aria');
+    const v = effectiveUiText(lang, k);
+    if (v !== undefined) el.setAttribute('aria-label', stripHtmlForUiAttr(v));
+  });
+  document.querySelectorAll('[data-ph]').forEach(el=>{
+    const k=el.getAttribute('data-ph');
+    const v = effectiveUiText(lang, k);
+    if (v !== undefined) el.placeholder = stripHtmlForUiAttr(v);
+  });
   // Stacked gold-& titles: photos H2 only. programs.sectionTag ("08 PROGRAMS & …") stays one line — section-tag typography.
   ['photos.h2'].forEach(k=>{
     document.querySelectorAll('[data-i18n="'+k+'"]').forEach(el=>{
@@ -7870,9 +8320,21 @@ function setLang(lang){
 
 function getEditorial(){
   const raw = load('rg_editorial_' + currentLang) || {};
+  const t = (Ti[currentLang] || Ti.en);
+  const pick = (field, tiKey) => {
+    const v = raw[field];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+    return t[tiKey] || '';
+  };
   return {
-    repProgramsLink: (typeof raw.repProgramsLink === 'string' && raw.repProgramsLink.trim()) ? raw.repProgramsLink.trim() : ((Ti[currentLang]||Ti.en)['rep.programsLink'] || ''),
-    epkProgramsLink: (typeof raw.epkProgramsLink === 'string' && raw.epkProgramsLink.trim()) ? raw.epkProgramsLink.trim() : ((Ti[currentLang]||Ti.en)['epk.programsLink'] || '')
+    repProgramsLink: (typeof raw.repProgramsLink === 'string' && raw.repProgramsLink.trim()) ? raw.repProgramsLink.trim() : (t['rep.programsLink'] || ''),
+    epkProgramsLink: (typeof raw.epkProgramsLink === 'string' && raw.epkProgramsLink.trim()) ? raw.epkProgramsLink.trim() : (t['epk.programsLink'] || ''),
+    repIntroLine: pick('repIntroLine', 'rep.introLine'),
+    repDescOpera: pick('repDescOpera', 'rep.descOpera'),
+    repDescArias: pick('repDescArias', 'rep.descArias'),
+    repDescOperetta: pick('repDescOperetta', 'rep.descOperetta'),
+    repDescLied: pick('repDescLied', 'rep.descLied'),
+    repDescTango: pick('repDescTango', 'rep.descTango'),
   };
 }
 function applyEditorialTexts(){
@@ -7916,35 +8378,35 @@ function savePressEdit(id){
 }
 async function autoTranslatePressEdit(id, btnEl){
   const textEl=document.getElementById('pe-pquote-'+id);
-  if(!textEl||!textEl.value.trim()){alert('Escribí la cita primero.');return;}
+  if(!textEl||!textEl.value.trim()){alert('Enter the quote first.');return;}
   const btn=btnEl;btn.textContent='⏳…';btn.disabled=true;
   try{
     const t=await callAnthropicTranslate(textEl.value.trim());
     const items=getPress();const idx=items.findIndex(p=>p.id===id);
     if(idx>=0){if(!items[idx].quotes_i18n)items[idx].quotes_i18n={};['en','de','es','it','fr'].forEach(l=>{items[idx].quotes_i18n[l]=t[l]||textEl.value;});save('rg_press',items);renderPress();}
-    btn.textContent='✓';setTimeout(()=>{btn.textContent='✦ Auto-traducir';btn.disabled=false;},2000);
-  }catch(e){btn.textContent='✦ Auto-traducir';btn.disabled=false;alert('Error: '+e.message);}
+    btn.textContent='✓';setTimeout(()=>{btn.textContent='✦ Auto-translate';btn.disabled=false;},2000);
+  }catch(e){btn.textContent='✦ Auto-translate';btn.disabled=false;alert('Error: '+e.message);}
 }
 function admRenderPressList(){
   const el=document.getElementById('pressAdmList');
   if(!el) return;
   const items=getPress().sort((a,b)=>(a.order||0)-(b.order||0));
-  if(!items.length){ el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No hay citas aún.</div>'; return; }
+  if(!items.length){ el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No quotes yet.</div>'; return; }
   el.innerHTML=items.map(p=>`
     <div class="adm-row" style="flex-direction:column;align-items:stretch;gap:0">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <div class="adm-row-info" style="cursor:pointer" onclick="togglePressEdit(${p.id})">
           <div class="adm-row-title" style="font-style:italic">"${p.quote.substring(0,80)}${p.quote.length>80?'…':''}"</div>
-          <div class="adm-row-meta">${p.source} · ${p.production}${p.visible===false?' · oculta':''}</div>
+          <div class="adm-row-meta">${p.source} · ${p.production}${p.visible===false?' · hidden':''}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="adm-btn-sm" onclick="togglePressEdit(${p.id})" style="background:rgba(212,168,67,.12);border-color:var(--gold-dim);color:var(--gold)">Editar</button>
-          <button class="adm-btn-sm adm-btn-danger" onclick="deletePressQuote(${p.id})">Eliminar</button>
+          <button class="adm-btn-sm" onclick="togglePressEdit(${p.id})" style="background:rgba(212,168,67,.12);border-color:var(--gold-dim);color:var(--gold)">Edit</button>
+          <button class="adm-btn-sm adm-btn-danger" onclick="deletePressQuote(${p.id})">Remove</button>
         </div>
       </div>
       <div id="pressedit-${p.id}" style="display:none;padding:14px 0 6px;margin-top:10px;border-top:1px solid var(--border)">
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita</label><textarea class="adm-input" id="pe-pquote-${p.id}" rows="3">${p.quote}</textarea></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Cita por idioma (EN / DE / ES / IT / FR)</label>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Quote</label><textarea class="adm-input" id="pe-pquote-${p.id}" rows="3">${p.quote}</textarea></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Quote per language (EN / DE / ES / IT / FR)</label>
           <input class="adm-input" id="pe-pquote-en-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.en)||''}" style="margin-bottom:6px" placeholder="EN">
           <input class="adm-input" id="pe-pquote-de-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.de)||''}" style="margin-bottom:6px" placeholder="DE">
           <input class="adm-input" id="pe-pquote-es-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.es)||''}" style="margin-bottom:6px" placeholder="ES">
@@ -7952,10 +8414,10 @@ function admRenderPressList(){
           <input class="adm-input" id="pe-pquote-fr-${p.id}" value="${(p.quotes_i18n&&p.quotes_i18n.fr)||''}" placeholder="FR">
         </div></div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Fuente</label><input class="adm-input" id="pe-psource-${p.id}" value="${p.source||''}"></div>
-          <div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" id="pe-pprod-${p.id}" value="${p.production||''}"></div>
+          <div class="adm-col"><label class="adm-label">Source</label><input class="adm-input" id="pe-psource-${p.id}" value="${p.source||''}"></div>
+          <div class="adm-col"><label class="adm-label">Production</label><input class="adm-input" id="pe-pprod-${p.id}" value="${p.production||''}"></div>
         </div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Producción por idioma (EN / DE / ES / IT / FR)</label>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Production per language (EN / DE / ES / IT / FR)</label>
           <input class="adm-input" id="pe-pprod-en-${p.id}" value="${(p.production_i18n&&p.production_i18n.en)||''}" style="margin-bottom:6px" placeholder="EN">
           <input class="adm-input" id="pe-pprod-de-${p.id}" value="${(p.production_i18n&&p.production_i18n.de)||''}" style="margin-bottom:6px" placeholder="DE">
           <input class="adm-input" id="pe-pprod-es-${p.id}" value="${(p.production_i18n&&p.production_i18n.es)||''}" style="margin-bottom:6px" placeholder="ES">
@@ -7963,29 +8425,29 @@ function admRenderPressList(){
           <input class="adm-input" id="pe-pprod-fr-${p.id}" value="${(p.production_i18n&&p.production_i18n.fr)||''}" placeholder="FR">
         </div></div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Orden</label><input class="adm-input" id="pe-porder-${p.id}" type="number" value="${Number.isFinite(Number(p.order))?Number(p.order):0}"></div>
+          <div class="adm-col"><label class="adm-label">Order</label><input class="adm-input" id="pe-porder-${p.id}" type="number" value="${Number.isFinite(Number(p.order))?Number(p.order):0}"></div>
           <div class="adm-col"><label class="adm-label">Visible</label><input type="checkbox" id="pe-pvisible-${p.id}" ${p.visible!==false?'checked':''}></div>
         </div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">URL artículo</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Article URL</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
-          <button class="adm-btn" onclick="savePressEdit(${p.id})">Guardar</button>
-          <button class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-traducir</button>
-          <button class="adm-btn" onclick="togglePressEdit(${p.id})" style="background:transparent">Cancelar</button>
+          <button class="adm-btn" onclick="savePressEdit(${p.id})">Save</button>
+          <button class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-translate</button>
+          <button class="adm-btn" onclick="togglePressEdit(${p.id})" style="background:transparent">Cancel</button>
         </div>
-        <div id="fb-pressedit-${p.id}" class="adm-feedback" style="display:none">¡Guardado!</div>
+        <div id="fb-pressedit-${p.id}" class="adm-feedback" style="display:none">Saved!</div>
       </div>
     </div>`).join('');
 }
 
 async function autoTranslateNewPressQuote(){
   const text=(document.getElementById('pa-quote')||{}).value.trim();
-  if(!text){alert('Escribí la cita primero.');return;}
+  if(!text){alert('Enter the quote first.');return;}
   const status=document.getElementById('pa-translateStatus');
-  if(status)status.textContent='Traduciendo…';
+  if(status)status.textContent='Translating…';
   try{
     const t=await callAnthropicTranslate(text);
     ['en','de','es','it','fr'].forEach(l=>{const el=document.getElementById('pa-qi18n-'+l);if(el)el.value=t[l]||text;});
-    if(status)status.innerHTML='<span style="color:#4CAF50">✓ 5 traducciones listas — se guardarán con la cita</span>';
+    if(status)status.innerHTML='<span style="color:#4CAF50">✓ 5 translations ready — they will be saved with the quote</span>';
   }catch(e){
     if(status)status.innerHTML='<span style="color:#e57373">✗ '+e.message+'</span>';
   }
@@ -7993,7 +8455,7 @@ async function autoTranslateNewPressQuote(){
 function addPressQuote(){
   const quote=document.getElementById('pa-quote').value.trim();
   const source=document.getElementById('pa-source').value.trim();
-  if(!quote||!source){alert('La cita y la fuente son obligatorias');return;}
+  if(!quote||!source){alert('Quote and source are required.');return;}
   const items=getPress();
   const newId=items.length?Math.max(...items.map(p=>p.id))+1:1;
   const _qi18n={};['en','de','es','it','fr'].forEach(l=>{const el=document.getElementById('pa-qi18n-'+l);_qi18n[l]=(el&&el.value.trim())?el.value.trim():quote;});
@@ -8009,7 +8471,7 @@ function addPressQuote(){
 }
 
 function deletePressQuote(id){
-  if(!confirm('¿Eliminar esta cita?'))return;
+  if(!confirm('Remove this quote?'))return;
   save('rg_press',getPress().filter(p=>p.id!==id));
   renderPress();admRenderPressList();
 }
@@ -8101,7 +8563,7 @@ function epkSetBioLang(lang) {
   const curLang = document.getElementById('epkBioActiveLang').value;
   epkSaveBioToTemp(curLang);
   const safeBadge=document.getElementById('epkBioSafeBadge');
-  if(safeBadge){safeBadge.textContent='✓ '+curLang.toUpperCase()+' guardado en memoria';safeBadge.style.opacity='1';setTimeout(()=>safeBadge.style.opacity='0',2000);}
+  if(safeBadge){safeBadge.textContent='✓ '+curLang.toUpperCase()+' kept in memory';safeBadge.style.opacity='1';setTimeout(()=>safeBadge.style.opacity='0',2000);}
 
   // Update active button style
   ['en','de','es','it','fr'].forEach(l => {
@@ -8265,13 +8727,13 @@ function epkRenderCvAdmin() {
   container.innerHTML = langs.map(langKey => {
     const hasCustom = !!storedCvs[langKey];
     const hasTemp   = !!_epkCvTemp[langKey];
-    const status = hasTemp ? '✦ nuevo archivo listo' : (hasCustom ? '✓ CV personalizado guardado' : '(usando CV por defecto)');
+    const status = hasTemp ? '✦ new file ready to save' : (hasCustom ? '✓ custom CV saved' : '(using default CV)');
     const statusColor = hasTemp ? 'var(--gold)' : (hasCustom ? '#4CAF50' : 'var(--text-faint)');
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface2);border:1px solid var(--border)">
       <span style="font-family:var(--ff-caps);font-size:.7rem;letter-spacing:.1em;min-width:28px;color:var(--gold)">${langKey}</span>
       <span style="font-size:.72rem;color:${statusColor};flex:1">${status}</span>
       <label style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:4px 10px;cursor:pointer;font-size:.68rem;font-family:var(--ff-caps)">
-        📎 Subir PDF
+        📎 Upload PDF
         <input type="file" accept="application/pdf" style="display:none" onchange="epkLoadCv(event, '${langKey}')">
       </label>
       ${(hasCustom || hasTemp) ? '<button onclick="epkRemoveCv(\'' + langKey + '\')" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:4px 8px;cursor:pointer;font-size:.65rem">✕</button>' : ''}
@@ -8283,7 +8745,7 @@ function epkLoadCv(event, langKey) {
   const file = event.target.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert('El archivo es demasiado grande (máx 5MB)');
+    alert('File is too large (max 5MB)');
     return;
   }
   const reader = new FileReader();
@@ -8324,18 +8786,18 @@ function epkRenderPhotosAdmin() {
   const photos = epkGetStoredPhotos();
 
   if (photos.length === 0) {
-    container.innerHTML = '<p style="font-size:.75rem;color:var(--text-faint);text-align:center;padding:12px">No hay fotos agregadas aún.</p>';
+    container.innerHTML = '<p style="font-size:.75rem;color:var(--text-faint);text-align:center;padding:12px">No press photos added yet.</p>';
     return;
   }
 
   container.innerHTML = photos.map((ph, i) => `
     <div style="display:flex;flex-direction:column;gap:5px;padding:10px;background:var(--surface2);border:1px solid var(--border)">
       <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
-        <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="URL de la foto (https://...)" value="${ph.url||''}" onchange="epkUpdatePhoto(${i},'url',this.value)">
-        <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="© Crédito fotógrafo" value="${ph.credit||''}" onchange="epkUpdatePhoto(${i},'credit',this.value)">
+        <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="Photo URL (https://...)" value="${ph.url||''}" onchange="epkUpdatePhoto(${i},'url',this.value)">
+        <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="© Photographer credit" value="${ph.credit||''}" onchange="epkUpdatePhoto(${i},'credit',this.value)">
         <button onclick="epkRemovePhoto(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:6px 10px;cursor:pointer;font-size:.7rem">✕</button>
       </div>
-      <input class="adm-input" style="font-size:.75rem;padding:5px" placeholder="Etiqueta visible (ej: Retrato de estudio · 2024)" value="${ph.label||''}" onchange="epkUpdatePhoto(${i},'label',this.value)">
+      <input class="adm-input" style="font-size:.75rem;padding:5px" placeholder="Visible label (e.g. Studio portrait · 2024)" value="${ph.label||''}" onchange="epkUpdatePhoto(${i},'label',this.value)">
     </div>
   `).join('');
 }
@@ -8454,7 +8916,7 @@ function saveMonthSize() {
   localStorage.setItem('rg_month_size', val);
   document.documentElement.style.setProperty('--perf-month-size', val + 'rem');
   const fb = document.createElement('span');
-  fb.textContent = ' ✓ Guardado'; fb.style.color = 'var(--gold)'; fb.style.fontSize = '.7rem';
+  fb.textContent = ' ✓ Saved'; fb.style.color = 'var(--gold)'; fb.style.fontSize = '.7rem';
   const btn = document.querySelector('[onclick="saveMonthSize()"]');
   btn.after(fb); setTimeout(() => fb.remove(), 2000);
 }
@@ -8466,8 +8928,8 @@ function admSetLang(lang){
     if(l===lang){btn.style.background='var(--gold)';btn.style.color='#000';btn.style.border='none';}
     else{btn.style.background='var(--surface2)';btn.style.color='var(--text-dim)';btn.style.border='1px solid var(--border)';}
   });
-  // Actualizar badges de idioma en paneles
-  ['hero','bio','contact','programs'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=lang.toUpperCase();});
+  // Update content-language badges on panels
+  ['hero','bio','contact','programs','perf'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=lang.toUpperCase();});
   if (admUnlocked) try { admSyncExportDocFold(); } catch (e) {}
 }
 function openAdmin(){
@@ -8502,7 +8964,7 @@ function openEventModal(perfId){
   const perfs = load('rg_perfs') || DEFAULTS.perfs;
   const p = perfs.find(x=>x.id===perfId);
   if(!p) return;
-  const perfLang = get('perf');
+  const perfLang = getPerfMerged();
   const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
   const typeLabel = types[p.type] || p.type || '';
   const detail = (p["detail_"+currentLang]||p.detail)||"";
@@ -8541,7 +9003,12 @@ function openEventModal(perfId){
   const linkEl = document.getElementById('emEventLink');
   if(p.eventLink && p.eventLink.trim()){
     linkEl.href = p.eventLink;
-    linkEl.textContent = p.eventLinkLabel || 'Tickets & Info';
+    const t = uiTable(currentLang);
+    const legacyEnglish = 'Tickets & Info';
+    const storedLabel = (p.eventLinkLabel || '').trim();
+    linkEl.textContent = storedLabel && storedLabel !== legacyEnglish
+      ? storedLabel
+      : (t['perf.ticketsInfo'] || legacyEnglish);
     linkEl.style.display = '';
   } else { linkEl.style.display = 'none'; }
   // Flyer image
@@ -8555,6 +9022,9 @@ function openEventModal(perfId){
   const mapsEl = document.getElementById('emMapsLink');
   if(p.venue){
     mapsEl.href = 'https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : ''));
+    const t = uiTable(currentLang);
+    const mapsLabel = t['perf.maps'] || ({en:'Maps',de:'Karten',es:'Mapas',it:'Mappe',fr:'Cartes'}[currentLang] || 'Maps');
+    mapsEl.innerHTML = '📍 ' + mapsLabel;
     mapsEl.style.display = '';
   } else { mapsEl.style.display = 'none'; }
   document.getElementById('eventModal').style.display = '';
@@ -8570,7 +9040,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 
 function admTab(name){
   admCurTab = name;
-  const tabs = ['hero','bio','rep-opera','rep-arias','rep-operetta','rep-lived','rep-tango','programs','vid','photos','perf','press','contact','epk'];
+  const tabs = ['hero','bio','rep-opera','rep-arias','rep-operetta','rep-lived','rep-tango','programs','vid','photos','perf','press','contact','siteui','epk'];
   document.querySelectorAll('.adm-tab').forEach((t,i)=>t.classList.toggle('active', tabs[i]===name));
   document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
   const panel = document.getElementById('admPanel-'+name);
@@ -8579,7 +9049,9 @@ function admTab(name){
 }
 
 function admPopulate(name){
-  ['hero','bio','contact','programs'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=currentLang.toUpperCase();});
+  ['hero','bio','contact','programs','perf'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=currentLang.toUpperCase();});
+  const suB = document.getElementById('siteuiLangBadge');
+  if (suB) suB.textContent = currentLang.toUpperCase();
   if (name && name.startsWith('rep-')) {
     const rb = document.getElementById('repLangBadge');
     if (rb) rb.textContent = currentLang.toUpperCase();
@@ -8590,15 +9062,17 @@ function admPopulate(name){
     const curBg=(document.getElementById('heroBg')||{}).style.backgroundImage||'';
     const curBgClean=curBg.replace(/url\(['"]?|['"]?\)/g,'');
     if(bgEl)bgEl.value=d.bgImage||curBgClean||'img/hero-bg.webp';
-    document.getElementById('f-heroEyebrow').value = d.eyebrow||'';
-    document.getElementById('f-heroSubtitle').value = d.subtitle||'';
-    document.getElementById('f-heroCta1').value = d.cta1||'';
-    document.getElementById('f-heroCta2').value = d.cta2||'';
+    document.getElementById('f-heroEyebrow').value = admEffectiveSectionField('hero', 'eyebrow');
+    document.getElementById('f-heroSubtitle').value = admEffectiveSectionField('hero', 'subtitle');
+    document.getElementById('f-heroCta1').value = admEffectiveSectionField('hero', 'cta1');
+    document.getElementById('f-heroCta2').value = admEffectiveSectionField('hero', 'cta2');
   }
   else if(name==='bio'){
     const d=get('bio');
     const map={h2:'f-bioH2',p1:'f-bioP1',p2:'f-bioP2',quote:'f-bioQuote'};
-    Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=d[k]||'';});
+    Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=admEffectiveSectionField('bio',k);});
+    const citeEl = document.getElementById('f-bioCite');
+    if (citeEl) citeEl.value = admEffectiveSectionField('bio', 'cite');
   }
   else if(name.startsWith('rep-')){
     const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
@@ -8607,6 +9081,16 @@ function admPopulate(name){
     const d = getRep();
     const repH2Input = document.getElementById('f-repH2');
     if (repH2Input) repH2Input.value = admEffectiveRepH2Display();
+    if (name === 'rep-opera') {
+      const ed = getEditorial();
+      const fillEd = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+      fillEd('f-repIntroLine', ed.repIntroLine);
+      fillEd('f-repDescOpera', ed.repDescOpera);
+      fillEd('f-repDescArias', ed.repDescArias);
+      fillEd('f-repDescOperetta', ed.repDescOperetta);
+      fillEd('f-repDescLied', ed.repDescLied);
+      fillEd('f-repDescTango', ed.repDescTango);
+    }
     let catCards = (d.cards || []).filter(c => (c.cat || 'opera') === cat);
     const sortStatus = (document.getElementById('repSortStatus-'+tabSuffix)||{}).value || '';
     if (sortStatus) {
@@ -8641,36 +9125,36 @@ function admPopulate(name){
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropRep('${cat}',${localIdx},event)">
         <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px">
-          <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Arrastrar para reordenar">⠿</span>
+          <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Drag to reorder">⠿</span>
           ${isOpera ? `<span style="color:${statusColors[card.status||'performed']};font-size:.7rem">●</span>` : ''}
-          ${isOpera ? 'Rol' : 'Entrada'} ${localIdx+1}
-          <button type="button" onclick="duplicateRepCard('${cat}',${localIdx})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicar</button>
-          <button type="button" onclick="removeRepCard('${cat}',${localIdx})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
+          ${isOpera ? 'Role' : 'Entry'} ${localIdx+1}
+          <button type="button" onclick="duplicateRepCard('${cat}',${localIdx})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicate</button>
+          <button type="button" onclick="removeRepCard('${cat}',${localIdx})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Remove</button>
         </div>
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Compositor</label><input class="adm-input" id="rc-${cat}-${localIdx}-composer" value="${repEsc(card.composer)}"></div>
-          <div class="adm-col"><label class="adm-label">Obra / Título</label><input class="adm-input" id="rc-${cat}-${localIdx}-opera" value="${repEsc(card.opera)}"></div>
+          <div class="adm-col"><label class="adm-label">Composer</label><input class="adm-input" id="rc-${cat}-${localIdx}-composer" value="${repEsc(card.composer)}"></div>
+          <div class="adm-col"><label class="adm-label">Work / title</label><input class="adm-input" id="rc-${cat}-${localIdx}-opera" value="${repEsc(card.opera)}"></div>
         </div>
         <div class="adm-grid">
           ${isOpera ? `
-          <div class="adm-col"><label class="adm-label">Rol</label><input class="adm-input" id="rc-${cat}-${localIdx}-role" value="${repEsc(card.role)}"></div>
+          <div class="adm-col"><label class="adm-label">Role</label><input class="adm-input" id="rc-${cat}-${localIdx}-role" value="${repEsc(card.role)}"></div>
           ` : ''}
           <div class="adm-col" style="max-width:92px;opacity:${(cat==='opera'||cat==='arias') ? '1' : '.72'}">
-            <label class="adm-label" style="${(cat==='opera'||cat==='arias') ? '' : 'font-size:.62rem;color:var(--text-faint);letter-spacing:.08em;'}">${(cat==='opera'||cat==='arias') ? 'Idioma' : 'Idioma (meta)'}</label>
+            <label class="adm-label" style="${(cat==='opera'||cat==='arias') ? '' : 'font-size:.62rem;color:var(--text-faint);letter-spacing:.08em;'}">${(cat==='opera'||cat==='arias') ? 'Language' : 'Language (meta)'}</label>
             <select class="adm-input" id="rc-${cat}-${localIdx}-lang">
               ${['IT','DE','FR','EN','LA','ES'].map(l=>`<option value="${l}" ${(card.lang||'IT')===l?'selected':''}>${l}</option>`).join('')}
             </select>
           </div>
           ${cat === 'lied' ? `
           <div class="adm-col">
-            <label class="adm-label">Categoría</label>
+            <label class="adm-label">Category</label>
             <select class="adm-input" id="rc-${cat}-${localIdx}-category">
               ${liedCategories.map(opt=>`<option value="${opt}" ${(card.category||'Deutsches Lied')===opt?'selected':''}>${opt}</option>`).join('')}
             </select>
           </div>
           ` : ''}
           ${isOpera ? `
-          <div class="adm-col"><label class="adm-label">Estado</label>
+          <div class="adm-col"><label class="adm-label">Status</label>
             <select class="adm-input" id="rc-${cat}-${localIdx}-status">
               <option value="performed" ${(card.status||'performed')==='performed'?'selected':''}>✓ Performed</option>
               <option value="prepared" ${card.status==='prepared'?'selected':''}>◎ Prepared</option>
@@ -8704,22 +9188,24 @@ function admPopulate(name){
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropProgram(${i},event)">
         <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px">
-          <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Arrastrar para reordenar">⠿</span>
+          <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Drag to reorder">⠿</span>
           <span style="color:${p.published?'#4CAF50':'#9A9080'};font-size:.7rem">●</span>
-          Programa ${i+1}${!p.published?' (oculto)':''}
-          <button type="button" onclick="duplicateProgramCard(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicar</button>
-          <button type="button" onclick="removeProgramCard(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Eliminar</button>
+          Program ${i+1}${!p.published?' (hidden)':''}
+          <button type="button" onclick="duplicateProgramCard(${i})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicate</button>
+          <button type="button" onclick="removeProgramCard(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Remove</button>
         </div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="prog-${i}-title" value="${progEsc(p.title)}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción</label><textarea class="adm-input" id="prog-${i}-description" rows="3">${progEsc(p.description)}</textarea></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Formaciones (una por línea)</label><textarea class="adm-input" id="prog-${i}-formations" rows="2">${progEsc(progLines(p.formations))}</textarea></div></div>
-        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Duración</label><input class="adm-input" id="prog-${i}-duration" value="${progEsc(p.duration)}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Ideal para (una por línea)</label><textarea class="adm-input" id="prog-${i}-idealFor" rows="2">${progEsc(progLines(p.idealFor))}</textarea></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visible</label><input type="checkbox" id="prog-${i}-published" ${p.published?'checked':''}></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title</label><input class="adm-input" id="prog-${i}-title" value="${progEsc(p.title)}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description</label><textarea class="adm-input" id="prog-${i}-description" rows="3">${progEsc(p.description)}</textarea></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Line-up (one per line)</label><textarea class="adm-input" id="prog-${i}-formations" rows="2">${progEsc(progLines(p.formations))}</textarea></div></div>
+        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Duration</label><input class="adm-input" id="prog-${i}-duration" value="${progEsc(p.duration)}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Ideal for (one per line)</label><textarea class="adm-input" id="prog-${i}-idealFor" rows="2">${progEsc(progLines(p.idealFor))}</textarea></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Published on site</label><input type="checkbox" id="prog-${i}-published" ${p.published?'checked':''}></div></div>
       </div>`).join('');
   }
   else if(name==='vid'){
     const d=getVid();
+    const vh = document.getElementById('f-vidH2');
+    if (vh) vh.value = admEffectiveVidH2();
     const div=document.getElementById('vidCards');
     div.innerHTML=d.videos.map((v,i)=>`
       <div class="adm-card-preview drag-item" draggable="true" data-vid-idx="${i}"
@@ -8730,53 +9216,53 @@ function admPopulate(name){
         ondragenter="this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropVideo(${i},event)">
-        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px"><span style="color:var(--gold);font-size:1.1rem">⠿</span> Video ${i+1}${v.hidden?' (oculto)':''}</div>
+        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px"><span style="color:var(--gold);font-size:1.1rem">⠿</span> Video ${i+1}${v.hidden?' (hidden)':''}</div>
         <div class="adm-grid">
           <div class="adm-col">
             <label class="adm-label">YouTube ID</label>
             <input class="adm-input" id="vc-${i}-id" value="${v.id||''}">
-            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Solo el ID del video, no la URL completa.</div>
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Video ID only, not the full URL.</div>
           </div>
           <div class="adm-col">
-            <label class="adm-label">Etiqueta breve</label>
+            <label class="adm-label">Short tag</label>
             <input class="adm-input" id="vc-${i}-tag" value="${v.tag||''}">
-            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Ej.: OPERA, RECITAL, GALA 2024.</div>
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">E.g. OPERA, RECITAL, GALA 2024.</div>
           </div>
         </div>
         <div class="adm-grid">
           <div class="adm-col">
-            <label class="adm-label">Grupo</label>
+            <label class="adm-label">Group</label>
             <select class="adm-select" id="vc-${i}-group">
               <option value="opera_lied"${(v.group||'opera_lied')==='opera_lied'?' selected':''}>Opera &amp; Art Song</option>
               <option value="gala_crossover"${(v.group||'opera_lied')==='gala_crossover'?' selected':''}>Gala &amp; Crossover</option>
             </select>
-            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Define la familia visual del video.</div>
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Sets the visual family for this video.</div>
           </div>
-          <div class="adm-col"><label class="adm-label">Destacar video</label>
+          <div class="adm-col"><label class="adm-label">Featured video</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-dim)">
               <input type="checkbox" id="vc-${i}-featured" ${v.featured ? 'checked' : ''}>
-              <span>Mostrar este video como destacado.</span>
+              <span>Show this video as featured.</span>
             </label>
           </div>
         </div>
         <div class="adm-grid full"><div class="adm-col">
-          <label class="adm-label">Título</label>
+          <label class="adm-label">Title</label>
           <input class="adm-input" id="vc-${i}-title" value="${v.title}">
         </div></div>
         <div class="adm-grid full"><div class="adm-col">
-          <label class="adm-label">Subtítulo</label>
+          <label class="adm-label">Subtitle</label>
           <input class="adm-input" id="vc-${i}-sub" value="${v.sub}">
-          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Obra · compositor · contexto breve.</div>
+          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Work · composer · short context.</div>
         </div></div>
         <div class="adm-grid full"><div class="adm-col">
-          <label class="adm-label">Imagen personalizada (URL opcional)</label>
+          <label class="adm-label">Custom thumbnail (optional URL)</label>
           <input class="adm-input" id="vc-${i}-thumb" placeholder="https://example.com/thumbnail.jpg" value="${v.customThumb||''}">
-          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Opcional. Si se deja vacío, se usa el fondo editorial automático.</div>
+          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Optional. If empty, the automatic editorial background is used.</div>
         </div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visibilidad</label>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visibility</label>
           <select class="adm-select" id="vc-${i}-hidden">
             <option value="false"${!v.hidden?' selected':''}>Visible</option>
-            <option value="true"${v.hidden?' selected':''}>Oculto</option>
+            <option value="true"${v.hidden?' selected':''}>Hidden</option>
           </select>
         </div></div>
       </div>`).join('');
@@ -8785,9 +9271,17 @@ function admPopulate(name){
     admRenderPhotoSlots();
   }
   else if(name==='perf'){
-    const p=get('perf');
-    const h=document.getElementById('f-perfH2'); if(h) h.value=p.h2||'';
-    const pi=document.getElementById('f-perfIntro'); if(pi) pi.value=p.intro||'';
+    const pm = getPerfMerged();
+    const h=document.getElementById('f-perfH2'); if(h) h.value=pm.h2||'';
+    const pi=document.getElementById('f-perfIntro'); if(pi) pi.value=pm.intro||'';
+    const et = document.getElementById('f-perfEventTypesJson');
+    if (et) {
+      try { et.value = pm.eventTypes && Object.keys(pm.eventTypes).length ? JSON.stringify(pm.eventTypes, null, 2) : ''; } catch (e) { et.value = ''; }
+    }
+    const mn = document.getElementById('f-perfMonthNamesJson');
+    if (mn) {
+      try { mn.value = pm.monthNames && Object.keys(pm.monthNames).length ? JSON.stringify(pm.monthNames, null, 2) : ''; } catch (e) { mn.value = ''; }
+    }
     admRenderPerfList();
     loadMonthSize();
   }
@@ -8798,12 +9292,22 @@ function admPopulate(name){
     if (noteEl) noteEl.value = ((pm[currentLang]||{}).translatedNote || '');
   }
   else if(name==='contact'){
-    const d=get('contact');
-    document.getElementById('f-contactTitle').value = d.title||'';
-    document.getElementById('f-contactSub').value = d.sub||'';
-    document.getElementById('f-contactQuote').value = d.quote||'';
-    document.getElementById('f-contactEmail').value = d.email||'';
-    document.getElementById('f-contactEmailBtn').value = d.emailBtn||'';
+    document.getElementById('f-contactTitle').value = admEffectiveSectionField('contact', 'title');
+    document.getElementById('f-contactSub').value = admEffectiveSectionField('contact', 'sub');
+    document.getElementById('f-contactQuote').value = admEffectiveSectionField('contact', 'quote');
+    document.getElementById('f-contactEmail').value = admEffectiveSectionField('contact', 'email');
+    document.getElementById('f-contactEmailBtn').value = admEffectiveSectionField('contact', 'emailBtn');
+    const w = document.getElementById('f-contactWebBtn'); if (w) w.value = admEffectiveSectionField('contact', 'webBtn');
+  }
+  else if(name==='siteui'){
+    admEnsureSiteUiFields();
+    const lang = currentLang || 'en';
+    document.querySelectorAll('#admPanel-siteui .adm-ui-str').forEach(el => {
+      const k = el.getAttribute('data-ui-key');
+      if (!k) return;
+      const v = effectiveUiText(lang, k);
+      el.value = v == null ? '' : String(v);
+    });
   }
   if(name==='epk'){
     // Load bio fields for default lang (en)
@@ -8846,6 +9350,43 @@ function saveRepHeader(opts){
   }
 }
 
+function saveRepEditorial() {
+  const prev = load('rg_editorial_' + currentLang) || {};
+  const next = {
+    ...prev,
+    repIntroLine: ((document.getElementById('f-repIntroLine') || {}).value || '').trim(),
+    repDescOpera: ((document.getElementById('f-repDescOpera') || {}).value || '').trim(),
+    repDescArias: ((document.getElementById('f-repDescArias') || {}).value || '').trim(),
+    repDescOperetta: ((document.getElementById('f-repDescOperetta') || {}).value || '').trim(),
+    repDescLied: ((document.getElementById('f-repDescLied') || {}).value || '').trim(),
+    repDescTango: ((document.getElementById('f-repDescTango') || {}).value || '').trim(),
+  };
+  const stripIfDefault = (key, field, tiKey) => {
+    const t = (Ti[currentLang] || Ti.en);
+    const def = (t[tiKey] || '').trim();
+    if (next[field] && def && next[field] === def) delete next[field];
+  };
+  stripIfDefault('', 'repIntroLine', 'rep.introLine');
+  stripIfDefault('', 'repDescOpera', 'rep.descOpera');
+  stripIfDefault('', 'repDescArias', 'rep.descArias');
+  stripIfDefault('', 'repDescOperetta', 'rep.descOperetta');
+  stripIfDefault('', 'repDescLied', 'rep.descLied');
+  stripIfDefault('', 'repDescTango', 'rep.descTango');
+  Object.keys(next).forEach(k => { if (next[k] === '') delete next[k]; });
+  save('rg_editorial_' + currentLang, next);
+  try { if (typeof renderRep === 'function') renderRep(); } catch (e) {}
+  const fill = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const e2 = getEditorial();
+  fill('f-repIntroLine', e2.repIntroLine);
+  fill('f-repDescOpera', e2.repDescOpera);
+  fill('f-repDescArias', e2.repDescArias);
+  fill('f-repDescOperetta', e2.repDescOperetta);
+  fill('f-repDescLied', e2.repDescLied);
+  fill('f-repDescTango', e2.repDescTango);
+  const fb = document.getElementById('fb-rep-editorial');
+  if (fb) { fb.style.display = 'block'; setTimeout(() => { fb.style.display = 'none'; }, 2200); }
+}
+
 function saveSection(name){
   let data;
   if(name==='hero'){
@@ -8853,10 +9394,18 @@ function saveSection(name){
     save('hero_'+currentLang,data);
     if(data.bgImage){const hb=document.getElementById('heroBg');if(hb)hb.style.backgroundImage="url('"+data.bgImage+"')";}
     renderHero();
+    document.getElementById('f-heroEyebrow').value = admEffectiveSectionField('hero', 'eyebrow');
+    document.getElementById('f-heroSubtitle').value = admEffectiveSectionField('hero', 'subtitle');
+    document.getElementById('f-heroCta1').value = admEffectiveSectionField('hero', 'cta1');
+    document.getElementById('f-heroCta2').value = admEffectiveSectionField('hero', 'cta2');
   }
   else if(name==='bio'){
-    data={h2:document.getElementById('f-bioH2').value,p1:document.getElementById('f-bioP1').value,p2:document.getElementById('f-bioP2').value,quote:document.getElementById('f-bioQuote').value,cite:get('bio').cite};
+    data={h2:document.getElementById('f-bioH2').value,p1:document.getElementById('f-bioP1').value,p2:document.getElementById('f-bioP2').value,quote:document.getElementById('f-bioQuote').value,cite:((document.getElementById('f-bioCite')||{}).value!=null)?document.getElementById('f-bioCite').value:get('bio').cite};
     save('bio_'+currentLang,data); renderBio();
+    const map={h2:'f-bioH2',p1:'f-bioP1',p2:'f-bioP2',quote:'f-bioQuote'};
+    Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=admEffectiveSectionField('bio',k);});
+    const citeEl = document.getElementById('f-bioCite');
+    if (citeEl) citeEl.value = admEffectiveSectionField('bio', 'cite');
   }
   else if(name.startsWith('rep-')){
     if (name === 'rep-opera') saveRepHeader({ silent: true });
@@ -8905,7 +9454,9 @@ function saveSection(name){
       });
     }
     save('rg_programs_' + currentLang, { title, subtitle, intro, closingNote, programs });
+    const prevEd = load('rg_editorial_' + currentLang) || {};
     save('rg_editorial_' + currentLang, {
+      ...prevEd,
       repProgramsLink: ((document.getElementById('f-repProgramsLink')||{}).value || '').trim(),
       epkProgramsLink: ((document.getElementById('f-epkProgramsLink')||{}).value || '').trim()
     });
@@ -8914,6 +9465,8 @@ function saveSection(name){
   }
   else if(name==='vid'){
     const d=getVid();
+    const vh = document.getElementById('f-vidH2');
+    if (vh) d.h2 = vh.value;
     d.videos=d.videos.map((v,i)=>({
       id:document.getElementById(`vc-${i}-id`).value,
       tag:document.getElementById(`vc-${i}-tag`).value,
@@ -8929,18 +9482,61 @@ function saveSection(name){
   else if(name==='contact'){
     data={title:document.getElementById('f-contactTitle').value,sub:document.getElementById('f-contactSub').value,quote:document.getElementById('f-contactQuote').value,email:document.getElementById('f-contactEmail').value,emailBtn:document.getElementById('f-contactEmailBtn').value};
     save('contact_'+currentLang,data); renderContact();
+    document.getElementById('f-contactTitle').value = admEffectiveSectionField('contact', 'title');
+    document.getElementById('f-contactSub').value = admEffectiveSectionField('contact', 'sub');
+    document.getElementById('f-contactQuote').value = admEffectiveSectionField('contact', 'quote');
+    document.getElementById('f-contactEmail').value = admEffectiveSectionField('contact', 'email');
+    document.getElementById('f-contactEmailBtn').value = admEffectiveSectionField('contact', 'emailBtn');
+    const w = document.getElementById('f-contactWebBtn'); if (w) w.value = admEffectiveSectionField('contact', 'webBtn');
   }
   const fb=document.getElementById('fb-'+name);
   if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);}
 }
 
 function savePerfHeader(){
-  const data={h2:document.getElementById('f-perfH2').value,intro:document.getElementById('f-perfIntro').value};
-  save('perf_'+currentLang,data);
-  document.getElementById('perfH2').innerHTML=formatSectionTitleIfAmpersand(data.h2);
-  document.getElementById('perfIntro').textContent=data.intro;
+  const h2 = document.getElementById('f-perfH2').value;
+  const intro = document.getElementById('f-perfIntro').value;
+  const etRaw = ((document.getElementById('f-perfEventTypesJson') || {}).value || '').trim();
+  const mnRaw = ((document.getElementById('f-perfMonthNamesJson') || {}).value || '').trim();
+  let eventTypes;
+  let monthNames;
+  if (etRaw) {
+    try {
+      eventTypes = JSON.parse(etRaw);
+      if (typeof eventTypes !== 'object' || eventTypes === null || Array.isArray(eventTypes)) throw new Error('Must be a JSON object');
+    } catch (e) {
+      alert('eventTypes JSON: ' + (e && e.message ? e.message : String(e)));
+      return;
+    }
+  }
+  if (mnRaw) {
+    try {
+      monthNames = JSON.parse(mnRaw);
+      if (typeof monthNames !== 'object' || monthNames === null || Array.isArray(monthNames)) throw new Error('Must be a JSON object');
+    } catch (e) {
+      alert('monthNames JSON: ' + (e && e.message ? e.message : String(e)));
+      return;
+    }
+  }
+  const next = { ...(load('perf_' + currentLang) || {}), h2, intro };
+  if (etRaw) next.eventTypes = eventTypes;
+  else delete next.eventTypes;
+  if (mnRaw) next.monthNames = monthNames;
+  else delete next.monthNames;
+  save('perf_' + currentLang, next);
+  const eff = getPerfMerged();
+  document.getElementById('perfH2').innerHTML=formatSectionTitleIfAmpersand(eff.h2 || '');
+  document.getElementById('perfIntro').textContent=eff.intro || '';
+  const etEl = document.getElementById('f-perfEventTypesJson');
+  if (etEl) {
+    try { etEl.value = eff.eventTypes && Object.keys(eff.eventTypes).length ? JSON.stringify(eff.eventTypes, null, 2) : ''; } catch (e) { etEl.value = ''; }
+  }
+  const mnEl = document.getElementById('f-perfMonthNamesJson');
+  if (mnEl) {
+    try { mnEl.value = eff.monthNames && Object.keys(eff.monthNames).length ? JSON.stringify(eff.monthNames, null, 2) : ''; } catch (e) { mnEl.value = ''; }
+  }
   const fb=document.getElementById('fb-perf');
-  if(fb){fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);}
+  if(fb){fb.textContent='Saved!';fb.style.display='block';setTimeout(()=>fb.style.display='none',2200);}
 }
 
 // ── Performances CRUD ──
@@ -8987,7 +9583,7 @@ function nextPerfId(arr){return arr.length?Math.max(...arr.map(p=>p.id))+1:1;}
 function addPerf(){
   const day=document.getElementById('pDay').value.trim();
   const title=document.getElementById('pTitle').value.trim();
-  if(!title){alert('El título es obligatorio');return;}
+  if(!title){alert('Title is required.');return;}
   const perfs=getPerfs();
   const _month=document.getElementById('pMonth').value.trim();
   const _status=document.getElementById('pStatus').value;
@@ -9033,12 +9629,13 @@ function addPerf(){
   const hChk=document.getElementById('pModalImgHide');if(hChk)hChk.checked=false;
   const tPrev=document.getElementById('translatePreviews');if(tPrev)tPrev.style.display='none';
   const tStat=document.getElementById('translateStatus');if(tStat)tStat.textContent='';
-  const tBtn=document.getElementById('translateBtn');if(tBtn){tBtn.textContent='✦ Auto-traducir';tBtn.disabled=false;}
-  const fb=document.getElementById('fb-perf');fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);
+  const tBtn=document.getElementById('translateBtn');if(tBtn){tBtn.textContent='✦ Auto-translate';tBtn.disabled=false;}
+  const fb=document.getElementById('fb-perf');
+  if(fb){fb.textContent='Added!';fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);}
 }
 
 function deletePerf(id){
-  if(!confirm('¿Eliminar esta fecha?'))return;
+  if(!confirm('Remove this event?'))return;
   savePerfs(getPerfs().filter(p=>p.id!==id));
   renderPerfs();admRenderPerfList();
 }
@@ -9047,7 +9644,7 @@ function admRenderPerfList(){
   const el=document.getElementById('admPerfList');
   if(!el)return;
   const _raw=getPerfs();
-  if(!_raw.length){el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No hay fechas.</div>';return;}
+  if(!_raw.length){el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No events yet.</div>';return;}
   const _toD=p=>p.sortDate?new Date(p.sortDate):new Date('2099-01-01');
   const perfs=[..._raw].sort((a,b)=>_toD(b)-_toD(a));
   el.innerHTML=perfs.map((p,pi)=>`
@@ -9067,24 +9664,24 @@ function admRenderPerfList(){
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <button class="adm-btn-sm" onclick="event.stopPropagation();togglePerfEdit(${p.id})" style="background:rgba(212,168,67,.12);border-color:var(--gold-dim);color:var(--gold)">Editar</button>
-          <button class="adm-btn-sm adm-btn-danger" onclick="event.stopPropagation();deletePerf(${p.id})">Eliminar</button>
+          <button class="adm-btn-sm" onclick="event.stopPropagation();togglePerfEdit(${p.id})" style="background:rgba(212,168,67,.12);border-color:var(--gold-dim);color:var(--gold)">Edit</button>
+          <button class="adm-btn-sm adm-btn-danger" onclick="event.stopPropagation();deletePerf(${p.id})">Remove</button>
         </div>
       </div>
       <div class="adm-perf-edit" id="perfedit-${p.id}" style="display:none;padding:16px;background:var(--surface2);border-top:1px solid var(--border);margin-top:0">
         <div class="adm-grid">
-          <div class="adm-col"><label class="adm-label">Día</label><input class="adm-input" id="pe-day-${p.id}" value="${p.day}"></div>
-          <div class="adm-col"><label class="adm-label">Mes / Período</label><input class="adm-input" id="pe-month-${p.id}" value="${p.month}"></div>
+          <div class="adm-col"><label class="adm-label">Day</label><input class="adm-input" id="pe-day-${p.id}" value="${p.day}"></div>
+          <div class="adm-col"><label class="adm-label">Month / period</label><input class="adm-input" id="pe-month-${p.id}" value="${p.month}"></div>
         </div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Horario (opcional)</label><input class="adm-input" id="pe-time-${p.id}" value="${p.time||''}" placeholder="20:00 · o · 19:30 – 21:30"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título</label><input class="adm-input" id="pe-title-${p.id}" value="${p.title}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Time (optional)</label><input class="adm-input" id="pe-time-${p.id}" value="${p.time||''}" placeholder="20:00 or 19:30 – 21:30"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title</label><input class="adm-input" id="pe-title-${p.id}" value="${p.title}"></div></div>
         <div class="adm-grid full"><div class="adm-col">
-          <label class="adm-label">Detalle <span style="color:var(--text-faint);font-weight:400">(cualquier idioma)</span></label>
+          <label class="adm-label">Detail <span style="color:var(--text-faint);font-weight:400">(any language)</span></label>
           <div style="display:flex;gap:8px;align-items:center">
             <input class="adm-input" id="pe-detail-${p.id}" value="${p.detail||''}" style="flex:1">
             <button type="button" onclick="autoTranslateEditDetail(${p.id})" id="etBtn-${p.id}"
               style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 12px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;flex-shrink:0">
-              ✦ Traducir
+              ✦ Translate
             </button>
           </div>
           <div id="etStatus-${p.id}" style="font-size:.7rem;color:var(--text-faint);margin-top:4px;min-height:14px"></div>
@@ -9096,30 +9693,30 @@ function admRenderPerfList(){
         </div></div>
         <div class="adm-grid">
           <div class="adm-col"><label class="adm-label">Venue</label><input class="adm-input" id="pe-venue-${p.id}" value="${p.venue||''}"></div>
-          <div class="adm-col"><label class="adm-label">Ciudad</label><input class="adm-input" id="pe-city-${p.id}" value="${p.city||''}"></div>
+          <div class="adm-col"><label class="adm-label">City</label><input class="adm-input" id="pe-city-${p.id}" value="${p.city||''}"></div>
         </div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Foto del venue (URL)</label><input class="adm-input" id="pe-venuePhoto-${p.id}" value="${p.venuePhoto||''}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Opacidad <span id="pe-opVal-${p.id}" style="color:var(--gold)">${(p.venueOpacity||50)}%</span></label><input type="range" min="30" max="100" value="${p.venueOpacity||50}" id="pe-venueOpacity-${p.id}" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pe-opVal-'+${p.id}).textContent=this.value+'%'"></div></div>
-        <div class="adm-section" style="margin-top:12px;font-size:.65rem">Info detallada</div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción extendida</label><textarea class="adm-input" id="pe-extDesc-${p.id}" rows="2">${p.extDesc||''}</textarea></div></div>
-        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Precio entradas</label><input class="adm-input" id="pe-ticketPrice-${p.id}" value="${p.ticketPrice||''}"></div><div class="adm-col"><label class="adm-label">Link evento</label><input class="adm-input" id="pe-eventLink-${p.id}" value="${p.eventLink||''}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto botón link</label><input class="adm-input" id="pe-eventLinkLabel-${p.id}" value="${p.eventLinkLabel||'Tickets & Info'}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Flyer / imagen</label><input class="adm-input" id="pe-flyerImg-${p.id}" value="${p.flyerImg||''}"></div></div>
-        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Imagen header modal (URL)</label><input class="adm-input" id="pe-modalImg-${p.id}" value="${p.modalImg||''}" placeholder="Vacío = foto venue"></div><div class="adm-col" style="display:flex;align-items:end;padding-bottom:6px"><label style="display:flex;align-items:center;gap:8px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="pe-modalImgHide-${p.id}" ${p.modalImgHide?'checked':''} style="accent-color:var(--gold);cursor:pointer"> Sin imagen</label></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Tipo de evento</label>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Venue photo (URL)</label><input class="adm-input" id="pe-venuePhoto-${p.id}" value="${p.venuePhoto||''}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Opacity <span id="pe-opVal-${p.id}" style="color:var(--gold)">${(p.venueOpacity||50)}%</span></label><input type="range" min="30" max="100" value="${p.venueOpacity||50}" id="pe-venueOpacity-${p.id}" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pe-opVal-'+${p.id}).textContent=this.value+'%'"></div></div>
+        <div class="adm-section" style="margin-top:12px;font-size:.65rem">Optional details</div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Extended description</label><textarea class="adm-input" id="pe-extDesc-${p.id}" rows="2">${p.extDesc||''}</textarea></div></div>
+        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Ticket price</label><input class="adm-input" id="pe-ticketPrice-${p.id}" value="${p.ticketPrice||''}"></div><div class="adm-col"><label class="adm-label">Event link</label><input class="adm-input" id="pe-eventLink-${p.id}" value="${p.eventLink||''}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link button label</label><input class="adm-input" id="pe-eventLinkLabel-${p.id}" value="${p.eventLinkLabel||'Tickets & Info'}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Flyer / image</label><input class="adm-input" id="pe-flyerImg-${p.id}" value="${p.flyerImg||''}"></div></div>
+        <div class="adm-grid"><div class="adm-col"><label class="adm-label">Modal header image (URL)</label><input class="adm-input" id="pe-modalImg-${p.id}" value="${p.modalImg||''}" placeholder="Empty = venue photo"></div><div class="adm-col" style="display:flex;align-items:end;padding-bottom:6px"><label style="display:flex;align-items:center;gap:8px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="pe-modalImgHide-${p.id}" ${p.modalImgHide?'checked':''} style="accent-color:var(--gold);cursor:pointer"> No image</label></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Event type</label>
           <select class="adm-select" id="pe-type-${p.id}">
-            <option value="concert"${(p.type||'concert')==='concert'?' selected':''}>Concierto / Concert</option>
-            <option value="opera"${p.type==='opera'?' selected':''}>Ópera / Opera</option>
+            <option value="concert"${(p.type||'concert')==='concert'?' selected':''}>Concert</option>
+            <option value="opera"${p.type==='opera'?' selected':''}>Opera</option>
             <option value="recital"${p.type==='recital'?' selected':''}>Recital / Liederabend</option>
             <option value="show"${p.type==='show'?' selected':''}>Show</option>
             <option value="gala"${p.type==='gala'?' selected':''}>Gala</option>
-            <option value="houseconcert"${p.type==='houseconcert'?' selected':''}>House Concert / Hauskonzert</option>
-            <option value="tango"${p.type==='tango'?' selected':''}>Tango Night</option>
-            <option value="collaboration"${p.type==='collaboration'?' selected':''}>Colaboración / Collaboration</option>
-            <option value="other"${p.type==='other'?' selected':''}>Otro / Other</option>
+            <option value="houseconcert"${p.type==='houseconcert'?' selected':''}>House concert</option>
+            <option value="tango"${p.type==='tango'?' selected':''}>Tango night</option>
+            <option value="collaboration"${p.type==='collaboration'?' selected':''}>Collaboration</option>
+            <option value="other"${p.type==='other'?' selected':''}>Other</option>
           </select>
         </div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Estado</label>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Status</label>
           <select class="adm-select" id="pe-status-${p.id}">
             <option value="upcoming"${p.status==='upcoming'?' selected':''}>Upcoming</option>
             <option value="current"${p.status==='current'?' selected':''}>Current Production</option>
@@ -9127,10 +9724,10 @@ function admRenderPerfList(){
           </select>
         </div></div>
         <div style="display:flex;gap:10px;margin-top:14px">
-          <button class="adm-btn adm-btn-save" onclick="savePerf(${p.id})">Guardar cambios</button>
-          <button class="adm-btn" onclick="togglePerfEdit(${p.id})" style="background:transparent">Cancelar</button>
+          <button class="adm-btn adm-btn-save" onclick="savePerf(${p.id})">Save changes</button>
+          <button class="adm-btn" onclick="togglePerfEdit(${p.id})" style="background:transparent">Cancel</button>
         </div>
-        <div class="adm-feedback" id="fb-perf-${p.id}" style="display:none">¡Guardado!</div>
+        <div class="adm-feedback" id="fb-perf-${p.id}" style="display:none">Saved!</div>
       </div>
     </div>`).join('');
 }
@@ -9230,7 +9827,7 @@ function renderPhotoGallery(){
   }catch(e){}
 }
 
-const STUDIO_LABELS=i=>(i===0?'Foto 1 (Bio)':'Foto '+(i+1));
+const STUDIO_LABELS=i=>(i===0?'Photo 1 (Bio)':'Photo '+(i+1));
 const STAGE_LABELS=i=>'Escena '+(i+1);
 const BACKSTAGE_LABELS=i=>'Backstage '+(i+1);
 
@@ -9255,9 +9852,9 @@ function admRenderPhotoSlots(){
         <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px;margin-bottom:8px">
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('s',${i},this)">
         </label>
-        ${ph.s.length>1?'<button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection(\'s\','+i+')">Eliminar</button>':''}
+        ${ph.s.length>1?'<button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection(\'s\','+i+')">Remove</button>':''}
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-s-${i}" value="${(getCaption('s',i).caption)||''}" onchange="setCaption('s',${i},this.value,document.getElementById('phot-s-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Caption" id="cap-s-${i}" value="${(getCaption('s',i).caption)||''}" onchange="setCaption('s',${i},this.value,document.getElementById('phot-s-${i}').value)">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-s-${i}" value="${(getCaption('s',i).photographer)||''}" onchange="setCaption('s',${i},document.getElementById('cap-s-${i}').value,this.value)">
         </div>
       </div>
@@ -9278,9 +9875,9 @@ function admRenderPhotoSlots(){
         <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px;margin-bottom:8px">
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('t',${i},this)">
         </label>
-        <button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection('t',${i})">Eliminar</button>
+        <button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection('t',${i})">Remove</button>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-t-${i}" value="${(getCaption('t',i).caption)||''}" onchange="setCaption('t',${i},this.value,document.getElementById('phot-t-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Caption" id="cap-t-${i}" value="${(getCaption('t',i).caption)||''}" onchange="setCaption('t',${i},this.value,document.getElementById('phot-t-${i}').value)">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-t-${i}" value="${(getCaption('t',i).photographer)||''}" onchange="setCaption('t',${i},document.getElementById('cap-t-${i}').value,this.value)">
         </div>
       </div>
@@ -9305,10 +9902,10 @@ function admRenderPhotoSlots(){
           <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
             Cambiar<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('b',${i},this)">
           </label>
-          <button class="adm-btn-sm adm-btn-danger" onclick="removeBackstagePhoto(${i})">Eliminar</button>
+          <button class="adm-btn-sm adm-btn-danger" onclick="removeBackstagePhoto(${i})">Remove</button>
         </div>
         <div style="display:flex;gap:6px">
-          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Descripción" id="cap-b-${i}" value="${(getCaption('b',i).caption)||''}" onchange="setCaption('b',${i},this.value,document.getElementById('phot-b-${i}').value)">
+          <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Caption" id="cap-b-${i}" value="${(getCaption('b',i).caption)||''}" onchange="setCaption('b',${i},this.value,document.getElementById('phot-b-${i}').value)">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-b-${i}" value="${(getCaption('b',i).photographer)||''}" onchange="setCaption('b',${i},document.getElementById('cap-b-${i}').value,this.value)">
         </div>
       </div>
@@ -9335,7 +9932,7 @@ function addPhotoToSection(type, input){
 function addPhotoByUrl(type, inputId){
   const input=document.getElementById(inputId);
   const url=input?input.value.trim():'';
-  if(!url){alert('Pegá una URL');return;}
+  if(!url){alert('Paste a URL first.');return;}
   const ph=getPhotos();
   if(!ph[type]) ph[type]=[];
   ph[type].push(url);
@@ -9345,7 +9942,7 @@ function addPhotoByUrl(type, inputId){
   if(input) input.value='';
 }
 function removePhotoFromSection(type, idx){
-  if(!confirm('¿Eliminar esta foto?')) return;
+  if(!confirm('Remove this photo?')) return;
   const ph=getPhotos();
   ph[type].splice(idx,1);
   savePhotos(ph);
@@ -9365,7 +9962,7 @@ function removePhotoFromSection(type, idx){
 function addBackstageByUrl(){
   const input = document.getElementById('backstageUrlInput');
   const url = input ? input.value.trim() : '';
-  if(!url){alert('Pegá una URL de imagen');return;}
+  if(!url){alert('Paste an image URL first.');return;}
   const ph=getPhotos();
   if(!ph.b) ph.b=[];
   ph.b.push(url);
@@ -9393,7 +9990,7 @@ function addBackstagePhoto(input){
   input.value='';
 }
 function removeBackstagePhoto(i){
-  if(!confirm('¿Eliminar esta foto backstage?')) return;
+  if(!confirm('Remove this backstage photo?')) return;
   const ph=getPhotos();
   ph.b.splice(i,1);
   savePhotos(ph);
