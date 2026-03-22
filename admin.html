@@ -441,24 +441,51 @@ section{position:relative;z-index:2}
 .videos-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px}
 .videos-header h2{font-family:var(--ff-title);color:var(--text)}
 .videos-header h2 em{font-style:italic;color:var(--gold)}
-.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.video-card{position:relative;overflow:hidden;cursor:none;background:var(--surface);text-decoration:none;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:2px;transition:border-color 0.3s}
-.video-card:hover{border-color:var(--gold)}
-.video-thumb-wrap{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,#1a1220,#0e0e18)}
-.video-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s,filter .5s;filter:brightness(.82)}
-.video-card:hover .video-thumb{transform:scale(1.04);filter:brightness(1)}
-.video-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2}
-.play-circle{width:58px;height:58px;border:1px solid rgba(212,168,67,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(13,13,18,.5);backdrop-filter:blur(4px);transition:all .3s}
-.play-circle svg{fill:var(--gold);margin-left:4px}
-.video-card:hover .play-circle{background:rgba(212,168,67,.18);border-color:var(--gold);transform:scale(1.1)}
-.video-info-bar{padding:18px 24px;background:var(--surface);border-top:1px solid var(--border);flex-grow:1;display:flex;flex-direction:column;justify-content:center}
-.video-tag{font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:3px}
-.video-title{font-family:var(--ff-title);font-size:1.08rem;font-style:italic;color:var(--text);line-height:1.3}
-.video-sub{font-size:.73rem;color:var(--text-dim);margin-top:2px}
-.video-thumb-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#1a1220,#0e0e18);padding:20px;text-align:center}
+.video-grid{display:block}
+.video-category{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-bottom:22px}
+.video-category-title{grid-column:1/-1;margin:0 0 8px;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-dim)}
+.video-card{position:relative;overflow:hidden;cursor:none;background:var(--surface);text-decoration:none;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:2px;transition:border-color .3s,box-shadow .3s,transform .3s;box-shadow:0 6px 20px rgba(0,0,0,.28);margin:2px}
+.video-card:hover{border-color:rgba(212,168,67,.35);box-shadow:0 10px 28px rgba(0,0,0,.38);transform:translateY(-1px)}
+.video-card-featured{grid-column:span 2;border-color:rgba(212,168,67,.4);box-shadow:0 8px 28px rgba(0,0,0,.42),0 0 0 1px rgba(212,168,67,.12)}
+.video-thumb-wrap{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(145deg,#16141c,#0a090e)}
+.video-thumb-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;z-index:0;transform:scale(1.02);transition:transform .55s ease,filter .4s ease,opacity .35s ease;filter:saturate(1.02) contrast(1.02)}
+.video-card:hover .video-thumb-media{transform:scale(1.06);filter:saturate(1.06) contrast(1.03) brightness(1.03)}
+.video-thumb-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;transition:opacity .35s ease}
+.video-cat-opera .video-thumb-scrim{background:linear-gradient(155deg,rgba(92,48,22,.38) 0%,rgba(32,18,12,.12) 40%,transparent 64%),linear-gradient(to top,rgba(8,5,6,.94) 0%,rgba(14,10,12,.68) 36%,rgba(12,10,14,.18) 72%,transparent 100%),radial-gradient(ellipse 90% 55% at 50% 100%,rgba(212,168,67,.08) 0%,transparent 55%)}
+.video-cat-lied .video-thumb-scrim{background:linear-gradient(165deg,rgba(22,32,48,.48) 0%,rgba(10,16,26,.1) 44%,transparent 68%),linear-gradient(to top,rgba(5,8,14,.95) 0%,rgba(12,18,28,.62) 42%,rgba(18,26,38,.15) 78%,transparent 100%)}
+.video-cat-concert_sacred .video-thumb-scrim{background:linear-gradient(185deg,rgba(228,234,248,.14) 0%,rgba(228,234,248,.04) 26%,transparent 46%),linear-gradient(to top,rgba(6,8,14,.9) 0%,rgba(10,14,22,.48) 48%,transparent 78%),linear-gradient(90deg,rgba(255,255,255,.03) 0%,transparent 35%,transparent 65%,rgba(255,255,255,.025) 100%)}
+.video-cat-tango_crossover .video-thumb-scrim{background:linear-gradient(128deg,rgba(72,16,28,.45) 0%,rgba(36,12,20,.18) 42%,transparent 66%),linear-gradient(to top,rgba(4,3,6,.96) 0%,rgba(24,8,14,.52) 46%,rgba(48,20,24,.12) 80%,transparent 100%),radial-gradient(ellipse 70% 40% at 80% 20%,rgba(184,90,60,.12) 0%,transparent 50%)}
+.video-thumb-wrap.video-has-custom .video-thumb-scrim{opacity:.92}
+.video-cat-pill{position:absolute;top:11px;left:11px;z-index:4;max-width:calc(100% - 22px);font-family:var(--ff-caps);font-size:.4rem;letter-spacing:.15em;text-transform:uppercase;padding:5px 9px;border:1px solid rgba(255,248,240,.22);background:rgba(6,6,10,.58);backdrop-filter:blur(10px);color:rgba(248,244,236,.94);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.video-cat-opera .video-cat-pill{border-color:rgba(212,168,67,.32);color:rgba(255,228,196,.95)}
+.video-cat-lied .video-cat-pill{border-color:rgba(140,168,198,.38);color:rgba(210,220,235,.92)}
+.video-cat-concert_sacred .video-cat-pill{border-color:rgba(200,210,230,.35);color:rgba(232,236,248,.94)}
+.video-cat-tango_crossover .video-cat-pill{border-color:rgba(200,100,90,.35);color:rgba(248,210,200,.93)}
+.video-thumb-overlay{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;padding:14px 16px 15px;pointer-events:none}
+.video-brand{font-family:var(--ff-caps);font-size:.38rem;letter-spacing:.17em;text-transform:uppercase;color:rgba(240,238,245,.55);margin-bottom:5px}
+.video-meta-title{font-family:var(--ff-title);font-size:clamp(.95rem,2.6vw,1.08rem);font-style:italic;font-weight:400;color:#faf8fc;line-height:1.22;margin:0;text-shadow:0 1px 12px rgba(0,0,0,.45);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.video-meta-composer{font-family:var(--ff-caps);font-size:.44rem;letter-spacing:.13em;text-transform:uppercase;color:rgba(212,168,67,.88);margin-top:5px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.video-cat-lied .video-meta-composer{color:rgba(168,188,218,.9)}
+.video-cat-concert_sacred .video-meta-composer{color:rgba(210,218,238,.88)}
+.video-cat-tango_crossover .video-meta-composer{color:rgba(220,150,120,.9)}
+.video-meta-sub{font-size:.66rem;line-height:1.35;color:rgba(228,226,232,.78);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.video-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5}
+.play-circle{width:48px;height:48px;border:1px solid rgba(212,168,67,.48);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(10,10,14,.45);backdrop-filter:blur(8px);transition:all .28s ease;box-shadow:0 4px 20px rgba(0,0,0,.35)}
+.play-circle svg{fill:var(--gold);margin-left:3px}
+.video-card:hover .play-circle{background:rgba(212,168,67,.16);border-color:var(--gold);transform:scale(1.05)}
+.video-info-bar{display:none}
+.video-thumb-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#1a1220,#0e0e18);padding:20px;text-align:center;z-index:2}
 .vfb-op{font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;opacity:.8}
 .vfb-title{font-family:var(--ff-title);font-size:1.15rem;font-style:italic;color:var(--text);line-height:1.3}
 .video-more-wrap{text-align:center;margin-top:20px}
+@media(max-width:900px){
+  .video-category{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .video-card-featured{grid-column:span 2}
+  .video-thumb-overlay{padding:12px 12px 13px}
+  .video-cat-pill{top:8px;left:8px;font-size:.36rem;padding:4px 8px;max-width:calc(100% - 16px)}
+  .play-circle{width:44px;height:44px}
+}
+@media(max-width:520px){.video-meta-title{-webkit-line-clamp:3}}
 #photos{padding:90px 0}
 .photos-header{margin-bottom:48px}
 .photos-header h2{font-family:var(--ff-title);color:var(--text)}
@@ -805,7 +832,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   
   .achievements{grid-template-columns:1fr}
   .rep-tabs{flex-wrap:wrap}.rep-tab{flex:1 1 auto;min-width:7rem}
-  .video-grid{grid-template-columns:1fr}
+  .video-category{grid-template-columns:1fr}
   .photo-grid-4{grid-template-columns:1fr 1fr}
   .photo-grid-3{grid-template-columns:1fr 1fr}
   .perf-item{grid-template-columns:minmax(90px,120px) 1fr;gap:16px}
@@ -978,8 +1005,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .contact-form{padding:24px 16px}
   .form-row{grid-template-columns:1fr}
   .footer-inner{padding:0 16px}
-  .video-info-bar{padding:10px 14px}
-  .video-title{font-size:.9rem}
   .lb-nav{padding:8px 12px;font-size:1.1rem}
   .lightbox-img{max-width:95vw;max-height:80vh}
 }/* ── PRESS ── */
@@ -1814,6 +1839,21 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-section">Videos</div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-vidH2" placeholder="Stage, Concert &amp; Recital Highlights"></div></div>
      <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Single source with the public site: <code>rg_vid.h2</code> (not <code>Ti['vid.h2']</code>).</p>
+     <details class="adm-advanced-fold" style="margin:8px 0 14px">
+      <summary class="adm-advanced-fold-sum">Thumbnail selection guidelines</summary>
+      <div style="font-size:.7rem;color:var(--text-dim);line-height:1.55;max-width:44rem;margin:10px 0 4px">
+       <p class="adm-perf-editorial-hint" style="margin:0 0 10px;max-width:none"><strong style="color:var(--text-dim)">Principle.</strong> Choose the still that best balances artistic presence, readability at small size, and repertoire mood. It should make viewers want to click and reinforce Rolando Guy’s identity—not literally illustrate the piece.</p>
+       <p style="margin:0 0 8px"><strong style="color:var(--gold-dim);font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;text-transform:uppercase">Priority</strong> (in order): strong image of the artist → clear when small → elegant facial/vocal gesture → space and contrast for title &amp; composer overlay → fit the repertoire atmosphere.</p>
+       <p style="margin:0 0 8px"><strong style="color:var(--gold-dim);font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;text-transform:uppercase">Custom thumbnail URL</strong> when: the YouTube default is weak; the video is featured or opens a category; it is strategically important; or the auto still has poor expression, blur, or lighting.</p>
+       <p style="margin:0 0 10px"><strong style="color:var(--gold-dim);font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;text-transform:uppercase">Reject</strong> if: unflattering vocal gesture, blur, low readability, noisy background, overly literal imagery, conflict with on-card text, or AI imagery that competes with the artist.</p>
+       <ul style="margin:0;padding-left:1.15em;list-style:disc;color:var(--text-faint)">
+        <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Opera</strong> — Theatrical, warm, noble, lyrical. Prefer strong stage presence and warm light; avoid awkward mouth shapes, visual chaos, and literal opera clichés.</li>
+        <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Lied / art song</strong> — Intimate, refined, introspective. Prefer closer, concentrated framing; avoid exaggerated theatricality and oversaturated backgrounds.</li>
+        <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Concert / sacred</strong> — Luminous, vertical, solemn, clean. Prefer poised images with space and dignity; avoid obvious religious stock imagery and overload.</li>
+        <li style="margin-bottom:0"><strong style="color:var(--text-dim)">Tango / crossover</strong> — Intense, elegant, dark, controlled energy. Prefer contrast and sophistication; avoid tourist kitsch.</li>
+       </ul>
+      </div>
+     </details>
      <div id="vidCards"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
        <button class="adm-btn" onclick="addVidCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add video</button>
@@ -2845,10 +2885,10 @@ const DEFAULTS = {
   vid: {
     h2: 'Stage, Concert &amp; <em>Recital Highlights</em>',
     videos: [
-      {id:'zDgSZm9WvYc', tag:'Featured · 2024',    title:"Libiamo ne' lieti calici",    sub:'La Traviata · Verdi · Waldorf Astoria Berlin'},
-      {id:'wWmlrZ6BLK0', tag:'Opera · The Cast',   title:'Chi mi frena in tal momento', sub:'Lucia di Lammermoor · Donizetti'},
-      {id:'uSyL6iWLtmA', tag:'Competition · 2018', title:'Il lamento di Federico',      sub:"L'Arlesiana · Cilea · Eva Marton Competition"},
-      {id:'-t5fr1m_mnc', tag:'Recital · Lied',     title:'Die Lorelei',                 sub:'Franz Liszt · Recital', hidden:true},
+      {id:'wWmlrZ6BLK0', group:'opera_lied', repertoireCat:'opera', composer:'G. Donizetti', tag:'OPERA · SOLOIST WITH ORCHESTRA', title:'Chi mi frena in tal momento', sub:'Lucia di Lammermoor'},
+      {id:'uSyL6iWLtmA', group:'opera_lied', repertoireCat:'opera', composer:'F. Cilea', tag:'OPERA ARIA · 2018', title:'Il lamento di Federico', sub:"L'Arlesiana · Eva Marton Competition"},
+      {id:'-t5fr1m_mnc', group:'opera_lied', repertoireCat:'lied', composer:'F. Liszt', tag:'RECITAL · ART SONG', title:'Die Lorelei', sub:'Eva Marton Competition', hidden:true},
+      {id:'zDgSZm9WvYc', group:'gala_crossover', repertoireCat:'opera', composer:'G. Verdi', tag:'GALA · 2024', title:"Libiamo ne' lieti calici", sub:'La Traviata · Waldorf Astoria Berlin'},
     ]
   },
   rep: {
@@ -3317,61 +3357,141 @@ function renderPrograms() {
   document.querySelectorAll('#programsGrid .reveal').forEach(el => { try { obs.observe(el); } catch(e) {} });
 }
 
+// ── Video thumbnails (public preview): repertoire category + editorial frame ──
+const VIDEO_REP_CATS = ['opera', 'lied', 'concert_sacred', 'tango_crossover'];
+function resolveVideoRepertoireCat(v) {
+  const raw = String(v.repertoireCat || '').trim();
+  if (VIDEO_REP_CATS.indexOf(raw) !== -1) return raw;
+  const blob = [v.tag, v.title, v.sub].map(function (x) { return String(x || ''); }).join(' ').toLowerCase();
+  if (v.group === 'gala_crossover') return 'tango_crossover';
+  if (/\blied\b|kunstlied|art song|lorelei|schubert|schumann|wolf|liederabend|mélodie|melodie|canción de arte|kunstlie/.test(blob)) return 'lied';
+  if (/sacred|oratorio|requiem|\bmass\b|bach|motet|passion|stabat|kirche|kirch|church|cathedral|\bmesse\b|geistlich|sacro|sacrée|sacra/.test(blob)) return 'concert_sacred';
+  return 'opera';
+}
+function escVideoHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escVideoAttr(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
 // ── Render Videos ──
 function renderVideos() {
   const d = getVid();
+  const t = uiTable(currentLang);
   const vidH2 = (d && typeof d.h2 === 'string' && d.h2.trim()) ? d.h2 : ((DEFAULTS.vid && DEFAULTS.vid.h2) || '');
   document.getElementById('vidH2').innerHTML = withTitleEmphasis('vid', vidH2);
-  const vids = d.videos;
+  const vids = Array.isArray(d.videos) ? d.videos.slice() : [];
   const grid = document.getElementById('videoGrid');
   const more = document.getElementById('videoMore');
-  const ordered = [...vids].sort((a, b) => {
-    if (a.hidden !== b.hidden) return a.hidden ? 1 : -1;
-    if (a.featured !== b.featured) return a.featured ? -1 : 1;
-    return 0;
-  });
-  const visible = ordered.filter(v => !v.hidden);
-  const hidden  = ordered.filter(v =>  v.hidden);
 
   function mkCard(v, i, hidden) {
-    const cls = 'video-card reveal' + (i > 0 ? ' rd' + i : '');
-    const st  = hidden ? 'style="display:none;max-width:500px;margin:4px auto 0"' : '';
-    return `<div class="${cls}" ${st}>
-      <div class="video-thumb-wrap" id="vwrap-${v.id}">
-        <img class="video-thumb"
-          src="${v.customThumb && v.customThumb.trim() ? v.customThumb : 'https://img.youtube.com/vi/' + v.id + '/maxresdefault.jpg'}"
-          alt="${v.title}" loading="lazy"
-          onerror="if(this.dataset.retry!='1'){this.dataset.retry='1';this.src='https://img.youtube.com/vi/${v.id}/hqdefault.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
-        <div class="video-thumb-fallback" style="display:none">
-          <span class="vfb-op">${v.sub}</span>
-          <span class="vfb-title">${v.title}</span>
-        </div>
-        <div class="video-play-btn" onclick="playVideo('${v.id}')" style="cursor:pointer;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:3">
-          <div class="play-circle">
-            <svg width="14" height="16" viewBox="0 0 16 18"><path d="M0 0L16 9L0 18V0Z" fill="currentColor"/></svg>
-          </div>
-        </div>
-      </div>
-      <div class="video-info-bar">
-        <div class="video-tag">${v.featured ? '★ Featured · ' : ''}${v.tag}</div>
-        <div class="video-title">${v.title}</div>
-        <div class="video-sub">${v.sub}</div>
-      </div>
-    </div>`;
+    const baseCls = 'video-card reveal' + (i > 0 ? ' rd' + i : '');
+    const cls = v.featured ? (baseCls + ' video-card-featured') : baseCls;
+    const st  = hidden ? ' style="display:none;max-width:500px;margin:4px auto 0"' : '';
+    const brandRaw = t['vid.brand'] || 'Rolando Guy · Lyric Tenor';
+    const brand = escVideoHtml(brandRaw);
+    const repCat = resolveVideoRepertoireCat(v);
+    const catKey = 'vid.repCat.' + repCat;
+    const catLabel = escVideoHtml(t[catKey] || repCat.replace(/_/g,' '));
+    const vidId = String(v.id || '').trim();
+    const custom = (v.customThumb && String(v.customThumb).trim()) ? String(v.customThumb).trim() : '';
+    const thumbSrc = custom || (vidId ? ('https://i.ytimg.com/vi/' + vidId + '/maxresdefault.jpg') : '');
+    const hqFallback = vidId ? ('https://i.ytimg.com/vi/' + vidId + '/hqdefault.jpg') : '';
+    const imgHtml = thumbSrc
+      ? '<img class="video-thumb-media" src="' + escVideoAttr(thumbSrc) + '" alt="" loading="lazy" decoding="async"' +
+        (hqFallback ? ' onerror="if(this.dataset._vfb!==\'1\'){this.dataset._vfb=\'1\';this.src=\'' + escVideoAttr(hqFallback) + '\';}else{this.style.visibility=\'hidden\';}"' : '') + '>'
+      : '';
+    const hasCustom = !!custom;
+    const title = escVideoHtml(v.title);
+    const composer = (v.composer && String(v.composer).trim()) ? escVideoHtml(String(v.composer).trim()) : '';
+    const sub = (v.sub && String(v.sub).trim()) ? escVideoHtml(String(v.sub).trim()) : '';
+    const wrapCls = 'video-thumb-wrap video-cat-' + repCat + (hasCustom ? ' video-has-custom' : '');
+    return '<div class="' + cls + '"' + st + '>' +
+      '<div class="' + wrapCls + '" id="vwrap-' + escVideoAttr(vidId) + '">' +
+      imgHtml +
+      '<div class="video-thumb-scrim" aria-hidden="true"></div>' +
+      '<span class="video-cat-pill">' + catLabel + '</span>' +
+      '<div class="video-thumb-overlay">' +
+        '<div class="video-brand">' + brand + '</div>' +
+        '<div class="video-meta-title">' + title + '</div>' +
+        (composer ? '<div class="video-meta-composer">' + composer + '</div>' : '') +
+        (sub ? '<div class="video-meta-sub">' + sub + '</div>' : '') +
+      '</div>' +
+      '<div class="video-play-btn" onclick="playVideo(\'' + escVideoAttr(vidId) + '\')" style="cursor:pointer;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">' +
+        '<div class="play-circle">' +
+          '<svg width="14" height="16" viewBox="0 0 16 18"><path d="M0 0L16 9L0 18V0Z" fill="currentColor"/></svg>' +
+        '</div></div></div>' +
+      '<div class="video-info-bar">' +
+        '<div class="video-tag">' + escVideoHtml(v.tag) + '</div>' +
+        '<div class="video-title">' + title + '</div>' +
+        '<div class="video-sub">' + sub + '</div>' +
+      '</div></div>';
   }
 
-  grid.innerHTML = visible.map((v, i) => mkCard(v, i, false)).join('');
+  const normalised = vids.map(v => {
+    let group = v.group || '';
+    if (!group) {
+      const title = String(v.title || '');
+      if (/libiamo/i.test(title)) group = 'gala_crossover';
+      else group = 'opera_lied';
+    }
+    return {...v, group};
+  });
 
-  if (hidden.length > 0) {
-    const tVid = uiTable(currentLang);
-    const showMoreTxt = tVid['vid.showMore'] || '+ Show More Videos';
-    more.innerHTML = hidden.map((v, i) => mkCard(v, i, true)).join('') +
+  const groups = [
+    { key: 'opera_lied',     label: t['vid.cat.opera_lied'] || 'Opera & Art Song' },
+    { key: 'gala_crossover', label: t['vid.cat.gala_crossover'] || 'Gala & Crossover' }
+  ];
+
+  let htmlVisible = '';
+  let htmlHidden  = '';
+
+  groups.forEach(gconf => {
+    let items = normalised.filter(v => (v.group || 'opera_lied') === gconf.key);
+    if (!items.length) return;
+
+    if (gconf.key === 'opera_lied') {
+      items = items.slice().sort((a, b) => {
+        const isLiszt = v =>
+          v.id === '-t5fr1m_mnc' ||
+          /Die\s+Lorelei/i.test(String(v.title || ''));
+        const wa = isLiszt(a) ? 0 : 1;
+        const wb = isLiszt(b) ? 0 : 1;
+        return wa - wb;
+      });
+    }
+
+    const vis = items.filter(v => !v.hidden);
+    const hid = items.filter(v =>  v.hidden);
+
+    const secTitle = String(gconf.label || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if (vis.length) {
+      htmlVisible += `<div class="video-category">
+        <h3 class="video-category-title">${secTitle}</h3>
+        ${vis.map((v, i) => mkCard(v, i, false)).join('')}
+      </div>`;
+    }
+    if (hid.length) {
+      htmlHidden += `<div class="video-category">
+        <h3 class="video-category-title">${secTitle}</h3>
+        ${hid.map((v, i) => mkCard(v, i, true)).join('')}
+      </div>`;
+    }
+  });
+
+  grid.innerHTML = htmlVisible;
+
+  if (htmlHidden) {
+    const showMoreTxt = t['vid.showMore'] || '+ Show More Videos';
+    more.innerHTML = htmlHidden +
       `<div style="text-align:center;margin-top:20px">
         <button class="btn-secondary" id="moreBtn" onclick="toggleMore()">${showMoreTxt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</button>
       </div>`;
   } else {
     more.innerHTML = '';
   }
+
   document.querySelectorAll('#videoGrid .reveal, #videoMore .reveal').forEach(el => obs.observe(el));
 }
 
@@ -8064,6 +8184,20 @@ Ti.it['vid.cat.opera_lied'] = "Opera e Canzone d'Arte";
 Ti.it['vid.cat.gala_crossover'] = 'Gala & Crossover';
 Ti.fr['vid.cat.opera_lied'] = "Opéra & Mélodies d'Art";
 Ti.fr['vid.cat.gala_crossover'] = 'Gala & Crossover';
+['en','de','es','it','fr'].forEach(function (L) {
+  const pack = {
+    en: { opera: 'Opera', lied: 'Lied & art song', concert_sacred: 'Concert & sacred', tango_crossover: 'Tango & crossover' },
+    de: { opera: 'Oper', lied: 'Lied & Kunstlied', concert_sacred: 'Konzert & Sakral', tango_crossover: 'Tango & Crossover' },
+    es: { opera: 'Ópera', lied: 'Lied y canción de arte', concert_sacred: 'Concierto y sacro', tango_crossover: 'Tango y crossover' },
+    it: { opera: 'Opera', lied: "Lied e canzone d'arte", concert_sacred: 'Concerto e sacro', tango_crossover: 'Tango e crossover' },
+    fr: { opera: 'Opéra', lied: 'Lied & mélodie', concert_sacred: 'Concert & sacré', tango_crossover: 'Tango & crossover' }
+  };
+  const p = pack[L] || pack.en;
+  Ti[L]['vid.repCat.opera'] = p.opera;
+  Ti[L]['vid.repCat.lied'] = p.lied;
+  Ti[L]['vid.repCat.concert_sacred'] = p.concert_sacred;
+  Ti[L]['vid.repCat.tango_crossover'] = p.tango_crossover;
+});
 Ti.en['perf.moreInfoPrint'] = 'More info';
 Ti.de['perf.moreInfoPrint'] = 'Mehr Infos';
 Ti.es['perf.moreInfoPrint'] = 'Más información';
@@ -8908,7 +9042,7 @@ function onDropVideo(dstIdx, e) {
 }
 function addVidCard() {
   const d = getVid();
-  d.videos.push({ id: '', tag: '', title: '', sub: '', hidden: false, group: 'opera_lied', featured: false, customThumb: '' });
+  d.videos.push({ id: '', tag: '', title: '', sub: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_lied', featured: false, customThumb: '' });
   save('rg_vid', d);
   admTab('vid');
   setTimeout(() => { const body = document.querySelector('.adm-body'); if (body) body.scrollTop = body.scrollHeight; }, 200);
@@ -9274,13 +9408,25 @@ function admPopulate(name){
         </div>
         <div class="adm-grid">
           <div class="adm-col">
-            <label class="adm-label">Group</label>
+            <label class="adm-label">Site section (group)</label>
             <select class="adm-select" id="vc-${i}-group">
               <option value="opera_lied"${(v.group||'opera_lied')==='opera_lied'?' selected':''}>Opera &amp; Art Song</option>
               <option value="gala_crossover"${(v.group||'opera_lied')==='gala_crossover'?' selected':''}>Gala &amp; Crossover</option>
             </select>
-            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Sets the visual family for this video.</div>
+            <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Which block the video appears under on the public page.</div>
           </div>
+          <div class="adm-col">
+            <label class="adm-label">Thumbnail repertoire (atmosphere)</label>
+            <select class="adm-select" id="vc-${i}-repertoireCat">
+              <option value=""${!(v.repertoireCat && String(v.repertoireCat).trim())?' selected':''}>Auto (from tag / title / group)</option>
+              <option value="opera"${(v.repertoireCat||'')==='opera'?' selected':''}>Opera — warm, theatrical</option>
+              <option value="lied"${(v.repertoireCat||'')==='lied'?' selected':''}>Lied / art song — intimate, cool</option>
+              <option value="concert_sacred"${(v.repertoireCat||'')==='concert_sacred'?' selected':''}>Concert / sacred / oratorio</option>
+              <option value="tango_crossover"${(v.repertoireCat||'')==='tango_crossover'?' selected':''}>Tango / crossover</option>
+            </select>
+          </div>
+        </div>
+        <div class="adm-grid">
           <div class="adm-col"><label class="adm-label">Featured video</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-dim)">
               <input type="checkbox" id="vc-${i}-featured" ${v.featured ? 'checked' : ''}>
@@ -9293,14 +9439,18 @@ function admPopulate(name){
           <input class="adm-input" id="vc-${i}-title" value="${v.title}">
         </div></div>
         <div class="adm-grid full"><div class="adm-col">
+          <label class="adm-label">Composer (thumbnail line)</label>
+          <input class="adm-input" id="vc-${i}-composer" placeholder="e.g. G. Verdi" value="${String(v.composer||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}">
+        </div></div>
+        <div class="adm-grid full"><div class="adm-col">
           <label class="adm-label">Subtitle</label>
           <input class="adm-input" id="vc-${i}-sub" value="${v.sub}">
-          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Work · composer · short context.</div>
+          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Work, venue, or context (shown under composer).</div>
         </div></div>
         <div class="adm-grid full"><div class="adm-col">
           <label class="adm-label">Custom thumbnail (optional URL)</label>
           <input class="adm-input" id="vc-${i}-thumb" placeholder="https://example.com/thumbnail.jpg" value="${v.customThumb||''}">
-          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">Optional. If empty, the automatic editorial background is used.</div>
+          <div style="font-size:.7rem;color:var(--text-faint);margin-top:4px">If empty, a YouTube still is used with the editorial overlay. Use a custom URL when the default is weak, the clip is featured or strategic, or expression/lighting is poor—see <strong>Thumbnail selection guidelines</strong> above.</div>
         </div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Visibility</label>
           <select class="adm-select" id="vc-${i}-hidden">
@@ -9515,6 +9665,8 @@ function saveSection(name){
       tag:document.getElementById(`vc-${i}-tag`).value,
       title:document.getElementById(`vc-${i}-title`).value,
       sub:document.getElementById(`vc-${i}-sub`).value,
+      composer:(document.getElementById(`vc-${i}-composer`)||{}).value||'',
+      repertoireCat:((document.getElementById(`vc-${i}-repertoireCat`)||{}).value||'').trim(),
       hidden:document.getElementById(`vc-${i}-hidden`).value==='true',
       group:(document.getElementById(`vc-${i}-group`).value||v.group||'opera_lied'),
       featured:document.getElementById(`vc-${i}-featured`).checked||false,
