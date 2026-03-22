@@ -454,20 +454,23 @@ section{position:relative;z-index:2}
 .video-cat-opera .video-thumb-scrim{background:linear-gradient(155deg,rgba(92,48,22,.38) 0%,rgba(32,18,12,.12) 40%,transparent 64%),linear-gradient(to top,rgba(8,5,6,.94) 0%,rgba(14,10,12,.68) 36%,rgba(12,10,14,.18) 72%,transparent 100%),radial-gradient(ellipse 90% 55% at 50% 100%,rgba(212,168,67,.08) 0%,transparent 55%)}
 .video-cat-lied .video-thumb-scrim{background:linear-gradient(165deg,rgba(22,32,48,.48) 0%,rgba(10,16,26,.1) 44%,transparent 68%),linear-gradient(to top,rgba(5,8,14,.95) 0%,rgba(12,18,28,.62) 42%,rgba(18,26,38,.15) 78%,transparent 100%)}
 .video-cat-concert_sacred .video-thumb-scrim{background:linear-gradient(185deg,rgba(228,234,248,.14) 0%,rgba(228,234,248,.04) 26%,transparent 46%),linear-gradient(to top,rgba(6,8,14,.9) 0%,rgba(10,14,22,.48) 48%,transparent 78%),linear-gradient(90deg,rgba(255,255,255,.03) 0%,transparent 35%,transparent 65%,rgba(255,255,255,.025) 100%)}
-.video-cat-tango_crossover .video-thumb-scrim{background:linear-gradient(128deg,rgba(72,16,28,.45) 0%,rgba(36,12,20,.18) 42%,transparent 66%),linear-gradient(to top,rgba(4,3,6,.96) 0%,rgba(24,8,14,.52) 46%,rgba(48,20,24,.12) 80%,transparent 100%),radial-gradient(ellipse 70% 40% at 80% 20%,rgba(184,90,60,.12) 0%,transparent 50%)}
+.video-cat-tango .video-thumb-scrim{background:linear-gradient(128deg,rgba(78,14,26,.48) 0%,rgba(38,10,18,.2) 40%,transparent 64%),linear-gradient(to top,rgba(4,2,5,.97) 0%,rgba(32,8,16,.55) 45%,rgba(52,18,22,.1) 78%,transparent 100%),radial-gradient(ellipse 65% 38% at 85% 18%,rgba(196,72,58,.14) 0%,transparent 52%)}
+.video-cat-crossover .video-thumb-scrim{background:linear-gradient(132deg,rgba(52,28,22,.4) 0%,rgba(28,18,14,.16) 44%,transparent 66%),linear-gradient(to top,rgba(6,5,8,.94) 0%,rgba(22,14,12,.48) 48%,rgba(212,168,67,.06) 88%,transparent 100%),radial-gradient(ellipse 75% 42% at 20% 15%,rgba(212,168,67,.09) 0%,transparent 48%)}
 .video-thumb-wrap.video-has-custom .video-thumb-scrim{opacity:.92}
 .video-cat-pill{position:absolute;top:11px;left:11px;z-index:4;max-width:calc(100% - 22px);font-family:var(--ff-caps);font-size:.4rem;letter-spacing:.15em;text-transform:uppercase;padding:5px 9px;border:1px solid rgba(255,248,240,.22);background:rgba(6,6,10,.58);backdrop-filter:blur(10px);color:rgba(248,244,236,.94);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .video-cat-opera .video-cat-pill{border-color:rgba(212,168,67,.32);color:rgba(255,228,196,.95)}
 .video-cat-lied .video-cat-pill{border-color:rgba(140,168,198,.38);color:rgba(210,220,235,.92)}
 .video-cat-concert_sacred .video-cat-pill{border-color:rgba(200,210,230,.35);color:rgba(232,236,248,.94)}
-.video-cat-tango_crossover .video-cat-pill{border-color:rgba(200,100,90,.35);color:rgba(248,210,200,.93)}
+.video-cat-tango .video-cat-pill{border-color:rgba(210,88,78,.38);color:rgba(252,205,195,.94)}
+.video-cat-crossover .video-cat-pill{border-color:rgba(212,168,67,.34);color:rgba(245,228,200,.93)}
 .video-thumb-overlay{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;padding:14px 16px 15px;pointer-events:none}
 .video-brand{font-family:var(--ff-caps);font-size:.38rem;letter-spacing:.17em;text-transform:uppercase;color:rgba(240,238,245,.55);margin-bottom:5px}
 .video-meta-title{font-family:var(--ff-title);font-size:clamp(.95rem,2.6vw,1.08rem);font-style:italic;font-weight:400;color:#faf8fc;line-height:1.22;margin:0;text-shadow:0 1px 12px rgba(0,0,0,.45);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .video-meta-composer{font-family:var(--ff-caps);font-size:.44rem;letter-spacing:.13em;text-transform:uppercase;color:rgba(212,168,67,.88);margin-top:5px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .video-cat-lied .video-meta-composer{color:rgba(168,188,218,.9)}
 .video-cat-concert_sacred .video-meta-composer{color:rgba(210,218,238,.88)}
-.video-cat-tango_crossover .video-meta-composer{color:rgba(220,150,120,.9)}
+.video-cat-tango .video-meta-composer{color:rgba(232,140,118,.92)}
+.video-cat-crossover .video-meta-composer{color:rgba(220,175,130,.9)}
 .video-meta-sub{font-size:.66rem;line-height:1.35;color:rgba(228,226,232,.78);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .video-play-btn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5}
 .play-circle{width:48px;height:48px;border:1px solid rgba(212,168,67,.48);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(10,10,14,.45);backdrop-filter:blur(8px);transition:all .28s ease;box-shadow:0 4px 20px rgba(0,0,0,.35)}
@@ -1850,7 +1853,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
         <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Opera</strong> — Theatrical, warm, noble, lyrical. Prefer strong stage presence and warm light; avoid awkward mouth shapes, visual chaos, and literal opera clichés.</li>
         <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Lied / art song</strong> — Intimate, refined, introspective. Prefer closer, concentrated framing; avoid exaggerated theatricality and oversaturated backgrounds.</li>
         <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Concert / sacred</strong> — Luminous, vertical, solemn, clean. Prefer poised images with space and dignity; avoid obvious religious stock imagery and overload.</li>
-        <li style="margin-bottom:0"><strong style="color:var(--text-dim)">Tango / crossover</strong> — Intense, elegant, dark, controlled energy. Prefer contrast and sophistication; avoid tourist kitsch.</li>
+        <li style="margin-bottom:7px"><strong style="color:var(--text-dim)">Tango</strong> — Intense, elegant, dark; strong contrast and character. Prefer sophistication over tourist kitsch.</li>
+        <li style="margin-bottom:0"><strong style="color:var(--text-dim)">Crossover</strong> — Gala and hybrid formats; warm, controlled energy with space for the overlay. Prefer polish over literal “showbiz” stock.</li>
        </ul>
       </div>
      </details>
@@ -3358,12 +3362,33 @@ function renderPrograms() {
 }
 
 // ── Video thumbnails (public preview): repertoire category + editorial frame ──
-const VIDEO_REP_CATS = ['opera', 'lied', 'concert_sacred', 'tango_crossover'];
+const VIDEO_REP_CATS = ['opera', 'lied', 'concert_sacred', 'tango', 'crossover'];
+function videoBlobLower(v) {
+  return [v.tag, v.title, v.sub].map(function (x) { return String(x || ''); }).join(' ').toLowerCase();
+}
+function inferTangoFromBlob(blob) {
+  return /\btango\b|milonga|bandoneon|bandoneón|tango argentin|tango argentino|tangos\b|tango-loft|tango loft/.test(blob);
+}
+/** Mutates d; returns true if persisted `tango_crossover` was rewritten (then save rg_vid). */
+function migrateVidLegacyTangoCrossover(d) {
+  if (!d || !Array.isArray(d.videos)) return false;
+  var dirty = false;
+  d.videos = d.videos.map(function (v) {
+    if (!v || v.repertoireCat !== 'tango_crossover') return v;
+    dirty = true;
+    var next = inferTangoFromBlob(videoBlobLower(v)) ? 'tango' : 'crossover';
+    return Object.assign({}, v, { repertoireCat: next });
+  });
+  return dirty;
+}
 function resolveVideoRepertoireCat(v) {
-  const raw = String(v.repertoireCat || '').trim();
+  var raw = String(v.repertoireCat || '').trim();
+  if (raw === 'tango_crossover') {
+    raw = inferTangoFromBlob(videoBlobLower(v)) ? 'tango' : 'crossover';
+  }
   if (VIDEO_REP_CATS.indexOf(raw) !== -1) return raw;
-  const blob = [v.tag, v.title, v.sub].map(function (x) { return String(x || ''); }).join(' ').toLowerCase();
-  if (v.group === 'gala_crossover') return 'tango_crossover';
+  var blob = videoBlobLower(v);
+  if (v.group === 'gala_crossover') return inferTangoFromBlob(blob) ? 'tango' : 'crossover';
   if (/\blied\b|kunstlied|art song|lorelei|schubert|schumann|wolf|liederabend|mélodie|melodie|canción de arte|kunstlie/.test(blob)) return 'lied';
   if (/sacred|oratorio|requiem|\bmass\b|bach|motet|passion|stabat|kirche|kirch|church|cathedral|\bmesse\b|geistlich|sacro|sacrée|sacra/.test(blob)) return 'concert_sacred';
   return 'opera';
@@ -3447,23 +3472,24 @@ function renderVideos() {
   let htmlVisible = '';
   let htmlHidden  = '';
 
+  function orderVideoGroupEntries(entries) {
+    return entries.slice().sort((a, b) => {
+      const fa = a.v.featured ? 0 : 1;
+      const fb = b.v.featured ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      return a.idx - b.idx;
+    });
+  }
+
   groups.forEach(gconf => {
-    let items = normalised.filter(v => (v.group || 'opera_lied') === gconf.key);
-    if (!items.length) return;
+    const entries = normalised
+      .map((v, idx) => ({ v, idx }))
+      .filter(e => (e.v.group || 'opera_lied') === gconf.key);
+    if (!entries.length) return;
 
-    if (gconf.key === 'opera_lied') {
-      items = items.slice().sort((a, b) => {
-        const isLiszt = v =>
-          v.id === '-t5fr1m_mnc' ||
-          /Die\s+Lorelei/i.test(String(v.title || ''));
-        const wa = isLiszt(a) ? 0 : 1;
-        const wb = isLiszt(b) ? 0 : 1;
-        return wa - wb;
-      });
-    }
-
-    const vis = items.filter(v => !v.hidden);
-    const hid = items.filter(v =>  v.hidden);
+    const ordered = orderVideoGroupEntries(entries).map(e => e.v);
+    const vis = ordered.filter(v => !v.hidden);
+    const hid = ordered.filter(v => v.hidden);
 
     const secTitle = String(gconf.label || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     if (vis.length) {
@@ -8186,17 +8212,18 @@ Ti.fr['vid.cat.opera_lied'] = "Opéra & Mélodies d'Art";
 Ti.fr['vid.cat.gala_crossover'] = 'Gala & Crossover';
 ['en','de','es','it','fr'].forEach(function (L) {
   const pack = {
-    en: { opera: 'Opera', lied: 'Lied & art song', concert_sacred: 'Concert & sacred', tango_crossover: 'Tango & crossover' },
-    de: { opera: 'Oper', lied: 'Lied & Kunstlied', concert_sacred: 'Konzert & Sakral', tango_crossover: 'Tango & Crossover' },
-    es: { opera: 'Ópera', lied: 'Lied y canción de arte', concert_sacred: 'Concierto y sacro', tango_crossover: 'Tango y crossover' },
-    it: { opera: 'Opera', lied: "Lied e canzone d'arte", concert_sacred: 'Concerto e sacro', tango_crossover: 'Tango e crossover' },
-    fr: { opera: 'Opéra', lied: 'Lied & mélodie', concert_sacred: 'Concert & sacré', tango_crossover: 'Tango & crossover' }
+    en: { opera: 'Opera', lied: 'Lied & art song', concert_sacred: 'Concert & sacred', tango: 'Tango', crossover: 'Crossover' },
+    de: { opera: 'Oper', lied: 'Lied & Kunstlied', concert_sacred: 'Konzert & Sakral', tango: 'Tango', crossover: 'Crossover' },
+    es: { opera: 'Ópera', lied: 'Lied y canción de arte', concert_sacred: 'Concierto y sacro', tango: 'Tango', crossover: 'Crossover' },
+    it: { opera: 'Opera', lied: "Lied e canzone d'arte", concert_sacred: 'Concerto e sacro', tango: 'Tango', crossover: 'Crossover' },
+    fr: { opera: 'Opéra', lied: 'Lied & mélodie', concert_sacred: 'Concert & sacré', tango: 'Tango', crossover: 'Crossover' }
   };
   const p = pack[L] || pack.en;
   Ti[L]['vid.repCat.opera'] = p.opera;
   Ti[L]['vid.repCat.lied'] = p.lied;
   Ti[L]['vid.repCat.concert_sacred'] = p.concert_sacred;
-  Ti[L]['vid.repCat.tango_crossover'] = p.tango_crossover;
+  Ti[L]['vid.repCat.tango'] = p.tango;
+  Ti[L]['vid.repCat.crossover'] = p.crossover;
 });
 Ti.en['perf.moreInfoPrint'] = 'More info';
 Ti.de['perf.moreInfoPrint'] = 'Mehr Infos';
@@ -9381,6 +9408,10 @@ function admPopulate(name){
   }
   else if(name==='vid'){
     const d=getVid();
+    if (migrateVidLegacyTangoCrossover(d)) {
+      save('rg_vid', d);
+      try { renderVideos(); } catch (e) {}
+    }
     const vh = document.getElementById('f-vidH2');
     if (vh) vh.value = admEffectiveVidH2();
     const div=document.getElementById('vidCards');
@@ -9422,7 +9453,8 @@ function admPopulate(name){
               <option value="opera"${(v.repertoireCat||'')==='opera'?' selected':''}>Opera — warm, theatrical</option>
               <option value="lied"${(v.repertoireCat||'')==='lied'?' selected':''}>Lied / art song — intimate, cool</option>
               <option value="concert_sacred"${(v.repertoireCat||'')==='concert_sacred'?' selected':''}>Concert / sacred / oratorio</option>
-              <option value="tango_crossover"${(v.repertoireCat||'')==='tango_crossover'?' selected':''}>Tango / crossover</option>
+              <option value="tango"${(v.repertoireCat||'')==='tango'?' selected':''}>Tango — intense, elegant</option>
+              <option value="crossover"${(v.repertoireCat||'')==='crossover'?' selected':''}>Gala / crossover — hybrid polish</option>
             </select>
           </div>
         </div>
@@ -9660,18 +9692,28 @@ function saveSection(name){
     const d=getVid();
     const vh = document.getElementById('f-vidH2');
     if (vh) d.h2 = vh.value;
-    d.videos=d.videos.map((v,i)=>({
-      id:document.getElementById(`vc-${i}-id`).value,
-      tag:document.getElementById(`vc-${i}-tag`).value,
-      title:document.getElementById(`vc-${i}-title`).value,
-      sub:document.getElementById(`vc-${i}-sub`).value,
-      composer:(document.getElementById(`vc-${i}-composer`)||{}).value||'',
-      repertoireCat:((document.getElementById(`vc-${i}-repertoireCat`)||{}).value||'').trim(),
-      hidden:document.getElementById(`vc-${i}-hidden`).value==='true',
-      group:(document.getElementById(`vc-${i}-group`).value||v.group||'opera_lied'),
-      featured:document.getElementById(`vc-${i}-featured`).checked||false,
-      customThumb:document.getElementById(`vc-${i}-thumb`).value||''
-    }));
+    d.videos=d.videos.map((v,i)=>{
+      let rc = ((document.getElementById(`vc-${i}-repertoireCat`)||{}).value||'').trim();
+      if (rc === 'tango_crossover') {
+        rc = inferTangoFromBlob(videoBlobLower({
+          tag: (document.getElementById(`vc-${i}-tag`)||{}).value,
+          title: (document.getElementById(`vc-${i}-title`)||{}).value,
+          sub: (document.getElementById(`vc-${i}-sub`)||{}).value
+        })) ? 'tango' : 'crossover';
+      }
+      return {
+        id:document.getElementById(`vc-${i}-id`).value,
+        tag:document.getElementById(`vc-${i}-tag`).value,
+        title:document.getElementById(`vc-${i}-title`).value,
+        sub:document.getElementById(`vc-${i}-sub`).value,
+        composer:(document.getElementById(`vc-${i}-composer`)||{}).value||'',
+        repertoireCat: rc,
+        hidden:document.getElementById(`vc-${i}-hidden`).value==='true',
+        group:(document.getElementById(`vc-${i}-group`).value||v.group||'opera_lied'),
+        featured:document.getElementById(`vc-${i}-featured`).checked||false,
+        customThumb:document.getElementById(`vc-${i}-thumb`).value||''
+      };
+    });
     save('rg_vid',d); renderVideos();
   }
   else if(name==='contact'){
