@@ -1197,6 +1197,69 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .rep-cell-role { color: var(--text); font-weight: 500; }
 .rep-cell-work { color: var(--text); }
 .rep-cell-composer { color: var(--text-faint); font-size: .8rem; }
+/* Optional per-role production credits (collapsed by default; no extra row height until opened) */
+.rep-pc-details {
+  margin-top: .35rem;
+  max-width: 22rem;
+}
+.rep-pc-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--ff-caps);
+  font-size: .48rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  user-select: none;
+}
+.rep-pc-summary::-webkit-details-marker { display: none; }
+.rep-pc-summary::before {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: .15rem;
+  border-left: 4px solid var(--gold-dim);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  transform: rotate(0deg);
+  transition: transform .15s ease;
+  opacity: .85;
+}
+.rep-pc-details[open] > .rep-pc-summary::before {
+  transform: rotate(90deg);
+}
+.rep-pc-summary:hover { color: var(--gold); }
+.rep-pc-body {
+  margin-top: .45rem;
+  padding-left: .55rem;
+  border-left: 1px solid rgba(212,168,67,.2);
+}
+.rep-pc-item + .rep-pc-item {
+  margin-top: .65rem;
+  padding-top: .55rem;
+  border-top: 1px solid rgba(240,237,230,.06);
+}
+.rep-pc-line { font-size: .78rem; line-height: 1.35; color: var(--text-dim); font-weight: 400; }
+.rep-pc-place { color: var(--text); font-size: .8rem; }
+.rep-pc-muted { font-size: .74rem; color: var(--text-faint); }
+.rep-pc-note { font-size: .72rem; font-style: italic; color: var(--text-faint); margin-top: .2rem; }
+.rep-pc-link {
+  font-size: .72rem;
+  font-family: var(--ff-caps);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212,168,67,.25);
+}
+.rep-pc-link:hover { color: var(--gold); border-bottom-color: var(--gold); }
+@media(max-width:600px){
+  .rep-pc-details { max-width: 100%; }
+}
 .rep-status{
   display:inline-block;
   margin-left:.5em;
@@ -2718,7 +2781,69 @@ function renderBio() {
 // ── Render Repertoire ──
 const NUMS=['I','II','III','IV','V','VI'];
 let repStatusFilter = 'all'; // 'all' | 'performed' | 'prepared' | 'studying'
-/** Future: optional card.performanceCredits[] can be rendered here (subtable, modal, or print) without changing rg_rep_cards shape. */
+function repCreditEntryHasContent(pc) {
+  if (!pc || typeof pc !== 'object') return false;
+  return ['year','venue','city','country','production','conductor','stageDirector','note','link'].some(function (k) {
+    const v = pc[k];
+    return v != null && String(v).trim() !== '';
+  });
+}
+function repNormalizePerformanceCredits(card) {
+  const raw = Array.isArray(card.performanceCredits) ? card.performanceCredits : [];
+  return raw.filter(repCreditEntryHasContent).map(function (pc) {
+    return {
+      year: String(pc.year || '').trim(),
+      venue: String(pc.venue || '').trim(),
+      city: String(pc.city || '').trim(),
+      country: String(pc.country || '').trim(),
+      production: String(pc.production || '').trim(),
+      conductor: String(pc.conductor || '').trim(),
+      stageDirector: String(pc.stageDirector || '').trim(),
+      note: String(pc.note || '').trim(),
+      link: String(pc.link || '').trim(),
+      linkLabel: String(pc.linkLabel || '').trim()
+    };
+  }).filter(repCreditEntryHasContent);
+}
+function repSafeCreditHref(url) {
+  let u = String(url || '').trim();
+  if (!u) return '';
+  const low = u.toLowerCase();
+  if (low.indexOf('javascript:') === 0 || low.indexOf('data:') === 0 || low.indexOf('vbscript:') === 0) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, '');
+  return u;
+}
+function repAttrEscape(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+/** Renders optional card.performanceCredits[] inside the role/work cell; returns '' if nothing to show. */
+function repFormatPerformanceCreditsBlock(card, t) {
+  const list = repNormalizePerformanceCredits(card);
+  if (!list.length) return '';
+  const esc = function (s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  };
+  const historyLbl = esc(t['rep.performanceHistory'] || 'Production history');
+  const moreInfo = esc(t['rep.performanceMoreInfo'] || 'More info');
+  const body = list.map(function (pc) {
+    const placeBits = [pc.year, pc.venue, pc.city, pc.country].filter(Boolean);
+    const linePlace = placeBits.length
+      ? '<div class="rep-pc-line rep-pc-place">' + esc(placeBits.join(' · ')) + '</div>'
+      : '';
+    const lineProd = pc.production ? '<div class="rep-pc-line">' + esc(pc.production) + '</div>' : '';
+    const lineCond = pc.conductor ? '<div class="rep-pc-line rep-pc-muted">' + esc(pc.conductor) + '</div>' : '';
+    const lineDir = pc.stageDirector ? '<div class="rep-pc-line rep-pc-muted">' + esc(pc.stageDirector) + '</div>' : '';
+    const lineNote = pc.note ? '<div class="rep-pc-line rep-pc-note">' + esc(pc.note) + '</div>' : '';
+    const linkH = repSafeCreditHref(pc.link);
+    let linkHtml = '';
+    if (linkH) {
+      const lbl = pc.linkLabel ? esc(pc.linkLabel) : moreInfo;
+      linkHtml = '<div class="rep-pc-line"><a class="rep-pc-link" href="' + repAttrEscape(linkH) + '" target="_blank" rel="noopener noreferrer">' + lbl + '</a></div>';
+    }
+    return '<div class="rep-pc-item">' + linePlace + lineProd + lineCond + lineDir + lineNote + linkHtml + '</div>';
+  }).join('');
+  return '<details class="rep-pc-details"><summary class="rep-pc-summary">' + historyLbl + '</summary><div class="rep-pc-body">' + body + '</div></details>';
+}
 function renderRep() {
   const d = getRep ? getRep() : {h2:'', intro:'', cards:[]};
   const cat = currentRepCategory || 'opera';
@@ -2832,9 +2957,12 @@ function renderRep() {
     if (s === 'studying')  return '<span class="rep-status rep-status-studying">' + (t['rep.statusRow.studying'] || t['rep.status.studying'] || 'Studying') + '</span>';
     return '';
   };
-  const row = (card) => isOpera
-    ? `<tr><td class="rep-cell-role">${esc(card.role)} ${statusBadge(card)}</td><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`
-    : `<tr><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`;
+  const row = (card) => {
+    const pcBlock = repFormatPerformanceCreditsBlock(card, t);
+    return isOpera
+      ? `<tr><td class="rep-cell-role">${esc(card.role)} ${statusBadge(card)}${pcBlock}</td><td class="rep-cell-work">${esc(card.opera)}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`
+      : `<tr><td class="rep-cell-work">${esc(card.opera)}${pcBlock}</td><td class="rep-cell-composer">${esc(card.composer)}</td></tr>`;
+  };
 
   // For Lied & Art Song, group entries by category with a small subtitle
   if (cat === 'lied') {
@@ -3669,7 +3797,7 @@ async function autoTranslateEditDetail(id) {
 // ── Repertoire admin helpers (per category) ──
 const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',lied:'rep-lived',tango:'rep-tango'};
 
-/** Optional per-role production credits (future public layer). Public: see renderRep() — credits are stored but not shown yet. */
+/** Optional per-role production credits (admin). Public: renderRep() shows them when non-empty via repFormatPerformanceCreditsBlock. */
 function repPcRowHtml(pc) {
   const pc0 = pc && typeof pc === 'object' ? pc : {};
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -4592,6 +4720,16 @@ Ti.it['rep.statusRow.studying'] = 'In studio';
 Ti.fr['rep.statusRow.performed'] = 'Interprété';
 Ti.fr['rep.statusRow.prepared'] = 'Préparé';
 Ti.fr['rep.statusRow.studying'] = 'À l\'étude';
+Ti.en['rep.performanceHistory'] = 'Production history';
+Ti.de['rep.performanceHistory'] = 'Aufführungshistorie';
+Ti.es['rep.performanceHistory'] = 'Historial de producción';
+Ti.it['rep.performanceHistory'] = 'Storia delle produzioni';
+Ti.fr['rep.performanceHistory'] = 'Historique des productions';
+Ti.en['rep.performanceMoreInfo'] = 'More info';
+Ti.de['rep.performanceMoreInfo'] = 'Mehr Infos';
+Ti.es['rep.performanceMoreInfo'] = 'Más información';
+Ti.it['rep.performanceMoreInfo'] = 'Ulteriori informazioni';
+Ti.fr['rep.performanceMoreInfo'] = 'En savoir plus';
 // Video category subtitles (fully internationalized)
 Ti.en['vid.cat.opera_lied'] = 'Opera & Art Song';
 Ti.en['vid.cat.gala_crossover'] = 'Gala & Crossover';
