@@ -1620,7 +1620,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
     </div>
     <button type="button" class="adm-tools-toggle" id="admToolsToggle" onclick="admToggleHeadTools()" aria-expanded="false" aria-controls="admHeadSecondary">Admin tools</button>
     <div class="adm-head-secondary" id="admHeadSecondary">
-      <button id="admExportBtn" onclick="admExportJSON()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
+      <button id="admExportBtn" type="button" onclick="admExportJSON()" title="Internal adminNote fields are omitted from this file (safe to share). Cloud data is unchanged." style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
       <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
       <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Sign out</button>
     </div>
@@ -1685,6 +1685,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
     <button class="adm-tab" onclick="admTab('rep-opera')">Opera</button>
     <button class="adm-tab" onclick="admTab('rep-arias')">Arias</button>
     <button class="adm-tab" onclick="admTab('rep-operetta')">Operetta</button>
+    <button class="adm-tab" onclick="admTab('rep-operetta_roles')">Operetta roles</button>
     <button class="adm-tab" onclick="admTab('rep-lived')">Lied</button>
     <button class="adm-tab" onclick="admTab('rep-tango')">Tango</button>
     <button class="adm-tab" onclick="admTab('programs')">Programs</button>
@@ -1695,6 +1696,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
          <button class="adm-tab" onclick="admTab('contact')">Contact</button>
     <button class="adm-tab" onclick="admTab('siteui')">UI / Site Strings</button>
     <button class="adm-tab" onclick="admTab('epk')">Press kit</button>
+    <button class="adm-tab" onclick="admTab('features')">Site features</button>
    </div>
    <div class="adm-body">
     <!-- HERO -->
@@ -1749,6 +1751,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Opera</label><textarea class="adm-input" id="f-repDescOpera" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Arias</label><textarea class="adm-input" id="f-repDescArias" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Operetta</label><textarea class="adm-input" id="f-repDescOperetta" rows="2"></textarea></div></div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Operetta roles</label><textarea class="adm-input" id="f-repDescOperettaRoles" rows="2" placeholder="Optional; falls back to Operetta blurb if empty"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Lied</label><textarea class="adm-input" id="f-repDescLied" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Tango</label><textarea class="adm-input" id="f-repDescTango" rows="2"></textarea></div></div>
      <button class="adm-btn" type="button" onclick="saveRepEditorial()" style="margin-bottom:1rem">Save editorial copy</button>
@@ -1797,6 +1800,31 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
      <div class="adm-feedback" id="fb-rep-operetta">Saved!</div>
+    </div>
+    <!-- REPERTOIRE: Operetta roles -->
+    <div class="adm-panel" id="admPanel-rep-operetta_roles">
+     <div class="adm-section">Repertoire — Operetta roles</div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:42rem">Full operetta roles with status (parallel to opera roles). The separate <strong>Operetta</strong> panel remains for numbers, arias and excerpts. Rows use <code>cat: &quot;operetta_roles&quot;</code> in <code>rg_rep_cards</code>. The public repertoire tab appears only when <strong>Site features → Operetta roles (public)</strong> is enabled, public visibility is on, and at least one row has composer, work, or role text.</p>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Status colours: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label class="adm-label" style="margin:0">Sort by status:</label>
+      <select class="adm-input" id="repSortStatus-operetta_roles" style="max-width:200px" onchange="admPopulate('rep-operetta_roles')" title="Preview only unless “Current order (safe to save)” is selected" aria-label="Sort operetta roles by status (preview)">
+       <option value="">Current order (safe to save)</option>
+       <option value="performed">Performed first (preview)</option>
+       <option value="prepared">Prepared first (preview)</option>
+       <option value="studying">Studying first (preview)</option>
+      </select>
+     </div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:40rem">Preview sorts reorder the list on screen only. <strong>Save operetta roles</strong> stays off until you pick <strong>Current order (safe to save)</strong>.</p>
+     <div id="repCards-operetta_roles"></div>
+     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
+      <button type="button" class="adm-btn" onclick="addRepCard('operetta_roles')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row at the end of the list">+ Add role</button>
+      <button class="adm-btn-sm" type="button" onclick="autoSortOperettaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)" title="Saves immediately: reorders stored operetta roles by status, then composer">✨ Auto-sort (status + composer)</button>
+      <button type="button" class="adm-btn adm-btn-save" id="btn-save-rep-operetta_roles" onclick="saveSection('rep-operetta_roles')">Save operetta roles</button>
+     <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
+     <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+     </div>
+     <div class="adm-feedback" id="fb-rep-operetta_roles">Saved!</div>
     </div>
     <!-- REPERTOIRE: Lied -->
     <div class="adm-panel" id="admPanel-rep-lived">
@@ -2191,6 +2219,32 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      </div>
 
    </div><!-- admPanel-epk -->
+    <div class="adm-panel" id="admPanel-features">
+     <div class="adm-section">Site features (global)</div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 14px;line-height:1.45;max-width:44rem">Single configuration for the whole site (not per language). On the public page, a feature is shown only if it is <strong>enabled</strong>, <strong>show on public site</strong> is on, and there is enough real content. <strong>Internal notes</strong> can be enabled for future admin use but are never shown on the public site.</p>
+     <div style="overflow-x:auto;margin-bottom:1rem">
+      <table style="width:100%;border-collapse:collapse;font-size:.76rem;color:var(--text-dim)">
+       <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border);font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)">
+         <th style="padding:10px 8px 8px 0">Feature</th>
+         <th style="padding:10px 8px 8px 0;white-space:nowrap">Enabled</th>
+         <th style="padding:10px 8px 8px 0;white-space:nowrap">Show on public</th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Operetta roles (repertoire tab)</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-operettaRolesPublic-enabled" aria-label="Operetta roles feature enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-operettaRolesPublic-showPublic" aria-label="Operetta roles visible on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Video professional metadata</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-videoProMetadata-enabled" aria-label="Video pro metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-videoProMetadata-showPublic" aria-label="Video pro metadata on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Calendar — extended metadata</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-perfExtendedMeta-enabled" aria-label="Performance extended metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-perfExtendedMeta-showPublic" aria-label="Performance extended metadata on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Press / reviews — extended metadata</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-pressExtendedMeta-enabled" aria-label="Press extended metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-pressExtendedMeta-showPublic" aria-label="Press extended metadata on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Homepage highlights</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-homeHighlights-enabled" aria-label="Home highlights enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-homeHighlights-showPublic" aria-label="Home highlights on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Materials (public / private / strategic)</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-materialsVault-enabled" aria-label="Materials vault enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-materialsVault-showPublic" aria-label="Materials vault on public site"></td></tr>
+        <tr><td style="padding:10px 8px 10px 0;vertical-align:middle">Internal notes <span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px">Never shown on the public site.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-internalNotes-enabled" aria-label="Internal notes feature enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-internalNotes-showPublic" disabled title="Internal notes are never public" aria-label="Not applicable — internal notes are never public"></td></tr>
+       </tbody>
+      </table>
+     </div>
+     <button type="button" class="adm-btn adm-btn-save" onclick="saveRgFeatureConfig()" title="Writes rg_feature_config to storage and Firestore">Save site features</button>
+     <div class="adm-feedback" id="fb-rg-features" style="display:none">Saved!</div>
+    </div>
    </div><!-- adm-body -->
    <div id="admActivityWrap" class="adm-activity-wrap">
      <button type="button" class="adm-activity-mobile-toggle" id="admActivityMobileToggle" onclick="admToggleActivityLog()" aria-expanded="false" aria-controls="admActivityPanel">Activity log</button>
@@ -2390,6 +2444,75 @@ function uiTable(lang){
   return merged;
 }
 
+/** Mirrors index.html: global feature flags, key rg_feature_config (one document, all languages). */
+const RG_FEATURE_CONFIG_KEY = 'rg_feature_config';
+const RG_FEATURE_IDS = {
+  OPERETTA_ROLES_PUBLIC: 'operettaRolesPublic',
+  VIDEO_PRO_METADATA: 'videoProMetadata',
+  PERF_EXTENDED_META: 'perfExtendedMeta',
+  PRESS_EXTENDED_META: 'pressExtendedMeta',
+  HOME_HIGHLIGHTS: 'homeHighlights',
+  MATERIALS_VAULT: 'materialsVault',
+  INTERNAL_NOTES: 'internalNotes'
+};
+function defaultRgFeatureConfig() {
+  const o = {};
+  Object.keys(RG_FEATURE_IDS).forEach((k) => { o[RG_FEATURE_IDS[k]] = { enabled: false, showPublic: false }; });
+  return { v: 1, features: o };
+}
+function normalizeRgFeatureConfig(raw) {
+  const base = defaultRgFeatureConfig();
+  if (!raw || typeof raw !== 'object') return base;
+  const next = Object.assign({}, base, { v: typeof raw.v === 'number' ? raw.v : base.v });
+  const feats = raw.features && typeof raw.features === 'object' && !Array.isArray(raw.features) ? raw.features : {};
+  Object.keys(base.features).forEach((id) => {
+    const row = feats[id];
+    const en = !!(row && row.enabled);
+    let pub = !!(row && row.showPublic);
+    if (id === RG_FEATURE_IDS.INTERNAL_NOTES) pub = false;
+    next.features[id] = { enabled: en, showPublic: pub };
+  });
+  return next;
+}
+function getRgFeatureConfig() {
+  try {
+    const raw = load(RG_FEATURE_CONFIG_KEY);
+    return normalizeRgFeatureConfig(raw);
+  } catch (e) {
+    return defaultRgFeatureConfig();
+  }
+}
+function admPopulateFeatureFlags() {
+  const cfg = getRgFeatureConfig();
+  Object.keys(RG_FEATURE_IDS).forEach((k) => {
+    const fid = RG_FEATURE_IDS[k];
+    const row = (cfg.features && cfg.features[fid]) ? cfg.features[fid] : { enabled: false, showPublic: false };
+    const enEl = document.getElementById('ff-' + fid + '-enabled');
+    const pubEl = document.getElementById('ff-' + fid + '-showPublic');
+    if (enEl) enEl.checked = !!row.enabled;
+    if (pubEl) {
+      pubEl.checked = !!row.showPublic;
+      pubEl.disabled = fid === RG_FEATURE_IDS.INTERNAL_NOTES;
+    }
+  });
+}
+function saveRgFeatureConfig() {
+  const feats = {};
+  Object.keys(RG_FEATURE_IDS).forEach((k) => {
+    const fid = RG_FEATURE_IDS[k];
+    const enEl = document.getElementById('ff-' + fid + '-enabled');
+    const pubEl = document.getElementById('ff-' + fid + '-showPublic');
+    let pub = pubEl && !pubEl.disabled && pubEl.checked;
+    if (fid === RG_FEATURE_IDS.INTERNAL_NOTES) pub = false;
+    feats[fid] = { enabled: !!(enEl && enEl.checked), showPublic: !!pub };
+  });
+  const next = normalizeRgFeatureConfig({ v: 1, features: feats });
+  save(RG_FEATURE_CONFIG_KEY, next);
+  admPopulateFeatureFlags();
+  const fb = document.getElementById('fb-rg-features');
+  if (fb) { fb.style.display = 'block'; setTimeout(() => { fb.style.display = 'none'; }, 2200); }
+}
+
 // ── Admin UX: Save status + activity log + helpers ──
 const __admLog = [];
 let __admSaveState = 'saved'; // 'saved' | 'saving' | 'unsaved' | 'localOnly' | 'failed'
@@ -2566,10 +2689,31 @@ function __admSafeDownload(filename, text, mime = 'application/json') {
   setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
+/** Strips `adminNote` from downloadable export only (Firestore / DB unchanged). */
+function rgExportDataStripAdminNotes(key, raw) {
+  try {
+    if (raw == null) return raw;
+    const dropNote = (obj) => {
+      if (!obj || typeof obj !== 'object') return obj;
+      const o = { ...obj };
+      delete o.adminNote;
+      return o;
+    };
+    if (key === 'rg_rep_cards' && Array.isArray(raw)) return raw.map(dropNote);
+    if (key === 'rg_press' && Array.isArray(raw)) return raw.map(dropNote);
+    if (key === 'rg_perfs' && Array.isArray(raw)) return raw.map(dropNote);
+    if (key === 'rg_vid' && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.videos)) {
+      return { ...raw, videos: raw.videos.map(dropNote) };
+    }
+  } catch (e) {}
+  return raw;
+}
+
 function admExportJSON() {
   try {
     const keys = Object.keys(DB || {}).sort();
     const editableKeys = keys.filter(k =>
+      k === 'rg_feature_config' ||
       k === 'rg_rep_cards' ||
       k === 'rg_vid' ||
       k === 'rg_perfs' ||
@@ -2595,7 +2739,7 @@ function admExportJSON() {
       exportedAt: new Date().toISOString(),
       origin: (typeof location !== 'undefined' ? location.origin : ''),
       keys: editableKeys,
-      data: Object.fromEntries(editableKeys.map(k => [k, DB[k]]))
+      data: Object.fromEntries(editableKeys.map(k => [k, rgExportDataStripAdminNotes(k, DB[k])]))
     };
     __admSafeDownload(`rg_admin_export_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`, JSON.stringify(payload, null, 2));
     admLog('info', 'Exported JSON', { key: '' });
@@ -2622,6 +2766,7 @@ function restoreDefaults(section) {
     else if (section === 'epk-photos') clear('rg_epk_photos');
     else if (section === 'repertoire') { clear('rg_rep_cards'); clear('rep_' + lang); }
     else if (section === 'photos') { clear('rg_photos'); clear('rg_photo_captions'); }
+    else if (section === 'feature-flags') clear(RG_FEATURE_CONFIG_KEY);
     admLog('info', 'Restore defaults requested', { key: section });
     // Refresh UI
     try { if (typeof renderAll === 'function') renderAll(); } catch(e) {}
@@ -2640,6 +2785,7 @@ function __admInjectPanelTools() {
     'admPanel-rep-opera': 'repertoire',
     'admPanel-rep-arias': 'repertoire',
     'admPanel-rep-operetta': 'repertoire',
+    'admPanel-rep-operetta_roles': 'repertoire',
     'admPanel-rep-lived': 'repertoire',
     'admPanel-rep-tango': 'repertoire',
     'admPanel-programs': 'programs',
@@ -2649,7 +2795,8 @@ function __admInjectPanelTools() {
     'admPanel-press': 'press',
     'admPanel-contact': 'contact',
     'admPanel-siteui': 'site-ui',
-    'admPanel-epk': 'epk-bios'
+    'admPanel-epk': 'epk-bios',
+    'admPanel-features': 'feature-flags'
   };
   const saveModeHint = {
     'admPanel-hero': 'Single save — Save Hero',
@@ -2665,8 +2812,10 @@ function __admInjectPanelTools() {
     'admPanel-rep-opera': 'Mixed saves: heading & blurbs use their buttons; role rows → Save opera roles',
     'admPanel-rep-arias': 'Manual save — Save arias list',
     'admPanel-rep-operetta': 'Manual save — Save operetta list',
+    'admPanel-rep-operetta_roles': 'Manual save — Save operetta roles',
     'admPanel-rep-lived': 'Manual save — Save lied list',
-    'admPanel-rep-tango': 'Manual save — Save tango list'
+    'admPanel-rep-tango': 'Manual save — Save tango list',
+    'admPanel-features': 'Single save — Save site features'
   };
   document.querySelectorAll('.adm-panel').forEach(panel => {
     const sec = panel.querySelector('.adm-section');
@@ -3195,9 +3344,9 @@ function getRep() {
   const langData = get('rep');
   let cards = load('rg_rep_cards') || DEFAULTS.rep.cards;
   if (!Array.isArray(cards)) cards = [];
-  // Ensure every card has cat so filtering works (opera, arias, operetta, lied, tango)
+  // Ensure every card has cat so filtering works (opera, arias, operetta, operetta_roles, lied, tango)
   cards = cards.map(c => {
-    const cat = (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera';
+    const cat = (c.cat === 'arias' || c.cat === 'operetta' || c.cat === 'operetta_roles' || c.cat === 'lied' || c.cat === 'tango') ? c.cat : 'opera';
     // For Lied & Art Song, ensure a category field exists so we can group on the frontend
     const category = (cat === 'lied') ? (c.category || 'Deutsches Lied') : c.category;
     return { ...c, cat, category };
@@ -4001,7 +4150,9 @@ async function autoTranslateEditDetail(id) {
 }
 
 // ── Repertoire admin helpers (per category) ──
-const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',lied:'rep-lived',tango:'rep-tango'};
+const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',operetta_roles:'rep-operetta_roles',lied:'rep-lived',tango:'rep-tango'};
+/** Opera-like repertoire rows: role + work + composer + status + performanceCredits in admin. */
+function repIsRoleStyleCat(cat) { return cat === 'opera' || cat === 'operetta_roles'; }
 
 /** Optional per-role production credits (future public layer). Shape: { year, venue, city, country, production, conductor, stageDirector, link, linkLabel, note, isSelectedHighlight? }[] */
 function repPcRowHtml(pc) {
@@ -4097,17 +4248,18 @@ function repReorderCategoryInPlace(allCards, cat, reorderSliceFn) {
   indices.forEach((gi, j) => { allCards[gi] = slice[j]; });
 }
 
-/** Disables “Save opera roles” while a preview-only status sort is active (matches saveSection guard). */
-function syncRepOperaSaveButtonState() {
-  const sel = document.getElementById('repSortStatus-opera');
-  const btn = document.getElementById('btn-save-rep-opera');
+/** Disables save while a preview-only status sort is active (matches saveSection guard). */
+function syncRepRoleStyleSaveButtonState(tabSuffix) {
+  const sel = document.getElementById('repSortStatus-' + tabSuffix);
+  const btn = document.getElementById('btn-save-rep-' + tabSuffix);
   if (!btn) return;
   const previewSort = !!(sel && String(sel.value || '').trim() !== '');
   btn.disabled = previewSort;
   btn.title = previewSort
     ? 'Switch Sort by status to “Current order (safe to save)” before saving — otherwise row data could map to the wrong roles.'
-    : 'Save all opera role rows below to storage.';
+    : 'Save all rows below to storage.';
 }
+function syncRepOperaSaveButtonState() { syncRepRoleStyleSaveButtonState('opera'); }
 
 function addRepCard(cat) {
   const allCards = (getRep().cards || []).slice();
@@ -4165,6 +4317,25 @@ function autoSortOperaRoles() {
   });
   save('rg_rep_cards', allCards);
   admTab('rep-opera');
+}
+
+function autoSortOperettaRoles() {
+  const allCards = (getRep().cards || []).slice();
+  const statusOrder = {performed:0, prepared:1, studying:2};
+  repReorderCategoryInPlace(allCards, 'operetta_roles', (slice) => {
+    slice.sort((a,b)=>{
+      const sa = statusOrder[(a.status||'performed').toLowerCase()] ?? 3;
+      const sb = statusOrder[(b.status||'performed').toLowerCase()] ?? 3;
+      if (sa !== sb) return sa - sb;
+      const ca = (a.composer||'').toLowerCase();
+      const cb = (b.composer||'').toLowerCase();
+      if (ca < cb) return -1;
+      if (ca > cb) return 1;
+      return 0;
+    });
+  });
+  save('rg_rep_cards', allCards);
+  admTab('rep-operetta_roles');
 }
 
 // ── Programs admin helpers ──
@@ -4315,6 +4486,7 @@ function buildShortRepertoirePlainText() {
   const categories = [
     { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), max: 4, role: true, status: true },
     { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), max: 3, role: true, status: false },
+    { key: 'operetta_roles', label: exportStripHtml(ti['rep.tabOperettaRoles'] || 'Operetta roles'), max: 3, role: true, status: true },
     { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), max: 2, role: false, status: false },
     { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), max: 2, role: false, status: false }
   ];
@@ -4353,6 +4525,7 @@ function buildShortExportRepertoireHtml() {
   const categories = [
     { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), max: 4, role: true, status: true },
     { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), max: 3, role: true, status: false },
+    { key: 'operetta_roles', label: exportStripHtml(ti['rep.tabOperettaRoles'] || 'Operetta roles'), max: 3, role: true, status: true },
     { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), max: 2, role: false, status: false },
     { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), max: 2, role: false, status: false }
   ];
@@ -5870,6 +6043,7 @@ function buildFullExportRepertoireHtml() {
     { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), role: true, status: true },
     { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), role: true, status: false },
     { key: 'operetta', label: exportStripHtml(ti['rep.tabOperetta'] || 'Operetta'), role: false, status: false },
+    { key: 'operetta_roles', label: exportStripHtml(ti['rep.tabOperettaRoles'] || 'Operetta roles'), role: true, status: true },
     { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), role: false, status: false },
     { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), role: false, status: false }
   ];
@@ -7376,6 +7550,7 @@ function buildRepertoirePlainText() {
     { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), includeRole: true, includeStatus: true },
     { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), includeRole: true, includeStatus: false },
     { key: 'operetta', label: exportStripHtml(ti['rep.tabOperetta'] || 'Operetta'), includeRole: false, includeStatus: false },
+    { key: 'operetta_roles', label: exportStripHtml(ti['rep.tabOperettaRoles'] || 'Operetta roles'), includeRole: true, includeStatus: true },
     { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), includeRole: false, includeStatus: false },
     { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), includeRole: false, includeStatus: false }
   ];
@@ -7431,6 +7606,7 @@ function openRepertoireCleanExport() {
     { key: 'opera', label: exportStripHtml(ti['rep.tabOpera'] || 'Opera Roles'), includeRole: true, includeStatus: true },
     { key: 'arias', label: exportStripHtml(ti['rep.tabArias'] || 'Opera Arias'), includeRole: true, includeStatus: false },
     { key: 'operetta', label: exportStripHtml(ti['rep.tabOperetta'] || 'Operetta'), includeRole: false, includeStatus: false },
+    { key: 'operetta_roles', label: exportStripHtml(ti['rep.tabOperettaRoles'] || 'Operetta roles'), includeRole: true, includeStatus: true },
     { key: 'lied', label: exportStripHtml(ti['rep.tabLied'] || 'Lied & Art Song'), includeRole: false, includeStatus: false },
     { key: 'tango', label: exportStripHtml(ti['rep.tabTango'] || 'Tango'), includeRole: false, includeStatus: false }
   ];
@@ -8481,6 +8657,11 @@ Ti.it['rep.statusRow.studying'] = 'In studio';
 Ti.fr['rep.statusRow.performed'] = 'Interprété';
 Ti.fr['rep.statusRow.prepared'] = 'Préparé';
 Ti.fr['rep.statusRow.studying'] = 'À l\'étude';
+Ti.en['rep.tabOperettaRoles'] = 'Operetta roles';
+Ti.de['rep.tabOperettaRoles'] = 'Operettenpartien';
+Ti.es['rep.tabOperettaRoles'] = 'Roles de opereta';
+Ti.it['rep.tabOperettaRoles'] = 'Ruoli di operetta';
+Ti.fr['rep.tabOperettaRoles'] = 'Rôles d’opérette';
 Ti.en['vid.cat.opera_lied'] = 'Opera & Art Song';
 Ti.en['vid.cat.gala_crossover'] = 'Gala & Crossover';
 Ti.de['vid.cat.opera_lied'] = 'Oper & Kunstlied';
@@ -8617,6 +8798,7 @@ const SITE_UI_PHASE2A_GROUPS = [
     ['rep.tabOpera', 'Tab'],
     ['rep.tabArias', 'Tab'],
     ['rep.tabOperetta', 'Tab'],
+    ['rep.tabOperettaRoles', 'Tab (when public repertoire adds operetta roles)'],
     ['rep.tabLied', 'Tab'],
     ['rep.tabTango', 'Tab'],
     ['rep.status.all', 'Opera filter'],
@@ -8821,6 +9003,7 @@ function getEditorial(){
     repDescOpera: pick('repDescOpera', 'rep.descOpera'),
     repDescArias: pick('repDescArias', 'rep.descArias'),
     repDescOperetta: pick('repDescOperetta', 'rep.descOperetta'),
+    repDescOperettaRoles: (typeof raw.repDescOperettaRoles === 'string' && raw.repDescOperettaRoles.trim()) ? raw.repDescOperettaRoles.trim() : '',
     repDescLied: pick('repDescLied', 'rep.descLied'),
     repDescTango: pick('repDescTango', 'rep.descTango'),
   };
@@ -8848,7 +9031,7 @@ function savePressEdit(id){
     qi18n[l] = ((document.getElementById('pe-pquote-'+l+'-'+id)||{}).value || (items[idx].quotes_i18n||{})[l] || '').trim();
     pi18n[l] = ((document.getElementById('pe-pprod-'+l+'-'+id)||{}).value || (items[idx].production_i18n||{})[l] || '').trim();
   });
-  items[idx]={...items[idx],
+  const nextPress = {...items[idx],
     quote: String(quote||'').trim(),
     quotes_i18n: qi18n,
     source:(document.getElementById('pe-psource-'+id)||{}).value||items[idx].source,
@@ -8858,6 +9041,10 @@ function savePressEdit(id){
     visible: !!((document.getElementById('pe-pvisible-'+id)||{}).checked),
     order: Number((document.getElementById('pe-porder-'+id)||{}).value || 0) || 0
   };
+  const pNote = ((document.getElementById('pe-padminNote-'+id)||{}).value||'').trim();
+  if (pNote) nextPress.adminNote = pNote;
+  else delete nextPress.adminNote;
+  items[idx] = nextPress;
   if(!items[idx].quotes_i18n.de) items[idx].quotes_i18n.de = items[idx].quote;
   if(!items[idx].production_i18n.en) items[idx].production_i18n.en = items[idx].production;
   save('rg_press',items);renderPress();admRenderPressList();
@@ -8921,6 +9108,7 @@ function admRenderPressList(){
           <div class="adm-col"><label class="adm-label">Visible</label><input type="checkbox" id="pe-pvisible-${p.id}" ${p.visible!==false?'checked':''}></div>
         </div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Article URL</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="pe-padminNote-${p.id}" rows="2" placeholder="Editorial rank and featured use. Context, translation, and future placement." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${String(p.adminNote||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
           <button class="adm-btn" onclick="savePressEdit(${p.id})">Save</button>
           <button type="button" data-anthropic-translate-btn="1" class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-translate</button>
@@ -9546,7 +9734,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 
 function admTab(name){
   admCurTab = name;
-  const tabs = ['hero','bio','rep-opera','rep-arias','rep-operetta','rep-lived','rep-tango','programs','vid','photos','perf','press','contact','siteui','epk'];
+  const tabs = ['hero','bio','rep-opera','rep-arias','rep-operetta','rep-operetta_roles','rep-lived','rep-tango','programs','vid','photos','perf','press','contact','siteui','epk','features'];
   document.querySelectorAll('.adm-tab').forEach((t,i)=>t.classList.toggle('active', tabs[i]===name));
   document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
   const panel = document.getElementById('admPanel-'+name);
@@ -9581,9 +9769,9 @@ function admPopulate(name){
     if (citeEl) citeEl.value = admEffectiveSectionField('bio', 'cite');
   }
   else if(name.startsWith('rep-')){
-    const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
+    const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-operetta_roles':'operetta_roles','rep-lived':'lied','rep-tango':'tango'};
     const cat = catMap[name] || 'opera';
-    const tabSuffix = name.replace('rep-',''); // matches HTML ids: opera, arias, operetta, lived, tango
+    const tabSuffix = name.replace('rep-',''); // matches HTML ids: opera, arias, operetta, operetta_roles, lived, tango
     const d = getRep();
     const repH2Input = document.getElementById('f-repH2');
     if (repH2Input) repH2Input.value = admEffectiveRepH2Display();
@@ -9594,6 +9782,7 @@ function admPopulate(name){
       fillEd('f-repDescOpera', ed.repDescOpera);
       fillEd('f-repDescArias', ed.repDescArias);
       fillEd('f-repDescOperetta', ed.repDescOperetta);
+      fillEd('f-repDescOperettaRoles', ed.repDescOperettaRoles);
       fillEd('f-repDescLied', ed.repDescLied);
       fillEd('f-repDescTango', ed.repDescTango);
     }
@@ -9607,7 +9796,7 @@ function admPopulate(name){
         return sa - sb;
       });
     }
-    const isOpera = cat === 'opera';
+    const isOpera = repIsRoleStyleCat(cat);
     const div = document.getElementById('repCards-'+tabSuffix);
     if (!div) return;
     const statusColors = {performed:'#4CAF50', prepared:'#D4A843', studying:'#9A9080'};
@@ -9645,8 +9834,8 @@ function admPopulate(name){
           ${isOpera ? `
           <div class="adm-col"><label class="adm-label">Role</label><input class="adm-input" id="rc-${cat}-${localIdx}-role" value="${repEsc(card.role)}"></div>
           ` : ''}
-          <div class="adm-col" style="max-width:92px;opacity:${(cat==='opera'||cat==='arias') ? '1' : '.72'}">
-            <label class="adm-label" style="${(cat==='opera'||cat==='arias') ? '' : 'font-size:.62rem;color:var(--text-faint);letter-spacing:.08em;'}">${(cat==='opera'||cat==='arias') ? 'Language' : 'Language (meta)'}</label>
+          <div class="adm-col" style="max-width:92px;opacity:${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? '1' : '.72'}">
+            <label class="adm-label" style="${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? '' : 'font-size:.62rem;color:var(--text-faint);letter-spacing:.08em;'}">${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? 'Language' : 'Language (meta)'}</label>
             <select class="adm-input" id="rc-${cat}-${localIdx}-lang">
               ${['IT','DE','FR','EN','LA','ES'].map(l=>`<option value="${l}" ${(card.lang||'IT')===l?'selected':''}>${l}</option>`).join('')}
             </select>
@@ -9670,8 +9859,10 @@ function admPopulate(name){
           ` : ''}
         </div>
         ${repCreditsAdminBlockHtml(cat, localIdx, card)}
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="rc-${cat}-${localIdx}-adminNote" rows="2" placeholder="Artistic angle and repertoire priority. When to show or hold back; what to push next." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${repEsc(card.adminNote||'')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
         </div>`).join('');
     if (name === 'rep-opera') syncRepOperaSaveButtonState();
+    if (name === 'rep-operetta_roles') syncRepRoleStyleSaveButtonState('operetta_roles');
   }
   else if(name==='programs'){
     const d = getPrograms();
@@ -9798,6 +9989,7 @@ function admPopulate(name){
             <option value="true"${v.hidden?' selected':''}>Hidden</option>
           </select>
         </div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="vc-${i}-adminNote" rows="2" placeholder="Casting/presenters, thumbnail, material quality. Plan a future clip swap or refresh." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${String(v.adminNote||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
       </div>`).join('');
   }
   else if(name==='photos'){
@@ -9856,6 +10048,9 @@ function admPopulate(name){
     epkRenderCvAdmin();
     epkRenderPhotosAdmin();
   }
+  if (name === 'features') {
+    admPopulateFeatureFlags();
+  }
 }
 
 /** Persist #repH2 source: Firestore key rep_{lang}. Empty or matching LANG_CONTENT.rep.h2 clears override. */
@@ -9891,6 +10086,7 @@ function saveRepEditorial() {
     repDescOpera: ((document.getElementById('f-repDescOpera') || {}).value || '').trim(),
     repDescArias: ((document.getElementById('f-repDescArias') || {}).value || '').trim(),
     repDescOperetta: ((document.getElementById('f-repDescOperetta') || {}).value || '').trim(),
+    repDescOperettaRoles: ((document.getElementById('f-repDescOperettaRoles') || {}).value || '').trim(),
     repDescLied: ((document.getElementById('f-repDescLied') || {}).value || '').trim(),
     repDescTango: ((document.getElementById('f-repDescTango') || {}).value || '').trim(),
   };
@@ -9914,6 +10110,7 @@ function saveRepEditorial() {
   fill('f-repDescOpera', e2.repDescOpera);
   fill('f-repDescArias', e2.repDescArias);
   fill('f-repDescOperetta', e2.repDescOperetta);
+  fill('f-repDescOperettaRoles', e2.repDescOperettaRoles);
   fill('f-repDescLied', e2.repDescLied);
   fill('f-repDescTango', e2.repDescTango);
   const fb = document.getElementById('fb-rep-editorial');
@@ -9941,13 +10138,13 @@ function saveSection(name){
     if (citeEl) citeEl.value = admEffectiveSectionField('bio', 'cite');
   }
   else if(name.startsWith('rep-')){
-    const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
+    const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-operetta_roles':'operetta_roles','rep-lived':'lied','rep-tango':'tango'};
     const cat = catMap[name] || 'opera';
     const tabSuffix = name.replace('rep-', '');
     const sortStatus = (document.getElementById('repSortStatus-' + tabSuffix) || {}).value || '';
-    if (sortStatus && cat === 'opera') {
+    if (sortStatus && repIsRoleStyleCat(cat)) {
       alert('Sort by status is preview-only. Choose “Current order (safe to save)” in the menu, then save again — otherwise row data could be written to the wrong stored roles.');
-      const sel = document.getElementById('repSortStatus-opera');
+      const sel = document.getElementById('repSortStatus-' + tabSuffix);
       if (sel) { try { sel.focus(); } catch (e) {} }
       return;
     }
@@ -9963,15 +10160,19 @@ function saveSection(name){
         ...prev,
         composer: (composerEl||{}).value||'',
         opera: (document.getElementById('rc-'+cat+'-'+localIdx+'-opera')||{}).value||'',
-        role: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'') : '',
+        role: repIsRoleStyleCat(cat) ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'') : '',
         lang: (document.getElementById('rc-'+cat+'-'+localIdx+'-lang')||{}).value||'IT',
-        status: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed') : 'performed',
+        status: repIsRoleStyleCat(cat) ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed') : 'performed',
         category: (cat === 'lied') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-category')||{}).value||'Deutsches Lied') : (prevInCat[localIdx] || {}).category,
         cat: cat
       };
       const pcs = readRepPerformanceCreditsFromDom(cat, localIdx);
       if (pcs.length) next.performanceCredits = pcs;
       else delete next.performanceCredits;
+      const noteEl = document.getElementById('rc-' + cat + '-' + localIdx + '-adminNote');
+      const noteStr = noteEl ? String(noteEl.value || '').trim() : '';
+      if (noteStr) next.adminNote = noteStr;
+      else delete next.adminNote;
       newCatCards.push(next);
     }
     let ni = 0;
@@ -10029,7 +10230,8 @@ function saveSection(name){
           sub: (document.getElementById(`vc-${i}-sub`)||{}).value
         })) ? 'tango' : 'crossover';
       }
-      return {
+      const noteStr = ((document.getElementById(`vc-${i}-adminNote`)||{}).value||'').trim();
+      const o = {
         ...(v && typeof v === 'object' ? v : {}),
         id:document.getElementById(`vc-${i}-id`).value,
         tag:document.getElementById(`vc-${i}-tag`).value,
@@ -10042,6 +10244,9 @@ function saveSection(name){
         featured:document.getElementById(`vc-${i}-featured`).checked||false,
         customThumb:document.getElementById(`vc-${i}-thumb`).value||''
       };
+      if (noteStr) o.adminNote = noteStr;
+      else delete o.adminNote;
+      return o;
     });
     save('rg_vid',d); renderVideos();
   }
@@ -10311,6 +10516,7 @@ function admRenderPerfList(){
             <option value="past"${p.status==='past'?' selected':''}>Past</option>
           </select>
         </div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="pe-adminNote-${p.id}" rows="2" placeholder="Follow-ups, pending links or assets (flyer, press). Feature or spotlight once ready." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${String(p.adminNote||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
         <div style="display:flex;gap:10px;margin-top:14px">
           <button class="adm-btn adm-btn-save" onclick="savePerf(${p.id})">Save changes</button>
           <button class="adm-btn" onclick="togglePerfEdit(${p.id})" style="background:transparent">Cancel</button>
@@ -10339,6 +10545,7 @@ function savePerf(id){
     i18nModal['eventLink_'+L]=(document.getElementById('pe-eventLink_'+L+'-'+id)||{}).value?.trim()||'';
     i18nModal['eventLinkLabel_'+L]=(document.getElementById('pe-eventLinkLabel_'+L+'-'+id)||{}).value?.trim()||'';
   });
+  const perfNote = ((document.getElementById('pe-adminNote-'+id)||{}).value||'').trim();
   perfs[idx]={
     ...prev,
     id,
@@ -10358,6 +10565,8 @@ function savePerf(id){
     type:document.getElementById('pe-type-'+id).value,
     ...i18nModal
   };
+  if (perfNote) perfs[idx].adminNote = perfNote;
+  else delete perfs[idx].adminNote;
   const _sDay=perfs[idx].day, _sMon=perfs[idx].month, _sStat=perfs[idx].status;
   const _cSD=(d,m,st)=>{if(!m)return st==='past'?'2000-01-01':'2099-12-01';const p=new Date((d&&d!=='TBA'?d+' ':'1 ')+m);return isNaN(p)?st==='past'?'2000-01-01':'2099-12-01':p.toISOString().split('T')[0];};
   perfs[idx].sortDate=_cSD(_sDay,_sMon,_sStat);
