@@ -2718,6 +2718,7 @@ function renderBio() {
 // ── Render Repertoire ──
 const NUMS=['I','II','III','IV','V','VI'];
 let repStatusFilter = 'all'; // 'all' | 'performed' | 'prepared' | 'studying'
+/** Future: optional card.performanceCredits[] can be rendered here (subtable, modal, or print) without changing rg_rep_cards shape. */
 function renderRep() {
   const d = getRep ? getRep() : {h2:'', intro:'', cards:[]};
   const cat = currentRepCategory || 'opera';
@@ -3667,6 +3668,90 @@ async function autoTranslateEditDetail(id) {
 
 // ── Repertoire admin helpers (per category) ──
 const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',lied:'rep-lived',tango:'rep-tango'};
+
+/** Optional per-role production credits (future public layer). Public: see renderRep() — credits are stored but not shown yet. */
+function repPcRowHtml(pc) {
+  const pc0 = pc && typeof pc === 'object' ? pc : {};
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const v = (k) => esc(pc0[k] == null ? '' : pc0[k]);
+  return `<div class="rep-pc-row" style="margin:10px 0;padding:10px;border:1px solid var(--border);border-radius:2px;background:var(--surface2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.12em;color:var(--gold)">Crédito de producción</span>
+      <span style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="adm-btn-sm" onclick="repPcMoveRow(this,-1);return false;">↑</button>
+        <button type="button" class="adm-btn-sm" onclick="repPcMoveRow(this,1);return false;">↓</button>
+        <button type="button" class="adm-btn-sm adm-btn-danger" onclick="repPcRemoveRow(this);return false;">Quitar</button>
+      </span>
+    </div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Año</label><input class="adm-input" data-rep-pc-field="year" value="${v('year')}"></div>
+      <div class="adm-col"><label class="adm-label">Teatro / sala</label><input class="adm-input" data-rep-pc-field="venue" value="${v('venue')}"></div>
+    </div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Ciudad</label><input class="adm-input" data-rep-pc-field="city" value="${v('city')}"></div>
+      <div class="adm-col"><label class="adm-label">País</label><input class="adm-input" data-rep-pc-field="country" value="${v('country')}"></div>
+    </div>
+    <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Producción</label><input class="adm-input" data-rep-pc-field="production" value="${v('production')}"></div></div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Director musical</label><input class="adm-input" data-rep-pc-field="conductor" value="${v('conductor')}"></div>
+      <div class="adm-col"><label class="adm-label">Director de escena</label><input class="adm-input" data-rep-pc-field="stageDirector" value="${v('stageDirector')}"></div>
+    </div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Enlace más info</label><input class="adm-input" data-rep-pc-field="link" value="${v('link')}" placeholder="https://…"></div>
+      <div class="adm-col"><label class="adm-label">Texto del enlace</label><input class="adm-input" data-rep-pc-field="linkLabel" value="${v('linkLabel')}"></div>
+    </div>
+    <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Nota</label><textarea class="adm-input" data-rep-pc-field="note" rows="2">${v('note')}</textarea></div></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
+      <input type="checkbox" data-rep-pc-field="isSelectedHighlight" ${pc0.isSelectedHighlight ? 'checked' : ''} style="accent-color:var(--gold)"> Destacado (reservado para uso futuro en la web)
+    </label>
+  </div>`;
+}
+function repCreditsAdminBlockHtml(cat, localIdx, card) {
+  const credits = Array.isArray(card.performanceCredits) ? card.performanceCredits : [];
+  const rowsHtml = credits.map((pc) => repPcRowHtml(pc)).join('');
+  return `
+        <details class="rep-pc-fold" style="margin-top:12px;border:1px solid var(--border);border-radius:2px;padding:10px 12px;background:rgba(0,0,0,.1)">
+          <summary style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;color:var(--gold-dim);cursor:pointer;user-select:none">Historial de producción (uso futuro)</summary>
+          <p style="font-size:.68rem;color:var(--text-faint);margin:8px 0;line-height:1.45">Créditos opcionales por fila de repertorio. <strong>Aún no se muestran en el sitio público.</strong> Guardá la pestaña de repertorio para persistir.</p>
+          <button type="button" class="adm-btn-sm" onclick="repPcAddRow('${cat}',${localIdx});return false;" style="margin-bottom:10px">+ Añadir crédito</button>
+          <div id="rc-${cat}-${localIdx}-pc-rows">${rowsHtml}</div>
+        </details>`;
+}
+function readRepPerformanceCreditsFromDom(cat, localIdx) {
+  const wrap = document.getElementById('rc-' + cat + '-' + localIdx + '-pc-rows');
+  if (!wrap) return [];
+  const fields = ['year', 'venue', 'city', 'country', 'production', 'conductor', 'stageDirector', 'link', 'linkLabel', 'note'];
+  const rows = Array.from(wrap.children).filter((el) => el.classList && el.classList.contains('rep-pc-row'));
+  const out = [];
+  rows.forEach((row) => {
+    const get = (f) => ((row.querySelector('[data-rep-pc-field="' + f + '"]') || {}).value || '').trim();
+    const obj = {};
+    fields.forEach((f) => { obj[f] = get(f); });
+    const hl = row.querySelector('[data-rep-pc-field="isSelectedHighlight"]');
+    obj.isSelectedHighlight = !!(hl && hl.checked);
+    const has = fields.some((f) => obj[f]) || obj.isSelectedHighlight;
+    if (has) out.push(obj);
+  });
+  return out;
+}
+function repPcAddRow(cat, localIdx) {
+  const wrap = document.getElementById('rc-' + cat + '-' + localIdx + '-pc-rows');
+  if (!wrap) return;
+  wrap.insertAdjacentHTML('beforeend', repPcRowHtml({}));
+}
+function repPcRemoveRow(btn) {
+  const row = btn.closest('.rep-pc-row');
+  if (row && confirm('¿Quitar este crédito del formulario? Guardá el repertorio para persistir.')) row.remove();
+}
+function repPcMoveRow(btn, delta) {
+  const row = btn.closest('.rep-pc-row');
+  if (!row || !row.parentNode) return;
+  const sib = delta < 0 ? row.previousElementSibling : row.nextElementSibling;
+  if (!sib || !sib.classList.contains('rep-pc-row')) return;
+  if (delta < 0) row.parentNode.insertBefore(row, sib);
+  else row.parentNode.insertBefore(sib, row);
+}
+
 function addRepCard(cat) {
   const cards = (getRep().cards || []).slice();
   cards.push({composer:'', opera:'', role:'', lang:'IT', status:'performed', cat: cat});
@@ -3688,7 +3773,11 @@ function duplicateRepCard(cat, localIdx) {
   const indices = allCards.reduce((acc, c, i) => ((c.cat||'opera')===cat ? acc.concat(i) : acc), []);
   const globalIdx = indices[localIdx];
   if (globalIdx == null) return;
-  const copy = Object.assign({}, allCards[globalIdx]);
+  const orig = allCards[globalIdx];
+  const copy = Object.assign({}, orig);
+  if (Array.isArray(orig.performanceCredits)) {
+    copy.performanceCredits = orig.performanceCredits.map((pc) => Object.assign({}, pc));
+  }
   allCards.splice(globalIdx + 1, 0, copy);
   save('rg_rep_cards', allCards);
   admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
@@ -5311,6 +5400,7 @@ function admPopulate(name){
           </div>
           ` : ''}
         </div>
+        ${repCreditsAdminBlockHtml(cat, localIdx, card)}
       </div>`).join('');
   }
   else if(name==='programs'){
@@ -5433,18 +5523,25 @@ function saveSection(name){
     const cat = catMap[name] || 'opera';
     const allCards = (getRep().cards || []).slice();
     const otherCards = allCards.filter(c => (c.cat || 'opera') !== cat);
+    const prevInCat = allCards.filter(c => (c.cat || 'opera') === cat);
     const newCatCards = [];
     for (let localIdx = 0; ; localIdx++) {
       const composerEl = document.getElementById('rc-'+cat+'-'+localIdx+'-composer');
       if (!composerEl) break;
-      newCatCards.push({
+      const prev = prevInCat[localIdx] || {};
+      const next = {
+        ...prev,
         composer: (composerEl||{}).value||'',
         opera: (document.getElementById('rc-'+cat+'-'+localIdx+'-opera')||{}).value||'',
         role: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'') : '',
         lang: (document.getElementById('rc-'+cat+'-'+localIdx+'-lang')||{}).value||'IT',
         status: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed') : 'performed',
         cat: cat
-      });
+      };
+      const pcs = readRepPerformanceCreditsFromDom(cat, localIdx);
+      if (pcs.length) next.performanceCredits = pcs;
+      else delete next.performanceCredits;
+      newCatCards.push(next);
     }
     const newCards = otherCards.concat(newCatCards);
     save('rg_rep_cards', newCards);
@@ -5490,7 +5587,14 @@ function saveSection(name){
     const d=getVid();
     const vh = document.getElementById('f-vidH2');
     if (vh) d.h2 = vh.value;
-    d.videos=d.videos.map((_,i)=>({id:document.getElementById(`vc-${i}-id`).value,tag:document.getElementById(`vc-${i}-tag`).value,title:document.getElementById(`vc-${i}-title`).value,sub:document.getElementById(`vc-${i}-sub`).value,hidden:document.getElementById(`vc-${i}-hidden`).value==='true'}));
+    d.videos=d.videos.map((v,i)=>({
+      ...(v && typeof v === 'object' ? v : {}),
+      id: document.getElementById(`vc-${i}-id`).value,
+      tag: document.getElementById(`vc-${i}-tag`).value,
+      title: document.getElementById(`vc-${i}-title`).value,
+      sub: document.getElementById(`vc-${i}-sub`).value,
+      hidden: document.getElementById(`vc-${i}-hidden`).value==='true'
+    }));
     save('rg_vid',d); renderVideos();
   }
   else if(name==='contact'){

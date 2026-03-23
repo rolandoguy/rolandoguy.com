@@ -3284,6 +3284,7 @@ function renderBio() {
 // ── Render Repertoire ──
 const NUMS=['I','II','III','IV','V','VI'];
 let repStatusFilter = 'all'; // 'all' | 'performed' | 'prepared' | 'studying'
+/** Future: render card.performanceCredits[] here when enabling the public “professional history” layer (data already in rg_rep_cards). */
 function renderRep() {
   const d = getRep();
   const cat = currentRepCategory || 'opera';
@@ -4002,6 +4003,89 @@ async function autoTranslateEditDetail(id) {
 // ── Repertoire admin helpers (per category) ──
 const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',lied:'rep-lived',tango:'rep-tango'};
 
+/** Optional per-role production credits (future public layer). Shape: { year, venue, city, country, production, conductor, stageDirector, link, linkLabel, note, isSelectedHighlight? }[] */
+function repPcRowHtml(pc) {
+  const pc0 = pc && typeof pc === 'object' ? pc : {};
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const v = (k) => esc(pc0[k] == null ? '' : pc0[k]);
+  return `<div class="rep-pc-row" style="margin:10px 0;padding:10px;border:1px solid var(--border);border-radius:2px;background:var(--surface2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.12em;color:var(--gold)">Production credit</span>
+      <span style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="adm-btn-sm" onclick="repPcMoveRow(this,-1);return false;">↑</button>
+        <button type="button" class="adm-btn-sm" onclick="repPcMoveRow(this,1);return false;">↓</button>
+        <button type="button" class="adm-btn-sm adm-btn-danger" onclick="repPcRemoveRow(this);return false;">Remove</button>
+      </span>
+    </div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Year</label><input class="adm-input" data-rep-pc-field="year" value="${v('year')}"></div>
+      <div class="adm-col"><label class="adm-label">Venue / theater</label><input class="adm-input" data-rep-pc-field="venue" value="${v('venue')}"></div>
+    </div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">City</label><input class="adm-input" data-rep-pc-field="city" value="${v('city')}"></div>
+      <div class="adm-col"><label class="adm-label">Country</label><input class="adm-input" data-rep-pc-field="country" value="${v('country')}"></div>
+    </div>
+    <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Production</label><input class="adm-input" data-rep-pc-field="production" value="${v('production')}"></div></div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">Conductor</label><input class="adm-input" data-rep-pc-field="conductor" value="${v('conductor')}"></div>
+      <div class="adm-col"><label class="adm-label">Stage director</label><input class="adm-input" data-rep-pc-field="stageDirector" value="${v('stageDirector')}"></div>
+    </div>
+    <div class="adm-grid">
+      <div class="adm-col"><label class="adm-label">More info link</label><input class="adm-input" data-rep-pc-field="link" value="${v('link')}" placeholder="https://…"></div>
+      <div class="adm-col"><label class="adm-label">Link label</label><input class="adm-input" data-rep-pc-field="linkLabel" value="${v('linkLabel')}"></div>
+    </div>
+    <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Note</label><textarea class="adm-input" data-rep-pc-field="note" rows="2">${v('note')}</textarea></div></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-dim);margin-top:6px;cursor:pointer">
+      <input type="checkbox" data-rep-pc-field="isSelectedHighlight" ${pc0.isSelectedHighlight ? 'checked' : ''} style="accent-color:var(--gold)"> Highlight (reserved for future public use)
+    </label>
+  </div>`;
+}
+function repCreditsAdminBlockHtml(cat, localIdx, card) {
+  const credits = Array.isArray(card.performanceCredits) ? card.performanceCredits : [];
+  const rowsHtml = credits.map((pc) => repPcRowHtml(pc)).join('');
+  return `
+        <details class="rep-pc-fold" style="margin-top:12px;border:1px solid var(--border);border-radius:2px;padding:10px 12px;background:rgba(0,0,0,.1)">
+          <summary style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;color:var(--gold-dim);cursor:pointer;user-select:none">Production / performance history (future use)</summary>
+          <p style="font-size:.68rem;color:var(--text-faint);margin:8px 0;line-height:1.45">Optional production credits for this repertoire row. <strong>Not shown on the public website yet.</strong> Use the section Save button below to store changes.</p>
+          <button type="button" class="adm-btn-sm" onclick="repPcAddRow('${cat}',${localIdx});return false;" style="margin-bottom:10px">+ Add production credit</button>
+          <div id="rc-${cat}-${localIdx}-pc-rows">${rowsHtml}</div>
+        </details>`;
+}
+function readRepPerformanceCreditsFromDom(cat, localIdx) {
+  const wrap = document.getElementById('rc-' + cat + '-' + localIdx + '-pc-rows');
+  if (!wrap) return [];
+  const fields = ['year', 'venue', 'city', 'country', 'production', 'conductor', 'stageDirector', 'link', 'linkLabel', 'note'];
+  const rows = Array.from(wrap.children).filter((el) => el.classList && el.classList.contains('rep-pc-row'));
+  const out = [];
+  rows.forEach((row) => {
+    const get = (f) => ((row.querySelector('[data-rep-pc-field="' + f + '"]') || {}).value || '').trim();
+    const obj = {};
+    fields.forEach((f) => { obj[f] = get(f); });
+    const hl = row.querySelector('[data-rep-pc-field="isSelectedHighlight"]');
+    obj.isSelectedHighlight = !!(hl && hl.checked);
+    const has = fields.some((f) => obj[f]) || obj.isSelectedHighlight;
+    if (has) out.push(obj);
+  });
+  return out;
+}
+function repPcAddRow(cat, localIdx) {
+  const wrap = document.getElementById('rc-' + cat + '-' + localIdx + '-pc-rows');
+  if (!wrap) return;
+  wrap.insertAdjacentHTML('beforeend', repPcRowHtml({}));
+}
+function repPcRemoveRow(btn) {
+  const row = btn.closest('.rep-pc-row');
+  if (row && confirm('Remove this production credit from the form? Save the repertoire section to persist.')) row.remove();
+}
+function repPcMoveRow(btn, delta) {
+  const row = btn.closest('.rep-pc-row');
+  if (!row || !row.parentNode) return;
+  const sib = delta < 0 ? row.previousElementSibling : row.nextElementSibling;
+  if (!sib || !sib.classList.contains('rep-pc-row')) return;
+  if (delta < 0) row.parentNode.insertBefore(row, sib);
+  else row.parentNode.insertBefore(sib, row);
+}
+
 /** Reorder entries of one `cat` without moving them to the end of `rg_rep_cards`: global indices stay fixed (same invariant as saveSection rep-* merge). */
 function repReorderCategoryInPlace(allCards, cat, reorderSliceFn) {
   const indices = [];
@@ -4054,7 +4138,11 @@ function duplicateRepCard(cat, localIdx) {
   const indices = allCards.reduce((acc, c, i) => ((c.cat||'opera')===cat ? acc.concat(i) : acc), []);
   const globalIdx = indices[localIdx];
   if (globalIdx == null) return;
-  const copy = Object.assign({}, allCards[globalIdx]);
+  const orig = allCards[globalIdx];
+  const copy = Object.assign({}, orig);
+  if (Array.isArray(orig.performanceCredits)) {
+    copy.performanceCredits = orig.performanceCredits.map((pc) => Object.assign({}, pc));
+  }
   allCards.splice(globalIdx + 1, 0, copy);
   save('rg_rep_cards', allCards);
   admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
@@ -9581,6 +9669,7 @@ function admPopulate(name){
           </div>
           ` : ''}
         </div>
+        ${repCreditsAdminBlockHtml(cat, localIdx, card)}
         </div>`).join('');
     if (name === 'rep-opera') syncRepOperaSaveButtonState();
   }
@@ -9869,7 +9958,9 @@ function saveSection(name){
     for (let localIdx = 0; ; localIdx++) {
       const composerEl = document.getElementById('rc-'+cat+'-'+localIdx+'-composer');
       if (!composerEl) break;
-      newCatCards.push({
+      const prev = prevInCat[localIdx] || {};
+      const next = {
+        ...prev,
         composer: (composerEl||{}).value||'',
         opera: (document.getElementById('rc-'+cat+'-'+localIdx+'-opera')||{}).value||'',
         role: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'') : '',
@@ -9877,7 +9968,11 @@ function saveSection(name){
         status: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed') : 'performed',
         category: (cat === 'lied') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-category')||{}).value||'Deutsches Lied') : (prevInCat[localIdx] || {}).category,
         cat: cat
-      });
+      };
+      const pcs = readRepPerformanceCreditsFromDom(cat, localIdx);
+      if (pcs.length) next.performanceCredits = pcs;
+      else delete next.performanceCredits;
+      newCatCards.push(next);
     }
     let ni = 0;
     const merged = [];
@@ -9935,6 +10030,7 @@ function saveSection(name){
         })) ? 'tango' : 'crossover';
       }
       return {
+        ...(v && typeof v === 'object' ? v : {}),
         id:document.getElementById(`vc-${i}-id`).value,
         tag:document.getElementById(`vc-${i}-tag`).value,
         title:document.getElementById(`vc-${i}-title`).value,
