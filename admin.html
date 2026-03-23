@@ -727,6 +727,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .adm-btn{font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--gold);color:var(--bg);background:var(--gold);cursor:none;transition:all .3s;white-space:nowrap}
 .adm-btn:hover{background:var(--copper)}
 .adm-btn-save{width:100%;margin-top:6px}
+button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;pointer-events:none}
 .adm-btn-sm{font-family:var(--ff-caps);font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border:1px solid var(--border);color:var(--text-faint);background:transparent;cursor:none;transition:all .25s}
 .adm-btn-sm:hover{border-color:var(--gold);color:var(--gold)}
 .adm-btn-danger{border-color:#8B3232;color:#c05050}
@@ -1641,6 +1642,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
    </div>
   </div>
   <div id="admContent" style="display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden">
+   <div id="admPersistBanner" role="status" aria-live="polite" style="display:none;margin:0;padding:8px 16px;font-size:.76rem;line-height:1.45;border-bottom:1px solid var(--border)"></div>
    <div id="admFullExportWrap" class="adm-export-bar" style="border-bottom:1px solid var(--border);padding:10px 16px;background:rgba(212,168,67,.04)">
     <button type="button" class="adm-export-mobile-toggle" id="admExportToolsToggle" onclick="admToggleExportTools()" aria-expanded="false" aria-controls="admExportBarInner">Export tools</button>
     <div class="adm-export-bar-inner" id="admExportBarInner">
@@ -1709,7 +1711,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="adm-col"><label class="adm-label">Button 1</label><input class="adm-input" id="f-heroCta1"></div>
       <div class="adm-col"><label class="adm-label">Button 2</label><input class="adm-input" id="f-heroCta2"></div>
      </div>
-     <button class="adm-btn adm-btn-save" onclick="saveSection('hero')">Save Hero</button>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:2px 0 10px">Everything on this tab is saved together when you click the button below.</p>
+     <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('hero')" title="Stores hero image, lines, and both buttons for the current content language">Save Hero</button>
      <div class="adm-feedback" id="fb-hero">Saved!</div>
     </div>
     <!-- BIO -->
@@ -1720,9 +1723,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Paragraph 2</label><textarea class="adm-input" id="f-bioP2" rows="4"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Quote</label><textarea class="adm-input" id="f-bioQuote" rows="3"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Attribution line (cite)</label><input class="adm-input" id="f-bioCite" placeholder="Rolando Guy · Berlin"></div></div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Shown under the quote on the public site (<code>&lt;cite&gt;</code>). Stored as <code>bio_{lang}.cite</code>.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Line shown under the quote on the public page (e.g. name · city).</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-4px 0 10px">All biography fields save together with <strong>Save Biography</strong>.</p>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn adm-btn-save" onclick="saveSection('bio')">Save Biography</button>
+      <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('bio')" title="Stores title, paragraphs, quote, and attribution for the current content language">Save Biography</button>
       <button class="adm-btn" type="button" onclick="copyBioPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
       <button class="adm-btn" type="button" onclick="openBioCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1740,7 +1744,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <button class="adm-btn" type="button" onclick="saveRepHeader()" style="background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold)">Save repertoire title</button>
      </div>
      <div class="adm-section" style="margin-top:.5rem">Editorial copy (repertoire)</div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Intro line and tab blurbs. Firestore: <code>rg_editorial_{lang}</code>. Empty = site default (<code>Ti</code>).</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Intro line and tab blurbs only — not the role table below. Use <strong>Save repertoire title</strong> / <strong>Save editorial copy</strong>. Empty = site default (<code>Ti</code>).</p>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Line under the H2</label><textarea class="adm-input" id="f-repIntroLine" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Opera</label><textarea class="adm-input" id="f-repDescOpera" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Arias</label><textarea class="adm-input" id="f-repDescArias" rows="2"></textarea></div></div>
@@ -1749,21 +1753,22 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Tango</label><textarea class="adm-input" id="f-repDescTango" rows="2"></textarea></div></div>
      <button class="adm-btn" type="button" onclick="saveRepEditorial()" style="margin-bottom:1rem">Save editorial copy</button>
      <div class="adm-feedback" id="fb-rep-editorial" style="display:none">Saved!</div>
-     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Estado: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
+     <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Status colours: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
      <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <label class="adm-label" style="margin:0">Sort by status:</label>
-      <select class="adm-input" id="repSortStatus-opera" style="max-width:200px" onchange="admPopulate('rep-opera')">
-       <option value="">Current order</option>
-       <option value="performed">Performed first</option>
-       <option value="prepared">Prepared first</option>
-       <option value="studying">Studying first</option>
+      <select class="adm-input" id="repSortStatus-opera" style="max-width:200px" onchange="admPopulate('rep-opera')" title="Preview only unless “Current order (safe to save)” is selected" aria-label="Sort opera list by status (preview)">
+       <option value="">Current order (safe to save)</option>
+       <option value="performed">Performed first (preview)</option>
+       <option value="prepared">Prepared first (preview)</option>
+       <option value="studying">Studying first (preview)</option>
       </select>
      </div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:40rem">Preview sorts reorder the list on screen only. <strong>Save opera roles</strong> stays off until you pick <strong>Current order (safe to save)</strong> — otherwise rows could be written to the wrong stored roles.</p>
     <div id="repCards-opera"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
-      <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)">✨ Auto-sort (status + composer)</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-opera')">Save</button>
+      <button type="button" class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row at the end of the list">+ Add role</button>
+      <button class="adm-btn-sm" type="button" onclick="autoSortOperaRoles()" style="background:transparent;color:var(--gold);border-color:rgba(212,168,67,.5)" title="Saves immediately: reorders stored opera roles by status, then composer">✨ Auto-sort (status + composer)</button>
+      <button type="button" class="adm-btn adm-btn-save" id="btn-save-rep-opera" onclick="saveSection('rep-opera')">Save opera roles</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1774,8 +1779,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-section">Repertoire — Opera arias</div>
      <div id="repCards-arias"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Save</button>
+      <button type="button" class="adm-btn" onclick="addRepCard('arias')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row">+ Add entry</button>
+      <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('rep-arias')">Save arias list</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1786,8 +1791,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-section">Repertoire — Operetta</div>
      <div id="repCards-operetta"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Save</button>
+      <button type="button" class="adm-btn" onclick="addRepCard('operetta')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row">+ Add entry</button>
+      <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('rep-operetta')">Save operetta list</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1798,8 +1803,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-section">Repertoire — Lied &amp; art song</div>
      <div id="repCards-lived"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Save</button>
+      <button type="button" class="adm-btn" onclick="addRepCard('lied')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row">+ Add entry</button>
+      <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('rep-lived')">Save lied list</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1810,8 +1815,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-section">Repertoire — Tango</div>
      <div id="repCards-tango"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add</button>
-      <button class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Save</button>
+      <button type="button" class="adm-btn" onclick="addRepCard('tango')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row">+ Add entry</button>
+      <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('rep-tango')">Save tango list</button>
      <button class="adm-btn" type="button" onclick="copyRepertoirePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openRepertoireCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1826,12 +1831,13 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Closing note</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Context link from Repertoire</label><input class="adm-input" id="f-repProgramsLink"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Context link from dossier / EPK</label><input class="adm-input" id="f-epkProgramsLink"></div></div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:4px 0 12px;line-height:1.45">The two context links above are written to storage only when you click <strong>Save Programs</strong> (together with title, intro, closing note, and program blocks).</p>
      <div class="adm-section">Program blocks</div>
      <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Drag to reorder. Only published programs appear on the site.</p>
      <div id="programCards"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-       <button class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add program</button>
-       <button class="adm-btn adm-btn-save" onclick="saveSection('programs')">Save Programs</button>
+       <button type="button" class="adm-btn" onclick="addProgramCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a draft block; use Save Programs to keep it">+ Add program</button>
+       <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('programs')" title="Stores all program fields and the two context links for the current language">Save Programs</button>
        <button class="adm-btn" type="button" onclick="copyProgramsPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
        <button class="adm-btn" type="button" onclick="openProgramsCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
      </div>
@@ -1841,7 +1847,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-panel" id="admPanel-vid">
      <div class="adm-section">Videos</div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-vidH2" placeholder="Stage, Concert &amp; Recital Highlights"></div></div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Single source with the public site: <code>rg_vid.h2</code> (not <code>Ti['vid.h2']</code>).</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">This heading is what visitors see above the video grid (same as on the public site).</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-4px 0 12px;line-height:1.45"><strong>Mixed saving:</strong> add, remove, or drag-reorder saves the list order right away. Text and options inside each card (tag, title, category, thumbnail URL, etc.) are kept only after you click <strong>Save Videos</strong>.</p>
      <details class="adm-advanced-fold" style="margin:8px 0 14px">
       <summary class="adm-advanced-fold-sum">Thumbnail selection guidelines</summary>
       <div style="font-size:.7rem;color:var(--text-dim);line-height:1.55;max-width:44rem;margin:10px 0 4px">
@@ -1860,8 +1867,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
      </details>
      <div id="vidCards"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-       <button class="adm-btn" onclick="addVidCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)">+ Add video</button>
-       <button class="adm-btn adm-btn-save" onclick="saveSection('vid')">Save Videos</button>
+       <button type="button" class="adm-btn" onclick="addVidCard()" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a card and saves the list; fill fields, then Save Videos">+ Add video</button>
+       <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('vid')" title="Writes all card fields (titles, tags, categories, thumbnails) to storage">Save Videos</button>
      </div>
      <div class="adm-feedback" id="fb-vid">Saved!</div>
     </div>
@@ -1872,9 +1879,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-perfH2" placeholder="Appears as the calendar section heading on the site"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro</label><textarea class="adm-input" id="f-perfIntro" rows="2" placeholder="Short line under the title (plain text)"></textarea></div></div>
      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-      <button type="button" class="adm-btn" onclick="savePerfHeader()">Save calendar settings</button>
+      <button type="button" class="adm-btn" onclick="savePerfHeader()" title="Stores section title, intro, and Advanced JSON only — not individual events">Save calendar settings</button>
       <div class="adm-feedback" id="fb-perf" style="display:none;margin:0;align-self:center">Saved!</div>
      </div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:0 0 12px;line-height:1.45;max-width:42rem"><strong>Mixed saving:</strong> <strong>+ Add event</strong>, remove, and drag-reorder update the event list right away. Each expanded card has its own <strong>Save changes</strong>. Use <strong>Save calendar settings</strong> for the heading, intro, and optional fields under Advanced.</p>
      <div class="adm-section" style="margin-top:20px">Events</div>
      <div id="admPerfList"></div>
 
@@ -1911,7 +1919,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <label class="adm-label">Detail <span style="color:var(--text-faint);font-weight:400">(any language — auto-translated)</span></label>
        <div style="display:flex;gap:8px;align-items:center">
          <input class="adm-input" id="pDetail" placeholder="E. Künneke · Roderich de Weert · Regie: N.N." style="flex:1">
-         <button type="button" onclick="autoTranslateDetail()" id="translateBtn"
+         <button type="button" onclick="autoTranslateDetail()" id="translateBtn" data-anthropic-translate-btn="1"
            style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;transition:all .2s;flex-shrink:0">
            ✦ Auto-translate
          </button>
@@ -1969,6 +1977,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <!-- PHOTOS -->
     <div class="adm-panel" id="admPanel-photos">
      <div class="adm-section">Photos — studio portraits</div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-8px 0 10px;line-height:1.45">Uploads and URL adds apply immediately; no separate Save for this tab.</p>
      <div id="admStudioSlots"></div>
      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
@@ -2009,7 +2018,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
        <label class="adm-label">Translation note (active content language)</label>
        <textarea class="adm-input" id="f-pressTranslatedNote" rows="2" placeholder="Translated from the original German review."></textarea>
        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-         <button class="adm-btn adm-btn-save" onclick="savePressMeta()">Save note</button>
+         <button type="button" class="adm-btn adm-btn-save" onclick="savePressMeta()" title="Stores only the translation note line for the active content language">Save translation note</button>
         <button class="adm-btn" type="button" onclick="copyPressPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
         <button class="adm-btn" type="button" onclick="openPressCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
          <div class="adm-feedback" id="fb-pressMeta" style="opacity:0;transition:opacity .3s">Saved!</div>
@@ -2020,7 +2029,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
      <div class="adm-grid full"><div class="adm-col">
        <label class="adm-label">Quote (no quotation marks)</label>
        <textarea class="adm-input" id="pa-quote" rows="3" placeholder="Das spielfreudige Ensemble begeistert..."></textarea>
-       <button type="button" onclick="autoTranslateNewPressQuote()" style="margin-top:6px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;padding:7px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer">✦ Auto-translate quote</button>
+       <button type="button" id="pa-autoTranslateBtn" data-anthropic-translate-btn="1" onclick="autoTranslateNewPressQuote()" style="margin-top:6px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;padding:7px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer">✦ Auto-translate quote</button>
        <div id="pa-translateStatus" style="font-size:.7rem;color:var(--text-faint);margin-top:4px;min-height:14px"></div>
        <input type="hidden" id="pa-qi18n-en"><input type="hidden" id="pa-qi18n-de">
        <input type="hidden" id="pa-qi18n-es"><input type="hidden" id="pa-qi18n-it"><input type="hidden" id="pa-qi18n-fr">
@@ -2044,8 +2053,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
       <div class="adm-col"><label class="adm-label">Email button label</label><input class="adm-input" id="f-contactEmailBtn"></div>
      </div>
     <div class="adm-grid full" style="display:none"><div class="adm-col"><label class="adm-label">Website button label</label><input class="adm-input" id="f-contactWebBtn"></div></div>
+    <p style="font-size:.72rem;color:var(--text-faint);margin:4px 0 0">All contact fields save together with the button below.</p>
     <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap">
-     <button class="adm-btn adm-btn-save" onclick="saveSection('contact')">Save Contact</button>
+     <button type="button" class="adm-btn adm-btn-save" onclick="saveSection('contact')" title="Stores title, subtitle, quote, email, and button labels for the current language">Save contact section</button>
      <button class="adm-btn" type="button" onclick="copyContactPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
      <button class="adm-btn" type="button" onclick="openContactCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
     </div>
@@ -2053,10 +2063,10 @@ textarea.adm-input{resize:vertical;min-height:80px}
     </div>
     <div class="adm-panel" id="admPanel-siteui">
      <div class="adm-section">UI / Site Strings <span id="siteuiLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Public site copy per language (same Content EN/DE/… selector as Hero/Bio). Firestore / local: <code>rg_ui_{lang}</code>. Empty values or values matching the site default are not stored as overrides. Program links from Repertoire / EPK stay in <code>rg_editorial_{lang}</code>.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Short labels visitors see (navigation, buttons, calendar filters, etc.) for the language selected in the toolbar. Empty fields keep the site default. Program links from Repertoire / EPK are edited under Programs, not here.</p>
      <div id="siteUiFieldsRoot"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button class="adm-btn adm-btn-save" type="button" onclick="saveSiteUiStrings()">Save site strings</button>
+      <button class="adm-btn adm-btn-save" type="button" onclick="saveSiteUiStrings()" title="Stores every field on this tab for the selected UI language">Save site strings</button>
      </div>
      <div class="adm-feedback" id="fb-siteui" style="display:none">Saved!</div>
     </div>
@@ -2358,7 +2368,7 @@ function uiTable(lang){
 
 // ── Admin UX: Save status + activity log + helpers ──
 const __admLog = [];
-let __admSaveState = 'saved'; // 'saved' | 'saving' | 'unsaved' | 'failed'
+let __admSaveState = 'saved'; // 'saved' | 'saving' | 'unsaved' | 'localOnly' | 'failed'
 let __admLastKey = null;
 
 function __admNow() {
@@ -2383,6 +2393,41 @@ function __admShowErr(msg) {
       if (aw) aw.classList.add('adm-activity-open');
     }
   } catch (e) {}
+}
+
+let __admPersistBannerTimer = null;
+/** Visible persist feedback: ok = cloud synced (brief); local = memory/localStorage only; fail = cannot rely on cloud. */
+function admSetPersistBanner(level, text) {
+  const el = document.getElementById('admPersistBanner');
+  if (!el) return;
+  if (__admPersistBannerTimer) {
+    clearTimeout(__admPersistBannerTimer);
+    __admPersistBannerTimer = null;
+  }
+  if (!level || !text) {
+    el.style.display = 'none';
+    el.textContent = '';
+    el.style.background = '';
+    el.style.color = '';
+    el.style.borderBottomColor = '';
+    return;
+  }
+  el.style.display = 'block';
+  el.textContent = text;
+  if (level === 'ok') {
+    el.style.background = 'rgba(80,160,100,.14)';
+    el.style.color = 'var(--text)';
+    el.style.borderBottomColor = 'rgba(80,160,100,.4)';
+    __admPersistBannerTimer = setTimeout(() => admSetPersistBanner('', ''), 2800);
+  } else if (level === 'local') {
+    el.style.background = 'rgba(212,168,67,.12)';
+    el.style.color = 'var(--text)';
+    el.style.borderBottomColor = 'var(--gold)';
+  } else if (level === 'fail') {
+    el.style.background = 'rgba(220,80,80,.12)';
+    el.style.color = '#ffb0b0';
+    el.style.borderBottomColor = 'rgba(220,80,80,.45)';
+  }
 }
 function admLog(level, msg, meta = {}) {
   __admLog.push({ t: __admNow(), level: level || 'info', msg: String(msg || ''), key: meta.key || null, meta });
@@ -2427,6 +2472,7 @@ function __admSetPill(state, detail = '') {
     saved:   { text: 'Saved',           color: 'var(--text-faint)', border: 'var(--border)', bg: 'transparent' },
     saving:  { text: 'Saving...',       color: 'var(--gold)',      border: 'var(--gold)',  bg: 'rgba(212,168,67,.08)' },
     unsaved: { text: 'Unsaved changes', color: '#ffd7a8',          border: 'rgba(255,215,168,.35)', bg: 'rgba(255,215,168,.06)' },
+    localOnly: { text: 'Local only',    color: '#e8c98a',          border: 'rgba(212,168,67,.5)',   bg: 'rgba(212,168,67,.1)' },
     failed:  { text: 'Save failed',     color: '#ffb0b0',          border: 'rgba(220,80,80,.45)',  bg: 'rgba(220,80,80,.08)' }
   };
   const cfg = map[state] || map.saved;
@@ -2440,20 +2486,28 @@ function rgSaveStart(key) {
   __admLastKey = key;
   __admSetPill('saving', key);
   __admShowErr('');
+  admSetPersistBanner('', '');
   admLog('info', 'Saving', { key });
 }
 function rgSaveOk(key) {
   __admLastKey = key;
   __admSetPill('saved', key);
+  admSetPersistBanner('ok', 'Saved and synced to the cloud.');
   admLog('info', 'Saved', { key });
 }
 function rgSaveFailed(key, err) {
   __admLastKey = key;
-  __admSetPill('failed', key);
   const code = err && err.code ? err.code : '';
   const message = err && err.message ? err.message : (typeof err === 'string' ? err : JSON.stringify(err));
   const full = `${key}${code ? ' · ' + code : ''}\n${message || ''}`.trim();
   __admShowErr(full);
+  if (code === 'no-fsdb') {
+    __admSetPill('failed', key);
+    admSetPersistBanner('fail', 'Firestore is not available — nothing was sent to the cloud. Fix connection or sign-in, then save again.');
+  } else {
+    __admSetPill('localOnly', key);
+    admSetPersistBanner('local', 'Cloud save failed — your edit is kept in this browser only (not synced). Check Activity log for details; fix auth or rules and save again.');
+  }
   admLog('error', code ? `Save failed (${code})` : 'Save failed', { key });
 }
 
@@ -2573,7 +2627,23 @@ function __admInjectPanelTools() {
     'admPanel-siteui': 'site-ui',
     'admPanel-epk': 'epk-bios'
   };
-  const autosavePanels = new Set(['admPanel-press', 'admPanel-epk', 'admPanel-perf', 'admPanel-photos']);
+  const saveModeHint = {
+    'admPanel-hero': 'Single save — Save Hero',
+    'admPanel-bio': 'Single save — Save Biography',
+    'admPanel-programs': 'Single save — Save Programs',
+    'admPanel-contact': 'Single save — Save contact section',
+    'admPanel-siteui': 'Single save — Save site strings',
+    'admPanel-photos': 'Photo uploads & URLs save immediately',
+    'admPanel-press': 'Quotes: Add / row Save; note: Save translation note',
+    'admPanel-perf': 'Events: add/reorder save now; title & intro: Save calendar settings',
+    'admPanel-epk': 'Each subsection saves with its own button',
+    'admPanel-vid': 'Add / remove / reorder saves now; card fields need Save Videos',
+    'admPanel-rep-opera': 'Mixed saves: heading & blurbs use their buttons; role rows → Save opera roles',
+    'admPanel-rep-arias': 'Manual save — Save arias list',
+    'admPanel-rep-operetta': 'Manual save — Save operetta list',
+    'admPanel-rep-lived': 'Manual save — Save lied list',
+    'admPanel-rep-tango': 'Manual save — Save tango list'
+  };
   document.querySelectorAll('.adm-panel').forEach(panel => {
     const sec = panel.querySelector('.adm-section');
     if (!sec) return;
@@ -2585,7 +2655,7 @@ function __admInjectPanelTools() {
     right.style.gap = '8px';
     right.style.alignItems = 'center';
     const mode = document.createElement('span');
-    mode.textContent = autosavePanels.has(panel.id) ? 'Auto-save' : 'Manual save';
+    mode.textContent = saveModeHint[panel.id] || 'Manual save — use the section Save button';
     mode.style.fontFamily = 'var(--ff-caps)';
     mode.style.fontSize = '.52rem';
     mode.style.letterSpacing = '.14em';
@@ -2594,6 +2664,10 @@ function __admInjectPanelTools() {
     mode.style.border = '1px solid var(--border)';
     mode.style.padding = '3px 8px';
     mode.style.borderRadius = '999px';
+    mode.style.maxWidth = 'min(46vw, 15.5rem)';
+    mode.style.whiteSpace = 'normal';
+    mode.style.textAlign = 'right';
+    mode.style.lineHeight = '1.35';
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = (panelMap[panel.id] === 'photos') ? 'Clear custom data' : 'Restore defaults';
@@ -2641,6 +2715,7 @@ setTimeout(() => {
   __admSetPill('saved', '');
   __admRenderLog();
   __admInjectPanelTools();
+  if (typeof syncAnthropicTranslateButtons === 'function') syncAnthropicTranslateButtons();
 }, 0);
 </script>
 <script>
@@ -3267,9 +3342,9 @@ function renderRep() {
   const esc = (s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const statusBadge = (card) => {
     const s = String(card.status||'').toLowerCase();
-    if (s === 'performed') return '<span class="rep-status rep-status-performed">Performed</span>';
-    if (s === 'prepared')  return '<span class="rep-status rep-status-prepared">Prepared</span>';
-    if (s === 'studying')  return '<span class="rep-status rep-status-studying">Studying</span>';
+    if (s === 'performed') return '<span class="rep-status rep-status-performed">' + (t['rep.statusRow.performed'] || t['rep.status.performed'] || 'Performed') + '</span>';
+    if (s === 'prepared')  return '<span class="rep-status rep-status-prepared">' + (t['rep.statusRow.prepared'] || t['rep.status.prepared'] || 'Prepared') + '</span>';
+    if (s === 'studying')  return '<span class="rep-status rep-status-studying">' + (t['rep.statusRow.studying'] || t['rep.status.studying'] || 'Studying') + '</span>';
     return '';
   };
   const row = (card) => isOpera
@@ -3747,10 +3822,33 @@ function printAgenda(){
   };
 }
 
-// ── Auto-translate event detail via Anthropic API ────────────
+// ── Auto-translate via Anthropic API (optional) ─────────────
+// Set window.__RG_ANTHROPIC_API_KEY before use; without it, translate buttons stay disabled.
+function isAnthropicTranslateConfigured() {
+  try {
+    const k = window.__RG_ANTHROPIC_API_KEY;
+    return typeof k === 'string' && k.trim().length >= 20;
+  } catch (e) {
+    return false;
+  }
+}
+
+function syncAnthropicTranslateButtons() {
+  const ok = isAnthropicTranslateConfigured();
+  const title = ok ? '' : 'Auto-translate is off: set window.__RG_ANTHROPIC_API_KEY in the console or a small script include (never commit keys).';
+  document.querySelectorAll('[data-anthropic-translate-btn="1"]').forEach(btn => {
+    if (!btn || btn.tagName !== 'BUTTON') return;
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '' : '0.48';
+    btn.style.cursor = ok ? '' : 'not-allowed';
+    btn.title = title;
+  });
+}
 
 async function callAnthropicTranslate(text) {
-  // Show loading state
+  if (!isAnthropicTranslateConfigured()) {
+    throw new Error('Auto-translate is not configured. Set window.__RG_ANTHROPIC_API_KEY, then reload the admin page.');
+  }
   const prompt = `You are a translator for an opera singer's website. 
 Translate the following event description into exactly 5 languages.
 The text may be in any language. Preserve proper nouns, opera titles, composer names, and technical musical terms (Regie, Dirigent, etc) but adapt the surrounding language naturally.
@@ -3763,7 +3861,11 @@ Respond ONLY with valid JSON, no markdown, no explanation:
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': String(window.__RG_ANTHROPIC_API_KEY).trim(),
+      'anthropic-version': '2023-06-01'
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
@@ -3771,7 +3873,14 @@ Respond ONLY with valid JSON, no markdown, no explanation:
     })
   });
 
-  if (!resp.ok) throw new Error('API error: ' + resp.status);
+  if (!resp.ok) {
+    let detail = '';
+    try {
+      const errBody = await resp.json();
+      if (errBody && errBody.error && errBody.error.message) detail = ': ' + errBody.error.message;
+    } catch (e) {}
+    throw new Error('Anthropic API error ' + resp.status + detail);
+  }
   const data = await resp.json();
   const raw = (data.content || []).map(b => b.text || '').join('');
   // Strip any markdown fences just in case
@@ -3816,7 +3925,7 @@ async function autoTranslateDetail() {
   } catch(e) {
     status.innerHTML = '<span style="color:#e57373">✗ Error: ' + e.message + '</span>';
     btn.textContent = '✦ Auto-translate';
-    btn.disabled = false;
+    syncAnthropicTranslateButtons();
   }
 }
 
@@ -3850,20 +3959,52 @@ async function autoTranslateEditDetail(id) {
   } catch(e) {
     if (status) status.innerHTML = '<span style="color:#e57373">✗ ' + e.message + '</span>';
     btn.textContent = '✦ Translate';
-    btn.disabled = false;
+    syncAnthropicTranslateButtons();
   }
 }
 
 // ── Repertoire admin helpers (per category) ──
 const REP_TAB_BY_CAT = {opera:'rep-opera',arias:'rep-arias',operetta:'rep-operetta',lied:'rep-lived',tango:'rep-tango'};
+
+/** Reorder entries of one `cat` without moving them to the end of `rg_rep_cards`: global indices stay fixed (same invariant as saveSection rep-* merge). */
+function repReorderCategoryInPlace(allCards, cat, reorderSliceFn) {
+  const indices = [];
+  for (let i = 0; i < allCards.length; i++) {
+    if ((allCards[i].cat || 'opera') === cat) indices.push(i);
+  }
+  const slice = indices.map(i => allCards[i]);
+  reorderSliceFn(slice);
+  indices.forEach((gi, j) => { allCards[gi] = slice[j]; });
+}
+
+/** Disables “Save opera roles” while a preview-only status sort is active (matches saveSection guard). */
+function syncRepOperaSaveButtonState() {
+  const sel = document.getElementById('repSortStatus-opera');
+  const btn = document.getElementById('btn-save-rep-opera');
+  if (!btn) return;
+  const previewSort = !!(sel && String(sel.value || '').trim() !== '');
+  btn.disabled = previewSort;
+  btn.title = previewSort
+    ? 'Switch Sort by status to “Current order (safe to save)” before saving — otherwise row data could map to the wrong roles.'
+    : 'Save all opera role rows below to storage.';
+}
+
 function addRepCard(cat) {
-  const cards = (getRep().cards || []).slice();
-  cards.push({composer:'', opera:'', role:'', lang:'IT', status:'performed', cat: cat});
-  save('rg_rep_cards', cards);
+  const allCards = (getRep().cards || []).slice();
+  const newCard = { composer: '', opera: '', role: '', lang: 'IT', status: 'performed', cat: cat };
+  let insertAt = allCards.length;
+  for (let i = allCards.length - 1; i >= 0; i--) {
+    if ((allCards[i].cat || 'opera') === cat) {
+      insertAt = i + 1;
+      break;
+    }
+  }
+  allCards.splice(insertAt, 0, newCard);
+  save('rg_rep_cards', allCards);
   admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
 }
 function removeRepCard(cat, localIdx) {
-  if (!confirm('Remove this entry?')) return;
+  if (!confirm('Remove this row from the list? You will need to re-enter it if this was a mistake.')) return;
   const allCards = (getRep().cards || []).slice();
   const globalIndices = allCards.reduce((acc, c, i) => ((c.cat||'opera')===cat ? acc.concat(i) : acc), []);
   const removeAt = globalIndices[localIdx];
@@ -3885,21 +4026,20 @@ function duplicateRepCard(cat, localIdx) {
 
 function autoSortOperaRoles() {
   const allCards = (getRep().cards || []).slice();
-  const opera = allCards.filter(c => (c.cat || 'opera') === 'opera');
-  const others = allCards.filter(c => (c.cat || 'opera') !== 'opera');
   const statusOrder = {performed:0, prepared:1, studying:2};
-  opera.sort((a,b)=>{
-    const sa = statusOrder[(a.status||'performed').toLowerCase()] ?? 3;
-    const sb = statusOrder[(b.status||'performed').toLowerCase()] ?? 3;
-    if (sa !== sb) return sa - sb;
-    const ca = (a.composer||'').toLowerCase();
-    const cb = (b.composer||'').toLowerCase();
-    if (ca < cb) return -1;
-    if (ca > cb) return 1;
-    return 0;
+  repReorderCategoryInPlace(allCards, 'opera', (opera) => {
+    opera.sort((a,b)=>{
+      const sa = statusOrder[(a.status||'performed').toLowerCase()] ?? 3;
+      const sb = statusOrder[(b.status||'performed').toLowerCase()] ?? 3;
+      if (sa !== sb) return sa - sb;
+      const ca = (a.composer||'').toLowerCase();
+      const cb = (b.composer||'').toLowerCase();
+      if (ca < cb) return -1;
+      if (ca > cb) return 1;
+      return 0;
+    });
   });
-  const newCards = others.concat(opera);
-  save('rg_rep_cards', newCards);
+  save('rg_rep_cards', allCards);
   admTab('rep-opera');
 }
 
@@ -3927,7 +4067,7 @@ function addProgramCard() {
   admTab('programs');
 }
 function removeProgramCard(idx) {
-  if (!confirm('Remove this program?')) return;
+  if (!confirm('Remove this program block from the list?')) return;
   const data = getPrograms();
   const programs = (data.programs || []).slice();
   programs.splice(Number(idx), 1);
@@ -8200,6 +8340,21 @@ Ti.fr['rep.status.all'] = 'Tous';
 Ti.fr['rep.status.performed'] = 'Interprétés';
 Ti.fr['rep.status.prepared'] = 'Préparés';
 Ti.fr['rep.status.studying'] = 'En étude';
+Ti.en['rep.statusRow.performed'] = 'Performed';
+Ti.en['rep.statusRow.prepared'] = 'Prepared';
+Ti.en['rep.statusRow.studying'] = 'Studying';
+Ti.de['rep.statusRow.performed'] = 'Aufgeführt';
+Ti.de['rep.statusRow.prepared'] = 'Vorbereitet';
+Ti.de['rep.statusRow.studying'] = 'Im Studium';
+Ti.es['rep.statusRow.performed'] = 'Interpretado';
+Ti.es['rep.statusRow.prepared'] = 'Preparado';
+Ti.es['rep.statusRow.studying'] = 'En estudio';
+Ti.it['rep.statusRow.performed'] = 'Interpretato';
+Ti.it['rep.statusRow.prepared'] = 'Preparato';
+Ti.it['rep.statusRow.studying'] = 'In studio';
+Ti.fr['rep.statusRow.performed'] = 'Interprété';
+Ti.fr['rep.statusRow.prepared'] = 'Préparé';
+Ti.fr['rep.statusRow.studying'] = 'À l\'étude';
 Ti.en['vid.cat.opera_lied'] = 'Opera & Art Song';
 Ti.en['vid.cat.gala_crossover'] = 'Gala & Crossover';
 Ti.de['vid.cat.opera_lied'] = 'Oper & Kunstlied';
@@ -8339,9 +8494,12 @@ const SITE_UI_PHASE2A_GROUPS = [
     ['rep.tabLied', 'Tab'],
     ['rep.tabTango', 'Tab'],
     ['rep.status.all', 'Opera filter'],
-    ['rep.status.performed', 'Opera filter + badge'],
-    ['rep.status.prepared', 'Opera filter + badge'],
-    ['rep.status.studying', 'Opera filter + badge'],
+    ['rep.status.performed', 'Opera filter (plural in ES/IT/FR)'],
+    ['rep.status.prepared', 'Opera filter (plural in ES/IT/FR)'],
+    ['rep.status.studying', 'Opera filter'],
+    ['rep.statusRow.performed', 'Opera row status badge (singular)'],
+    ['rep.statusRow.prepared', 'Opera row status badge (singular)'],
+    ['rep.statusRow.studying', 'Opera row status badge (singular)'],
     ['rep.thComposer', 'Table header'],
     ['rep.thOpera', 'Table header'],
     ['rep.thRole', 'Table header'],
@@ -8588,14 +8746,18 @@ async function autoTranslatePressEdit(id, btnEl){
     const t=await callAnthropicTranslate(textEl.value.trim());
     const items=getPress();const idx=items.findIndex(p=>p.id===id);
     if(idx>=0){if(!items[idx].quotes_i18n)items[idx].quotes_i18n={};['en','de','es','it','fr'].forEach(l=>{items[idx].quotes_i18n[l]=t[l]||textEl.value;});save('rg_press',items);renderPress();}
-    btn.textContent='✓';setTimeout(()=>{btn.textContent='✦ Auto-translate';btn.disabled=false;},2000);
-  }catch(e){btn.textContent='✦ Auto-translate';btn.disabled=false;alert('Error: '+e.message);}
+    btn.textContent='✓';setTimeout(()=>{btn.textContent='✦ Auto-translate';syncAnthropicTranslateButtons();},2000);
+  }catch(e){btn.textContent='✦ Auto-translate';syncAnthropicTranslateButtons();alert('Error: '+e.message);}
 }
 function admRenderPressList(){
   const el=document.getElementById('pressAdmList');
   if(!el) return;
   const items=getPress().sort((a,b)=>(a.order||0)-(b.order||0));
-  if(!items.length){ el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No quotes yet.</div>'; return; }
+  if(!items.length){
+    el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No quotes yet.</div>';
+    syncAnthropicTranslateButtons();
+    return;
+  }
   el.innerHTML=items.map(p=>`
     <div class="adm-row" style="flex-direction:column;align-items:stretch;gap:0">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -8635,12 +8797,13 @@ function admRenderPressList(){
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Article URL</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
           <button class="adm-btn" onclick="savePressEdit(${p.id})">Save</button>
-          <button class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-translate</button>
+          <button type="button" data-anthropic-translate-btn="1" class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-translate</button>
           <button class="adm-btn" onclick="togglePressEdit(${p.id})" style="background:transparent">Cancel</button>
         </div>
         <div id="fb-pressedit-${p.id}" class="adm-feedback" style="display:none">Saved!</div>
       </div>
     </div>`).join('');
+  syncAnthropicTranslateButtons();
 }
 
 async function autoTranslateNewPressQuote(){
@@ -8654,6 +8817,7 @@ async function autoTranslateNewPressQuote(){
     if(status)status.innerHTML='<span style="color:#4CAF50">✓ 5 translations ready — they will be saved with the quote</span>';
   }catch(e){
     if(status)status.innerHTML='<span style="color:#e57373">✗ '+e.message+'</span>';
+    syncAnthropicTranslateButtons();
   }
 }
 function addPressQuote(){
@@ -9044,12 +9208,11 @@ function onDropRep(cat, dstLocalIdx, e) {
   const srcLocalIdx = parseInt(repDragSrc.dataset.repLocalIdx, 10);
   if (srcCat !== cat || srcLocalIdx === dstLocalIdx) return false;
   const allCards = (getRep().cards || []).slice();
-  const otherCards = allCards.filter(c => (c.cat || 'opera') !== cat);
-  const catCards = allCards.filter(c => (c.cat || 'opera') === cat);
-  const [moved] = catCards.splice(srcLocalIdx, 1);
-  catCards.splice(dstLocalIdx, 0, moved);
-  const newCards = otherCards.concat(catCards);
-  save('rg_rep_cards', newCards);
+  repReorderCategoryInPlace(allCards, cat, (slice) => {
+    const [moved] = slice.splice(srcLocalIdx, 1);
+    slice.splice(dstLocalIdx, 0, moved);
+  });
+  save('rg_rep_cards', allCards);
   admTab(REP_TAB_BY_CAT[cat] || 'rep-opera');
   return false;
 }
@@ -9066,6 +9229,16 @@ function onDropVideo(dstIdx, e) {
   renderVideos();
   admPopulate('vid');
   return false;
+}
+function removeVidCard(idx) {
+  if (!confirm('Remove this video from the list? It will disappear from the site and from saved storage.')) return;
+  const d = getVid();
+  const i = Number(idx);
+  if (!Array.isArray(d.videos) || i < 0 || i >= d.videos.length) return;
+  d.videos.splice(i, 1);
+  save('rg_vid', d);
+  renderVideos();
+  admPopulate('vid');
 }
 function addVidCard() {
   const d = getVid();
@@ -9332,8 +9505,8 @@ function admPopulate(name){
           <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Drag to reorder">⠿</span>
           ${isOpera ? `<span style="color:${statusColors[card.status||'performed']};font-size:.7rem">●</span>` : ''}
           ${isOpera ? 'Role' : 'Entry'} ${localIdx+1}
-          <button type="button" onclick="duplicateRepCard('${cat}',${localIdx})" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicate</button>
-          <button type="button" onclick="removeRepCard('${cat}',${localIdx})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Remove</button>
+          <button type="button" onclick="duplicateRepCard('${cat}',${localIdx})" title="Inserts a copy of this row underneath; use your section Save button to persist" style="margin-left:auto;background:transparent;border:1px solid rgba(212,168,67,.4);color:var(--gold);cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px;margin-right:6px">⧉ Duplicate</button>
+          <button type="button" onclick="removeRepCard('${cat}',${localIdx})" title="Asks for confirmation, then deletes this row" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:.65rem;border-radius:2px">✕ Remove</button>
         </div>
         <div class="adm-grid">
           <div class="adm-col"><label class="adm-label">Composer</label><input class="adm-input" id="rc-${cat}-${localIdx}-composer" value="${repEsc(card.composer)}"></div>
@@ -9367,7 +9540,8 @@ function admPopulate(name){
           </div>
           ` : ''}
         </div>
-      </div>`).join('');
+        </div>`).join('');
+    if (name === 'rep-opera') syncRepOperaSaveButtonState();
   }
   else if(name==='programs'){
     const d = getPrograms();
@@ -9424,7 +9598,11 @@ function admPopulate(name){
         ondragenter="this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropVideo(${i},event)">
-        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px"><span style="color:var(--gold);font-size:1.1rem">⠿</span> Video ${i+1}${v.hidden?' (hidden)':''}</div>
+        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="color:var(--gold);font-size:1.1rem">⠿</span>
+          <span>Video ${i+1}${v.hidden?' (hidden)':''}</span>
+          <button type="button" class="adm-btn-sm adm-btn-danger" onclick="event.stopPropagation();removeVidCard(${i})" style="margin-left:auto">Eliminar video</button>
+        </div>
         <div class="adm-grid">
           <div class="adm-col">
             <label class="adm-label">YouTube ID</label>
@@ -9633,11 +9811,19 @@ function saveSection(name){
     if (citeEl) citeEl.value = admEffectiveSectionField('bio', 'cite');
   }
   else if(name.startsWith('rep-')){
-    if (name === 'rep-opera') saveRepHeader({ silent: true });
     const catMap = {'rep-opera':'opera','rep-arias':'arias','rep-operetta':'operetta','rep-lived':'lied','rep-tango':'tango'};
     const cat = catMap[name] || 'opera';
+    const tabSuffix = name.replace('rep-', '');
+    const sortStatus = (document.getElementById('repSortStatus-' + tabSuffix) || {}).value || '';
+    if (sortStatus && cat === 'opera') {
+      alert('Sort by status is preview-only. Choose “Current order (safe to save)” in the menu, then save again — otherwise row data could be written to the wrong stored roles.');
+      const sel = document.getElementById('repSortStatus-opera');
+      if (sel) { try { sel.focus(); } catch (e) {} }
+      return;
+    }
+    if (name === 'rep-opera') saveRepHeader({ silent: true });
     const allCards = (getRep().cards || []).slice();
-    const otherCards = allCards.filter(c => (c.cat || 'opera') !== cat);
+    const prevInCat = allCards.filter(c => (c.cat || 'opera') === cat);
     const newCatCards = [];
     for (let localIdx = 0; ; localIdx++) {
       const composerEl = document.getElementById('rc-'+cat+'-'+localIdx+'-composer');
@@ -9648,12 +9834,18 @@ function saveSection(name){
         role: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-role')||{}).value||'') : '',
         lang: (document.getElementById('rc-'+cat+'-'+localIdx+'-lang')||{}).value||'IT',
         status: (cat === 'opera') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-status')||{}).value||'performed') : 'performed',
-        category: (cat === 'lied') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-category')||{}).value||'Deutsches Lied') : (getRep().cards[localIdx]||{}).category,
+        category: (cat === 'lied') ? ((document.getElementById('rc-'+cat+'-'+localIdx+'-category')||{}).value||'Deutsches Lied') : (prevInCat[localIdx] || {}).category,
         cat: cat
       });
     }
-    const newCards = otherCards.concat(newCatCards);
-    save('rg_rep_cards', newCards);
+    let ni = 0;
+    const merged = [];
+    for (const c of allCards) {
+      if ((c.cat || 'opera') !== cat) merged.push(c);
+      else if (ni < newCatCards.length) merged.push(newCatCards[ni++]);
+    }
+    while (ni < newCatCards.length) merged.push(newCatCards[ni++]);
+    save('rg_rep_cards', merged);
     renderRep();
   }
   else if(name==='programs'){
@@ -9866,7 +10058,7 @@ function addPerf(){
   const hChk=document.getElementById('pModalImgHide');if(hChk)hChk.checked=false;
   const tPrev=document.getElementById('translatePreviews');if(tPrev)tPrev.style.display='none';
   const tStat=document.getElementById('translateStatus');if(tStat)tStat.textContent='';
-  const tBtn=document.getElementById('translateBtn');if(tBtn){tBtn.textContent='✦ Auto-translate';tBtn.disabled=false;}
+  const tBtn=document.getElementById('translateBtn');if(tBtn){tBtn.textContent='✦ Auto-translate';syncAnthropicTranslateButtons();}
   const fb=document.getElementById('fb-perf');
   if(fb){fb.textContent='Added!';fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);}
 }
@@ -9881,7 +10073,11 @@ function admRenderPerfList(){
   const el=document.getElementById('admPerfList');
   if(!el)return;
   const _raw=getPerfs();
-  if(!_raw.length){el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No events yet.</div>';return;}
+  if(!_raw.length){
+    el.innerHTML='<div style="color:var(--text-faint);padding:16px 0;font-style:italic">No events yet.</div>';
+    syncAnthropicTranslateButtons();
+    return;
+  }
   const _toD=p=>p.sortDate?new Date(p.sortDate):new Date('2099-01-01');
   const perfs=[..._raw].sort((a,b)=>_toD(b)-_toD(a));
   el.innerHTML=perfs.map((p,pi)=>`
@@ -9916,7 +10112,7 @@ function admRenderPerfList(){
           <label class="adm-label">Detail <span style="color:var(--text-faint);font-weight:400">(any language)</span></label>
           <div style="display:flex;gap:8px;align-items:center">
             <input class="adm-input" id="pe-detail-${p.id}" value="${p.detail||''}" style="flex:1">
-            <button type="button" onclick="autoTranslateEditDetail(${p.id})" id="etBtn-${p.id}"
+            <button type="button" data-anthropic-translate-btn="1" onclick="autoTranslateEditDetail(${p.id})" id="etBtn-${p.id}"
               style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 12px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;flex-shrink:0">
               ✦ Translate
             </button>
@@ -9967,6 +10163,7 @@ function admRenderPerfList(){
         <div class="adm-feedback" id="fb-perf-${p.id}" style="display:none">Saved!</div>
       </div>
     </div>`).join('');
+  syncAnthropicTranslateButtons();
 }
 
 function togglePerfEdit(id){
