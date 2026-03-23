@@ -3280,6 +3280,16 @@ function translateMonth(monthStr) {
   });
   return result;
 }
+/** Calendar event field with optional `base_en`…`base_fr` override; falls back to global `base`. */
+function perfLocaleField(p, base, lang) {
+  if (!p) return '';
+  const locKey = base + '_' + lang;
+  const loc = p[locKey];
+  if (loc != null && String(loc).trim() !== '') return String(loc).trim();
+  const g = p[base];
+  return g != null && String(g).trim() !== '' ? String(g).trim() : '';
+}
+
 function getPerfs() {
   const raw = load('rg_perfs');
   const perfs = normalizeArrayData(raw, ['perfs','items','value','data']);
@@ -3361,12 +3371,14 @@ function renderPerfs() {
       // Venue photo as subtle background accent (if available)
       if(hasVenuePhoto) { const op = (p.venueOpacity||50)/100; html += '<div class="perf-venue-bg" style="opacity:'+op+';background-image:url('+p.venuePhoto+')"></div>'; }
       html += '<div class="perf-date-box"><div class="perf-day">'+p.day+'</div><div class="perf-month">'+translateMonth(p.month)+'</div>'+timeHtml+'</div>';
-      html += '<div>'+badge+'<div class="perf-info-title">'+p.title+'</div><div class="perf-info-detail">'+detail+'</div>'+venueCity+'</div>';
+      const listTitle = perfLocaleField(p, 'title', currentLang);
+      html += '<div>'+badge+'<div class="perf-info-title">'+listTitle+'</div><div class="perf-info-detail">'+detail+'</div>'+venueCity+'</div>';
       // Print-only: repertoire / extended description (si existe)
       const repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
-      if(p.extDesc && p.extDesc.trim()) html += '<div class="perf-print-repertoire print-only"><strong>'+repLabel+':</strong> '+p.extDesc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div>';
+      const printExt = perfLocaleField(p, 'extDesc', currentLang);
+      if(printExt) html += '<div class="perf-print-repertoire print-only"><strong>'+repLabel+':</strong> '+printExt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div>';
       // More Info button (only if there's extra content)
-      const hasExtra = (p.extDesc && p.extDesc.trim()) || (p.ticketPrice && p.ticketPrice.trim()) || (p.eventLink && p.eventLink.trim()) || (p.flyerImg && p.flyerImg.trim());
+      const hasExtra = !!printExt || (p.ticketPrice && p.ticketPrice.trim()) || !!perfLocaleField(p, 'eventLink', currentLang) || (p.flyerImg && p.flyerImg.trim());
       if(hasExtra) html += '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal('+p.id+')">'+(tPerf['perf.moreInfo']||'More Info')+' →</button>';
       html += '</div>';
     });
@@ -3434,7 +3446,7 @@ function printAgenda(){
     if (!t) return '';
     const clean = String(t).replace(/\s*(uhr|h)\s*$/i, '').trim();
     const fmts = {en:x=>x, de:x=>x+' Uhr', es:x=>x+' h', it:x=>'ore '+x, fr:x=>x.replace(':','h')};
-    return (fmts[currentLang] || fmts.en)(clean);
+    return (fmts[lang] || fmts.en)(clean);
   };
 
   const monthOut = m => (typeof translateMonth === 'function') ? (translateMonth(m) || m || '') : (m || '');
@@ -3465,13 +3477,13 @@ function printAgenda(){
           : `${esc(monthStr)}${esc(yearStr)}`.trim() || 'TBA';
         const tStr = timeFmt(p.time);
         const when = tStr ? `${dateStr} · ${esc(tStr)}` : dateStr;
-        const title = (p.title || '').trim();
-        const detail = ((p['detail_'+currentLang] || p.detail) || '').trim();
+        const title = perfLocaleField(p, 'title', lang);
+        const detail = ((p['detail_'+lang] || p.detail) || '').trim();
         const venueBits = [];
         if ((p.venue || '').trim()) venueBits.push(String(p.venue).trim());
         if ((p.city || '').trim()) venueBits.push(String(p.city).trim());
         const venueLine = venueBits.join(' · ');
-        const moreInfo = (p.eventLink || '').trim();
+        const moreInfo = perfLocaleField(p, 'eventLink', lang);
         body += `<article class="event">
           <div class="meta">
             <div class="when">${esc(when)}</div>
@@ -4207,10 +4219,12 @@ function injectEventSchema() {
     const locationName = p.venue || p.city || 'Berlin';
     const city = p.city || 'Berlin';
 
+    const schemaTitle = perfLocaleField(p, 'title', currentLang) || p.title || 'Performance by Rolando Guy';
+    const schemaDetail = (p['detail_'+currentLang] || p.detail || '').trim();
     return {
       "@context": "https://schema.org",
       "@type": "MusicEvent",
-      "name": p.title || 'Performance by Rolando Guy',
+      "name": schemaTitle,
       "startDate": startDate,
       "endDate": startDate,
       "eventStatus": "https://schema.org/EventScheduled",
@@ -4234,7 +4248,7 @@ function injectEventSchema() {
         "name": p.venue || "Rolando Guy",
         "url": "https://www.rolandoguy.com/"
       },
-      "description": [p.title, p.detail, p.venue, p.city].filter(Boolean).join(' · '),
+      "description": [schemaTitle, schemaDetail, p.venue, p.city].filter(Boolean).join(' · '),
       "image": "https://www.rolandoguy.com/og-image.jpg",
       "url": "https://www.rolandoguy.com/#performances",
       "offers": {
@@ -5133,18 +5147,19 @@ document.addEventListener('keydown', e=>{
 
 // ── EVENT DETAIL MODAL ──
 function openEventModal(perfId){
-  const perfs = load('rg_perfs') || DEFAULTS.perfs;
+  const perfs = getPerfs();
   const p = perfs.find(x=>x.id===perfId);
   if(!p) return;
   const perfLang = getPerfMerged();
   const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
   const typeLabel = types[p.type] || p.type || '';
   const detail = (p["detail_"+currentLang]||p.detail)||"";
+  const modalTitle = perfLocaleField(p, 'title', currentLang);
   const venueCity = [p.venue, p.city].filter(Boolean).join(' · ');
   const timeStr = p.time ? (' · ' + p.time) : '';
   // Populate
   document.getElementById('emType').textContent = typeLabel;
-  document.getElementById('emTitle').textContent = p.title;
+  document.getElementById('emTitle').textContent = modalTitle;
   document.getElementById('emDate').textContent = (p.day||'') + ' ' + (translateMonth(p.month)||'') + timeStr;
   document.getElementById('emVenue').textContent = venueCity;
   document.getElementById('emDetail').textContent = detail;
@@ -5161,8 +5176,9 @@ function openEventModal(perfId){
   }
   // Extended description
   const extEl = document.getElementById('emExtDesc');
-  if(p.extDesc && p.extDesc.trim()){
-    extEl.innerHTML = p.extDesc.replace(/\n/g,'<br>');
+  const extBody = perfLocaleField(p, 'extDesc', currentLang);
+  if(extBody){
+    extEl.innerHTML = extBody.replace(/\n/g,'<br>');
     extEl.style.display = '';
   } else { extEl.style.display = 'none'; }
   // Price
@@ -5173,12 +5189,12 @@ function openEventModal(perfId){
   } else { priceWrap.style.display = 'none'; }
   // Event link
   const linkEl = document.getElementById('emEventLink');
-  if(p.eventLink && p.eventLink.trim()){
-    linkEl.href = p.eventLink;
+  const ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
+  if(ticketUrl){
+    linkEl.href = ticketUrl;
     const t = uiTable(currentLang);
-    // If the stored label is the legacy English default, localize it.
     const legacyEnglish = 'Tickets & Info';
-    const storedLabel = (p.eventLinkLabel || '').trim();
+    const storedLabel = perfLocaleField(p, 'eventLinkLabel', currentLang);
     linkEl.textContent = storedLabel && storedLabel !== legacyEnglish
       ? storedLabel
       : (t['perf.ticketsInfo'] || legacyEnglish);
@@ -5188,7 +5204,7 @@ function openEventModal(perfId){
   const flyerEl = document.getElementById('emFlyerImg');
   if(p.flyerImg && p.flyerImg.trim()){
     flyerEl.src = p.flyerImg;
-    flyerEl.alt = p.title + ' flyer';
+    flyerEl.alt = modalTitle + ' flyer';
     flyerEl.style.display = '';
   } else { flyerEl.style.display = 'none'; }
   // Maps link
@@ -5518,9 +5534,18 @@ function addPerf(){
   if(d_es) newPerf.detail_es=d_es;
   if(d_it) newPerf.detail_it=d_it;
   if(d_fr) newPerf.detail_fr=d_fr;
+  const i18nModal={};
+  ['en','de','es','it','fr'].forEach(L=>{
+    i18nModal['title_'+L]=(document.getElementById('p-title_'+L)||{}).value?.trim()||'';
+    i18nModal['extDesc_'+L]=(document.getElementById('p-extDesc_'+L)||{}).value?.trim()||'';
+    i18nModal['eventLink_'+L]=(document.getElementById('p-eventLink_'+L)||{}).value?.trim()||'';
+    i18nModal['eventLinkLabel_'+L]=(document.getElementById('p-eventLinkLabel_'+L)||{}).value?.trim()||'';
+  });
+  Object.assign(newPerf,i18nModal);
   perfs.unshift(newPerf);
   savePerfs(perfs);renderPerfs();admRenderPerfList();
-  ['pDay','pMonth','pTime','pTitle','pDetail','pDetail_de','pDetail_es','pDetail_it','pDetail_fr','pVenue','pCity','pVenuePhoto','pExtDesc','pTicketPrice','pEventLink','pEventLinkLabel','pFlyerImg','pModalImg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['pDay','pMonth','pTime','pTitle','pDetail','pDetail_en','pDetail_de','pDetail_es','pDetail_it','pDetail_fr','pVenue','pCity','pVenuePhoto','pExtDesc','pTicketPrice','pEventLink','pEventLinkLabel','pFlyerImg','pModalImg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['en','de','es','it','fr'].forEach(L=>{['p-title_'+L,'p-extDesc_'+L,'p-eventLink_'+L,'p-eventLinkLabel_'+L].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});});
   const fb=document.getElementById('fb-perf');fb.style.display='block';setTimeout(()=>fb.style.display='none',2000);
 }
 
@@ -5588,7 +5613,16 @@ function admRenderPerfList(){
         <div class="adm-section" style="margin-top:12px;font-size:.65rem">Info detallada</div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción extendida</label><textarea class="adm-input" id="pe-extDesc-${p.id}" rows="2">${p.extDesc||''}</textarea></div></div>
         <div class="adm-grid"><div class="adm-col"><label class="adm-label">Precio entradas</label><input class="adm-input" id="pe-ticketPrice-${p.id}" value="${p.ticketPrice||''}"></div><div class="adm-col"><label class="adm-label">Link evento</label><input class="adm-input" id="pe-eventLink-${p.id}" value="${p.eventLink||''}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto botón link</label><input class="adm-input" id="pe-eventLinkLabel-${p.id}" value="${p.eventLinkLabel||'Tickets & Info'}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Texto botón link</label><input class="adm-input" id="pe-eventLinkLabel-${p.id}" value="${(p.eventLinkLabel||'Tickets & Info').replace(/"/g,'&quot;')}"></div></div>
+        <details style="margin-top:12px;border:1px solid var(--border);border-radius:2px;padding:10px 12px;background:rgba(0,0,0,.12)">
+          <summary style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;color:var(--gold-dim);cursor:pointer;user-select:none">Texto del modal por idioma (opcional)</summary>
+          <p style="font-size:.68rem;color:var(--text-faint);margin:10px 0 8px;line-height:1.45">Si un idioma tiene título, descripción larga, enlace o etiqueta, el sitio en ese idioma los usa; si no, se mantiene el valor global de arriba.</p>
+          ${['en','de','es','it','fr'].map(L=>{ const tu=L.toUpperCase(); const tv=(x)=>String(x==null?'':x).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); const tx=(x)=>String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;'); return `
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><span style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.14em;color:var(--gold)">${tu}</span></div>
+          <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Título (${tu})</label><input class="adm-input" id="pe-title_${L}-${p.id}" value="${tv(p['title_'+L])}" placeholder="Vacío = título global"></div></div>
+          <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Descripción extendida (${tu})</label><textarea class="adm-input" id="pe-extDesc_${L}-${p.id}" rows="2" placeholder="Vacío = descripción global">${tx(p['extDesc_'+L])}</textarea></div></div>
+          <div class="adm-grid"><div class="adm-col"><label class="adm-label">Link (${tu})</label><input class="adm-input" id="pe-eventLink_${L}-${p.id}" value="${tv(p['eventLink_'+L])}" placeholder="Vacío = link global"></div><div class="adm-col"><label class="adm-label">Etiqueta botón (${tu})</label><input class="adm-input" id="pe-eventLinkLabel_${L}-${p.id}" value="${tv(p['eventLinkLabel_'+L])}" placeholder="Vacío = etiqueta global"></div></div>`;}).join('')}
+        </details>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Flyer / imagen</label><input class="adm-input" id="pe-flyerImg-${p.id}" value="${p.flyerImg||''}"></div></div>
         <div class="adm-grid"><div class="adm-col"><label class="adm-label">Imagen header modal (URL)</label><input class="adm-input" id="pe-modalImg-${p.id}" value="${p.modalImg||''}" placeholder="Vacío = foto venue"></div><div class="adm-col" style="display:flex;align-items:end;padding-bottom:6px"><label style="display:flex;align-items:center;gap:8px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);cursor:pointer"><input type="checkbox" id="pe-modalImgHide-${p.id}" ${p.modalImgHide?'checked':''} style="accent-color:var(--gold);cursor:pointer"> Sin imagen</label></div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Tipo de evento</label>
@@ -5630,7 +5664,16 @@ function savePerf(id){
   const perfs=getPerfs();
   const idx=perfs.findIndex(p=>p.id===id);
   if(idx<0)return;
+  const prev=perfs[idx];
+  const i18nModal={};
+  ['en','de','es','it','fr'].forEach(L=>{
+    i18nModal['title_'+L]=(document.getElementById('pe-title_'+L+'-'+id)||{}).value?.trim()||'';
+    i18nModal['extDesc_'+L]=(document.getElementById('pe-extDesc_'+L+'-'+id)||{}).value?.trim()||'';
+    i18nModal['eventLink_'+L]=(document.getElementById('pe-eventLink_'+L+'-'+id)||{}).value?.trim()||'';
+    i18nModal['eventLinkLabel_'+L]=(document.getElementById('pe-eventLinkLabel_'+L+'-'+id)||{}).value?.trim()||'';
+  });
   perfs[idx]={
+    ...prev,
     id,
     day:document.getElementById('pe-day-'+id).value.trim(),
     month:document.getElementById('pe-month-'+id).value.trim(),
@@ -5645,8 +5688,12 @@ function savePerf(id){
     venue:document.getElementById('pe-venue-'+id).value.trim(),
     city:document.getElementById('pe-city-'+id).value.trim(),venuePhoto:(document.getElementById('pe-venuePhoto-'+id)||{value:''}).value.trim(),venueOpacity:parseInt((document.getElementById('pe-venueOpacity-'+id)||{value:15}).value)||15,extDesc:(document.getElementById('pe-extDesc-'+id)||{value:''}).value.trim(),ticketPrice:(document.getElementById('pe-ticketPrice-'+id)||{value:''}).value.trim(),eventLink:(document.getElementById('pe-eventLink-'+id)||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pe-eventLinkLabel-'+id)||{value:''}).value.trim()||'Tickets & Info',flyerImg:(document.getElementById('pe-flyerImg-'+id)||{value:''}).value.trim(),modalImg:(document.getElementById('pe-modalImg-'+id)||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pe-modalImgHide-'+id)||{}).checked,
     status:document.getElementById('pe-status-'+id).value,
-    type:document.getElementById('pe-type-'+id).value
+    type:document.getElementById('pe-type-'+id).value,
+    ...i18nModal
   };
+  const _sDay=perfs[idx].day, _sMon=perfs[idx].month, _sStat=perfs[idx].status;
+  const _cSD=(d,m,st)=>{if(!m)return st==='past'?'2000-01-01':'2099-12-01';const p=new Date((d&&d!=='TBA'?d+' ':'1 ')+m);return isNaN(p)?st==='past'?'2000-01-01':'2099-12-01':p.toISOString().split('T')[0];};
+  perfs[idx].sortDate=_cSD(_sDay,_sMon,_sStat);
   savePerfs(perfs);
   renderPerfs();
   admRenderPerfList();
