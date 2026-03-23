@@ -664,6 +664,11 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
 .adm-close{font-size:1rem;cursor:none;color:var(--text-faint);background:none;border:none;transition:color .2s;font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.15em;padding:4px 10px}
 .adm-close:hover{color:var(--gold)}
 /* Horizontal scroll for tab row (all viewports); touch-friendly on iOS */
+.adm-tabs-wrap{
+  display:flex;
+  flex-direction:column;
+  flex-shrink:0;
+}
 .adm-tabs{
   display:flex;
   gap:1px;
@@ -678,6 +683,34 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
   scrollbar-width:thin;
   scrollbar-color:var(--gold-dim) transparent;
 }
+.adm-tabs-secondary{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px 8px;
+  padding:7px 14px 9px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.14);
+}
+.adm-tabs-adv-label{
+  font-family:var(--ff-caps);
+  font-size:.4rem;
+  letter-spacing:.2em;
+  color:var(--text-faint);
+  text-transform:uppercase;
+  opacity:.9;
+  margin-right:2px;
+  flex:0 0 auto;
+}
+.adm-tab.adm-tab-adv{
+  font-size:.46rem;
+  letter-spacing:.12em;
+  padding:6px 14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  border-radius:2px;
+}
+.adm-tab.adm-tab-adv:hover{background:rgba(255,255,255,.06);color:var(--text-dim)}
 .adm-tabs::-webkit-scrollbar{height:4px}
 .adm-tabs::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px}
 .adm-tabs::-webkit-scrollbar-track{background:transparent}
@@ -698,6 +731,13 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
 }
 .adm-tab:hover{background:var(--surface2);color:var(--text-dim)}
 .adm-tab.active{background:var(--surface2);color:var(--gold);border-bottom:2px solid var(--gold)}
+.adm-tabs-secondary .adm-tab.active{
+  background:rgba(212,168,67,.08);
+  color:var(--gold);
+  border:1px solid rgba(212,168,67,.35);
+  border-bottom:2px solid var(--gold);
+  padding-bottom:5px;
+}
 /* Editable form area: vertical scroll; min-height:0 required for flex child */
 .adm-body{
   flex:1;
@@ -744,6 +784,13 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
 
 /* Clean export toolbar (admin top block) */
 .adm-export-bar{padding:10px 16px}
+.adm-export-bar.adm-export-bar--in-tab{
+  border:1px solid var(--border);
+  border-radius:2px;
+  padding:12px 16px 14px;
+  background:rgba(212,168,67,.04);
+  margin-top:2px;
+}
 .adm-export-mobile-toggle{
   display:none;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;
   width:100%;margin:0 0 0;padding:8px 10px;border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);
@@ -907,6 +954,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
   .adm-export-bar .adm-export-bar-inner{display:block!important}
   .adm-activity-mobile-toggle{display:none!important}
   .adm-activity-wrap .adm-activity-panel{display:block!important}
+  .adm-tabs-wrap{position:static!important;box-shadow:none!important}
   .adm-tabs{position:static!important;box-shadow:none!important}
 }
 
@@ -915,12 +963,12 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
   - Export tools: only toggle visible until .adm-export-open (inner hidden by default).
   - Admin tools: secondary hidden until .adm-head-secondary-open.
   - Activity log: panel hidden until .adm-activity-open.
-  - Tabs: sticky + horizontal scroll (.adm-tabs overflow-x already global).
+  - Tabs: sticky band (.adm-tabs-wrap) + primary row scroll (.adm-tabs).
   - Form: .adm-body scrolls vertically (min-height:0 on .adm-body + #admContent).
 */
 @media(max-width:768px){
   .adm-body{padding:10px 8px 12px}
-  .adm-export-bar,.adm-tabs,.adm-activity-wrap{flex-shrink:0}
+  .adm-tabs-wrap,.adm-activity-wrap{flex-shrink:0}
   .adm-head{padding:6px 8px 6px;flex-wrap:wrap;gap:6px;align-items:flex-start}
   .adm-head-title{font-size:.58rem !important;letter-spacing:.22em !important;width:100%}
   .adm-head-toolbar{width:100%;flex-direction:column;align-items:stretch;gap:6px}
@@ -932,12 +980,16 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
   .adm-head-secondary{display:none !important;flex-direction:column;align-items:stretch;gap:6px;padding:8px;border:1px solid var(--border);border-radius:2px;background:rgba(0,0,0,.12)}
   .adm-head-secondary.adm-head-secondary-open{display:flex !important}
   .adm-head-secondary button{width:100%;margin:0!important}
-  .adm-tabs{
+  .adm-tabs-wrap{
     position:sticky;top:0;z-index:25;
     background:var(--surface);
     box-shadow:0 3px 10px rgba(0,0,0,.35);
   }
+  .adm-tabs{border-bottom-color:var(--border)}
+  .adm-tabs-secondary{padding:6px 8px 8px;background:rgba(0,0,0,.18)}
+  .adm-tabs-adv-label{font-size:.36rem !important;letter-spacing:.14em !important;width:100%;margin-bottom:2px}
   .adm-tab{padding:8px 10px !important;font-size:.42rem !important;letter-spacing:.1em !important}
+  .adm-tab.adm-tab-adv{padding:6px 10px !important;font-size:.38rem !important;letter-spacing:.08em !important}
   .adm-btn{font-size:.46rem !important;padding:7px 12px !important;letter-spacing:.11em !important;white-space:normal;text-align:center;line-height:1.3}
   .adm-btn-sm{font-size:.4rem !important;padding:5px 10px !important}
   .adm-input,.adm-select{font-size:.78rem !important;padding:6px 8px !important}
@@ -1617,10 +1669,10 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
       <span id="admLangInd" style="display:none">EN</span>
       <div id="admSavePill" style="font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);padding:5px 10px;border-radius:999px;min-width:140px;text-align:center">Saved</div>
       <a href="https://www.rolandoguy.com" target="_blank" rel="noopener" class="adm-head-web" style="color:var(--gold); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; text-decoration:none; padding:4px 10px; border:1px solid var(--gold); transition:all 0.3s;" onmouseover="this.style.background='rgba(212,168,67,0.1)'" onmouseout="this.style.background='transparent'">View site ↗</a>
+      <button id="admExportBtn" type="button" onclick="admExportJSON()" title="Internal adminNote fields are omitted from this file (safe to share). Cloud data is unchanged." style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
     </div>
     <button type="button" class="adm-tools-toggle" id="admToolsToggle" onclick="admToggleHeadTools()" aria-expanded="false" aria-controls="admHeadSecondary">Admin tools</button>
     <div class="adm-head-secondary" id="admHeadSecondary">
-      <button id="admExportBtn" type="button" onclick="admExportJSON()" title="Internal adminNote fields are omitted from this file (safe to share). Cloud data is unchanged." style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Export JSON</button>
       <button id="admCheckBtn" onclick="admCheckContent()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Check content</button>
       <button onclick="admSignOut()" style="color:var(--text-faint); font-family:var(--ff-caps); font-size:.65rem; letter-spacing:.15em; background:transparent; border:1px solid var(--border); padding:4px 10px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.color='var(--gold)'; this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'; this.style.borderColor='var(--border)'">Sign out</button>
     </div>
@@ -1643,60 +1695,30 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
   </div>
   <div id="admContent" style="display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden">
    <div id="admPersistBanner" role="status" aria-live="polite" style="display:none;margin:0;padding:8px 16px;font-size:.76rem;line-height:1.45;border-bottom:1px solid var(--border)"></div>
-   <div id="admFullExportWrap" class="adm-export-bar" style="border-bottom:1px solid var(--border);padding:10px 16px;background:rgba(212,168,67,.04)">
-    <button type="button" class="adm-export-mobile-toggle" id="admExportToolsToggle" onclick="admToggleExportTools()" aria-expanded="false" aria-controls="admExportBarInner">Export tools</button>
-    <div class="adm-export-bar-inner" id="admExportBarInner">
-    <div class="adm-export-desktop-title" style="font-family:var(--ff-caps);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Full clean export</div>
-    <div class="adm-export-sel">
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-bio" onchange="saveFullExportSectionPrefs()"> Biography</label>
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-repertoire" onchange="saveFullExportSectionPrefs()"> Repertoire</label>
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-programs" onchange="saveFullExportSectionPrefs()"> Programs &amp; Collaborations</label>
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-calendar" onchange="saveFullExportSectionPrefs()"> Calendar / Upcoming engagements</label>
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-press" onchange="saveFullExportSectionPrefs()"> Reviews / Press</label>
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-epk" onchange="saveFullExportSectionPrefs()"> Dossier / EPK</label>
-      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-contact" onchange="saveFullExportSectionPrefs()"> Contact</label>
-    </div>
-    <div class="adm-export-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="adm-btn" type="button" onclick="copyFullProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy selected sections</button>
-      <button class="adm-btn" type="button" onclick="openSelectedProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
-      <button class="adm-btn" type="button" onclick="copyShortProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy short profile</button>
-      <button class="adm-btn" type="button" onclick="openShortProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open short clean export</button>
-      <button class="adm-btn" type="button" onclick="openFullProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open full clean export</button>
-    </div>
-    <details class="adm-export-docfold" id="admExportDocFold">
-      <summary class="adm-export-docfold-sum"><span data-i18n="export.doc.foldSummary">Artist Sheet / Dossier (PDF)</span></summary>
-      <p class="adm-export-docfold-hint" style="margin:0 0 8px;font-size:.7rem;color:var(--text-faint);line-height:1.4" data-i18n="export.doc.pdfExportHint">PDF exports download directly as A4 files with the correct filename.</p>
-      <div class="adm-export-actions adm-export-doc-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="adm-btn" type="button" onclick="openArtistSheetExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenArtistSheet">Download Artist Sheet (PDF)</button>
-        <button class="adm-btn" type="button" onclick="openDossierExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenDossier">Download Dossier (PDF)</button>
-        <span id="admExportHtmlPreviewWrap" style="display:none">
-        <button class="adm-btn" type="button" onclick="previewArtistSheetHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewArtistSheetHtml">Preview Artist Sheet (HTML)</button>
-        <button class="adm-btn" type="button" onclick="previewDossierHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewDossierHtml">Preview Dossier (HTML)</button>
-        </span>
-        <button class="adm-btn" type="button" onclick="copyArtistSheetPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyArtistSheet">Copy Artist Sheet text</button>
-        <button class="adm-btn" type="button" onclick="copyDossierPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyDossier">Copy Dossier text</button>
-      </div>
-    </details>
-    </div><!-- adm-export-bar-inner -->
-   </div>
+   <div class="adm-tabs-wrap">
    <div class="adm-tabs">
-    <button class="adm-tab active" onclick="admTab('hero')">Hero</button>
-    <button class="adm-tab" onclick="admTab('bio')">Biography</button>
-    <button class="adm-tab" onclick="admTab('rep-opera')">Opera</button>
-    <button class="adm-tab" onclick="admTab('rep-arias')">Arias</button>
-    <button class="adm-tab" onclick="admTab('rep-operetta')">Operetta</button>
-    <button class="adm-tab" onclick="admTab('rep-operetta_roles')">Operetta roles</button>
-    <button class="adm-tab" onclick="admTab('rep-lived')">Lied</button>
-    <button class="adm-tab" onclick="admTab('rep-tango')">Tango</button>
-    <button class="adm-tab" onclick="admTab('programs')">Programs</button>
-    <button class="adm-tab" onclick="admTab('vid')">Videos</button>
-    <button class="adm-tab" onclick="admTab('photos')">Photos</button>
-    <button class="adm-tab" onclick="admTab('perf')">Calendar</button>
-    <button class="adm-tab" onclick="admTab('press')">Reviews</button>
-         <button class="adm-tab" onclick="admTab('contact')">Contact</button>
-    <button class="adm-tab" onclick="admTab('siteui')">UI / Site Strings</button>
-    <button class="adm-tab" onclick="admTab('epk')">Press kit</button>
-    <button class="adm-tab" onclick="admTab('features')">Site features</button>
+    <button type="button" class="adm-tab active" data-adm-tab="hero" onclick="admTab('hero')">Hero</button>
+    <button type="button" class="adm-tab" data-adm-tab="bio" onclick="admTab('bio')">Biography</button>
+    <button type="button" class="adm-tab" data-adm-tab="rep-opera" onclick="admTab('rep-opera')">Opera</button>
+    <button type="button" class="adm-tab" data-adm-tab="rep-arias" onclick="admTab('rep-arias')">Arias</button>
+    <button type="button" class="adm-tab" data-adm-tab="rep-operetta" onclick="admTab('rep-operetta')">Operetta</button>
+    <button type="button" class="adm-tab" data-adm-tab="rep-operetta_roles" onclick="admTab('rep-operetta_roles')">Operetta roles</button>
+    <button type="button" class="adm-tab" data-adm-tab="rep-lived" onclick="admTab('rep-lived')">Lied</button>
+    <button type="button" class="adm-tab" data-adm-tab="rep-tango" onclick="admTab('rep-tango')">Tango</button>
+    <button type="button" class="adm-tab" data-adm-tab="programs" onclick="admTab('programs')">Programs</button>
+    <button type="button" class="adm-tab" data-adm-tab="vid" onclick="admTab('vid')">Videos</button>
+    <button type="button" class="adm-tab" data-adm-tab="photos" onclick="admTab('photos')">Photos</button>
+    <button type="button" class="adm-tab" data-adm-tab="perf" onclick="admTab('perf')">Calendar</button>
+    <button type="button" class="adm-tab" data-adm-tab="press" onclick="admTab('press')">Reviews</button>
+    <button type="button" class="adm-tab" data-adm-tab="contact" onclick="admTab('contact')">Contact</button>
+    <button type="button" class="adm-tab" data-adm-tab="epk" onclick="admTab('epk')">Press kit</button>
+    <button type="button" class="adm-tab" data-adm-tab="exports" onclick="admTab('exports')">Export / PDFs</button>
+   </div>
+   <div class="adm-tabs-secondary" role="group" aria-label="Advanced settings">
+    <span class="adm-tabs-adv-label">Advanced</span>
+    <button type="button" class="adm-tab adm-tab-adv" data-adm-tab="siteui" onclick="admTab('siteui')">Site strings</button>
+    <button type="button" class="adm-tab adm-tab-adv" data-adm-tab="features" onclick="admTab('features')">Site features</button>
+   </div>
    </div>
    <div class="adm-body">
     <!-- HERO -->
@@ -1740,13 +1762,13 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <div class="adm-grid full"><div class="adm-col">
        <label class="adm-label">Repertoire section title (HTML, current content language)</label>
        <input class="adm-input" id="f-repH2" placeholder="Selected &lt;em&gt;Repertoire&lt;/em&gt;" autocomplete="off">
-       <p style="font-size:.72rem;color:var(--text-faint);margin:.35rem 0 0">Same field as the public H2 (<code>#repH2</code>). Use <code>&lt;em&gt;…&lt;/em&gt;</code> for the gold line. Leave empty or match the site default to clear the saved override and use <code>LANG_CONTENT</code>.</p>
+       <p style="font-size:.72rem;color:var(--text-faint);margin:.35rem 0 0">Public page heading. Use <code>&lt;em&gt;…&lt;/em&gt;</code> for the gold accent. Leave empty to use the site default for this language.</p>
      </div></div>
      <div style="margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
        <button class="adm-btn" type="button" onclick="saveRepHeader()" style="background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold)">Save repertoire title</button>
      </div>
      <div class="adm-section" style="margin-top:.5rem">Editorial copy (repertoire)</div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Intro line and tab blurbs only — not the role table below. Use <strong>Save repertoire title</strong> / <strong>Save editorial copy</strong>. Empty = site default (<code>Ti</code>).</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">Intro and tab blurbs only — not the role table. Use <strong>Save repertoire title</strong> or <strong>Save editorial copy</strong>. Leave blank for site defaults.</p>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Line under the H2</label><textarea class="adm-input" id="f-repIntroLine" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Opera</label><textarea class="adm-input" id="f-repDescOpera" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Description — Arias</label><textarea class="adm-input" id="f-repDescArias" rows="2"></textarea></div></div>
@@ -1766,7 +1788,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
        <option value="studying">Studying first (preview)</option>
       </select>
      </div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:40rem">Preview sorts reorder the list on screen only. <strong>Save opera roles</strong> stays off until you pick <strong>Current order (safe to save)</strong> — otherwise rows could be written to the wrong stored roles.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:40rem">Sort options are preview only. Click <strong>Save opera roles</strong> only when <strong>Current order (safe to save)</strong> is selected — otherwise stored order may not match what you see.</p>
     <div id="repCards-opera"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
       <button type="button" class="adm-btn" onclick="addRepCard('opera')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row at the end of the list">+ Add role</button>
@@ -1804,7 +1826,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
     <!-- REPERTOIRE: Operetta roles -->
     <div class="adm-panel" id="admPanel-rep-operetta_roles">
      <div class="adm-section">Repertoire — Operetta roles</div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:42rem">Full operetta roles with status (parallel to opera roles). The separate <strong>Operetta</strong> panel remains for numbers, arias and excerpts. Rows use <code>cat: &quot;operetta_roles&quot;</code> in <code>rg_rep_cards</code>. The public repertoire tab appears only when <strong>Site features → Operetta roles (public)</strong> is enabled, public visibility is on, and at least one row has composer, work, or role text.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:42rem">Operetta roles with status (parallel to opera roles). The <strong>Operetta</strong> tab is for numbers and excerpts. The public Operetta tab follows <strong>Site features → Operetta roles</strong> and needs at least composer, work, or role text.</p>
      <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:.75rem">Status colours: <strong style="color:#4CAF50">Performed</strong> · <strong style="color:#D4A843">Prepared</strong> · <strong style="color:#9A9080">Studying</strong></p>
      <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <label class="adm-label" style="margin:0">Sort by status:</label>
@@ -1815,7 +1837,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
        <option value="studying">Studying first (preview)</option>
       </select>
      </div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:40rem">Preview sorts reorder the list on screen only. <strong>Save operetta roles</strong> stays off until you pick <strong>Current order (safe to save)</strong>.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px;line-height:1.45;max-width:40rem">Sort options are preview only. Click <strong>Save operetta roles</strong> only when <strong>Current order (safe to save)</strong> is selected.</p>
      <div id="repCards-operetta_roles"></div>
      <div style="margin:1rem 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-wrap:wrap">
       <button type="button" class="adm-btn" onclick="addRepCard('operetta_roles')" style="background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)" title="Adds a blank row at the end of the list">+ Add role</button>
@@ -1859,7 +1881,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Closing note</label><textarea class="adm-input" id="f-programsClosing" rows="2"></textarea></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Context link from Repertoire</label><input class="adm-input" id="f-repProgramsLink"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Context link from dossier / EPK</label><input class="adm-input" id="f-epkProgramsLink"></div></div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:4px 0 12px;line-height:1.45">The two context links above are written to storage only when you click <strong>Save Programs</strong> (together with title, intro, closing note, and program blocks).</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:4px 0 12px;line-height:1.45">The two context links save with <strong>Save Programs</strong> (title, intro, closing, and blocks).</p>
      <div class="adm-section">Program blocks</div>
      <p style="font-size:.78rem;color:var(--text-faint);margin-bottom:1rem">Drag to reorder. Only published programs appear on the site.</p>
      <div id="programCards"></div>
@@ -1876,7 +1898,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <div class="adm-section">Videos</div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-vidH2" placeholder="Stage, Concert &amp; Recital Highlights"></div></div>
      <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 10px">This heading is what visitors see above the video grid (same as on the public site).</p>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-4px 0 12px;line-height:1.45"><strong>Mixed saving:</strong> add, remove, or drag-reorder saves the list order right away. Text and options inside each card (tag, title, category, thumbnail URL, etc.) are kept only after you click <strong>Save Videos</strong>.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-4px 0 12px;line-height:1.45">Add, remove, or reorder: order saves immediately. Card fields (tag, title, category, thumbnail, etc.) need <strong>Save Videos</strong>.</p>
      <details class="adm-advanced-fold" style="margin:8px 0 14px">
       <summary class="adm-advanced-fold-sum">Thumbnail selection guidelines</summary>
       <div style="font-size:.7rem;color:var(--text-dim);line-height:1.55;max-width:44rem;margin:10px 0 4px">
@@ -1903,18 +1925,18 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
     <!-- PERFORMANCES / CALENDAR -->
     <div class="adm-panel" id="admPanel-perf">
      <div class="adm-section">Calendar <span id="perfLangBadge" style="float:right;font-family:var(--ff-caps);font-size:.52rem;padding:2px 8px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:999px;border:1px solid rgba(212,168,67,.3)">EN</span></div>
-     <p class="adm-perf-editorial-hint">Use the toolbar <strong>Content</strong> language (EN / DE / …) to edit this heading and intro for each site language.</p>
+     <p class="adm-perf-editorial-hint">Use the toolbar <strong>Content</strong> language for the title and intro per language.</p>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Section title (HTML)</label><input class="adm-input" id="f-perfH2" placeholder="Appears as the calendar section heading on the site"></div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Intro</label><textarea class="adm-input" id="f-perfIntro" rows="2" placeholder="Short line under the title (plain text)"></textarea></div></div>
      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
       <button type="button" class="adm-btn" onclick="savePerfHeader()" title="Stores section title, intro, and Advanced JSON only — not individual events">Save calendar settings</button>
       <div class="adm-feedback" id="fb-perf" style="display:none;margin:0;align-self:center">Saved!</div>
      </div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:0 0 12px;line-height:1.45;max-width:42rem"><strong>Mixed saving:</strong> <strong>+ Add event</strong>, remove, and drag-reorder update the event list right away. Each expanded card has its own <strong>Save changes</strong>. Use <strong>Save calendar settings</strong> for the heading, intro, and optional fields under Advanced.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:0 0 12px;line-height:1.45;max-width:42rem">Add, remove, or reorder: list updates immediately. Open an event and use <strong>Save event</strong> for its fields. <strong>Save calendar settings</strong> stores the title, intro, and Advanced options.</p>
      <div class="adm-section" style="margin-top:20px">Events</div>
      <div id="admPerfList"></div>
 
-     <div class="adm-section" style="margin-top:24px">Add event</div>
+     <div class="adm-section" style="margin-top:24px">New event</div>
      <div class="adm-grid">
       <div class="adm-col"><label class="adm-label">Day</label><input class="adm-input" id="pDay" placeholder="15 or TBA"></div>
       <div class="adm-col"><label class="adm-label">Month / period</label><input class="adm-input" id="pMonth" placeholder="Jun 2025"></div>
@@ -2008,7 +2030,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <details class="adm-advanced-fold" id="admPerfAdvancedFold">
       <summary class="adm-advanced-fold-sum">Advanced · layout &amp; JSON overrides</summary>
       <div class="adm-advanced-inner">
-       <p class="adm-perf-editorial-hint" style="margin-top:0;margin-bottom:12px">Optional. Most sites never need these. Use <strong>Save calendar settings</strong> at the top of this tab to store title, intro, and these JSON fields together.</p>
+       <p class="adm-perf-editorial-hint" style="margin-top:0;margin-bottom:12px">Optional. Rarely needed. <strong>Save calendar settings</strong> stores title, intro, and these fields together.</p>
        <div class="adm-section" style="margin-top:0">Month column size (all languages)</div>
        <div class="adm-grid full"><div class="adm-col">
         <label class="adm-label">Scale — <span id="monthSizeLabel"></span></label>
@@ -2018,10 +2040,10 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
         <button type="button" class="adm-btn" style="margin-top:4px;width:auto" onclick="saveMonthSize()">Save month size</button>
        </div></div>
        <div class="adm-section" style="margin-top:16px">Event type labels (JSON)</div>
-       <p class="adm-perf-editorial-hint" style="margin-bottom:10px">Maps internal keys to labels on cards and filters. Leave empty to keep stored values.</p>
+       <p class="adm-perf-editorial-hint" style="margin-bottom:10px">Maps event-type keys to labels on cards and filters. Leave empty to keep what is stored.</p>
        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Event types object</label><textarea class="adm-input" id="f-perfEventTypesJson" rows="4" spellcheck="false" placeholder='{"opera":"Opera","concert":"Concert"}'></textarea></div></div>
        <div class="adm-section" style="margin-top:12px">Month names (JSON)</div>
-       <p class="adm-perf-editorial-hint" style="margin-bottom:10px">English keys (e.g. January) → display text for this content language. Leave empty to keep stored values.</p>
+       <p class="adm-perf-editorial-hint" style="margin-bottom:10px">English month keys (e.g. January) → label for this language. Leave empty to keep what is stored.</p>
        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Month / season labels</label><textarea class="adm-input" id="f-perfMonthNamesJson" rows="4" spellcheck="false" placeholder='{"January":"Januar"}'></textarea></div></div>
       </div>
      </details>
@@ -2029,7 +2051,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
     <!-- PHOTOS -->
     <div class="adm-panel" id="admPanel-photos">
      <div class="adm-section">Photos — studio portraits</div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-8px 0 10px;line-height:1.45">Uploads and URL adds apply immediately; no separate Save for this tab.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-8px 0 10px;line-height:1.45">Uploads and URL adds save immediately — no tab Save.</p>
      <div id="admStudioSlots"></div>
      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
        <label class="adm-btn" style="display:inline-block;cursor:pointer;font-size:.48rem;padding:7px 14px">
@@ -2070,14 +2092,14 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
        <label class="adm-label">Translation note (active content language)</label>
        <textarea class="adm-input" id="f-pressTranslatedNote" rows="2" placeholder="Translated from the original German review."></textarea>
        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-         <button type="button" class="adm-btn adm-btn-save" onclick="savePressMeta()" title="Stores only the translation note line for the active content language">Save translation note</button>
+         <button type="button" class="adm-btn adm-btn-save" onclick="savePressMeta()" title="Saves the translation note for the active content language">Save note</button>
         <button class="adm-btn" type="button" onclick="copyPressPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy plain text</button>
         <button class="adm-btn" type="button" onclick="openPressCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
          <div class="adm-feedback" id="fb-pressMeta" style="opacity:0;transition:opacity .3s">Saved!</div>
        </div>
      </div></div>
      <div id="pressAdmList"></div>
-     <div class="adm-section" style="margin-top:24px">Add quote</div>
+     <div class="adm-section" style="margin-top:24px">New quote</div>
      <div class="adm-grid full"><div class="adm-col">
        <label class="adm-label">Quote (no quotation marks)</label>
        <textarea class="adm-input" id="pa-quote" rows="3" placeholder="Das spielfreudige Ensemble begeistert..."></textarea>
@@ -2127,7 +2149,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
      <!-- ── BIOS ─────────────────────────────────────────── -->
      <div class="adm-section">Press kit — biography texts</div>
      <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:16px">
-       Edit each language separately. Changes are saved per language.
+       Choose bio language above. Each Press kit block has its own Save.
      </p>
 
      <!-- Language selector for bios -->
@@ -2221,7 +2243,7 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
    </div><!-- admPanel-epk -->
     <div class="adm-panel" id="admPanel-features">
      <div class="adm-section">Site features (global)</div>
-     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 14px;line-height:1.45;max-width:44rem">Single configuration for the whole site (not per language). On the public page, a feature is shown only if it is <strong>enabled</strong>, <strong>show on public site</strong> is on, and there is enough real content. <strong>Internal notes</strong> can be enabled for future admin use but are never shown on the public site.</p>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 14px;line-height:1.45;max-width:44rem">Single settings for the whole site (not per language). <strong>Only Operetta roles</strong> is connected to the live site today; the other rows store your choices for later and <strong>do not change the public page or this admin yet</strong>. Where a feature is live, visitors only see it if <strong>Enabled</strong> and <strong>Show on public</strong> are on and the related content exists. Each row below says what it actually does. <strong>Internal notes</strong> never appear on the public site.</p>
      <div style="overflow-x:auto;margin-bottom:1rem">
       <table style="width:100%;border-collapse:collapse;font-size:.76rem;color:var(--text-dim)">
        <thead>
@@ -2232,18 +2254,58 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
         </tr>
        </thead>
        <tbody>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Operetta roles (repertoire tab)</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-operettaRolesPublic-enabled" aria-label="Operetta roles feature enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-operettaRolesPublic-showPublic" aria-label="Operetta roles visible on public site"></td></tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Video professional metadata</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-videoProMetadata-enabled" aria-label="Video pro metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-videoProMetadata-showPublic" aria-label="Video pro metadata on public site"></td></tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Calendar — extended metadata</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-perfExtendedMeta-enabled" aria-label="Performance extended metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-perfExtendedMeta-showPublic" aria-label="Performance extended metadata on public site"></td></tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Press / reviews — extended metadata</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-pressExtendedMeta-enabled" aria-label="Press extended metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-pressExtendedMeta-showPublic" aria-label="Press extended metadata on public site"></td></tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Homepage highlights</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-homeHighlights-enabled" aria-label="Home highlights enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-homeHighlights-showPublic" aria-label="Home highlights on public site"></td></tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:middle">Materials (public / private / strategic)</td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-materialsVault-enabled" aria-label="Materials vault enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-materialsVault-showPublic" aria-label="Materials vault on public site"></td></tr>
-        <tr><td style="padding:10px 8px 10px 0;vertical-align:middle">Internal notes <span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px">Never shown on the public site.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-internalNotes-enabled" aria-label="Internal notes feature enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-internalNotes-showPublic" disabled title="Internal notes are never public" aria-label="Not applicable — internal notes are never public"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:top">Operetta roles (repertoire tab)<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Live on the public site.</strong> Controls public rendering only: the Operetta tab in Repertoire can appear when you have public operetta items. Does not add new fields in this panel — edit content under <strong>Repertoire</strong> (Operetta category).</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-operettaRolesPublic-enabled" aria-label="Operetta roles feature enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-operettaRolesPublic-showPublic" aria-label="Operetta roles visible on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:top">Video professional metadata<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Future placeholder — not wired to the live site yet.</strong> Values are saved only. No extra admin fields unlocked by this row today.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-videoProMetadata-enabled" aria-label="Video pro metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-videoProMetadata-showPublic" aria-label="Video pro metadata on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:top">Calendar — extended metadata<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Future placeholder — not wired to the live site yet.</strong> Values are saved only. Edit performances under <strong>Calendar</strong>; this toggle does not add fields there yet.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-perfExtendedMeta-enabled" aria-label="Performance extended metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-perfExtendedMeta-showPublic" aria-label="Performance extended metadata on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:top">Press / reviews — extended metadata<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Future placeholder — not wired to the live site yet.</strong> Values are saved only. Edit quotes and articles under <strong>Press</strong>; this toggle does not add fields there yet.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-pressExtendedMeta-enabled" aria-label="Press extended metadata enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-pressExtendedMeta-showPublic" aria-label="Press extended metadata on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:top">Homepage highlights<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Future placeholder — not wired to the live site yet.</strong> Values are saved only. No extra homepage fields in the admin from this row yet.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-homeHighlights-enabled" aria-label="Home highlights enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-homeHighlights-showPublic" aria-label="Home highlights on public site"></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:10px 8px 10px 0;vertical-align:top">Materials (public / private / strategic)<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Future placeholder — not wired to the live site yet.</strong> Values are saved only. No materials screens in the admin unlocked by this row yet.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-materialsVault-enabled" aria-label="Materials vault enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-materialsVault-showPublic" aria-label="Materials vault on public site"></td></tr>
+        <tr><td style="padding:10px 8px 10px 0;vertical-align:top">Internal notes<span style="display:block;font-size:.68rem;color:var(--text-faint);font-weight:normal;text-transform:none;letter-spacing:0;margin-top:4px;line-height:1.35"><strong>Never shown on the public site</strong> (visitors never see this). <strong>Future placeholder for admin-only use</strong> — enabling it does not add note fields elsewhere in the admin yet. “Show on public” does not apply.</span></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-internalNotes-enabled" aria-label="Internal notes feature enabled"></td><td style="padding:8px;vertical-align:middle"><input type="checkbox" id="ff-internalNotes-showPublic" disabled title="Internal notes are never public" aria-label="Not applicable — internal notes are never public"></td></tr>
        </tbody>
       </table>
      </div>
      <button type="button" class="adm-btn adm-btn-save" onclick="saveRgFeatureConfig()" title="Writes rg_feature_config to storage and Firestore">Save site features</button>
      <div class="adm-feedback" id="fb-rg-features" style="display:none">Saved!</div>
+    </div>
+    <div class="adm-panel" id="admPanel-exports">
+     <div class="adm-section">Export / PDFs</div>
+     <p style="font-size:.72rem;color:var(--text-faint);margin:-6px 0 14px;line-height:1.45;max-width:42rem">Clean text exports and printable layouts. <strong>Export JSON</strong> is in the header next to <strong>View site</strong>.</p>
+     <div id="admFullExportWrap" class="adm-export-bar adm-export-bar--in-tab">
+    <button type="button" class="adm-export-mobile-toggle" id="admExportToolsToggle" onclick="admToggleExportTools()" aria-expanded="false" aria-controls="admExportBarInner">Export tools</button>
+    <div class="adm-export-bar-inner" id="admExportBarInner">
+    <div class="adm-export-desktop-title" style="font-family:var(--ff-caps);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Full clean export</div>
+    <div class="adm-export-sel">
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-bio" onchange="saveFullExportSectionPrefs()"> Biography</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-repertoire" onchange="saveFullExportSectionPrefs()"> Repertoire</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-programs" onchange="saveFullExportSectionPrefs()"> Programs &amp; Collaborations</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-calendar" onchange="saveFullExportSectionPrefs()"> Calendar / Upcoming engagements</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-press" onchange="saveFullExportSectionPrefs()"> Reviews / Press</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-epk" onchange="saveFullExportSectionPrefs()"> Dossier / EPK</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.76rem;color:var(--text-dim)"><input type="checkbox" id="expSel-contact" onchange="saveFullExportSectionPrefs()"> Contact</label>
+    </div>
+    <div class="adm-export-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="adm-btn" type="button" onclick="copyFullProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy selected sections</button>
+      <button class="adm-btn" type="button" onclick="openSelectedProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open clean export</button>
+      <button class="adm-btn" type="button" onclick="copyShortProfilePlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Copy short profile</button>
+      <button class="adm-btn" type="button" onclick="openShortProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open short clean export</button>
+      <button class="adm-btn" type="button" onclick="openFullProfileCleanExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)">Open full clean export</button>
+    </div>
+    <details class="adm-export-docfold" id="admExportDocFold">
+      <summary class="adm-export-docfold-sum"><span data-i18n="export.doc.foldSummary">Artist Sheet / Dossier (PDF)</span></summary>
+      <p class="adm-export-docfold-hint" style="margin:0 0 8px;font-size:.7rem;color:var(--text-faint);line-height:1.4" data-i18n="export.doc.pdfExportHint">PDF exports download directly as A4 files with the correct filename.</p>
+      <div class="adm-export-actions adm-export-doc-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="adm-btn" type="button" onclick="openArtistSheetExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenArtistSheet">Download Artist Sheet (PDF)</button>
+        <button class="adm-btn" type="button" onclick="openDossierExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnOpenDossier">Download Dossier (PDF)</button>
+        <span id="admExportHtmlPreviewWrap" style="display:none">
+        <button class="adm-btn" type="button" onclick="previewArtistSheetHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewArtistSheetHtml">Preview Artist Sheet (HTML)</button>
+        <button class="adm-btn" type="button" onclick="previewDossierHtmlExport()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnPreviewDossierHtml">Preview Dossier (HTML)</button>
+        </span>
+        <button class="adm-btn" type="button" onclick="copyArtistSheetPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyArtistSheet">Copy Artist Sheet text</button>
+        <button class="adm-btn" type="button" onclick="copyDossierPlainText()" style="background:transparent;border-color:var(--border);color:var(--text-dim)" data-i18n="export.doc.btnCopyDossier">Copy Dossier text</button>
+      </div>
+    </details>
+    </div><!-- adm-export-bar-inner -->
+     </div>
     </div>
    </div><!-- adm-body -->
    <div id="admActivityWrap" class="adm-activity-wrap">
@@ -2799,25 +2861,26 @@ function __admInjectPanelTools() {
     'admPanel-features': 'feature-flags'
   };
   const saveModeHint = {
-    'admPanel-hero': 'Single save — Save Hero',
-    'admPanel-bio': 'Single save — Save Biography',
-    'admPanel-programs': 'Single save — Save Programs',
-    'admPanel-contact': 'Single save — Save contact section',
-    'admPanel-siteui': 'Single save — Save site strings',
-    'admPanel-photos': 'Photo uploads & URLs save immediately',
-    'admPanel-press': 'Quotes: Add / row Save; note: Save translation note',
-    'admPanel-perf': 'Events: add/reorder save now; title & intro: Save calendar settings',
-    'admPanel-epk': 'Each subsection saves with its own button',
-    'admPanel-vid': 'Add / remove / reorder saves now; card fields need Save Videos',
-    'admPanel-rep-opera': 'Mixed saves: heading & blurbs use their buttons; role rows → Save opera roles',
-    'admPanel-rep-arias': 'Manual save — Save arias list',
-    'admPanel-rep-operetta': 'Manual save — Save operetta list',
-    'admPanel-rep-operetta_roles': 'Manual save — Save operetta roles',
-    'admPanel-rep-lived': 'Manual save — Save lied list',
-    'admPanel-rep-tango': 'Manual save — Save tango list',
-    'admPanel-features': 'Single save — Save site features'
+    'admPanel-hero': 'One save · Save Hero',
+    'admPanel-bio': 'One save · Save Biography',
+    'admPanel-programs': 'One save · Save Programs',
+    'admPanel-contact': 'One save · Save contact',
+    'admPanel-siteui': 'One save · Save site strings',
+    'admPanel-photos': 'Uploads save immediately',
+    'admPanel-press': 'Each quote: Save · Note: Save note',
+    'admPanel-perf': 'List updates live · Heading: Save calendar',
+    'admPanel-epk': 'Each block has its own Save',
+    'admPanel-vid': 'List updates live · Cards: Save Videos',
+    'admPanel-rep-opera': 'Title & blurbs: own saves · Roles: Save opera roles',
+    'admPanel-rep-arias': 'One save · Save arias',
+    'admPanel-rep-operetta': 'One save · Save operetta',
+    'admPanel-rep-operetta_roles': 'One save · Save operetta roles',
+    'admPanel-rep-lived': 'One save · Save lied',
+    'admPanel-rep-tango': 'One save · Save tango',
+    'admPanel-features': 'One save · Save site features'
   };
   document.querySelectorAll('.adm-panel').forEach(panel => {
+    if (panel.id === 'admPanel-exports') return;
     const sec = panel.querySelector('.adm-section');
     if (!sec) return;
     if (sec.dataset.toolsInjected === '1') return;
@@ -2828,7 +2891,7 @@ function __admInjectPanelTools() {
     right.style.gap = '8px';
     right.style.alignItems = 'center';
     const mode = document.createElement('span');
-    mode.textContent = saveModeHint[panel.id] || 'Manual save — use the section Save button';
+    mode.textContent = saveModeHint[panel.id] || 'One save · section Save';
     mode.style.fontFamily = 'var(--ff-caps)';
     mode.style.fontSize = '.52rem';
     mode.style.letterSpacing = '.14em';
@@ -9734,8 +9797,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 
 function admTab(name){
   admCurTab = name;
-  const tabs = ['hero','bio','rep-opera','rep-arias','rep-operetta','rep-operetta_roles','rep-lived','rep-tango','programs','vid','photos','perf','press','contact','siteui','epk','features'];
-  document.querySelectorAll('.adm-tab').forEach((t,i)=>t.classList.toggle('active', tabs[i]===name));
+  document.querySelectorAll('.adm-tab').forEach(t=>{
+    const id = t.getAttribute('data-adm-tab');
+    if (id) t.classList.toggle('active', id === name);
+  });
   document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
   const panel = document.getElementById('admPanel-'+name);
   if(panel) panel.classList.add('active');
@@ -9743,6 +9808,9 @@ function admTab(name){
 }
 
 function admPopulate(name){
+  if (name === 'exports') {
+    try { admSyncExportDocFold(); } catch (e) {}
+  }
   ['hero','bio','contact','programs','perf'].forEach(p=>{const el=document.getElementById(p+'LangBadge');if(el)el.textContent=currentLang.toUpperCase();});
   const suB = document.getElementById('siteuiLangBadge');
   if (suB) suB.textContent = currentLang.toUpperCase();
@@ -9922,7 +9990,7 @@ function admPopulate(name){
         <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="color:var(--gold);font-size:1.1rem">⠿</span>
           <span>Video ${i+1}${v.hidden?' (hidden)':''}</span>
-          <button type="button" class="adm-btn-sm adm-btn-danger" onclick="event.stopPropagation();removeVidCard(${i})" style="margin-left:auto">Eliminar video</button>
+          <button type="button" class="adm-btn-sm adm-btn-danger" onclick="event.stopPropagation();removeVidCard(${i})" style="margin-left:auto">Remove video</button>
         </div>
         <div class="adm-grid">
           <div class="adm-col">
@@ -10518,7 +10586,7 @@ function admRenderPerfList(){
         </div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="pe-adminNote-${p.id}" rows="2" placeholder="Follow-ups, pending links or assets (flyer, press). Feature or spotlight once ready." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${String(p.adminNote||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
         <div style="display:flex;gap:10px;margin-top:14px">
-          <button class="adm-btn adm-btn-save" onclick="savePerf(${p.id})">Save changes</button>
+          <button class="adm-btn adm-btn-save" onclick="savePerf(${p.id})">Save event</button>
           <button class="adm-btn" onclick="togglePerfEdit(${p.id})" style="background:transparent">Cancel</button>
         </div>
         <div class="adm-feedback" id="fb-perf-${p.id}" style="display:none">Saved!</div>
