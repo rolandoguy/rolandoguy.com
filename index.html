@@ -350,7 +350,6 @@ nav.scrolled{background:rgba(13,13,18,.95);backdrop-filter:blur(12px);padding:12
 .hero-eyebrow::before{content:'';display:inline-block;width:36px;height:1px;background:var(--gold)}
 .hero-name{font-family:var(--ff-title);font-size:clamp(4rem,9vw,9rem);font-weight:300;line-height:.9;color:var(--text);opacity:0;animation:fadeSlideUp .9s ease forwards .5s}
 .hero-name em{font-style:italic;color:var(--gold);display:block}
-.hero-name-role{display:block;font-family:var(--ff-caps);font-size:clamp(.55rem,1.6vw,.68rem);letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim);margin-top:.5em;font-weight:400}
 .hero-subtitle{font-family:var(--ff-body);font-size:max(.72rem,clamp(.68rem,1.5vw,.82rem));letter-spacing:.035em;color:var(--text-dim);text-transform:none;font-weight:300;line-height:1.55;margin-top:20px;max-width:38rem;opacity:0;animation:fadeSlideUp .8s ease forwards .8s}
 .hero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:42px;opacity:0;animation:fadeSlideUp .8s ease forwards 1s;max-width:680px}
 .btn-primary{font-family:var(--ff-caps);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:13px 30px;border:1px solid var(--gold);color:var(--bg);background:var(--gold);text-decoration:none;position:relative;overflow:hidden;cursor:none;display:inline-flex;align-items:center;justify-content:center;text-align:center;transition:all .35s}
@@ -1109,8 +1108,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
   #hero{height:100svh;height:100vh;min-height:0}
   .hero-content{padding:0 16px max(70px, env(safe-area-inset-bottom, 0px))}
   .hero-eyebrow{font-size:.52rem;letter-spacing:.2em}
-  .hero-name{font-size:clamp(2.8rem,14vw,4.5rem)}
-  .hero-subtitle{font-size:.6rem;letter-spacing:.18em}
+  .hero-name{font-size:clamp(2.8rem,14vw,4.5rem);line-height:.92}
+  .hero-subtitle{font-size:.7rem;letter-spacing:.04em;line-height:1.4;margin-top:16px;max-width:22rem}
   .btn-primary,.btn-secondary{font-size:.5rem;padding:9px 12px;letter-spacing:.14em;text-align:center;justify-content:center}
   .section-inner{padding:0 16px}
   #about,#repertoire,#programs,#videos,#photos,#performances,#contact,#epk{padding:90px 0}
@@ -1558,7 +1557,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   <div class="hero-overlay"></div>
   <div class="hero-content">
     <p class="hero-eyebrow" id="heroEyebrow"></p>
-    <h1 class="hero-name" id="heroName"><!-- filled by renderHero(): Rolando / Guy + i18n role --></h1>
+    <h1 class="hero-name" id="heroName"><!-- filled by renderHero(): Rolando / Guy --></h1>
     <p class="hero-subtitle" id="heroSubtitle"></p>
     <div class="hero-cta">
       <a href="#videos" class="btn-primary"><span id="heroCta1"></span></a>
@@ -1976,7 +1975,7 @@ const LANG_CONTENT = {
   en: {
     hero: {
       eyebrow: 'Lyric Tenor · Opera · Concert · Recital',
-      subtitle: 'Argentine-Italian lyric tenor based in Berlin, performing in opera productions, recitals, concerts and curated events across Germany and Europe.',
+      subtitle: 'Argentine-Italian lyric tenor based in Berlin',
       cta1: 'Watch & Listen',
       cta2: 'Book Now',
     },
@@ -2023,7 +2022,7 @@ const LANG_CONTENT = {
   de: {
     hero: {
       eyebrow: 'Lyrischer Tenor · Oper · Konzert · Rezital',
-      subtitle: 'Argentinisch-italienischer lyrischer Tenor mit Sitz in Berlin — Opernproduktionen, Rezitale, Konzerte und kuratierte Veranstaltungen in Deutschland und Europa.',
+      subtitle: 'Argentinisch-italienischer lyrischer Tenor in Berlin',
       cta1: 'Ansehen & Hören',
       cta2: 'Jetzt anfragen',
     },
@@ -2071,7 +2070,7 @@ const LANG_CONTENT = {
   es: {
     hero: {
       eyebrow: 'Tenor lírico · Ópera · Concierto · Recital',
-      subtitle: 'Tenor lírico argentino-italiano con base en Berlín — ópera, recitales, conciertos y eventos curados en Alemania y Europa.',
+      subtitle: 'Tenor lírico argentino-italiano afincado en Berlín',
       cta1: 'Ver y escuchar',
       cta2: 'Contratar',
     },
@@ -2119,7 +2118,7 @@ const LANG_CONTENT = {
   fr: {
     hero: {
       eyebrow: 'Ténor lyrique · Opéra · Concert · Récital',
-      subtitle: 'Ténor lyrique argentin-italien basé à Berlin — opéra, récitals, concerts et événements en Allemagne et en Europe.',
+      subtitle: 'Ténor lyrique argentin-italien basé à Berlin',
       cta1: 'Voir & écouter',
       cta2: 'Réserver',
     },
@@ -2167,7 +2166,7 @@ const LANG_CONTENT = {
   it: {
     hero: {
       eyebrow: 'Tenore lirico · Opera · Concerto · Recital',
-      subtitle: 'Tenore lirico argentino-italiano con base a Berlino — produzioni liriche, recital, concerti ed eventi curati in Germania e in Europa.',
+      subtitle: 'Tenore lirico argentino-italiano con base a Berlino',
       cta1: 'Guarda e ascolta',
       cta2: 'Richiedi ingaggio',
     },
@@ -2750,15 +2749,7 @@ function renderHero() {
   if (heroCta2) heroCta2.textContent = d.cta2 || '';
   const h = document.getElementById('heroName');
   if (h) {
-    const tHero = uiTable(currentLang);
-    const role = (typeof stripHtmlForUiAttr === 'function')
-      ? stripHtmlForUiAttr(tHero['hero.nameRole'] || tHero['about.photoLabel'] || 'Lyric Tenor')
-      : String(tHero['hero.nameRole'] || tHero['about.photoLabel'] || 'Lyric Tenor').replace(/<[^>]*>/g, '').trim();
     h.innerHTML = 'Rolando<br><em>Guy</em>';
-    const roleEl = document.createElement('span');
-    roleEl.className = 'hero-name-role';
-    roleEl.textContent = role || 'Lyric Tenor';
-    h.appendChild(roleEl);
   }
   const hb = document.getElementById('heroBg');
   if (hb && d && d.bgImage && String(d.bgImage).trim()) {
@@ -4674,12 +4665,6 @@ Ti.de['reviewsIntro']  = 'Ausgewählte Pressestimmen zu jüngsten Produktionen u
 Ti.es['reviewsIntro']  = 'Selección de reseñas de prensa sobre producciones y presentaciones recientes.';
 Ti.it['reviewsIntro']  = 'Selezione di recensioni della stampa su recenti produzioni e performance.';
 Ti.fr['reviewsIntro']  = 'Sélection de critiques de presse sur des productions et prestations récentes.';
-// Hero H1 descriptor (name “Rolando Guy” stays literal in renderHero)
-Ti.en['hero.nameRole'] = 'Lyric Tenor';
-Ti.de['hero.nameRole'] = 'Lyrischer Tenor';
-Ti.es['hero.nameRole'] = 'Tenor lírico';
-Ti.it['hero.nameRole'] = 'Tenore lirico';
-Ti.fr['hero.nameRole'] = 'Ténor lyrique';
 // Print / videos QR image alt
 Ti.en['print.qrAlt'] = "QR code linking to Rolando Guy's official website";
 Ti.de['print.qrAlt'] = 'QR-Code zur offiziellen Website von Rolando Guy';
