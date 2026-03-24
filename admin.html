@@ -3300,7 +3300,37 @@ function resolveInitialLang() {
 // Get content: lang-specific custom override → lang default → fallback to 'en'
 function get(key) {
   const langKey = key + '_' + currentLang;
-  return load(langKey) || LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
+  const st = load(langKey);
+  if (st !== undefined && st !== null && typeof st === 'object' && !Array.isArray(st)) {
+    return st;
+  }
+  return LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
+}
+
+/** True when a value is neither undefined nor null ([] and '' count as “present”). */
+function admIsDefined(v) {
+  return v !== undefined && v !== null;
+}
+/** For <input>/<textarea>.value: only null/undefined → fallback; '' and 0 stringify as-is. */
+function admStrForInput(v, fallback) {
+  const fb = fallback === undefined || fallback === null ? '' : String(fallback);
+  return admIsDefined(v) ? String(v) : fb;
+}
+/** Undefined/null → defaultStr; any other value (including '') becomes String(v). */
+function admOptionalDefault(v, defaultStr) {
+  if (!admIsDefined(v)) return defaultStr === undefined || defaultStr === null ? '' : String(defaultStr);
+  return String(v);
+}
+/** Hero background URL for admin field: stored key wins even when ''; else merged hero, else live preview path. */
+function admEffectiveHeroBgInputValue(curBgClean) {
+  const hk = 'hero_' + currentLang;
+  const hSt = load(hk);
+  if (hSt && typeof hSt === 'object' && Object.prototype.hasOwnProperty.call(hSt, 'bgImage')) {
+    return hSt.bgImage == null ? '' : String(hSt.bgImage);
+  }
+  const d = get('hero');
+  if (d && admIsDefined(d.bgImage) && String(d.bgImage).trim() !== '') return String(d.bgImage);
+  return curBgClean || 'img/hero-bg.webp';
 }
 
 function getPerfMerged() {
@@ -3393,8 +3423,15 @@ function getPrograms() {
     duration: p.duration || '',
     idealFor: Array.isArray(p.idealFor) ? p.idealFor : (typeof p.idealFor === 'string' ? p.idealFor.split('\n').map(s => s.trim()).filter(Boolean) : [])
   }));
-  // Section-level: admin-saved for this lang > LANG_CONTENT > legacy > DEFAULTS (so admin edits take effect)
-  const section = (key) => (rawByLang && rawByLang[key] != null && rawByLang[key] !== '') ? rawByLang[key] : (langPrograms[key] != null ? langPrograms[key] : (raw[key] != null ? raw[key] : DEFAULTS.programs[key]));
+  // Section-level: admin-saved for this lang (empty string counts) > LANG_CONTENT > legacy > DEFAULTS
+  const section = (key) => {
+    if (rawByLang && typeof rawByLang === 'object' && Object.prototype.hasOwnProperty.call(rawByLang, key)) {
+      const v = rawByLang[key];
+      if (typeof v === 'string') return v;
+      if (v != null) return v;
+    }
+    return (langPrograms[key] != null ? langPrograms[key] : (raw[key] != null ? raw[key] : DEFAULTS.programs[key]));
+  };
   return {
     title: section('title'),
     subtitle: section('subtitle'),
@@ -3417,11 +3454,11 @@ function getRep() {
   return { h2: langData.h2, intro: langData.intro, cards };
 }
 
-/** #f-repH2 display: non-empty persisted rep_{lang}.h2, else bundled default (matches effective public #repH2). */
+/** #f-repH2 display: persisted rep_{lang}.h2 (including empty), else bundled default (matches effective public #repH2). */
 function admEffectiveRepH2Display() {
   const key = 'rep_' + currentLang;
   const stored = load(key);
-  if (stored && typeof stored === 'object' && typeof stored.h2 === 'string' && stored.h2.trim()) {
+  if (stored && typeof stored === 'object' && Object.prototype.hasOwnProperty.call(stored, 'h2') && typeof stored.h2 === 'string') {
     return stored.h2;
   }
   const lc = LANG_CONTENT[currentLang] && LANG_CONTENT[currentLang].rep;
@@ -3437,13 +3474,14 @@ function admLangPick(obj, field) {
   return (typeof v === 'string' && v.trim() !== '') ? v : '';
 }
 
-/** Hero / bio / contact field: non-empty Firestore override, else LANG_CONTENT (current lang then EN). */
+/** Hero / bio / contact field: persisted override (including empty string), else LANG_CONTENT (current lang then EN). */
 function admEffectiveSectionField(section, field) {
   const k = section + '_' + currentLang;
   const stored = load(k);
   if (stored && typeof stored === 'object' && Object.prototype.hasOwnProperty.call(stored, field)) {
     const v = stored[field];
-    if (typeof v === 'string' && v.trim() !== '') return v;
+    if (v === undefined || v === null) { /* fall through */ }
+    else if (typeof v === 'string') return v;
   }
   const lc = LANG_CONTENT[currentLang] && LANG_CONTENT[currentLang][section];
   const a = admLangPick(lc, field);
@@ -3454,7 +3492,9 @@ function admEffectiveSectionField(section, field) {
 
 function admEffectiveVidH2() {
   const d = getVid();
-  if (d && typeof d.h2 === 'string' && d.h2.trim()) return d.h2;
+  if (d && typeof d === 'object' && Object.prototype.hasOwnProperty.call(d, 'h2') && typeof d.h2 === 'string') {
+    return d.h2;
+  }
   return (DEFAULTS.vid && DEFAULTS.vid.h2) ? DEFAULTS.vid.h2 : '';
 }
 
@@ -3468,7 +3508,11 @@ function renderHero() {
   h.innerHTML = 'Rolando<br><em>Guy</em>';
   const epkNavBtn = document.getElementById('heroEpkBtn');
   if (epkNavBtn) { const tl = effectiveUiText(currentLang, 'nav.epk.short') || 'Press'; epkNavBtn.textContent = tl; }
-  if(d.bgImage&&d.bgImage.trim()){const hb=document.getElementById('heroBg');if(hb)hb.style.backgroundImage="url('"+d.bgImage.trim()+"')";}
+  const hb = document.getElementById('heroBg');
+  if (hb) {
+    if (d.bgImage && String(d.bgImage).trim()) hb.style.backgroundImage = "url('" + String(d.bgImage).trim() + "')";
+    else hb.style.backgroundImage = '';
+  }
 }
 
 // ── Render Bio ──
@@ -4157,7 +4201,7 @@ async function autoTranslateDetail() {
     // Store in hidden fields
     ['en','de','es','it','fr'].forEach(l => {
       const el = document.getElementById('pDetail_' + l);
-      if (el) el.value = t[l] || '';
+      if (el) el.value = admStrForInput(t[l], '');
     });
 
     // Show previews
@@ -4196,7 +4240,7 @@ async function autoTranslateEditDetail(id) {
     // Store in hidden fields
     ['en','de','es','it','fr'].forEach(l => {
       const el = document.getElementById('pe-detail_' + l + '-' + id);
-      if (el) el.value = t[l] || '';
+      if (el) el.value = admStrForInput(t[l], '');
     });
 
     if (status) {
@@ -8161,7 +8205,11 @@ function getPressMeta(){
   const out = JSON.parse(JSON.stringify(DEFAULT_PRESS_META));
   if (raw && typeof raw === 'object') {
     ['en','de','es','it','fr'].forEach(l => {
-      if (raw[l] && typeof raw[l].translatedNote === 'string') out[l].translatedNote = raw[l].translatedNote;
+      const block = raw[l];
+      if (block && typeof block === 'object' && Object.prototype.hasOwnProperty.call(block, 'translatedNote')) {
+        const tn = block.translatedNote;
+        if (typeof tn === 'string') out[l].translatedNote = tn;
+      }
     });
   }
   return out;
@@ -9055,18 +9103,22 @@ function getEditorial(){
   const raw = load('rg_editorial_' + currentLang) || {};
   const t = (Ti[currentLang] || Ti.en);
   const pick = (field, tiKey) => {
+    if (!Object.prototype.hasOwnProperty.call(raw, field)) return t[tiKey] || '';
     const v = raw[field];
-    if (typeof v === 'string' && v.trim()) return v.trim();
+    if (v === undefined || v === null) return t[tiKey] || '';
+    if (typeof v === 'string') return v;
     return t[tiKey] || '';
   };
   return {
-    repProgramsLink: (typeof raw.repProgramsLink === 'string' && raw.repProgramsLink.trim()) ? raw.repProgramsLink.trim() : (t['rep.programsLink'] || ''),
-    epkProgramsLink: (typeof raw.epkProgramsLink === 'string' && raw.epkProgramsLink.trim()) ? raw.epkProgramsLink.trim() : (t['epk.programsLink'] || ''),
+    repProgramsLink: pick('repProgramsLink', 'rep.programsLink'),
+    epkProgramsLink: pick('epkProgramsLink', 'epk.programsLink'),
     repIntroLine: pick('repIntroLine', 'rep.introLine'),
     repDescOpera: pick('repDescOpera', 'rep.descOpera'),
     repDescArias: pick('repDescArias', 'rep.descArias'),
     repDescOperetta: pick('repDescOperetta', 'rep.descOperetta'),
-    repDescOperettaRoles: (typeof raw.repDescOperettaRoles === 'string' && raw.repDescOperettaRoles.trim()) ? raw.repDescOperettaRoles.trim() : '',
+    repDescOperettaRoles: Object.prototype.hasOwnProperty.call(raw, 'repDescOperettaRoles') && typeof raw.repDescOperettaRoles === 'string'
+      ? raw.repDescOperettaRoles
+      : '',
     repDescLied: pick('repDescLied', 'rep.descLied'),
     repDescTango: pick('repDescTango', 'rep.descTango'),
   };
@@ -9344,16 +9396,17 @@ function epkSaveBioToTemp(lang) {
 }
 
 function epkLoadBioFields(lang) {
-  // Priority: temp edits → stored → hardcoded EPK_BIOS
+  // Merge: bundled defaults → Firestore → in-memory tab edits (temp wins per field path)
   const stored = epkGetStoredBios();
-  const src = _epkBioTemp[lang] || stored[lang] || EPK_BIOS[lang] || {};
-  const set = (id, val) => { const el = document.getElementById(id); if (el) { el.value = val || ''; } };
-  set('f-epkBio50',    src.b50   || '');
-  set('f-epkBio150',   src.b150  || '');
-  set('f-epkBio300p1', src.b300p1|| '');
-  set('f-epkBio300p2', src.b300p2|| '');
-  set('f-epkBio300p3', src.b300p3|| '');
-  set('f-epkBio300p4', src.b300p4|| '');
+  const seed = EPK_BIOS[lang] || {};
+  const src = Object.assign({}, seed, stored[lang] || {}, _epkBioTemp[lang] || {});
+  const set = (id, val) => { const el = document.getElementById(id); if (el) { el.value = admStrForInput(val, ''); } };
+  set('f-epkBio50',    src.b50);
+  set('f-epkBio150',   src.b150);
+  set('f-epkBio300p1', src.b300p1);
+  set('f-epkBio300p2', src.b300p2);
+  set('f-epkBio300p3', src.b300p3);
+  set('f-epkBio300p4', src.b300p4);
   epkCountWords('epkBio50Count',  'f-epkBio50');
   epkCountWords('epkBio150Count', 'f-epkBio150');
 }
@@ -9823,7 +9876,7 @@ function admPopulate(name){
     const bgEl=document.getElementById('f-heroBg');
     const curBg=(document.getElementById('heroBg')||{}).style.backgroundImage||'';
     const curBgClean=curBg.replace(/url\(['"]?|['"]?\)/g,'');
-    if(bgEl)bgEl.value=d.bgImage||curBgClean||'img/hero-bg.webp';
+    if(bgEl)bgEl.value=admEffectiveHeroBgInputValue(curBgClean);
     document.getElementById('f-heroEyebrow').value = admEffectiveSectionField('hero', 'eyebrow');
     document.getElementById('f-heroSubtitle').value = admEffectiveSectionField('hero', 'subtitle');
     document.getElementById('f-heroCta1').value = admEffectiveSectionField('hero', 'cta1');
@@ -9845,7 +9898,7 @@ function admPopulate(name){
     if (repH2Input) repH2Input.value = admEffectiveRepH2Display();
     if (name === 'rep-opera') {
       const ed = getEditorial();
-      const fillEd = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+      const fillEd = (id, v) => { const el = document.getElementById(id); if (el) el.value = admStrForInput(v, ''); };
       fillEd('f-repIntroLine', ed.repIntroLine);
       fillEd('f-repDescOpera', ed.repDescOpera);
       fillEd('f-repDescArias', ed.repDescArias);
@@ -9934,13 +9987,13 @@ function admPopulate(name){
   }
   else if(name==='programs'){
     const d = getPrograms();
-    const el = document.getElementById('f-programsTitle'); if(el) el.value = d.title || '';
-    const es = document.getElementById('f-programsSubtitle'); if(es) es.value = d.subtitle || '';
-    const ei = document.getElementById('f-programsIntro'); if(ei) ei.value = d.intro || '';
-    const ec = document.getElementById('f-programsClosing'); if(ec) ec.value = d.closingNote || '';
+    const el = document.getElementById('f-programsTitle'); if(el) el.value = admStrForInput(d.title, '');
+    const es = document.getElementById('f-programsSubtitle'); if(es) es.value = admStrForInput(d.subtitle, '');
+    const ei = document.getElementById('f-programsIntro'); if(ei) ei.value = admStrForInput(d.intro, '');
+    const ec = document.getElementById('f-programsClosing'); if(ec) ec.value = admStrForInput(d.closingNote, '');
     const ed = getEditorial();
-    const er = document.getElementById('f-repProgramsLink'); if(er) er.value = ed.repProgramsLink || '';
-    const ee = document.getElementById('f-epkProgramsLink'); if(ee) ee.value = ed.epkProgramsLink || '';
+    const er = document.getElementById('f-repProgramsLink'); if(er) er.value = admStrForInput(ed.repProgramsLink, '');
+    const ee = document.getElementById('f-epkProgramsLink'); if(ee) ee.value = admStrForInput(ed.epkProgramsLink, '');
     const div = document.getElementById('programCards');
     if(!div) return;
     const progEsc = (s)=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -10065,8 +10118,8 @@ function admPopulate(name){
   }
   else if(name==='perf'){
     const pm = getPerfMerged();
-    const h=document.getElementById('f-perfH2'); if(h) h.value=pm.h2||'';
-    const pi=document.getElementById('f-perfIntro'); if(pi) pi.value=pm.intro||'';
+    const h=document.getElementById('f-perfH2'); if(h) h.value=admStrForInput(pm.h2, '');
+    const pi=document.getElementById('f-perfIntro'); if(pi) pi.value=admStrForInput(pm.intro, '');
     const et = document.getElementById('f-perfEventTypesJson');
     if (et) {
       try { et.value = pm.eventTypes && Object.keys(pm.eventTypes).length ? JSON.stringify(pm.eventTypes, null, 2) : ''; } catch (e) { et.value = ''; }
@@ -10082,7 +10135,7 @@ function admPopulate(name){
     admRenderPressList();
     const pm = getPressMeta();
     const noteEl = document.getElementById('f-pressTranslatedNote');
-    if (noteEl) noteEl.value = ((pm[currentLang]||{}).translatedNote || '');
+    if (noteEl) noteEl.value = admStrForInput((pm[currentLang] || {}).translatedNote, '');
   }
   else if(name==='contact'){
     document.getElementById('f-contactTitle').value = admEffectiveSectionField('contact', 'title');
@@ -10169,10 +10222,9 @@ function saveRepEditorial() {
   stripIfDefault('', 'repDescOperetta', 'rep.descOperetta');
   stripIfDefault('', 'repDescLied', 'rep.descLied');
   stripIfDefault('', 'repDescTango', 'rep.descTango');
-  Object.keys(next).forEach(k => { if (next[k] === '') delete next[k]; });
   save('rg_editorial_' + currentLang, next);
   try { if (typeof renderRep === 'function') renderRep(); } catch (e) {}
-  const fill = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const fill = (id, val) => { const el = document.getElementById(id); if (el) el.value = admStrForInput(val, ''); };
   const e2 = getEditorial();
   fill('f-repIntroLine', e2.repIntroLine);
   fill('f-repDescOpera', e2.repDescOpera);
@@ -10188,14 +10240,19 @@ function saveRepEditorial() {
 function saveSection(name){
   let data;
   if(name==='hero'){
-    data={eyebrow:document.getElementById('f-heroEyebrow').value,subtitle:document.getElementById('f-heroSubtitle').value,cta1:document.getElementById('f-heroCta1').value,cta2:document.getElementById('f-heroCta2').value,bgImage:(document.getElementById('f-heroBg')||{value:''}).value.trim()||'img/hero-bg.webp',};
+    data={eyebrow:document.getElementById('f-heroEyebrow').value,subtitle:document.getElementById('f-heroSubtitle').value,cta1:document.getElementById('f-heroCta1').value,cta2:document.getElementById('f-heroCta2').value,bgImage:(document.getElementById('f-heroBg')||{value:''}).value.trim()};
     save('hero_'+currentLang,data);
-    if(data.bgImage){const hb=document.getElementById('heroBg');if(hb)hb.style.backgroundImage="url('"+data.bgImage+"')";}
     renderHero();
     document.getElementById('f-heroEyebrow').value = admEffectiveSectionField('hero', 'eyebrow');
     document.getElementById('f-heroSubtitle').value = admEffectiveSectionField('hero', 'subtitle');
     document.getElementById('f-heroCta1').value = admEffectiveSectionField('hero', 'cta1');
     document.getElementById('f-heroCta2').value = admEffectiveSectionField('hero', 'cta2');
+    const bgEl = document.getElementById('f-heroBg');
+    if (bgEl) {
+      const curBg = (document.getElementById('heroBg') || {}).style.backgroundImage || '';
+      const curBgClean = curBg.replace(/url\(['"]?|['"]?\)/g, '');
+      bgEl.value = admEffectiveHeroBgInputValue(curBgClean);
+    }
   }
   else if(name==='bio'){
     data={h2:document.getElementById('f-bioH2').value,p1:document.getElementById('f-bioP1').value,p2:document.getElementById('f-bioP2').value,quote:document.getElementById('f-bioQuote').value,cite:((document.getElementById('f-bioCite')||{}).value!=null)?document.getElementById('f-bioCite').value:get('bio').cite};
@@ -10364,8 +10421,8 @@ function savePerfHeader(){
   else delete next.monthNames;
   save('perf_' + currentLang, next);
   const eff = getPerfMerged();
-  document.getElementById('perfH2').innerHTML=formatSectionTitleIfAmpersand(eff.h2 || '');
-  document.getElementById('perfIntro').textContent=eff.intro || '';
+  document.getElementById('perfH2').innerHTML=formatSectionTitleIfAmpersand(admStrForInput(eff.h2, ''));
+  document.getElementById('perfIntro').textContent=admStrForInput(eff.intro, '');
   const etEl = document.getElementById('f-perfEventTypesJson');
   if (etEl) {
     try { etEl.value = eff.eventTypes && Object.keys(eff.eventTypes).length ? JSON.stringify(eff.eventTypes, null, 2) : ''; } catch (e) { etEl.value = ''; }
@@ -10439,14 +10496,14 @@ function addPerf(){
     venue:document.getElementById('pVenue').value.trim(),
     city:document.getElementById('pCity').value.trim(),
     venuePhoto:(document.getElementById('pVenuePhoto')||{value:''}).value.trim(),
-    venueOpacity:parseInt((document.getElementById('pVenueOpacity')||{value:50}).value)||50,
+    venueOpacity:(()=>{const n=parseInt((document.getElementById('pVenueOpacity')||{value:50}).value,10);return Number.isFinite(n)?n:50;})(),
     status:_status,
     type:document.getElementById('pType').value,
     sortDate:_calcSD(day,_month,_status),
     extDesc:(document.getElementById('pExtDesc')||{value:''}).value.trim(),
     ticketPrice:(document.getElementById('pTicketPrice')||{value:''}).value.trim(),
     eventLink:(document.getElementById('pEventLink')||{value:''}).value.trim(),
-    eventLinkLabel:(document.getElementById('pEventLinkLabel')||{value:''}).value.trim()||'Tickets & Info',
+    eventLinkLabel:(document.getElementById('pEventLinkLabel')||{value:''}).value.trim(),
     flyerImg:(document.getElementById('pFlyerImg')||{value:''}).value.trim(),
     modalImg:(document.getElementById('pModalImg')||{value:''}).value.trim(),
     modalImgHide:!!(document.getElementById('pModalImgHide')||{}).checked
@@ -10548,11 +10605,11 @@ function admRenderPerfList(){
           <div class="adm-col"><label class="adm-label">City</label><input class="adm-input" id="pe-city-${p.id}" value="${p.city||''}"></div>
         </div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Venue photo (URL)</label><input class="adm-input" id="pe-venuePhoto-${p.id}" value="${p.venuePhoto||''}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Opacity <span id="pe-opVal-${p.id}" style="color:var(--gold)">${(p.venueOpacity||50)}%</span></label><input type="range" min="30" max="100" value="${p.venueOpacity||50}" id="pe-venueOpacity-${p.id}" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pe-opVal-'+${p.id}).textContent=this.value+'%'"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Opacity <span id="pe-opVal-${p.id}" style="color:var(--gold)">${(p.venueOpacity != null && !Number.isNaN(Number(p.venueOpacity)) ? Number(p.venueOpacity) : 50)}%</span></label><input type="range" min="30" max="100" value="${p.venueOpacity != null && !Number.isNaN(Number(p.venueOpacity)) ? Number(p.venueOpacity) : 50}" id="pe-venueOpacity-${p.id}" style="width:100%;accent-color:var(--gold);cursor:pointer" oninput="document.getElementById('pe-opVal-'+${p.id}).textContent=this.value+'%'"></div></div>
         <div class="adm-section" style="margin-top:12px;font-size:.65rem">Optional details</div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Extended description</label><textarea class="adm-input" id="pe-extDesc-${p.id}" rows="2">${p.extDesc||''}</textarea></div></div>
         <div class="adm-grid"><div class="adm-col"><label class="adm-label">Ticket price</label><input class="adm-input" id="pe-ticketPrice-${p.id}" value="${p.ticketPrice||''}"></div><div class="adm-col"><label class="adm-label">Event link</label><input class="adm-input" id="pe-eventLink-${p.id}" value="${p.eventLink||''}"></div></div>
-        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link button label</label><input class="adm-input" id="pe-eventLinkLabel-${p.id}" value="${(p.eventLinkLabel||'Tickets & Info').replace(/"/g,'&quot;')}"></div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Link button label</label><input class="adm-input" id="pe-eventLinkLabel-${p.id}" value="${admOptionalDefault(p.eventLinkLabel, 'Tickets & Info').replace(/"/g,'&quot;')}"></div></div>
         <details style="margin-top:12px;border:1px solid var(--border);border-radius:2px;padding:10px 12px;background:rgba(0,0,0,.12)">
           <summary style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.12em;color:var(--gold-dim);cursor:pointer;user-select:none">Modal copy by language (optional)</summary>
           <p style="font-size:.68rem;color:var(--text-faint);margin:10px 0 8px;line-height:1.45">If set for a locale, the public site uses these for modal title, long text, link, and button label; otherwise the global fields above apply.</p>
@@ -10628,7 +10685,7 @@ function savePerf(id){
     detail_it:(document.getElementById('pe-detail_it-'+id)||{}).value||'',
     detail_fr:(document.getElementById('pe-detail_fr-'+id)||{}).value||'',
     venue:document.getElementById('pe-venue-'+id).value.trim(),
-    city:document.getElementById('pe-city-'+id).value.trim(),venuePhoto:(document.getElementById('pe-venuePhoto-'+id)||{value:''}).value.trim(),venueOpacity:parseInt((document.getElementById('pe-venueOpacity-'+id)||{value:50}).value)||50,extDesc:(document.getElementById('pe-extDesc-'+id)||{value:''}).value.trim(),ticketPrice:(document.getElementById('pe-ticketPrice-'+id)||{value:''}).value.trim(),eventLink:(document.getElementById('pe-eventLink-'+id)||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pe-eventLinkLabel-'+id)||{value:''}).value.trim()||'Tickets & Info',flyerImg:(document.getElementById('pe-flyerImg-'+id)||{value:''}).value.trim(),modalImg:(document.getElementById('pe-modalImg-'+id)||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pe-modalImgHide-'+id)||{}).checked,
+    city:document.getElementById('pe-city-'+id).value.trim(),venuePhoto:(document.getElementById('pe-venuePhoto-'+id)||{value:''}).value.trim(),venueOpacity:(()=>{const n=parseInt((document.getElementById('pe-venueOpacity-'+id)||{value:50}).value,10);return Number.isFinite(n)?n:50;})(),extDesc:(document.getElementById('pe-extDesc-'+id)||{value:''}).value.trim(),ticketPrice:(document.getElementById('pe-ticketPrice-'+id)||{value:''}).value.trim(),eventLink:(document.getElementById('pe-eventLink-'+id)||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pe-eventLinkLabel-'+id)||{value:''}).value.trim(),flyerImg:(document.getElementById('pe-flyerImg-'+id)||{value:''}).value.trim(),modalImg:(document.getElementById('pe-modalImg-'+id)||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pe-modalImgHide-'+id)||{}).checked,
     status:document.getElementById('pe-status-'+id).value,
     type:document.getElementById('pe-type-'+id).value,
     ...i18nModal
