@@ -3178,7 +3178,7 @@ function renderVideos() {
         (composer ? '<div class="video-meta-composer">' + composer + '</div>' : '') +
         (sub ? '<div class="video-meta-sub">' + sub + '</div>' : '') +
       '</div>' +
-      '<div class="video-play-btn" onclick="playVideo(\'' + escVideoAttr(vidId) + '\', event)" style="cursor:pointer;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">' +
+      '<div class="video-play-btn" onclick="playVideo(\'' + escVideoAttr(vidId) + '\')" style="cursor:pointer;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">' +
         '<div class="play-circle">' +
           '<svg width="14" height="16" viewBox="0 0 16 18"><path d="M0 0L16 9L0 18V0Z" fill="currentColor"/></svg>' +
         '</div></div></div>' +
@@ -3270,9 +3270,7 @@ function toggleMore() {
   if (btn) btn.textContent = isHidden ? (t['vid.showLess'] || '− Show Less') : (t['vid.showMore'] || '+ Show More Videos');
 }
 
-function playVideo(videoId, ev) {
-  if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
-  if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+function playVideo(videoId) {
   const wrap = document.getElementById('vwrap-' + videoId);
   if (!wrap) return;
   const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
@@ -3363,37 +3361,39 @@ function openVideoModal(videoId){
   const L = currentLang || 'en';
   const _vfbOp = String(effectiveUiText(L, 'vid.embedUnavailable') || 'Video player unavailable').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const _vfbYt = String(effectiveUiText(L, 'vid.openYoutube') || 'Open on YouTube').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-
-  // Orden: abrir modal primero, luego inyectar el embed en la misma pila síncrona del tap.
-  // Así el iframe no arranca en un contenedor todavía “cerrado” (mejor para autoplay/playsinline en iOS)
-  // y el `src` sigue ligado al gesto del usuario sin setTimeout intermedio.
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  const embedBase = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId);
-  const embedQs = 'autoplay=1&playsinline=1&rel=0&modestbranding=1';
   frame.innerHTML =
-    '<iframe src="' + embedBase + '?' + embedQs + '"' +
-    ' title="YouTube video"' +
+    '<iframe src="https://www.youtube.com/embed/' + videoId +
+    '?autoplay=1&rel=0&modestbranding=1"' +
     ' frameborder="0"' +
-    ' allow="autoplay; encrypted-media; picture-in-picture; fullscreen"' +
+    ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
     ' allowfullscreen' +
-    ' style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>' +
+    ' style="position:absolute;inset:0;width:100%;height:100%"></iframe>' +
     '<div class="video-embed-fallback" data-yt-id="' + videoId + '" style="display:none;position:absolute;inset:0;">' +
       '<span class="vfb-op">'+_vfbOp+'</span>' +
       '<button class="btn-secondary" style="margin-top:6px" onclick="window.open(\'' + youtubeUrl + '\',\'_blank\',\'noopener\')">'+_vfbYt+'</button>' +
     '</div>';
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
 
   try {
     const iframe = frame.querySelector('iframe');
     const fb = frame.querySelector('.video-embed-fallback');
     if (!iframe || !fb) return;
 
-    // Sin timeout ni “no hubo load”: en embeds cross-origin Safari a menudo no dispara `load` aunque el player funcione.
+    const markLoaded = () => { iframe.dataset.loaded = '1'; };
+    iframe.addEventListener('load', markLoaded);
     iframe.addEventListener('error', () => {
-      try{ iframe.remove(); }catch(_){}
+      iframe.remove();
       fb.style.display = 'flex';
     });
+
+    setTimeout(() => {
+      if (!iframe.dataset.loaded) {
+        try{ iframe.remove(); }catch(e){}
+        fb.style.display = 'flex';
+      }
+    }, 6000);
   } catch(e) {
     const fb = frame.querySelector('.video-embed-fallback');
     if (fb) {
