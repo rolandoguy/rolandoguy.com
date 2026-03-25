@@ -2327,7 +2327,11 @@ function normalizeArrayData(raw, preferredKeys = []) {
 // Get content: lang-specific custom override → lang default → fallback to 'en'
 function get(key) {
   const langKey = key + '_' + currentLang;
-  return load(langKey) || LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
+  const st = load(langKey);
+  if (st !== undefined && st !== null && typeof st === 'object' && !Array.isArray(st)) {
+    return st;
+  }
+  return LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
 }
 
 /** Merged perf doc: LANG defaults (en + current) then Firestore perf_{lang} overrides (fixes partial saves). */
@@ -2750,8 +2754,12 @@ function renderHero() {
     h.innerHTML = 'Rolando<br><em>Guy</em>';
   }
   const hb = document.getElementById('heroBg');
-  if (hb && d && d.bgImage && String(d.bgImage).trim()) {
-    hb.style.backgroundImage = "url('" + String(d.bgImage).trim() + "')";
+  if (hb) {
+    if (d && d.bgImage && String(d.bgImage).trim()) {
+      hb.style.backgroundImage = "url('" + String(d.bgImage).trim() + "')";
+    } else {
+      hb.style.backgroundImage = '';
+    }
   }
   const epkNavBtn = document.getElementById('heroEpkBtn');
   if (epkNavBtn) { const tl = effectiveUiText(currentLang, 'nav.epk.short') || 'Press'; epkNavBtn.textContent = tl; }
@@ -3310,7 +3318,7 @@ function playVideo(videoId) {
   wrap.innerHTML =
     '<div class="video-embed-shell" style="position:absolute;inset:0;width:100%;height:100%;">' +
       '<iframe src="https://www.youtube.com/embed/' + videoId +
-      '?autoplay=1&rel=0&modestbranding=1"' +
+      '?autoplay=1&playsinline=1&rel=0&modestbranding=1"' +
       ' frameborder="0"' +
       ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
       ' allowfullscreen' +
@@ -3358,12 +3366,18 @@ function openVideoModal(videoId){
   if (!modal || !frame) return;
   const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
 
+  // Mobile: show the modal *before* injecting the embed. Loading autoplay inside display:none
+  // often loses the user-gesture chain; Safari/iOS then requires a second tap on the player.
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const embedQs = 'autoplay=1&playsinline=1&rel=0&modestbranding=1';
   const L = currentLang || 'en';
   const _vfbOp = String(effectiveUiText(L, 'vid.embedUnavailable') || 'Video player unavailable').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const _vfbYt = String(effectiveUiText(L, 'vid.openYoutube') || 'Open on YouTube').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   frame.innerHTML =
     '<iframe src="https://www.youtube.com/embed/' + videoId +
-    '?autoplay=1&rel=0&modestbranding=1"' +
+    '?' + embedQs + '"' +
     ' frameborder="0"' +
     ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
     ' allowfullscreen' +
@@ -3372,9 +3386,6 @@ function openVideoModal(videoId){
       '<span class="vfb-op">'+_vfbOp+'</span>' +
       '<button class="btn-secondary" style="margin-top:6px" onclick="window.open(\'' + youtubeUrl + '\',\'_blank\',\'noopener\')">'+_vfbYt+'</button>' +
     '</div>';
-
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
 
   try {
     const iframe = frame.querySelector('iframe');
