@@ -2327,11 +2327,7 @@ function normalizeArrayData(raw, preferredKeys = []) {
 // Get content: lang-specific custom override → lang default → fallback to 'en'
 function get(key) {
   const langKey = key + '_' + currentLang;
-  const st = load(langKey);
-  if (st !== undefined && st !== null && typeof st === 'object' && !Array.isArray(st)) {
-    return st;
-  }
-  return LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
+  return load(langKey) || LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
 }
 
 /** Merged perf doc: LANG defaults (en + current) then Firestore perf_{lang} overrides (fixes partial saves). */
@@ -2754,12 +2750,8 @@ function renderHero() {
     h.innerHTML = 'Rolando<br><em>Guy</em>';
   }
   const hb = document.getElementById('heroBg');
-  if (hb) {
-    if (d && d.bgImage && String(d.bgImage).trim()) {
-      hb.style.backgroundImage = "url('" + String(d.bgImage).trim() + "')";
-    } else {
-      hb.style.backgroundImage = '';
-    }
+  if (hb && d && d.bgImage && String(d.bgImage).trim()) {
+    hb.style.backgroundImage = "url('" + String(d.bgImage).trim() + "')";
   }
   const epkNavBtn = document.getElementById('heroEpkBtn');
   if (epkNavBtn) { const tl = effectiveUiText(currentLang, 'nav.epk.short') || 'Press'; epkNavBtn.textContent = tl; }
@@ -3186,7 +3178,7 @@ function renderVideos() {
         (composer ? '<div class="video-meta-composer">' + composer + '</div>' : '') +
         (sub ? '<div class="video-meta-sub">' + sub + '</div>' : '') +
       '</div>' +
-      '<div class="video-play-btn" onclick="playVideo(\'' + escVideoAttr(vidId) + '\')" style="cursor:pointer;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">' +
+      '<div class="video-play-btn" onclick="playVideo(\'' + escVideoAttr(vidId) + '\', event)" style="cursor:pointer;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">' +
         '<div class="play-circle">' +
           '<svg width="14" height="16" viewBox="0 0 16 18"><path d="M0 0L16 9L0 18V0Z" fill="currentColor"/></svg>' +
         '</div></div></div>' +
@@ -3278,7 +3270,9 @@ function toggleMore() {
   if (btn) btn.textContent = isHidden ? (t['vid.showLess'] || '− Show Less') : (t['vid.showMore'] || '+ Show More Videos');
 }
 
-function playVideo(videoId) {
+function playVideo(videoId, ev) {
+  if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+  if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
   const wrap = document.getElementById('vwrap-' + videoId);
   if (!wrap) return;
   const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
@@ -3318,7 +3312,7 @@ function playVideo(videoId) {
   wrap.innerHTML =
     '<div class="video-embed-shell" style="position:absolute;inset:0;width:100%;height:100%;">' +
       '<iframe src="https://www.youtube.com/embed/' + videoId +
-      '?autoplay=1&playsinline=1&rel=0&modestbranding=1"' +
+      '?autoplay=1&rel=0&modestbranding=1"' +
       ' frameborder="0"' +
       ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
       ' allowfullscreen' +
@@ -3366,22 +3360,25 @@ function openVideoModal(videoId){
   if (!modal || !frame) return;
   const youtubeUrl = 'https://www.youtube.com/watch?v=' + videoId;
 
-  // Mobile: show the modal *before* injecting the embed. Loading autoplay inside display:none
-  // often loses the user-gesture chain; Safari/iOS then requires a second tap on the player.
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  const embedQs = 'autoplay=1&playsinline=1&rel=0&modestbranding=1';
   const L = currentLang || 'en';
   const _vfbOp = String(effectiveUiText(L, 'vid.embedUnavailable') || 'Video player unavailable').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const _vfbYt = String(effectiveUiText(L, 'vid.openYoutube') || 'Open on YouTube').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+  // Orden: abrir modal primero, luego inyectar el embed en la misma pila síncrona del tap.
+  // Así el iframe no arranca en un contenedor todavía “cerrado” (mejor para autoplay/playsinline en iOS)
+  // y el `src` sigue ligado al gesto del usuario sin setTimeout intermedio.
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const embedBase = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId);
+  const embedQs = 'autoplay=1&playsinline=1&rel=0&modestbranding=1';
   frame.innerHTML =
-    '<iframe src="https://www.youtube.com/embed/' + videoId +
-    '?' + embedQs + '"' +
+    '<iframe src="' + embedBase + '?' + embedQs + '"' +
+    ' title="YouTube video"' +
     ' frameborder="0"' +
-    ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
+    ' allow="autoplay; encrypted-media; picture-in-picture; fullscreen"' +
     ' allowfullscreen' +
-    ' style="position:absolute;inset:0;width:100%;height:100%"></iframe>' +
+    ' style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>' +
     '<div class="video-embed-fallback" data-yt-id="' + videoId + '" style="display:none;position:absolute;inset:0;">' +
       '<span class="vfb-op">'+_vfbOp+'</span>' +
       '<button class="btn-secondary" style="margin-top:6px" onclick="window.open(\'' + youtubeUrl + '\',\'_blank\',\'noopener\')">'+_vfbYt+'</button>' +
@@ -3392,19 +3389,11 @@ function openVideoModal(videoId){
     const fb = frame.querySelector('.video-embed-fallback');
     if (!iframe || !fb) return;
 
-    const markLoaded = () => { iframe.dataset.loaded = '1'; };
-    iframe.addEventListener('load', markLoaded);
+    // Sin timeout ni “no hubo load”: en embeds cross-origin Safari a menudo no dispara `load` aunque el player funcione.
     iframe.addEventListener('error', () => {
-      iframe.remove();
+      try{ iframe.remove(); }catch(_){}
       fb.style.display = 'flex';
     });
-
-    setTimeout(() => {
-      if (!iframe.dataset.loaded) {
-        try{ iframe.remove(); }catch(e){}
-        fb.style.display = 'flex';
-      }
-    }, 6000);
   } catch(e) {
     const fb = frame.querySelector('.video-embed-fallback');
     if (fb) {
