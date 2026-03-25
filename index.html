@@ -6,7 +6,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0D0D12">
 <!-- ═══════════════════════════════════════════
      SEO & SOCIAL META TAGS
@@ -334,13 +334,23 @@ body{
 .cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(212,168,67,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:1}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px}
-.lang-bar{
+/* Single fixed layer for lang + nav: improves Android Chrome stability when browser UI shows/hides */
+.site-chrome{
   position:fixed;
   top:0;
   left:0;
   right:0;
-  margin:0;
   z-index:200;
+  pointer-events:none;
+}
+.site-chrome .lang-bar,
+.site-chrome nav{
+  pointer-events:auto;
+}
+.lang-bar{
+  position:static;
+  width:100%;
+  margin:0;
   display:flex;
   justify-content:flex-end;
   align-items:center;
@@ -364,7 +374,15 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .lang-btn:focus-visible,.nav-logo:focus-visible,.nav-links a:focus-visible,.btn-primary:focus-visible,.btn-secondary:focus-visible,.back-to-top:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .hamburger:focus-visible,.mobile-menu a:focus-visible,.mobile-menu .lang-row button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .form-input:focus-visible,.form-submit:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-nav{position:fixed;top:37px;left:0;right:0;z-index:100;padding:20px 60px;display:flex;justify-content:space-between;align-items:center;transition:background .4s,padding .4s}
+nav{
+  position:static;
+  width:100%;
+  padding:20px 60px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  transition:background .4s,padding .4s;
+}
 nav.scrolled{background:rgba(13,13,18,.95);backdrop-filter:blur(12px);padding:12px 60px;border-bottom:1px solid var(--border)}
 .nav-logo{font-family:var(--ff-caps);font-size:.9rem;letter-spacing:.2em;color:var(--gold);text-decoration:none;text-transform:uppercase;transition:filter .35s var(--ease-soft),opacity .35s var(--ease-soft);cursor:none;flex-shrink:0;margin-right:16px}
 .nav-logo:hover{filter:brightness(1.14)}
@@ -1187,7 +1205,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   #repertoire::before{left:20px;width:min(200px,55vw)}
   #performances::before{right:20px;width:min(180px,50vw)}
   .lang-bar{padding:6px 18px}
-  nav{padding:14px 18px;top:37px;justify-content:space-between}
+  nav{padding:14px 18px;justify-content:space-between}
   .nav-logo{font-size:.72rem;letter-spacing:.18em;margin-right:0;max-width:calc(100vw - 120px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1;display:inline-flex;align-items:center}
   nav.scrolled{padding:10px 18px}
   .nav-links{display:none}
@@ -1277,7 +1295,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .lang-bar{padding:5px 12px;gap:1px;flex-wrap:wrap;justify-content:center;row-gap:6px}
   .lang-btn .lang-label{display:none}
   .lang-btn{padding:5px 8px}
-  nav{top:34px;padding:10px 14px}
+  nav{padding:10px 14px}
   /* Avoid hero taller than the viewport on short phones (was min-height:700px from base #hero) */
   #hero{height:100svh;height:100vh;min-height:0}
   .hero-content{padding:0 16px max(70px, env(safe-area-inset-bottom, 0px))}
@@ -1696,6 +1714,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 <body>
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
+<header class="site-chrome" role="banner">
 <div class="lang-bar">
   <button class="lang-btn active" onclick="setLang('en', { persist: true })" id="btn-en">&#127468;&#127463; EN</button>
   <button class="lang-btn" onclick="setLang('de', { persist: true })" id="btn-de">&#127465;&#127466; DE</button>
@@ -1719,6 +1738,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
     <span></span><span></span><span></span>
   </button>
 </nav>
+</header>
 <div class="mobile-menu" id="mobileMenu">
   <a href="#hero" onclick="closeMenu()" data-i18n="nav.home">Home</a>
   <a href="#about" onclick="closeMenu()" data-i18n="nav.bio">Biography</a>
