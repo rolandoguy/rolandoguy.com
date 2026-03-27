@@ -152,12 +152,7 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
         {"@type": "Organization", "name": "Die Goldvögel, Berlin"},
         {"@type": "Organization", "name": "Diplomatic Choir of Berlin"}
       ],
-      "award": ["Finalist, Eva Marton International Singing Competition, Hungary 2018", "Participant, Javier Camarena Masterclass, Buenos Aires 2017"],
-      "performer": [
-        {"@type": "Event", "name": "Der Vetter aus Dingsda", "location": "Kammeroper Frankfurt"},
-        {"@type": "Event", "name": "Die Zauberflöte", "location": "Opernwerkstatt am Rhein"},
-        {"@type": "Event", "name": "Tenor soloist", "location": "Staatsoper Berlin"}
-      ]
+      "award": ["Finalist, Eva Marton International Singing Competition, Hungary 2018", "Participant, Javier Camarena Masterclass, Buenos Aires 2017"]
     },
     {
       "@type": "Service",
@@ -188,38 +183,65 @@ ténor berlin, ténor à engager berlin, chanteur opéra berlin, recruter ténor
       "url": "https://www.rolandoguy.com/"
     },
     {
-      "@type": "MusicEvent",
+      "@type": "Event",
       "name": "Nestor — Irma la douce",
       "startDate": "2026-12-04",
       "eventStatus": "https://schema.org/EventScheduled",
       "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "description": "Rolando Guy as Nestor in Irma la douce · Institut Français · Berlin.",
       "location": {
         "@type": "Place",
         "name": "Institut Français",
         "address": {"@type": "PostalAddress", "addressLocality": "Berlin", "addressCountry": "DE"}
       },
-      "performer": {"@id": "https://www.rolandoguy.com/#person"},
-      "organizer": {"@type": "Organization", "name": "Institut Français Berlin"},
-      "description": "Rolando Guy as Nestor in Irma la douce · Institut Français · Berlin.",
-      "image": "https://www.rolandoguy.com/og-image.jpg",
-      "offers": {"@type": "Offer", "url": "https://www.rolandoguy.com/#contact", "availability": "https://schema.org/InStock", "validFrom": "2026-12-04"}
+      "performer": {"@type": "Person", "name": "Rolando Guy", "url": "https://www.rolandoguy.com/"},
+      "organizer": {"@type": "Organization", "name": "Institut Français Berlin", "url": "https://www.rolandoguy.com/#performances"},
+      "image": ["https://www.rolandoguy.com/og-image.jpg"],
+      "url": "https://www.rolandoguy.com/#performances"
     },
     {
-      "@type": "MusicEvent",
+      "@type": "Event",
       "name": "Nestor — Irma la douce",
       "startDate": "2026-12-18",
       "eventStatus": "https://schema.org/EventScheduled",
       "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "description": "Rolando Guy as Nestor in Irma la douce · Institut Français · Berlin.",
       "location": {
         "@type": "Place",
         "name": "Institut Français",
         "address": {"@type": "PostalAddress", "addressLocality": "Berlin", "addressCountry": "DE"}
       },
-      "performer": {"@id": "https://www.rolandoguy.com/#person"},
-      "organizer": {"@type": "Organization", "name": "Institut Français Berlin"},
-      "description": "Rolando Guy as Nestor in Irma la douce · Institut Français · Berlin.",
-      "image": "https://www.rolandoguy.com/og-image.jpg",
-      "offers": {"@type": "Offer", "url": "https://www.rolandoguy.com/#contact", "availability": "https://schema.org/InStock", "validFrom": "2026-12-18"}
+      "performer": {"@type": "Person", "name": "Rolando Guy", "url": "https://www.rolandoguy.com/"},
+      "organizer": {"@type": "Organization", "name": "Institut Français Berlin", "url": "https://www.rolandoguy.com/#performances"},
+      "image": ["https://www.rolandoguy.com/og-image.jpg"],
+      "url": "https://www.rolandoguy.com/#performances"
+    },
+    {
+      "@type": "Event",
+      "name": "Pasiones del Sur – Stimmen der Leidenschaft",
+      "startDate": "2026-09-01T19:00:00+02:00",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "description": "An evening of passion and poetry: Argentine and Spanish song, opera arias and tango. Featuring tenor Rolando Guy, baritone Hongyu Chen and pianist Anna Anstett.",
+      "location": {
+        "@type": "Place",
+        "name": "Schwartzsche Villa",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Grunewaldstraße 55",
+          "addressLocality": "Berlin",
+          "postalCode": "12165",
+          "addressCountry": "DE"
+        }
+      },
+      "performer": [
+        { "@type": "Person", "name": "Rolando Guy", "url": "https://www.rolandoguy.com/", "jobTitle": "Tenor" },
+        { "@type": "Person", "name": "Hongyu Chen", "jobTitle": "Baritone" },
+        { "@type": "Person", "name": "Anna Anstett", "jobTitle": "Piano" }
+      ],
+      "organizer": { "@type": "Person", "name": "Rolando Guy", "url": "https://www.rolandoguy.com/" },
+      "image": ["https://www.rolandoguy.com/og-image.jpg"],
+      "url": "https://www.rolandoguy.com/#performances"
     },
     {
       "@type": "WebSite",
@@ -8290,67 +8312,156 @@ function renderPress(){
 
 
 // ── Dynamic Event Schema for Google ──
+function perfSchemaYmd(p) {
+  const rawSd = p.sortDate != null ? String(p.sortDate).trim() : '';
+  const ymd = rawSd.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) {
+    const y = +ymd[1], mo = +ymd[2], d = +ymd[3];
+    if (y >= 2090) return null;
+    return { y, mo, d };
+  }
+  if (p.day && p.day !== 'TBA' && p.month) {
+    const dt = new Date(String(p.day) + ' ' + String(p.month));
+    if (isNaN(dt.getTime()) || dt.getFullYear() >= 2090) return null;
+    return { y: dt.getFullYear(), mo: dt.getMonth() + 1, d: dt.getDate() };
+  }
+  return null;
+}
+function extractPerfHm(p, langKey) {
+  const t = (p.time || '').replace(/\s*(uhr|h)\s*$/i, '').trim();
+  let m = t.match(/^(\d{1,2})[.:](\d{2})/);
+  if (m) return { h: +m[1], min: +m[2] };
+  const detail = String(p['detail_' + langKey] || p.detail || '');
+  m = detail.match(/\b(\d{1,2})[.:](\d{2})\b/);
+  if (m) return { h: +m[1], min: +m[2] };
+  return null;
+}
+function berlinOffsetSimple(month) {
+  return (month >= 4 && month <= 10) ? '+02:00' : '+01:00';
+}
+function buildPerfSchemaStartIso(p, langKey) {
+  const cal = perfSchemaYmd(p);
+  if (!cal) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  const { y, mo, d } = cal;
+  const datePart = `${y}-${pad(mo)}-${pad(d)}`;
+  const rawFull = p.sortDate != null ? String(p.sortDate).trim() : '';
+  if (/^\d{4}-\d{2}-\d{2}T/.test(rawFull)) {
+    if (/[+-]\d{2}:\d{2}$|Z$/i.test(rawFull)) return rawFull;
+    return rawFull + berlinOffsetSimple(mo);
+  }
+  const hm = extractPerfHm(p, langKey);
+  if (hm) {
+    return `${datePart}T${pad(hm.h)}:${pad(hm.min)}:00${berlinOffsetSimple(mo)}`;
+  }
+  return `${datePart}T00:00:00${berlinOffsetSimple(mo)}`;
+}
+function schemaStartHasTimezone(iso) {
+  return typeof iso === 'string' && /(Z|[+-]\d{2}:\d{2})$/.test(iso);
+}
+function inferAddressCountry(city, venue, locationName) {
+  const s = ((city || '') + ' ' + (venue || '') + ' ' + (locationName || '')).toLowerCase();
+  if (/\b(deutschland|germany|berlin|frankfurt|hamburg|köln|cologne|düsseldorf|münchen|munich|stuttgart|hannover|leipzig|dresden)\b/.test(s)) return 'DE';
+  if (/\b(france|frankreich|paris|lyon)\b/.test(s)) return 'FR';
+  if (/\b(italy|italia|italien|roma|rome|milano|milan)\b/.test(s)) return 'IT';
+  if (/\b(spain|españa|madrid|barcelona)\b/.test(s)) return 'ES';
+  if (/\b(argentina|buenos aires)\b/.test(s)) return 'AR';
+  return '';
+}
+function parseSchemaOfferPrice(ticketPrice) {
+  const t = (ticketPrice || '').trim();
+  if (!t) return null;
+  if (/^(0|0[.,]00)(\s*(€|eur))?$/i.test(t) || /\b(gratis|free)\b/i.test(t)) return '0';
+  const m = t.match(/(\d{1,4}([.,]\d{1,2})?)/);
+  if (!m) return null;
+  const v = parseFloat(m[1].replace(',', '.'));
+  if (isNaN(v) || v <= 0) return null;
+  return String(v);
+}
+function buildSchemaEventOffer(ticketUrl, ticketPrice, startIso, site) {
+  const hasTicket = ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim());
+  const price = parseSchemaOfferPrice(ticketPrice);
+  if (!hasTicket && price !== '0') return null;
+  const validFrom = startIso.slice(0, 10);
+  const url = hasTicket ? String(ticketUrl).trim() : site + '#contact';
+  const o = {
+    '@type': 'Offer',
+    url,
+    priceCurrency: 'EUR',
+    availability: 'https://schema.org/InStock',
+    validFrom
+  };
+  if (price != null) o.price = price;
+  return o;
+}
 function injectEventSchema() {
   const old = document.getElementById('event-schema');
   if (old) old.remove();
 
-  const perfs = getPerfs().filter(p => p.status === 'upcoming' || p.status === 'current');
-  if (!perfs.length) return;
+  const SITE = 'https://www.rolandoguy.com/';
+  /** Dates already published in the first <script type="application/ld+json"> @graph (avoid duplicate Event nodes). Keep in sync when editing static events. */
+  const STATIC_LD_EVENT_DAYS = new Set(['2026-12-04', '2026-12-18', '2026-09-01']);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sortDate = (p) => {
+    if (p.sortDate) return new Date(p.sortDate);
+    const str = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'Jan 2099');
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? new Date('2099-01-01') : d;
+  };
+  const lang = typeof currentLang === 'string' ? currentLang : 'en';
+  const perfs = getPerfs().filter((p) => {
+    const d = sortDate(p);
+    if (isNaN(d.getTime())) return false;
+    if (d.getFullYear() >= 2090) return false;
+    return d >= today;
+  });
 
-  const events = perfs.map(p => {
-    // Build ISO date from sortDate or day+month fields
-    let startDate = null;
-    if (p.sortDate) {
-      startDate = p.sortDate; // already ISO YYYY-MM-DD
-    } else {
-      const raw = (p.day && p.day !== 'TBA' ? p.day + ' ' : '1 ') + (p.month || 'January 2099');
-      const d = new Date(raw);
-      if (!isNaN(d)) startDate = d.toISOString().split('T')[0];
-    }
-    if (!startDate) return null; // skip events with no parseable date
+  const events = perfs.map((p) => {
+    const startDate = buildPerfSchemaStartIso(p, lang);
+    if (!startDate || !schemaStartHasTimezone(startDate)) return null;
+    if (STATIC_LD_EVENT_DAYS.has(startDate.slice(0, 10))) return null;
+    const schemaTitle = (perfLocaleField(p, 'title', lang) || p.title || '').trim();
+    if (!schemaTitle) return null;
+    const schemaDetail = (p['detail_' + lang] || p.detail || '').trim();
+    const venue = (p.venue || '').trim();
+    const cityRaw = (p.city || '').trim();
+    const locality = cityRaw ? cityRaw.split(',')[0].trim() : '';
+    const locationName = venue || locality;
+    if (!locationName) return null;
 
-    const locationName = p.venue || p.city || 'Berlin';
-    const city = p.city || 'Berlin';
-
-    const schemaTitle = perfLocaleField(p, 'title', currentLang) || p.title || 'Performance by Rolando Guy';
-    const schemaDetail = (p['detail_'+currentLang] || p.detail || '').trim();
-    return {
-      "@context": "https://schema.org",
-      "@type": "MusicEvent",
-      "name": schemaTitle,
-      "startDate": startDate,
-      "endDate": startDate,
-      "eventStatus": "https://schema.org/EventScheduled",
-      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-      "location": {
-        "@type": "Place",
-        "name": locationName,
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": city,
-          "addressCountry": city.toLowerCase().includes('berlin') || city.toLowerCase().includes('frankfurt') || city.toLowerCase().includes('germany') ? 'DE' : 'DE'
-        }
+    const evt = {
+      '@type': 'Event',
+      name: schemaTitle,
+      startDate,
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      performer: {
+        '@type': 'Person',
+        name: 'Rolando Guy',
+        url: SITE
       },
-      "performer": {
-        "@type": "Person",
-        "name": "Rolando Guy",
-        "url": "https://www.rolandoguy.com/"
-      },
-      "organizer": {
-        "@type": "Organization",
-        "name": p.venue || "Rolando Guy",
-        "url": "https://www.rolandoguy.com/"
-      },
-      "description": [schemaTitle, schemaDetail, p.venue, p.city].filter(Boolean).join(' · '),
-      "image": "https://www.rolandoguy.com/og-image.jpg",
-      "url": "https://www.rolandoguy.com/#performances",
-      "offers": {
-        "@type": "Offer",
-        "url": "https://www.rolandoguy.com/#contact",
-        "availability": "https://schema.org/InStock",
-        "validFrom": startDate
-      }
+      image: [SITE + 'og-image.jpg'],
+      url: SITE + '#performances',
+      organizer: { '@type': 'Organization', name: 'Rolando Guy', url: SITE }
     };
+    const descParts = [schemaTitle];
+    if (schemaDetail) descParts.push(schemaDetail);
+    if (venue) descParts.push(venue);
+    if (cityRaw) descParts.push(cityRaw);
+    evt.description = descParts.join(' · ');
+
+    const addr = { '@type': 'PostalAddress', addressLocality: locality || venue };
+    let cc = inferAddressCountry(cityRaw, venue, locationName);
+    if (!cc && /\b(berlin|frankfurt|münchen|munich|hamburg|köln|cologne|deutschland|germany)\b/i.test((locality + ' ' + venue + ' ' + cityRaw))) cc = 'DE';
+    if (cc) addr.addressCountry = cc;
+    evt.location = { '@type': 'Place', name: locationName, address: addr };
+
+    const ticketUrl = (perfLocaleField(p, 'eventLink', lang) || p.eventLink || '').trim();
+    const ticketPrice = (p.ticketPrice || '').trim();
+    const offer = buildSchemaEventOffer(ticketUrl, ticketPrice, startDate, SITE);
+    if (offer) evt.offers = offer;
+    return evt;
   }).filter(Boolean);
 
   if (!events.length) return;
@@ -8358,7 +8469,7 @@ function injectEventSchema() {
   const script = document.createElement('script');
   script.id = 'event-schema';
   script.type = 'application/ld+json';
-  script.textContent = JSON.stringify(events.length === 1 ? events[0] : {"@context":"https://schema.org","@graph":events});
+  script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': events });
   document.head.appendChild(script);
 }
 function renderAll() {
