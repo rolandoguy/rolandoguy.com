@@ -10,7 +10,11 @@
   var firebaseAuth = null;
   var authDebugState = {
     redirectProcessed: 'no',
+    persistenceSet: 'no',
+    persistenceType: 'unknown',
+    redirectPending: 'no',
     authState: 'pending',
+    currentUserPresent: 'no',
     email: '—',
     allowlist: 'no',
     gate: 'locked',
@@ -93,6 +97,13 @@
         localStorage.removeItem(AUTH_REDIRECT_PENDING_TS_KEY);
       }
     } catch (e) {}
+    setAuthDebug({ redirectPending: getRedirectPending() ? 'yes' : 'no' });
+  }
+  function refreshAuthRuntimeDebug(user) {
+    setAuthDebug({
+      redirectPending: getRedirectPending() ? 'yes' : 'no',
+      currentUserPresent: user ? 'yes' : 'no'
+    });
   }
   function renderAuthDebug() {
     var card = document.querySelector('.auth-card');
@@ -111,7 +122,11 @@
     }
     el.textContent =
       'AUTH debug: redirectProcessed=' + safeString(authDebugState.redirectProcessed) +
+      ' persistenceSet=' + safeString(authDebugState.persistenceSet) +
+      ' persistenceType=' + safeString(authDebugState.persistenceType) +
+      ' redirectPending=' + safeString(authDebugState.redirectPending) +
       ' authState=' + safeString(authDebugState.authState) +
+      ' currentUserPresent=' + safeString(authDebugState.currentUserPresent) +
       ' email=' + safeString(authDebugState.email || '—') +
       ' allowlist=' + safeString(authDebugState.allowlist) +
       ' gate=' + safeString(authDebugState.gate) +
@@ -140,16 +155,44 @@
     if ($('adm2SignOutBtn')) $('adm2SignOutBtn').style.display = user ? '' : 'none';
     if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').style.display = unlocked && user ? '' : 'none';
     if ($('adm2AuthMsg')) $('adm2AuthMsg').textContent = msgText || '';
+    refreshAuthRuntimeDebug(user || (firebaseAuth ? firebaseAuth.currentUser : null));
     setAuthDebug({
       email: user && user.email ? user.email : '—',
       allowlist: isAdminUser(user) ? 'yes' : 'no',
       gate: unlocked ? 'unlocked' : 'locked'
     });
   }
+  function setBestAuthPersistence() {
+    if (!firebaseAuth || !firebase.auth || !firebase.auth.Auth || !firebase.auth.Auth.Persistence) {
+      setAuthDebug({ persistenceSet: 'no', persistenceType: 'unavailable' });
+      return Promise.resolve(false);
+    }
+    var P = firebase.auth.Auth.Persistence;
+    var candidates = [
+      { id: P.LOCAL, label: 'local' },
+      { id: P.SESSION, label: 'session' },
+      { id: P.NONE, label: 'none' }
+    ];
+    var i = 0;
+    function next() {
+      if (i >= candidates.length) {
+        setAuthDebug({ persistenceSet: 'no', persistenceType: 'failed' });
+        return Promise.resolve(false);
+      }
+      var c = candidates[i++];
+      return firebaseAuth.setPersistence(c.id).then(function () {
+        setAuthDebug({ persistenceSet: 'yes', persistenceType: c.label });
+        return true;
+      }).catch(function () {
+        return next();
+      });
+    }
+    return next();
+  }
   function initAuth() {
     if (typeof firebase === 'undefined') {
       setAuthError('Authentication is unavailable (Firebase failed to load).');
-      return;
+      return Promise.resolve(false);
     }
     try {
       if (!firebase.apps || !firebase.apps.length) {
@@ -163,8 +206,10 @@
         });
       }
       firebaseAuth = firebase.auth();
+      return setBestAuthPersistence();
     } catch (e) {
       setAuthError('Authentication is unavailable (Firebase init failed).', e);
+      return Promise.resolve(false);
     }
   }
   function signInGoogle() {
@@ -203,6 +248,7 @@
     setAuthDebug({ redirectProcessed: 'no', authState: 'pending', failure: '' });
     return firebaseAuth.getRedirectResult().then(function (res) {
       setAuthDebug({ redirectProcessed: 'yes', authState: res && res.user ? 'signed-in' : 'signed-out' });
+      refreshAuthRuntimeDebug((res && res.user) || (firebaseAuth ? firebaseAuth.currentUser : null));
       if (res && res.user) {
         setRedirectPending(false);
         setAuthGate(false, res.user, 'Redirect sign-in completed. Verifying access…');
@@ -226,6 +272,7 @@
       var nullUserTimer = null;
       firebaseAuth.onAuthStateChanged(function (user) {
         var ok = isAdminUser(user);
+        refreshAuthRuntimeDebug(user);
         setAuthDebug({
           authState: user ? 'signed-in' : 'signed-out',
           email: user && user.email ? user.email : '—',
@@ -2115,9 +2162,17 @@
     try {
       window.adm2SignInGoogle = signInGoogle;
       window.adm2SignOut = signOut;
-      setAuthDebug({ redirectProcessed: getRedirectPending() ? 'no' : 'yes', authState: 'pending', failure: '' });
+      setAuthDebug({
+        redirectProcessed: getRedirectPending() ? 'no' : 'yes',
+        persistenceSet: 'no',
+        persistenceType: 'pending',
+        redirectPending: getRedirectPending() ? 'yes' : 'no',
+        authState: 'pending',
+        currentUserPresent: 'no',
+        failure: ''
+      });
       setAuthGate(false, null, 'Checking authentication status…');
-      initAuth();
+      await initAuth();
       await handleRedirectResult();
       if ($('adm2SignInBtn')) {
         $('adm2SignInBtn').addEventListener('click', signInGoogle);
