@@ -7,6 +7,9 @@
   var MP_LANG_STORAGE = 'mp_site_lang';
   var MP_LANG_LIST = ['en', 'de', 'es', 'it', 'fr'];
   var MP_LOCALES_URL = '/v1-assets/data/mp-locales.json';
+  var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var MP_UI_OVERRIDES = {};
+  var MP_UI_PROMISES = {};
 
   function normalizeLang(code) {
     var c = String(code || 'en')
@@ -34,6 +37,70 @@
   }
 
   window.getMpSiteLang = getMpSiteLang;
+  function readLegacyJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var parseMaybe = function (raw) {
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch (e) { return null; }
+      };
+      var direct = parseMaybe(window.localStorage.getItem(key));
+      if (direct != null) {
+        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
+        return direct;
+      }
+      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
+      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function fetchFirestoreDocJson(key) {
+    var url = 'https://firestore.googleapis.com/v1/projects/' + MP_FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!v || typeof v !== 'string') return null;
+        try { return JSON.parse(v); } catch (e) { return null; }
+      })
+      .catch(function () { return null; });
+  }
+  function ensureUiOverrideFor(lang) {
+    var L = normalizeLang(lang);
+    if (MP_UI_OVERRIDES[L]) return Promise.resolve(MP_UI_OVERRIDES[L]);
+    if (MP_UI_PROMISES[L]) return MP_UI_PROMISES[L];
+    var key = 'rg_ui_' + L;
+    MP_UI_PROMISES[L] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        var best = (doc && typeof doc === 'object') ? doc : readLegacyJson(key);
+        MP_UI_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
+        return MP_UI_OVERRIDES[L];
+      })
+      .catch(function () {
+        var best = readLegacyJson(key);
+        MP_UI_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
+        return MP_UI_OVERRIDES[L];
+      })
+      .finally(function () {
+        delete MP_UI_PROMISES[L];
+      });
+    return MP_UI_PROMISES[L];
+  }
+  function getUiOverrideString(lang, key) {
+    var L = normalizeLang(lang);
+    var d = MP_UI_OVERRIDES[L];
+    if (d && typeof d[key] === 'string' && d[key].trim()) return d[key];
+    if (L !== 'en') {
+      var en = MP_UI_OVERRIDES.en;
+      if (en && typeof en[key] === 'string' && en[key].trim()) return en[key];
+    }
+    return null;
+  }
 
   /**
    * @param {string} lang
@@ -41,6 +108,8 @@
    * @returns {string|null}
    */
   function pickLocaleString(lang, key) {
+    var ov = getUiOverrideString(lang, key);
+    if (ov != null && ov !== '') return String(ov);
     var L = window.MP_LOCALE_TABLE;
     if (!L || !key) return null;
     var t = L[lang] || L.en;
@@ -120,8 +189,10 @@
     var lang = persist ? storeMpSiteLang(code) : normalizeLang(code);
     document.documentElement.lang = lang;
     syncLangButtons(lang);
-    applyChromeI18n(lang);
-    dispatchLang(lang);
+    ensureUiOverrideFor(lang).finally(function () {
+      applyChromeI18n(lang);
+      dispatchLang(lang);
+    });
   };
 
   function applyLoadedLocales(data, lang) {
@@ -133,11 +204,13 @@
     }
     document.documentElement.lang = lang;
     syncLangButtons(lang);
-    applyChromeI18n(lang);
-    window.dispatchEvent(
-      new CustomEvent('mp:localesready', { detail: { lang: lang } })
-    );
-    dispatchLang(lang);
+    Promise.all([ensureUiOverrideFor('en'), ensureUiOverrideFor(lang)]).finally(function () {
+      applyChromeI18n(lang);
+      window.dispatchEvent(
+        new CustomEvent('mp:localesready', { detail: { lang: lang } })
+      );
+      dispatchLang(lang);
+    });
   }
 
   function mpInitLanguage() {

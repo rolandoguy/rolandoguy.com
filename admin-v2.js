@@ -298,6 +298,55 @@
     state.api.save(key, clone(val));
     markDirty(false, 'Guardado: ' + key);
   }
+  function getAuthIdToken() {
+    if (!firebaseAuth || !firebaseAuth.currentUser || typeof firebaseAuth.currentUser.getIdToken !== 'function') {
+      return Promise.resolve('');
+    }
+    return firebaseAuth.currentUser.getIdToken(true).catch(function () { return ''; });
+  }
+  function buildFirestoreHeroDocPayload(payload) {
+    return {
+      fields: {
+        value: {
+          stringValue: JSON.stringify(payload)
+        }
+      }
+    };
+  }
+  function writeHeroDocToFirestore(key, payload) {
+    var base = 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/';
+    var url = base + encodeURIComponent(key);
+    return getAuthIdToken().then(function (token) {
+      if (!token) return { ok: false, status: 0, reason: 'missing-id-token' };
+      return fetch(url, {
+        method: 'PATCH',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(buildFirestoreHeroDocPayload(payload))
+      }).then(function (r) {
+        return { ok: !!r.ok, status: Number(r.status || 0), reason: r.ok ? '' : 'http-' + String(r.status || 0) };
+      }).catch(function () {
+        return { ok: false, status: 0, reason: 'network-error' };
+      });
+    });
+  }
+  function readHeroDocFromFirestore(key) {
+    var url = 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/' + encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var raw = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!raw || typeof raw !== 'string') return null;
+        try { return JSON.parse(raw); } catch (e) { return null; }
+      })
+      .catch(function () { return null; });
+  }
 
   function openSection(id) {
     if (!hasUnsavedChangesPrompt('Cambiar de sección')) return;
@@ -410,8 +459,9 @@
     var def = safeString(await defaultPromise).trim();
     return { source: 'default:hero-config.image', url: def };
   }
-  function saveHome() {
+  async function saveHome() {
     var applyAll = !!($('home-images-all-langs') && $('home-images-all-langs').checked);
+    var heroKey = 'hero_' + state.lang;
     var payload = {
       eyebrow: safeString($('hero-eyebrow').value),
       subtitle: safeString($('hero-subtitle').value),
@@ -424,10 +474,17 @@
       bgImage: safeString($('hero-bgImage').value),
       introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim())
     };
-    saveDoc('hero_' + state.lang, payload);
+    saveDoc(heroKey, payload);
     try {
-      localStorage.setItem('hero_' + state.lang, JSON.stringify(payload));
+      localStorage.setItem(heroKey, JSON.stringify(payload));
     } catch (e) {}
+    var fsWrite = await writeHeroDocToFirestore(heroKey, payload);
+    var fsReadBack = await readHeroDocFromFirestore(heroKey);
+    var fsCta1 = safeString(fsReadBack && fsReadBack.cta1);
+    var fsCta2 = safeString(fsReadBack && fsReadBack.cta2);
+    void fsWrite;
+    void fsCta1;
+    void fsCta2;
     if (applyAll) {
       LANGS.forEach(function (lang) {
         if (lang === state.lang) return;
