@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +10,13 @@
   <div id="adm2LockWrap" class="auth-gate">
     <div class="auth-card">
       <h1>Admin v2.0</h1>
-      <p class="muted">Sign in with Google to continue.</p>
+      <p class="muted">For reliability, login is handled by legacy admin and then returns here.</p>
       <p class="muted">Signed in as: <span id="adm2UserEmail">—</span></p>
       <div class="toolbar">
-        <button id="adm2SignInBtn" type="button" onclick="return window.adm2SignInGoogle ? window.adm2SignInGoogle() : false;">Sign in with Google</button>
+        <button id="adm2SignInBtn" type="button" onclick="return window.adm2SignInGoogle ? window.adm2SignInGoogle() : false;">Sign in via legacy admin</button>
         <button id="adm2SignOutBtn" type="button" onclick="return window.adm2SignOut ? window.adm2SignOut() : false;" style="display:none">Sign out</button>
       </div>
-      <p id="adm2AuthMsg" class="muted">Sign in with Google to continue.</p>
+      <p id="adm2AuthMsg" class="muted">Sign in via legacy admin to continue.</p>
     </div>
   </div>
   <div class="app" id="adm2App" style="display:none">
@@ -32,13 +32,16 @@
         <button data-section="press" class="nav-item">Press / EPK</button>
         <button data-section="contact" class="nav-item">Contact</button>
         <button data-section="ui" class="nav-item">UI / Translations</button>
+        <button data-section="publishing" class="nav-item">Publishing</button>
+        <button data-section="translation" class="nav-item">Translation</button>
+        <button data-section="sitehealth" class="nav-item">Dashboard / Site health</button>
         <button data-section="tools" class="nav-item">System / Tools</button>
       </nav>
     </aside>
 
     <div class="main">
       <header class="topbar">
-        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">☰</button>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
         <div class="ctx">
           <span id="currentSectionLabel">Home / Hero</span>
           <span>·</span>
@@ -53,78 +56,143 @@
           <span id="langBadge" class="pill ok">EN</span>
         </div>
         <div class="actions">
-          <span id="saveState" class="pill">Cargando…</span>
+          <span id="saveState" class="pill">Loading…</span>
           <button id="adm2TopSignOutBtn" type="button" style="display:none">Sign out</button>
+          <label>Import scope
+            <select id="importScope" title="Only matching content from the file will be applied">
+              <option value="all">All compatible content</option>
+              <option value="home">Home / Hero only</option>
+              <option value="bio">Biography only</option>
+              <option value="rep">Repertoire only</option>
+              <option value="programs">Programs only</option>
+              <option value="calendar">Calendar only</option>
+              <option value="media">Media only</option>
+              <option value="press">Press / EPK only</option>
+              <option value="contact">Contact only</option>
+              <option value="ui">UI labels only</option>
+            </select>
+          </label>
           <button id="exportBtn">Export JSON</button>
           <label class="import-label">
             Import JSON
             <input type="file" id="importInput" accept=".json">
           </label>
-          <button id="openPublicBtn">Ver sitio</button>
+          <button id="openPublicBtn">View live site</button>
+          <button id="copyPublicUrlBtn" type="button">Copy public URL</button>
+          <button id="undoSectionBtn" type="button">Undo section edit</button>
+          <button id="discardSectionBtn" type="button">Discard section changes</button>
+          <button id="focusModeBtn" type="button">Focus mode</button>
         </div>
+        <p id="activitySummary" class="activity-summary muted" aria-live="polite"></p>
+        <p id="langCompareSummary" class="activity-summary muted" aria-live="polite"></p>
+        <div id="lang-compare-panel" class="lang-compare-panel" hidden></div>
       </header>
 
       <main class="content">
         <section id="section-home" class="section active">
           <h2>Home / Hero</h2>
+          <div class="toolbar">
+            <button id="copyHomeFromEnBtn" type="button">Copy from EN (text only)</button>
+            <button id="copyHomeMissingFromEnBtn" type="button">Copy missing from EN</button>
+            <button id="compareHomeWithEnBtn" type="button">Compare with EN</button>
+            <button id="markHomeNeedsTranslationBtn" type="button">Mark needs translation</button>
+            <button id="markHomeTranslatedBtn" type="button">Mark translated</button>
+            <button id="markHomeReviewedBtn" type="button">Mark reviewed</button>
+            <span id="home-completeness" class="pill">Checking…</span>
+          </div>
           <div class="grid two">
             <label>Eyebrow<input id="hero-eyebrow"></label>
             <label>Subtitle<input id="hero-subtitle"></label>
           </div>
           <div class="grid two">
-            <label>Main hero lower CTA 1 (`cta1`)<input id="hero-cta1"></label>
-            <label>Main hero lower CTA 2 (`cta2`)<input id="hero-cta2"></label>
+            <label>Hero · lower button 1<input id="hero-cta1"></label>
+            <label>Hero · lower button 2<input id="hero-cta2"></label>
+          </div>
+          <p class="muted">These labels power the two main buttons below the hero. Keep them short (roughly 12–24 characters). Saved field keys: <code>cta1</code>, <code>cta2</code>.</p>
+          <div class="grid two">
+            <label>Hero · quick link · Biography<input id="hero-quickBioLabel" placeholder="Biography"></label>
+            <label>Hero · quick link · Calendar<input id="hero-quickCalLabel" placeholder="Calendar"></label>
           </div>
           <div class="grid two">
-            <label>Main hero lower quick link · Biography (`quickBioLabel`)<input id="hero-quickBioLabel" placeholder="Biography"></label>
-            <label>Main hero lower quick link · Calendar (`quickCalLabel`)<input id="hero-quickCalLabel" placeholder="Calendar"></label>
+            <label>Home intro · button · Biography<input id="hero-introCtaBio" placeholder="Read the full biography"></label>
+            <label>Home intro · button · Media<input id="hero-introCtaMedia" placeholder="Watch & listen"></label>
           </div>
-          <div class="grid two">
-            <label>Home intro CTA · Biography (`introCtaBio`)<input id="hero-introCtaBio" placeholder="Read the full biography"></label>
-            <label>Home intro CTA · Media (`introCtaMedia`)<input id="hero-introCtaMedia" placeholder="Watch & listen"></label>
+          <p class="muted">Intro CTA labels appear in the Home intro text block for this language only.</p>
+          <div id="home-hero-preview" class="mini-preview">
+            <h4>Hero block preview</h4>
+            <p class="mini-preview__eyebrow" id="home-preview-eyebrow">Eyebrow</p>
+            <p class="mini-preview__subtitle" id="home-preview-subtitle">Subtitle</p>
+            <div class="mini-preview__actions">
+              <span id="home-preview-cta1">CTA 1</span>
+              <span id="home-preview-cta2">CTA 2</span>
+            </div>
+            <div class="mini-preview__links">
+              <span id="home-preview-quickBio">Biography</span>
+              <span id="home-preview-quickCal">Calendar</span>
+            </div>
+          </div>
+          <div id="home-intro-preview" class="mini-preview">
+            <h4>Home intro CTA preview</h4>
+            <div class="mini-preview__actions">
+              <span id="home-preview-introBio">Read biography</span>
+              <span id="home-preview-introMedia">Watch & listen</span>
+            </div>
           </div>
           <div class="grid one">
             <label>Hero image path<input id="hero-bgImage" placeholder="../img/hero-portrait.webp"></label>
-            <label>Home intro portrait (Home page only, language-specific) (`introImage`)<input id="hero-introImage" placeholder="../img/studio-2.jpg or https://..."></label>
+            <label>Home intro portrait (this language only)<input id="hero-introImage" placeholder="../img/studio-2.jpg or https://..."></label>
             <p class="muted">This image appears only on Home intro. Changes apply only to the currently selected language.</p>
             <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
               <input type="checkbox" id="home-images-all-langs" style="width:auto">
               Apply Home hero + Home intro images to all languages
             </label>
-            <label class="embed-file-label">Embed image from local file (base64)
-              <input type="file" id="hero-introUpload" accept="image/*">
-            </label>
-            <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
             <div class="photo-preview-wrap">
               <img id="hero-introPreview" alt="Home intro portrait preview">
             </div>
           </div>
-          <button id="saveHeroBtn">Guardar Home / Hero</button>
+          <div class="toolbar section-save-bar">
+            <button id="saveHeroBtn" type="button" class="button-primary">Save Home / Hero</button>
+          </div>
         </section>
 
         <section id="section-bio" class="section">
           <h2>Biography</h2>
+          <div class="toolbar">
+            <button id="copyBioFromEnBtn" type="button">Copy from EN (text only)</button>
+            <button id="copyBioMissingFromEnBtn" type="button">Copy missing from EN</button>
+            <button id="compareBioWithEnBtn" type="button">Compare with EN</button>
+            <button id="markBioNeedsTranslationBtn" type="button">Mark needs translation</button>
+            <button id="markBioTranslatedBtn" type="button">Mark translated</button>
+            <button id="markBioReviewedBtn" type="button">Mark reviewed</button>
+            <span id="bio-completeness" class="pill">Checking…</span>
+          </div>
           <div class="grid one">
             <label>Title (HTML)<input id="bio-h2"></label>
             <label>Paragraph 1<textarea id="bio-p1" rows="4"></textarea></label>
             <label>Paragraph 2<textarea id="bio-p2" rows="4"></textarea></label>
             <label>Quote<input id="bio-quote"></label>
             <label>Attribution<input id="bio-cite"></label>
-            <label>Biography portrait (Biography page only, language-specific) (`portraitImage`)<input id="bio-portraitImage" placeholder="../img/studio-2.jpg or https://..."></label>
+            <p class="muted">Biography text is public and language-specific. Keep paragraph openings concise for better mobile readability.</p>
+            <label>Biography portrait (this language only)<input id="bio-portraitImage" placeholder="../img/studio-2.jpg or https://..."></label>
             <p class="muted">This image appears only on Biography page. Changes apply only to the currently selected language.</p>
             <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
               <input type="checkbox" id="bio-image-all-langs" style="width:auto">
               Apply Biography portrait image to all languages
             </label>
-            <label class="embed-file-label">Embed image from local file (base64)
-              <input type="file" id="bio-portraitUpload" accept="image/*">
-            </label>
-            <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
             <div class="photo-preview-wrap">
               <img id="bio-portraitPreview" alt="Biography portrait preview">
             </div>
+            <div id="bio-card-preview" class="mini-preview">
+              <h4>Biography text preview</h4>
+              <p class="mini-preview__title" id="bio-preview-title">Biography</p>
+              <p class="mini-preview__body" id="bio-preview-p1">Paragraph 1</p>
+              <p class="mini-preview__body" id="bio-preview-p2">Paragraph 2</p>
+              <p class="mini-preview__quote" id="bio-preview-quote">Quote</p>
+            </div>
           </div>
-          <button id="saveBioBtn">Guardar Biography</button>
+          <div class="toolbar section-save-bar">
+            <button id="saveBioBtn" type="button" class="button-primary">Save Biography</button>
+          </div>
         </section>
 
         <section id="section-rep" class="section">
@@ -144,11 +212,71 @@
                 <option value="tango">Tango</option>
               </select>
             </label>
+            <label>Status filter
+              <select id="rep-status-filter">
+                <option value="all">All</option>
+                <option value="performed">Performed</option>
+                <option value="prepared">Prepared</option>
+                <option value="studying">Studying</option>
+                <option value="none">(none)</option>
+              </select>
+            </label>
+            <label>Search
+              <input id="rep-search" placeholder="Search composer / work / role">
+            </label>
+            <button id="rep-reset-filters" type="button">Reset filters</button>
             <button id="rep-add">+ New</button>
             <button id="rep-dup">Duplicate</button>
             <button id="rep-del" class="danger">Delete</button>
             <button id="rep-up">↑</button>
             <button id="rep-down">↓</button>
+          </div>
+          <div class="toolbar">
+            <span id="rep-selection-count" class="pill">Selected: 0</span>
+            <button id="rep-select-visible" type="button">Select all visible</button>
+            <button id="rep-clear-selection" type="button">Clear selection</button>
+            <label>Bulk status
+              <select id="rep-bulk-status">
+                <option value="">Choose…</option>
+                <option value="performed">Performed</option>
+                <option value="prepared">Prepared</option>
+                <option value="studying">Studying</option>
+              </select>
+            </label>
+            <label>Bulk category
+              <select id="rep-bulk-cat">
+                <option value="">Choose…</option>
+                <option value="opera">Opera</option>
+                <option value="arias">Arias</option>
+                <option value="operetta">Operetta</option>
+                <option value="operetta_roles">Operetta (roles)</option>
+                <option value="lied">Lied</option>
+                <option value="tango">Tango</option>
+              </select>
+            </label>
+            <label>Workflow filter
+              <select id="rep-workflow-filter" title="Editorial workflow">
+                <option value="all">All workflow</option>
+                <option value="draft">Draft</option>
+                <option value="needs_translation">Needs translation</option>
+                <option value="translated">Translated</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="published">Published</option>
+                <option value="hidden">Hidden</option>
+                <option value="ready">Ready to publish</option>
+              </select>
+            </label>
+            <label>Bulk editorial
+              <select id="rep-bulk-editorial">
+                <option value="">Choose…</option>
+                <option value="publish_rep">Mark published</option>
+                <option value="reviewed_rep">Mark reviewed</option>
+                <option value="draft_rep">Mark draft</option>
+                <option value="hide_rep">Mark hidden</option>
+              </select>
+            </label>
+            <button id="rep-apply-bulk" type="button">Apply status / cat</button>
+            <button id="rep-apply-editorial-bulk" type="button">Apply editorial</button>
           </div>
           <div class="split">
             <div id="rep-list" class="item-list"></div>
@@ -156,20 +284,65 @@
               <label>Composer<input id="rep-composer"></label>
               <label>Work / Opera<input id="rep-opera"></label>
               <label>Role<input id="rep-role"></label>
-              <label>Category<input id="rep-cat"></label>
-              <label>Status<input id="rep-status"></label>
+              <label>Category
+                <select id="rep-cat">
+                  <option value="opera">Opera</option>
+                  <option value="arias">Arias</option>
+                  <option value="operetta">Operetta</option>
+                  <option value="operetta_roles">Operetta (roles)</option>
+                  <option value="lied">Lied</option>
+                  <option value="tango">Tango</option>
+                </select>
+              </label>
+              <label>Status
+                <select id="rep-status">
+                  <option value="">(none)</option>
+                  <option value="performed">Performed</option>
+                  <option value="prepared">Prepared</option>
+                  <option value="studying">Studying</option>
+                </select>
+              </label>
               <label>Language<input id="rep-lang"></label>
-              <label>Lied category<input id="rep-category"></label>
+              <label>Lied category
+                <select id="rep-category">
+                  <option value="">(none)</option>
+                  <option value="Deutsches Lied">Deutsches Lied</option>
+                  <option value="Italian Art Song &amp; Canzone">Italian Art Song &amp; Canzone</option>
+                  <option value="Canción de Arte Argentina">Canción de Arte Argentina</option>
+                  <option value="Russian Art Song">Russian Art Song</option>
+                  <option value="English Art Song">English Art Song</option>
+                </select>
+              </label>
+              <label>Publishing status
+                <select id="rep-editorialStatus">
+                  <option value="draft">Draft</option>
+                  <option value="needs_translation">Needs translation</option>
+                  <option value="translated">Translated</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="published">Published</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
             </div>
           </div>
-          <div class="toolbar">
-            <button id="saveRepHeaderBtn">Save repertoire header</button>
-            <button id="saveRepCardsBtn">Save repertoire cards</button>
+          <div class="toolbar section-save-bar">
+            <button id="saveRepHeaderBtn" type="button" class="button-primary">Save repertoire header</button>
+            <button id="saveRepCardsBtn" type="button" class="button-primary">Save repertoire cards</button>
+            <button id="rep-prev-item" type="button">Previous item</button>
+            <button id="rep-next-item" type="button">Next item</button>
+            <label>Move to #
+              <input id="rep-move-pos" type="number" min="1" step="1" placeholder="1">
+            </label>
+            <button id="rep-move-apply" type="button">Move</button>
+            <button id="rep-revert-item" type="button">Revert current item</button>
           </div>
         </section>
 
         <section id="section-calendar" class="section">
           <h2>Calendar</h2>
+          <div class="toolbar">
+            <span id="calendar-completeness" class="pill">Checking…</span>
+          </div>
           <div class="editor-section">
             <h3>Calendar section content</h3>
             <div class="grid two">
@@ -178,11 +351,58 @@
             </div>
           </div>
           <div class="toolbar">
+            <label>Status filter
+              <select id="perf-status-filter">
+                <option value="all">All</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="past">Past</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </label>
+            <label>Workflow filter
+              <select id="perf-workflow-filter" title="Filter by editorial workflow">
+                <option value="all">All workflow</option>
+                <option value="draft">Draft</option>
+                <option value="needs_translation">Needs translation</option>
+                <option value="translated">Translated</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="published">Published</option>
+                <option value="hidden">Hidden</option>
+                <option value="ready">Ready to publish</option>
+              </select>
+            </label>
+            <button id="perf-reset-filters" type="button">Reset filters</button>
             <button id="perf-add">+ New event</button>
             <button id="perf-dup">Duplicate</button>
             <button id="perf-del" class="danger">Delete</button>
             <button id="perf-up">↑</button>
             <button id="perf-down">↓</button>
+          </div>
+          <div class="toolbar">
+            <span id="perf-selection-count" class="pill">Selected: 0</span>
+            <button id="perf-select-visible" type="button">Select all visible</button>
+            <button id="perf-clear-selection" type="button">Clear selection</button>
+            <label>Bulk status
+              <select id="perf-bulk-status">
+                <option value="">Choose…</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="past">Past</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </label>
+            <label>Bulk editorial
+              <select id="perf-bulk-editorial">
+                <option value="">Choose…</option>
+                <option value="publish_event">Mark published</option>
+                <option value="reviewed_event">Mark reviewed</option>
+                <option value="draft_event">Mark draft</option>
+                <option value="hide_event">Hide (hidden status)</option>
+                <option value="unhide_event">Unhide (upcoming)</option>
+              </select>
+            </label>
+            <button id="perf-apply-bulk" type="button">Apply status</button>
+            <button id="perf-apply-editorial-bulk" type="button">Apply editorial</button>
+            <button id="perf-add-template" type="button">New event from template</button>
           </div>
           <div class="split">
             <div id="perf-list" class="item-list"></div>
@@ -205,6 +425,16 @@
                   <label>Venue<input id="perf-venue"></label>
                   <label>City<input id="perf-city"></label>
                 </div>
+                <label>Publishing status
+                  <select id="perf-editorialStatus">
+                    <option value="draft">Draft</option>
+                    <option value="needs_translation">Needs translation</option>
+                    <option value="translated">Translated</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="published">Published</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </label>
               </div>
 
               <div class="editor-section">
@@ -228,16 +458,17 @@
                 </div>
               </div>
 
-              <div class="editor-section">
-                <h3>Internal / advanced</h3>
+              <details class="editor-section details-block">
+                <summary>Advanced · scheduling, badges &amp; internal fields</summary>
+                <p class="muted">Status and type are for your workflow; date badge lines are what visitors often see on the card.</p>
                 <div class="grid two">
                   <label>Status
                     <select id="perf-status">
-                      <option value="upcoming">upcoming</option>
-                      <option value="past">past</option>
-                      <option value="hidden">hidden</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="past">Past</option>
+                      <option value="hidden">Hidden</option>
                     </select>
-                    <small class="muted">Not shown publicly.</small>
+                    <small class="muted">Not shown publicly as a label.</small>
                   </label>
                   <label>Type
                     <select id="perf-type">
@@ -266,32 +497,85 @@
                   <input id="perf-month" placeholder="e.g. NOV">
                   <small class="muted">Shown on the public event card.</small>
                 </label>
-              </div>
+              </details>
             </div>
           </div>
-          <div class="toolbar">
-            <button id="savePerfHeaderBtn">Save calendar section text</button>
-            <button id="savePerfEventsBtn">Save event list</button>
+          <div class="toolbar section-save-bar">
+            <button id="savePerfHeaderBtn" type="button" class="button-primary">Save calendar section text</button>
+            <button id="savePerfEventsBtn" type="button" class="button-primary">Save event list</button>
+            <button id="perf-archive-current-btn" type="button" title="Mark current event as past">Archive event (past)</button>
+            <button id="perf-prev-item" type="button">Previous item</button>
+            <button id="perf-next-item" type="button">Next item</button>
+            <label>Move to #
+              <input id="perf-move-pos" type="number" min="1" step="1" placeholder="1">
+            </label>
+            <button id="perf-move-apply" type="button">Move</button>
+            <button id="perf-revert-item" type="button">Revert current item</button>
           </div>
         </section>
 
         <section id="section-programs" class="section">
           <h2>Programs / Collaborations</h2>
+          <div class="toolbar">
+            <button id="copyProgramsFromEnBtn" type="button">Copy from EN</button>
+            <button id="copyProgramsMissingFromEnBtn" type="button">Copy missing from EN</button>
+            <button id="compareProgramsWithEnBtn" type="button">Compare with EN</button>
+            <button id="markProgramsNeedsTranslationBtn" type="button">Mark needs translation</button>
+            <button id="markProgramsTranslatedBtn" type="button">Mark translated</button>
+            <button id="markProgramsReviewedBtn" type="button">Mark reviewed</button>
+            <span id="programs-completeness" class="pill">Checking…</span>
+            <button id="programs-review-publish-btn" type="button" title="Current card: published + visible">Reviewed + publish</button>
+          </div>
+          <div class="toolbar">
+            <label>Workflow filter
+              <select id="programs-workflow-filter" title="Narrow program list">
+                <option value="all">All workflow</option>
+                <option value="draft">Draft</option>
+                <option value="needs_translation">Needs translation</option>
+                <option value="translated">Translated</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="published">Published</option>
+                <option value="hidden">Hidden</option>
+                <option value="ready">Ready to publish</option>
+              </select>
+            </label>
+            <span id="programs-selection-count" class="pill">Selected: 0</span>
+            <button id="programs-select-listed" type="button">Select listed</button>
+            <button id="programs-clear-selection" type="button">Clear selection</button>
+            <label>Bulk editorial
+              <select id="programs-bulk-editorial">
+                <option value="">Choose…</option>
+                <option value="publish">Mark published + visible</option>
+                <option value="reviewed_only">Mark reviewed only</option>
+                <option value="draft">Mark draft (off site)</option>
+                <option value="unpublish">Mark draft (keep on site)</option>
+                <option value="hide">Hide (unpublish)</option>
+                <option value="unhide">Unhide (visible)</option>
+                <option value="needs_translation">Needs translation</option>
+                <option value="translated">Translated</option>
+              </select>
+            </label>
+            <button id="programs-apply-editorial-bulk" type="button">Apply to selected</button>
+          </div>
           <div class="grid two">
             <label>Section title (HTML)<input id="programs-title"></label>
             <label>Subtitle<input id="programs-subtitle"></label>
           </div>
+          <p class="muted">Programs text appears publicly on cards and detail panels. Favor clear audience-facing language over internal notes.</p>
           <div class="grid one">
             <label>Intro<textarea id="programs-intro" rows="3"></textarea></label>
             <label>Closing note<textarea id="programs-closingNote" rows="3"></textarea></label>
           </div>
           <div class="grid two">
-            <label>Context link from Repertoire (`rg_editorial_<lang>.repProgramsLink`)<input id="programs-repLink"></label>
-            <label>Context link from EPK (`rg_editorial_<lang>.epkProgramsLink`)<input id="programs-epkLink"></label>
+            <label>Link label · from Repertoire<input id="programs-repLink"></label>
+            <label>Link label · from EPK<input id="programs-epkLink"></label>
           </div>
+          <p class="muted">Stored with editorial data for this language (<code>repProgramsLink</code>, <code>epkProgramsLink</code>).</p>
 
           <div class="toolbar">
             <button id="programs-add">+ New</button>
+            <button id="programs-add-template">+ New from template</button>
+            <button id="programs-duplicate-to-lang" type="button">Duplicate current to language</button>
             <button id="programs-dup">Duplicate</button>
             <button id="programs-del" class="danger">Delete</button>
             <button id="programs-up">↑</button>
@@ -303,20 +587,44 @@
             <div class="editor">
               <label>Title<input id="programs-item-title"></label>
               <label>Description<textarea id="programs-item-description" rows="5"></textarea></label>
+              <small class="muted">Description is public. Aim for 2-5 concise sentences.</small>
               <label>Formations (one per line)<textarea id="programs-item-formations" rows="3"></textarea></label>
               <label>Duration<input id="programs-item-duration"></label>
               <label>Ideal for (one per line)<textarea id="programs-item-idealFor" rows="3"></textarea></label>
-              <label>Published
-                <select id="programs-item-published">
-                  <option value="true">true</option>
-                  <option value="false">false</option>
+              <label>On live site
+                <select id="programs-item-published" title="Maps to published true/false in saved data">
+                  <option value="true">Visible</option>
+                  <option value="false">Hidden</option>
                 </select>
               </label>
+              <label>Publishing status
+                <select id="programs-item-editorialStatus">
+                  <option value="draft">Draft</option>
+                  <option value="needs_translation">Needs translation</option>
+                  <option value="translated">Translated</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="published">Published</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
+              <div id="programs-card-preview" class="mini-preview">
+                <h4>Program card preview</h4>
+                <p class="mini-preview__title" id="programs-preview-title">Program title</p>
+                <p class="mini-preview__body" id="programs-preview-description">Program description</p>
+                <p class="mini-preview__meta" id="programs-preview-duration">Duration</p>
+              </div>
             </div>
           </div>
 
-          <div class="toolbar">
-            <button id="programs-save">Save Programs</button>
+          <div class="toolbar section-save-bar">
+            <button id="programs-save" type="button" class="button-primary">Save Programs</button>
+            <button id="programs-prev-item" type="button">Previous item</button>
+            <button id="programs-next-item" type="button">Next item</button>
+            <label>Move to #
+              <input id="programs-move-pos" type="number" min="1" step="1" placeholder="1">
+            </label>
+            <button id="programs-move-apply" type="button">Move</button>
+            <button id="programs-revert-item" type="button">Revert current item</button>
           </div>
         </section>
 
@@ -332,11 +640,54 @@
               <label>Videos H2 (HTML)<input id="media-vid-h2"></label>
             </div>
             <div class="toolbar">
+              <label>Search
+                <input id="media-vid-search" placeholder="Search title / composer / tag">
+              </label>
+            <label>Visibility filter
+                <select id="media-vid-filter">
+                  <option value="all">All</option>
+                  <option value="visible">Visible</option>
+                  <option value="hidden">Hidden</option>
+                  <option value="featured">Featured</option>
+                </select>
+              </label>
+            <label>Workflow filter
+              <select id="media-vid-workflow-filter" title="Editorial workflow">
+                <option value="all">All workflow</option>
+                <option value="draft">Draft</option>
+                <option value="needs_translation">Needs translation</option>
+                <option value="translated">Translated</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="published">Published</option>
+                <option value="hidden">Hidden</option>
+                <option value="ready">Ready to publish</option>
+              </select>
+            </label>
+            <button id="media-vid-reset-filters" type="button">Reset filters</button>
               <button id="media-vid-add">+ New video</button>
               <button id="media-vid-dup">Duplicate</button>
               <button id="media-vid-del" class="danger">Delete</button>
               <button id="media-vid-up">↑</button>
               <button id="media-vid-down">↓</button>
+            </div>
+            <div class="toolbar">
+              <span id="media-vid-selection-count" class="pill">Selected: 0</span>
+              <button id="media-vid-select-visible" type="button">Select all visible</button>
+              <button id="media-vid-clear-selection" type="button">Clear selection</button>
+              <label>Bulk action
+                <select id="media-vid-bulk-action">
+                  <option value="">Choose…</option>
+                  <option value="visible">Set visible</option>
+                  <option value="hidden">Set hidden</option>
+                  <option value="featured">Set featured</option>
+                  <option value="not_featured">Set not featured</option>
+                  <option value="publish_video">Mark published + visible</option>
+                  <option value="review_video">Mark reviewed</option>
+                  <option value="draft_video">Mark draft</option>
+                  <option value="hide_editorial">Hide + editorial hidden</option>
+                </select>
+              </label>
+              <button id="media-vid-apply-bulk" type="button">Apply to selected</button>
             </div>
             <div class="split">
               <div id="media-vid-list" class="item-list"></div>
@@ -376,10 +727,27 @@
                     <option value="true">true</option>
                   </select>
                 </label>
+                <label>Publishing status
+                  <select id="media-vid-editorialStatus">
+                    <option value="draft">Draft</option>
+                    <option value="needs_translation">Needs translation</option>
+                    <option value="translated">Translated</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="published">Published</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </label>
               </div>
             </div>
-            <div class="toolbar">
-              <button id="media-vid-save">Save Videos</button>
+            <div class="toolbar section-save-bar">
+              <button id="media-vid-save" type="button" class="button-primary">Save Videos</button>
+              <button id="media-vid-prev-item" type="button">Previous item</button>
+              <button id="media-vid-next-item" type="button">Next item</button>
+              <label>Move to #
+                <input id="media-vid-move-pos" type="number" min="1" step="1" placeholder="1">
+              </label>
+              <button id="media-vid-move-apply" type="button">Move</button>
+              <button id="media-vid-revert-item" type="button">Revert current item</button>
             </div>
           </div>
 
@@ -390,6 +758,9 @@
               <button id="media-photo-filter-b">Backstage</button>
             </div>
             <div class="toolbar">
+              <label>Search
+                <input id="media-photo-search" placeholder="Search URL / caption / photographer">
+              </label>
               <button id="media-photo-add-url">+ Add by URL</button>
               <label class="import-label embed-file-label">+ Embed photo from local file
                 <input type="file" id="media-photo-add-file" accept="image/*">
@@ -414,8 +785,8 @@
                 <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
               </div>
             </div>
-            <div class="toolbar">
-              <button id="media-photo-save">Save Photos + Captions</button>
+            <div class="toolbar section-save-bar">
+              <button id="media-photo-save" type="button" class="button-primary">Save Photos + Captions</button>
             </div>
           </div>
         </section>
@@ -423,54 +794,117 @@
         <section id="section-press" class="section">
           <h2>Press / EPK</h2>
           <div class="toolbar">
+            <span id="press-completeness" class="pill">Checking…</span>
+          </div>
+          <div class="toolbar">
             <button id="pressTabQuotes" class="active">Quotes</button>
             <button id="pressTabPdfs">Public PDFs</button>
             <button id="pressTabBios">EPK Bios</button>
             <button id="pressTabPhotos">EPK Photos</button>
-            <button id="pressTabCvs">EPK CVs</button>
+            <button id="pressTabCvs" hidden>EPK CVs</button>
           </div>
 
           <div id="pressQuotesPanel">
           <div class="grid two">
-            <label>Translated note (`rg_press_meta`)<input id="press-translatedNote"></label>
-            <label>Reviews intro (rg_ui_<lang>)<input id="press-reviewsIntro"></label>
+            <label>Translated note (press meta)<input id="press-translatedNote"></label>
+            <label>Reviews intro (UI · this language)<input id="press-reviewsIntro"></label>
             <label>Show press reviews section
               <select id="press-showReviewsSection">
-                <option value="true">true</option>
-                <option value="false">false</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
               </select>
             </label>
           </div>
           <div class="toolbar">
+            <label>Search
+              <input id="press-search" placeholder="Search source / quote / production">
+            </label>
+            <label>Visibility filter
+              <select id="press-visible-filter">
+                <option value="all">All</option>
+                <option value="visible">Visible</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </label>
+            <button id="press-reset-filters" type="button">Reset filters</button>
             <button id="press-add">+ New quote</button>
+            <button id="press-add-template">+ New from template</button>
             <button id="press-dup">Duplicate</button>
             <button id="press-del" class="danger">Delete</button>
             <button id="press-up">↑</button>
             <button id="press-down">↓</button>
+          </div>
+          <div class="toolbar">
+            <span id="press-selection-count" class="pill">Selected: 0</span>
+            <button id="press-select-visible" type="button">Select all visible</button>
+            <button id="press-clear-selection" type="button">Clear selection</button>
+            <label>Bulk visibility
+              <select id="press-bulk-visible">
+                <option value="">Choose…</option>
+                <option value="visible">Set visible</option>
+                <option value="hidden">Set hidden</option>
+              </select>
+            </label>
+            <button id="press-apply-bulk" type="button">Apply visibility</button>
+            <label>Bulk editorial
+              <select id="press-bulk-editorial">
+                <option value="">Choose…</option>
+                <option value="publish_quote">Mark published + visible</option>
+                <option value="reviewed_quote">Mark reviewed</option>
+                <option value="draft_quote">Mark draft</option>
+                <option value="hide_quote">Hide quote</option>
+                <option value="needs_translation">Needs translation</option>
+              </select>
+            </label>
+            <button id="press-apply-editorial-bulk" type="button">Apply editorial</button>
           </div>
           <div class="split">
             <div id="press-list" class="item-list"></div>
             <div class="editor">
               <label>Source<input id="press-source"></label>
               <label>Quote<textarea id="press-quote" rows="4"></textarea></label>
+              <small class="muted">Press quote is public. Keep to a strong excerpt and use the source field for attribution.</small>
               <label>Production<input id="press-production"></label>
               <label>URL<input id="press-url"></label>
-              <label>Visible
+              <label>On live list
                 <select id="press-visible">
-                  <option value="true">true</option>
-                  <option value="false">false</option>
+                  <option value="true">Visible</option>
+                  <option value="false">Hidden</option>
                 </select>
               </label>
+              <label>Publishing status
+                <select id="press-editorialStatus">
+                  <option value="draft">Draft</option>
+                  <option value="needs_translation">Needs translation</option>
+                  <option value="translated">Translated</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="published">Published</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
+              <button id="press-hide-outdated-btn" type="button" title="Hide this quote from the public list">Hide this quote</button>
+              <div id="press-quote-preview" class="mini-preview">
+                <h4>Press quote preview</h4>
+                <p class="mini-preview__quote" id="press-preview-quote">Quote text</p>
+                <p class="mini-preview__meta" id="press-preview-source">Source</p>
+              </div>
             </div>
           </div>
-          <div class="toolbar">
-            <button id="savePressMetaBtn">Save press meta</button>
-            <button id="savePressQuotesBtn">Save quotes</button>
+          <div class="toolbar section-save-bar">
+            <button id="savePressMetaBtn" type="button" class="button-primary">Save press notes</button>
+            <button id="savePressQuotesBtn" type="button" class="button-primary">Save quotes</button>
+            <button id="press-prev-item" type="button">Previous item</button>
+            <button id="press-next-item" type="button">Next item</button>
+            <label>Move to #
+              <input id="press-move-pos" type="number" min="1" step="1" placeholder="1">
+            </label>
+            <button id="press-move-apply" type="button">Move</button>
+            <button id="press-revert-item" type="button">Revert current item</button>
           </div>
           </div>
 
           <div id="pressPdfsPanel" style="display:none">
-            <p class="muted">Edita URLs públicas por idioma (`rg_public_pdfs`).</p>
+            <p class="muted">Public PDF URLs per language. Use full <code>https://</code> links where possible.</p>
             <div class="grid two">
               <label>Dossier EN<input id="pdf-dossier-EN" placeholder="https://...pdf"></label>
               <label>Artist Sheet EN<input id="pdf-artist-EN" placeholder="https://...pdf"></label>
@@ -483,13 +917,14 @@
               <label>Dossier FR<input id="pdf-dossier-FR" placeholder="https://...pdf"></label>
               <label>Artist Sheet FR<input id="pdf-artist-FR" placeholder="https://...pdf"></label>
             </div>
-            <div class="toolbar">
-              <button id="savePressPdfsBtn">Save Public PDFs</button>
+            <div class="toolbar section-save-bar">
+              <button id="savePressPdfsBtn" type="button" class="button-primary">Save Public PDFs</button>
             </div>
+            <p id="pdf-validation" class="muted"></p>
           </div>
 
           <div id="pressBiosPanel" style="display:none">
-            <p class="muted">Editando bios EPK del idioma actual (`rg_epk_bios.<lang>`).</p>
+            <p class="muted">EPK bios for the language selected in the top bar.</p>
             <div class="grid one">
               <label>Bio 50 words<textarea id="epk-bio-b50" rows="3"></textarea></label>
               <label>Bio 150 words<textarea id="epk-bio-b150" rows="5"></textarea></label>
@@ -498,19 +933,27 @@
               <label>Full bio · paragraph 3<textarea id="epk-bio-b300p3" rows="4"></textarea></label>
               <label>Full bio · paragraph 4<textarea id="epk-bio-b300p4" rows="4"></textarea></label>
             </div>
-            <div class="toolbar">
-              <button id="savePressBiosBtn">Save EPK Bios</button>
+            <div class="toolbar section-save-bar">
+              <button id="savePressBiosBtn" type="button" class="button-primary">Save EPK Bios</button>
+              <button id="comparePressBiosWithEnBtn" type="button">Compare with EN</button>
+              <button id="markPressBiosNeedsTranslationBtn" type="button">Mark needs translation</button>
+              <button id="markPressBiosTranslatedBtn" type="button">Mark translated</button>
+              <button id="markPressBiosReviewedBtn" type="button">Mark reviewed</button>
+              <button id="copyPressBiosMissingFromEnBtn" type="button">Copy missing from EN</button>
             </div>
           </div>
 
           <div id="pressPhotosPanel" style="display:none">
             <div class="toolbar">
-              <button id="epk-photo-add-url">+ Agregar por URL</button>
+              <label>Search
+                <input id="epk-photo-search" placeholder="Search label / credit / URL">
+              </label>
+              <button id="epk-photo-add-url">+ Add by URL</button>
               <label class="import-label embed-file-label">+ Embed photo from local file
                 <input type="file" id="epk-photo-add-file" accept="image/*">
               </label>
-              <button id="epk-photo-dup">Duplicar</button>
-              <button id="epk-photo-del" class="danger">Borrar</button>
+              <button id="epk-photo-dup">Duplicate</button>
+              <button id="epk-photo-del" class="danger">Delete</button>
               <button id="epk-photo-up">↑</button>
               <button id="epk-photo-down">↓</button>
             </div>
@@ -529,13 +972,20 @@
                 <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
               </div>
             </div>
-            <div class="toolbar">
-              <button id="savePressPhotosBtn">Save EPK Photos</button>
+            <div class="toolbar section-save-bar">
+              <button id="savePressPhotosBtn" type="button" class="button-primary">Save EPK Photos</button>
+              <button id="epk-photo-prev-item" type="button">Previous item</button>
+              <button id="epk-photo-next-item" type="button">Next item</button>
+              <label>Move to #
+                <input id="epk-photo-move-pos" type="number" min="1" step="1" placeholder="1">
+              </label>
+              <button id="epk-photo-move-apply" type="button">Move</button>
+              <button id="epk-photo-revert-item" type="button">Revert current item</button>
             </div>
           </div>
 
-          <div id="pressCvsPanel" style="display:none">
-            <p class="muted">Upload de CV por idioma (`rg_epk_cvs`). Si está vacío, se usa el PDF default en `docs/`.</p>
+          <div id="pressCvsPanel" style="display:none" hidden>
+            <p class="muted">CV PDF per language. If empty for a language, the site falls back to the default PDF under <code>docs/</code> when applicable.</p>
             <div class="grid two">
               <div class="editor">
                 <label>EN status<input id="epk-cv-status-EN" readonly></label>
@@ -563,67 +1013,198 @@
                 <button id="epk-cv-clear-FR" class="danger">Remove FR custom CV</button>
               </div>
             </div>
-            <div class="toolbar">
-              <button id="savePressCvsBtn">Save EPK CVs</button>
+            <div class="toolbar section-save-bar">
+              <button id="savePressCvsBtn" type="button" class="button-primary">Save EPK CVs</button>
             </div>
           </div>
         </section>
 
         <section id="section-contact" class="section">
           <h2>Contact / Booking</h2>
+          <div class="toolbar">
+            <button id="copyContactFromEnBtn" type="button">Copy from EN</button>
+            <button id="copyContactMissingFromEnBtn" type="button">Copy missing from EN</button>
+            <button id="compareContactWithEnBtn" type="button">Compare with EN</button>
+            <button id="markContactNeedsTranslationBtn" type="button">Mark needs translation</button>
+            <button id="markContactTranslatedBtn" type="button">Mark translated</button>
+            <button id="markContactReviewedBtn" type="button">Mark reviewed</button>
+            <span id="contact-completeness" class="pill">Checking…</span>
+          </div>
           <div class="grid one">
             <label>Title (HTML)<input id="contact-title"></label>
             <label>Subtitle<textarea id="contact-sub" rows="4"></textarea></label>
+            <small class="muted">This section is public and language-specific. Keep CTA copy direct and action-oriented.</small>
             <label>Email<input id="contact-email"></label>
+            <p id="contact-email-validation" class="muted"></p>
             <label>Email button<input id="contact-emailBtn"></label>
-            <label>Website button<input id="contact-webBtn"></label>
+            <label>Website button label<input id="contact-webBtn"></label>
+            <label>Website URL<input id="contact-webUrl" placeholder="https://..."></label>
+            <p id="contact-web-validation" class="muted"></p>
+            <div id="contact-cta-preview" class="mini-preview">
+              <h4>Contact CTA preview</h4>
+              <p class="mini-preview__title" id="contact-preview-title">Contact title</p>
+              <p class="mini-preview__body" id="contact-preview-sub">Contact subtitle</p>
+              <div class="mini-preview__actions">
+                <span id="contact-preview-emailBtn">Email button</span>
+                <span id="contact-preview-webBtn">Website button</span>
+              </div>
+            </div>
           </div>
-          <button id="saveContactBtn">Save Contact</button>
+          <div class="toolbar section-save-bar">
+            <button id="saveContactBtn" type="button" class="button-primary">Save Contact</button>
+          </div>
         </section>
 
         <section id="section-ui" class="section">
           <h2>UI / Translations</h2>
-          <p class="muted">Advanced editor for `rg_ui_<lang>`. Loads effective language content and lets you save overrides safely.</p>
+          <div class="toolbar">
+            <button id="copyUiNavFromEnBtn" type="button">Copy nav labels from EN</button>
+            <button id="copyUiNavMissingFromEnBtn" type="button">Copy missing nav labels from EN</button>
+            <button id="compareUiWithEnBtn" type="button">Compare with EN</button>
+            <button id="markUiNeedsTranslationBtn" type="button">Mark needs translation</button>
+            <button id="markUiTranslatedBtn" type="button">Mark translated</button>
+            <button id="markUiReviewedBtn" type="button">Mark reviewed</button>
+            <span id="ui-completeness" class="pill">Checking…</span>
+          </div>
+          <p class="muted">Menu and UI wording for the language selected above. Changes apply only to that language.</p>
           <div class="editor">
-            <h3>Navigation labels (desktop + mobile)</h3>
+            <h3>Navigation labels</h3>
             <div class="grid two">
-              <label>Home (`nav.home`)<input id="ui-nav-home"></label>
-              <label>Biography (`nav.bio`)<input id="ui-nav-bio"></label>
-              <label>Repertoire (`nav.rep`)<input id="ui-nav-rep"></label>
-              <label>Media (`nav.media`)<input id="ui-nav-media"></label>
-              <label>Calendar (`nav.cal`)<input id="ui-nav-cal"></label>
-              <label>Press & Materials (`nav.epk`)<input id="ui-nav-epk"></label>
-              <label>Book now (`nav.book`)<input id="ui-nav-book"></label>
+              <label>Home<input id="ui-nav-home"></label>
+              <label>Biography<input id="ui-nav-bio"></label>
+              <label>Repertoire<input id="ui-nav-rep"></label>
+              <label>Media<input id="ui-nav-media"></label>
+              <label>Calendar<input id="ui-nav-cal"></label>
+              <label>Press &amp; materials<input id="ui-nav-epk"></label>
+              <label>Book now<input id="ui-nav-book"></label>
             </div>
             <div class="toolbar">
               <button id="saveUiNavBtn">Save navigation labels</button>
             </div>
           </div>
-          <textarea id="ui-json" rows="18" class="mono"></textarea>
+          <details class="tools-card details-block">
+            <summary>Advanced · all UI strings as JSON</summary>
+            <textarea id="ui-json" rows="18" class="mono" style="margin-top:10px"></textarea>
+            <div class="toolbar">
+              <button id="reloadUiBtn">Reload JSON</button>
+              <button id="saveUiBtn">Save rg_ui_<lang></button>
+            </div>
+          </details>
+        </section>
+
+        <section id="section-publishing" class="section">
+          <h2>Publishing workflow</h2>
+          <p class="muted">Numbers reflect saved content. Program counts use the language in the top bar; press, media, calendar, and repertoire are shared lists. <strong>Ready to publish</strong> here means the usual required fields look complete—it is guidance, not a guarantee.</p>
           <div class="toolbar">
-            <button id="reloadUiBtn">Reload JSON</button>
-            <button id="saveUiBtn">Save rg_ui_<lang></button>
+            <button type="button" id="publishing-refresh">Refresh summary</button>
+          </div>
+          <div id="publishing-summary" class="publishing-summary"></div>
+          <div id="publishing-ready" class="publishing-ready tools-card"></div>
+        </section>
+
+        <section id="section-translation" class="section">
+          <h2>Translation workspace</h2>
+          <p class="muted">Cross-language editing for Home, Biography, Contact, UI labels, EPK bios, and Programs copy. English (EN) is always the reference column.</p>
+          <div class="toolbar">
+            <button id="translationRefreshBtn" type="button">Refresh workspace</button>
+            <button id="translationMissingOnlyToggle" type="button">Missing / incomplete only in editors</button>
+            <button id="translationRunQaBtn" type="button">Run consistency check</button>
+            <button id="translationBatchMissingBtn" type="button">Copy missing from EN (batch)…</button>
+          </div>
+          <p id="translation-mode-hint" class="muted"></p>
+          <div id="translation-workspace" class="translation-workspace"></div>
+          <div class="translation-qa-block tools-card" style="margin-top:14px">
+            <h3>Consistency notes</h3>
+            <p class="muted" style="margin:0 0 8px">Flags gaps vs EN, PDF parity, and text that still matches EN—editorial hints only.</p>
+            <div id="translation-qa" class="translation-qa"></div>
           </div>
         </section>
 
         <section id="section-tools" class="section">
           <h2>System / Tools</h2>
+          <details class="editor tools-card details-block admin-help-card">
+            <summary>Quick guide · Admin v2</summary>
+            <div class="admin-help-body">
+              <p class="muted"><strong>How login works.</strong> Open this page (<code>admin-v2.html</code>) after signing in through the <strong>legacy admin</strong> (<code>admin.html</code>). That flow loads the hidden bridge and connects Firebase-backed storage—stay signed in there if this panel says the bridge is not ready.</p>
+              <p class="muted"><strong>Before big edits.</strong> Use <strong>Create backup now</strong> (below) or top-bar <strong>Export JSON</strong> so you have a local copy before imports or risky experiments.</p>
+              <p class="muted"><strong>Site health.</strong> <strong>Dashboard / Site health</strong> runs editorial checks and links you to places that need attention—good for routine reviews.</p>
+              <p class="muted"><strong>Publishing.</strong> The <strong>Publishing</strong> section summarizes draft/review/published counts and “ready” hints; pair it with each section’s own save buttons.</p>
+              <p class="muted"><strong>Translations.</strong> The <strong>Translation workspace</strong> is for cross-language copy with English as reference—not a replacement for saving individual sections.</p>
+              <p class="muted"><strong>Import.</strong> Narrow <strong>Import scope</strong> in the top bar when possible; imports overwrite matching stored keys. Read the preview, confirm deliberately, and prefer a fresh backup first.</p>
+              <p class="muted"><strong>Before you leave.</strong> Open the live site (top bar), spot-check key pages, and optionally tick <strong>Before you sign off</strong> at the bottom of this System / Tools page—a short session checklist stored only in this browser until you clear it.</p>
+            </div>
+          </details>
           <div class="grid two">
             <div class="editor tools-card">
+              <h3>Backup</h3>
+              <p class="muted">Download everything this admin can edit into one JSON file on your computer. Use before risky imports.</p>
+              <div class="toolbar">
+                <button id="createBackupBtn" type="button">Create backup now</button>
+              </div>
+              <p id="backupSummary" class="muted"></p>
+            </div>
+            <div class="editor tools-card">
               <h3>Import</h3>
-              <p class="muted">Use the topbar <strong>Import JSON</strong> button. Import only writes allow-listed keys and validates payload structure before saving.</p>
+              <p class="muted"><strong>Import can overwrite</strong> matching content already saved in the admin. Choose a narrower <strong>Import scope</strong> in the top bar if you only want part of the site.</p>
+              <p class="muted">Strongly recommended: run <strong>Create backup now</strong> first, then use top bar <strong>Import JSON</strong>.</p>
             </div>
             <div class="editor tools-card">
               <h3>Export / Maintenance</h3>
-              <p class="muted">Use topbar <strong>Export JSON</strong> for backups. Use the actions below for diagnostics and section-level maintenance.</p>
+              <p class="muted">Top bar <strong>Export JSON</strong> downloads the same kind of bundle as a backup (handy for a second copy).</p>
+            </div>
+            <div class="editor tools-card">
+              <h3>Editorial PDF tools</h3>
+              <p class="muted">Quick access to public PDF links and EPK assets.</p>
+              <div class="toolbar">
+                <button id="openPressPdfsToolBtn" type="button">Open Public PDFs editor</button>
+                <button id="openPressBiosToolBtn" type="button">Open EPK bios editor</button>
+              </div>
+            </div>
+          </div>
+          <div id="closeout-card" class="editor tools-card closeout-card">
+            <h3>Before you sign off</h3>
+            <p class="muted">Light checklist for <strong>this browser session</strong> only—it does not change any saved content. Several items tick automatically when you use the matching action; you can also check them manually.</p>
+            <ul class="closeout-list">
+              <li><label><input type="checkbox" id="closeout-backup"> Backup downloaded (or export saved)</label></li>
+              <li><label><input type="checkbox" id="closeout-health"> Site health reviewed (Dashboard)</label></li>
+              <li><label><input type="checkbox" id="closeout-publishing"> Publishing summary refreshed</label></li>
+              <li><label><input type="checkbox" id="closeout-pdfs"> Public PDFs reviewed</label></li>
+              <li><label><input type="checkbox" id="closeout-spotcheck"> Live site spot-check</label></li>
+            </ul>
+            <div class="toolbar toolbar--tight">
+              <button type="button" id="closeout-reset">Clear checklist</button>
             </div>
           </div>
           <div class="toolbar">
             <button id="openLegacyBtn">Open legacy admin</button>
             <button id="restoreCurrentBtn" class="danger">Restore defaults (current section)</button>
           </div>
-          <p class="muted">Import diagnostics / preview panel. Shows parsed import status, key count, and compatibility before any write.</p>
+          <h3 class="tools-subheading">Import preview</h3>
+          <p class="muted">After you pick a JSON file in the top bar, a summary appears here before anything is saved.</p>
           <textarea id="import-preview" rows="12" class="mono" readonly></textarea>
+        </section>
+
+        <section id="section-sitehealth" class="section">
+          <h2>Dashboard / Site health</h2>
+          <p class="muted">Editorial quality checks across sections and languages. Use quick actions to jump directly to fixes.</p>
+          <div class="toolbar">
+            <button id="runHealthChecksBtn" type="button">Run checks now</button>
+            <span id="sitehealth-overall" class="pill">Checking…</span>
+          </div>
+          <div class="grid two">
+            <div class="editor tools-card">
+              <h3>Section health</h3>
+              <div id="sitehealth-section-status"></div>
+            </div>
+            <div class="editor tools-card">
+              <h3>Language completeness</h3>
+              <div id="sitehealth-lang-matrix"></div>
+            </div>
+          </div>
+          <div class="editor tools-card">
+            <h3>Warnings and actions</h3>
+            <div id="sitehealth-issues"></div>
+          </div>
         </section>
       </main>
     </div>

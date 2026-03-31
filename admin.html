@@ -2526,6 +2526,19 @@ try {
 // ── Admin auth (Google) ──
 // NOTE: This allowlist is only for UI gating. Real security must be enforced by Firestore Security Rules.
 const ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
+let admReturnRedirectDone = false;
+function admSafeReturnTarget(){
+  try{
+    const q = new URLSearchParams(location.search || '');
+    const raw = (q.get('return') || '').trim();
+    if(!raw) return '';
+    if(/^https?:\/\//i.test(raw)) return '';
+    if(/^\/\//.test(raw)) return '';
+    if(/^\s*javascript:/i.test(raw)) return '';
+    if(raw.indexOf('..') >= 0) return '';
+    return raw;
+  }catch(e){ return ''; }
+}
 function isAdminUser(user){
   if(!user) return false;
   const email = (user.email || '').toLowerCase();
@@ -2584,6 +2597,14 @@ if(fauth){
       if(!user) msg.textContent = 'Sign in with Google to continue.';
       else if(!ok) msg.textContent = 'This account is not authorized for this admin panel.';
       else msg.textContent = 'Signed in.';
+    }
+    if(user && ok && !admReturnRedirectDone){
+      const ret = admSafeReturnTarget();
+      if(ret){
+        admReturnRedirectDone = true;
+        if(msg) msg.textContent = 'Signed in. Returning to admin-v2…';
+        setTimeout(()=>{ location.href = ret; }, 120);
+      }
     }
   });
 }
