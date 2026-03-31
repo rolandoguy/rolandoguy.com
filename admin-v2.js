@@ -3,7 +3,19 @@
 
   var LANGS = ['en', 'de', 'es', 'it', 'fr'];
   var ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
+  var AUTH_REDIRECT_PENDING_KEY = 'adm2_redirect_pending';
+  var AUTH_REDIRECT_PENDING_TS_KEY = 'adm2_redirect_pending_ts';
+  var AUTH_REDIRECT_GRACE_MS = 8000;
+  var AUTH_REDIRECT_PENDING_TTL_MS = 15 * 60 * 1000;
   var firebaseAuth = null;
+  var authDebugState = {
+    redirectProcessed: 'no',
+    authState: 'pending',
+    email: '—',
+    allowlist: 'no',
+    gate: 'locked',
+    failure: ''
+  };
   var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_press|rg_press_meta|rg_vid|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var state = {
     lang: 'en',
@@ -57,7 +69,61 @@
     var full = safeString(message);
     if (code) full += ' [' + code + ']';
     if (msg) full += ' ' + msg;
+    setAuthDebug({ failure: code || msg || 'unknown-error' });
     setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, full);
+  }
+  function getRedirectPending() {
+    try {
+      if (sessionStorage.getItem(AUTH_REDIRECT_PENDING_KEY) === '1') return true;
+      var tsRaw = localStorage.getItem(AUTH_REDIRECT_PENDING_TS_KEY);
+      var ts = Number(tsRaw || 0);
+      if (!Number.isFinite(ts) || ts <= 0) return false;
+      return (Date.now() - ts) < AUTH_REDIRECT_PENDING_TTL_MS;
+    } catch (e) {
+      return false;
+    }
+  }
+  function setRedirectPending(flag) {
+    try {
+      if (flag) {
+        sessionStorage.setItem(AUTH_REDIRECT_PENDING_KEY, '1');
+        localStorage.setItem(AUTH_REDIRECT_PENDING_TS_KEY, String(Date.now()));
+      } else {
+        sessionStorage.removeItem(AUTH_REDIRECT_PENDING_KEY);
+        localStorage.removeItem(AUTH_REDIRECT_PENDING_TS_KEY);
+      }
+    } catch (e) {}
+  }
+  function renderAuthDebug() {
+    var card = document.querySelector('.auth-card');
+    if (!card) return;
+    var el = $('adm2AuthDebug');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'adm2AuthDebug';
+      el.className = 'muted';
+      el.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      el.style.fontSize = '12px';
+      el.style.lineHeight = '1.4';
+      var anchor = $('adm2AuthMsg');
+      if (anchor && anchor.parentNode) anchor.insertAdjacentElement('afterend', el);
+      else card.appendChild(el);
+    }
+    el.textContent =
+      'AUTH debug: redirectProcessed=' + safeString(authDebugState.redirectProcessed) +
+      ' authState=' + safeString(authDebugState.authState) +
+      ' email=' + safeString(authDebugState.email || '—') +
+      ' allowlist=' + safeString(authDebugState.allowlist) +
+      ' gate=' + safeString(authDebugState.gate) +
+      (authDebugState.failure ? ' reason=' + safeString(authDebugState.failure) : '');
+  }
+  function setAuthDebug(patch) {
+    if (patch && typeof patch === 'object') {
+      Object.keys(patch).forEach(function (k) {
+        authDebugState[k] = patch[k];
+      });
+    }
+    renderAuthDebug();
   }
   function isAdminUser(user) {
     if (!user) return false;
@@ -74,6 +140,11 @@
     if ($('adm2SignOutBtn')) $('adm2SignOutBtn').style.display = user ? '' : 'none';
     if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').style.display = unlocked && user ? '' : 'none';
     if ($('adm2AuthMsg')) $('adm2AuthMsg').textContent = msgText || '';
+    setAuthDebug({
+      email: user && user.email ? user.email : '—',
+      allowlist: isAdminUser(user) ? 'yes' : 'no',
+      gate: unlocked ? 'unlocked' : 'locked'
+    });
   }
   function initAuth() {
     if (typeof firebase === 'undefined') {
@@ -103,7 +174,9 @@
     }
     var provider = new firebase.auth.GoogleAuthProvider();
     if (shouldUseRedirectAuth()) {
+      setRedirectPending(true);
       setAuthGate(false, firebaseAuth.currentUser || null, 'Opening Google sign-in with redirect…');
+      setAuthDebug({ redirectProcessed: 'no', authState: 'pending', failure: '' });
       firebaseAuth.signInWithRedirect(provider).catch(function (err) {
         setAuthError('Redirect sign-in failed.', err);
       });
@@ -111,6 +184,7 @@
     }
     firebaseAuth.signInWithPopup(provider).catch(function (err) {
       if (err && err.code === 'auth/popup-blocked') {
+        setRedirectPending(true);
         setAuthGate(false, firebaseAuth.currentUser || null, 'Popup blocked. Switching to redirect sign-in…');
         firebaseAuth.signInWithRedirect(provider).catch(function (err2) {
           setAuthError('Could not sign in with Google after popup fallback to redirect.', err2);
@@ -122,9 +196,15 @@
     return false;
   }
   function handleRedirectResult() {
-    if (!firebaseAuth || typeof firebaseAuth.getRedirectResult !== 'function') return Promise.resolve();
+    if (!firebaseAuth || typeof firebaseAuth.getRedirectResult !== 'function') {
+      setAuthDebug({ redirectProcessed: 'no', failure: 'redirect-api-unavailable' });
+      return Promise.resolve();
+    }
+    setAuthDebug({ redirectProcessed: 'no', authState: 'pending', failure: '' });
     return firebaseAuth.getRedirectResult().then(function (res) {
+      setAuthDebug({ redirectProcessed: 'yes', authState: res && res.user ? 'signed-in' : 'signed-out' });
       if (res && res.user) {
+        setRedirectPending(false);
         setAuthGate(false, res.user, 'Redirect sign-in completed. Verifying access…');
       }
     }).catch(function (err) {
@@ -133,6 +213,7 @@
   }
   function signOut() {
     if (!firebaseAuth) return;
+    setRedirectPending(false);
     firebaseAuth.signOut().catch(function (err) {
       setAuthError('Sign out failed.', err);
     });
@@ -141,19 +222,46 @@
   function awaitAuthorizedUser() {
     return new Promise(function (resolve, reject) {
       if (!firebaseAuth) return reject(new Error('Firebase auth unavailable.'));
+      var pendingRedirect = getRedirectPending();
+      var nullUserTimer = null;
       firebaseAuth.onAuthStateChanged(function (user) {
         var ok = isAdminUser(user);
+        setAuthDebug({
+          authState: user ? 'signed-in' : 'signed-out',
+          email: user && user.email ? user.email : '—',
+          allowlist: ok ? 'yes' : 'no'
+        });
         if (!user) {
+          if (pendingRedirect) {
+            setAuthGate(false, null, 'Restoring sign-in session after redirect…');
+            if (!nullUserTimer) {
+              nullUserTimer = setTimeout(function () {
+                pendingRedirect = false;
+                setRedirectPending(false);
+                setAuthDebug({ failure: 'redirect-session-not-restored' });
+                setAuthGate(false, null, 'Sign-in was not restored after redirect. Please tap "Sign in with Google" again.');
+              }, AUTH_REDIRECT_GRACE_MS);
+            }
+            return;
+          }
           setAuthGate(false, null, 'Sign in with Google to continue.');
           return;
         }
+        if (nullUserTimer) {
+          clearTimeout(nullUserTimer);
+          nullUserTimer = null;
+        }
+        setRedirectPending(false);
         if (!ok) {
+          setAuthDebug({ failure: 'allowlist-denied' });
           setAuthGate(false, user, 'This account is not authorized for this admin panel.');
           return;
         }
+        setAuthDebug({ failure: '' });
         setAuthGate(true, user, 'Signed in.');
         resolve(user);
       }, function () {
+        setAuthDebug({ failure: 'auth-state-listener-failed' });
         reject(new Error('Auth state listener failed.'));
       });
     });
@@ -2007,6 +2115,8 @@
     try {
       window.adm2SignInGoogle = signInGoogle;
       window.adm2SignOut = signOut;
+      setAuthDebug({ redirectProcessed: getRedirectPending() ? 'no' : 'yes', authState: 'pending', failure: '' });
+      setAuthGate(false, null, 'Checking authentication status…');
       initAuth();
       await handleRedirectResult();
       if ($('adm2SignInBtn')) {
