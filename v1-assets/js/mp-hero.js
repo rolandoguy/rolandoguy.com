@@ -8,7 +8,9 @@
     'hero.nameHtml': 'Rolando<br><em>Guy</em>'
   };
   var LAST_HERO_IMAGE = '';
-  var LAST_INTRO_DEBUG = null;
+  var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var LIVE_HERO_DOCS = {};
+  var LIVE_HERO_PROMISES = {};
 
   function escUrl(u) {
     return String(u).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -46,6 +48,48 @@
     var rec = readLegacyRecord(key);
     return rec ? rec.value : null;
   }
+  function readLiveHeroRecord(key) {
+    var v = LIVE_HERO_DOCS[key];
+    if (!v || typeof v !== 'object') return null;
+    return { value: v, ts: 0 };
+  }
+  function fetchFirestoreDocJson(key) {
+    var url = 'https://firestore.googleapis.com/v1/projects/' + FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!v || typeof v !== 'string') return null;
+        try { return JSON.parse(v); } catch (e) { return null; }
+      })
+      .catch(function () { return null; });
+  }
+  function ensureLiveHeroDoc(key) {
+    if (!key) return Promise.resolve(null);
+    if (LIVE_HERO_DOCS[key]) return Promise.resolve(LIVE_HERO_DOCS[key]);
+    if (LIVE_HERO_PROMISES[key]) return LIVE_HERO_PROMISES[key];
+    LIVE_HERO_PROMISES[key] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        if (doc && typeof doc === 'object') LIVE_HERO_DOCS[key] = doc;
+        return LIVE_HERO_DOCS[key] || null;
+      })
+      .finally(function () {
+        delete LIVE_HERO_PROMISES[key];
+      });
+    return LIVE_HERO_PROMISES[key];
+  }
+  function loadLiveHeroOverrides(lang) {
+    var rawLang = String(lang || 'en');
+    var shortLang = rawLang.split('-')[0];
+    var keys = ['hero_' + rawLang, 'hero_en'];
+    if (shortLang && shortLang !== rawLang) keys.push('hero_' + shortLang);
+    return Promise.all(keys.map(ensureLiveHeroDoc))
+      .then(function () { return true; })
+      .catch(function () { return false; });
+  }
   function withCacheBuster(url, ts) {
     var s = String(url || '').trim();
     var n = Number(ts) || 0;
@@ -57,6 +101,35 @@
   function getIntroImageOverrideInfo() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     var shortLang = String(rawLang || 'en').split('-')[0];
+    var liveByLangRec = readLiveHeroRecord('hero_' + rawLang);
+    var liveByLang = liveByLangRec && liveByLangRec.value;
+    if (liveByLang && typeof liveByLang.introImage === 'string' && liveByLang.introImage.trim()) {
+      return {
+        source: 'firestore:hero_' + rawLang + '.introImage',
+        lang: rawLang,
+        url: withCacheBuster(normalizeIntroImagePath(liveByLang.introImage), liveByLangRec.ts)
+      };
+    }
+    if (shortLang && shortLang !== rawLang) {
+      var liveByShortRec = readLiveHeroRecord('hero_' + shortLang);
+      var liveByShort = liveByShortRec && liveByShortRec.value;
+      if (liveByShort && typeof liveByShort.introImage === 'string' && liveByShort.introImage.trim()) {
+        return {
+          source: 'firestore:hero_' + shortLang + '.introImage',
+          lang: rawLang,
+          url: withCacheBuster(normalizeIntroImagePath(liveByShort.introImage), liveByShortRec.ts)
+        };
+      }
+    }
+    var liveByEnRec = readLiveHeroRecord('hero_en');
+    var liveByEn = liveByEnRec && liveByEnRec.value;
+    if (liveByEn && typeof liveByEn.introImage === 'string' && liveByEn.introImage.trim()) {
+      return {
+        source: 'firestore:hero_en.introImage',
+        lang: rawLang,
+        url: withCacheBuster(normalizeIntroImagePath(liveByEn.introImage), liveByEnRec.ts)
+      };
+    }
     var byLangRec = readLegacyRecord('hero_' + rawLang);
     var byLang = byLangRec && byLangRec.value;
     if (byLang && typeof byLang.introImage === 'string' && byLang.introImage.trim()) {
@@ -88,19 +161,12 @@
     }
     return null;
   }
-  function setIntroDebug(info) {
-    LAST_INTRO_DEBUG = info || null;
-  }
   function resolveIntroImage(cfgImageOrFallback) {
     var override = getIntroImageOverrideInfo();
     if (override && override.url) {
-      setIntroDebug(override);
       return override.url;
     }
-    var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
-    var normalized = normalizeIntroImagePath(cfgImageOrFallback);
-    setIntroDebug({ lang: rawLang, source: 'hero-config.image', url: normalized });
-    return normalized;
+    return normalizeIntroImagePath(cfgImageOrFallback);
   }
   function normalizeIntroImagePath(raw) {
     var s = String(raw || '').trim();
@@ -185,7 +251,8 @@
   function bootHero() {
     var lang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     applyHeroCopy(lang);
-    fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
+    loadLiveHeroOverrides(lang).finally(function () {
+      fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
       .then(function (r) {
         return r.json();
       })
@@ -197,17 +264,18 @@
         var introPhoto = document.querySelector('img.mp-home-hero-asset');
         if (introPhoto) introPhoto.src = resolveIntroImage(fallback);
       });
+    });
   }
 
   window.addEventListener('mp:langchange', function (e) {
     var lang = (e.detail && e.detail.lang) || (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     applyHeroCopy(lang);
-    var introPhoto = document.querySelector('img.mp-home-hero-asset');
-    if (introPhoto) {
-      introPhoto.src = resolveIntroImage(LAST_HERO_IMAGE) || introPhoto.src;
-    } else if (LAST_INTRO_DEBUG) {
-      setIntroDebug(LAST_INTRO_DEBUG);
-    }
+    loadLiveHeroOverrides(lang).finally(function () {
+      var introPhoto = document.querySelector('img.mp-home-hero-asset');
+      if (introPhoto) {
+        introPhoto.src = resolveIntroImage(LAST_HERO_IMAGE) || introPhoto.src;
+      }
+    });
   });
 
   if (window.MP_LOCALE_TABLE) {

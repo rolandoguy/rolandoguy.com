@@ -4,14 +4,6 @@
   var LANGS = ['en', 'de', 'es', 'it', 'fr'];
   var ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
   var firebaseAuth = null;
-  var authDiag = {
-    firebaseLoaded: false,
-    authInitialized: false,
-    clickHandlerAttached: false,
-    popupAttemptStarted: false,
-    lastErrorCode: '',
-    lastErrorMessage: ''
-  };
   var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_press|rg_press_meta|rg_vid|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var state = {
     lang: 'en',
@@ -44,27 +36,29 @@
     bioPortraitDefault: '',
     bioLoadNonce: 0,
     homeIntroDefault: '',
-    homeLoadNonce: 0
+    homeLoadNonce: 0,
+    homeLoadCallCount: 0
   };
 
   function $(id) { return document.getElementById(id); }
-  function renderAuthDiag() {
-    var el = $('adm2Diag');
-    if (!el) return;
-    el.textContent = [
-      'Firebase loaded: ' + (authDiag.firebaseLoaded ? 'yes' : 'no'),
-      'Auth initialized: ' + (authDiag.authInitialized ? 'yes' : 'no'),
-      'Click handler attached: ' + (authDiag.clickHandlerAttached ? 'yes' : 'no'),
-      'Popup attempt started: ' + (authDiag.popupAttemptStarted ? 'yes' : 'no'),
-      'Last error code: ' + (authDiag.lastErrorCode || '—'),
-      'Last error message: ' + (authDiag.lastErrorMessage || '—')
-    ].join('\n');
+  function isMobileSafari() {
+    var ua = String((window.navigator && window.navigator.userAgent) || '');
+    var isIOS = /iP(hone|ad|od)/i.test(ua);
+    var isWebKit = /WebKit/i.test(ua);
+    var isSafari = /Safari/i.test(ua);
+    var excluded = /(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(ua);
+    return isIOS && isWebKit && isSafari && !excluded;
+  }
+  function shouldUseRedirectAuth() {
+    return isMobileSafari();
   }
   function setAuthError(message, err) {
-    authDiag.lastErrorCode = safeString(err && err.code).trim();
-    authDiag.lastErrorMessage = safeString(err && err.message).trim() || safeString(message);
-    renderAuthDiag();
-    setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, safeString(message) + (authDiag.lastErrorCode ? ' [' + authDiag.lastErrorCode + ']' : ''));
+    var code = safeString(err && err.code).trim();
+    var msg = safeString(err && err.message).trim();
+    var full = safeString(message);
+    if (code) full += ' [' + code + ']';
+    if (msg) full += ' ' + msg;
+    setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, full);
   }
   function isAdminUser(user) {
     if (!user) return false;
@@ -83,8 +77,6 @@
     if ($('adm2AuthMsg')) $('adm2AuthMsg').textContent = msgText || '';
   }
   function initAuth() {
-    authDiag.firebaseLoaded = typeof firebase !== 'undefined';
-    renderAuthDiag();
     if (typeof firebase === 'undefined') {
       setAuthError('Authentication is unavailable (Firebase failed to load).');
       return;
@@ -101,27 +93,44 @@
         });
       }
       firebaseAuth = firebase.auth();
-      authDiag.authInitialized = !!firebaseAuth;
-      renderAuthDiag();
     } catch (e) {
       setAuthError('Authentication is unavailable (Firebase init failed).', e);
     }
   }
   function signInGoogle() {
-    console.info('[admin-v2 auth] signIn button clicked');
     if (!firebaseAuth || typeof firebase === 'undefined') {
       setAuthError('Authentication is unavailable.');
       return false;
     }
     var provider = new firebase.auth.GoogleAuthProvider();
-    authDiag.popupAttemptStarted = true;
-    renderAuthDiag();
-    console.info('[admin-v2 auth] popup attempt start');
+    if (shouldUseRedirectAuth()) {
+      setAuthGate(false, firebaseAuth.currentUser || null, 'Opening Google sign-in with redirect…');
+      firebaseAuth.signInWithRedirect(provider).catch(function (err) {
+        setAuthError('Redirect sign-in failed.', err);
+      });
+      return false;
+    }
     firebaseAuth.signInWithPopup(provider).catch(function (err) {
-      console.warn('[admin-v2 auth] signInWithPopup failed', err);
+      if (err && err.code === 'auth/popup-blocked') {
+        setAuthGate(false, firebaseAuth.currentUser || null, 'Popup blocked. Switching to redirect sign-in…');
+        firebaseAuth.signInWithRedirect(provider).catch(function (err2) {
+          setAuthError('Could not sign in with Google after popup fallback to redirect.', err2);
+        });
+        return;
+      }
       setAuthError('Could not sign in with Google. Check Firebase Authentication domain settings or popup blocking.', err);
     });
     return false;
+  }
+  function handleRedirectResult() {
+    if (!firebaseAuth || typeof firebaseAuth.getRedirectResult !== 'function') return Promise.resolve();
+    return firebaseAuth.getRedirectResult().then(function (res) {
+      if (res && res.user) {
+        setAuthGate(false, res.user, 'Redirect sign-in completed. Verifying access…');
+      }
+    }).catch(function (err) {
+      setAuthError('Redirect sign-in failed on return.', err);
+    });
   }
   function signOut() {
     if (!firebaseAuth) return;
@@ -144,9 +153,6 @@
           return;
         }
         setAuthGate(true, user, 'Signed in.');
-        authDiag.lastErrorCode = '';
-        authDiag.lastErrorMessage = '';
-        renderAuthDiag();
         resolve(user);
       }, function () {
         reject(new Error('Auth state listener failed.'));
@@ -320,31 +326,79 @@
 
   function loadHome() {
     var nonce = ++state.homeLoadNonce;
+    state.homeLoadCallCount += 1;
     var stored = loadDoc('hero_' + state.lang, null);
-    var storedEn = loadDoc('hero_en', null);
     var fallback = getLegacySection('hero');
     $('hero-eyebrow').value = pickStoredOrFallback(stored, fallback, 'eyebrow');
     $('hero-subtitle').value = pickStoredOrFallback(stored, fallback, 'subtitle');
     $('hero-cta1').value = pickStoredOrFallback(stored, fallback, 'cta1');
     $('hero-cta2').value = pickStoredOrFallback(stored, fallback, 'cta2');
     $('hero-bgImage').value = pickStoredOrFallback(stored, fallback, 'bgImage');
-    var immediateIntro = isObject(stored) && safeString(stored.introImage).trim()
-      ? normalizeHomeIntroImagePath(safeString(stored.introImage).trim())
-      : (isObject(storedEn) ? normalizeHomeIntroImagePath(safeString(storedEn.introImage).trim()) : '');
-    if (immediateIntro) {
-      $('hero-introImage').value = immediateIntro;
-      updateHomeIntroPreview();
-    }
-    loadHomeIntroDefault().then(function (src) {
+    // Keep preview blank until final source is resolved (no stale first paint).
+    $('hero-introImage').value = '';
+    updateHomeIntroPreview();
+    resolveHomeIntroFinal().then(function (resolved) {
       if (nonce !== state.homeLoadNonce) return;
-      var effective = isObject(stored) && safeString(stored.introImage).trim()
-        ? normalizeHomeIntroImagePath(safeString(stored.introImage).trim())
-        : (isObject(storedEn) && safeString(storedEn.introImage).trim()
-          ? normalizeHomeIntroImagePath(safeString(storedEn.introImage).trim())
-          : src);
-      $('hero-introImage').value = safeString(effective).trim();
+      $('hero-introImage').value = safeString(resolved && resolved.url).trim();
       updateHomeIntroPreview();
     });
+  }
+  function readHomeIntroFromBridge() {
+    var stored = loadDoc('hero_' + state.lang, null);
+    if (isObject(stored) && safeString(stored.introImage).trim()) {
+      return {
+        source: 'bridge:hero_' + state.lang + '.introImage',
+        url: normalizeHomeIntroImagePath(safeString(stored.introImage).trim())
+      };
+    }
+    var storedEn = loadDoc('hero_en', null);
+    if (isObject(storedEn) && safeString(storedEn.introImage).trim()) {
+      return {
+        source: 'bridge:hero_en.introImage',
+        url: normalizeHomeIntroImagePath(safeString(storedEn.introImage).trim())
+      };
+    }
+    return null;
+  }
+  function fetchFirestoreDocJson(key) {
+    var url = 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/' + encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!v || typeof v !== 'string') return null;
+        try { return JSON.parse(v); } catch (e) { return null; }
+      })
+      .catch(function () { return null; });
+  }
+  function readHomeIntroFromFirestore(doc, keyLabel) {
+    if (!isObject(doc)) return null;
+    var s = safeString(doc.introImage).trim();
+    if (!s) return null;
+    return { source: 'firestore:' + keyLabel + '.introImage', url: normalizeHomeIntroImagePath(s) };
+  }
+  async function resolveHomeIntroFinal() {
+    var langKey = 'hero_' + state.lang;
+    var bridgeCandidate = readHomeIntroFromBridge();
+    var fsLangPromise = fetchFirestoreDocJson(langKey);
+    var fsEnPromise = fetchFirestoreDocJson('hero_en');
+    var defaultPromise = loadHomeIntroDefault();
+
+    var fsLang = await fsLangPromise;
+    var fsLangCandidate = readHomeIntroFromFirestore(fsLang, langKey);
+    if (fsLangCandidate) return fsLangCandidate;
+
+    var fsEn = await fsEnPromise;
+    var fsEnCandidate = readHomeIntroFromFirestore(fsEn, 'hero_en');
+    if (fsEnCandidate) return fsEnCandidate;
+
+    if (bridgeCandidate && bridgeCandidate.url) return bridgeCandidate;
+
+    var def = safeString(await defaultPromise).trim();
+    return { source: 'default:hero-config.image', url: def };
   }
   function saveHome() {
     var applyAll = !!($('home-images-all-langs') && $('home-images-all-langs').checked);
@@ -1858,13 +1912,12 @@
       window.adm2SignInGoogle = signInGoogle;
       window.adm2SignOut = signOut;
       initAuth();
+      await handleRedirectResult();
       if ($('adm2SignInBtn')) {
         $('adm2SignInBtn').addEventListener('click', signInGoogle);
-        authDiag.clickHandlerAttached = true;
       }
       if ($('adm2SignOutBtn')) $('adm2SignOutBtn').addEventListener('click', signOut);
       if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').addEventListener('click', signOut);
-      renderAuthDiag();
       await awaitAuthorizedUser();
       setStatus('Conectando bridge…', 'warn');
       state.api = await waitForLegacyApi();
