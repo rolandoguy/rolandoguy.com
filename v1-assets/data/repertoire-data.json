@@ -1,0 +1,457 @@
+{
+  "rep": {
+    "h2": "Selected <em>Repertoire</em>",
+    "intro": "From the intimate lyricism of Mozart to the dramatic sweep of Puccini and Verdi, Rolando's repertoire spans the full breadth of the tenor tradition."
+  },
+  "cards": [
+    {
+      "composer": "Carlos Gardel",
+      "opera": "Por una cabeza",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "Carlos Gardel",
+      "opera": "Volver",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "Carlos Gardel",
+      "opera": "El día que me quieras",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "Mariano Mores",
+      "opera": "Gricel",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "Mariano Mores",
+      "opera": "Cristal",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "Astor Piazzolla",
+      "opera": "Oblivion",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "José Dames",
+      "opera": "Nada",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "cat": "tango"
+    },
+    {
+      "composer": "Franz Lehár",
+      "opera": "Dein ist mein ganzes Herz",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "operetta"
+    },
+    {
+      "composer": "Franz Lehár",
+      "opera": "Freunde das Leben ist lebenswert",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "operetta"
+    },
+    {
+      "composer": "Franz Lehár",
+      "opera": "Gern hab' ich die Frau'n geküsst",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "operetta"
+    },
+    {
+      "composer": "Edward Künneke",
+      "opera": "Ich bin nur ein armer Wandergesell",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "operetta"
+    },
+    {
+      "composer": "Edward Künneke",
+      "opera": "Roderich de Weert - Der Vetter aus Dingsda ",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "operetta"
+    },
+    {
+      "composer": "Tosti",
+      "opera": "Ideale",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "Tosti",
+      "opera": "L’alba separa dalla luce l’ombra",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "Gastaldon",
+      "opera": "Musica proibita",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "G Puccini",
+      "opera": "Sole e amore",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "Rossini",
+      "opera": "La danza",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "Donaudy",
+      "opera": "O del mio amato ben",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "Leoncavallo",
+      "opera": "Mattinata",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "R Schumann",
+      "opera": "Dichterliebe op. 48",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Haydn",
+      "opera": "O tuneful voice",
+      "role": "",
+      "lang": "EN",
+      "status": "performed",
+      "category": "English Art Song",
+      "cat": "lied"
+    },
+    {
+      "composer": "Haydn",
+      "opera": "Fidelity",
+      "role": "",
+      "lang": "EN",
+      "status": "performed",
+      "category": "English Art Song",
+      "cat": "lied"
+    },
+    {
+      "composer": "Mozart",
+      "opera": "Das Lied der Trennung",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Mozart",
+      "opera": "Abendempfindung",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Mozart",
+      "opera": "An Chloe",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Beethoven",
+      "opera": "Adelaide",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Schubert",
+      "opera": "Lied eines Schiffers an die Dioskuren",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Schubert",
+      "opera": "Im Abendrot",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Schubert",
+      "opera": "Ständchen",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Schubert",
+      "opera": "Erlkönig",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Rachmaninov",
+      "opera": "V molchan’i nochi taynoy / In the silence of the night",
+      "role": "",
+      "lang": "EN",
+      "status": "performed",
+      "category": "Russian Art Song",
+      "cat": "lied"
+    },
+    {
+      "composer": "Rachmaninov",
+      "opera": "Ne poy, krasavitsa, pri mne",
+      "role": "",
+      "lang": "EN",
+      "status": "performed",
+      "category": "Russian Art Song",
+      "cat": "lied"
+    },
+    {
+      "composer": "Richard Strauss",
+      "opera": "Allerseelen",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Richard Strauss",
+      "opera": "Morgen",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Richard Strauss",
+      "opera": "Zueignung",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "category": "Deutsches Lied",
+      "cat": "lied"
+    },
+    {
+      "composer": "Franz Liszt",
+      "opera": "Tre sonetti di Petrarca",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "category": "Italian Art Song & Canzone",
+      "cat": "lied"
+    },
+    {
+      "composer": "Carlos López Buchardo",
+      "opera": "La canción del carretero",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "category": "Canción de Arte Argentina",
+      "cat": "lied"
+    },
+    {
+      "composer": "Carlos Guastavino",
+      "opera": "Cuatro canciones argentinas",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "category": "Canción de Arte Argentina",
+      "cat": "lied"
+    },
+    {
+      "composer": "Carlos Guastavino",
+      "opera": "La rosa y el sauce",
+      "role": "",
+      "lang": "ES",
+      "status": "performed",
+      "category": "Canción de Arte Argentina",
+      "cat": "lied"
+    },
+    {
+      "composer": "W. A. Mozart",
+      "opera": "Dies Bildnis ist bezaubernd schön",
+      "role": "",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "arias"
+    },
+    {
+      "composer": "Cilea",
+      "opera": "È la solita storia del pastore - L'Arlesiana",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "cat": "arias"
+    },
+    {
+      "composer": "G. Bizet",
+      "opera": "La fleur que tu m'avais jetée - Carmen",
+      "role": "",
+      "lang": "FR",
+      "status": "performed",
+      "cat": "arias"
+    },
+    {
+      "composer": "G. Verdi",
+      "opera": "Quando le sere al placido - Luisa Miller",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "cat": "arias"
+    },
+    {
+      "composer": "G. Donizetti",
+      "opera": "Una furtiva lagrima - L'elisir d'amore",
+      "role": "",
+      "lang": "IT",
+      "status": "performed",
+      "cat": "arias"
+    },
+    {
+      "composer": "G. Donizetti",
+      "opera": "L'elisir d'amore",
+      "role": "Nemorino",
+      "lang": "IT",
+      "status": "performed",
+      "cat": "opera"
+    },
+    {
+      "composer": "Giacomo Puccini",
+      "opera": "La Bohème",
+      "role": "Rodolfo",
+      "lang": "IT",
+      "status": "performed",
+      "cat": "opera"
+    },
+    {
+      "composer": "W. A. Mozart",
+      "opera": "Die Zauberflöte",
+      "role": "Tamino",
+      "lang": "DE",
+      "status": "performed",
+      "cat": "opera"
+    },
+    {
+      "composer": "W. A. Mozart",
+      "opera": "Così fan tutte",
+      "role": "Ferrando",
+      "lang": "IT",
+      "status": "performed",
+      "cat": "opera"
+    },
+    {
+      "composer": "G. Donizetti",
+      "opera": "Lucia di Lammermoor",
+      "role": "Edgardo",
+      "lang": "IT",
+      "status": "prepared",
+      "cat": "opera"
+    },
+    {
+      "composer": "Giuseppe Verdi",
+      "opera": "Rigoletto",
+      "role": "Il Duca di Mantova",
+      "lang": "IT",
+      "status": "prepared",
+      "cat": "opera"
+    },
+    {
+      "composer": "Giuseppe Verdi",
+      "opera": "La traviata",
+      "role": "Alfredo",
+      "lang": "IT",
+      "status": "prepared",
+      "cat": "opera"
+    },
+    {
+      "composer": "W. A. Mozart",
+      "opera": "Don Giovanni",
+      "role": "Don Ottavio",
+      "lang": "IT",
+      "status": "prepared",
+      "cat": "opera"
+    }
+  ],
+  "repLocales": {
+    "fr": {
+      "h2": "Selected <em>Repertoire</em>",
+      "intro": "Du lyrisme intime de Mozart à la puissance dramatique de Puccini et Verdi, le répertoire de Rolando embrasse toute la tradition du ténor."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "exportedAt": "2026-03-30T20:00:00.000Z",
+  "origin": "stub-min-hero-bio-for-mp-home-build",
+  "keys": ["hero_en", "bio_en"],
+  "data": {
+    "hero_en": {
+      "eyebrow": "Lyric Tenor · Opera · Concert · Recital",
+      "subtitle": "Argentine-Italian lyric tenor based in Berlin",
+      "cta1": "Watch & Listen",
+      "cta2": "Book Now",
+      "bgImage": "img/studio-1.jpg"
+    },
+    "bio_en": {
+      "h2": "A voice <em>forged</em><br>in tradition"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "exportedAt": "2026-03-30T18:00:00.000Z",
+  "origin": "stub-from-committed-contact-data",
+  "keys": [
+    "contact_en"
+  ],
+  "data": {
+    "contact_en": {
+      "title": "Bookings &amp; <em>Artistic Enquiries</em>",
+      "sub": "For booking enquiries, concert engagements, artistic collaborations, private recitals and opera galas, please get in touch directly. All messages are personally answered.",
+      "email": "rolandoguy@gmail.com",
+      "emailBtn": "Send Email",
+      "webBtn": "Official Website",
+      "quote": ""
+    }
+  }
+}

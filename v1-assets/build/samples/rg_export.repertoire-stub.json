@@ -1,0 +1,150 @@
+{
+  "exportedAt": "2026-03-30T12:00:00.000Z",
+  "origin": "stub-from-committed-repertoire-data",
+  "keys": [
+    "rg_rep_cards",
+    "rep_en"
+  ],
+  "data": {
+    "rg_rep_cards": [
+      {
+        "composer": "W. A. Mozart",
+        "opera": "Die Zauberflöte",
+        "role": "Tamino",
+        "lang": "DE",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "composer": "W. A. Mozart",
+        "opera": "Così fan tutte",
+        "role": "Ferrando",
+        "lang": "IT",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "composer": "Giacomo Puccini",
+        "opera": "La Bohème",
+        "role": "Rodolfo",
+        "lang": "IT",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "composer": "Giuseppe Verdi",
+        "opera": "La Traviata",
+        "role": "Alfredo / Gastone",
+        "lang": "IT",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "composer": "G. Donizetti",
+        "opera": "L'elisir d'amore",
+        "role": "Nemorino",
+        "lang": "IT",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "composer": "Eduard Künneke",
+        "opera": "Der Vetter aus Dingsda",
+        "role": "Roderich de Weert",
+        "lang": "DE",
+        "status": "performed",
+        "cat": "opera",
+        "performanceCredits": [
+          {
+            "year": "2025",
+            "venue": "Kammeroper Frankfurt",
+            "city": "Frankfurt",
+            "country": "Germany",
+            "production": "Der Vetter aus Dingsda",
+            "conductor": "Stanislav Rosenberg",
+            "link": "https://www.kammeroper-frankfurt.de/",
+            "linkLabel": "Venue"
+          }
+        ]
+      },
+      {
+        "composer": "G. Donizetti",
+        "opera": "Lucia di Lammermoor",
+        "role": "Edgardo",
+        "lang": "IT",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "composer": "Victor Massé",
+        "opera": "Irma la douce",
+        "role": "Nestor",
+        "lang": "FR",
+        "status": "performed",
+        "cat": "opera"
+      },
+      {
+        "cat": "arias",
+        "opera": "Chi mi frena in tal momento",
+        "composer": "G. Donizetti",
+        "lang": "IT"
+      },
+      {
+        "cat": "arias",
+        "opera": "Il lamento di Federico",
+        "composer": "F. Cilea",
+        "lang": "IT"
+      },
+      {
+        "cat": "arias",
+        "opera": "Libiamo ne' lieti calici",
+        "composer": "G. Verdi",
+        "lang": "IT"
+      },
+      {
+        "cat": "operetta",
+        "opera": "Selections from Der Vetter aus Dingsda",
+        "composer": "Eduard Künneke",
+        "lang": "DE"
+      },
+      {
+        "cat": "operetta",
+        "opera": "Selections from Irma la douce",
+        "composer": "Victor Massé",
+        "lang": "FR"
+      },
+      {
+        "cat": "lied",
+        "category": "Deutsches Lied",
+        "opera": "Die Lorelei",
+        "composer": "F. Liszt",
+        "lang": "DE"
+      },
+      {
+        "cat": "lied",
+        "category": "Deutsches Lied",
+        "opera": "Du bist die Ruh",
+        "composer": "F. Schubert",
+        "lang": "DE"
+      },
+      {
+        "cat": "lied",
+        "category": "Deutsches Lied",
+        "opera": "Morgen!",
+        "composer": "R. Strauss",
+        "lang": "DE"
+      },
+      {
+        "cat": "lied",
+        "category": "Italian Art Song & Canzone",
+        "opera": "Vaghissima sembianza",
+        "composer": "S. Donaudy",
+        "lang": "IT"
+      }
+    ],
+    "rep_en": {
+      "h2": "Selected <em>Repertoire</em>",
+      "intro": ""
+    }
+  }
+}

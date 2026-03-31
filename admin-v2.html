@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin v2.0 · Rolando Guy</title>
+  <link rel="stylesheet" href="admin-v2.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">Admin v2.0</div>
+      <nav class="nav" id="nav">
+        <button data-section="home" class="nav-item active">Home / Hero</button>
+        <button data-section="bio" class="nav-item">Biography</button>
+        <button data-section="rep" class="nav-item">Repertoire</button>
+        <button data-section="programs" class="nav-item">Programs</button>
+        <button data-section="calendar" class="nav-item">Calendar</button>
+        <button data-section="media" class="nav-item">Media</button>
+        <button data-section="press" class="nav-item">Press / EPK</button>
+        <button data-section="contact" class="nav-item">Contact</button>
+        <button data-section="ui" class="nav-item">UI / Translations</button>
+        <button data-section="tools" class="nav-item">System / Tools</button>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">☰</button>
+        <div class="ctx">
+          <span id="currentSectionLabel">Home / Hero</span>
+          <span>·</span>
+          <span>Language:</span>
+          <select id="langSelect">
+            <option value="en">EN</option>
+            <option value="de">DE</option>
+            <option value="es">ES</option>
+            <option value="it">IT</option>
+            <option value="fr">FR</option>
+          </select>
+          <span id="langBadge" class="pill ok">EN</span>
+        </div>
+        <div class="actions">
+          <span id="saveState" class="pill">Cargando…</span>
+          <button id="exportBtn">Export JSON</button>
+          <label class="import-label">
+            Import JSON
+            <input type="file" id="importInput" accept=".json">
+          </label>
+          <button id="openPublicBtn">Ver sitio</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section id="section-home" class="section active">
+          <h2>Home / Hero</h2>
+          <div class="grid two">
+            <label>Eyebrow<input id="hero-eyebrow"></label>
+            <label>Subtitle<input id="hero-subtitle"></label>
+          </div>
+          <div class="grid two">
+            <label>CTA 1<input id="hero-cta1"></label>
+            <label>CTA 2<input id="hero-cta2"></label>
+          </div>
+          <div class="grid one">
+            <label>Hero image path<input id="hero-bgImage" placeholder="../img/hero-portrait.webp"></label>
+            <label>Home intro portrait (Home page only, language-specific) (`introImage`)<input id="hero-introImage" placeholder="../img/studio-2.jpg or https://..."></label>
+            <p class="muted">This image appears only on Home intro. Changes apply only to the currently selected language.</p>
+            <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
+              <input type="checkbox" id="home-images-all-langs" style="width:auto">
+              Apply Home hero + Home intro images to all languages
+            </label>
+            <label>Replace home intro portrait file
+              <input type="file" id="hero-introUpload" accept="image/*">
+            </label>
+            <div class="photo-preview-wrap">
+              <img id="hero-introPreview" alt="Home intro portrait preview">
+            </div>
+          </div>
+          <button id="saveHeroBtn">Guardar Home / Hero</button>
+        </section>
+
+        <section id="section-bio" class="section">
+          <h2>Biography</h2>
+          <div class="grid one">
+            <label>Title (HTML)<input id="bio-h2"></label>
+            <label>Paragraph 1<textarea id="bio-p1" rows="4"></textarea></label>
+            <label>Paragraph 2<textarea id="bio-p2" rows="4"></textarea></label>
+            <label>Quote<input id="bio-quote"></label>
+            <label>Attribution<input id="bio-cite"></label>
+            <label>Biography portrait (Biography page only, language-specific) (`portraitImage`)<input id="bio-portraitImage" placeholder="../img/studio-2.jpg or https://..."></label>
+            <p class="muted">This image appears only on Biography page. Changes apply only to the currently selected language.</p>
+            <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
+              <input type="checkbox" id="bio-image-all-langs" style="width:auto">
+              Apply Biography portrait image to all languages
+            </label>
+            <label>Replace biography image file
+              <input type="file" id="bio-portraitUpload" accept="image/*">
+            </label>
+            <div class="photo-preview-wrap">
+              <img id="bio-portraitPreview" alt="Biography portrait preview">
+            </div>
+          </div>
+          <button id="saveBioBtn">Guardar Biography</button>
+        </section>
+
+        <section id="section-rep" class="section">
+          <h2>Repertoire</h2>
+          <div class="grid two">
+            <label>H2 (HTML)<input id="rep-h2"></label>
+            <label>Intro<input id="rep-intro"></label>
+          </div>
+          <div class="toolbar">
+            <label>Category filter
+              <select id="rep-cat-filter">
+                <option value="all">All</option>
+                <option value="opera">Opera</option>
+                <option value="arias">Arias</option>
+                <option value="operetta">Operetta</option>
+                <option value="lied">Lied</option>
+                <option value="tango">Tango</option>
+              </select>
+            </label>
+            <button id="rep-add">+ New</button>
+            <button id="rep-dup">Duplicate</button>
+            <button id="rep-del" class="danger">Delete</button>
+            <button id="rep-up">↑</button>
+            <button id="rep-down">↓</button>
+          </div>
+          <div class="split">
+            <div id="rep-list" class="item-list"></div>
+            <div class="editor">
+              <label>Composer<input id="rep-composer"></label>
+              <label>Work / Opera<input id="rep-opera"></label>
+              <label>Role<input id="rep-role"></label>
+              <label>Category<input id="rep-cat"></label>
+              <label>Status<input id="rep-status"></label>
+              <label>Language<input id="rep-lang"></label>
+              <label>Lied category<input id="rep-category"></label>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="saveRepHeaderBtn">Save repertoire header</button>
+            <button id="saveRepCardsBtn">Save repertoire cards</button>
+          </div>
+        </section>
+
+        <section id="section-calendar" class="section">
+          <h2>Calendar</h2>
+          <div class="grid two">
+            <label>H2 (HTML)<input id="perf-h2"></label>
+            <label>Intro<input id="perf-intro"></label>
+          </div>
+          <div class="toolbar">
+            <button id="perf-add">+ New event</button>
+            <button id="perf-dup">Duplicate</button>
+            <button id="perf-del" class="danger">Delete</button>
+            <button id="perf-up">↑</button>
+            <button id="perf-down">↓</button>
+          </div>
+          <div class="split">
+            <div id="perf-list" class="item-list"></div>
+            <div class="editor">
+              <label>Title<input id="perf-title"></label>
+              <label>Detail<input id="perf-detail"></label>
+              <label>Day<input id="perf-day"></label>
+              <label>Month<input id="perf-month"></label>
+              <label>Time (`time`, optional)<input id="perf-time" placeholder="20:00 or 19:30 – 21:30"></label>
+              <label>Venue<input id="perf-venue"></label>
+              <label>City<input id="perf-city"></label>
+              <label>Background image URL (`venuePhoto`)<input id="perf-venuePhoto" placeholder="https://..."></label>
+              <label>Background opacity (`venueOpacity` %)
+                <input id="perf-venueOpacity" type="range" min="30" max="100" step="1">
+              </label>
+              <label>Opacity value<input id="perf-venueOpacityValue" readonly></label>
+              <div id="perf-venuePreviewWrap" class="photo-preview-wrap">
+                <img id="perf-venuePreview" alt="Event background preview">
+              </div>
+              <label>Status<input id="perf-status"></label>
+              <label>Type<input id="perf-type"></label>
+              <label>Sort date<input id="perf-sortDate" placeholder="YYYY-MM-DD"></label>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="savePerfHeaderBtn">Save calendar header</button>
+            <button id="savePerfEventsBtn">Save events</button>
+          </div>
+        </section>
+
+        <section id="section-programs" class="section">
+          <h2>Programs / Collaborations</h2>
+          <div class="grid two">
+            <label>Section title (HTML)<input id="programs-title"></label>
+            <label>Subtitle<input id="programs-subtitle"></label>
+          </div>
+          <div class="grid one">
+            <label>Intro<textarea id="programs-intro" rows="3"></textarea></label>
+            <label>Closing note<textarea id="programs-closingNote" rows="3"></textarea></label>
+          </div>
+          <div class="grid two">
+            <label>Context link from Repertoire (`rg_editorial_<lang>.repProgramsLink`)<input id="programs-repLink"></label>
+            <label>Context link from EPK (`rg_editorial_<lang>.epkProgramsLink`)<input id="programs-epkLink"></label>
+          </div>
+
+          <div class="toolbar">
+            <button id="programs-add">+ New</button>
+            <button id="programs-dup">Duplicate</button>
+            <button id="programs-del" class="danger">Delete</button>
+            <button id="programs-up">↑</button>
+            <button id="programs-down">↓</button>
+          </div>
+
+          <div class="split">
+            <div id="programs-list" class="item-list"></div>
+            <div class="editor">
+              <label>Title<input id="programs-item-title"></label>
+              <label>Description<textarea id="programs-item-description" rows="5"></textarea></label>
+              <label>Formations (one per line)<textarea id="programs-item-formations" rows="3"></textarea></label>
+              <label>Duration<input id="programs-item-duration"></label>
+              <label>Ideal for (one per line)<textarea id="programs-item-idealFor" rows="3"></textarea></label>
+              <label>Published
+                <select id="programs-item-published">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <button id="programs-save">Save Programs</button>
+          </div>
+        </section>
+
+        <section id="section-media" class="section">
+          <h2>Media</h2>
+          <div class="toolbar">
+            <button id="mediaTabVideos" class="active">Videos</button>
+            <button id="mediaTabPhotos">Photos</button>
+          </div>
+
+          <div id="mediaVideosPanel">
+            <div class="grid one">
+              <label>Videos H2 (HTML)<input id="media-vid-h2"></label>
+            </div>
+            <div class="toolbar">
+              <button id="media-vid-add">+ New video</button>
+              <button id="media-vid-dup">Duplicate</button>
+              <button id="media-vid-del" class="danger">Delete</button>
+              <button id="media-vid-up">↑</button>
+              <button id="media-vid-down">↓</button>
+            </div>
+            <div class="split">
+              <div id="media-vid-list" class="item-list"></div>
+              <div class="editor">
+                <label>Youtube ID<input id="media-vid-id"></label>
+                <label>Title<input id="media-vid-title"></label>
+                <label>Sub<input id="media-vid-sub"></label>
+                <label>Tag<input id="media-vid-tag"></label>
+                <label>Composer<input id="media-vid-composer"></label>
+                <label>Group
+                  <select id="media-vid-group">
+                    <option value="opera_lied">opera_lied</option>
+                    <option value="gala_crossover">gala_crossover</option>
+                  </select>
+                </label>
+                <label>Repertoire category
+                  <select id="media-vid-repertoireCat">
+                    <option value="">(auto)</option>
+                    <option value="opera">opera</option>
+                    <option value="lied">lied</option>
+                    <option value="concert_sacred">concert_sacred</option>
+                    <option value="tango">tango</option>
+                    <option value="crossover">crossover</option>
+                    <option value="tango_crossover">tango_crossover</option>
+                  </select>
+                </label>
+                <label>Custom thumb URL<input id="media-vid-customThumb"></label>
+                <label>Featured
+                  <select id="media-vid-featured">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>Hidden
+                  <select id="media-vid-hidden">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button id="media-vid-save">Save Videos</button>
+            </div>
+          </div>
+
+          <div id="mediaPhotosPanel" style="display:none">
+            <div class="toolbar">
+              <button id="media-photo-filter-s" class="active">Studio</button>
+              <button id="media-photo-filter-t">Stage</button>
+              <button id="media-photo-filter-b">Backstage</button>
+            </div>
+            <div class="toolbar">
+              <button id="media-photo-add-url">+ Add by URL</button>
+              <label class="import-label">+ Upload photo
+                <input type="file" id="media-photo-add-file" accept="image/*">
+              </label>
+              <button id="media-photo-dup">Duplicate</button>
+              <button id="media-photo-del" class="danger">Delete</button>
+              <button id="media-photo-up">↑</button>
+              <button id="media-photo-down">↓</button>
+            </div>
+            <div class="split">
+              <div id="media-photo-list" class="item-list"></div>
+              <div class="editor">
+                <div id="media-photo-preview-wrap" class="photo-preview-wrap">
+                  <img id="media-photo-preview" alt="preview">
+                </div>
+                <label>Image URL<input id="media-photo-url"></label>
+                <label>Caption<input id="media-photo-caption"></label>
+                <label>Photographer<input id="media-photo-photographer"></label>
+                <label>Replace image file
+                  <input type="file" id="media-photo-replace-file" accept="image/*">
+                </label>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button id="media-photo-save">Save Photos + Captions</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-press" class="section">
+          <h2>Press / EPK</h2>
+          <div class="toolbar">
+            <button id="pressTabQuotes" class="active">Quotes</button>
+            <button id="pressTabPdfs">Public PDFs</button>
+            <button id="pressTabBios">EPK Bios</button>
+            <button id="pressTabPhotos">EPK Photos</button>
+            <button id="pressTabCvs">EPK CVs</button>
+          </div>
+
+          <div id="pressQuotesPanel">
+          <div class="grid two">
+            <label>Translated note (`rg_press_meta`)<input id="press-translatedNote"></label>
+            <label>Reviews intro (rg_ui_<lang>)<input id="press-reviewsIntro"></label>
+            <label>Show press reviews section
+              <select id="press-showReviewsSection">
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar">
+            <button id="press-add">+ New quote</button>
+            <button id="press-dup">Duplicate</button>
+            <button id="press-del" class="danger">Delete</button>
+            <button id="press-up">↑</button>
+            <button id="press-down">↓</button>
+          </div>
+          <div class="split">
+            <div id="press-list" class="item-list"></div>
+            <div class="editor">
+              <label>Source<input id="press-source"></label>
+              <label>Quote<textarea id="press-quote" rows="4"></textarea></label>
+              <label>Production<input id="press-production"></label>
+              <label>URL<input id="press-url"></label>
+              <label>Visible
+                <select id="press-visible">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="savePressMetaBtn">Save press meta</button>
+            <button id="savePressQuotesBtn">Save quotes</button>
+          </div>
+          </div>
+
+          <div id="pressPdfsPanel" style="display:none">
+            <p class="muted">Edita URLs públicas por idioma (`rg_public_pdfs`).</p>
+            <div class="grid two">
+              <label>Dossier EN<input id="pdf-dossier-EN" placeholder="https://...pdf"></label>
+              <label>Artist Sheet EN<input id="pdf-artist-EN" placeholder="https://...pdf"></label>
+              <label>Dossier DE<input id="pdf-dossier-DE" placeholder="https://...pdf"></label>
+              <label>Artist Sheet DE<input id="pdf-artist-DE" placeholder="https://...pdf"></label>
+              <label>Dossier ES<input id="pdf-dossier-ES" placeholder="https://...pdf"></label>
+              <label>Artist Sheet ES<input id="pdf-artist-ES" placeholder="https://...pdf"></label>
+              <label>Dossier IT<input id="pdf-dossier-IT" placeholder="https://...pdf"></label>
+              <label>Artist Sheet IT<input id="pdf-artist-IT" placeholder="https://...pdf"></label>
+              <label>Dossier FR<input id="pdf-dossier-FR" placeholder="https://...pdf"></label>
+              <label>Artist Sheet FR<input id="pdf-artist-FR" placeholder="https://...pdf"></label>
+            </div>
+            <div class="toolbar">
+              <button id="savePressPdfsBtn">Save Public PDFs</button>
+            </div>
+          </div>
+
+          <div id="pressBiosPanel" style="display:none">
+            <p class="muted">Editando bios EPK del idioma actual (`rg_epk_bios.<lang>`).</p>
+            <div class="grid one">
+              <label>Bio 50 words<textarea id="epk-bio-b50" rows="3"></textarea></label>
+              <label>Bio 150 words<textarea id="epk-bio-b150" rows="5"></textarea></label>
+              <label>Full bio · paragraph 1<textarea id="epk-bio-b300p1" rows="4"></textarea></label>
+              <label>Full bio · paragraph 2<textarea id="epk-bio-b300p2" rows="4"></textarea></label>
+              <label>Full bio · paragraph 3<textarea id="epk-bio-b300p3" rows="4"></textarea></label>
+              <label>Full bio · paragraph 4<textarea id="epk-bio-b300p4" rows="4"></textarea></label>
+            </div>
+            <div class="toolbar">
+              <button id="savePressBiosBtn">Save EPK Bios</button>
+            </div>
+          </div>
+
+          <div id="pressPhotosPanel" style="display:none">
+            <div class="toolbar">
+              <button id="epk-photo-add-url">+ Agregar por URL</button>
+              <label class="import-label">+ Subir foto
+                <input type="file" id="epk-photo-add-file" accept="image/*">
+              </label>
+              <button id="epk-photo-dup">Duplicar</button>
+              <button id="epk-photo-del" class="danger">Borrar</button>
+              <button id="epk-photo-up">↑</button>
+              <button id="epk-photo-down">↓</button>
+            </div>
+            <div class="split">
+              <div id="epk-photo-list" class="item-list"></div>
+              <div class="editor">
+                <div class="photo-preview-wrap">
+                  <img id="epk-photo-preview" alt="EPK photo preview">
+                </div>
+                <label>Photo URL<input id="epk-photo-url"></label>
+                <label>Label<input id="epk-photo-label"></label>
+                <label>Credit / Photographer<input id="epk-photo-credit"></label>
+                <label>Replace image file
+                  <input type="file" id="epk-photo-replace-file" accept="image/*">
+                </label>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button id="savePressPhotosBtn">Save EPK Photos</button>
+            </div>
+          </div>
+
+          <div id="pressCvsPanel" style="display:none">
+            <p class="muted">Upload de CV por idioma (`rg_epk_cvs`). Si está vacío, se usa el PDF default en `docs/`.</p>
+            <div class="grid two">
+              <div class="editor">
+                <label>EN status<input id="epk-cv-status-EN" readonly></label>
+                <label class="import-label">Upload EN PDF<input type="file" id="epk-cv-file-EN" accept="application/pdf"></label>
+                <button id="epk-cv-clear-EN" class="danger">Remove EN custom CV</button>
+              </div>
+              <div class="editor">
+                <label>DE status<input id="epk-cv-status-DE" readonly></label>
+                <label class="import-label">Upload DE PDF<input type="file" id="epk-cv-file-DE" accept="application/pdf"></label>
+                <button id="epk-cv-clear-DE" class="danger">Remove DE custom CV</button>
+              </div>
+              <div class="editor">
+                <label>ES status<input id="epk-cv-status-ES" readonly></label>
+                <label class="import-label">Upload ES PDF<input type="file" id="epk-cv-file-ES" accept="application/pdf"></label>
+                <button id="epk-cv-clear-ES" class="danger">Remove ES custom CV</button>
+              </div>
+              <div class="editor">
+                <label>IT status<input id="epk-cv-status-IT" readonly></label>
+                <label class="import-label">Upload IT PDF<input type="file" id="epk-cv-file-IT" accept="application/pdf"></label>
+                <button id="epk-cv-clear-IT" class="danger">Remove IT custom CV</button>
+              </div>
+              <div class="editor">
+                <label>FR status<input id="epk-cv-status-FR" readonly></label>
+                <label class="import-label">Upload FR PDF<input type="file" id="epk-cv-file-FR" accept="application/pdf"></label>
+                <button id="epk-cv-clear-FR" class="danger">Remove FR custom CV</button>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button id="savePressCvsBtn">Save EPK CVs</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-contact" class="section">
+          <h2>Contact / Booking</h2>
+          <div class="grid one">
+            <label>Title (HTML)<input id="contact-title"></label>
+            <label>Subtitle<textarea id="contact-sub" rows="4"></textarea></label>
+            <label>Email<input id="contact-email"></label>
+            <label>Email button<input id="contact-emailBtn"></label>
+            <label>Website button<input id="contact-webBtn"></label>
+          </div>
+          <button id="saveContactBtn">Save Contact</button>
+        </section>
+
+        <section id="section-ui" class="section">
+          <h2>UI / Translations</h2>
+          <p class="muted">Advanced editor for `rg_ui_<lang>`. Loads effective language content and lets you save overrides safely.</p>
+          <textarea id="ui-json" rows="18" class="mono"></textarea>
+          <div class="toolbar">
+            <button id="reloadUiBtn">Reload JSON</button>
+            <button id="saveUiBtn">Save rg_ui_<lang></button>
+          </div>
+        </section>
+
+        <section id="section-tools" class="section">
+          <h2>System / Tools</h2>
+          <div class="grid two">
+            <div class="editor tools-card">
+              <h3>Import</h3>
+              <p class="muted">Use the topbar <strong>Import JSON</strong> button. Import only writes allow-listed keys and validates payload structure before saving.</p>
+            </div>
+            <div class="editor tools-card">
+              <h3>Export / Maintenance</h3>
+              <p class="muted">Use topbar <strong>Export JSON</strong> for backups. Use the actions below for diagnostics and section-level maintenance.</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="openLegacyBtn">Open legacy admin</button>
+            <button id="restoreCurrentBtn" class="danger">Restore defaults (current section)</button>
+          </div>
+          <p class="muted">Import diagnostics / preview panel. Shows parsed import status, key count, and compatibility before any write.</p>
+          <textarea id="import-preview" rows="12" class="mono" readonly></textarea>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <iframe id="legacyBridge" src="admin.html" hidden></iframe>
+  <script src="admin-v2.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+{
+  "locales": {
+    "en": {
+      "title": "Programs &amp; <em>Collaborations</em>",
+      "subtitle": "Recital programmes for concert halls, cultural institutes, embassies, festivals, salons, and selected private events.",
+      "profileBridge": "",
+      "intro": "Each programme is conceived as a coherent musical shape and can be refined in length, casting, and language balance for your hall, audience, and occasion.",
+      "closingNote": "Programme length, language balance, and repertoire may be adjusted in consultation with the presenter and collaborating musicians.",
+      "linkLabel": "Explore concert programmes and artistic collaborations",
+      "items": [
+        {
+          "id": 1,
+          "order": 0,
+          "published": true,
+          "title": "Opera Gala: Arias & Duets",
+          "description": "Tenor arias and concert ensembles from the operatic canon, weighted toward dramatic and lyrical contrast. Offered with piano alone or with soprano and baritone for duets and finales—suited to galas and chamber series that want operatic colour without staging.",
+          "formations": ["Tenor + Piano", "Tenor + Soprano + Piano", "Tenor + Baritone + Piano"],
+          "duration": "30, 45, or 60 minutes",
+          "idealFor": ["Gala concerts", "Chamber series", "Cultural institutions", "Churches", "Private salons"]
+        },
+        {
+          "id": 2,
+          "order": 1,
+          "published": true,
+          "title": "Italian Song, Opera & Canzone",
+          "description": "Italian line and rhetoric across salon song, canzone, and operatic excerpts—not a survey, but a listening line built on colour, text, and vocal character. A natural fit for Italian institutes and series that programme one tradition deeply in an evening.",
+          "formations": ["Tenor + Piano", "Optional guest artist format"],
+          "duration": "30 to 60 minutes",
+          "idealFor": ["Italian cultural institutes", "Recital series", "House concerts", "Intimate classical settings"]
+        },
+        {
+          "id": 3,
+          "order": 2,
+          "published": true,
+          "title": "Tango, Passion & Poetry",
+          "description": "Argentine tango and song sung with classical technique and narrative timing: diction, rubato, and stage sense drawn from recital practice rather than pop crossover. For venues that want this repertoire beside art song without sacrificing musical seriousness.",
+          "formations": ["Tenor + Piano", "Expanded collaborative version possible"],
+          "duration": "30, 45, or 60 minutes",
+          "idealFor": ["Themed evenings", "Cultural centers", "Embassies", "Crossover recital settings", "Tango events"]
+        },
+        {
+          "id": 4,
+          "order": 3,
+          "published": true,
+          "title": "Songs Across Borders",
+          "description": "Lieder, mélodie, and song in several languages—Italian, French, German, English, and Spanish-language Argentine repertoire among them—ordered as a single listening arc (movement, exile, return) rather than a checklist. Especially apt for international seasons, embassy programmes, and cities where the audience’s spoken languages match the mix on stage.",
+          "formations": ["Tenor + Piano"],
+          "duration": "45 to 70 minutes",
+          "idealFor": ["International cultural institutions", "Diplomatic events", "Mixed-program recital audiences", "Curated chamber concerts"]
+        },
+        {
+          "id": 5,
+          "order": 4,
+          "published": true,
+          "title": "Duo & Ensemble Recital",
+          "description": "Evening-length chamber vocal programmes: tenor with soprano or baritone and piano, combining solos, duets, and small ensemble closers around a declared pairing or theme—Mozart–Da Ponte corners of the repertoire, verismo pairs, or a salon narrative. Gives presenters a dramaturgically clear alternative to an ad-hoc gala miscellany.",
+          "formations": ["Tenor + Soprano + Piano", "Tenor + Baritone + Piano", "Flexible guest artist format"],
+          "duration": "45 to 90 minutes",
+          "idealFor": ["Festivals", "Gala evenings", "Chamber music series", "Curated events", "Collaborative programmes"]
+        }
+      ]
+    },
+    "de": {
+      "title": "Programme &amp; <em>Projekte</em>",
+      "subtitle": "Rezitalprogramme für Konzerthäuser, Kultureinrichtungen, Botschaften, Festivals, Salons und ausgewählte private Veranstaltungen.",
+      "profileBridge": "",
+      "intro": "Jedes Programm ist als musikalischer Gesamtbogen konzipiert und kann in Dauer, Besetzung und Sprachgewicht für Ihren Saal, Ihr Publikum und den Anlass verfeinert werden.",
+      "closingNote": "Länge, Sprachgewicht und Repertoire können in Absprache mit dem Veranstalter und den mitwirkenden Musikerinnen und Musikern angepasst werden.",
+      "linkLabel": "Programme und künstlerische Kooperationen",
+      "items": []
+    },
+    "es": {
+      "title": "Programas &amp; <em>colaboraciones</em>",
+      "subtitle": "Programas de recital para salas de concierto, instituciones culturales, embajadas, festivales, salones y eventos privados seleccionados.",
+      "profileBridge": "",
+      "intro": "Cada programa se concibe como un arco musical coherente y puede afinarse en duración, plantel y equilibrio lingüístico según la sala, el público y la ocasión.",
+      "closingNote": "La duración, el equilibrio entre idiomas y el repertorio pueden ajustarse de común acuerdo con la institución promotora y los músicos colaboradores.",
+      "linkLabel": "Ver programas y colaboraciones",
+      "items": []
+    },
+    "it": {
+      "title": "Programmi &amp; <em>collaborazioni</em>",
+      "subtitle": "Programmi di recital per sale da concerto, istituti culturali, ambasciate, festival, salotti ed eventi privati selezionati.",
+      "profileBridge": "",
+      "intro": "Ogni programma è concepito come un arco musicale coerente e può essere rifinito in durata, organico ed equilibrio linguistico per la sala, il pubblico e l'occasione.",
+      "closingNote": "Durata, equilibrio linguistico e repertorio possono essere adattati di concerto con l'organizzatore e i musicisti collaboratori.",
+      "linkLabel": "Programmi e collaborazioni artistiche",
+      "items": []
+    },
+    "fr": {
+      "title": "Programmes &amp; <em>collaborations</em>",
+      "subtitle": "Programmes de récital pour salles de concert, institutions culturelles, ambassades, festivals, salons et événements privés sélectionnés.",
+      "profileBridge": "",
+      "intro": "Chaque programme est conçu comme un arc musical cohérent et peut être affiné en durée, effectif et équilibre linguistique selon la salle, le public et l'occasion.",
+      "closingNote": "La durée, l'équilibre linguistique et le répertoire peuvent être ajustés en consultation avec l'organisateur et les musiciens collaborateurs.",
+      "linkLabel": "Programmes et collaborations artistiques",
+      "items": []
+    }
+  }
+}

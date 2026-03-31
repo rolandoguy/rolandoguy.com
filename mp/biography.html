@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0D0D12">
-<title>Rolando Guy | Lyric Tenor in Berlin</title>
+<meta name="description" content="Biography of Argentine-Italian lyric tenor Rolando Guy — training, Berlin base, and engagements across Germany and Europe.">
+<title>Biography — Rolando Guy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
@@ -57,49 +58,43 @@
 <button type="button" class="back-to-top" id="backToTop" data-i18n-aria="ui.backToTop" aria-label="Back to top">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
-<section id="hero">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <p class="hero-eyebrow" id="heroEyebrow"></p>
-    <h1 class="hero-name" id="heroName"></h1>
-    <p class="hero-subtitle" id="heroSubtitle"></p>
-    <div class="hero-cta">
-      <a href="media.html" class="btn-primary"><span id="heroCta1"></span></a>
-      <a href="biography.html" class="btn-secondary" data-i18n="nav.bio">Biography</a>
-      <a href="calendar.html" class="btn-secondary" data-i18n="nav.cal">Calendar</a>
-      <a href="contact.html" class="btn-secondary" id="heroCta2"></a>
-    </div>
-  </div>
-  <a href="#intro" class="hero-scroll" data-i18n-aria="hero.scrollAria" aria-label="Continue to introduction">
-    <span data-i18n="hero.scroll">Artist profile</span>
-    <div class="scroll-line"></div>
-  </a>
-</section>
 
-<section id="intro">
-  <div class="section-inner">
-    <p class="section-tag" data-num="01" data-i18n="nav.bio">Biography</p>
-    <div class="about-grid">
-      <div class="about-photo-wrap reveal">
-        <div class="about-photo">
-          <img class="mp-home-hero-asset" src="../img/hero-portrait.webp" alt="Rolando Guy, lyric tenor — studio portrait for the site hero" width="1200" height="1500" loading="lazy" data-i18n-alt="home.intro.photoAlt">
-          <div class="about-photo-label" data-i18n="about.photoLabel">Lyric Tenor</div>
-        </div>
-        <div class="about-photo-border"></div>
+<main id="top" class="mp-page-main">
+  <section class="mp-page-bio" aria-labelledby="bio-heading">
+    <div class="section-inner">
+      <div class="rep-header">
+        <p class="section-tag" data-num="01" data-i18n="nav.bio">Biography</p>
+        <p class="rep-intro-line reveal" id="bioIntroLine"></p>
       </div>
-      <div class="about-text">
-        <h2 class="reveal" data-i18n-html="home.intro.h2">A voice <em>forged</em><br>in tradition</h2>
-        <p class="reveal rd1" data-i18n-html="home.intro.p1">Argentine-Italian lyric tenor <strong>Rolando Guy</strong> is based in <strong>Berlin</strong>, singing opera, concert and recital engagements across <strong>Germany and Europe</strong>. His work is rooted in the Italian line and Lieder tradition, extending into operetta and Argentine tango when the programme calls for colour and theatrical immediacy.</p>
-        <p class="reveal rd2" data-i18n-html="home.intro.p2">He collaborates with opera houses, orchestras, festivals and presenters who need a voice that combines musical discipline, languages on the tongue, and a vivid stage presence—from principal roles and gala nights to curated chamber programmes and recital series.</p>
-        <div class="contact-ctas reveal rd3">
-          <a href="biography.html" class="btn-primary" data-i18n="home.intro.ctaBio">Read the full biography</a>
-          <a href="media.html" class="btn-secondary" data-i18n="home.intro.ctaMedia">Watch &amp; listen</a>
+      <div class="about-grid">
+        <div class="about-photo-wrap reveal">
+          <div class="about-photo">
+            <!-- Biography portrait intentionally differs from Home hero to reduce repetition on mobile. -->
+            <img class="mp-bio-hero-asset" src="../img/studio-2.jpg" alt="" data-i18n-alt="bio.heroImageAlt" width="1200" height="1500" loading="lazy">
+            <div class="about-photo-label" data-i18n="about.photoLabel">Lyric Tenor</div>
+          </div>
+          <div class="about-photo-border"></div>
+        </div>
+        <div class="about-text">
+          <h2 class="reveal" id="bio-heading"></h2>
+          <div id="bioParagraphs"></div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <section class="mp-page-bio-continue mp-onward-band" aria-label="Next steps">
+    <div class="section-inner">
+      <p class="section-tag" data-num="02" id="bioContinueTag"></p>
+      <p class="section-sub mp-onward-note reveal" id="bioContinueSub"></p>
+      <div class="contact-ctas mp-onward-ctas reveal rd1">
+        <a href="repertoire.html" class="btn-primary"><span id="bioCtaRepertoire">Repertoire</span></a>
+        <a href="media.html" class="btn-secondary"><span id="bioCtaMedia">Media</span></a>
+        <a href="contact.html" class="btn-secondary" data-i18n="nav.book">Book now</a>
+      </div>
+    </div>
+  </section>
+</main>
 
 <footer>
   <div class="footer-inner">
@@ -120,8 +115,7 @@
     <div></div>
   </div>
 </footer>
-
 <script defer src="../v1-assets/js/mp-shell.js"></script>
-<script defer src="../v1-assets/js/mp-hero.js"></script>
+<script defer src="../v1-assets/js/mp-biography.js"></script>
 </body>
 </html>

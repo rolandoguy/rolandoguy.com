@@ -1,0 +1,292 @@
+/* Section labels: no numeric prefixes (01, 02, …) on mp pages */
+.section-tag {
+  gap: 0;
+}
+.section-tag::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Home-only section wrappers: token values copied from v1-main #about / layout rhythm */
+#intro {
+  padding: 90px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+#explore {
+  padding: 90px 0;
+  background: var(--bg);
+  position: relative;
+  border-top: 1px solid var(--border);
+}
+a.hero-scroll {
+  text-decoration: none;
+  color: inherit;
+}
+
+/*
+ * MP home hero composition (face-first).
+ * mp-hero.js sets inline backgroundPosition from hero-config — without !important,
+ * v1-main + inline lose priority fights. !important + higher specificity wins over
+ * inline non-!important and fixes prefers-reduced-motion: center !important on .hero-bg.
+ */
+html.mp-site #hero .hero-bg {
+  background-size: 76% auto !important;
+  background-repeat: no-repeat !important;
+  background-position: 88% 20% !important;
+}
+/* Desktop mood integration: remove flat gray feel on the left with a deep tonal blend. */
+@media (min-width: 901px) {
+  html.mp-site #hero .hero-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(6, 10, 14, 0.97) 0%,
+        rgba(8, 14, 20, 0.90) 18%,
+        rgba(10, 18, 25, 0.60) 36%,
+        rgba(11, 20, 28, 0.20) 50%,
+        rgba(11, 19, 27, 0) 60%
+      );
+  }
+}
+html.mp-site #intro .about-photo img.mp-home-hero-asset {
+  object-position: 66% 20% !important;
+}
+@media (max-width: 900px) {
+  html.mp-site #hero .hero-bg {
+    background-size: 92% auto !important;
+    background-position: 76% 20% !important;
+  }
+  html.mp-site #intro .about-photo img.mp-home-hero-asset {
+    object-position: 60% 20% !important;
+  }
+}
+@media (max-width: 700px) {
+  html.mp-site #hero .hero-bg {
+    background-size: 114% auto !important;
+    background-position: 44% 16% !important;
+  }
+  html.mp-site #intro .about-photo img.mp-home-hero-asset {
+    object-position: 50% 16% !important;
+  }
+}
+@media (max-width: 600px) {
+  html.mp-site #hero .hero-bg {
+    background-size: 120% auto !important;
+    background-position: 40% 14% !important;
+  }
+  html.mp-site #intro .about-photo img.mp-home-hero-asset {
+    object-position: 48% 14% !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.mp-site #hero .hero-bg {
+    background-size: 76% auto !important;
+    background-position: 88% 20% !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 700px) {
+  html.mp-site #hero .hero-bg {
+    background-size: 114% auto !important;
+    background-position: 44% 16% !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 600px) {
+  html.mp-site #hero .hero-bg {
+    background-size: 120% auto !important;
+    background-position: 40% 14% !important;
+  }
+}
+
+/* Text block: keep left column narrow and low so it clears the portrait. */
+@media (min-width: 901px) {
+  html.mp-site #hero .hero-content {
+    max-width: min(46vw, 520px) !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    /* Keep block elegantly centered in hero height (not too high). */
+    padding-bottom: clamp(96px, 12vh, 132px) !important;
+    box-sizing: border-box !important;
+  }
+  html.mp-site #hero .hero-content::before {
+    left: 20px !important;
+  }
+}
+@media (max-width: 900px) {
+  html.mp-site #hero .hero-content {
+    max-width: min(92vw, 480px) !important;
+    padding-left: 18px !important;
+    padding-right: 22px !important;
+    padding-bottom: 64px !important;
+  }
+}
+@media (max-width: 700px) {
+  html.mp-site #hero .hero-content {
+    max-width: 90vw !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    /* Bottom-anchored mobile composition with safe-area protection. */
+    padding-bottom: max(8px, calc(6px + env(safe-area-inset-bottom, 0px))) !important;
+  }
+  html.mp-site #hero .hero-cta {
+    justify-content: center !important;
+    width: min(88vw, 430px) !important;
+    max-width: min(88vw, 430px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 20px !important;
+  }
+}
+@media (max-width: 600px) {
+  html.mp-site #hero .hero-content {
+    padding-bottom: max(4px, calc(4px + env(safe-area-inset-bottom, 0px))) !important;
+  }
+  html.mp-site #hero .hero-cta {
+    width: min(90vw, 390px) !important;
+    max-width: min(90vw, 390px) !important;
+    margin-top: 16px !important;
+  }
+}
+
+.mp-soc {
+  color: var(--text-faint);
+  text-decoration: none;
+  font-family: var(--ff-caps);
+  font-size: 0.52rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  padding: 6px 16px;
+  transition: color 0.3s, border-color 0.3s;
+}
+.mp-soc:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+/* MP calendar: venue art on past/archive rows when JSON includes venuePhoto (v1-main hides these by default). */
+html.mp-site .perf-item--archive .perf-venue-bg {
+  display: block !important;
+}
+
+/* Inner pages: lang bar + nav */
+.mp-page-main {
+  padding-top: 136px;
+}
+/* Thin stub pages share the same chrome clearance as full inner pages */
+.mp-stub-main {
+  min-height: 45vh;
+}
+@media (max-width: 700px) {
+  .mp-page-main {
+    padding-top: 120px;
+  }
+}
+@media (max-width: 480px) {
+  .mp-page-main {
+    padding-top: 124px;
+  }
+}
+
+/* Mobile: slightly tighter fixed chrome so main content starts sooner (mp only). */
+@media (max-width: 1000px) {
+  html.mp-site .site-chrome .lang-bar {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  html.mp-site .site-chrome nav {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  html.mp-site .site-chrome nav.scrolled {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+.mp-page-bio {
+  padding: 90px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.mp-page-bio .rep-header {
+  margin-bottom: 2rem;
+}
+.mp-page-bio .rep-header .section-tag {
+  margin-bottom: 0.5rem;
+}
+.mp-page-bio-continue {
+  padding: 90px 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+/* Internal-page onward navigation: one consistent component across mp/*.html (except Home hero). */
+.mp-onward-band {
+  padding: 48px 0 72px;
+  border-top: 1px solid var(--border);
+}
+.mp-onward-band .section-inner {
+  text-align: center;
+}
+.mp-onward-note {
+  max-width: 34em;
+  margin: 0 auto 1.25rem;
+}
+.mp-onward-ctas {
+  justify-content: center;
+}
+/* Calendar: keep divider comfortably below action buttons. */
+html.mp-site #performances .mp-onward-band {
+  margin-top: 36px;
+}
+@media (max-width: 900px) {
+  .mp-page-bio,
+  .mp-page-bio-continue {
+    padding: 88px 0;
+  }
+  .mp-onward-band {
+    padding: 44px 0 64px;
+  }
+  html.mp-site #performances .mp-onward-band {
+    margin-top: 32px;
+  }
+}
+/* Same base asset as Home hero (studio-1.jpg via hero-config); portrait framing for 3:4 .about-photo — distinct from hero background focal */
+.mp-page-bio .about-photo img.mp-bio-hero-asset {
+  object-position: 50% 26%;
+}
+@media (max-width: 700px) {
+  .mp-page-bio .about-photo img.mp-bio-hero-asset {
+    object-position: 48% 22%;
+  }
+}
+
+/* In-page anchor under fixed nav when linking from legacy URLs */
+#press {
+  scroll-margin-top: 104px;
+}
+
+/* Home intro portrait crop: html.mp-site #intro … rules at top of file (mp only). */
+@media (max-width: 900px) {
+  #intro,
+  #explore {
+    padding: 88px 0;
+  }
+}
+
+/* Bare prose links in main content */
+.mp-page-main .section-inner p a:not(.btn-primary):not(.btn-secondary) {
+  color: var(--text-dim);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212, 168, 67, 0.32);
+  padding-bottom: 2px;
+  transition: color 0.38s var(--ease-soft), border-color 0.38s var(--ease-soft);
+}
+.mp-page-main .section-inner p a:not(.btn-primary):not(.btn-secondary):hover {
+  color: var(--gold);
+  border-bottom-color: rgba(212, 168, 67, 0.65);
+}

@@ -1,0 +1,70 @@
+{
+  "portraitImage": "../img/hero-portrait.webp",
+  "locales": {
+    "en": {
+      "introLine": "Argentine-Italian lyric tenor based in Berlin — opera, recital and concert across Germany and Europe.",
+      "portraitAlt": "Rolando Guy, lyric tenor — theatrical portrait for the site hero",
+      "h2": "A voice <em>forged</em><br>in tradition",
+      "p1": "Argentine-Italian tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory of Music. He worked privately with Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck and Víctor Torres — all singers and coaches at the Teatro Colón — and developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) and Marcelo Ayub. Earlier in his artistic development, he also received coaching from Jack Li Vigni in New York and from tenor Francesco Anile in Rome. In 2017 he participated in the prestigious Javier Camarena Masterclass in Buenos Aires.",
+      "p2": "Based in Berlin since 2019, he studied with Maestro Reiner Goldberg and Uwe Griem, and currently works on his technique and interpretation with Maestro Stephan von Cron Catalano, Austrian conductor and violinist. In 2025 he performed as Zweiter Fremder in Der Vetter aus Dingsda (Eduard Künneke) at Kammeroper Frankfurt under Stanislav Rosenberg, and in 2023 sang Tamino in Die Zauberflöte with Opernwerkstatt am Rhein. He has appeared as tenor soloist at the Staatsoper Berlin, performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office and Notre-Dame in Strasbourg. He has given Lieder recitals — Schubert, Strauss, Rachmaninov and Liszt — with pianist Marcelo Ayub.",
+      "continueSectionTag": "Continue",
+      "continueSub": "Hear the voice in context — repertoire, recordings and how to book.",
+      "ctaRepertoire": "Repertoire",
+      "ctaMedia": "Media",
+      "ctaContact": "Contact",
+      "ctaHomeIntro": "Home — introduction"
+    },
+    "de": {
+      "introLine": "Argentinisch-italienischer lyrischer Tenor in Berlin — Oper, Rezital und Konzert in Deutschland und Europa.",
+      "portraitAlt": "Rolando Guy, lyrischer Tenor — szenisches Portrait für die Website",
+      "h2": "<span class=\"rep-title-stack\"><span class=\"rep-title-line1\">Eine Stimme,</span><span class=\"rep-title-line2\">von <em>Tradition geprägt</em></span></span>",
+      "p1": "Der argentinisch-italienische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalen Konservatorium studierte. Er arbeitete privat mit Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck und Víctor Torres — allesamt Sänger und Lehrer am Teatro Colón — und erarbeitete sein Opernrepertoire mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russland) und Marcelo Ayub. In einer früheren Phase seiner künstlerischen Entwicklung erhielt er außerdem Coachings bei Jack Li Vigni in New York und bei dem Tenor Francesco Anile in Rom. 2017 nahm er an der renommierten Javier-Camarena-Meisterklasse in Buenos Aires teil.",
+      "p2": "Seit 2019 lebt er in Berlin. Er studierte bei Maestro Reiner Goldberg und Uwe Griem und arbeitet derzeit an seiner Technik und Interpretation mit Maestro Stephan von Cron Catalano, österreichischer Dirigent und Geiger. 2025 verkörperte er den Zweiten Fremden in Eduard Künneckes Der Vetter aus Dingsda an der Kammeroper Frankfurt unter Stanislav Rosenberg, und 2023 sang er den Tamino in Die Zauberflöte bei der Opernwerkstatt am Rhein. Er trat als Tenor-Solist in der Staatsoper Berlin auf, wirkte mit dem Ensemble Die Goldvögel in Berlin und Kopenhagen mit und sang als Solist mit dem Diplomatic Choir of Berlin im Berliner Dom, im Auswärtigen Amt und im Notre-Dame-Münster in Straßburg. Er gab zahlreiche Liederabende — Schubert, Strauss, Rachmaninov und Liszt — mit dem Pianisten Marcelo Ayub.",
+      "continueSectionTag": "Weiter",
+      "continueSub": "Die Stimme im Kontext — Repertoire, Aufnahmen und Buchung.",
+      "ctaRepertoire": "Repertoire",
+      "ctaMedia": "Medien",
+      "ctaContact": "Kontakt",
+      "ctaHomeIntro": "Home — Einführung"
+    },
+    "es": {
+      "introLine": "Tenor lírico argentino-italiano afincado en Berlín — ópera, recital y concierto en Alemania y Europa.",
+      "portraitAlt": "Rolando Guy, tenor lírico — retrato teatral para el sitio",
+      "h2": "Una voz <em>forjada</em><br>en la tradición",
+      "p1": "El tenor argentino-italiano Rolando Guy nació en Buenos Aires, donde estudió en el Conservatorio Nacional de Música. Trabajó privadamente con Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck y Víctor Torres — todos cantantes y profesores del Teatro Colón — y desarrolló su repertorio operístico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Rusia) y Marcelo Ayub. En una etapa anterior de su desarrollo artístico, también recibió coachings con Jack Li Vigni en Nueva York y con el tenor Francesco Anile en Roma. En 2017 participó en la prestigiosa Masterclass de Javier Camarena en Buenos Aires.",
+      "p2": "Residente en Berlín desde 2019, estudió con el Maestro Reiner Goldberg y Uwe Griem, y actualmente trabaja su técnica e interpretación con el Maestro Stephan von Cron Catalano, director de orquesta y violinista austriaco. En 2025 interpretó al Zweiter Fremder en Der Vetter aus Dingsda de Eduard Künneke en la Kammeroper Frankfurt bajo la dirección de Stanislav Rosenberg, y en 2023 cantó Tamino en Die Zauberflöte con la Opernwerkstatt am Rhein. Ha actuado como tenor solista en la Staatsoper Berlín, con el ensemble Die Goldvögel en Berlín y Copenhague, y como solista con el Diplomatic Choir of Berlin en el Berliner Dom, el Ministerio de Exteriores y Notre-Dame de Estrasburgo. Ha ofrecido recitales de lieder — Schubert, Strauss, Rachmaninov y Liszt — con el pianista Marcelo Ayub.",
+      "continueSectionTag": "Continuar",
+      "continueSub": "La voz en contexto — repertorio, grabaciones y contratación.",
+      "ctaRepertoire": "Repertorio",
+      "ctaMedia": "Medios",
+      "ctaContact": "Contacto",
+      "ctaHomeIntro": "Inicio — introducción"
+    },
+    "it": {
+      "introLine": "Tenore lirico argentino-italiano con base a Berlino — opera, recital e concerto in Germania e in Europa.",
+      "portraitAlt": "Rolando Guy, tenore lirico — ritratto teatrale per il sito",
+      "h2": "Una voce <em>forgiata</em><br>nella tradizione",
+      "p1": "Il tenore argentino-italiano Rolando Guy è nato a Buenos Aires, dove ha studiato al Conservatorio Nazionale di Musica. Ha lavorato privatamente con Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck e Víctor Torres — tutti cantanti e insegnanti del Teatro Colón — e ha sviluppato il suo repertorio operistico con Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) e Marcelo Ayub. In una fase precedente del suo sviluppo artistico, ha inoltre seguito sessioni di coaching con Jack Li Vigni a New York e con il tenore Francesco Anile a Roma. Nel 2017 ha partecipato alla prestigiosa Masterclass di Javier Camarena a Buenos Aires.",
+      "p2": "Residente a Berlino dal 2019, ha studiato con il Maestro Reiner Goldberg e Uwe Griem, e attualmente lavora sulla sua tecnica e interpretazione con il Maestro Stephan von Cron Catalano, direttore d'orchestra e violinista austriaco. Nel 2025 ha interpretato lo Zweiter Fremder in Der Vetter aus Dingsda di Eduard Künneke alla Kammeroper Frankfurt sotto la direzione di Stanislav Rosenberg, e nel 2023 ha cantato Tamino nel Die Zauberflöte con l'Opernwerkstatt am Rhein. Si è esibito come tenore solista alla Staatsoper di Berlino, con l'ensemble Die Goldvögel a Berlino e Copenaghen, e come solista con il Diplomatic Choir of Berlin alla Berliner Dom, al Ministero degli Esteri e a Notre-Dame di Strasburgo. Ha tenuto recital di Lieder — Schubert, Strauss, Rachmaninov e Liszt — con il pianista Marcelo Ayub.",
+      "continueSectionTag": "Continua",
+      "continueSub": "La voce nel contesto — repertorio, registrazioni e contatti.",
+      "ctaRepertoire": "Repertorio",
+      "ctaMedia": "Media",
+      "ctaContact": "Contatto",
+      "ctaHomeIntro": "Home — introduzione"
+    },
+    "fr": {
+      "introLine": "Ténor lyrique argentin-italien basé à Berlin — opéra, récital et concert en Allemagne et en Europe.",
+      "portraitAlt": "Rolando Guy, ténor lyrique — portrait théâtral pour le site",
+      "h2": "Une voix <em>forgée</em><br>dans la tradition",
+      "p1": "Le ténor argentin-italien Rolando Guy est né à Buenos Aires, où il a étudié au Conservatoire National de Musique. Il a travaillé en privé avec Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck et Víctor Torres — tous chanteurs et professeurs du Teatro Colón — et a développé son répertoire lyrique avec Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russie) et Marcelo Ayub. À une étape antérieure de son développement artistique, il a également suivi des coachings avec Jack Li Vigni à New York et avec le ténor Francesco Anile à Rome. En 2017 il a participé à la prestigieuse Masterclass de Javier Camarena à Buenos Aires.",
+      "p2": "Basé à Berlin depuis 2019, il a étudié avec le Maestro Reiner Goldberg et Uwe Griem, et travaille actuellement sa technique et son interprétation avec le Maestro Stephan von Cron Catalano, chef d'orchestre et violoniste autrichien. En 2025 il a interprété le Zweiter Fremder dans Der Vetter aus Dingsda d'Eduard Künneke à la Kammeroper Frankfurt sous la direction de Stanislav Rosenberg, et en 2023 a chanté Tamino dans Die Zauberflöte avec l'Opernwerkstatt am Rhein. Il s'est produit comme ténor soliste à la Staatsoper de Berlin, avec l'ensemble Die Goldvögel à Berlin et Copenhague, et comme soliste avec le Diplomatic Choir of Berlin au Berliner Dom, au Ministère des Affaires étrangères et à Notre-Dame de Strasbourg. Il a donné des récitals de Lieder — Schubert, Strauss, Rachmaninov et Liszt — avec le pianiste Marcelo Ayub.",
+      "continueSectionTag": "Poursuivre",
+      "continueSub": "La voix en contexte — répertoire, enregistrements et réservation.",
+      "ctaRepertoire": "Répertoire",
+      "ctaMedia": "Médias",
+      "ctaContact": "Contact",
+      "ctaHomeIntro": "Accueil — introduction"
+    }
+  }
+}

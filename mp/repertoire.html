@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0D0D12">
-<title>Rolando Guy | Lyric Tenor in Berlin</title>
+<meta name="description" content="Opera roles, arias, operetta, Lied and tango — selected repertoire of lyric tenor Rolando Guy.">
+<title>Repertoire — Rolando Guy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
@@ -33,9 +34,7 @@
     <li><a href="press.html" data-i18n="nav.epk">Press & materials</a></li>
     <li><a href="contact.html" data-i18n="nav.book">Book now</a></li>
   </ul>
-  <button type="button" class="hamburger" id="hamburger" onclick="toggleMenu()" data-i18n-aria="ui.menu" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
+  <button type="button" class="hamburger" id="hamburger" onclick="toggleMenu()" data-i18n-aria="ui.menu" aria-label="Menu"><span></span><span></span><span></span></button>
 </nav>
 </header>
 <div class="mobile-menu" id="mobileMenu">
@@ -57,49 +56,61 @@
 <button type="button" class="back-to-top" id="backToTop" data-i18n-aria="ui.backToTop" aria-label="Back to top">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
-<section id="hero">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <p class="hero-eyebrow" id="heroEyebrow"></p>
-    <h1 class="hero-name" id="heroName"></h1>
-    <p class="hero-subtitle" id="heroSubtitle"></p>
-    <div class="hero-cta">
-      <a href="media.html" class="btn-primary"><span id="heroCta1"></span></a>
-      <a href="biography.html" class="btn-secondary" data-i18n="nav.bio">Biography</a>
-      <a href="calendar.html" class="btn-secondary" data-i18n="nav.cal">Calendar</a>
-      <a href="contact.html" class="btn-secondary" id="heroCta2"></a>
-    </div>
-  </div>
-  <a href="#intro" class="hero-scroll" data-i18n-aria="hero.scrollAria" aria-label="Continue to introduction">
-    <span data-i18n="hero.scroll">Artist profile</span>
-    <div class="scroll-line"></div>
-  </a>
-</section>
 
-<section id="intro">
-  <div class="section-inner">
-    <p class="section-tag" data-num="01" data-i18n="nav.bio">Biography</p>
-    <div class="about-grid">
-      <div class="about-photo-wrap reveal">
-        <div class="about-photo">
-          <img class="mp-home-hero-asset" src="../img/hero-portrait.webp" alt="Rolando Guy, lyric tenor — studio portrait for the site hero" width="1200" height="1500" loading="lazy" data-i18n-alt="home.intro.photoAlt">
-          <div class="about-photo-label" data-i18n="about.photoLabel">Lyric Tenor</div>
-        </div>
-        <div class="about-photo-border"></div>
+<main id="top" class="mp-page-main">
+  <section id="repertoire" aria-labelledby="repH2">
+    <div class="section-inner">
+      <div class="rep-header">
+        <p class="section-tag" data-num="02" data-i18n="nav.rep">Repertoire</p>
+        <h2 class="reveal rep-title" id="repH2"></h2>
+        <p class="rep-intro-line reveal" id="repIntroLine"></p>
       </div>
-      <div class="about-text">
-        <h2 class="reveal" data-i18n-html="home.intro.h2">A voice <em>forged</em><br>in tradition</h2>
-        <p class="reveal rd1" data-i18n-html="home.intro.p1">Argentine-Italian lyric tenor <strong>Rolando Guy</strong> is based in <strong>Berlin</strong>, singing opera, concert and recital engagements across <strong>Germany and Europe</strong>. His work is rooted in the Italian line and Lieder tradition, extending into operetta and Argentine tango when the programme calls for colour and theatrical immediacy.</p>
-        <p class="reveal rd2" data-i18n-html="home.intro.p2">He collaborates with opera houses, orchestras, festivals and presenters who need a voice that combines musical discipline, languages on the tongue, and a vivid stage presence—from principal roles and gala nights to curated chamber programmes and recital series.</p>
-        <div class="contact-ctas reveal rd3">
-          <a href="biography.html" class="btn-primary" data-i18n="home.intro.ctaBio">Read the full biography</a>
-          <a href="media.html" class="btn-secondary" data-i18n="home.intro.ctaMedia">Watch &amp; listen</a>
-        </div>
+      <div class="rep-tabs reveal rd1" role="tablist" aria-label="Repertoire categories">
+        <button type="button" class="rep-tab active" id="repTabOpera" role="tab" aria-selected="true" onclick="setRepCategory('opera')" data-i18n="rep.tabOpera">Opera Roles</button>
+        <button type="button" class="rep-tab" id="repTabArias" role="tab" aria-selected="false" onclick="setRepCategory('arias')" data-i18n="rep.tabArias">Opera Arias</button>
+        <button type="button" class="rep-tab" id="repTabOperetta" role="tab" aria-selected="false" onclick="setRepCategory('operetta')" data-i18n="rep.tabOperetta">Operetta</button>
+        <button type="button" class="rep-tab" id="repTabOperettaRoles" role="tab" aria-selected="false" style="display:none" onclick="setRepCategory('operetta_roles')" data-i18n="rep.tabOperettaRoles">Operetta roles</button>
+        <button type="button" class="rep-tab" id="repTabLied" role="tab" aria-selected="false" onclick="setRepCategory('lied')" data-i18n="rep.tabLied">Lied &amp; Art Song</button>
+        <button type="button" class="rep-tab" id="repTabTango" role="tab" aria-selected="false" onclick="setRepCategory('tango')" data-i18n="rep.tabTango">Tango</button>
+      </div>
+      <p class="rep-desc reveal rd2" id="repIntro" aria-live="polite"></p>
+      <div class="rep-status-filters" id="repStatusFilters" aria-label="Filter opera roles by status">
+        <button type="button" class="rep-status-filter-btn active" data-filter="all" data-i18n="rep.status.all" onclick="setRepStatusFilter('all')">All</button>
+        <button type="button" class="rep-status-filter-btn" data-filter="performed" data-i18n="rep.status.performed" onclick="setRepStatusFilter('performed')">Performed</button>
+      </div>
+      <div class="opera-grid" id="operaGrid"></div>
+      <p class="reveal rd2" style="margin-top:18px;text-align:center">
+        <a href="#programs" id="repProgramsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">Explore concert programmes and artistic collaborations</a>
+      </p>
+    </div>
+  </section>
+
+  <section id="programs">
+    <div class="section-inner">
+      <p class="section-tag" data-num="03" id="programsSectionTag">Programs</p>
+      <div class="programs-header">
+        <h2 class="reveal" id="programsH2"></h2>
+        <p class="reveal rd1" id="programsSubtitle"></p>
+      </div>
+      <p class="programs-profile-bridge reveal rd1" id="programsProfileBridge" hidden></p>
+      <p class="programs-intro reveal rd2" id="programsIntro"></p>
+      <div class="programs-grid" id="programsGrid"></div>
+      <p class="programs-closing reveal rd3" id="programsClosing"></p>
+    </div>
+  </section>
+
+  <section class="mp-page-bio-continue mp-onward-band" aria-label="Next steps">
+    <div class="section-inner">
+      <p class="section-tag" data-num="04" data-i18n="rep.moreTag">More</p>
+      <p class="section-sub mp-onward-note reveal" data-i18n="rep.moreSub">Hear this repertoire in performance — or get in touch for a tailored programme.</p>
+      <div class="contact-ctas mp-onward-ctas reveal rd1">
+        <a href="media.html" class="btn-primary" data-i18n="nav.media">Media</a>
+        <a href="calendar.html" class="btn-secondary" data-i18n="nav.cal">Calendar</a>
+        <a href="contact.html" class="btn-secondary" data-i18n="nav.book">Book now</a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+</main>
 
 <footer>
   <div class="footer-inner">
@@ -120,8 +131,8 @@
     <div></div>
   </div>
 </footer>
-
 <script defer src="../v1-assets/js/mp-shell.js"></script>
-<script defer src="../v1-assets/js/mp-hero.js"></script>
+<script defer src="../v1-assets/js/mp-repertoire.js"></script>
+<script defer src="../v1-assets/js/mp-programs.js"></script>
 </body>
 </html>

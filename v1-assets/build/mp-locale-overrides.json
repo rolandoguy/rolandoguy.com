@@ -1,0 +1,32 @@
+{
+  "locales": {
+    "de": {
+      "nav.home": "Home",
+      "nav.epk": "Presse & Materialien",
+      "hero.scroll": "Künstlerprofil",
+      "mp.pressCoverage": "Pressestimmen",
+      "mp.presenterMaterials": "Material für Veranstalter"
+    },
+    "es": {
+      "nav.home": "Inicio",
+      "nav.epk": "Prensa y materiales",
+      "hero.scroll": "Perfil artístico",
+      "mp.pressCoverage": "En la prensa",
+      "mp.presenterMaterials": "Materiales para organizadores"
+    },
+    "it": {
+      "nav.home": "Home",
+      "nav.epk": "Stampa e materiali",
+      "hero.scroll": "Profilo artistico",
+      "mp.pressCoverage": "Rassegna stampa",
+      "mp.presenterMaterials": "Materiali per gli organizzatori"
+    },
+    "fr": {
+      "nav.home": "Accueil",
+      "nav.epk": "Presse & ressources",
+      "hero.scroll": "Profil d’artiste",
+      "mp.pressCoverage": "Revue de presse",
+      "mp.presenterMaterials": "Matériel pour les organisateurs"
+    }
+  }
+}

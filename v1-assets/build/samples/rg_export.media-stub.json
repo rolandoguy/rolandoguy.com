@@ -1,0 +1,73 @@
+{
+  "exportedAt": "2026-03-30T15:00:00.000Z",
+  "origin": "stub-from-committed-media-data",
+  "keys": [
+    "rg_vid",
+    "rg_photos",
+    "rg_photo_captions",
+    "rg_ui_en"
+  ],
+  "data": {
+    "rg_vid": {
+      "h2": "Stage, Concert &amp; <em>Recital Highlights</em>",
+      "videos": [
+        {
+          "id": "wWmlrZ6BLK0",
+          "featured": true,
+          "group": "opera_lied",
+          "repertoireCat": "opera",
+          "composer": "G. Donizetti",
+          "tag": "OPERA · SOLOIST WITH ORCHESTRA",
+          "title": "Chi mi frena in tal momento",
+          "sub": "Lucia di Lammermoor"
+        },
+        {
+          "id": "uSyL6iWLtmA",
+          "group": "opera_lied",
+          "repertoireCat": "opera",
+          "composer": "F. Cilea",
+          "tag": "OPERA ARIA · 2018",
+          "title": "Il lamento di Federico",
+          "sub": "L'Arlesiana · Eva Marton Competition"
+        },
+        {
+          "id": "-t5fr1m_mnc",
+          "group": "opera_lied",
+          "repertoireCat": "lied",
+          "composer": "F. Liszt",
+          "tag": "RECITAL · ART SONG",
+          "title": "Die Lorelei",
+          "sub": "Eva Marton Competition",
+          "hidden": true
+        },
+        {
+          "id": "zDgSZm9WvYc",
+          "group": "gala_crossover",
+          "repertoireCat": "opera",
+          "composer": "G. Verdi",
+          "tag": "GALA · 2024",
+          "title": "Libiamo ne' lieti calici",
+          "sub": "La Traviata · Waldorf Astoria Berlin"
+        }
+      ]
+    },
+    "rg_photos": {
+      "s": [
+        "img/studio-1.jpg",
+        "img/studio-2.jpg",
+        "img/studio-3.jpg",
+        "img/studio-4.jpg"
+      ],
+      "t": [
+        "img/stage-1.jpg",
+        "img/stage-2.jpg",
+        "img/stage-3.jpg",
+        "img/stage-4.jpg",
+        "img/stage-5.jpg",
+        "img/stage-6.jpg"
+      ],
+      "b": []
+    },
+    "rg_photo_captions": {}
+  }
+}

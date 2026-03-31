@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" class="mp-site">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0D0D12">
+<meta name="description" content="Upcoming tenor engagements, concerts and archive of past performances — Rolando Guy.">
+<title>Calendar — Rolando Guy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../v1-assets/css/v1-main.css">
+<link rel="stylesheet" href="mp-home.css">
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<header class="site-chrome" role="banner">
+<div class="lang-bar">
+  <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })">&#127468;&#127463; EN</button>
+  <button type="button" class="lang-btn" onclick="setLang('de', { persist: true })">&#127465;&#127466; DE</button>
+  <button type="button" class="lang-btn" onclick="setLang('es', { persist: true })">&#127466;&#127480; ES</button>
+  <button type="button" class="lang-btn" onclick="setLang('it', { persist: true })">&#127470;&#127481; IT</button>
+  <button type="button" class="lang-btn" onclick="setLang('fr', { persist: true })">&#127467;&#127479; FR</button>
+</div>
+<nav id="nav">
+  <a href="index.html#hero" class="nav-logo">Rolando Guy</a>
+  <ul class="nav-links">
+    <li><a href="index.html#hero" data-i18n="nav.home">Home</a></li>
+    <li><a href="biography.html" data-i18n="nav.bio">Biography</a></li>
+    <li><a href="repertoire.html" data-i18n="nav.rep">Repertoire</a></li>
+    <li><a href="media.html" data-i18n="nav.media">Media</a></li>
+    <li><a href="calendar.html" data-i18n="nav.cal">Calendar</a></li>
+    <li><a href="press.html" data-i18n="nav.epk">Press & materials</a></li>
+    <li><a href="contact.html" data-i18n="nav.book">Book now</a></li>
+  </ul>
+  <button type="button" class="hamburger" id="hamburger" onclick="toggleMenu()" data-i18n-aria="ui.menu" aria-label="Menu"><span></span><span></span><span></span></button>
+</nav>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html#hero" onclick="closeMenu()" data-i18n="nav.home">Home</a>
+  <a href="biography.html" onclick="closeMenu()" data-i18n="nav.bio">Biography</a>
+  <a href="repertoire.html" onclick="closeMenu()" data-i18n="nav.rep">Repertoire</a>
+  <a href="media.html" onclick="closeMenu()" data-i18n="nav.media">Media</a>
+  <a href="calendar.html" onclick="closeMenu()" data-i18n="nav.cal">Calendar</a>
+  <a href="press.html" onclick="closeMenu()" data-i18n="nav.epk">Press & materials</a>
+  <a href="contact.html" onclick="closeMenu()" data-i18n="nav.book">Book now</a>
+  <div class="lang-row">
+    <button type="button" onclick="setLang('en', { persist: true });closeMenu()" id="mob-btn-en" class="active">EN</button>
+    <button type="button" onclick="setLang('de', { persist: true });closeMenu()" id="mob-btn-de">DE</button>
+    <button type="button" onclick="setLang('es', { persist: true });closeMenu()" id="mob-btn-es">ES</button>
+    <button type="button" onclick="setLang('it', { persist: true });closeMenu()" id="mob-btn-it">IT</button>
+    <button type="button" onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr">FR</button>
+  </div>
+</div>
+<button type="button" class="back-to-top" id="backToTop" data-i18n-aria="ui.backToTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<main id="top" class="mp-page-main">
+<section id="performances" aria-labelledby="perfH2">
+  <div class="section-inner">
+    <div class="print-only-header print-only" id="perfPrintHeader" aria-hidden="true">
+      <h1 class="print-only-title">Rolando Guy</h1>
+      <p class="print-only-subtitle" id="perfPrintSubtitle">Calendar</p>
+    </div>
+    <p class="section-tag" data-num="05" data-i18n="nav.cal">Calendar</p>
+    <div class="perf-header">
+      <h2 class="reveal" id="perfH2"></h2>
+      <p class="reveal rd1" id="perfIntro"></p>
+    </div>
+    <div class="perf-list" id="perfList"></div>
+    <div class="perf-actions no-print" style="text-align:center;margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
+      <button id="pastToggleBtn" type="button" onclick="togglePastPerfs()" style="display:none;font-family:var(--ff-caps);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-faint);background:transparent;border:1px solid var(--border);padding:11px 26px;cursor:none;transition:all .3s" onmouseenter="this.style.color='var(--gold)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--text-faint)';this.style.borderColor='var(--border)'">+ Show Past Performances</button>
+      <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print calendar"><span id="perfPrintBtnText">Print calendar</span></button>
+    </div>
+    <section class="mp-onward-band" aria-label="Next steps">
+      <div class="section-inner reveal rd2">
+      <p class="section-sub mp-onward-note" data-i18n="mp.calFooterNote">For booking enquiries related to these dates, please use the contact page.</p>
+      <div class="contact-ctas mp-onward-ctas">
+        <a href="media.html" class="btn-secondary" data-i18n="nav.media">Media</a>
+        <a href="press.html" class="btn-secondary" data-i18n="nav.epk">Press & materials</a>
+        <a href="contact.html" class="btn-primary" data-i18n="nav.book">Book now</a>
+      </div>
+      </div>
+    </section>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo" data-i18n="footer.brandLine">Rolando Guy · Lyric Tenor</div>
+      <div class="footer-tagline" data-i18n="footer.tagline">Argentine-Italian tenor based in Berlin</div>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/rolando.guy.tenor/" target="_blank" rel="noopener" class="mp-soc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="vertical-align:middle;margin-right:5px"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>Instagram</a>
+        <a href="https://www.youtube.com/@rolandoguytenor" target="_blank" rel="noopener" class="mp-soc"><svg width="14" height="10" viewBox="0 0 24 17" fill="currentColor" aria-hidden="true" style="vertical-align:middle;margin-right:5px"><path d="M23.5 2.7s-.3-1.9-1.1-2.6C21.4-.8 20.3-.8 19.8-.7 16.5-1 12-1 12-1s-4.5 0-7.8.3c-.5 0-1.6.1-2.6 1.1C.8.9.5 2.8.5 2.8S.2 5 .2 7.2v2c0 2.2.3 4.4.3 4.4s.3 1.9 1.1 2.6c1 1 2.3.9 2.9 1C6.4 17.4 12 17.4 12 17.4s4.5 0 7.8-.2c.5-.1 1.6-.1 2.6-1.1.8-.7 1.1-2.6 1.1-2.6s.3-2.2.3-4.4v-2C23.8 5 23.5 5 23.5 2.7zM9.7 12V5.4l7 3.3-7 3.3z"/></svg>YouTube</a>
+        <a href="https://www.facebook.com/RolandoGuyTenor/" target="_blank" rel="noopener" class="mp-soc"><svg width="8" height="14" viewBox="0 0 10 18" fill="currentColor" aria-hidden="true" style="vertical-align:middle;margin-right:5px"><path d="M9 0H6.5C4 0 2.5 1.5 2.5 4v2.5H0V9.5h2.5V18h3V9.5h2.5L8.5 6.5H5.5V4.2C5.5 3.4 5.9 3 6.7 3H9V0z"/></svg>Facebook</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-ornament">✦</div>
+      <div class="footer-copy">© 2026 Rolando Guy · <span data-i18n="footer.rights">All rights reserved</span></div>
+      <div class="footer-location">Buenos Aires · Berlin</div>
+    </div>
+    <div></div>
+  </div>
+</footer>
+
+<div id="eventModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);overflow-y:auto;cursor:default" onclick="if(event.target===this)closeEventModal()">
+  <div style="max-width:640px;margin:60px auto;padding:40px 32px;position:relative">
+    <button type="button" onclick="closeEventModal()" style="position:absolute;top:0;right:0;background:none;border:none;color:var(--text-faint);font-size:1.6rem;cursor:pointer;padding:12px;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'">&times;</button>
+    <div id="emVenueImg" style="width:100%;height:200px;background-size:cover;background-position:center;border:1px solid var(--border);margin-bottom:28px;display:none;border-radius:2px"></div>
+    <div id="emType" style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:12px"></div>
+    <h3 id="emTitle" style="font-family:var(--ff-title);font-size:clamp(1.6rem,4vw,2.2rem);font-weight:300;font-style:italic;color:var(--text);margin-bottom:8px"></h3>
+    <div id="emDate" style="font-family:var(--ff-caps);font-size:.68rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px"></div>
+    <div id="emVenue" style="font-family:var(--ff-caps);font-size:.58rem;letter-spacing:.13em;color:var(--text-faint);text-transform:uppercase;margin-bottom:24px"></div>
+    <div id="emDetail" style="font-size:.88rem;color:var(--text-dim);line-height:1.8;margin-bottom:16px"></div>
+    <div id="emExtDesc" style="font-size:.88rem;color:var(--text-dim);line-height:1.8;margin-bottom:28px;border-top:1px solid var(--border);padding-top:20px;display:none"></div>
+    <img id="emFlyerImg" src="" alt="" style="display:none;width:100%;max-width:480px;border:1px solid var(--border);border-radius:2px;margin-bottom:28px">
+    <div id="emPrice" style="display:none;font-family:var(--ff-caps);font-size:.62rem;letter-spacing:.15em;color:var(--gold);margin-bottom:24px"><span style="color:var(--text-faint);margin-right:8px">Tickets:</span><span id="emPriceVal"></span></div>
+    <div id="emActions" style="display:flex;gap:12px;flex-wrap:wrap">
+      <a id="emEventLink" href="#" target="_blank" rel="noopener" class="btn-primary" style="display:none;font-size:.55rem;padding:12px 24px">Tickets & Info</a>
+      <a id="emMapsLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="display:none;font-size:.55rem;padding:12px 24px">📍 Maps</a>
+    </div>
+  </div>
+</div>
+
+<script defer src="../v1-assets/js/mp-shell.js"></script>
+<script defer src="../v1-assets/js/mp-calendar.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+{
+  "exportedAt": "2026-03-30T12:00:00.000Z",
+  "origin": "stub-from-committed-press-data",
+  "keys": [
+    "rg_press",
+    "rg_press_meta",
+    "rg_epk_photos",
+    "rg_public_pdfs"
+  ],
+  "data": {
+    "rg_press": [
+      {
+        "id": 1,
+        "source": "HR2 / Hessischer Rundfunk — Stephan Hübner",
+        "quote": "Augenzwinkernd-locker inszeniert, mit sympathischem Holland-Kitsch von Tulpe bis Gouda und mit einem spielfreudigen Ensemble — einen Operettenspaß mit Herz, Verstand und zeitloser Musik.",
+        "quotes_i18n": {
+          "de": "Augenzwinkernd-locker inszeniert, mit sympathischem Holland-Kitsch von Tulpe bis Gouda und mit einem spielfreudigen Ensemble — einen Operettenspaß mit Herz, Verstand und zeitloser Musik.",
+          "en": "Directed with a wink and a smile, with charming Dutch kitsch and a spirited ensemble — operetta entertainment with heart, wit and timeless music.",
+          "es": "Dirigido con guiño y humor, con encantador kitsch holandés y un ensemble entusiasta — entretenimiento de opereta con corazón, ingenio y música atemporal.",
+          "it": "Messo in scena con ironia e leggerezza, con grazioso kitsch olandese e un ensemble vivace — intrattenimento operettistico con cuore, arguzia e musica senza tempo.",
+          "fr": "Une mise en scène enjouée et légère, avec un kitsch hollandais charmant et un ensemble enthousiaste — un divertissement d'opérette plein de cœur, d'esprit et de musique intemporelle."
+        },
+        "production": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+        "production_i18n": {
+          "en": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "de": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "es": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "it": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "fr": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025"
+        },
+        "url": "https://www.hessenschau.de/kultur/hr2-fruehkritik-operettencharme-mit-windmuehlen---vetter-aus-dingsda-von-der-kammeroper-frankfurt,audio-109446.html",
+        "visible": true,
+        "order": 0
+      },
+      {
+        "id": 2,
+        "source": "Notate — Rainer Schilling",
+        "quote": "Jubel, Trubel, Heiterkeit — die Kammeroper Frankfurt lässt den Palmengarten beben. Eine herrliche, schwungvolle und begeisternde Unterhaltung.",
+        "quotes_i18n": {
+          "de": "Jubel, Trubel, Heiterkeit — die Kammeroper Frankfurt lässt den Palmengarten beben. Eine herrliche, schwungvolle und begeisternde Unterhaltung.",
+          "en": "Pure jubilation — the Kammeroper Frankfurt sets the Palmengarten ablaze. A glorious, exhilarating and captivating entertainment.",
+          "es": "Júbilo puro — la Kammeroper Frankfurt hace vibrar el Palmengarten. Un entretenimiento glorioso, arrebatador y cautivador.",
+          "it": "Puro giubilo — la Kammeroper Frankfurt fa vibrare il Palmengarten. Un intrattenimento glorioso, esaltante e coinvolgente.",
+          "fr": "Pure jubilation — la Kammeroper Frankfurt fait résonner le Palmengarten. Un divertissement glorieux, enivrant et captivant."
+        },
+        "production": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+        "production_i18n": {
+          "en": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "de": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "es": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "it": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025",
+          "fr": "Der Vetter aus Dingsda · Kammeroper Frankfurt · 2025"
+        },
+        "url": "https://www.notate.news/der-vetter-aus-dingsda-gibts-den-noch/",
+        "visible": true,
+        "order": 1
+      }
+    ],
+    "rg_press_meta": {
+      "en": {
+        "translatedNote": "Translated from the original German review."
+      },
+      "de": {
+        "translatedNote": ""
+      },
+      "es": {
+        "translatedNote": "Traducción de la reseña original en alemán."
+      },
+      "it": {
+        "translatedNote": "Traduzione dalla recensione originale in tedesco."
+      },
+      "fr": {
+        "translatedNote": "Traduction de la critique originale en allemand."
+      }
+    },
+    "rg_epk_photos": [
+      {
+        "url": "../img/studio-1.jpg",
+        "label": "Studio portrait",
+        "credit": "Official press photo — credit as indicated on your materials."
+      }
+    ],
+    "rg_public_pdfs": {
+      "dossier": {
+        "EN": {
+          "url": ""
+        },
+        "DE": {
+          "url": ""
+        },
+        "ES": {
+          "url": ""
+        },
+        "IT": {
+          "url": ""
+        },
+        "FR": {
+          "url": ""
+        }
+      },
+      "artistSheet": {
+        "EN": {
+          "url": ""
+        },
+        "DE": {
+          "url": ""
+        },
+        "ES": {
+          "url": ""
+        },
+        "IT": {
+          "url": ""
+        },
+        "FR": {
+          "url": ""
+        }
+      }
+    }
+  }
+}

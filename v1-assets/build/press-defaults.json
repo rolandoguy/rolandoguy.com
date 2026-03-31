@@ -1,0 +1,17 @@
+{
+  "reviewsIntro": "Selected press responses to recent productions and performances.",
+  "reviewsIntroByLang": {
+    "en": "Selected press responses to recent productions and performances.",
+    "de": "Ausgewählte Pressestimmen zu jüngeren Produktionen und Auftritten.",
+    "es": "Selección de reseñas sobre producciones y actuaciones recientes.",
+    "it": "Una selezione di citazioni stampa su produzioni e prove recenti.",
+    "fr": "Un choix de retours presse sur des productions et récitals récents."
+  },
+  "pressMeta": {
+    "en": { "translatedNote": "Translated from the original German review." },
+    "de": { "translatedNote": "" },
+    "es": { "translatedNote": "Traducción de la reseña original en alemán." },
+    "it": { "translatedNote": "Traduzione dalla recensione originale in tedesco." },
+    "fr": { "translatedNote": "Traduction de la critique originale en allemand." }
+  }
+}

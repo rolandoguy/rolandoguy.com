@@ -1,0 +1,12 @@
+{
+  "exportedAt": "2026-03-30T22:00:00.000Z",
+  "origin": "stub-passthrough-bio-from-defaults",
+  "keys": ["bio_en", "bio_de", "bio_es", "bio_it", "bio_fr"],
+  "data": {
+    "bio_en": {
+      "h2": "A voice <em>forged</em><br>in tradition",
+      "p1": "Argentine-Italian tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory of Music. He worked privately with Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck and Víctor Torres — all singers and coaches at the Teatro Colón — and developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia (Russia) and Marcelo Ayub. Earlier in his artistic development, he also received coaching from Jack Li Vigni in New York and from tenor Francesco Anile in Rome. In 2017 he participated in the prestigious Javier Camarena Masterclass in Buenos Aires.",
+      "p2": "Based in Berlin since 2019, he studied with Maestro Reiner Goldberg and Uwe Griem, and currently works on his technique and interpretation with Maestro Stephan von Cron Catalano, Austrian conductor and violinist. In 2025 he performed as Zweiter Fremder in Der Vetter aus Dingsda (Eduard Künneke) at Kammeroper Frankfurt under Stanislav Rosenberg, and in 2023 sang Tamino in Die Zauberflöte with Opernwerkstatt am Rhein. He has appeared as tenor soloist at the Staatsoper Berlin, performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office and Notre-Dame in Strasbourg. He has given Lieder recitals — Schubert, Strauss, Rachmaninov and Liszt — with pianist Marcelo Ayub."
+    }
+  }
+}

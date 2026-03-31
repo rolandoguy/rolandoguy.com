@@ -1,0 +1,118 @@
+{
+  "exportedAt": "2026-03-30T12:00:00.000Z",
+  "origin": "stub-from-committed-calendar-data",
+  "keys": [
+    "rg_perfs",
+    "perf_en"
+  ],
+  "data": {
+    "rg_perfs": [
+      {
+        "id": 8,
+        "day": "04",
+        "month": "Dec 2026",
+        "title": "Nestor — Irma la douce",
+        "detail": "Victor Massé · Berlin",
+        "venue": "Institut Français",
+        "city": "Berlin, Germany",
+        "status": "upcoming",
+        "type": "opera",
+        "category": "stage",
+        "sortDate": "2026-12-04",
+        "venuePhoto": "../img/stage-2.jpg",
+        "venueOpacity": 42
+      },
+      {
+        "id": 1,
+        "day": "25",
+        "month": "Jul 2025",
+        "title": "Der Vetter aus Dingsda",
+        "detail": "Eduard Künneke · Zweiter Fremder",
+        "venue": "Kammeroper Frankfurt",
+        "city": "Frankfurt, Germany",
+        "status": "past",
+        "type": "operetta",
+        "category": "stage",
+        "sortDate": "2025-07-25",
+        "venuePhoto": "../img/stage-1.jpg",
+        "venueOpacity": 45
+      },
+      {
+        "id": 2,
+        "day": "03",
+        "month": "Mar 2025",
+        "title": "Recital Berlin",
+        "detail": "20:00 · Berlin",
+        "venue": "Berlin",
+        "city": "",
+        "status": "past",
+        "type": "recital",
+        "category": "concert",
+        "sortDate": "2025-03-03",
+        "venuePhoto": "../img/studio-3.jpg",
+        "venueOpacity": 38
+      },
+      {
+        "id": 3,
+        "day": "17",
+        "month": "Dec 2024",
+        "title": "Concert with Die Goldvögel",
+        "detail": "Thematic concert · Grief & Loss",
+        "venue": "Kapelle St. Joseph Krankenhaus",
+        "city": "Berlin",
+        "status": "past",
+        "type": "concert",
+        "category": "concert",
+        "sortDate": "2024-12-17",
+        "venuePhoto": "../img/stage-3.jpg",
+        "venueOpacity": 40
+      },
+      {
+        "id": 4,
+        "day": "07",
+        "month": "Dec 2024",
+        "title": "Tango Tenors",
+        "detail": "20:00 · Tango Loft Berlin",
+        "venue": "Tango Loft Berlin",
+        "city": "Berlin",
+        "status": "past",
+        "type": "show",
+        "category": "stage",
+        "sortDate": "2024-12-07",
+        "venuePhoto": "../img/stage-4.jpg",
+        "venueOpacity": 42
+      },
+      {
+        "id": 5,
+        "day": "01",
+        "month": "Dec 2024",
+        "title": "Welt AIDS Tag",
+        "detail": "16:00 · Zwölf-Apostel-Kirche",
+        "venue": "Zwölf-Apostel-Kirche",
+        "city": "Berlin",
+        "status": "past",
+        "type": "concert",
+        "category": "concert",
+        "sortDate": "2024-12-01",
+        "venuePhoto": "../img/stage-5.jpg",
+        "venueOpacity": 40
+      }
+    ],
+    "perf_en": {
+      "h2": "Engagements &amp; <em>Concerts</em>",
+      "intro": "Upcoming performances, concert appearances and selected stage engagements across Germany and Europe, including opera productions, galas and house concerts.",
+      "eventTypes": {
+        "opera": "Opera",
+        "concert": "Concert",
+        "recital": "Recital",
+        "show": "Private Event",
+        "gala": "Gala",
+        "collaboration": "Collaboration",
+        "houseconcert": "House Concert",
+        "tango": "Tango Night",
+        "other": "Event",
+        "operetta": "Operetta"
+      }
+    }
+  }
+}

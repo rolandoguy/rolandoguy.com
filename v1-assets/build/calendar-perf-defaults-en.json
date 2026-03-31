@@ -1,0 +1,16 @@
+{
+  "h2": "Engagements &amp; <em>Concerts</em>",
+  "intro": "Upcoming performances, concert appearances and selected stage engagements across Germany and Europe, including opera productions, galas and house concerts.",
+  "eventTypes": {
+    "opera": "Opera",
+    "concert": "Concert",
+    "recital": "Recital",
+    "show": "Private Event",
+    "gala": "Gala",
+    "collaboration": "Collaboration",
+    "houseconcert": "House Concert",
+    "tango": "Tango Night",
+    "other": "Event",
+    "operetta": "Operetta"
+  }
+}
