@@ -5,6 +5,7 @@
   var ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
   var AUTH_REDIRECT_PENDING_KEY = 'adm2_redirect_pending';
   var AUTH_REDIRECT_PENDING_TS_KEY = 'adm2_redirect_pending_ts';
+  var AUTH_SAFARI_RESTORE_FAILED_KEY = 'adm2_safari_restore_failed';
   var AUTH_REDIRECT_GRACE_MS = 8000;
   var AUTH_REDIRECT_PENDING_TTL_MS = 15 * 60 * 1000;
   var firebaseAuth = null;
@@ -99,6 +100,19 @@
     } catch (e) {}
     setAuthDebug({ redirectPending: getRedirectPending() ? 'yes' : 'no' });
   }
+  function markSafariRestoreFailed(flag) {
+    try {
+      if (flag) localStorage.setItem(AUTH_SAFARI_RESTORE_FAILED_KEY, '1');
+      else localStorage.removeItem(AUTH_SAFARI_RESTORE_FAILED_KEY);
+    } catch (e) {}
+  }
+  function hasSafariRestoreFailed() {
+    try {
+      return localStorage.getItem(AUTH_SAFARI_RESTORE_FAILED_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
   function refreshAuthRuntimeDebug(user) {
     setAuthDebug({
       redirectPending: getRedirectPending() ? 'yes' : 'no',
@@ -106,31 +120,8 @@
     });
   }
   function renderAuthDebug() {
-    var card = document.querySelector('.auth-card');
-    if (!card) return;
     var el = $('adm2AuthDebug');
-    if (!el) {
-      el = document.createElement('p');
-      el.id = 'adm2AuthDebug';
-      el.className = 'muted';
-      el.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-      el.style.fontSize = '12px';
-      el.style.lineHeight = '1.4';
-      var anchor = $('adm2AuthMsg');
-      if (anchor && anchor.parentNode) anchor.insertAdjacentElement('afterend', el);
-      else card.appendChild(el);
-    }
-    el.textContent =
-      'AUTH debug: redirectProcessed=' + safeString(authDebugState.redirectProcessed) +
-      ' persistenceSet=' + safeString(authDebugState.persistenceSet) +
-      ' persistenceType=' + safeString(authDebugState.persistenceType) +
-      ' redirectPending=' + safeString(authDebugState.redirectPending) +
-      ' authState=' + safeString(authDebugState.authState) +
-      ' currentUserPresent=' + safeString(authDebugState.currentUserPresent) +
-      ' email=' + safeString(authDebugState.email || '—') +
-      ' allowlist=' + safeString(authDebugState.allowlist) +
-      ' gate=' + safeString(authDebugState.gate) +
-      (authDebugState.failure ? ' reason=' + safeString(authDebugState.failure) : '');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
   }
   function setAuthDebug(patch) {
     if (patch && typeof patch === 'object') {
@@ -168,11 +159,18 @@
       return Promise.resolve(false);
     }
     var P = firebase.auth.Auth.Persistence;
-    var candidates = [
-      { id: P.LOCAL, label: 'local' },
-      { id: P.SESSION, label: 'session' },
-      { id: P.NONE, label: 'none' }
-    ];
+    // Safari iPhone redirect can behave better with SESSION persistence first.
+    var candidates = shouldUseRedirectAuth()
+      ? [
+          { id: P.SESSION, label: 'session' },
+          { id: P.LOCAL, label: 'local' },
+          { id: P.NONE, label: 'none' }
+        ]
+      : [
+          { id: P.LOCAL, label: 'local' },
+          { id: P.SESSION, label: 'session' },
+          { id: P.NONE, label: 'none' }
+        ];
     var i = 0;
     function next() {
       if (i >= candidates.length) {
@@ -219,6 +217,7 @@
     }
     var provider = new firebase.auth.GoogleAuthProvider();
     if (shouldUseRedirectAuth()) {
+      markSafariRestoreFailed(false);
       setRedirectPending(true);
       setAuthGate(false, firebaseAuth.currentUser || null, 'Opening Google sign-in with redirect…');
       setAuthDebug({ redirectProcessed: 'no', authState: 'pending', failure: '' });
@@ -285,10 +284,29 @@
               nullUserTimer = setTimeout(function () {
                 pendingRedirect = false;
                 setRedirectPending(false);
-                setAuthDebug({ failure: 'redirect-session-not-restored' });
-                setAuthGate(false, null, 'Sign-in was not restored after redirect. Please tap "Sign in with Google" again.');
+                if (shouldUseRedirectAuth()) {
+                  markSafariRestoreFailed(true);
+                  setAuthDebug({ failure: 'safari-redirect-session-not-restored' });
+                  setAuthGate(
+                    false,
+                    null,
+                    'Safari iPhone could not restore the Firebase session after Google redirect. Please use Chrome on iPhone or sign in from desktop.'
+                  );
+                } else {
+                  setAuthDebug({ failure: 'redirect-session-not-restored' });
+                  setAuthGate(false, null, 'Sign-in was not restored after redirect. Please tap "Sign in with Google" again.');
+                }
               }, AUTH_REDIRECT_GRACE_MS);
             }
+            return;
+          }
+          if (shouldUseRedirectAuth() && hasSafariRestoreFailed()) {
+            setAuthDebug({ failure: 'safari-fallback-active' });
+            setAuthGate(
+              false,
+              null,
+              'Safari iPhone sign-in is currently unreliable in this setup. Please use Chrome on iPhone or sign in from desktop.'
+            );
             return;
           }
           setAuthGate(false, null, 'Sign in with Google to continue.');
@@ -299,6 +317,7 @@
           nullUserTimer = null;
         }
         setRedirectPending(false);
+        markSafariRestoreFailed(false);
         if (!ok) {
           setAuthDebug({ failure: 'allowlist-denied' });
           setAuthGate(false, user, 'This account is not authorized for this admin panel.');
