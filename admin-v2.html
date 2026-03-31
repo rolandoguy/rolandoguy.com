@@ -507,6 +507,21 @@
         <section id="section-ui" class="section">
           <h2>UI / Translations</h2>
           <p class="muted">Advanced editor for `rg_ui_<lang>`. Loads effective language content and lets you save overrides safely.</p>
+          <div class="editor">
+            <h3>Navigation labels (desktop + mobile)</h3>
+            <div class="grid two">
+              <label>Home (`nav.home`)<input id="ui-nav-home"></label>
+              <label>Biography (`nav.bio`)<input id="ui-nav-bio"></label>
+              <label>Repertoire (`nav.rep`)<input id="ui-nav-rep"></label>
+              <label>Media (`nav.media`)<input id="ui-nav-media"></label>
+              <label>Calendar (`nav.cal`)<input id="ui-nav-cal"></label>
+              <label>Press & Materials (`nav.epk`)<input id="ui-nav-epk"></label>
+              <label>Book now (`nav.book`)<input id="ui-nav-book"></label>
+            </div>
+            <div class="toolbar">
+              <button id="saveUiNavBtn">Save navigation labels</button>
+            </div>
+          </div>
           <textarea id="ui-json" rows="18" class="mono"></textarea>
           <div class="toolbar">
             <button id="reloadUiBtn">Reload JSON</button>

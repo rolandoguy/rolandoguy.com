@@ -1378,6 +1378,30 @@
     }
     if (!isObject(d)) d = {};
     $('ui-json').value = JSON.stringify(d, null, 2);
+    loadUiNavFieldsFromDoc(d);
+  }
+  function loadUiNavFieldsFromDoc(d) {
+    var doc = isObject(d) ? d : {};
+    $('ui-nav-home').value = safeString(doc['nav.home']);
+    $('ui-nav-bio').value = safeString(doc['nav.bio']);
+    $('ui-nav-rep').value = safeString(doc['nav.rep']);
+    $('ui-nav-media').value = safeString(doc['nav.media']);
+    $('ui-nav-cal').value = safeString(doc['nav.cal']);
+    $('ui-nav-epk').value = safeString(doc['nav.epk']);
+    $('ui-nav-book').value = safeString(doc['nav.book']);
+  }
+  function saveUiNav() {
+    var d = loadDoc('rg_ui_' + state.lang, null);
+    if (!isObject(d)) d = {};
+    d['nav.home'] = safeString($('ui-nav-home').value);
+    d['nav.bio'] = safeString($('ui-nav-bio').value);
+    d['nav.rep'] = safeString($('ui-nav-rep').value);
+    d['nav.media'] = safeString($('ui-nav-media').value);
+    d['nav.cal'] = safeString($('ui-nav-cal').value);
+    d['nav.epk'] = safeString($('ui-nav-epk').value);
+    d['nav.book'] = safeString($('ui-nav-book').value);
+    saveDoc('rg_ui_' + state.lang, d);
+    $('ui-json').value = JSON.stringify(d, null, 2);
   }
   function saveUiJson() {
     try {
@@ -1486,6 +1510,7 @@
     $('saveContactBtn').addEventListener('click', saveContact);
     $('reloadUiBtn').addEventListener('click', loadUiJson);
     $('saveUiBtn').addEventListener('click', saveUiJson);
+    $('saveUiNavBtn').addEventListener('click', saveUiNav);
 
     $('rep-cat-filter').addEventListener('change', renderRepList);
     $('rep-add').addEventListener('click', function () {
@@ -1828,7 +1853,7 @@
       updateBioPortraitPreview();
       markDirty(true);
     });
-    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','ui-json']);
+    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book']);
 
     $('bio-portraitUpload').addEventListener('change', function (e) {
       var file = e.target.files && e.target.files[0];
