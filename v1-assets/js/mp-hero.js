@@ -12,7 +12,7 @@
   function escUrl(u) {
     return String(u).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   }
-  function readLegacyJson(key) {
+  function readLegacyRecord(key) {
     try {
       if (!window.localStorage) return null;
       var parseMaybe = function (raw) {
@@ -21,24 +21,51 @@
       };
       var direct = parseMaybe(window.localStorage.getItem(key));
       if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
+        if (direct && typeof direct === 'object' && direct.value != null) {
+          return { value: direct.value, ts: Number(direct.ts) || 0 };
+        }
+        return { value: direct, ts: 0 };
       }
       var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
+      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) {
+        return { value: wrapped.value, ts: Number(wrapped.ts) || 0 };
+      }
       return null;
     } catch (e) {
       return null;
     }
   }
+  function readLegacyJson(key) {
+    var rec = readLegacyRecord(key);
+    return rec ? rec.value : null;
+  }
+  function withCacheBuster(url, ts) {
+    var s = String(url || '').trim();
+    var n = Number(ts) || 0;
+    if (!s || !n) return s;
+    if (/^(data:|blob:)/i.test(s)) return s;
+    if (/[?&]v=\d+/.test(s)) return s;
+    return s + (s.indexOf('?') >= 0 ? '&' : '?') + 'v=' + n;
+  }
   function getIntroImageOverride() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     var shortLang = String(rawLang || 'en').split('-')[0];
-    var byLang = readLegacyJson('hero_' + rawLang);
-    if (byLang && typeof byLang.introImage === 'string' && byLang.introImage.trim()) return normalizeIntroImagePath(byLang.introImage);
+    var byLangRec = readLegacyRecord('hero_' + rawLang);
+    var byLang = byLangRec && byLangRec.value;
+    if (byLang && typeof byLang.introImage === 'string' && byLang.introImage.trim()) {
+      return withCacheBuster(normalizeIntroImagePath(byLang.introImage), byLangRec.ts);
+    }
     if (shortLang && shortLang !== rawLang) {
-      var byShort = readLegacyJson('hero_' + shortLang);
-      if (byShort && typeof byShort.introImage === 'string' && byShort.introImage.trim()) return normalizeIntroImagePath(byShort.introImage);
+      var byShortRec = readLegacyRecord('hero_' + shortLang);
+      var byShort = byShortRec && byShortRec.value;
+      if (byShort && typeof byShort.introImage === 'string' && byShort.introImage.trim()) {
+        return withCacheBuster(normalizeIntroImagePath(byShort.introImage), byShortRec.ts);
+      }
+    }
+    var byEnRec = readLegacyRecord('hero_en');
+    var byEn = byEnRec && byEnRec.value;
+    if (byEn && typeof byEn.introImage === 'string' && byEn.introImage.trim()) {
+      return withCacheBuster(normalizeIntroImagePath(byEn.introImage), byEnRec.ts);
     }
     return '';
   }
