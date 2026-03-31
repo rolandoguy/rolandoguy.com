@@ -10,6 +10,7 @@
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var MP_UI_OVERRIDES = {};
   var MP_UI_PROMISES = {};
+  var MP_LANG_DEBUG = { detected: 'en', source: 'fallback', applied: 'en', persisted: 'no' };
 
   function normalizeLang(code) {
     var c = String(code || 'en')
@@ -19,13 +20,44 @@
     return c;
   }
 
-  function getMpSiteLang() {
+  function getStoredMpSiteLang() {
     try {
       var s = localStorage.getItem(MP_LANG_STORAGE);
-      return normalizeLang(s);
+      if (!s) return '';
+      var n = normalizeLang(s);
+      return MP_LANG_LIST.indexOf(n) >= 0 ? n : '';
     } catch (e) {
-      return 'en';
+      return '';
     }
+  }
+  function detectNavigatorLang() {
+    var picked = '';
+    function consider(raw) {
+      if (picked) return;
+      var n = normalizeLang(raw);
+      if (MP_LANG_LIST.indexOf(n) >= 0) picked = n;
+    }
+    try {
+      if (window.navigator && Array.isArray(window.navigator.languages) && window.navigator.languages.length) {
+        window.navigator.languages.forEach(consider);
+      }
+      if (!picked && window.navigator && window.navigator.language) consider(window.navigator.language);
+    } catch (e) {}
+    return picked || 'en';
+  }
+  function resolveInitialLang() {
+    var stored = getStoredMpSiteLang();
+    if (stored) {
+      MP_LANG_DEBUG = { detected: stored, source: 'stored', applied: stored, persisted: 'yes' };
+      return { lang: stored, source: 'stored', persisted: true };
+    }
+    var detected = detectNavigatorLang();
+    var source = detected === 'en' ? 'fallback' : 'navigator.languages';
+    MP_LANG_DEBUG = { detected: detected, source: source, applied: detected, persisted: 'no' };
+    return { lang: detected, source: source, persisted: false };
+  }
+  function getMpSiteLang() {
+    return resolveInitialLang().lang;
   }
 
   function storeMpSiteLang(code) {
@@ -188,6 +220,12 @@
     var persist = !opts || opts.persist !== false;
     var lang = persist ? storeMpSiteLang(code) : normalizeLang(code);
     document.documentElement.lang = lang;
+    MP_LANG_DEBUG.applied = lang;
+    if (persist) {
+      MP_LANG_DEBUG.detected = lang;
+      MP_LANG_DEBUG.source = 'stored';
+      MP_LANG_DEBUG.persisted = 'yes';
+    }
     syncLangButtons(lang);
     ensureUiOverrideFor(lang).finally(function () {
       applyChromeI18n(lang);
@@ -203,6 +241,7 @@
       console.warn('mp-locales.json: missing "locales" object');
     }
     document.documentElement.lang = lang;
+    MP_LANG_DEBUG.applied = normalizeLang(lang);
     syncLangButtons(lang);
     Promise.all([ensureUiOverrideFor('en'), ensureUiOverrideFor(lang)]).finally(function () {
       applyChromeI18n(lang);
@@ -214,19 +253,21 @@
   }
 
   function mpInitLanguage() {
+    var initial = resolveInitialLang();
     fetch(MP_LOCALES_URL, { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
       })
       .then(function (data) {
-        applyLoadedLocales(data, getMpSiteLang());
+        applyLoadedLocales(data, initial.lang);
       })
       .catch(function (err) {
         console.warn('mp-locales load failed', err);
         window.MP_LOCALE_TABLE = null;
-        var lang = getMpSiteLang();
+        var lang = initial.lang;
         document.documentElement.lang = lang;
+        MP_LANG_DEBUG.applied = normalizeLang(lang);
         syncLangButtons(lang);
         window.dispatchEvent(
           new CustomEvent('mp:localesready', { detail: { lang: lang, error: true } })

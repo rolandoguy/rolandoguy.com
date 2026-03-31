@@ -54,12 +54,37 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 .item.active{background:rgba(212,168,67,.08);color:var(--gold)}
 .empty-state{padding:12px;color:var(--muted);font-size:.85rem}
 .editor{display:grid;grid-template-columns:1fr;gap:8px}
+.editor-section{border:1px solid var(--border);border-radius:10px;background:#11151d;padding:10px;margin-bottom:10px}
+.editor-section h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.01em;color:var(--gold)}
+.calendar-editor .grid.two{margin-bottom:0}
 .tools-card{border:1px solid var(--border);border-radius:10px;background:#11151d;padding:10px}
 .tools-card .muted{margin:0}
 .photo-preview-wrap{border:1px solid var(--border);border-radius:8px;background:#0e131a;display:flex;justify-content:center;align-items:center;min-height:220px;padding:8px}
 .photo-preview-wrap img{max-width:100%;max-height:320px;display:block;object-fit:contain}
+.perf-card-preview{position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;min-height:180px;background:#0e131a}
+.perf-card-preview__bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.55}
+.perf-card-preview__bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,12,18,.15) 0%,rgba(9,12,18,.85) 100%)}
+.perf-card-preview__content{position:relative;z-index:1;padding:14px}
+.perf-card-preview__meta{margin:0 0 6px;font-size:.74rem;letter-spacing:.08em;color:#b7c3d8;text-transform:uppercase}
+.perf-card-preview__title{margin:0 0 6px;font-size:1rem;color:var(--text)}
+.perf-card-preview__detail{margin:0 0 8px;font-size:.84rem;color:var(--muted)}
+.perf-card-preview__venue{margin:0;font-size:.8rem;color:#c7d1e3}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .muted{color:var(--muted);font-size:.84rem}
+.embed-file-label{
+  opacity:.82;
+  border:1px dashed var(--border);
+  border-radius:8px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.01);
+}
+.embed-file-label input[type="file"]{
+  margin-top:4px;
+}
+.embed-note{
+  margin:-2px 0 8px;
+  font-size:.78rem;
+}
 .menu-btn{display:none}
 
 @media (max-width: 1024px){

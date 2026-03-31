@@ -1033,6 +1033,7 @@
     $('perf-detail').value = safeString(e.detail);
     $('perf-day').value = safeString(e.day);
     $('perf-month').value = safeString(e.month);
+    $('perf-dateDisplay').value = normalizeSortDateForInput(e.sortDate);
     $('perf-time').value = safeString(e.time);
     $('perf-venue').value = safeString(e.venue);
     $('perf-city').value = safeString(e.city);
@@ -1045,9 +1046,58 @@
     $('perf-venueOpacityValue').value = String(op) + '%';
     $('perf-venuePreview').src = safeString(e.venuePhoto);
     $('perf-venuePreview').style.opacity = String(op / 100);
-    $('perf-status').value = safeString(e.status);
-    $('perf-type').value = safeString(e.type);
+    setSelectWithCustomValue('perf-status', safeString(e.status), 'upcoming');
+    setSelectWithCustomValue('perf-type', safeString(e.type), 'concert');
     $('perf-sortDate').value = safeString(e.sortDate);
+    updatePerfCardPreview();
+  }
+  function setSelectWithCustomValue(id, rawValue, fallback) {
+    var el = $(id);
+    if (!el) return;
+    var v = safeString(rawValue).trim();
+    if (!v) v = fallback;
+    var has = false;
+    Array.prototype.forEach.call(el.options || [], function (opt) {
+      if (safeString(opt.value) === v) has = true;
+    });
+    if (!has) {
+      var customOpt = document.createElement('option');
+      customOpt.value = v;
+      customOpt.textContent = v + ' (custom)';
+      customOpt.setAttribute('data-custom', 'true');
+      el.appendChild(customOpt);
+    }
+    el.value = v;
+  }
+  function normalizeSortDateForInput(raw) {
+    var s = safeString(raw).trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+  }
+  function perfPreviewDateLabel() {
+    var day = safeString($('perf-day').value).trim();
+    var month = safeString($('perf-month').value).trim();
+    if (day || month) return (day + ' ' + month).trim();
+    var sort = normalizeSortDateForInput($('perf-sortDate').value);
+    if (!sort) return 'Date';
+    var parts = sort.split('-');
+    return parts[2] + ' ' + parts[1];
+  }
+  function updatePerfCardPreview() {
+    var title = safeString($('perf-title').value).trim();
+    var detail = safeString($('perf-detail').value).trim();
+    var venue = safeString($('perf-venue').value).trim();
+    var city = safeString($('perf-city').value).trim();
+    var bg = safeString($('perf-venuePhoto').value).trim();
+    var op = parseInt($('perf-venueOpacity').value, 10);
+    if (!Number.isFinite(op)) op = 50;
+    if (op < 30) op = 30;
+    if (op > 100) op = 100;
+    $('perf-preview-date').textContent = perfPreviewDateLabel();
+    $('perf-preview-title').textContent = title || 'Event title';
+    $('perf-preview-detail').textContent = detail || 'Event detail';
+    $('perf-preview-venue').textContent = ((venue || 'Venue') + ' · ' + (city || 'City'));
+    $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
+    $('perf-cardPreviewBg').style.opacity = String(op / 100);
   }
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
@@ -1060,6 +1110,8 @@
     e.venue = $('perf-venue').value;
     e.city = $('perf-city').value;
     e.venuePhoto = safeString($('perf-venuePhoto').value).trim();
+    var dateDisplay = normalizeSortDateForInput($('perf-dateDisplay').value);
+    if (dateDisplay) $('perf-sortDate').value = dateDisplay;
     var op = parseInt($('perf-venueOpacity').value, 10);
     if (!Number.isFinite(op)) op = 50;
     if (op < 30) op = 30;
@@ -1072,6 +1124,7 @@
     e.type = $('perf-type').value;
     e.sortDate = $('perf-sortDate').value;
     state.perfs[state.perfIndex] = e;
+    updatePerfCardPreview();
     renderPerfList();
     markDirty(true);
   }
@@ -2081,7 +2134,7 @@
 
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category'], persistRepEditor);
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published'], persistProgramsEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () { persistPressPdfsFromUi(); markDirty(true, 'Public PDFs editados'); });
     bindInputsDirty(['epk-bio-b50','epk-bio-b150','epk-bio-b300p1','epk-bio-b300p2','epk-bio-b300p3','epk-bio-b300p4'], function () { persistEpkBiosFromUi(); markDirty(true, 'EPK bios editadas'); });

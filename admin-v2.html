@@ -91,9 +91,10 @@
               <input type="checkbox" id="home-images-all-langs" style="width:auto">
               Apply Home hero + Home intro images to all languages
             </label>
-            <label>Replace home intro portrait file
+            <label class="embed-file-label">Embed image from local file (base64)
               <input type="file" id="hero-introUpload" accept="image/*">
             </label>
+            <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
             <div class="photo-preview-wrap">
               <img id="hero-introPreview" alt="Home intro portrait preview">
             </div>
@@ -115,9 +116,10 @@
               <input type="checkbox" id="bio-image-all-langs" style="width:auto">
               Apply Biography portrait image to all languages
             </label>
-            <label>Replace biography image file
+            <label class="embed-file-label">Embed image from local file (base64)
               <input type="file" id="bio-portraitUpload" accept="image/*">
             </label>
+            <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
             <div class="photo-preview-wrap">
               <img id="bio-portraitPreview" alt="Biography portrait preview">
             </div>
@@ -168,9 +170,12 @@
 
         <section id="section-calendar" class="section">
           <h2>Calendar</h2>
-          <div class="grid two">
-            <label>H2 (HTML)<input id="perf-h2"></label>
-            <label>Intro<input id="perf-intro"></label>
+          <div class="editor-section">
+            <h3>Calendar section content</h3>
+            <div class="grid two">
+              <label>Section title (HTML)<input id="perf-h2"></label>
+              <label>Section intro text<input id="perf-intro"></label>
+            </div>
           </div>
           <div class="toolbar">
             <button id="perf-add">+ New event</button>
@@ -181,30 +186,92 @@
           </div>
           <div class="split">
             <div id="perf-list" class="item-list"></div>
-            <div class="editor">
-              <label>Title<input id="perf-title"></label>
-              <label>Detail<input id="perf-detail"></label>
-              <label>Day<input id="perf-day"></label>
-              <label>Month<input id="perf-month"></label>
-              <label>Time (`time`, optional)<input id="perf-time" placeholder="20:00 or 19:30 – 21:30"></label>
-              <label>Venue<input id="perf-venue"></label>
-              <label>City<input id="perf-city"></label>
-              <label>Background image URL (`venuePhoto`)<input id="perf-venuePhoto" placeholder="https://..."></label>
-              <label>Background opacity (`venueOpacity` %)
-                <input id="perf-venueOpacity" type="range" min="30" max="100" step="1">
-              </label>
-              <label>Opacity value<input id="perf-venueOpacityValue" readonly></label>
-              <div id="perf-venuePreviewWrap" class="photo-preview-wrap">
-                <img id="perf-venuePreview" alt="Event background preview">
+            <div class="editor calendar-editor">
+              <div class="editor-section">
+                <h3>Public event information</h3>
+                <label>Title<input id="perf-title"></label>
+                <label>Detail<input id="perf-detail"></label>
+                <div class="grid two">
+                  <label>Date
+                    <input id="perf-dateDisplay" type="date">
+                    <small class="muted">Main date selector for sorting and scheduling.</small>
+                  </label>
+                  <label>Time
+                    <input id="perf-time" placeholder="20:00 or 19:30 – 21:30">
+                    <small class="muted">Examples: 20:00 or 19:30–21:30</small>
+                  </label>
+                </div>
+                <div class="grid two">
+                  <label>Venue<input id="perf-venue"></label>
+                  <label>City<input id="perf-city"></label>
+                </div>
               </div>
-              <label>Status<input id="perf-status"></label>
-              <label>Type<input id="perf-type"></label>
-              <label>Sort date<input id="perf-sortDate" placeholder="YYYY-MM-DD"></label>
+
+              <div class="editor-section">
+                <h3>Visual appearance</h3>
+                <label>Background image URL<input id="perf-venuePhoto" placeholder="https://..."></label>
+                <label>Background opacity
+                  <input id="perf-venueOpacity" type="range" min="30" max="100" step="1">
+                </label>
+                <label>Opacity value<input id="perf-venueOpacityValue" readonly></label>
+                <div id="perf-venuePreviewWrap" class="photo-preview-wrap">
+                  <img id="perf-venuePreview" alt="Event background preview">
+                </div>
+                <div id="perf-cardPreview" class="perf-card-preview">
+                  <div class="perf-card-preview__bg" id="perf-cardPreviewBg" aria-hidden="true"></div>
+                  <div class="perf-card-preview__content">
+                    <p class="perf-card-preview__meta" id="perf-preview-date">Date</p>
+                    <h4 class="perf-card-preview__title" id="perf-preview-title">Event title</h4>
+                    <p class="perf-card-preview__detail" id="perf-preview-detail">Event detail</p>
+                    <p class="perf-card-preview__venue" id="perf-preview-venue">Venue · City</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="editor-section">
+                <h3>Internal / advanced</h3>
+                <div class="grid two">
+                  <label>Status
+                    <select id="perf-status">
+                      <option value="upcoming">upcoming</option>
+                      <option value="past">past</option>
+                      <option value="hidden">hidden</option>
+                    </select>
+                    <small class="muted">Not shown publicly.</small>
+                  </label>
+                  <label>Type
+                    <select id="perf-type">
+                      <option value="concert">concert</option>
+                      <option value="recital">recital</option>
+                      <option value="opera">opera</option>
+                      <option value="gala">gala</option>
+                      <option value="private event">private event</option>
+                      <option value="sacred music">sacred music</option>
+                      <option value="other">other</option>
+                    </select>
+                    <small class="muted">Not shown publicly.</small>
+                  </label>
+                </div>
+                <div class="grid two">
+                  <label>Sort date (YYYY-MM-DD)
+                    <input id="perf-sortDate" placeholder="YYYY-MM-DD">
+                    <small class="muted">Used for ordering events.</small>
+                  </label>
+                  <label>Public date badge · day
+                    <input id="perf-day" placeholder="e.g. 12">
+                    <small class="muted">Shown on the public event card.</small>
+                  </label>
+                </div>
+                <label>Public date badge · month
+                  <input id="perf-month" placeholder="e.g. NOV">
+                  <small class="muted">Shown on the public event card.</small>
+                </label>
+              </div>
             </div>
           </div>
           <div class="toolbar">
-            <button id="savePerfHeaderBtn">Save calendar header</button>
-            <button id="savePerfEventsBtn">Save events</button>
+            <button id="savePerfHeaderBtn">Save calendar section text</button>
+            <button id="savePerfEventsBtn">Save event list</button>
           </div>
         </section>
 
@@ -324,7 +391,7 @@
             </div>
             <div class="toolbar">
               <button id="media-photo-add-url">+ Add by URL</button>
-              <label class="import-label">+ Upload photo
+              <label class="import-label embed-file-label">+ Embed photo from local file
                 <input type="file" id="media-photo-add-file" accept="image/*">
               </label>
               <button id="media-photo-dup">Duplicate</button>
@@ -341,9 +408,10 @@
                 <label>Image URL<input id="media-photo-url"></label>
                 <label>Caption<input id="media-photo-caption"></label>
                 <label>Photographer<input id="media-photo-photographer"></label>
-                <label>Replace image file
+                <label class="embed-file-label">Embed replacement image from local file
                   <input type="file" id="media-photo-replace-file" accept="image/*">
                 </label>
+                <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
               </div>
             </div>
             <div class="toolbar">
@@ -438,7 +506,7 @@
           <div id="pressPhotosPanel" style="display:none">
             <div class="toolbar">
               <button id="epk-photo-add-url">+ Agregar por URL</button>
-              <label class="import-label">+ Subir foto
+              <label class="import-label embed-file-label">+ Embed photo from local file
                 <input type="file" id="epk-photo-add-file" accept="image/*">
               </label>
               <button id="epk-photo-dup">Duplicar</button>
@@ -455,9 +523,10 @@
                 <label>Photo URL<input id="epk-photo-url"></label>
                 <label>Label<input id="epk-photo-label"></label>
                 <label>Credit / Photographer<input id="epk-photo-credit"></label>
-                <label>Replace image file
+                <label class="embed-file-label">Embed replacement image from local file
                   <input type="file" id="epk-photo-replace-file" accept="image/*">
                 </label>
+                <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
               </div>
             </div>
             <div class="toolbar">
