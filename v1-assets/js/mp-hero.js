@@ -8,6 +8,7 @@
     'hero.nameHtml': 'Rolando<br><em>Guy</em>'
   };
   var LAST_HERO_IMAGE = '';
+  var LAST_INTRO_DEBUG = null;
 
   function escUrl(u) {
     return String(u).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -20,17 +21,23 @@
         try { return JSON.parse(raw); } catch (e) { return null; }
       };
       var direct = parseMaybe(window.localStorage.getItem(key));
+      var directRec = null;
       if (direct != null) {
         if (direct && typeof direct === 'object' && direct.value != null) {
-          return { value: direct.value, ts: Number(direct.ts) || 0 };
+          directRec = { value: direct.value, ts: Number(direct.ts) || 0 };
+        } else {
+          directRec = { value: direct, ts: 0 };
         }
-        return { value: direct, ts: 0 };
       }
       var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
+      var wrappedRec = null;
       if (wrapped && typeof wrapped === 'object' && wrapped.value != null) {
-        return { value: wrapped.value, ts: Number(wrapped.ts) || 0 };
+        wrappedRec = { value: wrapped.value, ts: Number(wrapped.ts) || 0 };
       }
-      return null;
+      if (!directRec) return wrappedRec;
+      if (!wrappedRec) return directRec;
+      // Prefer freshest payload when both exist; avoids stale direct shadowing newer wrapped data.
+      return wrappedRec.ts >= directRec.ts ? wrappedRec : directRec;
     } catch (e) {
       return null;
     }
@@ -47,27 +54,53 @@
     if (/[?&]v=\d+/.test(s)) return s;
     return s + (s.indexOf('?') >= 0 ? '&' : '?') + 'v=' + n;
   }
-  function getIntroImageOverride() {
+  function getIntroImageOverrideInfo() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     var shortLang = String(rawLang || 'en').split('-')[0];
     var byLangRec = readLegacyRecord('hero_' + rawLang);
     var byLang = byLangRec && byLangRec.value;
     if (byLang && typeof byLang.introImage === 'string' && byLang.introImage.trim()) {
-      return withCacheBuster(normalizeIntroImagePath(byLang.introImage), byLangRec.ts);
+      return {
+        source: 'hero_' + rawLang + '.introImage',
+        lang: rawLang,
+        url: withCacheBuster(normalizeIntroImagePath(byLang.introImage), byLangRec.ts)
+      };
     }
     if (shortLang && shortLang !== rawLang) {
       var byShortRec = readLegacyRecord('hero_' + shortLang);
       var byShort = byShortRec && byShortRec.value;
       if (byShort && typeof byShort.introImage === 'string' && byShort.introImage.trim()) {
-        return withCacheBuster(normalizeIntroImagePath(byShort.introImage), byShortRec.ts);
+        return {
+          source: 'hero_' + shortLang + '.introImage',
+          lang: rawLang,
+          url: withCacheBuster(normalizeIntroImagePath(byShort.introImage), byShortRec.ts)
+        };
       }
     }
     var byEnRec = readLegacyRecord('hero_en');
     var byEn = byEnRec && byEnRec.value;
     if (byEn && typeof byEn.introImage === 'string' && byEn.introImage.trim()) {
-      return withCacheBuster(normalizeIntroImagePath(byEn.introImage), byEnRec.ts);
+      return {
+        source: 'hero_en.introImage',
+        lang: rawLang,
+        url: withCacheBuster(normalizeIntroImagePath(byEn.introImage), byEnRec.ts)
+      };
     }
-    return '';
+    return null;
+  }
+  function setIntroDebug(info) {
+    LAST_INTRO_DEBUG = info || null;
+  }
+  function resolveIntroImage(cfgImageOrFallback) {
+    var override = getIntroImageOverrideInfo();
+    if (override && override.url) {
+      setIntroDebug(override);
+      return override.url;
+    }
+    var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var normalized = normalizeIntroImagePath(cfgImageOrFallback);
+    setIntroDebug({ lang: rawLang, source: 'hero-config.image', url: normalized });
+    return normalized;
   }
   function normalizeIntroImagePath(raw) {
     var s = String(raw || '').trim();
@@ -115,7 +148,7 @@
     if (img) {
       LAST_HERO_IMAGE = img;
       hb.style.backgroundImage = "url('" + escUrl(img) + "')";
-      if (introPhoto) introPhoto.src = getIntroImageOverride() || normalizeIntroImagePath(img);
+      if (introPhoto) introPhoto.src = resolveIntroImage(img);
     }
     var cropRaw = String(cfg.cropMode != null ? cfg.cropMode : 'cover').toLowerCase();
     var crop = cropRaw === 'contain' ? 'contain' : 'cover';
@@ -162,7 +195,7 @@
         var fallback = '../img/hero-portrait.webp';
         if (hb) hb.style.backgroundImage = "url('" + escUrl(fallback) + "')";
         var introPhoto = document.querySelector('img.mp-home-hero-asset');
-        if (introPhoto) introPhoto.src = getIntroImageOverride() || normalizeIntroImagePath(fallback);
+        if (introPhoto) introPhoto.src = resolveIntroImage(fallback);
       });
   }
 
@@ -170,7 +203,11 @@
     var lang = (e.detail && e.detail.lang) || (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     applyHeroCopy(lang);
     var introPhoto = document.querySelector('img.mp-home-hero-asset');
-    if (introPhoto) introPhoto.src = getIntroImageOverride() || normalizeIntroImagePath(LAST_HERO_IMAGE) || introPhoto.src;
+    if (introPhoto) {
+      introPhoto.src = resolveIntroImage(LAST_HERO_IMAGE) || introPhoto.src;
+    } else if (LAST_INTRO_DEBUG) {
+      setIntroDebug(LAST_INTRO_DEBUG);
+    }
   });
 
   if (window.MP_LOCALE_TABLE) {

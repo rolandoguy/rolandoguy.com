@@ -1,0 +1,28 @@
+{
+  "name": "rolandoguy-site_1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:epk-bios": "node scripts/build-epk-bios.js",
+    "build:mp-locales": "node scripts/build-mp-locales.js",
+    "build:hero-config": "node scripts/build-hero-config.js",
+    "build:mp-home": "node scripts/build-mp-home.js",
+    "build:biography": "node scripts/build-biography.js",
+    "build:repertoire": "node scripts/build-repertoire.js",
+    "build:calendar": "node scripts/build-calendar.js",
+    "build:press": "node scripts/build-press.js",
+    "build:media": "node scripts/build-media.js",
+    "build:contact": "node scripts/build-contact.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pdfmake": "^0.2.12"
+  }
+}

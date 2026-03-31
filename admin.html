@@ -1041,6 +1041,124 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
   .adm-activity-wrap:not(.adm-activity-open) .adm-activity-panel{display:none!important}
   .adm-activity-wrap.adm-activity-open .adm-activity-mobile-toggle{border-color:var(--gold-dim);color:var(--gold)}
   .adm-activity-wrap .adm-activity-panel #admActivityLog{max-height:72px;font-size:.72rem}
+
+  /* ── #adm mobile: safe areas, stacks, touch targets (scoped; desktop ≥769px unchanged) ── */
+  #adm.adm{padding-bottom:env(safe-area-inset-bottom,0)}
+  #adm .adm-wrap{
+    padding-left:max(0px,env(safe-area-inset-left));
+    padding-right:max(0px,env(safe-area-inset-right));
+  }
+  #adm #admLockWrap{padding:28px 16px!important}
+  #adm .adm-lock-row{flex-direction:column;max-width:none;align-items:stretch}
+  #adm .adm-body{
+    padding-left:max(8px,env(safe-area-inset-left));
+    padding-right:max(8px,env(safe-area-inset-right));
+    padding-bottom:max(12px,env(safe-area-inset-bottom));
+  }
+  #adm .adm-tab{
+    cursor:pointer;
+    min-height:44px;
+    box-sizing:border-box;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #adm .adm-tabs{align-items:stretch}
+  #adm .adm-tab.adm-tab-adv{min-height:40px}
+  #adm .adm-btn-sm{
+    min-height:44px;
+    padding:8px 14px!important;
+    box-sizing:border-box;
+    cursor:pointer;
+    justify-content:center;
+    display:inline-flex;
+    align-items:center;
+  }
+  #adm .adm-row{flex-direction:column;align-items:stretch;gap:10px}
+  #adm .adm-row .adm-row-title{white-space:normal;overflow:visible;text-overflow:unset;line-height:1.3}
+  #adm .adm-row > div[style*="display:flex"]:last-child{justify-content:flex-start;flex-wrap:wrap;gap:8px;width:100%}
+  #adm .adm-row > .adm-btn{
+    width:100%;
+    box-sizing:border-box;
+    min-height:44px;
+  }
+  #adm .adm-row > .adm-feedback{width:100%;text-align:center}
+  #adm .adm-card-preview{
+    max-width:100%;
+    box-sizing:border-box;
+    overflow-x:hidden;
+  }
+  #adm .adm-card-toolbar{
+    flex-wrap:wrap!important;
+    gap:8px!important;
+    align-items:flex-start!important;
+  }
+  #adm .adm-card-toolbar > button{
+    margin-left:0!important;
+    margin-right:0!important;
+    min-height:44px;
+    flex:1 1 100%;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  #adm .adm-card-idx > span[style*="cursor:grab"]{flex-shrink:0}
+  #adm .adm-photo-slot{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:12px!important;
+  }
+  #adm .adm-photo-slot > img{align-self:flex-start;max-width:100%}
+  #adm .adm-photo-cap-row{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:8px!important;
+  }
+  #adm .adm-photo-cap-row .adm-input{width:100%!important}
+  #adm .adm-photo-slot > div[style*="flex:1"] > div[style*="display:flex"][style*="margin-bottom:8px"]{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:8px!important;
+  }
+  #adm .adm-photo-slot > div[style*="flex:1"] > div[style*="display:flex"][style*="margin-bottom:8px"] .adm-btn,
+  #adm .adm-photo-slot > div[style*="flex:1"] > div[style*="display:flex"][style*="margin-bottom:8px"] .adm-btn-sm{width:100%;box-sizing:border-box;justify-content:center;text-align:center}
+  #adm .adm-epk-photo-toolbar{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    align-items:stretch!important;
+  }
+  #adm .adm-epk-photo-toolbar .adm-input{width:100%}
+  #adm .adm-epk-photo-toolbar button{width:100%;min-height:44px;box-sizing:border-box}
+  #adm select[id^="repSortStatus-"]{max-width:none!important;width:100%}
+  #adm .adm-rep-lang-col{
+    max-width:none!important;
+    width:100%;
+    opacity:1!important;
+  }
+  #adm .adm-inline-field-row{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:10px!important;
+  }
+  #adm .adm-inline-field-row > .adm-input{width:100%!important}
+  #adm .adm-inline-field-row > button{width:100%;min-height:44px;white-space:normal!important;box-sizing:border-box}
+  #adm .adm-form-actions-row{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:10px!important;
+  }
+  #adm .adm-form-actions-row > .adm-btn{width:100%;box-sizing:border-box;min-height:44px}
+  #adm .adm-press-summary-row{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:10px!important;
+  }
+  #adm .adm-press-summary-row > div:last-child{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+  #adm .adm-press-summary-row .adm-btn-sm{flex:1;min-width:0;min-height:44px}
+  #adm #admPanel-features .adm-panel > div[style*="overflow-x:auto"]{-webkit-overflow-scrolling:touch}
+  #adm #admPanel-features .adm-panel > div[style*="overflow-x:auto"] table{min-width:520px}
+  #adm textarea.adm-input{min-height:5.25rem}
   #admCheckBtn{display:none}
 }
 
@@ -1341,6 +1459,20 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
 .perf-row-past:hover{opacity:.6}
 .perf-past-divider{text-align:center;padding:32px 0 24px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.3em;color:var(--text-faint);text-transform:uppercase}
 .perf-past-divider::before,.perf-past-divider::after{content:'';display:inline-block;width:40px;height:1px;background:var(--border);vertical-align:middle;margin:0 16px}
+.perf-past-category{margin-bottom:40px}
+.perf-past-category.perf-row-past{opacity:1;filter:none}
+.perf-past-category-title{
+  margin:0 0 20px;
+  font-family:var(--ff-caps);
+  font-size:.6rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:rgba(212,168,67,.92);
+  padding:10px 0 14px .7rem;
+  border-left:2px solid rgba(212,168,67,.45);
+  border-bottom:1px solid rgba(212,168,67,.18);
+}
+.perf-past-divider + .perf-past-category .perf-past-category-title{padding-top:4px}
 
 
 
@@ -1986,10 +2118,19 @@ button.adm-btn:disabled,button.adm-btn[disabled]{opacity:.52;cursor:not-allowed;
         </select>
       </div>
      </div>
+     <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Past section category</label>
+        <select class="adm-select" id="pCategory">
+          <option value="stage">Stage / Operetta</option>
+          <option value="concert">Concerts &amp; Recitals</option>
+          <option value="collaboration">Collaborations</option>
+          <option value="private">Selected Private Engagements</option>
+        </select>
+        <p style="font-size:.68rem;color:var(--text-faint);margin:6px 0 0;line-height:1.4">Used when the event date is in the past on the public calendar. Defaults from event type if you leave the standard choice.</p>
+      </div></div>
      <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title</label><input class="adm-input" id="pTitle" placeholder="Der Vetter aus Dingsda"></div></div>
      <div class="adm-grid full"><div class="adm-col">
        <label class="adm-label">Detail <span style="color:var(--text-faint);font-weight:400">(any language — auto-translated)</span></label>
-       <div style="display:flex;gap:8px;align-items:center">
+       <div class="adm-inline-field-row" style="display:flex;gap:8px;align-items:center">
          <input class="adm-input" id="pDetail" placeholder="E. Künneke · Roderich de Weert · Regie: N.N." style="flex:1">
          <button type="button" onclick="autoTranslateDetail()" id="translateBtn" data-anthropic-translate-btn="1"
            style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 14px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;transition:all .2s;flex-shrink:0">
@@ -3253,11 +3394,11 @@ const DEFAULTS = {
   },
   perfs: [
     {id:6,day:'TBA',month:'',title:'The Cast — Opera Band',detail:'Classical & Contemporary Opera · Tour',venue:'Germany & Europe',city:'',status:'upcoming',sortDate:'2099-12-01'},
-    {id:1,day:'25',month:'Jul 2025',title:'Der Vetter aus Dingsda',detail:'Eduard Künneke · Roderich de Weert',venue:'Kammeroper Frankfurt',city:'Frankfurt, Germany',status:'past',type:'opera',sortDate:'2025-07-25'},
-    {id:2,day:'03',month:'Mar 2025',title:'Recital Berlin',detail:'20:00 · Berlin',venue:'Berlin',city:'',status:'past',type:'recital',sortDate:'2025-03-03'},
-    {id:3,day:'17',month:'Dec 2024',title:'Concert with Die Goldvögel',detail:'Thematic concert · Grief & Loss',venue:'Kapelle St. Joseph Krankenhaus',city:'Berlin',status:'past',type:'concert',sortDate:'2024-12-17'},
-    {id:4,day:'07',month:'Dec 2024',title:'Tango Tenors',detail:'20:00 · Tango Loft Berlin',venue:'Tango Loft Berlin',city:'Berlin',status:'past',type:'show',sortDate:'2024-12-07'},
-    {id:5,day:'01',month:'Dec 2024',title:'Welt AIDS Tag',detail:'16:00 · Zwölf-Apostel-Kirche',venue:'Zwölf-Apostel-Kirche',city:'Berlin',status:'past',type:'concert',sortDate:'2024-12-01'},
+    {id:1,day:'25',month:'Jul 2025',title:'Der Vetter aus Dingsda',detail:'Eduard Künneke · Roderich de Weert',venue:'Kammeroper Frankfurt',city:'Frankfurt, Germany',status:'past',type:'opera',category:'stage',sortDate:'2025-07-25'},
+    {id:2,day:'03',month:'Mar 2025',title:'Recital Berlin',detail:'20:00 · Berlin',venue:'Berlin',city:'',status:'past',type:'recital',category:'concert',sortDate:'2025-03-03'},
+    {id:3,day:'17',month:'Dec 2024',title:'Concert with Die Goldvögel',detail:'Thematic concert · Grief & Loss',venue:'Kapelle St. Joseph Krankenhaus',city:'Berlin',status:'past',type:'concert',category:'concert',sortDate:'2024-12-17'},
+    {id:4,day:'07',month:'Dec 2024',title:'Tango Tenors',detail:'20:00 · Tango Loft Berlin',venue:'Tango Loft Berlin',city:'Berlin',status:'past',type:'show',category:'stage',sortDate:'2024-12-07'},
+    {id:5,day:'01',month:'Dec 2024',title:'Welt AIDS Tag',detail:'16:00 · Zwölf-Apostel-Kirche',venue:'Zwölf-Apostel-Kirche',city:'Berlin',status:'past',type:'concert',category:'concert',sortDate:'2024-12-01'},
   ],
   programs: {
     title: 'Programs &amp; Collaborations',
@@ -3949,6 +4090,21 @@ function perfLocaleField(p, base, lang) {
   const g = p[base];
   return g != null && String(g).trim() !== '' ? String(g).trim() : '';
 }
+var PAST_PERF_CATEGORY_ORDER = ['stage','concert','collaboration','private'];
+var PAST_PERF_VALID = (function(){ var s={}; PAST_PERF_CATEGORY_ORDER.forEach(function(k){ s[k]=1; }); return s; })();
+function inferPastCategoryFromType(type) {
+  var t = String(type || '').toLowerCase();
+  if (t === 'collaboration') return 'collaboration';
+  if (t === 'houseconcert') return 'private';
+  if (t === 'concert' || t === 'recital') return 'concert';
+  return 'stage';
+}
+function normalizePastPerfCategory(p) {
+  if (!p) return 'stage';
+  var c = p.category;
+  if (c && PAST_PERF_VALID[c]) return c;
+  return inferPastCategoryFromType(p.type);
+}
 function renderPerfs() {
   const perfs = load('rg_perfs') || DEFAULTS.perfs;
   const list = document.getElementById('perfList');
@@ -3959,68 +4115,95 @@ function renderPerfs() {
     const d = new Date(str);
     return isNaN(d) ? new Date('2099-01-01') : d;
   };
-  const upcoming = perfs.filter(p=>p.status!=='past').sort((a,b)=>sortDate(a)-sortDate(b));
-  const past = perfs.filter(p=>p.status==='past').sort((a,b)=>sortDate(b)-sortDate(a));
-  const visible = showPastPerfs ? [...upcoming,...past] : upcoming;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const upcoming = [];
+  const past = [];
+  perfs.forEach(p => {
+    const d = sortDate(p);
+    if (d >= today) upcoming.push(p);
+    else past.push(p);
+  });
+  upcoming.sort((a,b)=>sortDate(a)-sortDate(b));
   const perfLang = getPerfMerged();
   const types = perfLang.eventTypes || {opera:'Opera',concert:'Concert',recital:'Recital',show:'Show',gala:'Gala',collaboration:'Collaboration',houseconcert:'House Concert',tango:'Tango Night',other:'Event'};
   const tPerf = uiTable(currentLang);
   const mapsWord = tPerf['perf.maps'] || 'Maps';
-  // Group by year
-  const groups = {};
-  visible.forEach(p => {
+  const pastCatTitle = function(key) {
+    return tPerf['perf.pastCat.'+key] || key;
+  };
+  function rowHtml(p, i, isPastSection) {
+    const isArchive = sortDate(p) < today;
+    const typeLabel = types[p.type] || p.type || types['concert'];
+    const badge = (p.status==='current' && !isPastSection)
+      ? '<div class="perf-badge">'+typeLabel+'</div>'
+      : (isPastSection || p.status==='past' || isArchive)
+      ? '<div class="perf-badge perf-badge-past">'+typeLabel+'</div>'
+      : '<div class="perf-type">'+typeLabel+'</div>';
+    const timeHtml = (() => {
+      if (!p.time) return '';
+      const cleanTime = p.time.replace(/\s*(uhr|h)\s*$/i, '').trim();
+      const timeFmts = {en:t=>t, de:t=>t+' Uhr', es:t=>t+' h', it:t=>'ore '+t, fr:t=>t.replace(':','h')};
+      return '<div class="perf-time">' + (timeFmts[currentLang]||timeFmts.en)(cleanTime) + '</div>';
+    })();
+    const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ ' + mapsWord + '</span></a>' : '';
+    const detail = (p["detail_"+currentLang]||p.detail)||"";
+    const listTitle = perfLocaleField(p, 'title', currentLang);
+    const printExt = perfLocaleField(p, 'extDesc', currentLang);
+    const pastClass = (isPastSection || p.status==='past') ? ' perf-item-past' : '';
+    const archiveClass = isArchive ? ' perf-item--archive' : '';
+    const hasVenuePhoto = p.venuePhoto && p.venuePhoto.trim();
+    let html = '<div class="perf-item reveal'+(i>0?' rd'+(i%4+1):'') + pastClass + archiveClass + '">';
+    if (isPastSection || p.status==='past') html += '<div class="perf-past-stamp">'+(tPerf['perf.pastStamp']||'Past')+'</div>';
+    if(hasVenuePhoto && !isArchive) { const op = (p.venueOpacity||50)/100; html += '<div class="perf-venue-bg" style="opacity:'+op+';background-image:url('+p.venuePhoto+')"></div>'; }
+    html += '<div class="perf-date-box"><div class="perf-day">'+p.day+'</div><div class="perf-month">'+translateMonth(p.month)+'</div>'+timeHtml+'</div>';
+    html += '<div>'+badge+'<div class="perf-info-title">'+listTitle+'</div><div class="perf-info-detail">'+detail+'</div>'+venueCity+'</div>';
+    const repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
+    if(printExt) html += '<div class="perf-print-repertoire print-only"><strong>'+repLabel+':</strong> '+printExt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div>';
+    const hasExtra = !!printExt || (p.ticketPrice && p.ticketPrice.trim()) || !!perfLocaleField(p, 'eventLink', currentLang) || (p.flyerImg && p.flyerImg.trim());
+    if(hasExtra) html += '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal('+p.id+')">'+(tPerf['perf.moreInfo']||'More Info')+' →</button>';
+    html += '</div>';
+    return html;
+  }
+  const upcomingByYear = {};
+  upcoming.forEach(p => {
     const sd = sortDate(p);
     const yr = sd.getFullYear() > 2090 ? 'TBA' : sd.getFullYear().toString();
-    const key = (p.status==='past' ? 'past_' : '') + yr;
-    if(!groups[key]) groups[key] = {year:yr, past:p.status==='past', items:[]};
-    groups[key].items.push(p);
+    if (!upcomingByYear[yr]) upcomingByYear[yr] = [];
+    upcomingByYear[yr].push(p);
   });
-  const pastDivTxt = tPerf['perf.pastDivider'] || 'Past Performances';
+  const yearKeys = Object.keys(upcomingByYear).sort((a, b) => {
+    if (a === 'TBA') return 1;
+    if (b === 'TBA') return -1;
+    return Number(a) - Number(b);
+  });
   let html = '';
-  let addedPastDivider = false;
-  Object.values(groups).forEach(g => {
-    if(g.past && !addedPastDivider) {
-      html += '<div class="perf-past-divider">'+pastDivTxt+'</div>';
-      addedPastDivider = true;
-    }
-    html += '<div class="perf-year-group'+(g.past?' perf-row-past':'')+'">';
-    html += '<div class="perf-year-label">'+g.year+'</div>';
-    g.items.forEach((p,i) => {
-      const typeLabel = types[p.type] || p.type || types['concert'];
-      const badge = p.status==='current'
-        ? '<div class="perf-badge">'+typeLabel+'</div>'
-        : p.status==='past'
-        ? '<div class="perf-badge perf-badge-past">'+typeLabel+'</div>'
-        : '<div class="perf-type">'+typeLabel+'</div>';
-      const timeHtml = (() => {
-        if (!p.time) return '';
-        const cleanTime = p.time.replace(/\s*(uhr|h)\s*$/i, '').trim();
-        const timeFmts = {en:t=>t, de:t=>t+' Uhr', es:t=>t+' h', it:t=>'ore '+t, fr:t=>t.replace(':','h')};
-        return '<div class="perf-time">' + (timeFmts[currentLang]||timeFmts.en)(cleanTime) + '</div>';
-      })();
-      const venueCity = p.venue ? '<a href="https://maps.google.com/?q=' + encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>'+p.venue+(p.city?' · '+p.city:'')+' <span class="perf-maps-hint">→ ' + mapsWord + '</span></a>' : '';
-      const detail = (p["detail_"+currentLang]||p.detail)||"";
-      const listTitle = perfLocaleField(p, 'title', currentLang);
-      const printExt = perfLocaleField(p, 'extDesc', currentLang);
-      const pastClass = p.status==='past' ? ' perf-item-past' : '';
-      const hasVenuePhoto = p.venuePhoto && p.venuePhoto.trim();
-      html += '<div class="perf-item reveal'+(i>0?' rd'+(i%4+1):'') + pastClass + '">';
-      if(p.status==='past') html += '<div class="perf-past-stamp">'+(tPerf['perf.pastStamp']||'Past')+'</div>';
-      // Venue photo as subtle background accent (if available)
-      if(hasVenuePhoto) { const op = (p.venueOpacity||50)/100; html += '<div class="perf-venue-bg" style="opacity:'+op+';background-image:url('+p.venuePhoto+')"></div>'; }
-      html += '<div class="perf-date-box"><div class="perf-day">'+p.day+'</div><div class="perf-month">'+translateMonth(p.month)+'</div>'+timeHtml+'</div>';
-      html += '<div>'+badge+'<div class="perf-info-title">'+listTitle+'</div><div class="perf-info-detail">'+detail+'</div>'+venueCity+'</div>';
-      // Print-only: repertoire / extended description (si existe)
-      const repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
-      if(printExt) html += '<div class="perf-print-repertoire print-only"><strong>'+repLabel+':</strong> '+printExt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div>';
-      // More Info button (only if there's extra content)
-      const hasExtra = !!printExt || (p.ticketPrice && p.ticketPrice.trim()) || !!perfLocaleField(p, 'eventLink', currentLang) || (p.flyerImg && p.flyerImg.trim());
-      if(hasExtra) html += '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal('+p.id+')">'+(tPerf['perf.moreInfo']||'More Info')+' →</button>';
-      html += '</div>';
-    });
+  yearKeys.forEach(yr => {
+    const bucket = upcomingByYear[yr].slice().sort((a,b)=>sortDate(a)-sortDate(b));
+    html += '<div class="perf-year-group">';
+    html += '<div class="perf-year-label">'+yr+'</div>';
+    bucket.forEach((p,i) => { html += rowHtml(p, i, false); });
     html += '</div>';
   });
-  if (!visible.length) {
+  if (showPastPerfs && past.length) {
+    html += '<div class="perf-past-divider">'+(tPerf['perf.pastDivider'] || 'Past Performances')+'</div>';
+    var byCat = { stage: [], concert: [], collaboration: [], private: [] };
+    past.forEach(function(p) {
+      var k = normalizePastPerfCategory(p);
+      if (byCat[k]) byCat[k].push(p);
+      else byCat.stage.push(p);
+    });
+    PAST_PERF_CATEGORY_ORDER.forEach(function(catKey) {
+      var items = byCat[catKey];
+      if (!items.length) return;
+      items.sort(function(a,b){ return sortDate(b) - sortDate(a); });
+      html += '<div class="perf-past-category perf-row-past">';
+      html += '<div class="perf-past-category-title">' + pastCatTitle(catKey) + '</div>';
+      items.forEach(function(p, i) { html += rowHtml(p, i, true); });
+      html += '</div>';
+    });
+  }
+  if (!upcoming.length && !(showPastPerfs && past.length)) {
     const msg = tPerf['perf.calendarEmpty'] || tPerf['perf.emptyUpcoming'] || 'Upcoming dates to be announced soon.';
     list.innerHTML = `<div class="perf-empty" role="status">${msg}</div>`;
     const btn0 = document.getElementById('pastToggleBtn');
@@ -8607,11 +8790,11 @@ Ti.it['perf.maps'] = 'Mappe';
 Ti.fr['perf.maps'] = 'Cartes';
 (function(){
   const pack = {
-    en: { emptyUpcoming: 'Upcoming dates to be announced soon.', calendarEmpty: 'Upcoming dates to be announced soon.', pastDivider: 'Past Performances', pastStamp: 'Past', moreInfo: 'More Info', pastShow: '+ Show Past Performances', pastHide: '\u2212 Hide Past Performances', repertoireLabel: 'Repertoire' },
-    de: { emptyUpcoming: 'Neue Konzerttermine werden in Kürze bekanntgegeben.', calendarEmpty: 'Neue Konzerttermine werden in Kürze bekanntgegeben.', pastDivider: 'Vergangene Auftritte', pastStamp: 'Vergangen', moreInfo: 'Mehr Info', pastShow: '+ Vergangene Auftritte zeigen', pastHide: '\u2212 Vergangene Auftritte verbergen', repertoireLabel: 'Repertoire' },
-    es: { emptyUpcoming: 'Próximas fechas a anunciarse próximamente.', calendarEmpty: 'Próximas fechas a anunciarse próximamente.', pastDivider: 'Actuaciones pasadas', pastStamp: 'Pasado', moreInfo: 'Más Info', pastShow: '+ Mostrar actuaciones pasadas', pastHide: '\u2212 Ocultar actuaciones pasadas', repertoireLabel: 'Repertorio' },
-    it: { emptyUpcoming: 'Le prossime date saranno annunciate a breve.', calendarEmpty: 'Le prossime date saranno annunciate a breve.', pastDivider: 'Spettacoli passati', pastStamp: 'Passato', moreInfo: 'Più Info', pastShow: '+ Mostra spettacoli passati', pastHide: '\u2212 Nascondi spettacoli passati', repertoireLabel: 'Repertorio' },
-    fr: { emptyUpcoming: 'Les prochaines dates seront annoncées prochainement.', calendarEmpty: 'Les prochaines dates seront annoncées prochainement.', pastDivider: 'Représentations passées', pastStamp: 'Passé', moreInfo: "Plus d'Info", pastShow: '+ Voir les représentations passées', pastHide: '\u2212 Masquer les représentations passées', repertoireLabel: 'Répertoire' },
+    en: { emptyUpcoming: 'Upcoming dates to be announced soon.', calendarEmpty: 'Upcoming dates to be announced soon.', pastDivider: 'Past Performances', pastStamp: 'Past', moreInfo: 'More Info', pastShow: '+ Show Past Performances', pastHide: '\u2212 Hide Past Performances', repertoireLabel: 'Repertoire', pastCatStage: 'Stage / Operetta', pastCatConcert: 'Concerts & Recitals', pastCatCollaboration: 'Collaborations', pastCatPrivate: 'Selected Private Engagements' },
+    de: { emptyUpcoming: 'Neue Konzerttermine werden in Kürze bekanntgegeben.', calendarEmpty: 'Neue Konzerttermine werden in Kürze bekanntgegeben.', pastDivider: 'Vergangene Auftritte', pastStamp: 'Vergangen', moreInfo: 'Mehr Info', pastShow: '+ Vergangene Auftritte zeigen', pastHide: '\u2212 Vergangene Auftritte verbergen', repertoireLabel: 'Repertoire', pastCatStage: 'Bühne / Operette', pastCatConcert: 'Konzerte & Rezitals', pastCatCollaboration: 'Kooperationen', pastCatPrivate: 'Ausgewählte private Auftritte' },
+    es: { emptyUpcoming: 'Próximas fechas a anunciarse próximamente.', calendarEmpty: 'Próximas fechas a anunciarse próximamente.', pastDivider: 'Actuaciones pasadas', pastStamp: 'Pasado', moreInfo: 'Más Info', pastShow: '+ Mostrar actuaciones pasadas', pastHide: '\u2212 Ocultar actuaciones pasadas', repertoireLabel: 'Repertorio', pastCatStage: 'Escena / Opereta', pastCatConcert: 'Conciertos y recitales', pastCatCollaboration: 'Colaboraciones', pastCatPrivate: 'Compromisos privados seleccionados' },
+    it: { emptyUpcoming: 'Le prossime date saranno annunciate a breve.', calendarEmpty: 'Le prossime date saranno annunciate a breve.', pastDivider: 'Spettacoli passati', pastStamp: 'Passato', moreInfo: 'Più Info', pastShow: '+ Mostra spettacoli passati', pastHide: '\u2212 Nascondi spettacoli passati', repertoireLabel: 'Repertorio', pastCatStage: 'Scena / Operetta', pastCatConcert: 'Concerti e recital', pastCatCollaboration: 'Collaborazioni', pastCatPrivate: 'Impegni privati selezionati' },
+    fr: { emptyUpcoming: 'Les prochaines dates seront annoncées prochainement.', calendarEmpty: 'Les prochaines dates seront annoncées prochainement.', pastDivider: 'Représentations passées', pastStamp: 'Passé', moreInfo: "Plus d'Info", pastShow: '+ Voir les représentations passées', pastHide: '\u2212 Masquer les représentations passées', repertoireLabel: 'Répertoire', pastCatStage: 'Scène / Opérette', pastCatConcert: 'Concerts & récitals', pastCatCollaboration: 'Collaborations', pastCatPrivate: 'Engagements privés choisis' },
   };
   Object.keys(pack).forEach(l => {
     const p = pack[l];
@@ -8623,6 +8806,10 @@ Ti.fr['perf.maps'] = 'Cartes';
     Ti[l]['perf.pastShow'] = p.pastShow;
     Ti[l]['perf.pastHide'] = p.pastHide;
     Ti[l]['perf.repertoireLabel'] = p.repertoireLabel;
+    Ti[l]['perf.pastCat.stage'] = p.pastCatStage;
+    Ti[l]['perf.pastCat.concert'] = p.pastCatConcert;
+    Ti[l]['perf.pastCat.collaboration'] = p.pastCatCollaboration;
+    Ti[l]['perf.pastCat.private'] = p.pastCatPrivate;
   });
 })();
 Ti.en['rep.programsLink'] = 'Explore concert programmes and artistic collaborations';
@@ -9299,7 +9486,7 @@ function admRenderPressList(){
   }
   el.innerHTML=items.map(p=>`
     <div class="adm-row" style="flex-direction:column;align-items:stretch;gap:0">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div class="adm-press-summary-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <div class="adm-row-info" style="cursor:pointer" onclick="togglePressEdit(${p.id})">
           <div class="adm-row-title" style="font-style:italic">"${p.quote.substring(0,80)}${p.quote.length>80?'…':''}"</div>
           <div class="adm-row-meta">${p.source} · ${p.production}${p.visible===false?' · hidden':''}</div>
@@ -9335,7 +9522,7 @@ function admRenderPressList(){
         </div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Article URL</label><input class="adm-input" id="pe-purl-${p.id}" value="${p.url||''}"></div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="pe-padminNote-${p.id}" rows="2" placeholder="Editorial rank and featured use. Context, translation, and future placement." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${String(p.adminNote||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
-        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+        <div class="adm-form-actions-row" style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
           <button class="adm-btn" onclick="savePressEdit(${p.id})">Save</button>
           <button type="button" data-anthropic-translate-btn="1" class="adm-btn" onclick="autoTranslatePressEdit(${p.id}, this)" style="background:rgba(212,168,67,.08);border-color:var(--gold);color:var(--gold)">✦ Auto-translate</button>
           <button class="adm-btn" onclick="togglePressEdit(${p.id})" style="background:transparent">Cancel</button>
@@ -9701,10 +9888,10 @@ function epkRenderPhotosAdmin() {
 
   container.innerHTML = photos.map((ph, i) => `
     <div style="display:flex;flex-direction:column;gap:5px;padding:10px;background:var(--surface2);border:1px solid var(--border)">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
+      <div class="adm-epk-photo-toolbar" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
         <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="Photo URL (https://...)" value="${ph.url||''}" onchange="epkUpdatePhoto(${i},'url',this.value)">
         <input class="adm-input" style="font-size:.75rem;padding:6px" placeholder="© Photographer credit" value="${ph.credit||''}" onchange="epkUpdatePhoto(${i},'credit',this.value)">
-        <button onclick="epkRemovePhoto(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:6px 10px;cursor:pointer;font-size:.7rem">✕</button>
+        <button type="button" onclick="epkRemovePhoto(${i})" style="background:transparent;border:1px solid rgba(255,100,100,.3);color:#ff6b6b;padding:6px 10px;cursor:pointer;font-size:.7rem">✕</button>
       </div>
       <input class="adm-input" style="font-size:.75rem;padding:5px" placeholder="Visible label (e.g. Studio portrait · 2024)" value="${ph.label||''}" onchange="epkUpdatePhoto(${i},'label',this.value)">
     </div>
@@ -10051,7 +10238,7 @@ function admPopulate(name){
         ondragenter="this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropRep('${cat}',${localIdx},event)">
-        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px">
+        <div class="adm-card-idx adm-card-toolbar" style="display:flex;align-items:center;gap:8px">
           <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Drag to reorder">⠿</span>
           ${isOpera ? `<span style="color:${statusColors[card.status||'performed']};font-size:.7rem">●</span>` : ''}
           ${isOpera ? 'Role' : 'Entry'} ${localIdx+1}
@@ -10066,7 +10253,7 @@ function admPopulate(name){
           ${isOpera ? `
           <div class="adm-col"><label class="adm-label">Role</label><input class="adm-input" id="rc-${cat}-${localIdx}-role" value="${repEsc(card.role)}"></div>
           ` : ''}
-          <div class="adm-col" style="max-width:92px;opacity:${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? '1' : '.72'}">
+          <div class="adm-col adm-rep-lang-col" style="max-width:92px;opacity:${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? '1' : '.72'}">
             <label class="adm-label" style="${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? '' : 'font-size:.62rem;color:var(--text-faint);letter-spacing:.08em;'}">${(cat==='opera'||cat==='operetta_roles'||cat==='arias') ? 'Language' : 'Language (meta)'}</label>
             <select class="adm-input" id="rc-${cat}-${localIdx}-lang">
               ${['IT','DE','FR','EN','LA','ES'].map(l=>`<option value="${l}" ${(card.lang||'IT')===l?'selected':''}>${l}</option>`).join('')}
@@ -10118,7 +10305,7 @@ function admPopulate(name){
         ondragenter="this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropProgram(${i},event)">
-        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px">
+        <div class="adm-card-idx adm-card-toolbar" style="display:flex;align-items:center;gap:8px">
           <span style="color:var(--gold);font-size:1.1rem;cursor:grab" title="Drag to reorder">⠿</span>
           <span style="color:${p.published?'#4CAF50':'#9A9080'};font-size:.7rem">●</span>
           Program ${i+1}${!p.published?' (hidden)':''}
@@ -10151,7 +10338,7 @@ function admPopulate(name){
         ondragenter="this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="onDropVideo(${i},event)">
-        <div class="adm-card-idx" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="adm-card-idx adm-card-toolbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="color:var(--gold);font-size:1.1rem">⠿</span>
           <span>Video ${i+1}${v.hidden?' (hidden)':''}</span>
           <button type="button" class="adm-btn-sm adm-btn-danger" onclick="event.stopPropagation();removeVidCard(${i})" style="margin-left:auto">Remove video</button>
@@ -10619,6 +10806,10 @@ function addPerf(){
     modalImg:(document.getElementById('pModalImg')||{value:''}).value.trim(),
     modalImgHide:!!(document.getElementById('pModalImgHide')||{}).checked
   };
+  var _pcEl=document.getElementById('pCategory');
+  var _pCat=_pcEl&&_pcEl.value?_pcEl.value:inferPastCategoryFromType(newPerf.type);
+  if(!PAST_PERF_VALID[_pCat])_pCat=inferPastCategoryFromType(newPerf.type);
+  newPerf.category=_pCat;
   const d_en=(document.getElementById('pDetail_en')||{}).value||'';
   const d_de=(document.getElementById('pDetail_de')||{}).value||'';
   const d_es=(document.getElementById('pDetail_es')||{}).value||'';
@@ -10697,7 +10888,7 @@ function admRenderPerfList(){
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Title</label><input class="adm-input" id="pe-title-${p.id}" value="${p.title}"></div></div>
         <div class="adm-grid full"><div class="adm-col">
           <label class="adm-label">Detail <span style="color:var(--text-faint);font-weight:400">(any language)</span></label>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div class="adm-inline-field-row" style="display:flex;gap:8px;align-items:center">
             <input class="adm-input" id="pe-detail-${p.id}" value="${p.detail||''}" style="flex:1">
             <button type="button" data-anthropic-translate-btn="1" onclick="autoTranslateEditDetail(${p.id})" id="etBtn-${p.id}"
               style="white-space:nowrap;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.1em;padding:10px 12px;border:1px solid var(--gold);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;flex-shrink:0">
@@ -10752,8 +10943,17 @@ function admRenderPerfList(){
             <option value="past"${p.status==='past'?' selected':''}>Past</option>
           </select>
         </div></div>
+        <div class="adm-grid full"><div class="adm-col"><label class="adm-label">Past section category</label>
+          <select class="adm-select" id="pe-category-${p.id}">
+            <option value="stage"${normalizePastPerfCategory(p)==='stage'?' selected':''}>Stage / Operetta</option>
+            <option value="concert"${normalizePastPerfCategory(p)==='concert'?' selected':''}>Concerts &amp; Recitals</option>
+            <option value="collaboration"${normalizePastPerfCategory(p)==='collaboration'?' selected':''}>Collaborations</option>
+            <option value="private"${normalizePastPerfCategory(p)==='private'?' selected':''}>Selected Private Engagements</option>
+          </select>
+          <p style="font-size:.68rem;color:var(--text-faint);margin:6px 0 0;line-height:1.4">Used when the event appears under <strong>Past Performances</strong> on the site (by calendar date). If unset in storage, the public site infers from event type until you save.</p>
+        </div></div>
         <div class="adm-grid full"><div class="adm-col"><label class="adm-label" style="color:var(--text-faint)">Internal note <span style="font-weight:400;font-size:.68rem;letter-spacing:0">· Not shown publicly</span></label><textarea class="adm-input" id="pe-adminNote-${p.id}" rows="2" placeholder="Follow-ups, pending links or assets (flyer, press). Feature or spotlight once ready." style="font-size:.72rem;max-height:4.5rem;line-height:1.35">${String(p.adminNote||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea><p style="font-size:.65rem;color:var(--text-faint);margin:4px 0 0;line-height:1.35;max-width:40rem">Internal strategy note. Never shown publicly.</p></div></div>
-        <div style="display:flex;gap:10px;margin-top:14px">
+        <div class="adm-form-actions-row" style="display:flex;gap:10px;margin-top:14px">
           <button class="adm-btn adm-btn-save" onclick="savePerf(${p.id})">Save event</button>
           <button class="adm-btn" onclick="togglePerfEdit(${p.id})" style="background:transparent">Cancel</button>
         </div>
@@ -10799,6 +10999,12 @@ function savePerf(id){
     city:document.getElementById('pe-city-'+id).value.trim(),venuePhoto:(document.getElementById('pe-venuePhoto-'+id)||{value:''}).value.trim(),venueOpacity:(()=>{const n=parseInt((document.getElementById('pe-venueOpacity-'+id)||{value:50}).value,10);return Number.isFinite(n)?n:50;})(),extDesc:(document.getElementById('pe-extDesc-'+id)||{value:''}).value.trim(),ticketPrice:(document.getElementById('pe-ticketPrice-'+id)||{value:''}).value.trim(),eventLink:(document.getElementById('pe-eventLink-'+id)||{value:''}).value.trim(),eventLinkLabel:(document.getElementById('pe-eventLinkLabel-'+id)||{value:''}).value.trim(),flyerImg:(document.getElementById('pe-flyerImg-'+id)||{value:''}).value.trim(),modalImg:(document.getElementById('pe-modalImg-'+id)||{value:''}).value.trim(),modalImgHide:!!(document.getElementById('pe-modalImgHide-'+id)||{}).checked,
     status:document.getElementById('pe-status-'+id).value,
     type:document.getElementById('pe-type-'+id).value,
+    category:(function(){
+      var el=document.getElementById('pe-category-'+id);
+      var t=document.getElementById('pe-type-'+id).value;
+      var v=el&&el.value?el.value:inferPastCategoryFromType(t);
+      return PAST_PERF_VALID[v]?v:inferPastCategoryFromType(t);
+    })(),
     ...i18nModal
   };
   if (perfNote) perfs[idx].adminNote = perfNote;
@@ -10881,7 +11087,7 @@ function admRenderPhotoSlots(){
   const tDiv=document.getElementById('admStageSlots');
   if(!sDiv||!tDiv) return;
   sDiv.innerHTML=ph.s.map((src,i)=>`
-    <div class="drag-item" draggable="true" data-idx="${i}" data-type="s"
+    <div class="drag-item adm-photo-slot" draggable="true" data-idx="${i}" data-type="s"
       style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);cursor:grab"
       ondragstart="dragSrc=this;this.style.opacity='0.4'"
       ondragend="this.style.opacity='';document.querySelectorAll('.drag-item').forEach(el=>el.classList.remove('drag-over'))"
@@ -10897,14 +11103,14 @@ function admRenderPhotoSlots(){
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('s',${i},this)">
         </label>
         ${ph.s.length>1?'<button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection(\'s\','+i+')">Remove</button>':''}
-        <div style="display:flex;gap:6px;margin-top:4px">
+        <div class="adm-photo-cap-row" style="display:flex;gap:6px;margin-top:4px">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Caption" id="cap-s-${i}" value="${(getCaption('s',i).caption)||''}" onchange="setCaption('s',${i},this.value,document.getElementById('phot-s-${i}').value)">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-s-${i}" value="${(getCaption('s',i).photographer)||''}" onchange="setCaption('s',${i},document.getElementById('cap-s-${i}').value,this.value)">
         </div>
       </div>
     </div>`).join('');
   tDiv.innerHTML=ph.t.map((src,i)=>`
-    <div class="drag-item" draggable="true" data-idx="${i}" data-type="t"
+    <div class="drag-item adm-photo-slot" draggable="true" data-idx="${i}" data-type="t"
       style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);cursor:grab"
       ondragstart="dragSrc=this;this.style.opacity='0.4'"
       ondragend="this.style.opacity='';document.querySelectorAll('.drag-item').forEach(el=>el.classList.remove('drag-over'))"
@@ -10920,7 +11126,7 @@ function admRenderPhotoSlots(){
           Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadPhoto('t',${i},this)">
         </label>
         <button class="adm-btn-sm adm-btn-danger" onclick="removePhotoFromSection('t',${i})">Remove</button>
-        <div style="display:flex;gap:6px;margin-top:4px">
+        <div class="adm-photo-cap-row" style="display:flex;gap:6px;margin-top:4px">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Caption" id="cap-t-${i}" value="${(getCaption('t',i).caption)||''}" onchange="setCaption('t',${i},this.value,document.getElementById('phot-t-${i}').value)">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-t-${i}" value="${(getCaption('t',i).photographer)||''}" onchange="setCaption('t',${i},document.getElementById('cap-t-${i}').value,this.value)">
         </div>
@@ -10930,7 +11136,7 @@ function admRenderPhotoSlots(){
   const bDiv=document.getElementById('admBackstageSlots');
   if(bDiv && ph.b){
     bDiv.innerHTML=ph.b.map((src,i)=>`
-    <div class="drag-item" draggable="true" data-idx="${i}" data-type="b"
+    <div class="drag-item adm-photo-slot" draggable="true" data-idx="${i}" data-type="b"
       style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);cursor:grab"
       ondragstart="dragSrc=this;this.style.opacity='0.4'"
       ondragend="this.style.opacity='';document.querySelectorAll('.drag-item').forEach(el=>el.classList.remove('drag-over'))"
@@ -10948,7 +11154,7 @@ function admRenderPhotoSlots(){
           </label>
           <button class="adm-btn-sm adm-btn-danger" onclick="removeBackstagePhoto(${i})">Remove</button>
         </div>
-        <div style="display:flex;gap:6px">
+        <div class="adm-photo-cap-row" style="display:flex;gap:6px">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;flex:1" placeholder="Caption" id="cap-b-${i}" value="${(getCaption('b',i).caption)||''}" onchange="setCaption('b',${i},this.value,document.getElementById('phot-b-${i}').value)">
           <input class="adm-input" style="font-size:.7rem;padding:4px 8px;width:120px" placeholder="© Fotógrafo" id="phot-b-${i}" value="${(getCaption('b',i).photographer)||''}" onchange="setCaption('b',${i},document.getElementById('cap-b-${i}').value,this.value)">
         </div>
