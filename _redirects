@@ -1,0 +1,15 @@
+# Redirects 301 — páginas viejas del Weebly
+# Netlify los aplica automáticamente al detectar este archivo en la raíz del repo
+
+/upcoming-performances.html     https://www.rolandoguy.com/     301
+/upcoming-performances          https://www.rolandoguy.com/     301
+/about.html                     https://www.rolandoguy.com/     301
+/mp                             https://www.rolandoguy.com/                   301
+/mp/index.html                  https://www.rolandoguy.com/                   301
+/mp/biography.html              https://www.rolandoguy.com/biography.html     301
+/mp/calendar.html               https://www.rolandoguy.com/calendar.html      301
+/mp/contact.html                https://www.rolandoguy.com/contact.html       301
+/mp/media.html                  https://www.rolandoguy.com/media.html         301
+/mp/press.html                  https://www.rolandoguy.com/press.html         301
+/mp/repertoire.html             https://www.rolandoguy.com/repertoire.html    301
+/mp/reviews.html                https://www.rolandoguy.com/reviews.html       301

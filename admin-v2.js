@@ -2,6 +2,16 @@
   'use strict';
 
   var LANGS = ['en', 'de', 'es', 'it', 'fr'];
+  var ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
+  var firebaseAuth = null;
+  var authDiag = {
+    firebaseLoaded: false,
+    authInitialized: false,
+    clickHandlerAttached: false,
+    popupAttemptStarted: false,
+    lastErrorCode: '',
+    lastErrorMessage: ''
+  };
   var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_press|rg_press_meta|rg_vid|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var state = {
     lang: 'en',
@@ -38,6 +48,111 @@
   };
 
   function $(id) { return document.getElementById(id); }
+  function renderAuthDiag() {
+    var el = $('adm2Diag');
+    if (!el) return;
+    el.textContent = [
+      'Firebase loaded: ' + (authDiag.firebaseLoaded ? 'yes' : 'no'),
+      'Auth initialized: ' + (authDiag.authInitialized ? 'yes' : 'no'),
+      'Click handler attached: ' + (authDiag.clickHandlerAttached ? 'yes' : 'no'),
+      'Popup attempt started: ' + (authDiag.popupAttemptStarted ? 'yes' : 'no'),
+      'Last error code: ' + (authDiag.lastErrorCode || '—'),
+      'Last error message: ' + (authDiag.lastErrorMessage || '—')
+    ].join('\n');
+  }
+  function setAuthError(message, err) {
+    authDiag.lastErrorCode = safeString(err && err.code).trim();
+    authDiag.lastErrorMessage = safeString(err && err.message).trim() || safeString(message);
+    renderAuthDiag();
+    setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, safeString(message) + (authDiag.lastErrorCode ? ' [' + authDiag.lastErrorCode + ']' : ''));
+  }
+  function isAdminUser(user) {
+    if (!user) return false;
+    var email = safeString(user.email).toLowerCase();
+    return ADMIN_ALLOWLIST_EMAILS.map(function (x) { return safeString(x).toLowerCase(); }).indexOf(email) >= 0;
+  }
+  function setAuthGate(unlocked, user, msgText) {
+    var gate = $('adm2LockWrap');
+    var app = $('adm2App');
+    if (gate) gate.style.display = unlocked ? 'none' : '';
+    if (app) app.style.display = unlocked ? 'flex' : 'none';
+    if ($('adm2UserEmail')) $('adm2UserEmail').textContent = user && user.email ? user.email : '—';
+    if ($('adm2SignInBtn')) $('adm2SignInBtn').style.display = user ? 'none' : '';
+    if ($('adm2SignOutBtn')) $('adm2SignOutBtn').style.display = user ? '' : 'none';
+    if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').style.display = unlocked && user ? '' : 'none';
+    if ($('adm2AuthMsg')) $('adm2AuthMsg').textContent = msgText || '';
+  }
+  function initAuth() {
+    authDiag.firebaseLoaded = typeof firebase !== 'undefined';
+    renderAuthDiag();
+    if (typeof firebase === 'undefined') {
+      setAuthError('Authentication is unavailable (Firebase failed to load).');
+      return;
+    }
+    try {
+      if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey: "AIzaSyCW9fCKrUcmFxc91KmgXhQF4kRYCiZH9Y0",
+          authDomain: "rolandoguy-57d63.firebaseapp.com",
+          projectId: "rolandoguy-57d63",
+          storageBucket: "rolandoguy-57d63.firebasestorage.app",
+          messagingSenderId: "276077748266",
+          appId: "1:276077748266:web:f38a687ab3b526f0262353"
+        });
+      }
+      firebaseAuth = firebase.auth();
+      authDiag.authInitialized = !!firebaseAuth;
+      renderAuthDiag();
+    } catch (e) {
+      setAuthError('Authentication is unavailable (Firebase init failed).', e);
+    }
+  }
+  function signInGoogle() {
+    console.info('[admin-v2 auth] signIn button clicked');
+    if (!firebaseAuth || typeof firebase === 'undefined') {
+      setAuthError('Authentication is unavailable.');
+      return false;
+    }
+    var provider = new firebase.auth.GoogleAuthProvider();
+    authDiag.popupAttemptStarted = true;
+    renderAuthDiag();
+    console.info('[admin-v2 auth] popup attempt start');
+    firebaseAuth.signInWithPopup(provider).catch(function (err) {
+      console.warn('[admin-v2 auth] signInWithPopup failed', err);
+      setAuthError('Could not sign in with Google. Check Firebase Authentication domain settings or popup blocking.', err);
+    });
+    return false;
+  }
+  function signOut() {
+    if (!firebaseAuth) return;
+    firebaseAuth.signOut().catch(function (err) {
+      setAuthError('Sign out failed.', err);
+    });
+    return false;
+  }
+  function awaitAuthorizedUser() {
+    return new Promise(function (resolve, reject) {
+      if (!firebaseAuth) return reject(new Error('Firebase auth unavailable.'));
+      firebaseAuth.onAuthStateChanged(function (user) {
+        var ok = isAdminUser(user);
+        if (!user) {
+          setAuthGate(false, null, 'Sign in with Google to continue.');
+          return;
+        }
+        if (!ok) {
+          setAuthGate(false, user, 'This account is not authorized for this admin panel.');
+          return;
+        }
+        setAuthGate(true, user, 'Signed in.');
+        authDiag.lastErrorCode = '';
+        authDiag.lastErrorMessage = '';
+        renderAuthDiag();
+        resolve(user);
+      }, function () {
+        reject(new Error('Auth state listener failed.'));
+      });
+    });
+  }
   function clone(v) { return JSON.parse(JSON.stringify(v)); }
   function setStatus(text, kind) {
     var el = $('saveState');
@@ -1740,6 +1855,17 @@
 
   async function init() {
     try {
+      window.adm2SignInGoogle = signInGoogle;
+      window.adm2SignOut = signOut;
+      initAuth();
+      if ($('adm2SignInBtn')) {
+        $('adm2SignInBtn').addEventListener('click', signInGoogle);
+        authDiag.clickHandlerAttached = true;
+      }
+      if ($('adm2SignOutBtn')) $('adm2SignOutBtn').addEventListener('click', signOut);
+      if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').addEventListener('click', signOut);
+      renderAuthDiag();
+      await awaitAuthorizedUser();
       setStatus('Conectando bridge…', 'warn');
       state.api = await waitForLegacyApi();
       var lang = (state.api.currentLang && LANGS.indexOf(state.api.currentLang) >= 0) ? state.api.currentLang : 'en';
@@ -1752,7 +1878,7 @@
       refreshCurrentSection();
     } catch (e) {
       setStatus('Error bridge', 'err');
-      alert('No se pudo iniciar admin-v2: ' + e.message);
+      setAuthError('No se pudo iniciar admin-v2: ' + e.message, e);
     }
   }
 

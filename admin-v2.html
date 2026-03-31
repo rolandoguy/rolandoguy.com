@@ -13,10 +13,11 @@
       <p class="muted">Sign in with Google to continue.</p>
       <p class="muted">Signed in as: <span id="adm2UserEmail">—</span></p>
       <div class="toolbar">
-        <button id="adm2SignInBtn" type="button">Sign in with Google</button>
-        <button id="adm2SignOutBtn" type="button" style="display:none">Sign out</button>
+        <button id="adm2SignInBtn" type="button" onclick="return window.adm2SignInGoogle ? window.adm2SignInGoogle() : false;">Sign in with Google</button>
+        <button id="adm2SignOutBtn" type="button" onclick="return window.adm2SignOut ? window.adm2SignOut() : false;" style="display:none">Sign out</button>
       </div>
       <p id="adm2AuthMsg" class="muted">Sign in with Google to continue.</p>
+      <pre id="adm2Diag" class="mono muted"></pre>
     </div>
   </div>
   <div class="app" id="adm2App" style="display:none">
@@ -54,6 +55,7 @@
         </div>
         <div class="actions">
           <span id="saveState" class="pill">Cargando…</span>
+          <button id="adm2TopSignOutBtn" type="button" style="display:none">Sign out</button>
           <button id="exportBtn">Export JSON</button>
           <label class="import-label">
             Import JSON
