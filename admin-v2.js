@@ -36,8 +36,7 @@
     bioPortraitDefault: '',
     bioLoadNonce: 0,
     homeIntroDefault: '',
-    homeLoadNonce: 0,
-    homeLoadCallCount: 0
+    homeLoadNonce: 0
   };
 
   function $(id) { return document.getElementById(id); }
@@ -326,13 +325,24 @@
 
   function loadHome() {
     var nonce = ++state.homeLoadNonce;
-    state.homeLoadCallCount += 1;
     var stored = loadDoc('hero_' + state.lang, null);
     var fallback = getLegacySection('hero');
+    var uiStored = loadDoc('rg_ui_' + state.lang, null);
+    var uiFallback = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var t = state.api.uiTable(state.lang);
+        if (isObject(t)) uiFallback = t;
+      }
+    } catch (e) {}
     $('hero-eyebrow').value = pickStoredOrFallback(stored, fallback, 'eyebrow');
     $('hero-subtitle').value = pickStoredOrFallback(stored, fallback, 'subtitle');
     $('hero-cta1').value = pickStoredOrFallback(stored, fallback, 'cta1');
     $('hero-cta2').value = pickStoredOrFallback(stored, fallback, 'cta2');
+    $('hero-quickBioLabel').value = pickStoredOrFallback(stored, fallback, 'quickBioLabel');
+    $('hero-quickCalLabel').value = pickStoredOrFallback(stored, fallback, 'quickCalLabel');
+    $('hero-introCtaBio').value = (isObject(stored) && safeString(stored.introCtaBio).trim()) ? safeString(stored.introCtaBio) : pickStoredOrFallback(uiStored, uiFallback, 'home.intro.ctaBio');
+    $('hero-introCtaMedia').value = (isObject(stored) && safeString(stored.introCtaMedia).trim()) ? safeString(stored.introCtaMedia) : pickStoredOrFallback(uiStored, uiFallback, 'home.intro.ctaMedia');
     $('hero-bgImage').value = pickStoredOrFallback(stored, fallback, 'bgImage');
     // Keep preview blank until final source is resolved (no stale first paint).
     $('hero-introImage').value = '';
@@ -407,6 +417,10 @@
       subtitle: safeString($('hero-subtitle').value),
       cta1: safeString($('hero-cta1').value),
       cta2: safeString($('hero-cta2').value),
+      quickBioLabel: safeString($('hero-quickBioLabel').value),
+      quickCalLabel: safeString($('hero-quickCalLabel').value),
+      introCtaBio: safeString($('hero-introCtaBio').value),
+      introCtaMedia: safeString($('hero-introCtaMedia').value),
       bgImage: safeString($('hero-bgImage').value),
       introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim())
     };
@@ -1845,7 +1859,7 @@
     bindInputsDirty(['media-vid-h2']);
     bindInputsDirty(['media-photo-url','media-photo-caption','media-photo-photographer'], persistMediaPhotoEditor);
 
-    bindInputsDirty(['hero-eyebrow','hero-subtitle','hero-cta1','hero-cta2','hero-bgImage','hero-introImage'], function () {
+    bindInputsDirty(['hero-eyebrow','hero-subtitle','hero-cta1','hero-cta2','hero-quickBioLabel','hero-quickCalLabel','hero-introCtaBio','hero-introCtaMedia','hero-bgImage','hero-introImage'], function () {
       updateHomeIntroPreview();
       markDirty(true);
     });
