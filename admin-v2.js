@@ -2012,7 +2012,20 @@
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
     var activeId = document.activeElement && document.activeElement.id ? document.activeElement.id : '';
-    var modalTitle = safeString($('perf-modal-title') && $('perf-modal-title').value).trim();
+    function readVal(id) { return safeString($(id) && $(id).value).trim(); }
+    function syncPairedValue(mainId, modalId) {
+      var mainVal = readVal(mainId);
+      var modalVal = readVal(modalId);
+      // Reusable guard: the actively edited field wins in this cycle.
+      if (activeId === modalId) return modalVal || mainVal;
+      return mainVal || modalVal;
+    }
+    function writeIfInactive(id, value) {
+      var el = $(id);
+      if (!el || activeId === id) return;
+      el.value = safeString(value);
+    }
+    var modalTitle = readVal('perf-modal-title');
     var cardTitle = safeString($('perf-title') && $('perf-title').value).trim();
     // Prevent input overwrite loop: when editing card title, it is the source of truth.
     // Allow modal-title edits to drive title only while that field is actively edited.
@@ -2022,10 +2035,8 @@
     e.day = $('perf-day').value;
     e.month = $('perf-month').value;
     e.time = safeString($('perf-time').value).trim();
-    var modalVenue = safeString($('perf-modal-venue') && $('perf-modal-venue').value).trim();
-    var modalCity = safeString($('perf-modal-city') && $('perf-modal-city').value).trim();
-    e.venue = modalVenue || $('perf-venue').value;
-    e.city = modalCity || $('perf-city').value;
+    e.venue = syncPairedValue('perf-venue', 'perf-modal-venue');
+    e.city = syncPairedValue('perf-city', 'perf-modal-city');
     e.venuePhoto = safeString($('perf-venuePhoto').value).trim();
     var dateDisplay = normalizeSortDateForInput($('perf-dateDisplay').value);
     if (dateDisplay) $('perf-sortDate').value = dateDisplay;
@@ -2038,7 +2049,7 @@
     $('perf-venuePreview').src = e.venuePhoto;
     $('perf-venuePreview').style.opacity = String(op / 100);
     e.status = $('perf-status').value;
-    e.type = safeString($('perf-modal-type') && $('perf-modal-type').value).trim() || $('perf-type').value;
+    e.type = syncPairedValue('perf-type', 'perf-modal-type');
     e.editorialStatus = safeString($('perf-editorialStatus').value || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft'));
     e.extDesc = safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value).trim();
     e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
@@ -2059,11 +2070,14 @@
     e['eventLink_' + state.lang] = e.eventLink;
     e['eventLinkLabel_' + state.lang] = e.eventLinkLabel;
     e.sortDate = $('perf-sortDate').value;
-    if ($('perf-title') && activeId !== 'perf-title') $('perf-title').value = safeString(e.title);
-    if ($('perf-modal-title') && activeId !== 'perf-modal-title') $('perf-modal-title').value = safeString(e.title);
-    if ($('perf-venue')) $('perf-venue').value = safeString(e.venue);
-    if ($('perf-city')) $('perf-city').value = safeString(e.city);
-    if ($('perf-type')) $('perf-type').value = safeString(e.type || 'concert');
+    writeIfInactive('perf-title', e.title);
+    writeIfInactive('perf-modal-title', e.title);
+    writeIfInactive('perf-venue', e.venue);
+    writeIfInactive('perf-modal-venue', e.venue);
+    writeIfInactive('perf-city', e.city);
+    writeIfInactive('perf-modal-city', e.city);
+    writeIfInactive('perf-type', e.type || 'concert');
+    writeIfInactive('perf-modal-type', e.type || 'concert');
     state.perfs[state.perfIndex] = e;
     updatePerfCardPreview();
     updatePerfPublicVisibilitySummary();
