@@ -281,6 +281,10 @@
       extDesc: String(o.extDesc || '').trim(),
       modalImg: String(o.modalImg || '').trim(),
       modalImgHide: isTruthyFlag(o.modalImgHide),
+      modalEnabled:
+        (o.modalEnabled === true || o.modalEnabled === false)
+          ? o.modalEnabled
+          : (String(o.modalEnabled).trim() === 'true' ? true : (String(o.modalEnabled).trim() === 'false' ? false : null)),
       flyerImg: String(o.flyerImg || '').trim(),
       title_en: o.title_en,
       title_de: o.title_de,
@@ -768,7 +772,8 @@
         (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
         (p.flyerImg && p.flyerImg.trim()) ||
         (p.modalImg && p.modalImg.trim());
-      if (hasExtra)
+      var allowModalButton = (p.modalEnabled === false) ? false : hasExtra;
+      if (allowModalButton)
         h +=
           '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal(' +
           p.id +

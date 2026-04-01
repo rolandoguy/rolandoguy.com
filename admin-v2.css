@@ -204,6 +204,9 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 #perf-modal-longdesc-translation-warn,
 #perf-modal-link-label-translation-warn,
 #perf-modal-link-translation-warn{display:block;margin-top:4px}
+.tx-lang-picker{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.tx-lang-picker label{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+#perf-tx-result{margin-top:8px}
 .adm2-tx-missing-only .tx-missing-only-hide{display:none!important}
 
 .button-primary{border-color:var(--gold);background:rgba(212,168,67,.12);color:var(--gold)}

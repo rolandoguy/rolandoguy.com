@@ -500,8 +500,34 @@
                       <option value="true">true</option>
                     </select>
                   </label>
+                  <label>Enable More info button
+                    <select id="perf-modal-enabled">
+                      <option value="">auto (content-based)</option>
+                      <option value="true">true</option>
+                      <option value="false">false</option>
+                    </select>
+                  </label>
                   <label>Modal flyer image URL<input id="perf-modal-flyerImg" placeholder="https://..."></label>
                 </div>
+              </div>
+
+              <div class="editor-section">
+                <h3>Translation tools</h3>
+                <p class="muted">Use the active language as source to speed up localized event support text.</p>
+                <div class="toolbar toolbar--tight">
+                  <button id="perf-tx-copy-all-btn" type="button">Copy current language to other languages</button>
+                  <button id="perf-tx-copy-selected-btn" type="button">Copy current language to selected languages…</button>
+                  <button id="perf-tx-autotranslate-btn" type="button">Auto-translate from current language</button>
+                  <button id="perf-tx-copy-base-to-current-btn" type="button">Copy base fields to current language</button>
+                </div>
+                <div class="tx-lang-picker" id="perf-tx-lang-picker">
+                  <label><input type="checkbox" id="perf-tx-lang-en" value="en"> EN</label>
+                  <label><input type="checkbox" id="perf-tx-lang-de" value="de"> DE</label>
+                  <label><input type="checkbox" id="perf-tx-lang-es" value="es"> ES</label>
+                  <label><input type="checkbox" id="perf-tx-lang-it" value="it"> IT</label>
+                  <label><input type="checkbox" id="perf-tx-lang-fr" value="fr"> FR</label>
+                </div>
+                <p id="perf-tx-result" class="muted"></p>
               </div>
 
               <details class="editor-section details-block">

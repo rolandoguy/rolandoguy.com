@@ -1711,6 +1711,11 @@
     if ($('perf-modal-ticketPrice')) $('perf-modal-ticketPrice').value = safeString(e.ticketPrice);
     if ($('perf-modal-image')) $('perf-modal-image').value = safeString(e.modalImg);
     if ($('perf-modal-image-hide')) $('perf-modal-image-hide').value = e.modalImgHide ? 'true' : 'false';
+    if ($('perf-modal-enabled')) {
+      if (e.modalEnabled === true) $('perf-modal-enabled').value = 'true';
+      else if (e.modalEnabled === false) $('perf-modal-enabled').value = 'false';
+      else $('perf-modal-enabled').value = '';
+    }
     if ($('perf-modal-flyerImg')) $('perf-modal-flyerImg').value = safeString(e.flyerImg);
     if ($('perf-modal-maps-link')) {
       var q = encodeURIComponent((safeString(e.venue).trim() || '') + (safeString(e.city).trim() ? (' ' + safeString(e.city).trim()) : ''));
@@ -1720,6 +1725,7 @@
     updatePerfCardPreview();
     updatePerfPublicVisibilitySummary();
     updatePerfTranslationWarnings();
+    syncPerfTxPicker();
   }
   function setSelectWithCustomValue(id, rawValue, fallback) {
     var el = $(id);
@@ -1840,6 +1846,168 @@
     }
     summary.style.display = '';
   }
+  function setPerfTxResult(text, kind) {
+    var el = $('perf-tx-result');
+    if (!el) return;
+    el.className = 'muted' + (kind ? (' ' + kind) : '');
+    el.textContent = safeString(text);
+  }
+  function syncPerfTxPicker() {
+    var src = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+    LANGS.forEach(function (L) {
+      var box = $('perf-tx-lang-' + L);
+      if (!box) return;
+      box.disabled = (L === src);
+      if (L === src) box.checked = false;
+      else if (box.dataset.init !== '1') box.checked = true;
+      box.dataset.init = '1';
+    });
+  }
+  function getPerfTxSelectedTargets(sourceLang) {
+    return LANGS.filter(function (L) {
+      if (L === sourceLang) return false;
+      var box = $('perf-tx-lang-' + L);
+      return !!(box && box.checked);
+    });
+  }
+  function collectPerfTxSource(e, sourceLang) {
+    function pick(base) {
+      var lk = base + '_' + sourceLang;
+      var loc = safeString(e[lk]).trim();
+      if (loc) return loc;
+      return safeString(e[base]).trim();
+    }
+    return {
+      detail: pick('detail'),
+      extDesc: pick('extDesc'),
+      eventLinkLabel: pick('eventLinkLabel'),
+      eventLink: pick('eventLink')
+    };
+  }
+  function applyPerfTxCopy(targetLangs, opts) {
+    opts = opts || {};
+    if (state.perfIndex < 0) return;
+    var e = state.perfs[state.perfIndex] || {};
+    var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+    var source = collectPerfTxSource(e, sourceLang);
+    var includeUrl = !!opts.includeUrl;
+    var fields = ['detail', 'extDesc', 'eventLinkLabel'].concat(includeUrl ? ['eventLink'] : []);
+    var overwriteHits = [];
+    targetLangs.forEach(function (L) {
+      fields.forEach(function (base) {
+        var tk = base + '_' + L;
+        var incoming = safeString(source[base]).trim();
+        var existing = safeString(e[tk]).trim();
+        if (incoming && existing && existing !== incoming) overwriteHits.push(L.toUpperCase() + ':' + tk);
+      });
+    });
+    if (overwriteHits.length) {
+      var msg = 'This will overwrite ' + overwriteHits.length + ' non-empty localized field(s).\n\nContinue?\n\n' + overwriteHits.slice(0, 10).join(', ') + (overwriteHits.length > 10 ? '…' : '');
+      if (!window.confirm(msg)) {
+        setPerfTxResult('Copy cancelled.', 'warn');
+        return;
+      }
+    }
+    targetLangs.forEach(function (L) {
+      fields.forEach(function (base) {
+        e[base + '_' + L] = safeString(source[base]).trim();
+      });
+    });
+    state.perfs[state.perfIndex] = e;
+    renderPerfEditor();
+    renderPerfList();
+    markDirty(true, 'Calendar translation copy applied');
+    updatePerfTranslationWarnings();
+    setPerfTxResult(
+      'Copied from ' + sourceLang.toUpperCase() + ' to: ' + targetLangs.map(function (L) { return L.toUpperCase(); }).join(', ') +
+      (includeUrl ? ' (including URLs).' : ' (without URLs).'),
+      'ok'
+    );
+  }
+  function runPerfCopyCurrentToTargets(targetLangs) {
+    if (state.perfIndex < 0) return;
+    if (!targetLangs.length) {
+      setPerfTxResult('No target languages selected.', 'warn');
+      return;
+    }
+    persistPerfEditor();
+    var e = state.perfs[state.perfIndex] || {};
+    var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+    var source = collectPerfTxSource(e, sourceLang);
+    var includeUrl = false;
+    if (source.eventLink) {
+      includeUrl = window.confirm('Copy localized CTA URLs as well?\n\nSelect "Cancel" to keep target URLs unchanged.');
+    }
+    applyPerfTxCopy(targetLangs, { includeUrl: includeUrl });
+  }
+  function copyPerfBaseToCurrentLang() {
+    if (state.perfIndex < 0) return;
+    var lang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+    var e = state.perfs[state.perfIndex] || {};
+    var incoming = {
+      detail: safeString(e.detail).trim(),
+      extDesc: safeString(e.extDesc).trim(),
+      eventLinkLabel: safeString(e.eventLinkLabel).trim(),
+      eventLink: safeString(e.eventLink).trim()
+    };
+    var overwriteHits = [];
+    Object.keys(incoming).forEach(function (base) {
+      var tk = base + '_' + lang;
+      var existing = safeString(e[tk]).trim();
+      if (incoming[base] && existing && existing !== incoming[base]) overwriteHits.push(tk);
+    });
+    if (overwriteHits.length) {
+      if (!window.confirm('Overwrite existing localized fields for ' + lang.toUpperCase() + '?\n\n' + overwriteHits.join(', '))) {
+        setPerfTxResult('Copy cancelled.', 'warn');
+        return;
+      }
+    }
+    Object.keys(incoming).forEach(function (base) {
+      e[base + '_' + lang] = incoming[base];
+    });
+    state.perfs[state.perfIndex] = e;
+    renderPerfEditor();
+    renderPerfList();
+    markDirty(true, 'Copied base fields to current language');
+    updatePerfTranslationWarnings();
+    setPerfTxResult('Base fields copied to ' + lang.toUpperCase() + '.', 'ok');
+  }
+  function autoTranslatePerfFromCurrentLang() {
+    if (state.perfIndex < 0) return;
+    persistPerfEditor();
+    var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+    var targetLangs = LANGS.filter(function (L) { return L !== sourceLang; });
+    var translateFn = state.api && typeof state.api.translateText === 'function' ? state.api.translateText : null;
+    if (!translateFn) {
+      setPerfTxResult('Auto-translate helper is not available in this environment. UI is ready for future integration.', 'warn');
+      return;
+    }
+    var e = state.perfs[state.perfIndex] || {};
+    var src = collectPerfTxSource(e, sourceLang);
+    var jobs = [];
+    targetLangs.forEach(function (L) {
+      ['detail', 'extDesc', 'eventLinkLabel'].forEach(function (base) {
+        if (!safeString(src[base]).trim()) return;
+        jobs.push(
+          Promise.resolve(translateFn(src[base], sourceLang, L)).then(function (out) {
+            e[base + '_' + L] = safeString(out).trim();
+          })
+        );
+      });
+    });
+    Promise.all(jobs)
+      .then(function () {
+        state.perfs[state.perfIndex] = e;
+        renderPerfEditor();
+        renderPerfList();
+        markDirty(true, 'Auto-translation drafts generated');
+        updatePerfTranslationWarnings();
+        setPerfTxResult('Draft translations generated for review. Save all event changes when ready.', 'warn');
+      })
+      .catch(function (err) {
+        setPerfTxResult('Auto-translate failed: ' + safeString(err && err.message), 'err');
+      });
+  }
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
@@ -1873,6 +2041,12 @@
     e.eventLinkLabel = safeString($('perf-modal-link-label') && $('perf-modal-link-label').value).trim();
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
     e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
+    if ($('perf-modal-enabled')) {
+      var modalEnabledRaw = safeString($('perf-modal-enabled').value).trim().toLowerCase();
+      if (modalEnabledRaw === 'true') e.modalEnabled = true;
+      else if (modalEnabledRaw === 'false') e.modalEnabled = false;
+      else delete e.modalEnabled;
+    }
     e.flyerImg = safeString($('perf-modal-flyerImg') && $('perf-modal-flyerImg').value).trim();
     // Keep locale-specific supporting fields in sync for active language.
     e['detail_' + state.lang] = safeString(e.detail).trim();
@@ -1907,6 +2081,7 @@
   function savePerfEvents() {
     state.perfs = state.perfs.filter(function (e) { return isObject(e); });
     saveDoc('rg_perfs', state.perfs);
+    setPerfTxResult('Saved event list. Translation tool changes are now persisted.', 'ok');
   }
   function normalizePastPerfImportItem(raw, idx) {
     var o = isObject(raw) ? raw : {};
@@ -4541,6 +4716,17 @@
     if ($('programs-duplicate-to-lang')) $('programs-duplicate-to-lang').addEventListener('click', duplicateCurrentProgramToLanguage);
     $('savePerfHeaderBtn').addEventListener('click', savePerfHeader);
     $('savePerfEventsBtn').addEventListener('click', savePerfEvents);
+    if ($('perf-tx-copy-all-btn')) $('perf-tx-copy-all-btn').addEventListener('click', function () {
+      var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+      var targets = LANGS.filter(function (L) { return L !== sourceLang; });
+      runPerfCopyCurrentToTargets(targets);
+    });
+    if ($('perf-tx-copy-selected-btn')) $('perf-tx-copy-selected-btn').addEventListener('click', function () {
+      var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+      runPerfCopyCurrentToTargets(getPerfTxSelectedTargets(sourceLang));
+    });
+    if ($('perf-tx-copy-base-to-current-btn')) $('perf-tx-copy-base-to-current-btn').addEventListener('click', copyPerfBaseToCurrentLang);
+    if ($('perf-tx-autotranslate-btn')) $('perf-tx-autotranslate-btn').addEventListener('click', autoTranslatePerfFromCurrentLang);
     if ($('pastperfs-import-btn')) $('pastperfs-import-btn').addEventListener('click', importPastPerfsJson);
     if ($('pastperfs-clear-btn')) $('pastperfs-clear-btn').addEventListener('click', clearPastPerfsDataset);
     if ($('pastperfs-save-all-btn')) $('pastperfs-save-all-btn').addEventListener('click', function () {
@@ -5143,7 +5329,7 @@
 
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category','rep-editorialStatus'], persistRepEditor);
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
