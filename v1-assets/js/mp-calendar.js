@@ -216,6 +216,11 @@
   function normalizedEditorialStatus(v) {
     return String(v || '').trim().toLowerCase();
   }
+  function isTruthyFlag(v) {
+    if (v === true) return true;
+    var s = String(v == null ? '' : v).trim().toLowerCase();
+    return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+  }
   function normalizeRgPerfsItem(raw, idx) {
     var o = raw && typeof raw === 'object' ? raw : {};
     var title = String(o.title || o.name || '').trim();
@@ -254,6 +259,9 @@
       eventLink: String(o.eventLink || o.link || '').trim(),
       eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
       extDesc: String(o.extDesc || '').trim(),
+      modalImg: String(o.modalImg || '').trim(),
+      modalImgHide: isTruthyFlag(o.modalImgHide),
+      flyerImg: String(o.flyerImg || '').trim(),
       title_en: o.title_en,
       title_de: o.title_de,
       title_es: o.title_es,
@@ -507,16 +515,10 @@
     var title = p && p.title != null ? String(p.title).trim() : '';
     var name = p && p.name != null ? String(p.name).trim() : '';
     var localeTitle = p && p['title_' + lang] != null ? String(p['title_' + lang]).trim() : '';
+    // Multilingual strategy: keep artistic/project title stable across locales.
+    // Localized title fields are only fallback for legacy items missing canonical title.
     var chosen = title || name || localeTitle || '';
-    var source = title ? 'title' : (name ? 'name' : (localeTitle ? 'title_' + lang : 'empty'));
-    if (title && localeTitle && title.indexOf('—') > -1 && localeTitle.indexOf('—') > -1) {
-      var baseLeft = title.split('—')[0].trim();
-      var locRight = localeTitle.split('—').slice(1).join('—').trim();
-      if (baseLeft && locRight) {
-        chosen = baseLeft + ' — ' + locRight;
-        source = 'title + localized subtitle';
-      }
-    }
+    var source = title ? 'title(canonical)' : (name ? 'name(legacy)' : (localeTitle ? 'title_' + lang + '(fallback)' : 'empty'));
     if (!titleChoiceLogged) {
       titleChoiceLogged = true;
       console.log('[Calendar] Title field resolution sample', {
@@ -1015,7 +1017,8 @@
     document.getElementById('emDetail').textContent = detail;
 
     var imgEl = document.getElementById('emVenueImg');
-    if (p.modalImgHide) {
+    var hideModalHero = isTruthyFlag(p.modalImgHide);
+    if (hideModalHero) {
       imgEl.style.display = 'none';
     } else {
       var modalSrc =
@@ -1069,6 +1072,8 @@
     if (p.flyerImg && p.flyerImg.trim()) {
       flyerEl.src = p.flyerImg;
       flyerEl.alt = modalTitle + ' flyer';
+      // When hero image is intentionally hidden, let flyer lead as main visual in content.
+      flyerEl.style.maxWidth = hideModalHero ? '100%' : '480px';
       flyerEl.style.display = '';
     } else {
       flyerEl.style.display = 'none';
