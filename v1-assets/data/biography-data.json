@@ -2,7 +2,7 @@
   "portraitImage": "../img/studio-2.jpg",
   "locales": {
     "en": {
-      "introLine": "Argentine-Italian lyric tenor based in Berlin — opera, recital and concert across Germany and Europe.",
+      "introLine": "Berlin-based Argentine-Italian lyric tenor active in opera productions, concert programmes, recital series, and curated crossover evenings across Germany and Europe.",
       "h2": "A voice <em>forged</em><br>in tradition",
       "paragraphs": [
         "Argentine-Italian tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory of Music.",
@@ -12,14 +12,14 @@
       ],
       "portraitAlt": "Rolando Guy, lyric tenor — theatrical portrait for the site hero",
       "continueSectionTag": "Continue",
-      "continueSub": "Hear the voice in context — repertoire, recordings and how to book.",
+      "continueSub": "Review repertoire strands, recordings, and booking pathways for programming and casting context.",
       "ctaRepertoire": "Repertoire",
       "ctaMedia": "Media",
       "ctaContact": "Contact",
       "ctaHomeIntro": "Home — introduction"
     },
     "de": {
-      "introLine": "Argentinisch-italienischer lyrischer Tenor in Berlin — Oper, Rezital und Konzert in Deutschland und Europa.",
+      "introLine": "In Berlin ansässiger argentinisch-italienischer Lyriktenor, aktiv in Opernproduktionen, Konzertprogrammen, Rezitalreihen und kuratierten Crossover-Formaten in Deutschland und Europa.",
       "h2": "<span class=\"rep-title-stack\"><span class=\"rep-title-line1\">Eine Stimme,</span><span class=\"rep-title-line2\">von <em>Tradition geprägt</em></span></span>",
       "paragraphs": [
         "Der argentinisch-italienische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalen Konservatorium studierte.",
@@ -29,14 +29,14 @@
       ],
       "portraitAlt": "Rolando Guy, lyrischer Tenor — szenisches Portrait für die Website",
       "continueSectionTag": "Weiter",
-      "continueSub": "Die Stimme im Kontext — Repertoire, Aufnahmen und Buchung.",
+      "continueSub": "Repertoire-Stränge, Aufnahmen und Buchungswege für Programm- und Casting-Kontexte im Überblick.",
       "ctaRepertoire": "Repertoire",
       "ctaMedia": "Medien",
       "ctaContact": "Kontakt",
       "ctaHomeIntro": "Home — Einführung"
     },
     "es": {
-      "introLine": "Tenor lírico argentino-italiano afincado en Berlín — ópera, recital y concierto en Alemania y Europa.",
+      "introLine": "Tenor lírico argentino-italiano con base en Berlín, activo en producciones de ópera, programas de concierto, ciclos de recital y formatos curados de crossover en Alemania y Europa.",
       "h2": "Una voz <em>forjada</em><br>en la tradición",
       "paragraphs": [
         "El tenor argentino-italiano Rolando Guy nació en Buenos Aires, donde estudió en el Conservatorio Nacional de Música.",
@@ -46,14 +46,14 @@
       ],
       "portraitAlt": "Rolando Guy, tenor lírico — retrato teatral para el sitio",
       "continueSectionTag": "Continuar",
-      "continueSub": "La voz en contexto — repertorio, grabaciones y contratación.",
+      "continueSub": "Revise líneas de repertorio, grabaciones y vías de contratación para contextos de programación y casting.",
       "ctaRepertoire": "Repertorio",
       "ctaMedia": "Medios",
       "ctaContact": "Contacto",
       "ctaHomeIntro": "Inicio — introducción"
     },
     "it": {
-      "introLine": "Tenore lirico argentino-italiano con base a Berlino — opera, recital e concerto in Germania e in Europa.",
+      "introLine": "Tenore lirico argentino-italiano con base a Berlino, attivo in produzioni d’opera, programmi da concerto, cicli di recital e formati crossover curati in Germania e in Europa.",
       "h2": "Una voce <em>forgiata</em><br>nella tradizione",
       "paragraphs": [
         "Il tenore argentino-italiano Rolando Guy è nato a Buenos Aires, dove ha studiato al Conservatorio Nazionale di Musica.",
@@ -63,14 +63,14 @@
       ],
       "portraitAlt": "Rolando Guy, tenore lirico — ritratto teatrale per il sito",
       "continueSectionTag": "Continua",
-      "continueSub": "La voce nel contesto — repertorio, registrazioni e contatti.",
+      "continueSub": "Consulti linee di repertorio, registrazioni e percorsi di ingaggio in ottica programmazione e casting.",
       "ctaRepertoire": "Repertorio",
       "ctaMedia": "Media",
       "ctaContact": "Contatto",
       "ctaHomeIntro": "Home — introduzione"
     },
     "fr": {
-      "introLine": "Ténor lyrique argentin-italien basé à Berlin — opéra, récital et concert en Allemagne et en Europe.",
+      "introLine": "Ténor lyrique argentin-italien basé à Berlin, actif en productions d’opéra, programmes de concert, séries de récitals et formats crossover curatés en Allemagne et en Europe.",
       "h2": "Une voix <em>forgée</em><br>dans la tradition",
       "paragraphs": [
         "Le ténor argentin-italien Rolando Guy est né à Buenos Aires, où il a étudié au Conservatoire National de Musique.",
@@ -80,7 +80,7 @@
       ],
       "portraitAlt": "Rolando Guy, ténor lyrique — portrait théâtral pour le site",
       "continueSectionTag": "Poursuivre",
-      "continueSub": "La voix en contexte — répertoire, enregistrements et réservation.",
+      "continueSub": "Consultez axes de répertoire, enregistrements et voies de réservation pour les contextes de programmation et de casting.",
       "ctaRepertoire": "Répertoire",
       "ctaMedia": "Médias",
       "ctaContact": "Contact",

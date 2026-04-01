@@ -1,7 +1,7 @@
 {
   "rep": {
     "h2": "Selected <em>Repertoire</em>",
-    "intro": "From the intimate lyricism of Mozart to the dramatic sweep of Puccini and Verdi, Rolando's repertoire spans the full breadth of the tenor tradition."
+    "intro": "This page maps practical programme strands for presenters: opera roles and arias, operetta material, Lied/art song lines, and Argentine tango repertoire adaptable to venue, ensemble format, and audience profile."
   },
   "cards": [
     {
@@ -449,9 +449,21 @@
     }
   ],
   "repLocales": {
+    "de": {
+      "h2": "Selected <em>Repertoire</em>",
+      "intro": "Diese Seite zeigt praxisnahe Programmstränge für Veranstalter: Opernrollen und Arien, Operettenmaterial, Lied/Art-Song-Linien sowie argentinisches Tango-Repertoire, anpassbar an Spielstätte, Besetzungsformat und Publikum."
+    },
+    "es": {
+      "h2": "Selected <em>Repertoire</em>",
+      "intro": "Esta página organiza líneas de programa útiles para programadores: roles y arias de ópera, material de opereta, Lied/canción de arte y repertorio de tango argentino adaptable a sala, formato de elenco y perfil de audiencia."
+    },
+    "it": {
+      "h2": "Selected <em>Repertoire</em>",
+      "intro": "Questa pagina organizza linee di programma utili per la direzione artistica: ruoli e arie d’opera, materiale d’operetta, filoni Lied/art song e repertorio di tango argentino adattabile a sede, formato d’ensemble e pubblico."
+    },
     "fr": {
       "h2": "Selected <em>Repertoire</em>",
-      "intro": "Du lyrisme intime de Mozart à la puissance dramatique de Puccini et Verdi, le répertoire de Rolando embrasse toute la tradition du ténor."
+      "intro": "Cette page structure des axes de programme utiles aux programmateurs : rôles et airs d’opéra, matière d’opérette, filières Lied/mélodie et répertoire de tango argentin adaptable à la salle, au format d’effectif et au profil du public."
     }
   }
 }

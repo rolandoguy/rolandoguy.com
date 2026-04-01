@@ -1,11 +1,25 @@
 {
   "contact": {
     "title": "Bookings &amp; <em>Artistic Enquiries</em>",
-    "sub": "For booking enquiries, concert engagements, artistic collaborations, private recitals and opera galas, please get in touch directly. All messages are personally answered.",
+    "sub": "For opera, concert, recital, tango, and curated programme enquiries, please get in touch directly. The contact channel is intended for presenters, artistic directors, theatres, festivals, and collaborating ensembles, and every enquiry receives a personal reply.",
     "email": "rolandoguy@gmail.com",
     "emailBtn": "Send Email",
     "webBtn": "Official Website",
     "quote": ""
   },
-  "formspreeId": "xqedvoqw"
+  "formspreeId": "xqedvoqw",
+  "contactLocales": {
+    "de": {
+      "sub": "Für Anfragen zu Oper, Konzert, Rezital, Tango und kuratierten Programmformaten schreiben Sie bitte direkt. Dieser Kanal richtet sich an Veranstalter, künstlerische Leitungen, Theater, Festivals und kooperierende Ensembles; jede Anfrage wird persönlich beantwortet."
+    },
+    "es": {
+      "sub": "Para consultas de ópera, concierto, recital, tango y formatos curados de programa, escriba directamente. Este canal está orientado a programadores, direcciones artísticas, teatros, festivales y ensambles colaboradores; cada consulta recibe respuesta personal."
+    },
+    "it": {
+      "sub": "Per richieste relative a opera, concerto, recital, tango e formati curati di programma, scriva direttamente. Questo canale è dedicato a organizzatori, direzioni artistiche, teatri, festival ed ensemble partner; ogni richiesta riceve risposta personale."
+    },
+    "fr": {
+      "sub": "Pour les demandes liées à l’opéra, au concert, au récital, au tango et aux formats de programme curatés, écrivez directement. Ce canal s’adresse aux programmateurs, directions artistiques, théâtres, festivals et ensembles partenaires ; chaque demande reçoit une réponse personnelle."
+    }
+  }
 }

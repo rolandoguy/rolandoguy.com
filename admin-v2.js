@@ -1731,11 +1731,11 @@
   function updateBioPortraitPreview() {
     var src = safeString($('bio-portraitImage').value).trim();
     var previewSrc = src;
-    // Biography portrait paths are resolved by mp/biography.html, not admin-v2.html.
-    // Resolve relative paths against /mp/ to keep admin preview aligned with public rendering.
+    // Match public `normalizePortraitPath`: resolve relative paths against the current document URL
+    // (e.g. admin-v2.html at site root → `img/x.jpg` → `/img/x.jpg`, not `/mp/img/x.jpg`).
     if (previewSrc && !/^(data:|https?:\/\/|\/\/|\/)/i.test(previewSrc)) {
       try {
-        previewSrc = new URL(previewSrc, window.location.origin + '/mp/').toString();
+        previewSrc = new URL(previewSrc, window.location.href).toString();
       } catch (e) {}
     }
     $('bio-portraitPreview').src = previewSrc;

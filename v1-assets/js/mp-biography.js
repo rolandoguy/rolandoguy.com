@@ -8,6 +8,8 @@
   var MP_BIO = null;
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var BIO_DOC_CACHE = {};
+  /** Invisible placeholder so the browser never paints bundled/HTML default portrait before JS resolves the real URL. */
+  var PORTRAIT_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   function readLegacyJson(key) {
     try {
@@ -231,7 +233,7 @@
     return !!(merged.introLine || merged.h2 || (merged.paragraphs && merged.paragraphs.length));
   }
 
-  function applyMergedBioToDom(merged) {
+  function applyMergedBioToDom(merged, portraitHint) {
     var intro = document.getElementById('bioIntroLine');
     var h2 = document.getElementById('bio-heading');
     var parasEl = document.getElementById('bioParagraphs');
@@ -244,6 +246,12 @@
     var ctaHome = document.getElementById('bioCtaHomeIntro');
     var lang = currentLang();
     var pick = typeof window.pickMpLocaleString === 'function' ? window.pickMpLocaleString : null;
+
+    if (img) {
+      img.style.opacity = '0';
+      img.src = PORTRAIT_PLACEHOLDER;
+      delete img.dataset.currentSrc;
+    }
 
     if (!hasAnyBioBody(merged)) {
       if (intro) {
@@ -281,10 +289,13 @@
       } catch (e) {}
     }
 
+    if (portraitHint && portraitHint.src && img) {
+      applyPortraitImage(img, portraitHint.src, portraitHint.token || '');
+    }
     resolvePortraitSource().then(function (resolved) {
       var portrait = resolved && resolved.src ? resolved.src : '';
       if (img && portrait) applyPortraitImage(img, portrait, resolved.token || '');
-      else if (img) img.style.opacity = '1';
+      else if (img && !portrait) img.style.opacity = '1';
     });
 
     if (typeof window.applyMpChromeI18n === 'function') {
@@ -328,7 +339,15 @@
     getBioDocWithFallback(lang).then(function (docWrap) {
       var adminDoc = docWrap && docWrap.data && typeof docWrap.data === 'object' ? docWrap.data : {};
       var merged = mergeBioDisplay(bundle, adminDoc);
-      applyMergedBioToDom(merged);
+      var portraitHint = null;
+      var rawPi = adminDoc && typeof adminDoc.portraitImage === 'string' ? adminDoc.portraitImage.trim() : '';
+      if (rawPi) {
+        portraitHint = {
+          src: normalizePortraitPath(rawPi),
+          token: docWrap && docWrap.updateTime ? String(docWrap.updateTime).trim() : ''
+        };
+      }
+      applyMergedBioToDom(merged, portraitHint);
     });
   }
 
