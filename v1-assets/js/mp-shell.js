@@ -159,38 +159,110 @@
   window.pickMpLocaleString = pickLocaleString;
 
   function applyChromeI18n(lang) {
-    if (!window.MP_LOCALE_TABLE) return;
-    document.querySelectorAll('[data-i18n]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n');
-      if (!key) return;
-      var val = pickLocaleString(lang, key);
-      if (val != null) el.textContent = val;
-    });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n-html');
-      if (!key) return;
-      var val = pickLocaleString(lang, key);
-      if (val != null) el.innerHTML = val;
-    });
-    document.querySelectorAll('[data-i18n-alt]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n-alt');
-      if (!key) return;
-      var val = pickLocaleString(lang, key);
-      if (val != null) el.setAttribute('alt', val);
-    });
-    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n-aria');
-      if (!key) return;
-      var val = pickLocaleString(lang, key);
-      if (val != null) el.setAttribute('aria-label', val);
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n-placeholder');
-      if (!key) return;
-      var val = pickLocaleString(lang, key);
-      if (val != null) el.setAttribute('placeholder', val);
+    if (window.MP_LOCALE_TABLE) {
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n');
+        if (!key) return;
+        var val = pickLocaleString(lang, key);
+        if (val != null) el.textContent = val;
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-html');
+        if (!key) return;
+        var val = pickLocaleString(lang, key);
+        if (val != null) el.innerHTML = val;
+      });
+      document.querySelectorAll('[data-i18n-alt]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-alt');
+        if (!key) return;
+        var val = pickLocaleString(lang, key);
+        if (val != null) el.setAttribute('alt', val);
+      });
+      document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-aria');
+        if (!key) return;
+        var val = pickLocaleString(lang, key);
+        if (val != null) el.setAttribute('aria-label', val);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-placeholder');
+        if (!key) return;
+        var val = pickLocaleString(lang, key);
+        if (val != null) el.setAttribute('placeholder', val);
+      });
+    }
+    applyNavLogoFromRgUi(lang);
+    applyPageHeadFromRgUi(lang);
+  }
+
+  /** Re-apply [data-i18n*] after async page modules finish rendering (e.g. biography body). */
+  window.applyMpChromeI18n = function (lang) {
+    applyChromeI18n(lang || (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en');
+  };
+
+  function applyNavLogoFromRgUi(lang) {
+    var v = pickLocaleString(lang, 'nav.logo');
+    if (v == null || String(v).trim() === '') return;
+    document.querySelectorAll('a.nav-logo').forEach(function (a) {
+      a.textContent = String(v);
     });
   }
+
+  function pickFirstLocaleString(lang, keys) {
+    for (var i = 0; i < keys.length; i++) {
+      var v = pickLocaleString(lang, keys[i]);
+      if (v != null && String(v).trim() !== '') return String(v).trim();
+    }
+    return '';
+  }
+
+  /** Optional `<head>` / JSON-LD overrides via `rg_ui_*` + bundle (`page.<id>.*` keys). */
+  window.applyPageHeadFromRgUi = function (lang) {
+    var L = lang || (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+    var page = document.body && document.body.getAttribute('data-mp-page');
+    if (!page) return;
+    var pfx = 'page.' + page + '.';
+    var title = pickFirstLocaleString(L, [pfx + 'title']);
+    if (title) document.title = title;
+    var desc = pickFirstLocaleString(L, [pfx + 'metaDescription']);
+    function setMetaByName(name, content) {
+      if (!content) return;
+      var el = document.querySelector('meta[name="' + name.replace(/"/g, '') + '"]');
+      if (el) el.setAttribute('content', content);
+    }
+    function setMetaByProp(prop, content) {
+      if (!content) return;
+      var el = document.querySelector('meta[property="' + prop.replace(/"/g, '') + '"]');
+      if (el) el.setAttribute('content', content);
+    }
+    setMetaByName('description', desc);
+    var ogTitle = pickFirstLocaleString(L, [pfx + 'ogTitle', pfx + 'title']);
+    var ogDesc = pickFirstLocaleString(L, [pfx + 'ogDescription', pfx + 'metaDescription']);
+    setMetaByProp('og:title', ogTitle);
+    setMetaByProp('og:description', ogDesc);
+    var twTitle = pickFirstLocaleString(L, [pfx + 'twitterTitle', pfx + 'title']);
+    var twDesc = pickFirstLocaleString(L, [pfx + 'twitterDescription', pfx + 'metaDescription']);
+    setMetaByName('twitter:title', twTitle);
+    setMetaByName('twitter:description', twDesc);
+    if (page === 'biography') {
+      var scripts = document.querySelectorAll('script[type="application/ld+json"][data-mp-person-ld]');
+      if (scripts.length) {
+        try {
+          var raw = scripts[0].textContent || '';
+          var j = JSON.parse(raw);
+          if (j && typeof j === 'object') {
+            var jd = pickFirstLocaleString(L, ['page.biography.jsonLdDescription']);
+            var jt = pickFirstLocaleString(L, ['page.biography.jsonLdJobTitle']);
+            var jl = pickFirstLocaleString(L, ['page.biography.jsonLdHomeLocation']);
+            if (jd) j.description = jd;
+            if (jt) j.jobTitle = jt;
+            if (jl && j.homeLocation && typeof j.homeLocation === 'object') j.homeLocation.name = jl;
+            scripts[0].textContent = JSON.stringify(j);
+          }
+        } catch (e) {}
+      }
+    }
+  };
 
   function syncLangButtons(active) {
     var order = MP_LANG_LIST;

@@ -1,6 +1,6 @@
 /**
- * mp/biography.html — long-form bio from v1-assets/data/biography-data.json
- * (npm run build:biography -- [export.json]; defaults in v1-assets/build/biography-defaults.json).
+ * Biography page: visible editorial copy merges admin `bio_<lang>` first, then bundled
+ * `v1-assets/data/biography-data.json` (build artifact) as fallback. Portrait resolution unchanged.
  */
 (function () {
   'use strict';
@@ -14,7 +14,11 @@
       if (!window.localStorage) return null;
       var parseMaybe = function (raw) {
         if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
       };
       var direct = parseMaybe(window.localStorage.getItem(key));
       if (direct != null) {
@@ -43,7 +47,11 @@
     return '';
   }
   function fetchFirestoreDocJsonWithMeta(key) {
-    var url = 'https://firestore.googleapis.com/v1/projects/' + MP_FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
+    var url =
+      'https://firestore.googleapis.com/v1/projects/' +
+      MP_FIRESTORE_PROJECT_ID +
+      '/databases/(default)/documents/rg/' +
+      encodeURIComponent(key);
     return fetch(url, { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) return null;
@@ -53,14 +61,20 @@
         var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
         if (!v || typeof v !== 'string') return null;
         var parsed = null;
-        try { parsed = JSON.parse(v); } catch (e) { parsed = null; }
+        try {
+          parsed = JSON.parse(v);
+        } catch (e) {
+          parsed = null;
+        }
         if (!parsed || typeof parsed !== 'object') return null;
         return {
           data: parsed,
           updateTime: String(doc.updateTime || '').trim()
         };
       })
-      .catch(function () { return null; });
+      .catch(function () {
+        return null;
+      });
   }
   function getBioDocWithFallback(lang) {
     var key = 'bio_' + lang;
@@ -120,9 +134,8 @@
     }
     return next().then(function (found) {
       if (found && found.src) return found;
-      var bundled = (MP_BIO && MP_BIO.portraitImage) ? String(MP_BIO.portraitImage).trim() : '';
+      var bundled = MP_BIO && MP_BIO.portraitImage ? String(MP_BIO.portraitImage).trim() : '';
       if (bundled) return { src: normalizePortraitPath(bundled), token: '' };
-      // Keep legacy localStorage as a last-resort fallback only.
       var local = getBioPortraitOverride();
       if (local) return { src: normalizePortraitPath(local), token: '' };
       return { src: '', token: '' };
@@ -163,8 +176,62 @@
     return L[lang] || L.en || null;
   }
 
-  function renderBioContent() {
-    var d = pickLocale();
+  function firstNonEmpty() {
+    for (var i = 0; i < arguments.length; i++) {
+      var v = arguments[i];
+      if (v != null && String(v).trim() !== '') return String(v);
+    }
+    return '';
+  }
+
+  function normalizeParagraphsFromDoc(doc) {
+    if (!doc || typeof doc !== 'object') return [];
+    if (Array.isArray(doc.paragraphs) && doc.paragraphs.length) {
+      return doc.paragraphs
+        .map(function (x) {
+          return String(x == null ? '' : x).trim();
+        })
+        .filter(Boolean);
+    }
+    var out = [];
+    ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (k) {
+      var s = doc[k];
+      if (s != null && String(s).trim() !== '') out.push(String(s).trim());
+    });
+    return out;
+  }
+
+  function mergeBioDisplay(bundleLocale, adminDoc) {
+    var b = bundleLocale && typeof bundleLocale === 'object' ? bundleLocale : {};
+    var a = adminDoc && typeof adminDoc === 'object' ? adminDoc : {};
+    var adminParas = normalizeParagraphsFromDoc(a);
+    var bundleParas = Array.isArray(b.paragraphs)
+      ? b.paragraphs
+          .map(function (x) {
+            return String(x == null ? '' : x).trim();
+          })
+          .filter(Boolean)
+      : [];
+    var paras = adminParas.length ? adminParas : bundleParas;
+    return {
+      introLine: firstNonEmpty(a.introLine, b.introLine),
+      h2: firstNonEmpty(a.h2, b.h2),
+      paragraphs: paras,
+      portraitAlt: firstNonEmpty(a.portraitAlt, b.portraitAlt),
+      continueSectionTag: firstNonEmpty(a.continueSectionTag, b.continueSectionTag),
+      continueSub: firstNonEmpty(a.continueSub, b.continueSub),
+      ctaRepertoire: firstNonEmpty(a.ctaRepertoire, b.ctaRepertoire),
+      ctaMedia: firstNonEmpty(a.ctaMedia, b.ctaMedia),
+      ctaContact: firstNonEmpty(a.ctaContact, b.ctaContact),
+      ctaHomeIntro: firstNonEmpty(a.ctaHomeIntro, b.ctaHomeIntro)
+    };
+  }
+
+  function hasAnyBioBody(merged) {
+    return !!(merged.introLine || merged.h2 || (merged.paragraphs && merged.paragraphs.length));
+  }
+
+  function applyMergedBioToDom(merged) {
     var intro = document.getElementById('bioIntroLine');
     var h2 = document.getElementById('bio-heading');
     var parasEl = document.getElementById('bioParagraphs');
@@ -175,12 +242,24 @@
     var ctaMed = document.getElementById('bioCtaMedia');
     var ctaCon = document.getElementById('bioCtaContact');
     var ctaHome = document.getElementById('bioCtaHomeIntro');
-    if (!d) return;
-    if (intro) intro.textContent = d.introLine || '';
-    if (h2) h2.innerHTML = d.h2 || '';
+    var lang = currentLang();
+    var pick = typeof window.pickMpLocaleString === 'function' ? window.pickMpLocaleString : null;
+
+    if (!hasAnyBioBody(merged)) {
+      if (intro) {
+        var msg = pick ? pick(lang, 'bio.loadError') : null;
+        intro.textContent = msg || 'Biography content could not be loaded.';
+      }
+      if (h2) h2.innerHTML = '';
+      if (parasEl) parasEl.innerHTML = '';
+      return;
+    }
+
+    if (intro) intro.textContent = merged.introLine || '';
+    if (h2) h2.innerHTML = merged.h2 || '';
     if (parasEl) {
       parasEl.innerHTML = '';
-      var ps = Array.isArray(d.paragraphs) ? d.paragraphs : [];
+      var ps = merged.paragraphs || [];
       for (var i = 0; i < ps.length; i++) {
         var p = document.createElement('p');
         p.className = 'reveal rd' + (i + 1);
@@ -201,18 +280,56 @@
         });
       } catch (e) {}
     }
+
     resolvePortraitSource().then(function (resolved) {
       var portrait = resolved && resolved.src ? resolved.src : '';
       if (img && portrait) applyPortraitImage(img, portrait, resolved.token || '');
       else if (img) img.style.opacity = '1';
     });
-    if (img && d.portraitAlt) img.setAttribute('alt', d.portraitAlt);
-    if (ctag) ctag.textContent = d.continueSectionTag || '';
-    if (csub) csub.textContent = d.continueSub || '';
-    if (ctaRep) ctaRep.textContent = d.ctaRepertoire || '';
-    if (ctaMed) ctaMed.textContent = d.ctaMedia || '';
-    if (ctaCon) ctaCon.textContent = d.ctaContact || '';
-    if (ctaHome) ctaHome.textContent = d.ctaHomeIntro || '';
+
+    if (typeof window.applyMpChromeI18n === 'function') {
+      window.applyMpChromeI18n(lang);
+    }
+    if (img && merged.portraitAlt) img.setAttribute('alt', merged.portraitAlt);
+
+    if (ctag) ctag.textContent = merged.continueSectionTag || '';
+    if (csub) csub.textContent = merged.continueSub || '';
+    if (ctaRep) ctaRep.textContent = merged.ctaRepertoire || '';
+    if (ctaMed) ctaMed.textContent = merged.ctaMedia || '';
+    if (ctaCon) {
+      if (merged.ctaContact) ctaCon.textContent = merged.ctaContact;
+      else if (pick) {
+        var nb = pick(lang, 'nav.book');
+        if (nb != null && String(nb).trim() !== '') ctaCon.textContent = String(nb);
+      }
+    }
+    if (ctaHome) {
+      if (merged.ctaHomeIntro) ctaHome.textContent = merged.ctaHomeIntro;
+      else if (pick) {
+        var nh = pick(lang, 'nav.home');
+        if (nh != null && String(nh).trim() !== '') ctaHome.textContent = String(nh);
+      }
+    }
+
+    var homeWrap = document.getElementById('bioCtaHomeWrap');
+    if (homeWrap) {
+      var showHome = !!(merged.ctaHomeIntro || (pick && pick(lang, 'nav.home')));
+      homeWrap.style.display = showHome ? '' : 'none';
+    }
+
+    if (typeof window.applyPageHeadFromRgUi === 'function') {
+      window.applyPageHeadFromRgUi(lang);
+    }
+  }
+
+  function renderBioContent() {
+    var bundle = pickLocale();
+    var lang = currentLang();
+    getBioDocWithFallback(lang).then(function (docWrap) {
+      var adminDoc = docWrap && docWrap.data && typeof docWrap.data === 'object' ? docWrap.data : {};
+      var merged = mergeBioDisplay(bundle, adminDoc);
+      applyMergedBioToDom(merged);
+    });
   }
 
   function boot() {
@@ -227,20 +344,13 @@
       })
       .catch(function () {
         MP_BIO = null;
-        var intro = document.getElementById('bioIntroLine');
-        if (intro) {
-          var lang = currentLang();
-          var msg =
-            typeof window.pickMpLocaleString === 'function'
-              ? window.pickMpLocaleString(lang, 'bio.loadError')
-              : null;
-          intro.textContent = msg || 'Biography content could not be loaded.';
-        }
+        renderBioContent();
       });
   }
 
   window.addEventListener('mp:langchange', function () {
-    if (MP_BIO) renderBioContent();
+    BIO_DOC_CACHE = {};
+    renderBioContent();
   });
 
   if (window.MP_LOCALE_TABLE) {

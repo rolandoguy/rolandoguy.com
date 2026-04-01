@@ -2,6 +2,281 @@
   'use strict';
 
   var LANGS = ['en', 'de', 'es', 'it', 'fr'];
+  /** Stored in rg_ui_<lang> — Home intro copy + presenter block (also shown on Biography). */
+  var HOME_RG_UI_COPY_FIELDS = [
+    { id: 'hero-homeIntroH2', key: 'home.intro.h2' },
+    { id: 'hero-homeIntroP1', key: 'home.intro.p1' },
+    { id: 'hero-homeIntroP2', key: 'home.intro.p2' },
+    { id: 'hero-homeIntroProof', key: 'home.intro.proof' },
+    { id: 'hero-presenterTag', key: 'home.presenter.tag' },
+    { id: 'hero-presenterP1', key: 'home.presenter.p1' },
+    { id: 'hero-presenterP2', key: 'home.presenter.p2' },
+    { id: 'hero-presenterP3', key: 'home.presenter.p3' }
+  ];
+  /** Public UI strings in rg_ui_<lang> (beyond nav + home intro block). Built on first open of UI section. */
+  function unpackPublicUiCopyGroups(packed) {
+    return packed.map(function (g) {
+      return {
+        title: g[0],
+        fields: g[1].map(function (r) {
+          return { key: r[0], label: r[1], multi: !!r[2], rows: r[3] || 3 };
+        })
+      };
+    });
+  }
+  var PUBLIC_RG_UI_COPY_GROUPS = unpackPublicUiCopyGroups([
+    ['Global chrome & hero', [
+      ['ui.skipMain', 'Skip to main link'],
+      ['ui.menu', 'Hamburger · aria-label (Menu)'],
+      ['ui.backToTop', 'Back to top · aria-label'],
+      ['ui.close', 'Close (chrome)'],
+      ['ui.closeEmbed', 'Close embed'],
+      ['ui.closeVideoAria', 'Close video · aria-label'],
+      ['ui.copied', 'Copied toast'],
+      ['hero.scroll', 'Hero scroll hint text'],
+      ['hero.scrollAria', 'Hero scroll · aria-label'],
+      ['hero.nameHtml', 'Hero name (HTML)', 1, 4]
+    ]],
+    ['Nav logo (header)', [['nav.logo', 'Nav wordmark text']]],
+    ['SEO · Home (`index`)', [
+      ['page.index.title', 'Document <title>'],
+      ['page.index.metaDescription', 'Meta description', 1, 2],
+      ['page.index.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.index.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.index.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.index.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Calendar', [
+      ['page.calendar.title', 'Document <title>'],
+      ['page.calendar.metaDescription', 'Meta description', 1, 2],
+      ['page.calendar.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.calendar.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.calendar.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.calendar.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Media', [
+      ['page.media.title', 'Document <title>'],
+      ['page.media.metaDescription', 'Meta description', 1, 2],
+      ['page.media.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.media.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.media.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.media.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Press', [
+      ['page.press.title', 'Document <title>'],
+      ['page.press.metaDescription', 'Meta description', 1, 2],
+      ['page.press.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.press.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.press.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.press.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Repertoire', [
+      ['page.repertoire.title', 'Document <title>'],
+      ['page.repertoire.metaDescription', 'Meta description', 1, 2],
+      ['page.repertoire.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.repertoire.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.repertoire.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.repertoire.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Contact', [
+      ['page.contact.title', 'Document <title>'],
+      ['page.contact.metaDescription', 'Meta description', 1, 2],
+      ['page.contact.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.contact.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.contact.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.contact.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Reviews', [
+      ['page.reviews.title', 'Document <title>'],
+      ['page.reviews.metaDescription', 'Meta description', 1, 2],
+      ['page.reviews.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.reviews.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.reviews.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.reviews.twitterDescription', 'Twitter description (optional)', 1, 2]
+    ]],
+    ['SEO · Biography + JSON-LD', [
+      ['page.biography.title', 'Document <title>'],
+      ['page.biography.metaDescription', 'Meta description', 1, 2],
+      ['page.biography.ogTitle', 'Open Graph title (optional)', 0],
+      ['page.biography.ogDescription', 'Open Graph description (optional)', 1, 2],
+      ['page.biography.twitterTitle', 'Twitter title (optional)', 0],
+      ['page.biography.twitterDescription', 'Twitter description (optional)', 1, 2],
+      ['page.biography.jsonLdDescription', 'JSON-LD · Person description', 1, 3],
+      ['page.biography.jsonLdJobTitle', 'JSON-LD · jobTitle'],
+      ['page.biography.jsonLdHomeLocation', 'JSON-LD · homeLocation.name']
+    ]],
+    ['Footer', [
+      ['footer.brandLine', 'Footer brand line'],
+      ['footer.tagline', 'Footer tagline'],
+      ['footer.rights', 'Footer rights line'],
+      ['footer.socialInstagram', 'Footer · Instagram link label'],
+      ['footer.socialYoutube', 'Footer · YouTube link label'],
+      ['footer.socialFacebook', 'Footer · Facebook link label'],
+      ['footer.copyrightLead', 'Footer · copyright / name line (before rights)'],
+      ['footer.locationLine', 'Footer · cities / location line'],
+      ['footer.ornament', 'Footer · center ornament (e.g. ✦)']
+    ]],
+    ['Shared / biography', [
+      ['about.photoLabel', 'Photo label (home about)'],
+      ['bio.heroImageAlt', 'Biography hero image alt'],
+      ['bio.loadError', 'Biography load error']
+    ]],
+    ['Home supporting', [
+      ['home.intro.photoAlt', 'Home intro image alt'],
+      ['home.explore.tag', 'Explore block tag'],
+      ['home.explore.sub', 'Explore block subtitle', 1],
+      ['home.explore.btnBookings', 'Explore · bookings button']
+    ]],
+    ['Repertoire (tabs & table)', [
+      ['rep.tabOpera', 'Tab · Opera roles'],
+      ['rep.tabArias', 'Tab · Opera arias'],
+      ['rep.tabOperetta', 'Tab · Operetta'],
+      ['rep.tabOperettaRoles', 'Tab · Operetta roles'],
+      ['rep.tabLied', 'Tab · Lied'],
+      ['rep.pageH2', 'Page title (HTML)', 1, 3],
+      ['rep.thRole', 'Table · Role'],
+      ['rep.thOpera', 'Table · Opera / work'],
+      ['rep.thWork', 'Table · Work'],
+      ['rep.thWorkLied', 'Table · Work (Lied)'],
+      ['rep.thComposer', 'Table · Composer'],
+      ['rep.status.all', 'Filter · All'],
+      ['rep.status.performed', 'Filter · Performed'],
+      ['rep.status.prepared', 'Filter · Prepared'],
+      ['rep.status.studying', 'Filter · Studying'],
+      ['rep.statusRow.performed', 'Row badge · Performed'],
+      ['rep.statusRow.prepared', 'Row badge · Prepared'],
+      ['rep.statusRow.studying', 'Row badge · Studying'],
+      ['rep.empty', 'Empty state'],
+      ['rep.loadError', 'Load error'],
+      ['rep.performanceHistory', 'Production history heading'],
+      ['rep.performanceMoreInfo', 'More info (repertoire modal)'],
+      ['rep.introLine', 'Intro line', 1],
+      ['rep.descOpera', 'Description · Opera', 1],
+      ['rep.descArias', 'Description · Arias', 1],
+      ['rep.descOperetta', 'Description · Operetta', 1],
+      ['rep.descLied', 'Description · Lied', 1],
+      ['rep.descTango', 'Description · Tango', 1],
+      ['rep.moreTag', 'More block tag'],
+      ['rep.moreSub', 'More block subtitle', 1]
+    ]],
+    ['Calendar / performances', [
+      ['perf.maps', 'Maps'],
+      ['perf.pastStamp', 'Past stamp'],
+      ['perf.pastDivider', 'Past performances divider'],
+      ['perf.pastDividerSelected', 'Selected past performances divider'],
+      ['perf.calendarEmpty', 'Calendar empty'],
+      ['perf.emptyUpcoming', 'Empty upcoming'],
+      ['perf.moreInfo', 'More info (card)'],
+      ['perf.pastShow', 'Show past performances'],
+      ['perf.pastHide', 'Hide past performances'],
+      ['perf.repertoireLabel', 'Repertoire label'],
+      ['perf.pastCat.stage', 'Past category · Stage'],
+      ['perf.pastCat.concert', 'Past category · Concert'],
+      ['perf.pastCat.collaboration', 'Past category · Collaboration'],
+      ['perf.pastCat.private', 'Past category · Private'],
+      ['perf.printAgenda', 'Print · agenda'],
+      ['perf.printSubtitle', 'Print · subtitle'],
+      ['perf.printHeadline', 'Print · headline'],
+      ['perf.printTagline', 'Print · tagline'],
+      ['perf.printDocTitle', 'Print · document title'],
+      ['perf.printTitle', 'Print · title'],
+      ['perf.moreInfoPrint', 'Print · more info'],
+      ['perf.ticketsInfo', 'Tickets & info'],
+      ['perf.dataLoadError', 'Data load error'],
+      ['perf.loadFallbackH2', 'Fallback page H2 (HTML)', 1, 3],
+      ['perf.pageH2', 'Page H2 (HTML)', 1, 3],
+      ['perf.pageIntro', 'Page intro', 1, 4]
+    ]],
+    ['Media (videos & photos)', [
+      ['vid.brand', 'Video brand line'],
+      ['vid.cat.opera_lied', 'Video category · Opera & art song'],
+      ['vid.cat.gala_crossover', 'Video category · Gala & crossover'],
+      ['vid.repCat.opera', 'Video rep filter · Opera'],
+      ['vid.repCat.lied', 'Video rep filter · Lied'],
+      ['vid.repCat.concert_sacred', 'Video rep filter · Concert'],
+      ['vid.repCat.tango', 'Video rep filter · Tango'],
+      ['vid.repCat.crossover', 'Video rep filter · Crossover'],
+      ['vid.showMore', 'Show more videos'],
+      ['vid.showLess', 'Show less'],
+      ['vid.embedUnavailable', 'Embed unavailable'],
+      ['vid.openYoutube', 'Open on YouTube'],
+      ['mp.videos.h2', 'Videos section H2 (HTML)', 1, 3],
+      ['mp.section.videos', 'Section label · Videos'],
+      ['mp.section.photos', 'Section label · Photos'],
+      ['mp.photos.h2', 'Photos H2 (HTML)', 1, 3],
+      ['mp.photos.sub', 'Photos subtitle', 1],
+      ['mp.photos.studioTab', 'Photos tab · Studio'],
+      ['mp.photos.stageTab', 'Photos tab · Stage'],
+      ['mp.photos.backstageTab', 'Photos tab · Backstage'],
+      ['mp.photos.backstageEmpty', 'Backstage empty'],
+      ['mp.mediaLoadError', 'Media load error'],
+      ['mp.mediaBottomNote', 'Media page footnote', 1],
+      ['mp.mediaBottomPress', 'Media · press downloads link']
+    ]],
+    ['Press & presenter (EPK chrome)', [
+      ['press.tag', 'Press section tag'],
+      ['press.empty', 'Press quotes empty'],
+      ['press.readMore', 'Read article'],
+      ['press.dataLoadError', 'Press load error'],
+      ['press.intro', 'Press intro', 1, 4],
+      ['epk.tag', 'EPK section tag'],
+      ['epk.title', 'EPK dossier title'],
+      ['epk.bio50lbl', 'Bio 50 label'],
+      ['epk.bio150lbl', 'Bio 150 label'],
+      ['epk.bio300lbl', 'Bio full label'],
+      ['epk.copyBio', 'Copy biography button'],
+      ['epk.photos', 'High-res photos heading'],
+      ['epk.photosIntro', 'EPK photos intro', 1],
+      ['epk.photoCredit', 'EPK photo credit', 1],
+      ['epk.docs', 'Documents heading'],
+      ['epk.docsIntro', 'Documents intro', 1],
+      ['epk.downloadDossier', 'Download dossier'],
+      ['epk.downloadArtistSheet', 'Download artist sheet'],
+      ['epk.programsLink', 'Programs link'],
+      ['epk.downloadPhoto', 'Download hi-res'],
+      ['epk.preview', 'Preview'],
+      ['epk.pdfSoon', 'PDF soon'],
+      ['mp.pressCoverage', 'Media page · press coverage heading'],
+      ['mp.presenterMaterials', 'Media page · presenter materials heading'],
+      ['mp.pressFooterNote', 'Press page footnote', 1]
+    ]],
+    ['Contact & form', [
+      ['form.name', 'Form · Name label'],
+      ['form.email', 'Form · Email label'],
+      ['form.subject', 'Form · Subject label'],
+      ['form.message', 'Form · Message label'],
+      ['form.send', 'Form · Send button'],
+      ['form.success', 'Form · Success message', 1],
+      ['form.namePh', 'Placeholder · Name'],
+      ['form.emailPh', 'Placeholder · Email'],
+      ['form.subjectPh', 'Placeholder · Subject'],
+      ['form.messagePh', 'Placeholder · Message', 1],
+      ['form.sending', 'Form · Sending'],
+      ['form.errorSend', 'Form · Send error', 1],
+      ['contact.materialsHint', 'Contact materials hint', 1],
+      ['contact.dataLoadError', 'Contact load error', 1],
+      ['contact.title', 'Contact title fallback (HTML)', 1, 3],
+      ['mp.contactBottomNote', 'Contact onward note', 1]
+    ]],
+    ['Reviews stub & calendar note', [
+      ['mp.reviewsStub.tag', 'Reviews stub tag'],
+      ['mp.reviewsStub.h2', 'Reviews stub H2'],
+      ['mp.reviewsStub.html', 'Reviews stub body (HTML)', 1, 5],
+      ['mp.calFooterNote', 'Calendar page footnote', 1]
+    ]]
+  ]);
+  function fieldDomIdForUiKey(key) {
+    return 'ui-str-' + String(key || '').replace(/\./g, '-');
+  }
+  function flatPublicRgUiCopyFields() {
+    var out = [];
+    PUBLIC_RG_UI_COPY_GROUPS.forEach(function (g) {
+      (g.fields || []).forEach(function (f) {
+        out.push(f);
+      });
+    });
+    return out;
+  }
   var ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
   var AUTH_REDIRECT_PENDING_KEY = 'adm2_redirect_pending';
   var AUTH_REDIRECT_PENDING_TS_KEY = 'adm2_redirect_pending_ts';
@@ -370,6 +645,132 @@
   function pickStoredOrFallback(stored, fallback, key) {
     if (isObject(stored) && hasOwn(stored, key)) return safeString(stored[key]);
     return safeString(fallback && fallback[key]);
+  }
+  function fillHomeRgUiCopyFields(uiStored, uiFallback) {
+    HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      var el = $(row.id);
+      if (!el) return;
+      el.value = pickStoredOrFallback(uiStored, uiFallback, row.key);
+    });
+  }
+  function persistHomeRgUiCopyFields(ui) {
+    var out = isObject(ui) ? ui : {};
+    HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      var el = $(row.id);
+      if (!el) return;
+      out[row.key] = safeString(el.value);
+    });
+    return out;
+  }
+  var UI_PUBLIC_COPY_BUILD = '2';
+  function ensureUiPublicCopyEditorBuilt() {
+    var host = $('ui-public-copy-host');
+    if (!host || host.dataset.built === UI_PUBLIC_COPY_BUILD) return;
+    host.dataset.built = UI_PUBLIC_COPY_BUILD;
+    var html =
+      '<h3>Structured public copy</h3><p class="muted" style="margin:0 0 10px">Saved into the Firestore/local <code>rg_ui_*</code> document for the language selected above. Empty fields use the bundled locale fallback. Raw JSON below remains available for advanced edits.</p>';
+    PUBLIC_RG_UI_COPY_GROUPS.forEach(function (g) {
+      html +=
+        '<details class="tools-card details-block" style="margin-top:10px"><summary>' +
+        escapeHtml(g.title) +
+        '</summary><div style="margin-top:10px">';
+      (g.fields || []).forEach(function (f) {
+        var id = fieldDomIdForUiKey(f.key);
+        html += '<label class="ui-str-field" style="display:block;margin-bottom:14px">' + escapeHtml(f.label);
+        html +=
+          '<span class="muted" style="display:block;font-size:11px;margin:2px 0 6px">Key: <code>' +
+          escapeHtml(f.key) +
+          '</code></span>';
+        if (f.multi) {
+          html +=
+            '<textarea id="' +
+            id +
+            '" class="wide" rows="' +
+            (f.rows || 3) +
+            '" style="width:100%;box-sizing:border-box"></textarea></label>';
+        } else {
+          html += '<input type="text" id="' + id + '" class="wide" style="width:100%;box-sizing:border-box"></label>';
+        }
+      });
+      html += '</div></details>';
+    });
+    host.innerHTML = html;
+    bindInputsDirty(
+      flatPublicRgUiCopyFields().map(function (f) {
+        return fieldDomIdForUiKey(f.key);
+      }),
+      function () {
+        updateCompletenessIndicators();
+        markDirty(true, 'UI copy editado');
+      }
+    );
+  }
+  function fillPublicRgUiCopyFields(doc) {
+    var uiFb = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var t = state.api.uiTable(state.lang);
+        if (isObject(t)) uiFb = t;
+      }
+    } catch (e) {}
+    var d = isObject(doc) ? doc : {};
+    flatPublicRgUiCopyFields().forEach(function (f) {
+      var el = $(fieldDomIdForUiKey(f.key));
+      if (!el) return;
+      el.value = pickStoredOrFallback(d, uiFb, f.key);
+    });
+  }
+  /** Nav inputs + structured public copy only (does not touch Home hero intro fields). */
+  function syncUiNavAndPublicCopyFromDoc(d) {
+    var doc = isObject(d) ? d : {};
+    if ($('ui-nav-home')) $('ui-nav-home').value = safeString(doc['nav.home']);
+    if ($('ui-nav-bio')) $('ui-nav-bio').value = safeString(doc['nav.bio']);
+    if ($('ui-nav-rep')) $('ui-nav-rep').value = safeString(doc['nav.rep']);
+    if ($('ui-nav-media')) $('ui-nav-media').value = safeString(doc['nav.media']);
+    if ($('ui-nav-cal')) $('ui-nav-cal').value = safeString(doc['nav.cal']);
+    if ($('ui-nav-epk')) $('ui-nav-epk').value = safeString(doc['nav.epk']);
+    if ($('ui-nav-book')) $('ui-nav-book').value = safeString(doc['nav.book']);
+    if ($('ui-nav-contact')) $('ui-nav-contact').value = safeString(doc['nav.contact']);
+    fillPublicRgUiCopyFields(doc);
+  }
+  /** Build structured copy DOM and fill nav + public fields from storage (safe on any section). */
+  function primeUiPublicCopyFromStorage() {
+    if (!state.ready || !state.api) return;
+    ensureUiPublicCopyEditorBuilt();
+    var d = loadDoc('rg_ui_' + state.lang, null);
+    if (!isObject(d)) {
+      try {
+        if (typeof state.api.uiTable === 'function') {
+          var t = state.api.uiTable(state.lang);
+          if (isObject(t)) d = t;
+        }
+      } catch (e) {}
+    }
+    if (!isObject(d)) d = {};
+    syncUiNavAndPublicCopyFromDoc(d);
+  }
+  function persistPublicRgUiCopyFields(doc) {
+    var out = isObject(doc) ? doc : {};
+    flatPublicRgUiCopyFields().forEach(function (f) {
+      var el = $(fieldDomIdForUiKey(f.key));
+      if (!el) return;
+      out[f.key] = safeString(el.value);
+    });
+    return out;
+  }
+  function collectUiSectionInputsToDoc() {
+    var d = {};
+    d['nav.home'] = safeString($('ui-nav-home') && $('ui-nav-home').value);
+    d['nav.bio'] = safeString($('ui-nav-bio') && $('ui-nav-bio').value);
+    d['nav.rep'] = safeString($('ui-nav-rep') && $('ui-nav-rep').value);
+    d['nav.media'] = safeString($('ui-nav-media') && $('ui-nav-media').value);
+    d['nav.cal'] = safeString($('ui-nav-cal') && $('ui-nav-cal').value);
+    d['nav.epk'] = safeString($('ui-nav-epk') && $('ui-nav-epk').value);
+    d['nav.book'] = safeString($('ui-nav-book') && $('ui-nav-book').value);
+    d['nav.contact'] = safeString($('ui-nav-contact') && $('ui-nav-contact').value);
+    d = persistHomeRgUiCopyFields(d);
+    d = persistPublicRgUiCopyFields(d);
+    return d;
   }
   function getLegacySection(section) {
     try {
@@ -753,7 +1154,7 @@
       : (!hasLocalPrograms && !hasEnPrograms ? 'err' : scoreStatus(programsMissing, false));
     var contactMissing = ['title', 'sub', 'email'].filter(function (k) { return isBlank(contact[k]); }).length;
     out.contact = scoreStatus(contactMissing, (!isBlank(contact.email) && !isValidEmail(contact.email)));
-    var navKeys = ['nav.home', 'nav.bio', 'nav.rep', 'nav.media', 'nav.cal', 'nav.epk', 'nav.book'];
+    var navKeys = ['nav.home', 'nav.bio', 'nav.rep', 'nav.media', 'nav.cal', 'nav.epk', 'nav.book', 'nav.contact'];
     var uiMissing = navKeys.filter(function (k) { return isBlank(ui[k]); }).length;
     out.ui = uiMissing >= 3 ? 'warn' : (uiMissing > 0 ? 'ok' : 'ok');
     return out;
@@ -780,6 +1181,7 @@
       state.pressVisibleFilter = pressFilter;
       renderPressList();
     }
+    if (lang && LANGS.indexOf(lang) >= 0) primeUiPublicCopyFromStorage();
   }
   async function renderSiteHealth() {
     if (!state.ready || !state.api) return;
@@ -1120,6 +1522,7 @@
     $('hero-quickCalLabel').value = pickStoredOrFallback(stored, fallback, 'quickCalLabel');
     $('hero-introCtaBio').value = (isObject(stored) && safeString(stored.introCtaBio).trim()) ? safeString(stored.introCtaBio) : pickStoredOrFallback(uiStored, uiFallback, 'home.intro.ctaBio');
     $('hero-introCtaMedia').value = (isObject(stored) && safeString(stored.introCtaMedia).trim()) ? safeString(stored.introCtaMedia) : pickStoredOrFallback(uiStored, uiFallback, 'home.intro.ctaMedia');
+    fillHomeRgUiCopyFields(uiStored, uiFallback);
     $('hero-bgImage').value = pickStoredOrFallback(stored, fallback, 'bgImage');
     // Keep preview blank until final source is resolved (no stale first paint).
     $('hero-introImage').value = '';
@@ -1210,6 +1613,10 @@
     try {
       localStorage.setItem(heroKey, JSON.stringify(payload));
     } catch (e) {}
+    var uiMerged = loadDoc('rg_ui_' + state.lang, null);
+    if (!isObject(uiMerged)) uiMerged = {};
+    uiMerged = persistHomeRgUiCopyFields(uiMerged);
+    saveDoc('rg_ui_' + state.lang, uiMerged);
     var fsWrite = await writeHeroDocToFirestore(heroKey, payload);
     var fsReadBack = await readHeroDocFromFirestore(heroKey);
     var fsCta1 = safeString(fsReadBack && fsReadBack.cta1);
@@ -1269,6 +1676,42 @@
     return '../' + s;
   }
 
+  function bioParagraphFieldIds() {
+    return ['bio-p1', 'bio-p2', 'bio-p3', 'bio-p4', 'bio-p5', 'bio-p6'];
+  }
+  function normalizeParagraphsFromBioStored(stored) {
+    if (!stored || typeof stored !== 'object') return [];
+    if (Array.isArray(stored.paragraphs) && stored.paragraphs.length) {
+      return stored.paragraphs
+        .map(function (x) {
+          return safeString(x).trim();
+        })
+        .filter(Boolean);
+    }
+    var out = [];
+    ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (k) {
+      var s = safeString(stored[k]).trim();
+      if (s) out.push(s);
+    });
+    return out;
+  }
+  function paragraphsArrayFromBioInputs() {
+    var out = [];
+    bioParagraphFieldIds().forEach(function (id) {
+      var s = safeString($(id) && $(id).value).trim();
+      if (s) out.push(s);
+    });
+    return out;
+  }
+  function fillBioParagraphInputsFromStored(stored, fallback) {
+    var paras = normalizeParagraphsFromBioStored(isObject(stored) ? stored : {});
+    if (!paras.length) paras = normalizeParagraphsFromBioStored(isObject(fallback) ? fallback : {});
+    var ids = bioParagraphFieldIds();
+    for (var i = 0; i < ids.length; i++) {
+      var el = $(ids[i]);
+      if (el) el.value = safeString(paras[i]);
+    }
+  }
   function loadBioPortraitDefault() {
     if (state.bioPortraitDefault) return Promise.resolve(state.bioPortraitDefault);
     return fetch('v1-assets/data/biography-data.json', { cache: 'no-store' })
@@ -1311,9 +1754,16 @@
     var stored = loadDoc('bio_' + state.lang, null);
     var storedEn = loadDoc('bio_en', null);
     var fallback = getLegacySection('bio');
+    $('bio-introLine').value = pickStoredOrFallback(stored, fallback, 'introLine');
     $('bio-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
-    $('bio-p1').value = pickStoredOrFallback(stored, fallback, 'p1');
-    $('bio-p2').value = pickStoredOrFallback(stored, fallback, 'p2');
+    fillBioParagraphInputsFromStored(stored, fallback);
+    $('bio-continue-tag').value = pickStoredOrFallback(stored, fallback, 'continueSectionTag');
+    $('bio-continue-sub').value = pickStoredOrFallback(stored, fallback, 'continueSub');
+    $('bio-cta-rep').value = pickStoredOrFallback(stored, fallback, 'ctaRepertoire');
+    $('bio-cta-media').value = pickStoredOrFallback(stored, fallback, 'ctaMedia');
+    $('bio-cta-contact').value = pickStoredOrFallback(stored, fallback, 'ctaContact');
+    $('bio-cta-home').value = pickStoredOrFallback(stored, fallback, 'ctaHomeIntro');
+    $('bio-portraitAlt').value = pickStoredOrFallback(stored, fallback, 'portraitAlt');
     $('bio-quote').value = pickStoredOrFallback(stored, fallback, 'quote');
     $('bio-cite').value = pickStoredOrFallback(stored, fallback, 'cite');
     var immediate = resolveEffectiveBioPortrait(stored, storedEn, state.bioPortraitDefault);
@@ -1333,10 +1783,20 @@
   }
   function saveBio() {
     var applyAll = !!($('bio-image-all-langs') && $('bio-image-all-langs').checked);
+    var paras = paragraphsArrayFromBioInputs();
     var payload = {
+      introLine: safeString($('bio-introLine').value),
       h2: safeString($('bio-h2').value),
-      p1: safeString($('bio-p1').value),
-      p2: safeString($('bio-p2').value),
+      p1: paras[0] || '',
+      p2: paras[1] || '',
+      paragraphs: paras,
+      continueSectionTag: safeString($('bio-continue-tag').value),
+      continueSub: safeString($('bio-continue-sub').value),
+      ctaRepertoire: safeString($('bio-cta-rep').value),
+      ctaMedia: safeString($('bio-cta-media').value),
+      ctaContact: safeString($('bio-cta-contact').value),
+      ctaHomeIntro: safeString($('bio-cta-home').value),
+      portraitAlt: safeString($('bio-portraitAlt').value),
       quote: safeString($('bio-quote').value),
       cite: safeString($('bio-cite').value),
       portraitImage: safeString($('bio-portraitImage').value).trim()
@@ -3002,6 +3462,7 @@
   }
 
   function loadUiJson() {
+    ensureUiPublicCopyEditorBuilt();
     var d = loadDoc('rg_ui_' + state.lang, null);
     if (!isObject(d)) {
       try {
@@ -3018,13 +3479,19 @@
   }
   function loadUiNavFieldsFromDoc(d) {
     var doc = isObject(d) ? d : {};
-    $('ui-nav-home').value = safeString(doc['nav.home']);
-    $('ui-nav-bio').value = safeString(doc['nav.bio']);
-    $('ui-nav-rep').value = safeString(doc['nav.rep']);
-    $('ui-nav-media').value = safeString(doc['nav.media']);
-    $('ui-nav-cal').value = safeString(doc['nav.cal']);
-    $('ui-nav-epk').value = safeString(doc['nav.epk']);
-    $('ui-nav-book').value = safeString(doc['nav.book']);
+    syncUiNavAndPublicCopyFromDoc(doc);
+    var uiFbHome = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var tHome = state.api.uiTable(state.lang);
+        if (isObject(tHome)) uiFbHome = tHome;
+      }
+    } catch (e) {}
+    HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      var el = $(row.id);
+      if (!el) return;
+      el.value = pickStoredOrFallback(doc, uiFbHome, row.key);
+    });
   }
   function saveUiNav() {
     var d = loadDoc('rg_ui_' + state.lang, null);
@@ -3036,6 +3503,9 @@
     d['nav.cal'] = safeString($('ui-nav-cal').value);
     d['nav.epk'] = safeString($('ui-nav-epk').value);
     d['nav.book'] = safeString($('ui-nav-book').value);
+    if ($('ui-nav-contact')) d['nav.contact'] = safeString($('ui-nav-contact').value);
+    d = persistHomeRgUiCopyFields(d);
+    d = persistPublicRgUiCopyFields(d);
     saveDoc('rg_ui_' + state.lang, d);
     $('ui-json').value = JSON.stringify(d, null, 2);
   }
@@ -3069,9 +3539,16 @@
     if (!window.confirm('Copy Biography text fields from EN for this language? Portrait image is not overwritten.')) return;
     var en = loadDoc('bio_en', {});
     if (!isObject(en)) en = {};
+    $('bio-introLine').value = safeString(en.introLine);
     $('bio-h2').value = safeString(en.h2);
-    $('bio-p1').value = safeString(en.p1);
-    $('bio-p2').value = safeString(en.p2);
+    fillBioParagraphInputsFromStored(en, {});
+    $('bio-continue-tag').value = safeString(en.continueSectionTag);
+    $('bio-continue-sub').value = safeString(en.continueSub);
+    $('bio-cta-rep').value = safeString(en.ctaRepertoire);
+    $('bio-cta-media').value = safeString(en.ctaMedia);
+    $('bio-cta-contact').value = safeString(en.ctaContact);
+    $('bio-cta-home').value = safeString(en.ctaHomeIntro);
+    $('bio-portraitAlt').value = safeString(en.portraitAlt);
     $('bio-quote').value = safeString(en.quote);
     $('bio-cite').value = safeString(en.cite);
     updateCompletenessIndicators();
@@ -3126,10 +3603,20 @@
   }
   function copyUiNavFromEn(onlyMissing) {
     if (state.lang === 'en') return setStatus('Already EN.', 'warn');
-    var label = onlyMissing ? 'Copy only missing navigation labels from EN?' : 'Overwrite navigation labels from EN?';
+    var label = onlyMissing
+      ? 'Copy only missing navigation labels and structured public copy from EN?'
+      : 'Overwrite navigation labels and structured public copy from EN?';
     if (!window.confirm(label)) return;
+    ensureUiPublicCopyEditorBuilt();
     var en = loadDoc('rg_ui_en', {});
     if (!isObject(en)) en = {};
+    var enFb = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var tEn = state.api.uiTable('en');
+        if (isObject(tEn)) enFb = tEn;
+      }
+    } catch (e) {}
     var rows = [
       { id: 'ui-nav-home', key: 'nav.home' },
       { id: 'ui-nav-bio', key: 'nav.bio' },
@@ -3137,15 +3624,27 @@
       { id: 'ui-nav-media', key: 'nav.media' },
       { id: 'ui-nav-cal', key: 'nav.cal' },
       { id: 'ui-nav-epk', key: 'nav.epk' },
-      { id: 'ui-nav-book', key: 'nav.book' }
+      { id: 'ui-nav-book', key: 'nav.book' },
+      { id: 'ui-nav-contact', key: 'nav.contact' }
     ];
     rows.forEach(function (row) {
       var el = $(row.id);
       if (!el) return;
-      if (!onlyMissing || isBlank(el.value)) el.value = safeString(en[row.key]);
+      if (!onlyMissing || isBlank(el.value)) {
+        var v = hasOwn(en, row.key) ? en[row.key] : enFb[row.key];
+        el.value = safeString(v);
+      }
+    });
+    flatPublicRgUiCopyFields().forEach(function (f) {
+      var el = $(fieldDomIdForUiKey(f.key));
+      if (!el) return;
+      if (!onlyMissing || isBlank(el.value)) {
+        var v2 = hasOwn(en, f.key) ? en[f.key] : enFb[f.key];
+        el.value = safeString(v2);
+      }
     });
     updateCompletenessIndicators();
-    markDirty(true, onlyMissing ? 'Missing nav labels copied from EN' : 'Nav labels copied from EN');
+    markDirty(true, onlyMissing ? 'Missing UI strings copied from EN' : 'UI strings copied from EN');
   }
   function copyPressBiosMissingFromEn() {
     if (state.lang === 'en') return setStatus('Already EN.', 'warn');
@@ -3175,6 +3674,20 @@
       { id: 'hero-introCtaMedia', key: 'introCtaMedia' }
     ];
     map.forEach(function (m) { if (isBlank($(m.id).value)) $(m.id).value = safeString(en[m.key]); });
+    var enUi = loadDoc('rg_ui_en', null);
+    if (!isObject(enUi)) enUi = {};
+    var enUiFb = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var tEn = state.api.uiTable('en');
+        if (isObject(tEn)) enUiFb = tEn;
+      }
+    } catch (e) {}
+    HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      if (!isBlank($(row.id).value)) return;
+      var v = hasOwn(enUi, row.key) ? enUi[row.key] : enUiFb[row.key];
+      $(row.id).value = safeString(v);
+    });
     updateHomeMiniPreviews();
     updateCompletenessIndicators();
     markDirty(true, 'Home missing fields copied from EN');
@@ -3184,9 +3697,29 @@
     var en = loadDoc('bio_en', {});
     if (!isObject(en)) en = {};
     var map = [
-      { id: 'bio-h2', key: 'h2' }, { id: 'bio-p1', key: 'p1' }, { id: 'bio-p2', key: 'p2' }, { id: 'bio-quote', key: 'quote' }, { id: 'bio-cite', key: 'cite' }
+      { id: 'bio-introLine', key: 'introLine' },
+      { id: 'bio-h2', key: 'h2' },
+      { id: 'bio-continue-tag', key: 'continueSectionTag' },
+      { id: 'bio-continue-sub', key: 'continueSub' },
+      { id: 'bio-cta-rep', key: 'ctaRepertoire' },
+      { id: 'bio-cta-media', key: 'ctaMedia' },
+      { id: 'bio-cta-contact', key: 'ctaContact' },
+      { id: 'bio-cta-home', key: 'ctaHomeIntro' },
+      { id: 'bio-portraitAlt', key: 'portraitAlt' },
+      { id: 'bio-quote', key: 'quote' },
+      { id: 'bio-cite', key: 'cite' }
     ];
-    map.forEach(function (m) { if (isBlank($(m.id).value)) $(m.id).value = safeString(en[m.key]); });
+    map.forEach(function (m) {
+      if (isBlank($(m.id).value)) $(m.id).value = safeString(en[m.key]);
+    });
+    var enParas = normalizeParagraphsFromBioStored(en);
+    if (!paragraphsArrayFromBioInputs().length && enParas.length) {
+      fillBioParagraphInputsFromStored(en, {});
+    } else {
+      bioParagraphFieldIds().forEach(function (id, idx) {
+        if (isBlank($(id).value) && enParas[idx] != null) $(id).value = safeString(enParas[idx]);
+      });
+    }
     updateBioMiniPreview();
     updateCompletenessIndicators();
     markDirty(true, 'Biography missing fields copied from EN');
@@ -3286,7 +3819,9 @@
   function compareHomeWithEn() {
     var cur = loadDoc('hero_' + state.lang, {}) || {};
     var en = loadDoc('hero_en', {}) || {};
-    compareFieldsWithEn('Home / Hero', {
+    var curUi = loadDoc('rg_ui_' + state.lang, {}) || {};
+    var enUi = loadDoc('rg_ui_en', {}) || {};
+    var curH = {
       eyebrow: cur.eyebrow,
       subtitle: cur.subtitle,
       cta1: cur.cta1,
@@ -3295,7 +3830,8 @@
       quickCalLabel: cur.quickCalLabel,
       introCtaBio: cur.introCtaBio,
       introCtaMedia: cur.introCtaMedia
-    }, {
+    };
+    var enH = {
       eyebrow: en.eyebrow,
       subtitle: en.subtitle,
       cta1: en.cta1,
@@ -3304,12 +3840,35 @@
       quickCalLabel: en.quickCalLabel,
       introCtaBio: en.introCtaBio,
       introCtaMedia: en.introCtaMedia
+    };
+    HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      curH['UI · ' + row.key] = curUi[row.key];
+      enH['UI · ' + row.key] = enUi[row.key];
     });
+    compareFieldsWithEn('Home / Hero + intro UI', curH, enH);
   }
   function compareBioWithEn() {
     var cur = loadDoc('bio_' + state.lang, {}) || {};
     var en = loadDoc('bio_en', {}) || {};
-    compareFieldsWithEn('Biography', { h2: cur.h2, p1: cur.p1, p2: cur.p2, quote: cur.quote, cite: cur.cite }, { h2: en.h2, p1: en.p1, p2: en.p2, quote: en.quote, cite: en.cite });
+    function flatBio(d) {
+      var o = isObject(d) ? d : {};
+      var base = {
+        introLine: o.introLine,
+        h2: o.h2,
+        continueSectionTag: o.continueSectionTag,
+        continueSub: o.continueSub,
+        ctaRepertoire: o.ctaRepertoire,
+        ctaMedia: o.ctaMedia,
+        ctaContact: o.ctaContact,
+        ctaHomeIntro: o.ctaHomeIntro,
+        portraitAlt: o.portraitAlt,
+        quote: o.quote,
+        cite: o.cite,
+        paragraphsJoined: normalizeParagraphsFromBioStored(o).join('\n\n')
+      };
+      return base;
+    }
+    compareFieldsWithEn('Biography', flatBio(cur), flatBio(en));
   }
   function compareProgramsWithEn() {
     var cur = safeProgramsDoc(loadProgramsCanonicalForLang(state.lang));
@@ -3338,7 +3897,32 @@
   function compareUiWithEn() {
     var cur = loadDoc('rg_ui_' + state.lang, {}) || {};
     var en = loadDoc('rg_ui_en', {}) || {};
-    compareFieldsWithEn('UI labels', { home: cur['nav.home'], bio: cur['nav.bio'], rep: cur['nav.rep'], media: cur['nav.media'], cal: cur['nav.cal'], epk: cur['nav.epk'], book: cur['nav.book'] }, { home: en['nav.home'], bio: en['nav.bio'], rep: en['nav.rep'], media: en['nav.media'], cal: en['nav.cal'], epk: en['nav.epk'], book: en['nav.book'] });
+    var curH = {
+      'Nav · home': cur['nav.home'],
+      'Nav · bio': cur['nav.bio'],
+      'Nav · rep': cur['nav.rep'],
+      'Nav · media': cur['nav.media'],
+      'Nav · cal': cur['nav.cal'],
+      'Nav · epk': cur['nav.epk'],
+      'Nav · book': cur['nav.book'],
+      'Nav · contact': cur['nav.contact']
+    };
+    var enH = {
+      'Nav · home': en['nav.home'],
+      'Nav · bio': en['nav.bio'],
+      'Nav · rep': en['nav.rep'],
+      'Nav · media': en['nav.media'],
+      'Nav · cal': en['nav.cal'],
+      'Nav · epk': en['nav.epk'],
+      'Nav · book': en['nav.book'],
+      'Nav · contact': en['nav.contact']
+    };
+    flatPublicRgUiCopyFields().forEach(function (f) {
+      var k = 'Copy · ' + f.key;
+      curH[k] = cur[f.key];
+      enH[k] = en[f.key];
+    });
+    compareFieldsWithEn('UI / translations', curH, enH);
   }
   function comparePressBiosWithEn() {
     var bios = safeEpkBios(loadDoc('rg_epk_bios', {}));
@@ -3439,9 +4023,12 @@
       '<button type="button" data-tx-action="mark" data-tx-mark="reviewed" data-tx-target="home">Reviewed</button>';
 
     var bioRows = [
+      { label: 'Intro line', en: be.introLine, cur: bc.introLine },
       { label: 'Title', en: be.h2, cur: bc.h2 },
-      { label: '§1', en: be.p1, cur: bc.p1 },
-      { label: '§2', en: be.p2, cur: bc.p2 },
+      { label: 'Paragraphs', en: normalizeParagraphsFromBioStored(be).join(' / '), cur: normalizeParagraphsFromBioStored(bc).join(' / ') },
+      { label: 'Continue', en: (be.continueSectionTag || '') + ' · ' + (be.continueSub || ''), cur: (bc.continueSectionTag || '') + ' · ' + (bc.continueSub || '') },
+      { label: 'CTAs', en: [be.ctaRepertoire, be.ctaMedia, be.ctaContact, be.ctaHomeIntro].filter(Boolean).join(' · '), cur: [bc.ctaRepertoire, bc.ctaMedia, bc.ctaContact, bc.ctaHomeIntro].filter(Boolean).join(' · ') },
+      { label: 'Portrait alt', en: be.portraitAlt, cur: bc.portraitAlt },
       { label: 'Quote', en: be.quote, cur: bc.quote }
     ];
     var bioAct =
@@ -3466,6 +4053,14 @@
       '<button type="button" data-tx-action="mark" data-tx-mark="translated" data-tx-target="contact">Translated</button> ' +
       '<button type="button" data-tx-action="mark" data-tx-mark="reviewed" data-tx-target="contact">Reviewed</button>';
 
+    var pf = flatPublicRgUiCopyFields();
+    var copyFilledEn = 0;
+    var copyFilledCur = 0;
+    var copyTotal = pf.length;
+    pf.forEach(function (f) {
+      if (!isBlank(ue[f.key])) copyFilledEn += 1;
+      if (!isBlank(uc[f.key])) copyFilledCur += 1;
+    });
     var uiRows = [
       { label: 'Nav home', en: ue['nav.home'], cur: uc['nav.home'] },
       { label: 'Nav bio', en: ue['nav.bio'], cur: uc['nav.bio'] },
@@ -3473,11 +4068,17 @@
       { label: 'Nav media', en: ue['nav.media'], cur: uc['nav.media'] },
       { label: 'Nav cal', en: ue['nav.cal'], cur: uc['nav.cal'] },
       { label: 'Nav EPK', en: ue['nav.epk'], cur: uc['nav.epk'] },
-      { label: 'Nav book', en: ue['nav.book'], cur: uc['nav.book'] }
+      { label: 'Nav book', en: ue['nav.book'], cur: uc['nav.book'] },
+      { label: 'Nav contact (section tag)', en: ue['nav.contact'], cur: uc['nav.contact'] },
+      {
+        label: 'Structured public copy (keys with saved text)',
+        en: String(copyFilledEn) + ' / ' + String(copyTotal),
+        cur: String(copyFilledCur) + ' / ' + String(copyTotal)
+      }
     ];
     var uiAct =
       '<button type="button" data-tx-action="open" data-tx-target="ui">Open</button> ' +
-      '<button type="button" data-tx-action="copy-missing" data-tx-target="ui">Copy missing nav</button> ' +
+      '<button type="button" data-tx-action="copy-missing" data-tx-target="ui">Copy missing UI strings</button> ' +
       '<button type="button" data-tx-action="compare" data-tx-target="ui">Compare</button> ' +
       '<button type="button" data-tx-action="mark" data-tx-mark="needs_translation" data-tx-target="ui">Needs translation</button> ' +
       '<button type="button" data-tx-action="mark" data-tx-mark="translated" data-tx-target="ui">Translated</button> ' +
@@ -3542,7 +4143,7 @@
     });
     var ue = loadDoc('rg_ui_en', {}) || {};
     var uc = loadDoc('rg_ui_' + L, {}) || {};
-    ['nav.home', 'nav.bio', 'nav.cal', 'nav.book'].forEach(function (k) {
+    ['nav.home', 'nav.bio', 'nav.cal', 'nav.book', 'nav.contact'].forEach(function (k) {
       if (!isBlank(ue[k]) && isBlank(uc[k])) issues.push('UI label ' + k + ' missing while EN has text.');
     });
     var pd = safePublicPdfs(loadDoc('rg_public_pdfs', {}));
@@ -3569,7 +4170,7 @@
     if (state.lang === 'en') return setStatus('Switch to a non-EN language first.', 'warn');
     var msg =
       'Copy missing fields from EN into the current language for:\n' +
-      'Home, Biography, Contact, UI nav, Programs (saved docs), and EPK bios.\n\n' +
+      'Home, Biography, Contact, UI nav + structured public copy, Programs (saved docs), and EPK bios.\n\n' +
       'This updates the editor only until you save each section. Continue?';
     if (!window.confirm(msg)) return;
     copyHomeMissingFromEn();
@@ -3582,7 +4183,7 @@
     copyProgramsFromEn(true);
     refreshTranslationWorkspace();
     markDirty(true, 'Batch: missing fields from EN applied in editor');
-    pushActivitySummary('Batch copy from EN', ['Home, Bio, Contact, UI nav, Programs, EPK bios — review and save per section.']);
+    pushActivitySummary('Batch copy from EN', ['Home, Bio, Contact, UI (nav + structured copy), Programs, EPK bios — review and save per section.']);
     setStatus('Batch copy applied in editor — save each section as needed.', 'ok');
   }
 
@@ -3627,9 +4228,19 @@
       hideIf('hero-introCtaMedia', he.introCtaMedia, $('hero-introCtaMedia').value);
     } else if (sec === 'bio') {
       var be = loadDoc('bio_en', {}) || {};
+      hideIf('bio-introLine', be.introLine, $('bio-introLine').value);
       hideIf('bio-h2', be.h2, $('bio-h2').value);
-      hideIf('bio-p1', be.p1, $('bio-p1').value);
-      hideIf('bio-p2', be.p2, $('bio-p2').value);
+      bioParagraphFieldIds().forEach(function (id, idx) {
+        var enP = normalizeParagraphsFromBioStored(be)[idx];
+        hideIf(id, enP, $(id).value);
+      });
+      hideIf('bio-continue-tag', be.continueSectionTag, $('bio-continue-tag').value);
+      hideIf('bio-continue-sub', be.continueSub, $('bio-continue-sub').value);
+      hideIf('bio-cta-rep', be.ctaRepertoire, $('bio-cta-rep').value);
+      hideIf('bio-cta-media', be.ctaMedia, $('bio-cta-media').value);
+      hideIf('bio-cta-contact', be.ctaContact, $('bio-cta-contact').value);
+      hideIf('bio-cta-home', be.ctaHomeIntro, $('bio-cta-home').value);
+      hideIf('bio-portraitAlt', be.portraitAlt, $('bio-portraitAlt').value);
       hideIf('bio-quote', be.quote, $('bio-quote').value);
       hideIf('bio-cite', be.cite, $('bio-cite').value);
     } else if (sec === 'contact') {
@@ -3649,6 +4260,11 @@
       hideIf('ui-nav-cal', ue['nav.cal'], $('ui-nav-cal').value);
       hideIf('ui-nav-epk', ue['nav.epk'], $('ui-nav-epk').value);
       hideIf('ui-nav-book', ue['nav.book'], $('ui-nav-book').value);
+      hideIf('ui-nav-contact', ue['nav.contact'], $('ui-nav-contact') && $('ui-nav-contact').value);
+      flatPublicRgUiCopyFields().forEach(function (f) {
+        var id = fieldDomIdForUiKey(f.key);
+        hideIf(id, ue[f.key], $(id) && $(id).value);
+      });
     } else if (sec === 'programs') {
       var enP = safeProgramsDoc(loadProgramsCanonicalForLang('en'));
       var curP = state.programsDoc;
@@ -4354,6 +4970,10 @@
       var parsed = JSON.parse($('ui-json').value || '{}');
       if (!isObject(parsed)) throw new Error('JSON must be an object');
       saveDoc('rg_ui_' + state.lang, parsed);
+      ensureUiPublicCopyEditorBuilt();
+      loadUiNavFieldsFromDoc(parsed);
+      updateCompletenessIndicators();
+      setStatus('rg_ui saved', 'ok');
     } catch (e) {
       setStatus('Invalid JSON: ' + e.message, 'err');
       alert('Invalid JSON: ' + e.message);
@@ -4393,12 +5013,16 @@
     ['hero-eyebrow', 'hero-subtitle', 'hero-cta1', 'hero-cta2', 'hero-introCtaBio', 'hero-introCtaMedia'].forEach(function (id) {
       if (isBlank($(id) && $(id).value)) homeMissing += 1;
     });
+    HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      if (isBlank($(row.id) && $(row.id).value)) homeMissing += 1;
+    });
     setPillStatus('home-completeness', homeMissing ? 'warn' : 'ok', homeMissing ? ('Missing fields: ' + homeMissing) : 'Complete');
 
     var bioMissing = 0;
-    ['bio-h2', 'bio-p1', 'bio-p2', 'bio-quote'].forEach(function (id) {
+    ['bio-introLine', 'bio-h2', 'bio-continue-tag', 'bio-continue-sub'].forEach(function (id) {
       if (isBlank($(id) && $(id).value)) bioMissing += 1;
     });
+    if (!paragraphsArrayFromBioInputs().length) bioMissing += 1;
     setPillStatus('bio-completeness', bioMissing ? 'warn' : 'ok', bioMissing ? ('Missing fields: ' + bioMissing) : 'Complete');
 
     var programMissing = 0;
@@ -4431,10 +5055,23 @@
     setPillStatus('calendar-completeness', calendarMissing ? 'warn' : 'ok', calendarMissing ? 'Section text incomplete' : 'Section text complete');
 
     var uiMissing = 0;
-    ['ui-nav-home', 'ui-nav-bio', 'ui-nav-rep', 'ui-nav-media', 'ui-nav-cal', 'ui-nav-epk', 'ui-nav-book'].forEach(function (id) {
+    ['ui-nav-home', 'ui-nav-bio', 'ui-nav-rep', 'ui-nav-media', 'ui-nav-cal', 'ui-nav-epk', 'ui-nav-book', 'ui-nav-contact'].forEach(function (id) {
       if (isBlank($(id) && $(id).value)) uiMissing += 1;
     });
-    setPillStatus('ui-completeness', uiMissing ? 'warn' : 'ok', uiMissing ? ('Missing labels: ' + uiMissing) : 'Complete');
+    var uiPubTotal = 0;
+    var uiPubFilled = 0;
+    flatPublicRgUiCopyFields().forEach(function (f) {
+      var el = $(fieldDomIdForUiKey(f.key));
+      if (!el) return;
+      uiPubTotal += 1;
+      if (!isBlank(el.value)) uiPubFilled += 1;
+    });
+    var uiPillMsg = uiMissing
+      ? 'Missing nav labels: ' + uiMissing
+      : uiPubTotal
+        ? 'Nav OK · structured fields with text: ' + uiPubFilled + '/' + uiPubTotal
+        : 'Nav OK';
+    setPillStatus('ui-completeness', uiMissing ? 'warn' : 'ok', uiPillMsg);
   }
   function clipText(v, max) {
     var s = safeString(v).trim();
@@ -4454,6 +5091,7 @@
   }
   function updateBioMiniPreview() {
     if (!$('bio-preview-title')) return;
+    if ($('bio-preview-intro')) $('bio-preview-intro').textContent = clipText($('bio-introLine').value, 160) || 'Intro line';
     $('bio-preview-title').textContent = clipText($('bio-h2').value, 80) || 'Biography';
     $('bio-preview-p1').textContent = clipText($('bio-p1').value, 180) || 'Paragraph 1';
     $('bio-preview-p2').textContent = clipText($('bio-p2').value, 180) || 'Paragraph 2';
@@ -4508,16 +5146,35 @@
       quickBioLabel: $('hero-quickBioLabel').value, quickCalLabel: $('hero-quickCalLabel').value, introCtaBio: $('hero-introCtaBio').value,
       introCtaMedia: $('hero-introCtaMedia').value, bgImage: $('hero-bgImage').value, introImage: $('hero-introImage').value
     };
-    if (s === 'bio') return {
-      h2: $('bio-h2').value, p1: $('bio-p1').value, p2: $('bio-p2').value, quote: $('bio-quote').value, cite: $('bio-cite').value, portraitImage: $('bio-portraitImage').value
-    };
+    if (s === 'bio') {
+      return {
+        introLine: $('bio-introLine').value,
+        h2: $('bio-h2').value,
+        p1: $('bio-p1').value,
+        p2: $('bio-p2').value,
+        p3: $('bio-p3').value,
+        p4: $('bio-p4').value,
+        p5: $('bio-p5').value,
+        p6: $('bio-p6').value,
+        continueSectionTag: $('bio-continue-tag').value,
+        continueSub: $('bio-continue-sub').value,
+        ctaRepertoire: $('bio-cta-rep').value,
+        ctaMedia: $('bio-cta-media').value,
+        ctaContact: $('bio-cta-contact').value,
+        ctaHomeIntro: $('bio-cta-home').value,
+        portraitAlt: $('bio-portraitAlt').value,
+        quote: $('bio-quote').value,
+        cite: $('bio-cite').value,
+        portraitImage: $('bio-portraitImage').value
+      };
+    }
     if (s === 'rep') return { h2: $('rep-h2').value, intro: $('rep-intro').value, repCards: clone(state.repCards), repIndex: state.repIndex };
     if (s === 'programs') return { programsDoc: clone(state.programsDoc), programsIndex: state.programsIndex };
     if (s === 'calendar') return { h2: $('perf-h2').value, intro: $('perf-intro').value, perfs: clone(state.perfs), perfIndex: state.perfIndex };
     if (s === 'media') return { vidData: clone(state.vidData), vidIndex: state.vidIndex, photosData: clone(state.photosData), photoCaptions: clone(state.photoCaptions), photoType: state.photoType, photoIndex: state.photoIndex };
     if (s === 'press') return { press: clone(state.press), pressIndex: state.pressIndex, publicPdfs: clone(state.publicPdfs), epkBios: clone(state.epkBios), epkPhotos: clone(state.epkPhotos), epkPhotoIndex: state.epkPhotoIndex };
     if (s === 'contact') return { title: $('contact-title').value, sub: $('contact-sub').value, email: $('contact-email').value, emailBtn: $('contact-emailBtn').value, webBtn: $('contact-webBtn').value, webUrl: $('contact-webUrl') ? $('contact-webUrl').value : '' };
-    if (s === 'ui') return { nav: { home: $('ui-nav-home').value, bio: $('ui-nav-bio').value, rep: $('ui-nav-rep').value, media: $('ui-nav-media').value, cal: $('ui-nav-cal').value, epk: $('ui-nav-epk').value, book: $('ui-nav-book').value }, json: $('ui-json').value };
+    if (s === 'ui') return { uiPartial: collectUiSectionInputsToDoc(), json: $('ui-json').value };
     return null;
   }
   function applySectionDraftObject(s, d) {
@@ -4528,7 +5185,24 @@
       $('hero-introCtaMedia').value = safeString(d.introCtaMedia); $('hero-bgImage').value = safeString(d.bgImage); $('hero-introImage').value = safeString(d.introImage);
       updateHomeIntroPreview(); updateHomeMiniPreviews();
     } else if (s === 'bio') {
-      $('bio-h2').value = safeString(d.h2); $('bio-p1').value = safeString(d.p1); $('bio-p2').value = safeString(d.p2); $('bio-quote').value = safeString(d.quote); $('bio-cite').value = safeString(d.cite); $('bio-portraitImage').value = safeString(d.portraitImage);
+      $('bio-introLine').value = safeString(d.introLine);
+      $('bio-h2').value = safeString(d.h2);
+      $('bio-p1').value = safeString(d.p1);
+      $('bio-p2').value = safeString(d.p2);
+      $('bio-p3').value = safeString(d.p3);
+      $('bio-p4').value = safeString(d.p4);
+      $('bio-p5').value = safeString(d.p5);
+      $('bio-p6').value = safeString(d.p6);
+      $('bio-continue-tag').value = safeString(d.continueSectionTag);
+      $('bio-continue-sub').value = safeString(d.continueSub);
+      $('bio-cta-rep').value = safeString(d.ctaRepertoire);
+      $('bio-cta-media').value = safeString(d.ctaMedia);
+      $('bio-cta-contact').value = safeString(d.ctaContact);
+      $('bio-cta-home').value = safeString(d.ctaHomeIntro);
+      $('bio-portraitAlt').value = safeString(d.portraitAlt);
+      $('bio-quote').value = safeString(d.quote);
+      $('bio-cite').value = safeString(d.cite);
+      $('bio-portraitImage').value = safeString(d.portraitImage);
       updateBioPortraitPreview(); updateBioMiniPreview();
     } else if (s === 'rep') {
       state.repCards = Array.isArray(d.repCards) ? clone(d.repCards) : [];
@@ -4565,9 +5239,24 @@
       $('contact-title').value = safeString(d.title); $('contact-sub').value = safeString(d.sub); $('contact-email').value = safeString(d.email); $('contact-emailBtn').value = safeString(d.emailBtn); $('contact-webBtn').value = safeString(d.webBtn); if ($('contact-webUrl')) $('contact-webUrl').value = safeString(d.webUrl);
       updateContactValidation(); updateContactMiniPreview();
     } else if (s === 'ui') {
-      var nav = isObject(d.nav) ? d.nav : {};
-      $('ui-nav-home').value = safeString(nav.home); $('ui-nav-bio').value = safeString(nav.bio); $('ui-nav-rep').value = safeString(nav.rep); $('ui-nav-media').value = safeString(nav.media);
-      $('ui-nav-cal').value = safeString(nav.cal); $('ui-nav-epk').value = safeString(nav.epk); $('ui-nav-book').value = safeString(nav.book); $('ui-json').value = safeString(d.json);
+      $('ui-json').value = safeString(d.json);
+      ensureUiPublicCopyEditorBuilt();
+      var base = loadDoc('rg_ui_' + state.lang, {});
+      if (!isObject(base)) base = {};
+      var partial = isObject(d.uiPartial) ? d.uiPartial : {};
+      if (!Object.keys(partial).length && isObject(d.nav)) {
+        partial = {
+          'nav.home': d.nav.home,
+          'nav.bio': d.nav.bio,
+          'nav.rep': d.nav.rep,
+          'nav.media': d.nav.media,
+          'nav.cal': d.nav.cal,
+          'nav.epk': d.nav.epk,
+          'nav.book': d.nav.book
+        };
+      }
+      var merged = Object.assign({}, base, partial);
+      loadUiNavFieldsFromDoc(merged);
     }
     updateCompletenessIndicators();
   }
@@ -4684,7 +5373,7 @@
     document.querySelectorAll('.nav-item').forEach(function (btn) {
       btn.addEventListener('click', function () { openSection(btn.getAttribute('data-section')); });
     });
-    $('langSelect').addEventListener('change', function () {
+      $('langSelect').addEventListener('change', function () {
       if (!hasUnsavedChangesPrompt('Switch language?')) {
         $('langSelect').value = state.lang;
         return;
@@ -4693,6 +5382,7 @@
       if (typeof state.api.setLang === 'function') state.api.setLang(state.lang, { persist: false });
       updateLangBadge();
       refreshCurrentSection();
+      primeUiPublicCopyFromStorage();
       markDirty(false, 'Language: ' + state.lang.toUpperCase());
     });
 
@@ -5363,22 +6053,66 @@
     bindInputsDirty(['media-vid-h2']);
     bindInputsDirty(['media-photo-url','media-photo-caption','media-photo-photographer'], persistMediaPhotoEditor);
 
-    bindInputsDirty(['hero-eyebrow','hero-subtitle','hero-cta1','hero-cta2','hero-quickBioLabel','hero-quickCalLabel','hero-introCtaBio','hero-introCtaMedia','hero-bgImage','hero-introImage'], function () {
-      updateHomeIntroPreview();
-      updateHomeMiniPreviews();
-      updateCompletenessIndicators();
-      markDirty(true);
-    });
-    bindInputsDirty(['bio-h2','bio-p1','bio-p2','bio-quote','bio-cite','bio-portraitImage'], function () {
-      updateBioPortraitPreview();
-      updateBioMiniPreview();
-      updateCompletenessIndicators();
-      markDirty(true);
-    });
+    bindInputsDirty(
+      [
+        'hero-eyebrow',
+        'hero-subtitle',
+        'hero-cta1',
+        'hero-cta2',
+        'hero-quickBioLabel',
+        'hero-quickCalLabel',
+        'hero-introCtaBio',
+        'hero-introCtaMedia',
+        'hero-homeIntroH2',
+        'hero-homeIntroP1',
+        'hero-homeIntroP2',
+        'hero-homeIntroProof',
+        'hero-presenterTag',
+        'hero-presenterP1',
+        'hero-presenterP2',
+        'hero-presenterP3',
+        'hero-bgImage',
+        'hero-introImage'
+      ],
+      function () {
+        updateHomeIntroPreview();
+        updateHomeMiniPreviews();
+        updateCompletenessIndicators();
+        markDirty(true);
+      }
+    );
+    bindInputsDirty(
+      [
+        'bio-introLine',
+        'bio-h2',
+        'bio-p1',
+        'bio-p2',
+        'bio-p3',
+        'bio-p4',
+        'bio-p5',
+        'bio-p6',
+        'bio-continue-tag',
+        'bio-continue-sub',
+        'bio-cta-rep',
+        'bio-cta-media',
+        'bio-cta-contact',
+        'bio-cta-home',
+        'bio-portraitAlt',
+        'bio-quote',
+        'bio-cite',
+        'bio-portraitImage'
+      ],
+      function () {
+        updateBioPortraitPreview();
+        updateBioMiniPreview();
+        updateCompletenessIndicators();
+        markDirty(true);
+      }
+    );
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
     bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);
-    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book'], function () {
+    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
       updateContactValidation();
       updateContactMiniPreview();
       updateCompletenessIndicators();
@@ -5545,6 +6279,7 @@
       setStatus('Ready · ' + lang.toUpperCase(), 'ok');
       setupEvents();
       refreshCurrentSection();
+      primeUiPublicCopyFromStorage();
     } catch (e) {
       setStatus('Could not start admin', 'err');
       setAuthError('Admin could not finish starting: ' + e.message, e);

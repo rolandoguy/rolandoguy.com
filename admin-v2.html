@@ -119,6 +119,20 @@
             <label>Home intro · button · Media<input id="hero-introCtaMedia" placeholder="Watch & listen"></label>
           </div>
           <p class="muted">Intro CTA labels appear in the Home intro text block for this language only.</p>
+          <div class="editor tools-card" style="margin-top:14px">
+            <h3>Home intro copy &amp; presenter block</h3>
+            <p class="muted">Saved to <code>rg_ui_<em>lang</em></code> (same keys the public site uses). Visible on <strong>Home</strong> and <strong>Biography</strong> (proof line + “For presenters” bullets). Use <strong>Save Home / Hero</strong> below.</p>
+            <label>Intro headline (HTML)<textarea id="hero-homeIntroH2" rows="2" placeholder="A voice forged…"></textarea></label>
+            <label>Intro paragraph 1 (HTML)<textarea id="hero-homeIntroP1" rows="4"></textarea></label>
+            <label>Intro paragraph 2 (HTML)<textarea id="hero-homeIntroP2" rows="4"></textarea></label>
+            <label>Proof / supporting line (plain text)<textarea id="hero-homeIntroProof" rows="3" placeholder="Calendar, Media, Press…"></textarea></label>
+            <div class="grid two">
+              <label>Presenter · section label<input id="hero-presenterTag" placeholder="For presenters"></label>
+            </div>
+            <label>Presenter · bullet 1<input id="hero-presenterP1"></label>
+            <label>Presenter · bullet 2<input id="hero-presenterP2"></label>
+            <label>Presenter · bullet 3<input id="hero-presenterP3"></label>
+          </div>
           <div id="home-hero-preview" class="mini-preview">
             <h4>Hero block preview</h4>
             <p class="mini-preview__eyebrow" id="home-preview-eyebrow">Eyebrow</p>
@@ -168,12 +182,24 @@
             <span id="bio-completeness" class="pill">Checking…</span>
           </div>
           <div class="grid one">
-            <label>Title (HTML)<input id="bio-h2"></label>
+            <label>Intro line (plain text under section tag)<textarea id="bio-introLine" rows="2"></textarea></label>
+            <label>Main heading (HTML)<input id="bio-h2"></label>
             <label>Paragraph 1<textarea id="bio-p1" rows="4"></textarea></label>
             <label>Paragraph 2<textarea id="bio-p2" rows="4"></textarea></label>
-            <label>Quote<input id="bio-quote"></label>
-            <label>Attribution<input id="bio-cite"></label>
-            <p class="muted">Biography text is public and language-specific. Keep paragraph openings concise for better mobile readability.</p>
+            <label>Paragraph 3<textarea id="bio-p3" rows="4"></textarea></label>
+            <label>Paragraph 4<textarea id="bio-p4" rows="4"></textarea></label>
+            <label>Paragraph 5<textarea id="bio-p5" rows="3"></textarea></label>
+            <label>Paragraph 6<textarea id="bio-p6" rows="3"></textarea></label>
+            <label>Continue block · section tag<input id="bio-continue-tag" placeholder="Continue"></label>
+            <label>Continue block · subtitle<textarea id="bio-continue-sub" rows="2"></textarea></label>
+            <label>CTA · Repertoire<input id="bio-cta-rep"></label>
+            <label>CTA · Media<input id="bio-cta-media"></label>
+            <label>CTA · Contact / Book (optional; falls back to nav “Book” label)<input id="bio-cta-contact"></label>
+            <label>CTA · Home (optional; falls back to nav “Home” label)<input id="bio-cta-home"></label>
+            <label>Portrait image alt (overrides bundled alt when set)<input id="bio-portraitAlt"></label>
+            <label>Quote (optional; not shown on current public biography layout)<input id="bio-quote"></label>
+            <label>Attribution (optional)<input id="bio-cite"></label>
+            <p class="muted">Saved per language as <code>bio_<em>lang</em></code>. The public page uses these values first and falls back to bundled <code>biography-data.json</code> only when a field is empty. Paragraphs are stored as <code>paragraphs[]</code> plus legacy <code>p1</code>/<code>p2</code> for compatibility.</p>
             <label>Biography portrait (this language only)<input id="bio-portraitImage" placeholder="../img/studio-2.jpg or https://..."></label>
             <p class="muted">This image appears only on Biography page. Changes apply only to the currently selected language.</p>
             <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
@@ -185,6 +211,7 @@
             </div>
             <div id="bio-card-preview" class="mini-preview">
               <h4>Biography text preview</h4>
+              <p class="mini-preview__body" id="bio-preview-intro">Intro line</p>
               <p class="mini-preview__title" id="bio-preview-title">Biography</p>
               <p class="mini-preview__body" id="bio-preview-p1">Paragraph 1</p>
               <p class="mini-preview__body" id="bio-preview-p2">Paragraph 2</p>
@@ -1166,8 +1193,8 @@
         <section id="section-ui" class="section">
           <h2>UI / Translations</h2>
           <div class="toolbar">
-            <button id="copyUiNavFromEnBtn" type="button">Copy nav labels from EN</button>
-            <button id="copyUiNavMissingFromEnBtn" type="button">Copy missing nav labels from EN</button>
+            <button id="copyUiNavFromEnBtn" type="button">Copy UI strings from EN</button>
+            <button id="copyUiNavMissingFromEnBtn" type="button">Copy missing UI strings from EN</button>
             <button id="compareUiWithEnBtn" type="button">Compare with EN</button>
             <button id="markUiNeedsTranslationBtn" type="button">Mark needs translation</button>
             <button id="markUiTranslatedBtn" type="button">Mark translated</button>
@@ -1185,11 +1212,13 @@
               <label>Calendar<input id="ui-nav-cal"></label>
               <label>Press &amp; materials<input id="ui-nav-epk"></label>
               <label>Book now<input id="ui-nav-book"></label>
+              <label>Contact (section tag)<input id="ui-nav-contact"></label>
             </div>
             <div class="toolbar">
-              <button id="saveUiNavBtn">Save navigation labels</button>
+              <button id="saveUiNavBtn" type="button">Save UI (nav + structured copy)</button>
             </div>
           </div>
+          <div id="ui-public-copy-host" class="editor" style="margin-top:14px"></div>
           <details class="tools-card details-block">
             <summary>Advanced · all UI strings as JSON</summary>
             <textarea id="ui-json" rows="18" class="mono" style="margin-top:10px"></textarea>
