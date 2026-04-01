@@ -2011,8 +2011,13 @@
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
+    var activeId = document.activeElement && document.activeElement.id ? document.activeElement.id : '';
     var modalTitle = safeString($('perf-modal-title') && $('perf-modal-title').value).trim();
-    e.title = modalTitle || $('perf-title').value;
+    var cardTitle = safeString($('perf-title') && $('perf-title').value).trim();
+    // Prevent input overwrite loop: when editing card title, it is the source of truth.
+    // Allow modal-title edits to drive title only while that field is actively edited.
+    if (activeId === 'perf-modal-title') e.title = modalTitle || cardTitle;
+    else e.title = cardTitle || modalTitle;
     e.detail = $('perf-detail').value;
     e.day = $('perf-day').value;
     e.month = $('perf-month').value;
@@ -2054,7 +2059,8 @@
     e['eventLink_' + state.lang] = e.eventLink;
     e['eventLinkLabel_' + state.lang] = e.eventLinkLabel;
     e.sortDate = $('perf-sortDate').value;
-    if ($('perf-title')) $('perf-title').value = safeString(e.title);
+    if ($('perf-title') && activeId !== 'perf-title') $('perf-title').value = safeString(e.title);
+    if ($('perf-modal-title') && activeId !== 'perf-modal-title') $('perf-modal-title').value = safeString(e.title);
     if ($('perf-venue')) $('perf-venue').value = safeString(e.venue);
     if ($('perf-city')) $('perf-city').value = safeString(e.city);
     if ($('perf-type')) $('perf-type').value = safeString(e.type || 'concert');
