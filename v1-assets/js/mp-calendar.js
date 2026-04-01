@@ -9,6 +9,49 @@
   var MP_CAL = null;
   var showPastPerfs = false;
   var currentLang = 'en';
+  var MP_PAST_PERFS = [];
+  var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+
+  function escHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function readLegacyJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var parseMaybe = function (raw) {
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch (e) { return null; }
+      };
+      var direct = parseMaybe(window.localStorage.getItem(key));
+      if (direct != null) {
+        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
+        return direct;
+      }
+      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
+      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function fetchFirestoreDocJson(key) {
+    var url = 'https://firestore.googleapis.com/v1/projects/' + MP_FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!v || typeof v !== 'string') return null;
+        try { return JSON.parse(v); } catch (e) { return null; }
+      })
+      .catch(function () { return null; });
+  }
 
   function mpPick(lang, key, fb) {
     var p = window.pickMpLocaleString;
@@ -168,6 +211,112 @@
   function getPerfs() {
     return MP_CAL && Array.isArray(MP_CAL.perfs) ? MP_CAL.perfs : [];
   }
+  function parseIsoDateMaybe(s) {
+    var raw = String(s || '').trim();
+    if (!raw) return null;
+    var d = new Date(raw);
+    if (!isNaN(d.getTime())) return d;
+    return null;
+  }
+  function normalizePastPublicItem(raw, idx) {
+    var o = raw && typeof raw === 'object' ? raw : {};
+    return {
+      id: String(o.id || ('past-' + (idx + 1))),
+      date: String(o.date || '').trim(),
+      time: String(o.time || '').trim(),
+      title: String(o.title || '').trim(),
+      place: String(o.place || '').trim(),
+      city: String(o.city || '').trim(),
+      address: String(o.address || '').trim(),
+      description: String(o.description || '').trim(),
+      linkText: String(o.linkText || '').trim(),
+      link: String(o.link || '').trim(),
+      image: String(o.image || '').trim(),
+      status: 'past',
+      private: !!o.private
+    };
+  }
+  function normalizePastPublicList(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(function (item, idx) {
+      return normalizePastPublicItem(item, idx);
+    });
+  }
+  function validPastPublicItem(item, idx) {
+    if (!item || typeof item !== 'object') {
+      console.warn('[Past Performances] Skipping non-object item at index', idx);
+      return false;
+    }
+    var dateRaw = String(item.date || '').trim();
+    if (!dateRaw) {
+      console.warn('[Past Performances] Skipping item with missing date at index', idx);
+      return false;
+    }
+    var d = parseIsoDateMaybe(dateRaw);
+    if (!d) {
+      console.warn('[Past Performances] Skipping item with invalid date at index', idx, dateRaw);
+      return false;
+    }
+    return true;
+  }
+  function loadPastPerfs() {
+    return fetchFirestoreDocJson('rg_past_perfs')
+      .then(function (doc) {
+        var best = Array.isArray(doc) ? doc : readLegacyJson('rg_past_perfs');
+        MP_PAST_PERFS = normalizePastPublicList(best);
+      })
+      .catch(function () {
+        MP_PAST_PERFS = normalizePastPublicList(readLegacyJson('rg_past_perfs'));
+      });
+  }
+  function renderPastPerformancesPublic() {
+    var section = document.getElementById('pastPerformancesSection');
+    var list = document.getElementById('pastPerfList');
+    if (!section || !list) return;
+    var t = uiTable(currentLang);
+    var mapsWord = t['perf.maps'] || 'Maps';
+    var items = normalizePastPublicList(MP_PAST_PERFS)
+      .filter(function (p, idx) { return validPastPublicItem(p, idx); })
+      .filter(function (p) { return !p.private; })
+      .sort(function (a, b) {
+        var da = parseIsoDateMaybe(a.date);
+        var db = parseIsoDateMaybe(b.date);
+        var ta = da ? da.getTime() : 0;
+        var tb = db ? db.getTime() : 0;
+        return tb - ta;
+      });
+    if (!items.length) {
+      section.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+    section.style.display = '';
+    var html = '';
+    items.forEach(function (p, i) {
+      var d = parseIsoDateMaybe(p.date);
+      var day = d ? String(d.getDate()) : '';
+      var month = d ? d.toLocaleString('en', { month: 'short' }).toUpperCase() : '';
+      var when = day || month
+        ? '<div class="perf-date-box"><div class="perf-day">' + escHtml(day) + '</div><div class="perf-month">' + escHtml(month) + '</div>' + (p.time ? '<div class="perf-time">' + escHtml(p.time) + '</div>' : '') + '</div>'
+        : '';
+      var venueCity = (p.place || p.city)
+        ? '<a href="https://maps.google.com/?q=' + encodeURIComponent((p.address || p.place || '') + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>' + escHtml(p.place || '') + (p.city ? ' · ' + escHtml(p.city) : '') + ' <span class="perf-maps-hint">→ ' + escHtml(mapsWord) + '</span></a>'
+        : '';
+      var link = (p.link && /^https?:\/\//i.test(p.link))
+        ? '<a href="' + escHtml(p.link) + '" target="_blank" rel="noopener" class="perf-venue-link">' + escHtml(p.linkText || (t['perf.moreInfo'] || 'More Info')) + '</a>'
+        : '';
+      html += '<div class="perf-item reveal perf-item-past' + (i > 0 ? ' rd' + ((i % 4) + 1) : '') + '">';
+      if (p.image) {
+        html += '<div class="perf-venue-bg" style="opacity:.45;background-image:url(&quot;' + escHtml(p.image) + '&quot;)"></div>';
+      }
+      html += when + '<div><div class="perf-badge perf-badge-past">' + (t['perf.pastStamp'] || 'Past') + '</div><div class="perf-info-title">' + escHtml(p.title) + '</div>';
+      if (p.description) html += '<div class="perf-info-detail past-desc">' + escHtml(p.description) + '</div>';
+      html += venueCity;
+      if (link) html += '<div class="perf-info-detail">' + link + '</div>';
+      html += '</div></div>';
+    });
+    list.innerHTML = html;
+  }
 
   function inferPastCategoryFromType(type) {
     var t = String(type || '').toLowerCase();
@@ -246,11 +395,9 @@
     var today = new Date();
     today.setHours(0, 0, 0, 0);
     var upcoming = [];
-    var past = [];
     perfs.forEach(function (p) {
       var d = sortDate(p);
       if (d >= today) upcoming.push(p);
-      else past.push(p);
     });
     upcoming.sort(function (a, b) {
       return sortDate(a) - sortDate(b);
@@ -270,9 +417,6 @@
       };
     var tPerf = uiTable(currentLang);
     var mapsWord = tPerf['perf.maps'] || 'Maps';
-    function pastCatTitle(key) {
-      return tPerf['perf.pastCat.' + key] || key;
-    }
     function rowHtml(p, i, isPastSection) {
       var isArchive = sortDate(p) < today;
       var typeLabel = types[p.type] || p.type || types.concert;
@@ -416,53 +560,18 @@
       });
       html += '</div>';
     });
-    if (showPastPerfs && past.length) {
-      html +=
-        '<div class="perf-past-divider">' +
-        (tPerf['perf.pastDivider'] || 'Past Performances') +
-        '</div>';
-      var byCat = { stage: [], concert: [], collaboration: [], private: [] };
-      past.forEach(function (p) {
-        var kk = normalizePastPerfCategory(p);
-        if (byCat[kk]) byCat[kk].push(p);
-        else byCat.stage.push(p);
-      });
-      PAST_PERF_CATEGORY_ORDER.forEach(function (catKey) {
-        var items = byCat[catKey];
-        if (!items.length) return;
-        items.sort(function (a, b) {
-          return sortDate(b) - sortDate(a);
-        });
-        html += '<div class="perf-past-category perf-row-past">';
-        html += '<div class="perf-past-category-title">' + pastCatTitle(catKey) + '</div>';
-        items.forEach(function (p, i) {
-          html += rowHtml(p, i, true);
-        });
-        html += '</div>';
-      });
-    }
-    if (!upcoming.length && !(showPastPerfs && past.length)) {
+    if (!upcoming.length) {
       var msg = tPerf['perf.calendarEmpty'] || tPerf['perf.emptyUpcoming'] || 'Upcoming dates to be announced soon.';
       list.innerHTML = '<div class="perf-empty" role="status">' + msg + '</div>';
       var btn0 = document.getElementById('pastToggleBtn');
       if (btn0) btn0.style.display = 'none';
+      renderPastPerformancesPublic();
       return;
     }
 
     list.innerHTML = html;
-    if (past.length > 0) {
-      var btn = document.getElementById('pastToggleBtn');
-      if (btn) {
-        btn.style.display = '';
-        var tPastToggle = uiTable(currentLang);
-        var showPast = tPastToggle['perf.pastShow'] || '+ Show Past Performances';
-        var hidePast = tPastToggle['perf.pastHide'] || '\u2212 Hide Past Performances';
-        btn.textContent = showPastPerfs ? hidePast : showPast;
-      }
-    } else {
-      var btn2 = document.getElementById('pastToggleBtn');
-      if (btn2) btn2.style.display = 'none';
-    }
+    var btn2 = document.getElementById('pastToggleBtn');
+    if (btn2) btn2.style.display = 'none';
     var t = uiTable(currentLang);
     var printBtnText = document.getElementById('perfPrintBtnText');
     if (printBtnText) printBtnText.textContent = t['perf.printAgenda'] || 'Print calendar';
@@ -482,6 +591,7 @@
       );
       ob.observe(el);
     });
+    renderPastPerformancesPublic();
   }
 
   function togglePastPerfs() {
@@ -837,38 +947,39 @@
   });
 
   var dataUrl = '/v1-assets/data/calendar-data.json';
-  fetch(dataUrl)
-    .then(function (r) {
-      if (!r.ok) throw new Error(r.statusText);
-      return r.json();
-    })
-    .then(function (data) {
-      MP_CAL = data;
+  Promise.all([
+    fetch(dataUrl)
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.statusText);
+        return r.json();
+      })
+      .catch(function () {
+        var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+        return {
+          perf: {
+            h2: mpPick(lang, 'perf.loadFallbackH2', 'Engagements &amp; <em>Concerts</em>'),
+            intro: mpPick(lang, 'perf.dataLoadError', 'Calendar data could not be loaded.'),
+            eventTypes: {
+              opera: 'Opera',
+              concert: 'Concert',
+              recital: 'Recital',
+              show: 'Show',
+              gala: 'Gala',
+              collaboration: 'Collaboration',
+              houseconcert: 'House Concert',
+              tango: 'Tango Night',
+              other: 'Event',
+              operetta: 'Operetta'
+            }
+          },
+          perfs: []
+        };
+      }),
+    loadPastPerfs()
+  ])
+    .then(function (parts) {
+      MP_CAL = parts[0];
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-      applyPerfHeader();
-      renderPerfs();
-    })
-    .catch(function () {
-      var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
-      MP_CAL = {
-        perf: {
-          h2: mpPick(lang, 'perf.loadFallbackH2', 'Engagements &amp; <em>Concerts</em>'),
-          intro: mpPick(lang, 'perf.dataLoadError', 'Calendar data could not be loaded.'),
-          eventTypes: {
-            opera: 'Opera',
-            concert: 'Concert',
-            recital: 'Recital',
-            show: 'Show',
-            gala: 'Gala',
-            collaboration: 'Collaboration',
-            houseconcert: 'House Concert',
-            tango: 'Tango Night',
-            other: 'Event',
-            operetta: 'Operetta'
-          }
-        },
-        perfs: []
-      };
       applyPerfHeader();
       renderPerfs();
     });

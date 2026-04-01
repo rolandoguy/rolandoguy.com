@@ -23,7 +23,7 @@
     gate: 'locked',
     failure: ''
   };
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_press|rg_press_meta|rg_vid|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var activityLog = [];
   var state = {
@@ -35,6 +35,7 @@
     repIndex: -1,
     perfs: [],
     perfIndex: -1,
+    pastPerfs: [],
     programsDoc: { title: '', subtitle: '', intro: '', closingNote: '', programs: [] },
     programsIndex: -1,
     pressTab: 'quotes',
@@ -490,7 +491,7 @@
   function validateKeyValue(key, val) {
     if (val === undefined) throw new Error('Cannot save undefined (' + key + ')');
     if (typeof val === 'function') throw new Error('Cannot save a function (' + key + ')');
-    if (key === 'rg_rep_cards' || key === 'rg_perfs' || key === 'rg_press') {
+    if (key === 'rg_rep_cards' || key === 'rg_perfs' || key === 'rg_past_perfs' || key === 'rg_press') {
       if (!Array.isArray(val)) throw new Error(key + ' must be an array');
     }
     if (key === 'rg_vid') {
@@ -555,6 +556,7 @@
     if (/^rg_editorial_/.test(k)) return 'Programs · context links (' + k.replace(/^rg_editorial_/, '').toUpperCase() + ')';
     if (/^perf_/.test(k)) return 'Calendar intro (' + k.replace(/^perf_/, '').toUpperCase() + ')';
     if (k === 'rg_perfs') return 'Calendar events';
+    if (k === 'rg_past_perfs') return 'Past performances (public list)';
     if (k === 'rg_vid') return 'Media · videos';
     if (k === 'rg_photos') return 'Media · photos';
     if (k === 'rg_photo_captions') return 'Media · photo captions';
@@ -976,7 +978,7 @@
     if (scope === 'bio') return /^bio_/.test(key);
     if (scope === 'rep') return /^rep_/.test(key) || key === 'rg_rep_cards';
     if (scope === 'programs') return /^rg_programs/.test(key) || /^programs_/.test(key) || /^rg_editorial_/.test(key);
-    if (scope === 'calendar') return /^perf_/.test(key) || key === 'rg_perfs';
+    if (scope === 'calendar') return /^perf_/.test(key) || key === 'rg_perfs' || key === 'rg_past_perfs';
     if (scope === 'media') return key === 'rg_vid' || key === 'rg_photos' || key === 'rg_photo_captions';
     if (scope === 'press') return !!PRESS_IMPORT_KEYS[key];
     if (scope === 'contact') return /^contact_/.test(key);
@@ -1082,6 +1084,7 @@
     else if (state.section === 'programs') loadPrograms();
     else if (state.section === 'calendar') loadCalendar();
     else if (state.section === 'media') loadMedia();
+    else if (state.section === 'pastperfs') loadPastPerfsSection();
     else if (state.section === 'press') loadPress();
     else if (state.section === 'contact') loadContact();
     else if (state.section === 'ui') loadUiJson();
@@ -1090,7 +1093,7 @@
       refreshTranslationWorkspace();
     } else if (state.section === 'publishing') refreshPublishingDashboard();
     else if (state.section === 'sitehealth') showSiteHealthPlaceholder();
-    if (state.section !== 'sitehealth' && state.section !== 'tools' && state.section !== 'translation' && state.section !== 'publishing') {
+    if (state.section !== 'sitehealth' && state.section !== 'tools' && state.section !== 'translation' && state.section !== 'publishing' && state.section !== 'pastperfs') {
       maybeRestoreDraftForCurrentSection();
     }
     applyTranslationMissingOnlyMask();
@@ -1789,6 +1792,148 @@
   function savePerfEvents() {
     state.perfs = state.perfs.filter(function (e) { return isObject(e); });
     saveDoc('rg_perfs', state.perfs);
+  }
+  function normalizePastPerfImportItem(raw, idx) {
+    var o = isObject(raw) ? raw : {};
+    var idSeed = safeString(o.id).trim();
+    var date = safeString(o.date).trim();
+    var time = safeString(o.time).trim();
+    var title = safeString(o.title).trim();
+    var place = safeString(o.place != null ? o.place : o.venue).trim();
+    var city = safeString(o.city).trim();
+    var address = safeString(o.address).trim();
+    var description = safeString(o.description).trim();
+    var linkText = safeString(o.linkText != null ? o.linkText : o.buttonText).trim();
+    var link = safeString(o.link != null ? o.link : o.buttonLink).trim();
+    var image = safeString(o.image != null ? o.image : o.image_url).trim();
+    return {
+      id: idSeed || ('past-' + (idx + 1)),
+      date: date,
+      time: time,
+      title: title,
+      place: place,
+      city: city,
+      address: address,
+      description: description,
+      linkText: linkText,
+      link: link,
+      image: image,
+      status: 'past',
+      private: !!o.private
+    };
+  }
+  function normalizePastPerfImportArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(function (item, idx) {
+      return normalizePastPerfImportItem(item, idx);
+    });
+  }
+  function validatePastPerfsImportArray(arr) {
+    var errors = [];
+    if (!Array.isArray(arr)) {
+      errors.push('Root JSON must be an array.');
+      return errors;
+    }
+    arr.forEach(function (item, idx) {
+      if (!isObject(item)) {
+        errors.push('Item #' + (idx + 1) + ' is not an object.');
+        return;
+      }
+      var rawDate = safeString(item.date).trim();
+      if (!rawDate) {
+        errors.push('Item #' + (idx + 1) + ' is missing date.');
+      } else {
+        var d = new Date(rawDate);
+        if (isNaN(d.getTime())) errors.push('Item #' + (idx + 1) + ' has invalid date: ' + rawDate);
+      }
+    });
+    return errors;
+  }
+  function loadPastPerfsSection() {
+    state.pastPerfs = loadDoc('rg_past_perfs', []);
+    if (!Array.isArray(state.pastPerfs)) state.pastPerfs = [];
+    state.pastPerfs = normalizePastPerfImportArray(state.pastPerfs);
+    if ($('pastperfs-import-file')) $('pastperfs-import-file').value = '';
+    if ($('pastperfs-import-summary')) $('pastperfs-import-summary').textContent = '';
+    if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = '';
+    if ($('pastperfs-skipped-note')) {
+      $('pastperfs-skipped-note').textContent = '';
+      $('pastperfs-skipped-note').style.display = 'none';
+    }
+    if ($('pastperfs-summary')) {
+      $('pastperfs-summary').textContent = state.pastPerfs.length
+        ? ('Saved past events: ' + state.pastPerfs.length)
+        : 'No past events saved yet.';
+    }
+    if ($('pastperfs-preview')) {
+      $('pastperfs-preview').value = JSON.stringify(state.pastPerfs.slice(0, 40), null, 2);
+    }
+  }
+  function clearPastPerfsDataset() {
+    if (!window.confirm('Clear all past events? This replaces rg_past_perfs with an empty list.')) return;
+    saveDoc('rg_past_perfs', []);
+    state.pastPerfs = [];
+    if ($('pastperfs-summary')) $('pastperfs-summary').textContent = 'No past events saved yet.';
+    if ($('pastperfs-preview')) $('pastperfs-preview').value = '[]';
+    if ($('pastperfs-import-summary')) $('pastperfs-import-summary').textContent = 'Imported: 0 · Skipped: 0 · Total processed: 0';
+    if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Past events cleared.';
+    if ($('pastperfs-skipped-note')) {
+      $('pastperfs-skipped-note').textContent = '';
+      $('pastperfs-skipped-note').style.display = 'none';
+    }
+    setStatus('Past events cleared', 'ok');
+    pushActivitySummary('Past events cleared', ['rg_past_perfs replaced with an empty array.']);
+  }
+  function importPastPerfsJson() {
+    var input = $('pastperfs-import-file');
+    if (!input || !input.files || !input.files[0]) {
+      alert('Choose a JSON file first.');
+      return;
+    }
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(String(reader.result || '[]'));
+        var validationErrors = validatePastPerfsImportArray(parsed);
+        if (validationErrors.length) {
+          throw new Error('Validation failed:\n- ' + validationErrors.slice(0, 12).join('\n- ') + (validationErrors.length > 12 ? '\n- ... and ' + (validationErrors.length - 12) + ' more' : ''));
+        }
+        if (!window.confirm('Import will REPLACE the full rg_past_perfs dataset.\n\nContinue?')) return;
+        var total = parsed.length;
+        var normalized = normalizePastPerfImportArray(parsed);
+        var imported = normalized.length;
+        var skipped = Math.max(0, total - imported);
+        saveDoc('rg_past_perfs', normalized);
+        state.pastPerfs = normalized;
+        if ($('pastperfs-summary')) $('pastperfs-summary').textContent = 'Saved past events: ' + normalized.length;
+        if ($('pastperfs-preview')) $('pastperfs-preview').value = JSON.stringify(normalized.slice(0, 40), null, 2);
+        if ($('pastperfs-import-summary')) $('pastperfs-import-summary').textContent = 'Imported: ' + imported + ' · Skipped: ' + skipped + ' · Total processed: ' + total;
+        if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Import complete: ' + normalized.length + ' past event(s) saved (full dataset replaced).';
+        if ($('pastperfs-skipped-note')) {
+          if (skipped > 0) {
+            $('pastperfs-skipped-note').textContent = skipped + ' item(s) were skipped during import.';
+            $('pastperfs-skipped-note').style.display = '';
+          } else {
+            $('pastperfs-skipped-note').textContent = '';
+            $('pastperfs-skipped-note').style.display = 'none';
+          }
+        }
+        setStatus('Past events imported', 'ok');
+        pushActivitySummary('Past events imported', [normalized.length + ' item(s) saved to rg_past_perfs.']);
+        alert('Import complete. ' + normalized.length + ' past event(s) imported.');
+      } catch (err) {
+        if ($('pastperfs-import-summary')) $('pastperfs-import-summary').textContent = '';
+        if ($('pastperfs-skipped-note')) {
+          $('pastperfs-skipped-note').textContent = '';
+          $('pastperfs-skipped-note').style.display = 'none';
+        }
+        if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Import failed: ' + safeString(err.message);
+        setStatus('Past events import failed', 'err');
+        alert('Import failed: ' + safeString(err.message));
+      }
+    };
+    reader.readAsText(file);
   }
 
   function getPhotoCaption(type, idx) {
@@ -4060,7 +4205,7 @@
 
   function buildExportPayload() {
     var keys = [
-      'rg_rep_cards','rg_vid','rg_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions',
+      'rg_rep_cards','rg_vid','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
       'rg_editorial_en','rg_editorial_de','rg_editorial_es','rg_editorial_it','rg_editorial_fr',
       'hero_en','hero_de','hero_es','hero_it','hero_fr',
@@ -4159,6 +4304,8 @@
     if ($('programs-duplicate-to-lang')) $('programs-duplicate-to-lang').addEventListener('click', duplicateCurrentProgramToLanguage);
     $('savePerfHeaderBtn').addEventListener('click', savePerfHeader);
     $('savePerfEventsBtn').addEventListener('click', savePerfEvents);
+    if ($('pastperfs-import-btn')) $('pastperfs-import-btn').addEventListener('click', importPastPerfsJson);
+    if ($('pastperfs-clear-btn')) $('pastperfs-clear-btn').addEventListener('click', clearPastPerfsDataset);
     $('mediaTabVideos').addEventListener('click', function () { toggleMediaTab('videos'); });
     $('mediaTabPhotos').addEventListener('click', function () { toggleMediaTab('photos'); });
     $('media-vid-save').addEventListener('click', saveMediaVideos);

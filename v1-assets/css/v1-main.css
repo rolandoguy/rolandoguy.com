@@ -1409,6 +1409,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
 @media(max-width:700px){
   .perf-venue-bg{width:45%;mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.5) 50%,rgba(0,0,0,1) 100%);-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.5) 50%,rgba(0,0,0,1) 100%)}
   .perf-item .perf-info-title,.perf-item .perf-info-detail,.perf-item .perf-type,.perf-item .perf-badge,.perf-item .perf-venue-link{text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 12px rgba(10,10,15,.9)}
+#pastPerfList .perf-info-detail.past-desc{
+  display:-webkit-box;
+  -webkit-line-clamp:4;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
 }
 
 .perf-more-btn{display:inline-block;margin-top:10px;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold);background:none;border:1px solid rgba(212,168,67,.3);padding:5px 14px;text-transform:uppercase;cursor:pointer;transition:all .25s}

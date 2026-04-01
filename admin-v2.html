@@ -28,6 +28,7 @@
         <button data-section="rep" class="nav-item">Repertoire</button>
         <button data-section="programs" class="nav-item">Programs</button>
         <button data-section="calendar" class="nav-item">Calendar</button>
+        <button data-section="pastperfs" class="nav-item">Past Events</button>
         <button data-section="media" class="nav-item">Media</button>
         <button data-section="press" class="nav-item">Press / EPK</button>
         <button data-section="contact" class="nav-item">Contact</button>
@@ -511,6 +512,29 @@
             </label>
             <button id="perf-move-apply" type="button">Move</button>
             <button id="perf-revert-item" type="button">Revert current item</button>
+          </div>
+        </section>
+
+        <section id="section-pastperfs" class="section">
+          <h2>Past Events</h2>
+          <p class="muted">Import a JSON array of past performances. Each import normalizes fields and overwrites the saved <code>rg_past_perfs</code> list.</p>
+          <p class="muted warn">Import replaces the current Past Events dataset.</p>
+          <div class="grid one">
+            <label>Past events JSON file
+              <input id="pastperfs-import-file" type="file" accept=".json,application/json">
+            </label>
+          </div>
+          <div class="toolbar section-save-bar">
+            <button id="pastperfs-import-btn" type="button" class="button-primary">Import Past Events JSON</button>
+            <button id="pastperfs-clear-btn" type="button">Clear Past Events</button>
+          </div>
+          <p id="pastperfs-import-summary" class="muted"></p>
+          <p id="pastperfs-import-status" class="muted"></p>
+          <div class="editor tools-card">
+            <h3>Saved overview</h3>
+            <p id="pastperfs-summary" class="muted">No saved data loaded yet.</p>
+            <textarea id="pastperfs-preview" rows="10" class="mono" readonly></textarea>
+            <p id="pastperfs-skipped-note" class="muted warn" style="display:none"></p>
           </div>
         </section>
 
