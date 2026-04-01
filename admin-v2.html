@@ -435,7 +435,9 @@
                     <option value="published">Published</option>
                     <option value="hidden">Hidden</option>
                   </select>
+                  <small class="muted">Publishing controls whether the event is ready for public display.</small>
                 </label>
+                <p id="perf-public-visibility" class="pill">Visibility: —</p>
               </div>
 
               <div class="editor-section">
@@ -469,7 +471,7 @@
                       <option value="past">Past</option>
                       <option value="hidden">Hidden</option>
                     </select>
-                    <small class="muted">Not shown publicly as a label.</small>
+                    <small class="muted">Status controls whether an event is upcoming, past, or hidden.</small>
                   </label>
                   <label>Type
                     <select id="perf-type">
@@ -502,8 +504,8 @@
             </div>
           </div>
           <div class="toolbar section-save-bar">
-            <button id="savePerfHeaderBtn" type="button" class="button-primary">Save calendar section text</button>
-            <button id="savePerfEventsBtn" type="button" class="button-primary">Save event list</button>
+            <button id="savePerfHeaderBtn" type="button" class="button-primary">Save page heading &amp; intro</button>
+            <button id="savePerfEventsBtn" type="button" class="button-primary">Save all event changes</button>
             <button id="perf-archive-current-btn" type="button" title="Mark current event as past">Archive event (past)</button>
             <button id="perf-prev-item" type="button">Previous item</button>
             <button id="perf-next-item" type="button">Next item</button>
@@ -513,6 +515,8 @@
             <button id="perf-move-apply" type="button">Move</button>
             <button id="perf-revert-item" type="button">Revert current item</button>
           </div>
+          <p class="muted">Save page heading &amp; intro saves the calendar page title and intro text only.</p>
+          <p class="muted">Save all event changes saves titles, dates, venue, visibility, and other event fields.</p>
         </section>
 
         <section id="section-pastperfs" class="section">

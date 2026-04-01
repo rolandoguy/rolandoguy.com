@@ -1698,6 +1698,7 @@
     setSelectWithCustomValue('perf-editorialStatus', safeString(e.editorialStatus || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft')), 'draft');
     $('perf-sortDate').value = safeString(e.sortDate);
     updatePerfCardPreview();
+    updatePerfPublicVisibilitySummary();
   }
   function setSelectWithCustomValue(id, rawValue, fallback) {
     var el = $(id);
@@ -1747,6 +1748,23 @@
     $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
     $('perf-cardPreviewBg').style.opacity = String(op / 100);
   }
+  function updatePerfPublicVisibilitySummary() {
+    var box = $('perf-public-visibility');
+    if (!box) return;
+    var st = safeString($('perf-status') && $('perf-status').value).trim().toLowerCase();
+    var es = safeString($('perf-editorialStatus') && $('perf-editorialStatus').value).trim().toLowerCase();
+    var hiddenByStatus = st === 'hidden';
+    var hiddenByEditorial = es === 'hidden' || es === 'draft' || es === 'needs_translation' || es === 'needs translation';
+    if (hiddenByStatus || hiddenByEditorial) {
+      box.textContent = 'Hidden from website';
+      box.classList.remove('ok');
+      box.classList.add('warn');
+    } else {
+      box.textContent = 'Visible on website';
+      box.classList.remove('warn');
+      box.classList.add('ok');
+    }
+  }
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
@@ -1774,6 +1792,7 @@
     e.sortDate = $('perf-sortDate').value;
     state.perfs[state.perfIndex] = e;
     updatePerfCardPreview();
+    updatePerfPublicVisibilitySummary();
     renderPerfList();
     markDirty(true);
   }

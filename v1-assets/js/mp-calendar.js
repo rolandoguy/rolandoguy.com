@@ -11,6 +11,7 @@
   var currentLang = 'en';
   var MP_PAST_PERFS = [];
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var titleChoiceLogged = false;
 
   function escHtml(s) {
     return String(s || '')
@@ -271,24 +272,47 @@
   function shouldRenderPublicEvent(item, idx) {
     var es = normalizedEditorialStatus(item.editorialStatus);
     var st = String(item.status || '').trim().toLowerCase();
-    if (st === 'hidden') {
-      console.warn('[Calendar] Skipping hidden event via status', idx, item && item.title);
-      return false;
+    var title = String((item && item.title) || '').trim() || ('#' + (idx + 1));
+    var allowedPublicEditorial = { published: 1, public: 1, live: 1, ready: 1, reviewed: 1, translated: 1 };
+    var excludedEditorial = { hidden: 1, draft: 1, needs_translation: 1, 'needs translation': 1 };
+    var excludedStatus = { hidden: 1, draft: 1 };
+    var include = true;
+    var reason = 'included';
+
+    if (excludedStatus[st]) {
+      include = false;
+      reason = 'status=' + st;
     }
-    if (es === 'hidden' || es === 'draft' || es === 'needs_translation' || es === 'needs translation') {
-      console.warn('[Calendar] Skipping hidden/draft event via editorialStatus', idx, item && item.title, es);
-      return false;
+    if (include && excludedEditorial[es]) {
+      include = false;
+      reason = 'editorialStatus=' + es;
     }
-    if (es && es !== 'published') {
-      console.warn('[Calendar] Skipping non-published event', idx, item && item.title, es);
-      return false;
+    // If editorialStatus is present, allow several publish-like values used by workflows.
+    if (include && es && !allowedPublicEditorial[es]) {
+      include = false;
+      reason = 'editorialStatus not public-like: ' + es;
     }
-    if (!es) {
-      // Backward compatibility: legacy events may not have editorialStatus.
-      console.warn('[Calendar] Legacy event without editorialStatus shown', idx, item && item.title);
-    }
+
     if (!String(item.title || '').trim()) console.warn('[Calendar] Event missing title', idx, item);
     if (!String(item.day || '').trim() && !String(item.sortDate || '').trim()) console.warn('[Calendar] Event missing date/day fields', idx, item);
+
+    if (!include) {
+      console.warn('[Calendar] Excluded event', {
+        idx: idx,
+        title: title,
+        status: st || '(empty)',
+        editorialStatus: es || '(empty)',
+        reason: reason
+      });
+      return false;
+    }
+
+    console.log('[Calendar] Included event', {
+      idx: idx,
+      title: title,
+      status: st || '(empty)',
+      editorialStatus: es || '(empty)'
+    });
     return true;
   }
   function parseIsoDateMaybe(s) {
@@ -476,6 +500,24 @@
     var g = p[base];
     return g != null && String(g).trim() !== '' ? String(g).trim() : '';
   }
+  function resolveEventTitle(p, lang) {
+    var title = p && p.title != null ? String(p.title).trim() : '';
+    var name = p && p.name != null ? String(p.name).trim() : '';
+    var localeTitle = p && p['title_' + lang] != null ? String(p['title_' + lang]).trim() : '';
+    var chosen = title || name || localeTitle || '';
+    if (!titleChoiceLogged) {
+      titleChoiceLogged = true;
+      console.log('[Calendar] Title field resolution sample', {
+        lang: lang,
+        raw_title: title,
+        raw_name: name,
+        raw_title_locale: localeTitle,
+        chosen: chosen,
+        source: title ? 'title' : (name ? 'name' : (localeTitle ? 'title_' + lang : 'empty'))
+      });
+    }
+    return chosen;
+  }
 
   function sortDate(p) {
     if (p.sortDate) return new Date(p.sortDate);
@@ -603,7 +645,7 @@
         '</div>' +
         timeHtml +
         '</div>';
-      var listTitle = perfLocaleField(p, 'title', currentLang);
+      var listTitle = resolveEventTitle(p, currentLang);
       h +=
         '<div>' +
         badge +
@@ -818,7 +860,7 @@
                 : esc(monthStr + yearStr).trim() || 'TBA';
             var tStr = timeFmt(p.time);
             var when = tStr ? dateStr + ' · ' + esc(tStr) : dateStr;
-            var title = perfLocaleField(p, 'title', lang);
+            var title = resolveEventTitle(p, lang);
             var detail = ((p['detail_' + lang] || p.detail) || '').trim();
             var venueBits = [];
             if ((p.venue || '').trim()) venueBits.push(String(p.venue).trim());
@@ -936,7 +978,7 @@
       };
     var typeLabel = types[p.type] || p.type || '';
     var detail = p['detail_' + currentLang] || p.detail || '';
-    var modalTitle = perfLocaleField(p, 'title', currentLang);
+    var modalTitle = resolveEventTitle(p, currentLang);
     var venueCity = [p.venue, p.city].filter(Boolean).join(' · ');
     var timeStr = p.time ? ' · ' + p.time : '';
 
