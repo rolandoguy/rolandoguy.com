@@ -996,6 +996,8 @@ textarea.adm-input{resize:vertical;min-height:80px}
   nav{padding:10px 14px}
   /* Avoid hero taller than the viewport on short phones (was min-height:700px from base #hero) */
   #hero{height:100svh;height:100vh;min-height:0}
+  /* Keep CTA block low, but add breathing room before Biography section. */
+  #hero{margin-bottom:14px}
   .hero-content{padding:0 16px max(70px, env(safe-area-inset-bottom, 0px))}
   .hero-eyebrow{font-size:.52rem;letter-spacing:.2em}
   .hero-name{font-size:clamp(2.8rem,14vw,4.5rem);line-height:.92}
