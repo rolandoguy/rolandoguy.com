@@ -1,4 +1,6 @@
 (function () {
+  /** Avoid loading bundled intro portrait before admin/config resolution runs. */
+  var INTRO_PLACEHOLDER_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   /** Hero background: /v1-assets/data/hero-config.json (npm run build:hero-config -- <export.json>). */
   var HERO_EN_FALLBACK = {
     'hero.eyebrow': 'LYRIC TENOR · OPERA · CONCERT · RECITAL',
@@ -179,10 +181,18 @@
     }
     return normalizeIntroImagePath(cfgImageOrFallback);
   }
-  function applyIntroPhotoSource(introPhoto, cfgImageOrFallback) {
+  function applyIntroPhotoSource(introPhoto, cfgImageOrFallback, options) {
     if (!introPhoto) return;
-    if (!introPhoto.dataset.baseSrcset) introPhoto.dataset.baseSrcset = introPhoto.getAttribute('srcset') || '';
-    if (!introPhoto.dataset.baseSizes) introPhoto.dataset.baseSizes = introPhoto.getAttribute('sizes') || '';
+    options = options || {};
+    var onlyOverride = !!options.onlyOverride;
+    if (!introPhoto.dataset.baseSrcset) {
+      introPhoto.dataset.baseSrcset =
+        introPhoto.getAttribute('data-intro-srcset') || introPhoto.getAttribute('srcset') || '';
+    }
+    if (!introPhoto.dataset.baseSizes) {
+      introPhoto.dataset.baseSizes =
+        introPhoto.getAttribute('data-intro-sizes') || introPhoto.getAttribute('sizes') || '';
+    }
     var override = getIntroImageOverrideInfo();
     if (override && override.url) {
       // If a language-specific intro portrait exists, force that exact file.
@@ -192,6 +202,7 @@
       introPhoto.src = override.url;
       return;
     }
+    if (onlyOverride) return;
     var fallback = normalizeIntroImagePath(cfgImageOrFallback);
     if (introPhoto.dataset.baseSrcset) introPhoto.setAttribute('srcset', introPhoto.dataset.baseSrcset);
     else introPhoto.removeAttribute('srcset');
@@ -389,8 +400,15 @@
 
   function bootHero() {
     var lang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var introPhoto = document.querySelector('img.mp-home-hero-asset');
+    if (introPhoto) {
+      introPhoto.src = INTRO_PLACEHOLDER_SRC;
+      introPhoto.removeAttribute('srcset');
+      introPhoto.removeAttribute('sizes');
+    }
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
+      if (introPhoto) applyIntroPhotoSource(introPhoto, '', { onlyOverride: true });
       fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
       .then(function (r) {
         return r.json();
@@ -400,17 +418,22 @@
         var hb = document.getElementById('heroBg');
         var fallback = '../img/hero-portrait.webp';
         if (hb) hb.style.backgroundImage = "image-set(url('../img/hero-portrait-1280.webp') 1x, url('../img/hero-portrait-1920.webp') 2x, url('../img/hero-portrait.webp') 3x)";
-        var introPhoto = document.querySelector('img.mp-home-hero-asset');
-        applyIntroPhotoSource(introPhoto, fallback);
+        var introEl = document.querySelector('img.mp-home-hero-asset');
+        applyIntroPhotoSource(introEl, fallback);
       });
     });
   }
 
   window.addEventListener('mp:langchange', function (e) {
     var lang = (e.detail && e.detail.lang) || (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var introPhoto = document.querySelector('img.mp-home-hero-asset');
+    if (introPhoto) {
+      introPhoto.src = INTRO_PLACEHOLDER_SRC;
+      introPhoto.removeAttribute('srcset');
+      introPhoto.removeAttribute('sizes');
+    }
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
-      var introPhoto = document.querySelector('img.mp-home-hero-asset');
       if (introPhoto) {
         applyIntroPhotoSource(introPhoto, LAST_HERO_IMAGE || '../img/hero-portrait.webp');
       }
