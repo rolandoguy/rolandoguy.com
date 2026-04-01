@@ -12,6 +12,8 @@
   var MP_PAST_PERFS = [];
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var titleChoiceLogged = false;
+  var modalLocaleChoiceLogged = false;
+  var supportingLocaleChoiceLogged = false;
 
   function escHtml(s) {
     return String(s || '')
@@ -271,7 +273,22 @@
       detail_de: o.detail_de,
       detail_es: o.detail_es,
       detail_it: o.detail_it,
-      detail_fr: o.detail_fr
+      detail_fr: o.detail_fr,
+      extDesc_en: o.extDesc_en,
+      extDesc_de: o.extDesc_de,
+      extDesc_es: o.extDesc_es,
+      extDesc_it: o.extDesc_it,
+      extDesc_fr: o.extDesc_fr,
+      eventLink_en: o.eventLink_en,
+      eventLink_de: o.eventLink_de,
+      eventLink_es: o.eventLink_es,
+      eventLink_it: o.eventLink_it,
+      eventLink_fr: o.eventLink_fr,
+      eventLinkLabel_en: o.eventLinkLabel_en,
+      eventLinkLabel_de: o.eventLinkLabel_de,
+      eventLinkLabel_es: o.eventLinkLabel_es,
+      eventLinkLabel_it: o.eventLinkLabel_it,
+      eventLinkLabel_fr: o.eventLinkLabel_fr
     };
   }
   function normalizeRgPerfsList(arr) {
@@ -636,6 +653,32 @@
           '</span></a>'
         : '';
       var detail = p['detail_' + currentLang] || p.detail || '';
+      if (!supportingLocaleChoiceLogged) {
+        supportingLocaleChoiceLogged = true;
+        console.log('[Calendar] Supporting i18n resolution sample', {
+          lang: currentLang,
+          detail: {
+            base: p.detail || '',
+            localized: p['detail_' + currentLang] || '',
+            chosenCard: detail || ''
+          },
+          extDesc: {
+            base: p.extDesc || '',
+            localized: p['extDesc_' + currentLang] || '',
+            chosenModal: perfLocaleField(p, 'extDesc', currentLang) || ''
+          },
+          eventLinkLabel: {
+            base: p.eventLinkLabel || '',
+            localized: p['eventLinkLabel_' + currentLang] || '',
+            chosenModal: perfLocaleField(p, 'eventLinkLabel', currentLang) || ''
+          },
+          eventLink: {
+            base: p.eventLink || '',
+            localized: p['eventLink_' + currentLang] || '',
+            chosenModal: perfLocaleField(p, 'eventLink', currentLang) || ''
+          }
+        });
+      }
       var pastClass = isPastSection || p.status === 'past' ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
@@ -1066,6 +1109,32 @@
       linkEl.style.display = '';
     } else {
       linkEl.style.display = 'none';
+    }
+    if (!modalLocaleChoiceLogged) {
+      modalLocaleChoiceLogged = true;
+      console.log('[Calendar] Modal i18n resolution sample', {
+        lang: currentLang,
+        detail: {
+          base: p.detail || '',
+          localized: p['detail_' + currentLang] || '',
+          chosen: detail || ''
+        },
+        extDesc: {
+          base: p.extDesc || '',
+          localized: p['extDesc_' + currentLang] || '',
+          chosen: extBody || ''
+        },
+        eventLink: {
+          base: p.eventLink || '',
+          localized: p['eventLink_' + currentLang] || '',
+          chosen: ticketUrl || ''
+        },
+        eventLinkLabel: {
+          base: p.eventLinkLabel || '',
+          localized: p['eventLinkLabel_' + currentLang] || '',
+          chosen: linkEl && linkEl.style.display !== 'none' ? (linkEl.textContent || '') : ''
+        }
+      });
     }
 
     var flyerEl = document.getElementById('emFlyerImg');
