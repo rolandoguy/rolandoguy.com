@@ -211,6 +211,86 @@
   function getPerfs() {
     return MP_CAL && Array.isArray(MP_CAL.perfs) ? MP_CAL.perfs : [];
   }
+  function normalizedEditorialStatus(v) {
+    return String(v || '').trim().toLowerCase();
+  }
+  function normalizeRgPerfsItem(raw, idx) {
+    var o = raw && typeof raw === 'object' ? raw : {};
+    var title = String(o.title || o.name || '').trim();
+    var detail = String(o.detail || o.description || '').trim();
+    var venue = String(o.venue || o.place || '').trim();
+    var city = String(o.city || '').trim();
+    var status = String(o.status || '').trim().toLowerCase();
+    var editorialStatus = normalizedEditorialStatus(o.editorialStatus);
+    var sortDate = String(o.sortDate || o.date || '').trim();
+    var day = String(o.day || '').trim();
+    var month = String(o.month || '').trim();
+    var time = String(o.time || '').trim();
+    if (!day || !month) {
+      var parsed = sortDate ? new Date(sortDate) : null;
+      if (parsed && !isNaN(parsed.getTime())) {
+        if (!day) day = String(parsed.getDate());
+        if (!month) month = parsed.toLocaleString('en', { month: 'short' }).toUpperCase();
+      }
+    }
+    return {
+      id: o.id != null ? o.id : ('perf-' + (idx + 1)),
+      title: title,
+      detail: detail,
+      venue: venue,
+      city: city,
+      day: day,
+      month: month,
+      time: time,
+      sortDate: sortDate,
+      status: status || 'upcoming',
+      editorialStatus: editorialStatus,
+      type: String(o.type || 'concert').trim().toLowerCase() || 'concert',
+      venuePhoto: String(o.venuePhoto || o.image || '').trim(),
+      venueOpacity: o.venueOpacity,
+      ticketPrice: String(o.ticketPrice || '').trim(),
+      eventLink: String(o.eventLink || o.link || '').trim(),
+      eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
+      extDesc: String(o.extDesc || '').trim(),
+      title_en: o.title_en,
+      title_de: o.title_de,
+      title_es: o.title_es,
+      title_it: o.title_it,
+      title_fr: o.title_fr,
+      detail_en: o.detail_en,
+      detail_de: o.detail_de,
+      detail_es: o.detail_es,
+      detail_it: o.detail_it,
+      detail_fr: o.detail_fr
+    };
+  }
+  function normalizeRgPerfsList(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(function (item, idx) { return normalizeRgPerfsItem(item, idx); });
+  }
+  function shouldRenderPublicEvent(item, idx) {
+    var es = normalizedEditorialStatus(item.editorialStatus);
+    var st = String(item.status || '').trim().toLowerCase();
+    if (st === 'hidden') {
+      console.warn('[Calendar] Skipping hidden event via status', idx, item && item.title);
+      return false;
+    }
+    if (es === 'hidden' || es === 'draft' || es === 'needs_translation' || es === 'needs translation') {
+      console.warn('[Calendar] Skipping hidden/draft event via editorialStatus', idx, item && item.title, es);
+      return false;
+    }
+    if (es && es !== 'published') {
+      console.warn('[Calendar] Skipping non-published event', idx, item && item.title, es);
+      return false;
+    }
+    if (!es) {
+      // Backward compatibility: legacy events may not have editorialStatus.
+      console.warn('[Calendar] Legacy event without editorialStatus shown', idx, item && item.title);
+    }
+    if (!String(item.title || '').trim()) console.warn('[Calendar] Event missing title', idx, item);
+    if (!String(item.day || '').trim() && !String(item.sortDate || '').trim()) console.warn('[Calendar] Event missing date/day fields', idx, item);
+    return true;
+  }
   function parseIsoDateMaybe(s) {
     var raw = String(s || '').trim();
     if (!raw) return null;
@@ -418,7 +498,8 @@
     var list = document.getElementById('perfList');
     if (!list) return;
     list.innerHTML = '';
-    var perfs = getPerfs();
+    var perfs = getPerfs().filter(function (p, idx) { return shouldRenderPublicEvent(p, idx); });
+    console.log('[Calendar] rg_perfs loaded:', getPerfs().length, 'public after filter:', perfs.length);
     var today = new Date();
     today.setHours(0, 0, 0, 0);
     var upcoming = [];
@@ -1019,10 +1100,25 @@
           perfs: []
         };
       }),
-    loadPastPerfs()
+    loadPastPerfs(),
+    fetchFirestoreDocJson('rg_perfs')
   ])
     .then(function (parts) {
       MP_CAL = parts[0];
+      var rgPerfsLive = parts[2];
+      if (Array.isArray(rgPerfsLive)) {
+        MP_CAL.perfs = normalizeRgPerfsList(rgPerfsLive);
+        console.log('[Calendar] Using live rg_perfs from Firestore:', MP_CAL.perfs.length);
+      } else {
+        var legacyLocal = readLegacyJson('rg_perfs');
+        if (Array.isArray(legacyLocal)) {
+          MP_CAL.perfs = normalizeRgPerfsList(legacyLocal);
+          console.log('[Calendar] Using local rg_perfs fallback:', MP_CAL.perfs.length);
+        } else {
+          MP_CAL.perfs = normalizeRgPerfsList(MP_CAL.perfs);
+          console.log('[Calendar] Using bundled calendar fallback:', MP_CAL.perfs.length);
+        }
+      }
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
       applyPerfHeader();
       renderPerfs();
