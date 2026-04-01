@@ -1411,9 +1411,12 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .perf-item .perf-info-title,.perf-item .perf-info-detail,.perf-item .perf-type,.perf-item .perf-badge,.perf-item .perf-venue-link{text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 12px rgba(10,10,15,.9)}
 #pastPerfList .perf-info-detail.past-desc{
   display:-webkit-box;
-  -webkit-line-clamp:4;
+  -webkit-line-clamp:3;
   -webkit-box-orient:vertical;
   overflow:hidden;
+  position:relative;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 72%,rgba(0,0,0,0));
+  -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 72%,rgba(0,0,0,0));
 }
 }
 

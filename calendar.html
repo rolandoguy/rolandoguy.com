@@ -72,12 +72,16 @@
     </div>
     <div class="perf-list" id="perfList"></div>
     <div class="perf-actions no-print" style="text-align:center;margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
-      <button id="pastToggleBtn" type="button" onclick="togglePastPerfs()" style="display:none;font-family:var(--ff-caps);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-faint);background:transparent;border:1px solid var(--border);padding:11px 26px;cursor:none;transition:all .3s" onmouseenter="this.style.color='var(--gold)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--text-faint)';this.style.borderColor='var(--border)'">+ Show Past Performances</button>
       <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print calendar"><span id="perfPrintBtnText">Print calendar</span></button>
     </div>
     <section id="pastPerformancesSection" class="perf-past-block" style="display:none;margin-top:42px">
       <div class="perf-past-divider">Selected Past Performances</div>
-      <div class="perf-list" id="pastPerfList"></div>
+      <div class="perf-actions no-print" style="text-align:center;margin:0 0 12px;display:flex;justify-content:center">
+        <button id="pastPerfCollapseBtn" type="button" class="perf-print-btn" aria-expanded="false" aria-controls="pastPerfListWrap">View past performances</button>
+      </div>
+      <div id="pastPerfListWrap" style="max-height:0;opacity:0;overflow:hidden;transition:max-height .35s ease,opacity .25s ease">
+        <div class="perf-list" id="pastPerfList"></div>
+      </div>
     </section>
     <section class="mp-onward-band" aria-label="Next steps">
       <div class="section-inner reveal rd2">

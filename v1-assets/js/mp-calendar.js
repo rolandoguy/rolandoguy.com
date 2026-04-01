@@ -7,7 +7,7 @@
   'use strict';
 
   var MP_CAL = null;
-  var showPastPerfs = false;
+  var pastPublicExpanded = false;
   var currentLang = 'en';
   var MP_PAST_PERFS = [];
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
@@ -242,6 +242,15 @@
       return normalizePastPublicItem(item, idx);
     });
   }
+  function isGoodPastTimeLabel(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return false;
+    var m = s.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+    if (!m) return false;
+    var mins = Number(m[2]);
+    if (!Number.isFinite(mins)) return false;
+    return mins % 5 === 0;
+  }
   function validPastPublicItem(item, idx) {
     if (!item || typeof item !== 'object') {
       console.warn('[Past Performances] Skipping non-object item at index', idx);
@@ -272,7 +281,9 @@
   function renderPastPerformancesPublic() {
     var section = document.getElementById('pastPerformancesSection');
     var list = document.getElementById('pastPerfList');
-    if (!section || !list) return;
+    var wrap = document.getElementById('pastPerfListWrap');
+    var toggleBtn = document.getElementById('pastPerfCollapseBtn');
+    if (!section || !list || !wrap || !toggleBtn) return;
     var t = uiTable(currentLang);
     var mapsWord = t['perf.maps'] || 'Maps';
     var items = normalizePastPublicList(MP_PAST_PERFS)
@@ -288,6 +299,10 @@
     if (!items.length) {
       section.style.display = 'none';
       list.innerHTML = '';
+      wrap.style.maxHeight = '0px';
+      wrap.style.opacity = '0';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.textContent = 'View past performances';
       return;
     }
     section.style.display = '';
@@ -296,8 +311,9 @@
       var d = parseIsoDateMaybe(p.date);
       var day = d ? String(d.getDate()) : '';
       var month = d ? d.toLocaleString('en', { month: 'short' }).toUpperCase() : '';
+      var showTime = isGoodPastTimeLabel(p.time);
       var when = day || month
-        ? '<div class="perf-date-box"><div class="perf-day">' + escHtml(day) + '</div><div class="perf-month">' + escHtml(month) + '</div>' + (p.time ? '<div class="perf-time">' + escHtml(p.time) + '</div>' : '') + '</div>'
+        ? '<div class="perf-date-box"><div class="perf-day">' + escHtml(day) + '</div><div class="perf-month">' + escHtml(month) + '</div>' + (showTime ? '<div class="perf-time">' + escHtml(p.time) + '</div>' : '') + '</div>'
         : '';
       var venueCity = (p.place || p.city)
         ? '<a href="https://maps.google.com/?q=' + encodeURIComponent((p.address || p.place || '') + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>' + escHtml(p.place || '') + (p.city ? ' · ' + escHtml(p.city) : '') + ' <span class="perf-maps-hint">→ ' + escHtml(mapsWord) + '</span></a>'
@@ -316,6 +332,17 @@
       html += '</div></div>';
     });
     list.innerHTML = html;
+    if (pastPublicExpanded) {
+      toggleBtn.textContent = 'Hide past performances';
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      wrap.style.maxHeight = wrap.scrollHeight + 'px';
+      wrap.style.opacity = '1';
+    } else {
+      toggleBtn.textContent = 'View past performances';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      wrap.style.maxHeight = '0px';
+      wrap.style.opacity = '0';
+    }
   }
 
   function inferPastCategoryFromType(type) {
@@ -594,9 +621,22 @@
     renderPastPerformancesPublic();
   }
 
-  function togglePastPerfs() {
-    showPastPerfs = !showPastPerfs;
-    renderPerfs();
+  function togglePastPublicList() {
+    var wrap = document.getElementById('pastPerfListWrap');
+    var toggleBtn = document.getElementById('pastPerfCollapseBtn');
+    if (!wrap || !toggleBtn) return;
+    pastPublicExpanded = !pastPublicExpanded;
+    if (pastPublicExpanded) {
+      toggleBtn.textContent = 'Hide past performances';
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      wrap.style.maxHeight = wrap.scrollHeight + 'px';
+      wrap.style.opacity = '1';
+    } else {
+      toggleBtn.textContent = 'View past performances';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      wrap.style.maxHeight = '0px';
+      wrap.style.opacity = '0';
+    }
   }
 
   function printAgenda() {
@@ -925,10 +965,14 @@
     if (em && em.style.display !== 'none') closeEventModal();
   });
 
-  window.togglePastPerfs = togglePastPerfs;
+  window.togglePastPerfs = function () {};
   window.openEventModal = openEventModal;
   window.closeEventModal = closeEventModal;
   window.printAgenda = printAgenda;
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('pastPerfCollapseBtn');
+    if (btn) btn.addEventListener('click', togglePastPublicList);
+  });
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';

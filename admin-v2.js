@@ -85,7 +85,8 @@
     pressWorkflowFilter: 'all',
     mediaVidWorkflowFilter: 'all',
     perfWorkflowFilter: 'all',
-    repWorkflowFilter: 'all'
+    repWorkflowFilter: 'all',
+    pastPerfsSelected: {}
   };
 
   function $(id) { return document.getElementById(id); }
@@ -1828,6 +1829,122 @@
       return normalizePastPerfImportItem(item, idx);
     });
   }
+  function parseDateSafe(s) {
+    var raw = safeString(s).trim();
+    if (!raw) return null;
+    var d = new Date(raw);
+    if (isNaN(d.getTime())) return null;
+    return d;
+  }
+  function validatePastPerfItem(item, idx) {
+    var errors = [];
+    if (!isObject(item)) {
+      errors.push('Item #' + (idx + 1) + ' is not an object.');
+      return errors;
+    }
+    var rawDate = safeString(item.date).trim();
+    if (!rawDate) errors.push('Item #' + (idx + 1) + ' is missing date.');
+    else if (!parseDateSafe(rawDate)) errors.push('Item #' + (idx + 1) + ' has invalid date: ' + rawDate);
+    return errors;
+  }
+  function savePastPerfsToStorage() {
+    var allErrors = [];
+    state.pastPerfs = normalizePastPerfImportArray(state.pastPerfs);
+    state.pastPerfs.forEach(function (item, idx) {
+      item.status = 'past';
+      validatePastPerfItem(item, idx).forEach(function (e) { allErrors.push(e); });
+    });
+    if (allErrors.length) {
+      if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Save failed: ' + allErrors[0];
+      alert('Save failed:\n- ' + allErrors.slice(0, 12).join('\n- ') + (allErrors.length > 12 ? '\n- ... and ' + (allErrors.length - 12) + ' more' : ''));
+      return false;
+    }
+    saveDoc('rg_past_perfs', state.pastPerfs);
+    if ($('pastperfs-summary')) $('pastperfs-summary').textContent = state.pastPerfs.length ? ('Saved past events: ' + state.pastPerfs.length) : 'No past events saved yet.';
+    if ($('pastperfs-preview')) $('pastperfs-preview').value = JSON.stringify(state.pastPerfs.slice(0, 40), null, 2);
+    setStatus('Past events saved', 'ok');
+    return true;
+  }
+  function renderPastPerfsEditorList() {
+    var box = $('pastperfs-editor-list');
+    if (!box) return;
+    var arr = Array.isArray(state.pastPerfs) ? state.pastPerfs : [];
+    if (!arr.length) {
+      box.innerHTML = '<div class="item">No past events saved.</div>';
+      return;
+    }
+    box.innerHTML = arr.map(function (p, idx) {
+      var checked = !!state.pastPerfsSelected[idx];
+      var title = safeString(p.title).trim() || '(untitled)';
+      return '' +
+        '<div class="item" data-past-idx="' + idx + '">' +
+          '<div class="item-row">' +
+            '<input type="checkbox" data-past-select="' + idx + '"' + (checked ? ' checked' : '') + '>' +
+            '<div class="item-main">' +
+              '<strong>#' + (idx + 1) + ' · ' + escapeHtml(title) + '</strong>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid two">' +
+            '<label>Date<input data-past-field="date" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.date)) + '"></label>' +
+            '<label>Time<input data-past-field="time" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.time)) + '"></label>' +
+            '<label>Title<input data-past-field="title" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.title)) + '"></label>' +
+            '<label>Place<input data-past-field="place" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.place)) + '"></label>' +
+            '<label>City<input data-past-field="city" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.city)) + '"></label>' +
+            '<label>Address<input data-past-field="address" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.address)) + '"></label>' +
+            '<label>Link text<input data-past-field="linkText" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.linkText)) + '"></label>' +
+            '<label>Link<input data-past-field="link" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.link)) + '"></label>' +
+            '<label>Image<input data-past-field="image" data-past-idx="' + idx + '" value="' + escapeHtml(safeString(p.image)) + '"></label>' +
+            '<label>Private<select data-past-field="private" data-past-idx="' + idx + '"><option value="false"' + (!p.private ? ' selected' : '') + '>false</option><option value="true"' + (p.private ? ' selected' : '') + '>true</option></select></label>' +
+          '</div>' +
+          '<label>Description<textarea rows="3" data-past-field="description" data-past-idx="' + idx + '">' + escapeHtml(safeString(p.description)) + '</textarea></label>' +
+          '<div class="toolbar">' +
+            '<button type="button" data-past-action="save" data-past-idx="' + idx + '">Save item changes</button>' +
+            '<button type="button" data-past-action="up" data-past-idx="' + idx + '">Move up</button>' +
+            '<button type="button" data-past-action="down" data-past-idx="' + idx + '">Move down</button>' +
+            '<button type="button" class="danger" data-past-action="delete" data-past-idx="' + idx + '">Delete item</button>' +
+          '</div>' +
+        '</div>';
+    }).join('');
+  }
+  function collectPastPerfItemFromUi(idx) {
+    function v(field) {
+      var el = document.querySelector('[data-past-field="' + field + '"][data-past-idx="' + idx + '"]');
+      return el ? safeString(el.value) : '';
+    }
+    return {
+      id: safeString(state.pastPerfs[idx] && state.pastPerfs[idx].id).trim() || ('past-' + (idx + 1)),
+      date: v('date').trim(),
+      time: v('time').trim(),
+      title: v('title').trim(),
+      place: v('place').trim(),
+      city: v('city').trim(),
+      address: v('address').trim(),
+      description: v('description').trim(),
+      linkText: v('linkText').trim(),
+      link: v('link').trim(),
+      image: v('image').trim(),
+      status: 'past',
+      private: v('private') === 'true'
+    };
+  }
+  function savePastPerfItemAt(idx) {
+    if (idx < 0 || idx >= state.pastPerfs.length) return;
+    var next = collectPastPerfItemFromUi(idx);
+    var errors = validatePastPerfItem(next, idx);
+    if (errors.length) {
+      if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Save failed: ' + errors[0];
+      alert(errors.join('\n'));
+      return;
+    }
+    state.pastPerfs[idx] = next;
+    if (savePastPerfsToStorage()) {
+      if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Item #' + (idx + 1) + ' saved.';
+      renderPastPerfsEditorList();
+    }
+  }
+  function selectedPastPerfIndices() {
+    return Object.keys(state.pastPerfsSelected || {}).filter(function (k) { return !!state.pastPerfsSelected[k]; }).map(function (k) { return Number(k); }).filter(function (n) { return Number.isFinite(n); }).sort(function (a, b) { return a - b; });
+  }
   function validatePastPerfsImportArray(arr) {
     var errors = [];
     if (!Array.isArray(arr)) {
@@ -1853,6 +1970,7 @@
     state.pastPerfs = loadDoc('rg_past_perfs', []);
     if (!Array.isArray(state.pastPerfs)) state.pastPerfs = [];
     state.pastPerfs = normalizePastPerfImportArray(state.pastPerfs);
+    clearSelected(state.pastPerfsSelected);
     if ($('pastperfs-import-file')) $('pastperfs-import-file').value = '';
     if ($('pastperfs-import-summary')) $('pastperfs-import-summary').textContent = '';
     if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = '';
@@ -1868,6 +1986,7 @@
     if ($('pastperfs-preview')) {
       $('pastperfs-preview').value = JSON.stringify(state.pastPerfs.slice(0, 40), null, 2);
     }
+    renderPastPerfsEditorList();
   }
   function clearPastPerfsDataset() {
     if (!window.confirm('Clear all past events? This replaces rg_past_perfs with an empty list.')) return;
@@ -1881,6 +2000,8 @@
       $('pastperfs-skipped-note').textContent = '';
       $('pastperfs-skipped-note').style.display = 'none';
     }
+    clearSelected(state.pastPerfsSelected);
+    renderPastPerfsEditorList();
     setStatus('Past events cleared', 'ok');
     pushActivitySummary('Past events cleared', ['rg_past_perfs replaced with an empty array.']);
   }
@@ -1921,6 +2042,8 @@
         }
         setStatus('Past events imported', 'ok');
         pushActivitySummary('Past events imported', [normalized.length + ' item(s) saved to rg_past_perfs.']);
+        clearSelected(state.pastPerfsSelected);
+        renderPastPerfsEditorList();
         alert('Import complete. ' + normalized.length + ' past event(s) imported.');
       } catch (err) {
         if ($('pastperfs-import-summary')) $('pastperfs-import-summary').textContent = '';
@@ -4306,6 +4429,91 @@
     $('savePerfEventsBtn').addEventListener('click', savePerfEvents);
     if ($('pastperfs-import-btn')) $('pastperfs-import-btn').addEventListener('click', importPastPerfsJson);
     if ($('pastperfs-clear-btn')) $('pastperfs-clear-btn').addEventListener('click', clearPastPerfsDataset);
+    if ($('pastperfs-save-all-btn')) $('pastperfs-save-all-btn').addEventListener('click', function () {
+      var list = state.pastPerfs.map(function (_, idx) { return collectPastPerfItemFromUi(idx); });
+      state.pastPerfs = normalizePastPerfImportArray(list);
+      if (savePastPerfsToStorage()) {
+        if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'All past events saved.';
+        renderPastPerfsEditorList();
+      }
+    });
+    if ($('pastperfs-select-all-btn')) $('pastperfs-select-all-btn').addEventListener('click', function () {
+      clearSelected(state.pastPerfsSelected);
+      state.pastPerfs.forEach(function (_, idx) { state.pastPerfsSelected[idx] = true; });
+      renderPastPerfsEditorList();
+    });
+    if ($('pastperfs-clear-selection-btn')) $('pastperfs-clear-selection-btn').addEventListener('click', function () {
+      clearSelected(state.pastPerfsSelected);
+      renderPastPerfsEditorList();
+    });
+    if ($('pastperfs-clear-times-btn')) $('pastperfs-clear-times-btn').addEventListener('click', function () {
+      var ids = selectedPastPerfIndices();
+      if (!ids.length) return alert('Select at least one item.');
+      ids.forEach(function (i) { if (state.pastPerfs[i]) state.pastPerfs[i].time = ''; });
+      if (savePastPerfsToStorage()) {
+        if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Cleared times for ' + ids.length + ' item(s).';
+        renderPastPerfsEditorList();
+      }
+    });
+    if ($('pastperfs-mark-private-btn')) $('pastperfs-mark-private-btn').addEventListener('click', function () {
+      var ids = selectedPastPerfIndices();
+      if (!ids.length) return alert('Select at least one item.');
+      ids.forEach(function (i) { if (state.pastPerfs[i]) state.pastPerfs[i].private = true; });
+      if (savePastPerfsToStorage()) {
+        if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Marked private: ' + ids.length + ' item(s).';
+        renderPastPerfsEditorList();
+      }
+    });
+    if ($('pastperfs-delete-selected-btn')) $('pastperfs-delete-selected-btn').addEventListener('click', function () {
+      var ids = selectedPastPerfIndices();
+      if (!ids.length) return alert('Select at least one item.');
+      if (!window.confirm('Delete ' + ids.length + ' selected item(s)?')) return;
+      state.pastPerfs = state.pastPerfs.filter(function (_, idx) { return ids.indexOf(idx) < 0; });
+      clearSelected(state.pastPerfsSelected);
+      if (savePastPerfsToStorage()) {
+        if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Deleted ' + ids.length + ' selected item(s).';
+        renderPastPerfsEditorList();
+      }
+    });
+    if ($('pastperfs-editor-list')) $('pastperfs-editor-list').addEventListener('click', function (evt) {
+      var btn = evt.target && evt.target.closest ? evt.target.closest('[data-past-action]') : null;
+      if (!btn) return;
+      var idx = Number(btn.getAttribute('data-past-idx'));
+      if (!Number.isFinite(idx) || idx < 0 || idx >= state.pastPerfs.length) return;
+      var action = safeString(btn.getAttribute('data-past-action'));
+      if (action === 'save') {
+        savePastPerfItemAt(idx);
+      } else if (action === 'delete') {
+        if (!window.confirm('Delete this item?')) return;
+        state.pastPerfs.splice(idx, 1);
+        clearSelected(state.pastPerfsSelected);
+        if (savePastPerfsToStorage()) {
+          if ($('pastperfs-import-status')) $('pastperfs-import-status').textContent = 'Item deleted.';
+          renderPastPerfsEditorList();
+        }
+      } else if (action === 'up') {
+        if (idx <= 0) return;
+        var t = state.pastPerfs[idx - 1];
+        state.pastPerfs[idx - 1] = state.pastPerfs[idx];
+        state.pastPerfs[idx] = t;
+        clearSelected(state.pastPerfsSelected);
+        renderPastPerfsEditorList();
+      } else if (action === 'down') {
+        if (idx >= state.pastPerfs.length - 1) return;
+        var t2 = state.pastPerfs[idx + 1];
+        state.pastPerfs[idx + 1] = state.pastPerfs[idx];
+        state.pastPerfs[idx] = t2;
+        clearSelected(state.pastPerfsSelected);
+        renderPastPerfsEditorList();
+      }
+    });
+    if ($('pastperfs-editor-list')) $('pastperfs-editor-list').addEventListener('change', function (evt) {
+      var cb = evt.target && evt.target.closest ? evt.target.closest('[data-past-select]') : null;
+      if (!cb) return;
+      var idx = Number(cb.getAttribute('data-past-select'));
+      if (!Number.isFinite(idx)) return;
+      toggleSelected(state.pastPerfsSelected, idx, !!cb.checked);
+    });
     $('mediaTabVideos').addEventListener('click', function () { toggleMediaTab('videos'); });
     $('mediaTabPhotos').addEventListener('click', function () { toggleMediaTab('photos'); });
     $('media-vid-save').addEventListener('click', saveMediaVideos);
