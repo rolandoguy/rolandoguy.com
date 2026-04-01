@@ -86,21 +86,22 @@
     'perf.pastDivider': 'Past Performances',
     'perf.calendarEmpty': 'Upcoming dates to be announced soon.',
     'perf.emptyUpcoming': 'Upcoming dates to be announced soon.',
-    'perf.moreInfo': 'More Info',
-    'perf.pastShow': '+ Show Past Performances',
+    'perf.moreInfo': 'Details',
+    'perf.pastShow': 'View past performances',
     'perf.pastHide': '\u2212 Hide Past Performances',
+    'perf.pastDividerSelected': 'Selected Past Performances',
     'perf.repertoireLabel': 'Repertoire',
     'perf.pastCat.stage': 'Stage / Operetta',
     'perf.pastCat.concert': 'Concerts & Recitals',
     'perf.pastCat.collaboration': 'Collaborations',
     'perf.pastCat.private': 'Selected Private Engagements',
-    'perf.printAgenda': 'Print calendar',
+    'perf.printAgenda': 'Print schedule',
     'perf.printSubtitle': 'Calendar',
     'perf.printHeadline': 'Calendar',
     'perf.printTagline': 'Selected engagements and concerts',
     'perf.printDocTitle': 'Rolando Guy — Calendar',
     'perf.printTitle': 'Rolando Guy',
-    'perf.moreInfoPrint': 'More info',
+    'perf.moreInfoPrint': 'Details',
     'perf.ticketsInfo': 'Tickets & Info'
   };
 
@@ -387,9 +388,11 @@
     var list = document.getElementById('pastPerfList');
     var wrap = document.getElementById('pastPerfListWrap');
     var toggleBtn = document.getElementById('pastPerfCollapseBtn');
+    var divider = document.getElementById('pastPerfDivider');
     if (!section || !list || !wrap || !toggleBtn) return;
     var t = uiTable(currentLang);
     var mapsWord = t['perf.maps'] || 'Maps';
+    if (divider) divider.textContent = t['perf.pastDividerSelected'] || ((currentLang === 'en') ? 'Selected Past Performances' : (t['perf.pastDivider'] || 'Past Performances'));
     var items = normalizePastPublicList(MP_PAST_PERFS)
       .filter(function (p, idx) { return validPastPublicItem(p, idx); })
       .filter(function (p) { return !p.private; })
@@ -406,7 +409,7 @@
       wrap.style.maxHeight = '0px';
       wrap.style.opacity = '0';
       toggleBtn.setAttribute('aria-expanded', 'false');
-      toggleBtn.textContent = 'View past performances';
+      toggleBtn.textContent = t['perf.pastShow'] || 'View past performances';
       return;
     }
     section.style.display = '';
@@ -437,12 +440,12 @@
     });
     list.innerHTML = html;
     if (pastPublicExpanded) {
-      toggleBtn.textContent = 'Hide past performances';
+      toggleBtn.textContent = t['perf.pastHide'] || '\u2212 Hide Past Performances';
       toggleBtn.setAttribute('aria-expanded', 'true');
       wrap.style.maxHeight = wrap.scrollHeight + 'px';
       wrap.style.opacity = '1';
     } else {
-      toggleBtn.textContent = 'View past performances';
+      toggleBtn.textContent = t['perf.pastShow'] || 'View past performances';
       toggleBtn.setAttribute('aria-expanded', 'false');
       wrap.style.maxHeight = '0px';
       wrap.style.opacity = '0';
@@ -505,6 +508,15 @@
     var name = p && p.name != null ? String(p.name).trim() : '';
     var localeTitle = p && p['title_' + lang] != null ? String(p['title_' + lang]).trim() : '';
     var chosen = title || name || localeTitle || '';
+    var source = title ? 'title' : (name ? 'name' : (localeTitle ? 'title_' + lang : 'empty'));
+    if (title && localeTitle && title.indexOf('—') > -1 && localeTitle.indexOf('—') > -1) {
+      var baseLeft = title.split('—')[0].trim();
+      var locRight = localeTitle.split('—').slice(1).join('—').trim();
+      if (baseLeft && locRight) {
+        chosen = baseLeft + ' — ' + locRight;
+        source = 'title + localized subtitle';
+      }
+    }
     if (!titleChoiceLogged) {
       titleChoiceLogged = true;
       console.log('[Calendar] Title field resolution sample', {
@@ -513,7 +525,7 @@
         raw_name: name,
         raw_title_locale: localeTitle,
         chosen: chosen,
-        source: title ? 'title' : (name ? 'name' : (localeTitle ? 'title_' + lang : 'empty'))
+        source: source
       });
     }
     return chosen;
@@ -534,6 +546,14 @@
     if (s.indexOf('../') === 0 || s.indexOf('./') === 0) return s;
     if (s.indexOf('img/') === 0) return '../' + s;
     return s;
+  }
+  function compactVenueForCard(rawVenue) {
+    var v = String(rawVenue || '').trim();
+    if (!v) return '';
+    // Prefer venue name on cards; avoid long street-address tails.
+    if (v.indexOf(',') > -1) v = v.split(',')[0].trim();
+    if (v.length > 64) v = v.slice(0, 61).trim() + '...';
+    return v;
   }
 
   function renderPerfs() {
@@ -602,12 +622,13 @@
           '</div>'
         );
       })();
-      var venueCity = p.venue
+      var venueShort = compactVenueForCard(p.venue);
+      var venueCity = (venueShort || p.city)
         ? '<a href="https://maps.google.com/?q=' +
           encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) +
           '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">\ud83d\udccd </span>' +
-          p.venue +
-          (p.city ? ' · ' + p.city : '') +
+          venueShort +
+          (p.city ? ((venueShort ? ' · ' : '') + p.city) : '') +
           ' <span class="perf-maps-hint">\u2192 ' +
           mapsWord +
           '</span></a>'
@@ -617,11 +638,13 @@
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
       var hasVenuePhoto = !!venuePhotoResolved;
+      var photoClass = hasVenuePhoto ? ' perf-item-has-photo' : ' perf-item-no-photo';
       var h =
         '<div class="perf-item reveal' +
         (i > 0 ? ' rd' + ((i % 4) + 1) : '') +
         pastClass +
         archiveClass +
+        photoClass +
         '">';
       if (isPastSection || p.status === 'past')
         h += '<div class="perf-past-stamp">' + (tPerf['perf.pastStamp'] || 'Past') + '</div>';
@@ -651,9 +674,8 @@
         badge +
         '<div class="perf-info-title">' +
         listTitle +
-        '</div><div class="perf-info-detail">' +
-        detail +
         '</div>' +
+        (detail ? ('<div class="perf-info-detail">' + detail + '</div>') : '') +
         venueCity +
         '</div>';
       var repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
@@ -669,11 +691,13 @@
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>') +
           '</div>';
+      var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
       var hasExtra =
         !!printExt ||
         (p.ticketPrice && p.ticketPrice.trim()) ||
-        !!perfLocaleField(p, 'eventLink', currentLang) ||
-        (p.flyerImg && p.flyerImg.trim());
+        (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
+        (p.flyerImg && p.flyerImg.trim()) ||
+        (p.modalImg && p.modalImg.trim());
       if (hasExtra)
         h +=
           '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal(' +
@@ -748,14 +772,15 @@
     var wrap = document.getElementById('pastPerfListWrap');
     var toggleBtn = document.getElementById('pastPerfCollapseBtn');
     if (!wrap || !toggleBtn) return;
+    var t = uiTable(currentLang);
     pastPublicExpanded = !pastPublicExpanded;
     if (pastPublicExpanded) {
-      toggleBtn.textContent = 'Hide past performances';
+      toggleBtn.textContent = t['perf.pastHide'] || '\u2212 Hide Past Performances';
       toggleBtn.setAttribute('aria-expanded', 'true');
       wrap.style.maxHeight = wrap.scrollHeight + 'px';
       wrap.style.opacity = '1';
     } else {
-      toggleBtn.textContent = 'View past performances';
+      toggleBtn.textContent = t['perf.pastShow'] || 'View past performances';
       toggleBtn.setAttribute('aria-expanded', 'false');
       wrap.style.maxHeight = '0px';
       wrap.style.opacity = '0';
@@ -1026,7 +1051,7 @@
 
     var linkEl = document.getElementById('emEventLink');
     var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
-    if (ticketUrl) {
+    if (ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
       linkEl.href = ticketUrl;
       var t = uiTable(currentLang);
       var legacyEnglish = 'Tickets & Info';
@@ -1050,10 +1075,11 @@
     }
 
     var mapsEl = document.getElementById('emMapsLink');
-    if (p.venue) {
+    var destination = String((p.venue || '') + (p.city ? (' ' + p.city) : '')).trim();
+    if (destination) {
       mapsEl.href =
         'https://maps.google.com/?q=' +
-        encodeURIComponent(p.venue + (p.city ? ' ' + p.city : ''));
+        encodeURIComponent(destination);
       var t2 = uiTable(currentLang);
       var mapsLabel =
         t2['perf.maps'] ||

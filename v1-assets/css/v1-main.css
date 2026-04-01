@@ -1418,6 +1418,29 @@ textarea.adm-input{resize:vertical;min-height:80px}
   mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 72%,rgba(0,0,0,0));
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 72%,rgba(0,0,0,0));
 }
+.perf-item-has-photo .perf-venue-bg{
+  filter:brightness(.54) saturate(.88) contrast(1.03);
+  overflow:hidden;
+}
+.perf-item-has-photo .perf-venue-bg::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to left,rgba(6,8,12,.58),rgba(6,8,12,.18));
+}
+.perf-item-no-photo{
+  background:linear-gradient(90deg,rgba(20,22,30,.22),rgba(20,22,30,.08));
+}
+.perf-item-no-photo .perf-date-box{
+  background:rgba(8,8,12,.58);
+}
+.perf-item .perf-info-title,
+.perf-item .perf-info-detail,
+.perf-item .perf-type,
+.perf-item .perf-badge,
+.perf-item .perf-venue-link{
+  text-shadow:0 1px 5px rgba(0,0,0,.78),0 0 14px rgba(8,10,14,.95);
+}
 }
 
 .perf-more-btn{display:inline-block;margin-top:10px;font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold);background:none;border:1px solid rgba(212,168,67,.3);padding:5px 14px;text-transform:uppercase;cursor:pointer;transition:all .25s}
@@ -1426,6 +1449,80 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .perf-print-btn:hover{background:rgba(212,168,67,.12);color:var(--gold)}
 .print-only{display:none}
 .perf-print-repertoire{margin-top:.5em;font-size:.9em;line-height:1.5;color:inherit}
+
+/* Calendar mobile polish (layout-safe, behavior unchanged) */
+.perf-info-title{overflow-wrap:anywhere;hyphens:auto}
+.perf-venue-link{max-width:100%;white-space:normal;line-height:1.45}
+
+@media(max-width:768px){
+  #pastPerfCollapseBtn{
+    width:100%;
+    max-width:min(100%,24rem);
+    white-space:normal;
+    line-height:1.35;
+    text-align:center;
+    padding:10px 16px;
+  }
+  #performances .perf-actions{
+    row-gap:10px;
+  }
+  .perf-print-btn{
+    width:100%;
+    max-width:min(100%,24rem);
+    line-height:1.35;
+    white-space:normal;
+  }
+
+  #eventModal > div{
+    max-width:min(640px,calc(100vw - 24px)) !important;
+    margin:max(16px,env(safe-area-inset-top,0px)) auto max(16px,env(safe-area-inset-bottom,0px)) !important;
+    padding:24px 16px 20px !important;
+  }
+  #eventModal #emTitle{font-size:clamp(1.35rem,7vw,1.95rem) !important}
+  #eventModal #emDetail,
+  #eventModal #emExtDesc{font-size:.86rem !important;line-height:1.72 !important}
+  #eventModal #emVenue{line-height:1.55}
+  #eventModal #emActions{
+    display:grid !important;
+    grid-template-columns:1fr;
+    gap:10px !important;
+  }
+  #eventModal #emActions .btn-primary,
+  #eventModal #emActions .btn-secondary{
+    width:100%;
+    justify-content:center;
+    text-align:center;
+    padding:11px 14px !important;
+    white-space:normal;
+  }
+}
+
+@media(max-width:520px){
+  .back-to-top{
+    left:auto;
+    right:max(12px,env(safe-area-inset-right));
+    bottom:max(12px,env(safe-area-inset-bottom));
+    width:36px;
+    height:36px;
+  }
+}
+
+@media(max-width:480px){
+  .perf-item,
+  .perf-item--archive{
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+    padding:16px 0;
+  }
+  .perf-item:hover{padding-left:0}
+  .perf-date-box{
+    justify-self:start;
+    width:fit-content;
+    min-width:0;
+    padding:.5rem .58rem;
+  }
+  .perf-venue-bg{width:100%;opacity:.24}
+}
 
 #backstageGrid{background:transparent;border:none}
 #backstageGrid .photo-item{border:1px solid var(--border)}

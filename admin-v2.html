@@ -461,6 +461,44 @@
                 </div>
               </div>
 
+              <div class="editor-section">
+                <h3>More info modal content</h3>
+                <p class="muted">These fields control the content shown when the visitor clicks More info.</p>
+                <div class="grid two">
+                  <label>Modal title<input id="perf-modal-title"></label>
+                  <label>Modal type / category label
+                    <select id="perf-modal-type">
+                      <option value="concert">concert</option>
+                      <option value="recital">recital</option>
+                      <option value="opera">opera</option>
+                      <option value="gala">gala</option>
+                      <option value="private event">private event</option>
+                      <option value="sacred music">sacred music</option>
+                      <option value="other">other</option>
+                    </select>
+                  </label>
+                  <label>Modal venue line<input id="perf-modal-venue"></label>
+                  <label>Modal location / city<input id="perf-modal-city"></label>
+                </div>
+                <label>Modal long description<textarea id="perf-modal-longdesc" rows="5"></textarea></label>
+                <div class="grid two">
+                  <label>Modal secondary CTA URL<input id="perf-modal-link" placeholder="https://..."></label>
+                  <label>Modal secondary CTA label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
+                  <label>Modal price/info line<input id="perf-modal-ticketPrice" placeholder="20€ / 15€ reduced"></label>
+                  <label>Maps button URL (from venue + city)<input id="perf-modal-maps-link" readonly></label>
+                </div>
+                <div class="grid two">
+                  <label>Modal hero image URL<input id="perf-modal-image" placeholder="https://..."></label>
+                  <label>Hide modal hero image
+                    <select id="perf-modal-image-hide">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                  <label>Modal flyer image URL<input id="perf-modal-flyerImg" placeholder="https://..."></label>
+                </div>
+              </div>
+
               <details class="editor-section details-block">
                 <summary>Advanced · scheduling, badges &amp; internal fields</summary>
                 <p class="muted">Status and type are for your workflow; date badge lines are what visitors often see on the card.</p>

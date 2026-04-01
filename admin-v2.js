@@ -1676,6 +1676,11 @@
   }
   function renderPerfEditor() {
     var e = state.perfs[state.perfIndex] || {};
+    function localeFirst(base) {
+      var lk = base + '_' + state.lang;
+      var loc = safeString(e[lk]).trim();
+      return loc || safeString(e[base]);
+    }
     $('perf-title').value = safeString(e.title);
     $('perf-detail').value = safeString(e.detail);
     $('perf-day').value = safeString(e.day);
@@ -1696,6 +1701,21 @@
     setSelectWithCustomValue('perf-status', safeString(e.status), 'upcoming');
     setSelectWithCustomValue('perf-type', safeString(e.type), 'concert');
     setSelectWithCustomValue('perf-editorialStatus', safeString(e.editorialStatus || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft')), 'draft');
+    if ($('perf-modal-title')) $('perf-modal-title').value = safeString(e.title);
+    if ($('perf-modal-type')) setSelectWithCustomValue('perf-modal-type', safeString(e.type), 'concert');
+    if ($('perf-modal-venue')) $('perf-modal-venue').value = safeString(e.venue);
+    if ($('perf-modal-city')) $('perf-modal-city').value = safeString(e.city);
+    if ($('perf-modal-longdesc')) $('perf-modal-longdesc').value = localeFirst('extDesc');
+    if ($('perf-modal-link')) $('perf-modal-link').value = localeFirst('eventLink');
+    if ($('perf-modal-link-label')) $('perf-modal-link-label').value = localeFirst('eventLinkLabel');
+    if ($('perf-modal-ticketPrice')) $('perf-modal-ticketPrice').value = safeString(e.ticketPrice);
+    if ($('perf-modal-image')) $('perf-modal-image').value = safeString(e.modalImg);
+    if ($('perf-modal-image-hide')) $('perf-modal-image-hide').value = e.modalImgHide ? 'true' : 'false';
+    if ($('perf-modal-flyerImg')) $('perf-modal-flyerImg').value = safeString(e.flyerImg);
+    if ($('perf-modal-maps-link')) {
+      var q = encodeURIComponent((safeString(e.venue).trim() || '') + (safeString(e.city).trim() ? (' ' + safeString(e.city).trim()) : ''));
+      $('perf-modal-maps-link').value = q ? ('https://maps.google.com/?q=' + q) : '';
+    }
     $('perf-sortDate').value = safeString(e.sortDate);
     updatePerfCardPreview();
     updatePerfPublicVisibilitySummary();
@@ -1768,13 +1788,16 @@
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
-    e.title = $('perf-title').value;
+    var modalTitle = safeString($('perf-modal-title') && $('perf-modal-title').value).trim();
+    e.title = modalTitle || $('perf-title').value;
     e.detail = $('perf-detail').value;
     e.day = $('perf-day').value;
     e.month = $('perf-month').value;
     e.time = safeString($('perf-time').value).trim();
-    e.venue = $('perf-venue').value;
-    e.city = $('perf-city').value;
+    var modalVenue = safeString($('perf-modal-venue') && $('perf-modal-venue').value).trim();
+    var modalCity = safeString($('perf-modal-city') && $('perf-modal-city').value).trim();
+    e.venue = modalVenue || $('perf-venue').value;
+    e.city = modalCity || $('perf-city').value;
     e.venuePhoto = safeString($('perf-venuePhoto').value).trim();
     var dateDisplay = normalizeSortDateForInput($('perf-dateDisplay').value);
     if (dateDisplay) $('perf-sortDate').value = dateDisplay;
@@ -1787,9 +1810,24 @@
     $('perf-venuePreview').src = e.venuePhoto;
     $('perf-venuePreview').style.opacity = String(op / 100);
     e.status = $('perf-status').value;
-    e.type = $('perf-type').value;
+    e.type = safeString($('perf-modal-type') && $('perf-modal-type').value).trim() || $('perf-type').value;
     e.editorialStatus = safeString($('perf-editorialStatus').value || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft'));
+    e.extDesc = safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value).trim();
+    e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
+    e.eventLink = safeString($('perf-modal-link') && $('perf-modal-link').value).trim();
+    e.eventLinkLabel = safeString($('perf-modal-link-label') && $('perf-modal-link-label').value).trim();
+    e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
+    e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
+    e.flyerImg = safeString($('perf-modal-flyerImg') && $('perf-modal-flyerImg').value).trim();
+    // Keep locale-specific modal fields in sync for active language.
+    e['extDesc_' + state.lang] = e.extDesc;
+    e['eventLink_' + state.lang] = e.eventLink;
+    e['eventLinkLabel_' + state.lang] = e.eventLinkLabel;
     e.sortDate = $('perf-sortDate').value;
+    if ($('perf-title')) $('perf-title').value = safeString(e.title);
+    if ($('perf-venue')) $('perf-venue').value = safeString(e.venue);
+    if ($('perf-city')) $('perf-city').value = safeString(e.city);
+    if ($('perf-type')) $('perf-type').value = safeString(e.type || 'concert');
     state.perfs[state.perfIndex] = e;
     updatePerfCardPreview();
     updatePerfPublicVisibilitySummary();
@@ -5048,7 +5086,7 @@
 
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category','rep-editorialStatus'], persistRepEditor);
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
