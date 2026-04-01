@@ -7,7 +7,16 @@
 <meta name="theme-color" content="#0D0D12">
 <meta name="description" content="Upcoming tenor engagements, concerts and archive of past performances — Rolando Guy.">
 <title>Calendar — Rolando Guy</title>
-<link rel="canonical" href="https://www.rolandoguy.com/calendar.html">
+<link rel="canonical" href="https://rolandoguy.com/calendar">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Calendar — Rolando Guy">
+<meta property="og:description" content="Upcoming tenor engagements, concerts and archive of past performances — Rolando Guy.">
+<meta property="og:url" content="https://rolandoguy.com/calendar">
+<meta property="og:image" content="https://rolandoguy.com/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Calendar — Rolando Guy">
+<meta name="twitter:description" content="Upcoming tenor engagements, concerts and archive of past performances — Rolando Guy.">
+<meta name="twitter:image" content="https://rolandoguy.com/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
@@ -15,6 +24,7 @@
 <link rel="stylesheet" href="mp-home.css">
 </head>
 <body>
+<a class="skip-link" href="#top" data-i18n="ui.skipMain">Skip to main content</a>
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 <header class="site-chrome" role="banner">
@@ -68,10 +78,10 @@
     </div>
     <p class="section-tag" data-num="05" data-i18n="nav.cal">Calendar</p>
     <div class="perf-header">
-      <h2 class="reveal" id="perfH2"></h2>
-      <p class="reveal rd1" id="perfIntro"></p>
+      <h2 class="reveal" id="perfH2">Engagements &amp; <em>Concerts</em></h2>
+      <p class="reveal rd1" id="perfIntro">Rolando Guy appears in recitals, gala concerts, concerts, and selected stage projects in Germany and across Europe.</p>
     </div>
-    <div class="perf-list" id="perfList"></div>
+    <div class="perf-list" id="perfList"><p class="perf-empty">Upcoming engagements are listed here. If events do not load in your browser, please use the contact page for current booking information.</p></div>
     <div class="perf-actions no-print" style="text-align:center;margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
       <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print calendar"><span id="perfPrintBtnText">Print calendar</span></button>
     </div>

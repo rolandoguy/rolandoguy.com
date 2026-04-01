@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.rolandoguy.com/sitemap.xml
+Sitemap: https://rolandoguy.com/sitemap.xml

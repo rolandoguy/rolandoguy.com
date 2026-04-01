@@ -1,15 +1,33 @@
+# Canonical host: apex (non-www). Redirect www → apex.
+https://www.rolandoguy.com/*  https://rolandoguy.com/:splat  301
+
 # Redirects 301 — páginas viejas del Weebly
 # Netlify los aplica automáticamente al detectar este archivo en la raíz del repo
 
-/upcoming-performances.html     https://www.rolandoguy.com/     301
-/upcoming-performances          https://www.rolandoguy.com/     301
-/about.html                     https://www.rolandoguy.com/     301
-/mp                             https://www.rolandoguy.com/                   301
-/mp/index.html                  https://www.rolandoguy.com/                   301
-/mp/biography.html              https://www.rolandoguy.com/biography.html     301
-/mp/calendar.html               https://www.rolandoguy.com/calendar.html      301
-/mp/contact.html                https://www.rolandoguy.com/contact.html       301
-/mp/media.html                  https://www.rolandoguy.com/media.html         301
-/mp/press.html                  https://www.rolandoguy.com/press.html         301
-/mp/repertoire.html             https://www.rolandoguy.com/repertoire.html    301
-/mp/reviews.html                https://www.rolandoguy.com/reviews.html       301
+/upcoming-performances.html     https://rolandoguy.com/     301
+/upcoming-performances          https://rolandoguy.com/     301
+/about.html                     https://rolandoguy.com/     301
+/mp                             https://rolandoguy.com/                   301
+/mp/index.html                  https://rolandoguy.com/                   301
+/mp/biography                   https://rolandoguy.com/biography          301
+/mp/calendar                    https://rolandoguy.com/calendar           301
+/mp/contact                     https://rolandoguy.com/contact            301
+/mp/media                       https://rolandoguy.com/media              301
+/mp/press                       https://rolandoguy.com/press              301
+/mp/repertoire                  https://rolandoguy.com/repertoire         301
+/mp/reviews                     https://rolandoguy.com/reviews            301
+/mp/biography.html              https://rolandoguy.com/biography          301
+/mp/calendar.html               https://rolandoguy.com/calendar           301
+/mp/contact.html                https://rolandoguy.com/contact            301
+/mp/media.html                  https://rolandoguy.com/media              301
+/mp/press.html                  https://rolandoguy.com/press              301
+/mp/repertoire.html             https://rolandoguy.com/repertoire         301
+/mp/reviews.html                https://rolandoguy.com/reviews            301
+/index.html                     https://rolandoguy.com/                   301
+/biography.html                 https://rolandoguy.com/biography          301
+/repertoire.html                https://rolandoguy.com/repertoire         301
+/calendar.html                  https://rolandoguy.com/calendar           301
+/media.html                     https://rolandoguy.com/media              301
+/contact.html                   https://rolandoguy.com/contact            301
+/press.html                     https://rolandoguy.com/press              301
+/reviews.html                   https://rolandoguy.com/reviews            301

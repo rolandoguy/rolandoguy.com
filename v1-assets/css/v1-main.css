@@ -2,7 +2,7 @@
 :root{
   --bg:#0D0D12;--surface:#16161E;--surface2:#1C1C26;
   --gold:#D4A843;--gold-dim:#9C7B2F;--copper:#B87333;
-  --text:#F0EDE6;--text-dim:#9A9080;--text-faint:#5A5450;
+  --text:#F0EDE6;--text-dim:#9A9080;--text-faint:#8C847B;
   --border:rgba(212,168,67,0.18);
   --ff-title:'Cormorant Garamond',serif;
   --ff-caps:'Cinzel',serif;
@@ -29,6 +29,22 @@ body{
   cursor:none;
   overflow-x:hidden;
 }
+.skip-link{
+  position:absolute;
+  left:12px;
+  top:-44px;
+  z-index:1200;
+  padding:8px 12px;
+  background:var(--gold);
+  color:var(--bg);
+  text-decoration:none;
+  font-family:var(--ff-caps);
+  font-size:.58rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  border-radius:4px;
+}
+.skip-link:focus{top:10px}
 .cursor{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s}
 .cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(212,168,67,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:1}
@@ -198,6 +214,47 @@ section{position:relative;z-index:2}
 .about-text h2{font-family:var(--ff-title);color:var(--text);margin-bottom:24px}
 .about-text h2 em{font-style:italic;color:var(--gold)}
 .about-text p{font-size:.98rem;color:var(--text-dim);line-height:1.9;margin-bottom:16px}
+.presenter-micro{margin-top:18px}
+.presenter-micro-tag{
+  margin:0 0 8px;
+  font-family:var(--ff-caps);
+  font-size:.56rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--gold);
+}
+.presenter-micro-list{
+  margin:0;
+  padding:0;
+  list-style:none;
+  display:grid;
+  gap:6px;
+}
+.presenter-micro-list li{
+  position:relative;
+  padding-left:14px;
+  font-size:.86rem;
+  line-height:1.65;
+  color:var(--text-dim);
+}
+.presenter-micro-list li::before{
+  content:"•";
+  position:absolute;
+  left:0;
+  top:0;
+  color:var(--gold);
+}
+/* Homepage intro: CTAs sit below portrait+text on desktop (two-column breakpoint only) */
+@media(min-width:1001px){
+  #intro .intro-ctas{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    margin-top:clamp(38px,4vw,56px);
+  }
+}
 .about-quote{border-left:2px solid var(--gold);padding:12px 0 12px 22px;margin:28px 0}
 .about-quote p{font-family:var(--ff-title);font-size:1.22rem;font-style:italic;color:var(--text);line-height:1.6;margin:0}
 .about-quote cite{display:block;margin-top:8px;font-family:var(--ff-caps);font-size:.55rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-style:normal}
@@ -288,6 +345,15 @@ section{position:relative;z-index:2}
 /* EN Videos H2: keep "& Recital Highlights" on one line (title-amp-stack). On very narrow viewports allow line2 to wrap but still glue words inside <em>. */
 html[lang="en"] #vidH2 .title-line2{white-space:nowrap}
 html[lang="en"] #vidH2 .title-line2 em{white-space:nowrap}
+/* Desktop refinement: ES/FR media heading should stay in two balanced lines. */
+@media (min-width:901px){
+  html[lang="es"] #vidH2,
+  html[lang="fr"] #vidH2{max-width:min(100%,27rem)}
+  html[lang="es"] #vidH2 .title-line2,
+  html[lang="fr"] #vidH2 .title-line2,
+  html[lang="es"] #vidH2 .title-line2 em,
+  html[lang="fr"] #vidH2 .title-line2 em{white-space:nowrap}
+}
 @media (max-width:380px){
   html[lang="en"] #vidH2 .title-line2{white-space:normal}
 }
@@ -1530,3 +1596,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 #backstageGrid{background:transparent;border:none}
 #backstageGrid .photo-item{border:1px solid var(--border)}
 .print-only-media{display:none}
+
+/* Accessibility/UX: keep native cursor across the public site */
+html,body,a,button,input,textarea,select,label,[role="button"]{cursor:auto!important}
+.cursor,.cursor-ring{display:none!important}

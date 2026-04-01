@@ -131,10 +131,8 @@
     var L = normalizeLang(lang);
     var d = MP_UI_OVERRIDES[L];
     if (d && typeof d[key] === 'string' && d[key].trim()) return d[key];
-    if (L !== 'en') {
-      var en = MP_UI_OVERRIDES.en;
-      if (en && typeof en[key] === 'string' && en[key].trim()) return en[key];
-    }
+    // Important: do not fall back to EN runtime overrides for non-EN pages.
+    // Otherwise localized bundled strings can be shadowed by English snippets.
     return null;
   }
 
@@ -307,41 +305,7 @@ function closeMenu() {
   document.body.style.overflow = '';
 }
 
-(function () {
-  var cur = document.getElementById('cursor');
-  var ring = document.getElementById('cursorRing');
-  if (!cur || !ring) return;
-  var mx = 0,
-    my = 0,
-    rx = 0,
-    ry = 0;
-  document.addEventListener('mousemove', function (e) {
-    mx = e.clientX;
-    my = e.clientY;
-    cur.style.left = mx + 'px';
-    cur.style.top = my + 'px';
-  });
-  (function loop() {
-    rx += (mx - rx) * 0.1;
-    ry += (my - ry) * 0.1;
-    ring.style.left = rx + 'px';
-    ring.style.top = ry + 'px';
-    requestAnimationFrame(loop);
-  })();
-  document.querySelectorAll('a,button,.photo-item,.video-card,.mp-soc').forEach(function (el) {
-    el.addEventListener('mouseenter', function () {
-      cur.style.width = '20px';
-      cur.style.height = '20px';
-      ring.style.width = '52px';
-      ring.style.height = '52px';
-      ring.style.borderColor = 'rgba(212,168,67,.8)';
-    });
-    el.addEventListener('mouseleave', function () {
-      cur.style.cssText = '';
-      ring.style.cssText = '';
-    });
-  });
-})();
+// Custom cursor intentionally removed: use native system cursor site-wide.
 
 (function () {
   var navEl = document.getElementById('nav');

@@ -1,13 +1,24 @@
 (function () {
   /** Hero background: /v1-assets/data/hero-config.json (npm run build:hero-config -- <export.json>). */
   var HERO_EN_FALLBACK = {
-    'hero.eyebrow': 'Lyric Tenor · Opera · Concert · Recital',
+    'hero.eyebrow': 'LYRIC TENOR · OPERA · CONCERT · RECITAL',
     'hero.subtitle': 'Argentine-Italian lyric tenor based in Berlin',
-    'hero.cta1': 'Watch & Listen',
-    'hero.cta2': 'Book Now',
+    'hero.cta1': 'WATCH & LISTEN',
+    'hero.cta2': 'BOOK NOW',
     'hero.nameHtml': 'Rolando<br><em>Guy</em>'
   };
   var LAST_HERO_IMAGE = '';
+  var HERO_SOURCE_LOGGED = false;
+  function normalizeLangCode(v) {
+    var s = String(v || '').trim().toLowerCase();
+    return /^(en|de|es|it|fr)$/.test(s) ? s : '';
+  }
+  function resolveHeroLang(preferred) {
+    var fromArg = normalizeLangCode(preferred);
+    var fromDoc = normalizeLangCode(document && document.documentElement ? document.documentElement.lang : '');
+    var fromShell = (window.getMpSiteLang && normalizeLangCode(window.getMpSiteLang())) || '';
+    return fromDoc || fromArg || fromShell || 'en';
+  }
   var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var LIVE_HERO_DOCS = {};
   var LIVE_HERO_PROMISES = {};
@@ -168,6 +179,26 @@
     }
     return normalizeIntroImagePath(cfgImageOrFallback);
   }
+  function applyIntroPhotoSource(introPhoto, cfgImageOrFallback) {
+    if (!introPhoto) return;
+    if (!introPhoto.dataset.baseSrcset) introPhoto.dataset.baseSrcset = introPhoto.getAttribute('srcset') || '';
+    if (!introPhoto.dataset.baseSizes) introPhoto.dataset.baseSizes = introPhoto.getAttribute('sizes') || '';
+    var override = getIntroImageOverrideInfo();
+    if (override && override.url) {
+      // If a language-specific intro portrait exists, force that exact file.
+      // Keeping srcset would make browsers keep using hero responsive candidates.
+      introPhoto.removeAttribute('srcset');
+      introPhoto.removeAttribute('sizes');
+      introPhoto.src = override.url;
+      return;
+    }
+    var fallback = normalizeIntroImagePath(cfgImageOrFallback);
+    if (introPhoto.dataset.baseSrcset) introPhoto.setAttribute('srcset', introPhoto.dataset.baseSrcset);
+    else introPhoto.removeAttribute('srcset');
+    if (introPhoto.dataset.baseSizes) introPhoto.setAttribute('sizes', introPhoto.dataset.baseSizes);
+    else introPhoto.removeAttribute('sizes');
+    if (fallback) introPhoto.src = fallback;
+  }
   function normalizeIntroImagePath(raw) {
     var s = String(raw || '').trim();
     if (!s) return '';
@@ -209,11 +240,28 @@
     if (localEn) return { value: localEn, source: 'local:hero_en.' + field, lang: rawLang };
     return null;
   }
+  function getHeroTextOverrideInfoWithoutEn(field, lang) {
+    var rawLang = String(lang || 'en');
+    var shortLang = rawLang.split('-')[0];
+    var liveLang = readHeroFieldFromRecord(readLiveHeroRecord('hero_' + rawLang), field);
+    if (liveLang) return { value: liveLang, source: 'firestore:hero_' + rawLang + '.' + field, lang: rawLang };
+    if (shortLang && shortLang !== rawLang) {
+      var liveShort = readHeroFieldFromRecord(readLiveHeroRecord('hero_' + shortLang), field);
+      if (liveShort) return { value: liveShort, source: 'firestore:hero_' + shortLang + '.' + field, lang: rawLang };
+    }
+    var localLang = readHeroFieldFromRecord(readLegacyRecord('hero_' + rawLang), field);
+    if (localLang) return { value: localLang, source: 'local:hero_' + rawLang + '.' + field, lang: rawLang };
+    if (shortLang && shortLang !== rawLang) {
+      var localShort = readHeroFieldFromRecord(readLegacyRecord('hero_' + shortLang), field);
+      if (localShort) return { value: localShort, source: 'local:hero_' + shortLang + '.' + field, lang: rawLang };
+    }
+    return null;
+  }
 
   function applyHeroCopy(lang) {
     var pick =
       typeof window.pickMpLocaleString === 'function' ? window.pickMpLocaleString : null;
-    var L = lang || (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var L = resolveHeroLang(lang);
     function val(key) {
       var map = {
         'hero.eyebrow': 'eyebrow',
@@ -222,12 +270,13 @@
         'hero.cta2': 'cta2'
       };
       var field = map[key];
-      if (field) {
-        var info = getHeroTextOverrideInfo(field, L);
-        if (info && info.value) return { value: info.value, source: info.source };
-      }
       var v = pick ? pick(L, key) : null;
       if (v != null && v !== '') return { value: v, source: 'locale:' + key };
+      // Fallback to same-language hero_* text only when locale table has no value.
+      if (field) {
+        var info = getHeroTextOverrideInfoWithoutEn(field, L);
+        if (info && info.value) return { value: info.value, source: info.source };
+      }
       v = HERO_EN_FALLBACK[key];
       return { value: (v != null ? v : null), source: 'fallback:' + key };
     }
@@ -251,37 +300,43 @@
     if (heroCta2 && vCta2 && vCta2.value != null) heroCta2.textContent = vCta2.value;
     var quickBioInfo = getHeroTextOverrideInfo('quickBioLabel', L);
     if (heroQuickBio) {
-      if (quickBioInfo && quickBioInfo.value) heroQuickBio.textContent = quickBioInfo.value;
-      else {
-        var quickBioFallback = pick ? pick(L, 'nav.bio') : null;
-        if (quickBioFallback != null && quickBioFallback !== '') heroQuickBio.textContent = quickBioFallback;
-      }
+      var quickBioFallback = pick ? pick(L, 'nav.bio') : null;
+      if (quickBioFallback != null && quickBioFallback !== '') heroQuickBio.textContent = quickBioFallback;
+      else if (quickBioInfo && quickBioInfo.value) heroQuickBio.textContent = quickBioInfo.value;
     }
     var quickCalInfo = getHeroTextOverrideInfo('quickCalLabel', L);
     if (heroQuickCal) {
-      if (quickCalInfo && quickCalInfo.value) heroQuickCal.textContent = quickCalInfo.value;
-      else {
-        var quickCalFallback = pick ? pick(L, 'nav.cal') : null;
-        if (quickCalFallback != null && quickCalFallback !== '') heroQuickCal.textContent = quickCalFallback;
-      }
+      var quickCalFallback = pick ? pick(L, 'nav.cal') : null;
+      if (quickCalFallback != null && quickCalFallback !== '') heroQuickCal.textContent = quickCalFallback;
+      else if (quickCalInfo && quickCalInfo.value) heroQuickCal.textContent = quickCalInfo.value;
     }
     var vName = val('hero.nameHtml');
     if (heroName && vName && vName.value != null) heroName.innerHTML = vName.value;
-    var introBioInfo = getHeroTextOverrideInfo('introCtaBio', L);
+    // Avoid cross-language leak: do not use hero_en override for localized intro CTA labels.
+    var introBioInfo = getHeroTextOverrideInfoWithoutEn('introCtaBio', L);
     if (homeIntroCtaBio) {
-      if (introBioInfo && introBioInfo.value) homeIntroCtaBio.textContent = introBioInfo.value;
-      else {
-        var introBioFallback = pick ? pick(L, 'home.intro.ctaBio') : null;
-        if (introBioFallback != null && introBioFallback !== '') homeIntroCtaBio.textContent = introBioFallback;
-      }
+      var introBioFallback = pick ? pick(L, 'home.intro.ctaBio') : null;
+      if (introBioFallback != null && introBioFallback !== '') homeIntroCtaBio.textContent = introBioFallback;
+      else if (introBioInfo && introBioInfo.value) homeIntroCtaBio.textContent = introBioInfo.value;
     }
-    var introMediaInfo = getHeroTextOverrideInfo('introCtaMedia', L);
+    // Avoid cross-language leak: do not use hero_en override for localized intro CTA labels.
+    var introMediaInfo = getHeroTextOverrideInfoWithoutEn('introCtaMedia', L);
     if (homeIntroCtaMedia) {
-      if (introMediaInfo && introMediaInfo.value) homeIntroCtaMedia.textContent = introMediaInfo.value;
-      else {
-        var introMediaFallback = pick ? pick(L, 'home.intro.ctaMedia') : null;
-        if (introMediaFallback != null && introMediaFallback !== '') homeIntroCtaMedia.textContent = introMediaFallback;
-      }
+      var introMediaFallback = pick ? pick(L, 'home.intro.ctaMedia') : null;
+      if (introMediaFallback != null && introMediaFallback !== '') homeIntroCtaMedia.textContent = introMediaFallback;
+      else if (introMediaInfo && introMediaInfo.value) homeIntroCtaMedia.textContent = introMediaInfo.value;
+    }
+    if (!HERO_SOURCE_LOGGED) {
+      HERO_SOURCE_LOGGED = true;
+      console.log('[Hero] Runtime source trace', {
+        langUsed: L,
+        eyebrow: vEyebrow && vEyebrow.source,
+        subtitle: vSubtitle && vSubtitle.source,
+        cta1: vCta1 && vCta1.source,
+        cta2: vCta2 && vCta2.source,
+        quickBio: heroQuickBio ? heroQuickBio.textContent : '',
+        quickCal: heroQuickCal ? heroQuickCal.textContent : ''
+      });
     }
   }
 
@@ -293,8 +348,12 @@
     var img = String(cfg.image || '').trim();
     if (img) {
       LAST_HERO_IMAGE = img;
-      hb.style.backgroundImage = "url('" + escUrl(img) + "')";
-      if (introPhoto) introPhoto.src = resolveIntroImage(img);
+      if (img === '../img/hero-portrait.webp') {
+        hb.style.backgroundImage = "image-set(url('../img/hero-portrait-1280.webp') 1x, url('../img/hero-portrait-1920.webp') 2x, url('../img/hero-portrait.webp') 3x)";
+      } else {
+        hb.style.backgroundImage = "url('" + escUrl(img) + "')";
+      }
+      applyIntroPhotoSource(introPhoto, img);
     }
     var cropRaw = String(cfg.cropMode != null ? cfg.cropMode : 'cover').toLowerCase();
     var crop = cropRaw === 'contain' ? 'contain' : 'cover';
@@ -340,9 +399,9 @@
       .catch(function () {
         var hb = document.getElementById('heroBg');
         var fallback = '../img/hero-portrait.webp';
-        if (hb) hb.style.backgroundImage = "url('" + escUrl(fallback) + "')";
+        if (hb) hb.style.backgroundImage = "image-set(url('../img/hero-portrait-1280.webp') 1x, url('../img/hero-portrait-1920.webp') 2x, url('../img/hero-portrait.webp') 3x)";
         var introPhoto = document.querySelector('img.mp-home-hero-asset');
-        if (introPhoto) introPhoto.src = resolveIntroImage(fallback);
+        applyIntroPhotoSource(introPhoto, fallback);
       });
     });
   }
@@ -353,7 +412,7 @@
       applyHeroCopy(lang);
       var introPhoto = document.querySelector('img.mp-home-hero-asset');
       if (introPhoto) {
-        introPhoto.src = resolveIntroImage(LAST_HERO_IMAGE) || introPhoto.src;
+        applyIntroPhotoSource(introPhoto, LAST_HERO_IMAGE || '../img/hero-portrait.webp');
       }
     });
   });

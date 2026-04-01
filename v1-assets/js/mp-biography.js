@@ -92,6 +92,16 @@
       return raw;
     }
   }
+  function normalizePortraitPath(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^data:/i.test(s)) return s;
+    try {
+      return new URL(s, window.location.href).toString();
+    } catch (e) {
+      return s;
+    }
+  }
   function resolvePortraitSource() {
     var lang = currentLang();
     var shortLang = String(lang || 'en').split('-')[0];
@@ -104,15 +114,18 @@
       var L = chain[idx++];
       return getBioDocWithFallback(L).then(function (doc) {
         var src = doc && doc.data && typeof doc.data.portraitImage === 'string' ? doc.data.portraitImage.trim() : '';
-        if (src) return { src: src, token: doc.updateTime || '' };
+        if (src) return { src: normalizePortraitPath(src), token: doc.updateTime || '' };
         return next();
       });
     }
     return next().then(function (found) {
       if (found && found.src) return found;
+      var bundled = (MP_BIO && MP_BIO.portraitImage) ? String(MP_BIO.portraitImage).trim() : '';
+      if (bundled) return { src: normalizePortraitPath(bundled), token: '' };
+      // Keep legacy localStorage as a last-resort fallback only.
       var local = getBioPortraitOverride();
-      if (local) return { src: local, token: '' };
-      return { src: (MP_BIO && MP_BIO.portraitImage) ? String(MP_BIO.portraitImage).trim() : '', token: '' };
+      if (local) return { src: normalizePortraitPath(local), token: '' };
+      return { src: '', token: '' };
     });
   }
   function applyPortraitImage(img, rawSrc, token) {

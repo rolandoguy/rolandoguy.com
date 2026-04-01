@@ -1,11 +1,11 @@
 {
-  "reviewsIntro": "Selected press responses to recent productions and performances.",
+  "reviewsIntro": "Selected reviews and press responses from recent productions, with materials below tailored for programming, season planning, and media/editorial workflows.",
   "reviewsIntroByLang": {
-    "en": "Selected press responses to recent productions and performances.",
-    "de": "Ausgewählte Pressestimmen zu jüngeren Produktionen und Auftritten.",
-    "es": "Selección de reseñas sobre producciones y actuaciones recientes.",
-    "it": "Una selezione di citazioni stampa su produzioni e prove recenti.",
-    "fr": "Un choix de retours presse sur des productions et récitals récents."
+    "en": "Selected reviews and press responses from recent productions, with materials below tailored for programming, season planning, and media/editorial workflows.",
+    "de": "Ausgewählte Kritiken und Pressestimmen, mit Materialien darunter für Programmplanung, Saisonvorbereitung und redaktionelle Nutzung.",
+    "es": "Selección de críticas y citas de prensa, con materiales debajo para programación, planificación de temporada y uso editorial.",
+    "it": "Selezione di recensioni e citazioni stampa, con materiali qui sotto per programmazione, pianificazione di stagione e uso editoriale.",
+    "fr": "Sélection de critiques et citations de presse, avec des ressources ci-dessous pour programmation, planification de saison et usage éditorial."
   },
   "press": [
     {

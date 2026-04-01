@@ -578,6 +578,70 @@
     var d = new Date(str);
     return isNaN(d.getTime()) ? new Date('2099-01-01') : d;
   }
+  function updateUpcomingEventSchema(upcomingList) {
+    var prev = document.getElementById('calendar-events-jsonld');
+    if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+    if (!Array.isArray(upcomingList) || !upcomingList.length) return;
+    var items = [];
+    upcomingList.forEach(function (p) {
+      var dateRaw = String(p.sortDate || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) return;
+      var title = resolveEventTitle(p, currentLang);
+      if (!title) return;
+      var startDate = dateRaw;
+      var time = String(p.time || '').trim();
+      if (/^\d{1,2}:\d{2}$/.test(time)) {
+        var hhmm = time.split(':');
+        var hh = hhmm[0].padStart(2, '0');
+        startDate = dateRaw + 'T' + hh + ':' + hhmm[1] + ':00';
+      }
+      var ev = {
+        '@type': 'MusicEvent',
+        name: title,
+        startDate: startDate,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        url: 'https://rolandoguy.com/calendar'
+      };
+      var venueName = String(p.venue || '').trim();
+      var city = String(p.city || '').trim();
+      if (venueName || city) {
+        ev.location = {
+          '@type': 'Place',
+          name: venueName || city
+        };
+        if (city) {
+          ev.location.address = {
+            '@type': 'PostalAddress',
+            addressLocality: city
+          };
+        }
+      }
+      if (p.venuePhoto) {
+        ev.image = [String(p.venuePhoto).trim()];
+      } else {
+        ev.image = ['https://rolandoguy.com/og-image.jpg'];
+      }
+      var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
+      if (ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
+        ev.offers = {
+          '@type': 'Offer',
+          url: String(ticketUrl).trim(),
+          availability: 'https://schema.org/InStock'
+        };
+      }
+      items.push(ev);
+    });
+    if (!items.length) return;
+    var script = document.createElement('script');
+    script.id = 'calendar-events-jsonld';
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': items
+    });
+    document.head.appendChild(script);
+  }
 
   /** Resolve venue image paths for pages under mp/ (admin may emit img/... without ../). */
   function normalizeVenuePhotoUrl(raw) {
@@ -602,7 +666,7 @@
     var list = document.getElementById('perfList');
     if (!list) return;
     list.innerHTML = '';
-    var perfs = getPerfs().filter(function (p, idx) { return shouldRenderPublicEvent(p, idx); });
+    var perfs = getPublicPerfs();
     console.log('[Calendar] rg_perfs loaded:', getPerfs().length, 'public after filter:', perfs.length);
     var today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -614,6 +678,7 @@
     upcoming.sort(function (a, b) {
       return sortDate(a) - sortDate(b);
     });
+    updateUpcomingEventSchema(upcoming);
     var perfLang = getPerfMerged();
     var types =
       perfLang.eventTypes || {
@@ -862,10 +927,17 @@
     }
   }
 
+  function getPublicPerfs() {
+    return getPerfs().filter(function (p, idx) {
+      return shouldRenderPublicEvent(p, idx);
+    });
+  }
+
   function printAgenda() {
     var lang = currentLang || 'en';
     var tPrint = uiTable(lang);
-    var perfs = getPerfs();
+    // Print must mirror the same public visibility rules as live calendar rendering.
+    var perfs = getPublicPerfs();
     var today = new Date();
     today.setHours(0, 0, 0, 0);
     var upcoming = (Array.isArray(perfs) ? perfs : [])
