@@ -17,6 +17,7 @@ html{
   padding:0;
   background:var(--bg);
 }
+html.mp-lang-pending body{opacity:0}
 body{
   margin:0;
   padding:0;

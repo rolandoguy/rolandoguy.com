@@ -3,6 +3,10 @@
   'use strict';
 
   document.documentElement.classList.add('mp-site');
+  function markLangReady() {
+    document.documentElement.classList.remove('mp-lang-pending');
+    document.documentElement.classList.add('mp-lang-ready');
+  }
 
   var MP_LANG_STORAGE = 'mp_site_lang';
   var MP_LANG_LIST = ['en', 'de', 'es', 'it', 'fr'];
@@ -230,6 +234,7 @@
     ensureUiOverrideFor(lang).finally(function () {
       applyChromeI18n(lang);
       dispatchLang(lang);
+      markLangReady();
     });
   };
 
@@ -249,6 +254,7 @@
         new CustomEvent('mp:localesready', { detail: { lang: lang } })
       );
       dispatchLang(lang);
+      markLangReady();
     });
   }
 
@@ -273,6 +279,7 @@
           new CustomEvent('mp:localesready', { detail: { lang: lang, error: true } })
         );
         dispatchLang(lang);
+        markLangReady();
       });
   }
 
