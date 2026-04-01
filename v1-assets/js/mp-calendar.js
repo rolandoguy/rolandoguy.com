@@ -14,6 +14,24 @@
   var titleChoiceLogged = false;
   var modalLocaleChoiceLogged = false;
   var supportingLocaleChoiceLogged = false;
+  function normalizeLangCode(v) {
+    var s = String(v || '').trim().toLowerCase();
+    return /^(en|de|es|it|fr)$/.test(s) ? s : '';
+  }
+  function resolveActiveLang(reason) {
+    var fromState = normalizeLangCode(currentLang) || 'en';
+    var fromDoc = normalizeLangCode(document && document.documentElement ? document.documentElement.lang : '');
+    var fromShell = (typeof window.getMpSiteLang === 'function') ? normalizeLangCode(window.getMpSiteLang()) : '';
+    var next = fromShell || fromDoc || fromState || 'en';
+    if (next !== currentLang) currentLang = next;
+    console.log('[Calendar] Active language sync', {
+      reason: reason || 'unknown',
+      currentLang: currentLang,
+      documentLang: fromDoc || '(empty)',
+      shellLang: fromShell || '(empty)'
+    });
+    return currentLang;
+  }
 
   function escHtml(s) {
     return String(s || '')
@@ -576,6 +594,7 @@
   }
 
   function renderPerfs() {
+    resolveActiveLang('renderPerfs');
     var list = document.getElementById('perfList');
     if (!list) return;
     list.innerHTML = '';
@@ -655,27 +674,33 @@
       var detail = p['detail_' + currentLang] || p.detail || '';
       if (!supportingLocaleChoiceLogged) {
         supportingLocaleChoiceLogged = true;
+        var subtitleSource = String(p['detail_' + currentLang] || '').trim() ? ('detail_' + currentLang) : 'detail';
         console.log('[Calendar] Supporting i18n resolution sample', {
           lang: currentLang,
+          eventTitle: resolveEventTitle(p, currentLang),
           detail: {
             base: p.detail || '',
             localized: p['detail_' + currentLang] || '',
-            chosenCard: detail || ''
+            chosenCard: detail || '',
+            source: subtitleSource
           },
           extDesc: {
             base: p.extDesc || '',
             localized: p['extDesc_' + currentLang] || '',
-            chosenModal: perfLocaleField(p, 'extDesc', currentLang) || ''
+            chosenModal: perfLocaleField(p, 'extDesc', currentLang) || '',
+            source: String(p['extDesc_' + currentLang] || '').trim() ? ('extDesc_' + currentLang) : 'extDesc'
           },
           eventLinkLabel: {
             base: p.eventLinkLabel || '',
             localized: p['eventLinkLabel_' + currentLang] || '',
-            chosenModal: perfLocaleField(p, 'eventLinkLabel', currentLang) || ''
+            chosenModal: perfLocaleField(p, 'eventLinkLabel', currentLang) || '',
+            source: String(p['eventLinkLabel_' + currentLang] || '').trim() ? ('eventLinkLabel_' + currentLang) : 'eventLinkLabel'
           },
           eventLink: {
             base: p.eventLink || '',
             localized: p['eventLink_' + currentLang] || '',
-            chosenModal: perfLocaleField(p, 'eventLink', currentLang) || ''
+            chosenModal: perfLocaleField(p, 'eventLink', currentLang) || '',
+            source: String(p['eventLink_' + currentLang] || '').trim() ? ('eventLink_' + currentLang) : 'eventLink'
           }
         });
       }
@@ -1024,6 +1049,7 @@
   }
 
   function openEventModal(perfId) {
+    resolveActiveLang('openEventModal');
     var perfs = getPerfs();
     var p = null;
     for (var i = 0; i < perfs.length; i++) {
@@ -1057,7 +1083,11 @@
     document.getElementById('emDate').textContent =
       (p.day || '') + ' ' + (translateMonth(p.month) || '') + timeStr;
     document.getElementById('emVenue').textContent = venueCity;
-    document.getElementById('emDetail').textContent = detail;
+    var extBody = perfLocaleField(p, 'extDesc', currentLang);
+    // Modal body should be language-exclusive, not additive:
+    // prefer localized extended text, then shared extended text, then short detail fallback.
+    var modalBody = extBody || detail || '';
+    document.getElementById('emDetail').textContent = modalBody;
 
     var imgEl = document.getElementById('emVenueImg');
     var hideModalHero = isTruthyFlag(p.modalImgHide);
@@ -1079,13 +1109,8 @@
     }
 
     var extEl = document.getElementById('emExtDesc');
-    var extBody = perfLocaleField(p, 'extDesc', currentLang);
-    if (extBody) {
-      extEl.innerHTML = extBody.replace(/\n/g, '<br>');
-      extEl.style.display = '';
-    } else {
-      extEl.style.display = 'none';
-    }
+    // Keep second paragraph hidden to avoid mixed-language duplicate body blocks.
+    extEl.style.display = 'none';
 
     var priceWrap = document.getElementById('emPrice');
     if (p.ticketPrice && p.ticketPrice.trim()) {
@@ -1112,27 +1137,34 @@
     }
     if (!modalLocaleChoiceLogged) {
       modalLocaleChoiceLogged = true;
+      var detailSource = String(p['detail_' + currentLang] || '').trim() ? ('detail_' + currentLang) : 'detail';
+      var extSource = String(p['extDesc_' + currentLang] || '').trim() ? ('extDesc_' + currentLang) : 'extDesc';
       console.log('[Calendar] Modal i18n resolution sample', {
         lang: currentLang,
+        eventTitle: modalTitle,
         detail: {
           base: p.detail || '',
           localized: p['detail_' + currentLang] || '',
-          chosen: detail || ''
+          chosen: detail || '',
+          source: detailSource
         },
         extDesc: {
           base: p.extDesc || '',
           localized: p['extDesc_' + currentLang] || '',
-          chosen: extBody || ''
+          chosen: modalBody || '',
+          source: extSource
         },
         eventLink: {
           base: p.eventLink || '',
           localized: p['eventLink_' + currentLang] || '',
-          chosen: ticketUrl || ''
+          chosen: ticketUrl || '',
+          source: String(p['eventLink_' + currentLang] || '').trim() ? ('eventLink_' + currentLang) : 'eventLink'
         },
         eventLinkLabel: {
           base: p.eventLinkLabel || '',
           localized: p['eventLinkLabel_' + currentLang] || '',
-          chosen: linkEl && linkEl.style.display !== 'none' ? (linkEl.textContent || '') : ''
+          chosen: linkEl && linkEl.style.display !== 'none' ? (linkEl.textContent || '') : '',
+          source: String(p['eventLinkLabel_' + currentLang] || '').trim() ? ('eventLinkLabel_' + currentLang) : 'eventLinkLabel'
         }
       });
     }
@@ -1199,6 +1231,8 @@
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
+    console.log('[Calendar] mp:langchange received', { lang: currentLang });
+    resolveActiveLang('mp:langchange');
     if (MP_CAL) {
       applyPerfHeader();
       renderPerfs();
@@ -1207,6 +1241,7 @@
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
+    resolveActiveLang('mp:localesready');
     if (MP_CAL) {
       applyPerfHeader();
       renderPerfs();
@@ -1262,6 +1297,7 @@
         }
       }
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
+      resolveActiveLang('initial-load');
       applyPerfHeader();
       renderPerfs();
     });

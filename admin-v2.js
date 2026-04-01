@@ -1682,7 +1682,7 @@
       return loc || safeString(e[base]);
     }
     $('perf-title').value = safeString(e.title);
-    $('perf-detail').value = safeString(e.detail);
+    $('perf-detail').value = localeFirst('detail');
     $('perf-day').value = safeString(e.day);
     $('perf-month').value = safeString(e.month);
     $('perf-dateDisplay').value = normalizeSortDateForInput(e.sortDate);
@@ -1719,6 +1719,7 @@
     $('perf-sortDate').value = safeString(e.sortDate);
     updatePerfCardPreview();
     updatePerfPublicVisibilitySummary();
+    updatePerfTranslationWarnings();
   }
   function setSelectWithCustomValue(id, rawValue, fallback) {
     var el = $(id);
@@ -1785,6 +1786,60 @@
       box.classList.add('ok');
     }
   }
+  function updatePerfTranslationWarnings() {
+    var summary = $('perf-translation-status');
+    var warnDetail = $('perf-detail-translation-warn');
+    var warnExt = $('perf-modal-longdesc-translation-warn');
+    var warnCtaLabel = $('perf-modal-link-label-translation-warn');
+    var warnCtaUrl = $('perf-modal-link-translation-warn');
+    if (!summary) return;
+    var e = state.perfs[state.perfIndex] || {};
+    var lang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+    var LANG_LABELS = { en: 'EN', de: 'DE', es: 'ES', it: 'IT', fr: 'FR' };
+    var langLabel = LANG_LABELS[lang] || lang.toUpperCase();
+    function setWarn(el, text) {
+      if (!el) return;
+      if (text) {
+        el.textContent = text;
+        el.style.display = '';
+      } else {
+        el.textContent = '';
+        el.style.display = 'none';
+      }
+    }
+    if (lang === 'en') {
+      summary.className = 'translation-qa';
+      summary.textContent = 'Translation status: EN baseline. Switch language to review localized event content.';
+      summary.style.display = '';
+      setWarn(warnDetail, '');
+      setWarn(warnExt, '');
+      setWarn(warnCtaLabel, '');
+      setWarn(warnCtaUrl, '');
+      return;
+    }
+    var detailLoc = safeString(e['detail_' + lang]).trim();
+    var extLoc = safeString(e['extDesc_' + lang]).trim();
+    var linkBase = safeString(e.eventLink).trim();
+    var linkLoc = safeString(e['eventLink_' + lang]).trim();
+    var labelLoc = safeString(e['eventLinkLabel_' + lang]).trim();
+    var missing = [];
+    if (!detailLoc) missing.push('Missing ' + langLabel + ' subtitle');
+    if (!extLoc) missing.push('Missing ' + langLabel + ' modal text');
+    if (linkBase && !labelLoc) missing.push('Missing ' + langLabel + ' CTA label');
+    if (linkBase && !linkLoc) missing.push('Missing ' + langLabel + ' CTA URL');
+    setWarn(warnDetail, !detailLoc ? ('Missing ' + langLabel + ' subtitle (detail_' + lang + ')') : '');
+    setWarn(warnExt, !extLoc ? ('Missing ' + langLabel + ' modal text (extDesc_' + lang + ')') : '');
+    setWarn(warnCtaLabel, (linkBase && !labelLoc) ? ('Missing ' + langLabel + ' CTA label (eventLinkLabel_' + lang + ')') : '');
+    setWarn(warnCtaUrl, (linkBase && !linkLoc) ? ('Missing ' + langLabel + ' CTA URL (eventLink_' + lang + ')') : '');
+    if (!missing.length) {
+      summary.className = 'translation-qa muted ok';
+      summary.textContent = 'Translation status: complete for ' + langLabel + '.';
+    } else {
+      summary.className = 'translation-qa';
+      summary.innerHTML = '<strong>Translation status for this event (' + langLabel + '):</strong><ul><li>' + missing.join('</li><li>') + '</li></ul>';
+    }
+    summary.style.display = '';
+  }
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
@@ -1819,7 +1874,8 @@
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
     e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
     e.flyerImg = safeString($('perf-modal-flyerImg') && $('perf-modal-flyerImg').value).trim();
-    // Keep locale-specific modal fields in sync for active language.
+    // Keep locale-specific supporting fields in sync for active language.
+    e['detail_' + state.lang] = safeString(e.detail).trim();
     e['extDesc_' + state.lang] = e.extDesc;
     e['eventLink_' + state.lang] = e.eventLink;
     e['eventLinkLabel_' + state.lang] = e.eventLinkLabel;
@@ -1831,6 +1887,7 @@
     state.perfs[state.perfIndex] = e;
     updatePerfCardPreview();
     updatePerfPublicVisibilitySummary();
+    updatePerfTranslationWarnings();
     renderPerfList();
     markDirty(true);
   }
