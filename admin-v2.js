@@ -2917,6 +2917,22 @@
     });
     state.photoCaptions = next;
   }
+  /** Before inserting a new photo at insertAt, shift caption keys at indices >= insertAt up by one (keeps captions aligned with URLs). */
+  function shiftPhotoCaptionsAfterInsert(type, insertAt) {
+    var prefix = type + '_';
+    var next = {};
+    Object.keys(state.photoCaptions).forEach(function (k) {
+      if (k.indexOf(prefix) !== 0) {
+        next[k] = state.photoCaptions[k];
+        return;
+      }
+      var i = Number(k.slice(prefix.length));
+      if (!Number.isFinite(i)) return;
+      if (i >= insertAt) next[prefix + (i + 1)] = state.photoCaptions[k];
+      else next[k] = state.photoCaptions[k];
+    });
+    state.photoCaptions = next;
+  }
   function safeMediaVideos(raw) {
     var d = isObject(raw) ? clone(raw) : {};
     if (!Array.isArray(d.videos)) d.videos = [];
@@ -3104,7 +3120,7 @@
       return hay.indexOf(q) >= 0;
     });
     if (!rows.length) {
-      box.innerHTML = '<div class="empty-state">No hay fotos en este grupo. Usa "+ Agregar por URL" o "+ Subir foto".</div>';
+      box.innerHTML = '<div class="empty-state">No hay fotos en este grupo. Usa "+ Add by URL".</div>';
       state.photoIndex = -1;
       renderMediaPhotoEditor();
       return;
@@ -6060,37 +6076,16 @@
       state.photoIndex = state.photosData[state.photoType].length - 1;
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto agregada');
     });
-    $('media-photo-add-file').addEventListener('change', function (e) {
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        state.photosData[state.photoType].push(safeString(ev.target.result));
-        state.photoIndex = state.photosData[state.photoType].length - 1;
-        renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto subida');
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    });
-    $('media-photo-replace-file').addEventListener('change', function (e) {
-      if (state.photoIndex < 0) return;
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        state.photosData[state.photoType][state.photoIndex] = safeString(ev.target.result);
-        renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto reemplazada');
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    });
     $('media-photo-dup').addEventListener('click', function () {
       if (state.photoIndex < 0) return;
-      var arr = state.photosData[state.photoType];
-      arr.splice(state.photoIndex + 1, 0, arr[state.photoIndex]);
-      var cap = clone(getPhotoCaption(state.photoType, state.photoIndex));
-      state.photoIndex += 1;
-      setPhotoCaption(state.photoType, state.photoIndex, cap.caption, cap.alt, cap.photographer);
+      var type = state.photoType;
+      var arr = state.photosData[type];
+      var insertAt = state.photoIndex + 1;
+      shiftPhotoCaptionsAfterInsert(type, insertAt);
+      arr.splice(insertAt, 0, arr[state.photoIndex]);
+      var cap = clone(getPhotoCaption(type, state.photoIndex));
+      state.photoIndex = insertAt;
+      setPhotoCaption(type, state.photoIndex, cap.caption, cap.alt, cap.photographer);
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto duplicada');
     });
     $('media-photo-del').addEventListener('click', function () {
