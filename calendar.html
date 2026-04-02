@@ -25,8 +25,6 @@
 </head>
 <body data-mp-page="calendar">
 <a class="skip-link" href="#top" data-i18n="ui.skipMain">Skip to main content</a>
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
 <header class="site-chrome" role="banner">
 <div class="lang-bar">
   <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })">&#127468;&#127463; EN</button>
@@ -74,27 +72,27 @@
   <div class="section-inner">
     <div class="print-only-header print-only" id="perfPrintHeader" aria-hidden="true">
       <h1 class="print-only-title">Rolando Guy</h1>
-      <p class="print-only-subtitle" id="perfPrintSubtitle">Calendar</p>
+      <p class="print-only-subtitle" id="perfPrintSubtitle" data-i18n="perf.printSubtitle">Calendar</p>
     </div>
     <p class="section-tag" data-num="05" data-i18n="nav.cal">Calendar</p>
     <div class="perf-header">
       <h2 class="reveal" id="perfH2">Engagements &amp; <em>Concerts</em></h2>
       <p class="reveal rd1" id="perfIntro">Rolando Guy appears in recitals, gala concerts, concerts, and selected stage projects in Germany and across Europe.</p>
     </div>
-    <div class="perf-list" id="perfList"><p class="perf-empty">Upcoming engagements are listed here. If events do not load in your browser, please use the contact page for current booking information.</p></div>
+    <div class="perf-list" id="perfList"><p class="perf-empty" data-i18n="perf.calendarEmpty">Upcoming dates to be announced soon.</p></div>
     <div class="perf-actions no-print" style="text-align:center;margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
       <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print calendar" data-i18n-aria="perf.printAgenda"><span id="perfPrintBtnText" data-i18n="perf.printAgenda">Print calendar</span></button>
     </div>
     <section id="pastPerformancesSection" class="perf-past-block" style="display:none;margin-top:42px">
       <div id="pastPerfDivider" class="perf-past-divider" data-i18n="perf.pastDividerSelected">Selected Past Performances</div>
       <div class="perf-actions no-print" style="text-align:center;margin:0 0 12px;display:flex;justify-content:center">
-        <button id="pastPerfCollapseBtn" type="button" class="perf-print-btn" aria-expanded="false" aria-controls="pastPerfListWrap">View past performances</button>
+        <button id="pastPerfCollapseBtn" type="button" class="perf-print-btn" aria-expanded="false" aria-controls="pastPerfListWrap" data-i18n="perf.pastShow">+ Show Past Performances</button>
       </div>
       <div id="pastPerfListWrap" style="max-height:0;opacity:0;overflow:hidden;transition:max-height .35s ease,opacity .25s ease">
         <div class="perf-list" id="pastPerfList"></div>
       </div>
     </section>
-    <section class="mp-onward-band" aria-label="Next steps">
+    <section class="mp-onward-band" data-i18n-aria="ui.onwardSectionAria" aria-label="Next steps">
       <div class="section-inner reveal rd2">
       <p class="section-sub mp-onward-note" data-i18n="mp.calFooterNote">For booking enquiries related to these dates, please use the contact page.</p>
       <div class="contact-ctas mp-onward-ctas">
@@ -130,7 +128,7 @@
 
 <div id="eventModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);overflow-y:auto;cursor:default" onclick="if(event.target===this)closeEventModal()">
   <div style="max-width:640px;margin:60px auto;padding:40px 32px;position:relative">
-    <button type="button" onclick="closeEventModal()" style="position:absolute;top:0;right:0;background:none;border:none;color:var(--text-faint);font-size:1.6rem;cursor:pointer;padding:12px;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'">&times;</button>
+    <button type="button" onclick="closeEventModal()" data-i18n-aria="ui.close" aria-label="Close" style="position:absolute;top:0;right:0;background:none;border:none;color:var(--text-faint);font-size:1.6rem;cursor:pointer;padding:12px;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'">&times;</button>
     <div id="emVenueImg" style="width:100%;height:200px;background-size:cover;background-position:center;border:1px solid var(--border);margin-bottom:28px;display:none;border-radius:2px"></div>
     <div id="emType" style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:12px"></div>
     <h3 id="emTitle" style="font-family:var(--ff-title);font-size:clamp(1.6rem,4vw,2.2rem);font-weight:300;font-style:italic;color:var(--text);margin-bottom:8px"></h3>
@@ -139,10 +137,10 @@
     <div id="emDetail" style="font-size:.88rem;color:var(--text-dim);line-height:1.8;margin-bottom:16px"></div>
     <div id="emExtDesc" style="font-size:.88rem;color:var(--text-dim);line-height:1.8;margin-bottom:28px;border-top:1px solid var(--border);padding-top:20px;display:none"></div>
     <img id="emFlyerImg" src="" alt="" style="display:none;width:100%;max-width:480px;border:1px solid var(--border);border-radius:2px;margin-bottom:28px">
-    <div id="emPrice" style="display:none;font-family:var(--ff-caps);font-size:.62rem;letter-spacing:.15em;color:var(--gold);margin-bottom:24px"><span style="color:var(--text-faint);margin-right:8px">Tickets:</span><span id="emPriceVal"></span></div>
+    <div id="emPrice" style="display:none;font-family:var(--ff-caps);font-size:.62rem;letter-spacing:.15em;color:var(--gold);margin-bottom:24px"><span style="color:var(--text-faint);margin-right:8px" data-i18n="perf.modalTicketsLead">Tickets:</span><span id="emPriceVal"></span></div>
     <div id="emActions" style="display:flex;gap:12px;flex-wrap:wrap">
       <a id="emEventLink" href="#" target="_blank" rel="noopener" class="btn-primary" style="display:none;font-size:.55rem;padding:12px 24px" data-i18n="perf.ticketsInfo">Tickets & Info</a>
-      <a id="emMapsLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="display:none;font-size:.55rem;padding:12px 24px"><span aria-hidden="true">📍 </span><span data-i18n="perf.maps">Maps</span></a>
+      <a id="emMapsLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="display:none;font-size:.55rem;padding:12px 24px"><span aria-hidden="true">📍 </span><span id="emMapsText" data-i18n="perf.maps">Maps</span></a>
     </div>
   </div>
 </div>

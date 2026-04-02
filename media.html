@@ -25,8 +25,6 @@
 </head>
 <body data-mp-page="media">
 <a class="skip-link" href="#top" data-i18n="ui.skipMain">Skip to main content</a>
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
 <header class="site-chrome" role="banner">
 <div class="lang-bar">
   <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })">&#127468;&#127463; EN</button>
@@ -75,18 +73,14 @@
     <div class="videos-header">
       <div>
         <p class="section-tag" data-num="03" data-i18n="mp.section.videos">Videos</p>
-        <h2 class="reveal" id="vidH2">Stage, Concert &amp; Recital Highlights</h2>
+        <h2 class="reveal" id="vidH2" data-i18n-html="mp.videos.h2">Stage, Concert &amp; Recital Highlights</h2>
       </div>
     </div>
     <div class="video-grid" id="videoGrid"></div>
     <div class="video-more-wrap" id="videoMore"></div>
     <div class="print-only-media">
-      <p class="qr-text" lang="en">For audio samples and performance videos, scan the QR code or visit: rolandoguy.com</p>
-      <p class="qr-text" lang="de">Für Hörbeispiele und Konzertmitschnitte scannen Sie den QR-Code oder besuchen Sie: rolandoguy.com</p>
-      <p class="qr-text" lang="es">Para escuchar grabaciones y ver interpretaciones en vivo, escaneá el código QR o visitá: rolandoguy.com</p>
-      <p class="qr-text" lang="it">Per ascoltare registrazioni e vedere interpretazioni dal vivo, scansiona il codice QR o visita: rolandoguy.com</p>
-      <p class="qr-text" lang="fr">Pour écouter des enregistrements et découvrir des interprétations en concert, scannez le code QR ou rendez-vous sur : rolandoguy.com</p>
-      <img class="print-qr qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&amp;data=https://rolandoguy.com" alt="QR code to official website" style="max-width:150px;height:auto;">
+      <p class="qr-text" data-i18n="mp.printQrNote">For audio samples and performance videos, scan the QR code or visit: rolandoguy.com</p>
+      <img class="print-qr qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&amp;data=https://rolandoguy.com" alt="" data-i18n-alt="mp.printQrAlt" style="max-width:150px;height:auto;">
     </div>
   </div>
 </section>
@@ -99,7 +93,7 @@
 </div>
 
 <div class="lightbox" id="lightbox" onclick="closeLbOnBg(event)">
-  <button type="button" class="lightbox-close" onclick="closeLb()">Close ✕</button>
+  <button type="button" class="lightbox-close" onclick="closeLb()" data-i18n="ui.close">Close ✕</button>
   <button type="button" class="lb-nav lb-prev" onclick="navLb(-1)">&#8592;</button>
   <img class="lightbox-img" id="lbImg" src="" alt="">
   <button type="button" class="lb-nav lb-next" onclick="navLb(1)">&#8594;</button>
@@ -114,13 +108,13 @@
   <div class="section-inner">
     <p class="section-tag" data-num="04" data-i18n="mp.section.photos">Photos</p>
     <div class="photos-header">
-      <h2 class="reveal" id="photosH2">Portraits, Stage &amp; <em>Backstage</em></h2>
-      <p class="reveal rd1" id="photosSub">Selected portrait, stage and backstage photography. Click any image to view full size.</p>
+      <h2 class="reveal" id="photosH2" data-i18n-html="mp.photos.h2">Portraits, Stage &amp; <em>Backstage</em></h2>
+      <p class="reveal rd1" id="photosSub" data-i18n="mp.photos.sub">Selected portrait, stage and backstage photography. Click any image to view full size.</p>
     </div>
     <div class="photo-tabs">
-      <button type="button" class="photo-tab active" id="tab-studio" onclick="showTab('studio')">Studio Portraits</button>
-      <button type="button" class="photo-tab" id="tab-stage" onclick="showTab('stage')">On Stage</button>
-      <button type="button" class="photo-tab" id="tab-backstage" onclick="showTab('backstage')">Backstage</button>
+      <button type="button" class="photo-tab active" id="tab-studio" onclick="showTab('studio')" data-i18n="mp.photos.studioTab">Studio Portraits</button>
+      <button type="button" class="photo-tab" id="tab-stage" onclick="showTab('stage')" data-i18n="mp.photos.stageTab">On Stage</button>
+      <button type="button" class="photo-tab" id="tab-backstage" onclick="showTab('backstage')" data-i18n="mp.photos.backstageTab">Backstage</button>
     </div>
     <div id="panel-studio" class="photo-panel active">
       <div class="photo-grid-4"></div>
@@ -130,12 +124,12 @@
     </div>
     <div id="panel-backstage" class="photo-panel">
       <div class="photo-grid-3" id="backstageGrid"></div>
-      <div id="backstageEmpty" style="text-align:center;padding:60px 0;color:var(--text-faint);font-style:italic"></div>
+      <div id="backstageEmpty" style="text-align:center;padding:60px 0;color:var(--text-faint);font-style:italic" data-i18n="mp.photos.backstageEmpty"></div>
     </div>
   </div>
 </section>
 
-<section class="mp-onward-band" aria-label="Next steps">
+<section class="mp-onward-band" data-i18n-aria="ui.onwardSectionAria" aria-label="Next steps">
   <div class="section-inner reveal rd2">
   <p class="section-sub mp-onward-note" data-i18n="mp.mediaBottomNote">Press materials and high-resolution assets are available on the press page.</p>
   <div class="contact-ctas mp-onward-ctas">

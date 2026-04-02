@@ -305,8 +305,20 @@
 
     if (ctag) ctag.textContent = merged.continueSectionTag || '';
     if (csub) csub.textContent = merged.continueSub || '';
-    if (ctaRep) ctaRep.textContent = merged.ctaRepertoire || '';
-    if (ctaMed) ctaMed.textContent = merged.ctaMedia || '';
+    if (ctaRep) {
+      if (merged.ctaRepertoire) ctaRep.textContent = merged.ctaRepertoire;
+      else if (pick) {
+        var nr = pick(lang, 'nav.rep');
+        if (nr != null && String(nr).trim() !== '') ctaRep.textContent = String(nr);
+      }
+    }
+    if (ctaMed) {
+      if (merged.ctaMedia) ctaMed.textContent = merged.ctaMedia;
+      else if (pick) {
+        var nm = pick(lang, 'nav.media');
+        if (nm != null && String(nm).trim() !== '') ctaMed.textContent = String(nm);
+      }
+    }
     if (ctaCon) {
       if (merged.ctaContact) ctaCon.textContent = merged.ctaContact;
       else if (pick) {

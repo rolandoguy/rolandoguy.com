@@ -113,7 +113,14 @@
 
   function getCaption(type, idx) {
     var caps = getCaptions();
-    return caps[type + '_' + idx] || {};
+    var raw = caps[type + '_' + idx];
+    if (typeof raw === 'string') return { caption: raw, alt: '', photographer: '' };
+    if (!raw || typeof raw !== 'object') return { caption: '', alt: '', photographer: '' };
+    return {
+      caption: String(raw.caption || ''),
+      alt: String(raw.alt || ''),
+      photographer: String(raw.photographer || '')
+    };
   }
 
   var VIDEO_REP_CATS = ['opera', 'lied', 'concert_sacred', 'tango', 'crossover'];
@@ -609,8 +616,16 @@
     var cap = getCaption(lbSet, lbIdx);
     var t = document.getElementById('lbCapText');
     var p = document.getElementById('lbCapPhotog');
-    if (t) t.textContent = cap.caption || '';
-    if (p) p.textContent = cap.photographer ? '\u00a9 ' + cap.photographer : '';
+    if (t) {
+      var caption = String(cap.caption || '').trim();
+      t.textContent = caption;
+      t.style.display = caption ? '' : 'none';
+    }
+    if (p) {
+      var credit = String(cap.photographer || '').trim();
+      p.textContent = credit ? '\u00a9 ' + credit : '';
+      p.style.display = credit ? '' : 'none';
+    }
   }
 
   function openLb(set, idx) {
@@ -623,6 +638,9 @@
     var ctr = document.getElementById('lbCtr');
     if (!img || !lb || !ctr) return;
     img.src = arr[idx];
+    var openCap = getCaption(lbSet, lbIdx);
+    var openAlt = String(openCap.alt || '').trim();
+    img.alt = openAlt || 'Photo';
     ctr.textContent = idx + 1 + ' / ' + arr.length;
     lb.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -646,6 +664,10 @@
     var img = document.getElementById('lbImg');
     var ctr = document.getElementById('lbCtr');
     if (img) img.src = arr[lbIdx];
+    if (img) {
+      var navCap = getCaption(lbSet, lbIdx);
+      img.alt = String(navCap.alt || '').trim() || 'Photo';
+    }
     if (ctr) ctr.textContent = lbIdx + 1 + ' / ' + lbArr(lbSet).length;
     updateLbCaption();
   }
@@ -679,12 +701,18 @@
 
   function renderPhotoGallery() {
     var ph = getPhotoPaths();
+    var lang = currentLang || 'en';
+    var altStudioFb = mpPick(lang, 'mp.photos.studioTab', 'Rolando Guy');
+    var altStageFb = mpPick(lang, 'mp.photos.stageTab', 'On Stage');
+    var altBackFb = mpPick(lang, 'mp.photos.backstageTab', 'Backstage');
     var sGrid = document.getElementById('panel-studio');
     if (sGrid) {
       var sgrid = sGrid.querySelector('.photo-grid-4');
       if (sgrid)
         sgrid.innerHTML = ph.s
           .map(function (src, i) {
+            var cap = getCaption('s', i);
+            var alt = String(cap.alt || '').trim() || altStudioFb;
             return (
               '<div class="photo-item photo-item-p reveal rd' +
               i % 4 +
@@ -692,7 +720,9 @@
               i +
               ')"><img src="' +
               src +
-              '" alt="Rolando Guy" loading="lazy"></div>'
+              '" alt="' +
+              alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
+              '" loading="lazy"></div>'
             );
           })
           .join('');
@@ -703,6 +733,8 @@
       if (tgrid)
         tgrid.innerHTML = ph.t
           .map(function (src, i) {
+            var cap = getCaption('t', i);
+            var alt = String(cap.alt || '').trim() || altStageFb;
             return (
               '<div class="photo-item photo-item-s reveal rd' +
               i % 4 +
@@ -710,7 +742,9 @@
               i +
               ')"><img src="' +
               src +
-              '" alt="On Stage" loading="lazy"></div>'
+              '" alt="' +
+              alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
+              '" loading="lazy"></div>'
             );
           })
           .join('');
@@ -722,6 +756,8 @@
         bGrid.innerHTML = ph.b
           .map(function (src, i) {
             var imgSrc = typeof src === 'object' ? src.url || src : src;
+            var cap = getCaption('b', i);
+            var alt = String(cap.alt || '').trim() || altBackFb;
             return (
               '<div class="photo-item photo-item-s reveal rd' +
               i % 4 +
@@ -729,7 +765,9 @@
               i +
               ')"><img src="' +
               imgSrc +
-              '" alt="Backstage" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
+              '" alt="' +
+              alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
+              '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
             );
           })
           .join('');

@@ -40,6 +40,11 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+  function localeTagForMpLang(lang) {
+    var map = { en: 'en-US', de: 'de-DE', es: 'es-ES', it: 'it-IT', fr: 'fr-FR' };
+    var k = normalizeLangCode(lang) || 'en';
+    return map[k] || 'en-US';
+  }
   function readLegacyJson(key) {
     try {
       if (!window.localStorage) return null;
@@ -464,7 +469,9 @@
     items.forEach(function (p, i) {
       var d = parseIsoDateMaybe(p.date);
       var day = d ? String(d.getDate()) : '';
-      var month = d ? d.toLocaleString('en', { month: 'short' }).toUpperCase() : '';
+      var month = d
+        ? d.toLocaleString(localeTagForMpLang(currentLang), { month: 'short' }).toUpperCase()
+        : '';
       var showTime = isGoodPastTimeLabel(p.time);
       var when = day || month
         ? '<div class="perf-date-box"><div class="perf-day">' + escHtml(day) + '</div><div class="perf-month">' + escHtml(month) + '</div>' + (showTime ? '<div class="perf-time">' + escHtml(p.time) + '</div>' : '') + '</div>'
@@ -869,7 +876,8 @@
           return sortDate(a) - sortDate(b);
         });
       html += '<div class="perf-year-group">';
-      html += '<div class="perf-year-label">' + yr + '</div>';
+      var yrShown = yr === 'TBA' ? tPerf['perf.yearTba'] || 'TBA' : yr;
+      html += '<div class="perf-year-label">' + escHtml(yrShown) + '</div>';
       bucket.forEach(function (p, i) {
         html += rowHtml(p, i, false);
       });
@@ -1022,15 +1030,17 @@
       Object.keys(groups)
         .sort()
         .forEach(function (yr) {
-          body += '<h2 class="year">' + esc(yr) + '</h2>';
+          var yrShown = yr === 'TBA' ? tPrint['perf.yearTba'] || 'TBA' : yr;
+          body += '<h2 class="year">' + esc(yrShown) + '</h2>';
           groups[yr].forEach(function (p) {
             var typeLabel = types[p.type] || p.type || types.other || 'Event';
             var monthStr = monthOut(p.month);
             var yearStr = sortDate(p).getFullYear() > 2090 ? '' : ' ' + String(sortDate(p).getFullYear());
+            var tbaWord = tPrint['perf.yearTba'] || 'TBA';
             var dateStr =
               p.day && p.day !== 'TBA'
                 ? esc(p.day) + ' ' + esc(monthStr) + esc(yearStr)
-                : esc(monthStr + yearStr).trim() || 'TBA';
+                : esc(monthStr + yearStr).trim() || esc(tbaWord);
             var tStr = timeFmt(p.time);
             var when = tStr ? dateStr + ' · ' + esc(tStr) : dateStr;
             var title = resolveEventTitle(p, lang);
@@ -1250,7 +1260,9 @@
     var flyerEl = document.getElementById('emFlyerImg');
     if (p.flyerImg && p.flyerImg.trim()) {
       flyerEl.src = p.flyerImg;
-      flyerEl.alt = modalTitle + ' flyer';
+      var tFly = uiTable(currentLang);
+      var flyTail = String(tFly['perf.flyerAltTail'] || '').trim();
+      flyerEl.alt = flyTail ? modalTitle + ' — ' + flyTail : modalTitle;
       // When hero image is intentionally hidden, let flyer lead as main visual in content.
       flyerEl.style.maxWidth = hideModalHero ? '100%' : '480px';
       flyerEl.style.display = '';
@@ -1259,6 +1271,7 @@
     }
 
     var mapsEl = document.getElementById('emMapsLink');
+    var mapsTextEl = document.getElementById('emMapsText');
     var destination = String((p.venue || '') + (p.city ? (' ' + p.city) : '')).trim();
     if (destination) {
       mapsEl.href =
@@ -1269,7 +1282,8 @@
         t2['perf.maps'] ||
         ({ en: 'Maps', de: 'Karten', es: 'Mapas', it: 'Mappa', fr: 'Cartes' }[currentLang] ||
           'Maps');
-      mapsEl.innerHTML = '\ud83d\udccd ' + mapsLabel;
+      if (mapsTextEl) mapsTextEl.textContent = mapsLabel;
+      else mapsEl.textContent = '\ud83d\udccd ' + mapsLabel;
       mapsEl.style.display = '';
     } else {
       mapsEl.style.display = 'none';

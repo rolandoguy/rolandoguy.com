@@ -113,12 +113,16 @@
       loc && loc.quote != null && String(loc.quote).trim() !== ''
         ? String(loc.quote).trim()
         : base.quote;
+    var webBtn =
+      (loc && loc.webBtn && String(loc.webBtn).trim()) ||
+      mpPick(lang, 'contact.webBtn', '') ||
+      (base.webBtn != null ? String(base.webBtn) : '');
     return {
       title: title,
       sub: sub,
       email: base.email,
       emailBtn: emailBtn,
-      webBtn: base.webBtn,
+      webBtn: webBtn,
       quote: quote
     };
   }
@@ -173,7 +177,10 @@
       eb.href = 'mailto:' + email;
     }
     var wb = document.getElementById('contactWebBtn');
-    if (wb) wb.style.display = 'none';
+    if (wb) {
+      if (d.webBtn && String(d.webBtn).trim()) wb.textContent = String(d.webBtn).trim();
+      wb.style.display = 'none';
+    }
 
     var tag = document.getElementById('contactSectionTag');
     var tnav = uiTable();
@@ -276,6 +283,7 @@
           ),
           email: 'rolandoguy@gmail.com',
           emailBtn: mpPick(lang, 'contact.emailBtn', 'Send Email'),
+          webBtn: mpPick(lang, 'contact.webBtn', 'Official website'),
           quote: ''
         },
         formspreeId: 'xqedvoqw'

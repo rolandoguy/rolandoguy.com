@@ -299,7 +299,7 @@
     gate: 'locked',
     failure: ''
   };
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var activityLog = [];
   var state = {
@@ -947,9 +947,9 @@
     if (key === 'rg_rep_cards' || key === 'rg_perfs' || key === 'rg_past_perfs' || key === 'rg_press') {
       if (!Array.isArray(val)) throw new Error(key + ' must be an array');
     }
-    if (key === 'rg_vid') {
-      if (!isObject(val)) throw new Error('rg_vid must be an object');
-      if (!Array.isArray(val.videos)) throw new Error('rg_vid.videos must be an array');
+    if (key === 'rg_vid' || key === 'rg_vid_en') {
+      if (!isObject(val)) throw new Error(key + ' must be an object');
+      if (!Array.isArray(val.videos)) throw new Error(key + '.videos must be an array');
     }
     if (key === 'rg_photos') {
       if (!isObject(val)) throw new Error('rg_photos must be an object');
@@ -1011,6 +1011,7 @@
     if (k === 'rg_perfs') return 'Calendar events';
     if (k === 'rg_past_perfs') return 'Past performances (public list)';
     if (k === 'rg_vid') return 'Media · videos';
+    if (k === 'rg_vid_en') return 'Media · videos (legacy key · read-only merge)';
     if (k === 'rg_photos') return 'Media · photos';
     if (k === 'rg_photo_captions') return 'Media · photo captions';
     if (k === 'rg_press') return 'Press · quotes';
@@ -1066,7 +1067,7 @@
       'contact_en','contact_de','contact_es','contact_it','contact_fr',
       'rg_ui_en','rg_ui_de','rg_ui_es','rg_ui_it','rg_ui_fr',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
-      'rg_perfs','rg_vid','rg_photos','rg_press','rg_public_pdfs'
+      'rg_perfs','rg_vid','rg_vid_en','rg_photos','rg_press','rg_public_pdfs'
     ];
   }
   function buildSiteHealthSnapshot() {
@@ -1273,7 +1274,7 @@
     if (perfMissingCritical) issues.push({ kind: 'err', text: perfMissingCritical + ' upcoming calendar events are missing date/time/venue.', action: { section: 'calendar' } });
     if (perfPastMissing) issues.push({ kind: 'info', text: perfPastMissing + ' past events are missing some details (optional cleanup).', action: { section: 'calendar' } });
     if (perfHidden) issues.push({ kind: 'info', text: perfHidden + ' calendar events are hidden intentionally.', action: { section: 'calendar', filter: 'hidden' } });
-    var vid = safeMediaVideos(getSiteHealthDoc(snapshot, 'rg_vid', {}));
+    var vid = mergeRgVidRead(getSiteHealthDoc(snapshot, 'rg_vid', {}), getSiteHealthDoc(snapshot, 'rg_vid_en', null));
     var videos = Array.isArray(vid.videos) ? vid.videos : [];
     var vidsMissing = videos.filter(function (v) { return isBlank(v && v.id) || isBlank(v && v.title); }).length;
     var vidsHidden = videos.filter(function (v) { return !!(v && v.hidden); }).length;
@@ -2888,11 +2889,22 @@
   }
 
   function getPhotoCaption(type, idx) {
-    if (idx < 0) return { caption: '', photographer: '' };
-    return state.photoCaptions[type + '_' + idx] || { caption: '', photographer: '' };
+    if (idx < 0) return { caption: '', alt: '', photographer: '' };
+    var raw = state.photoCaptions[type + '_' + idx];
+    if (typeof raw === 'string') return { caption: safeString(raw), alt: '', photographer: '' };
+    if (!isObject(raw)) return { caption: '', alt: '', photographer: '' };
+    return {
+      caption: safeString(raw.caption),
+      alt: safeString(raw.alt),
+      photographer: safeString(raw.photographer)
+    };
   }
-  function setPhotoCaption(type, idx, caption, photographer) {
-    state.photoCaptions[type + '_' + idx] = { caption: safeString(caption), photographer: safeString(photographer) };
+  function setPhotoCaption(type, idx, caption, alt, photographer) {
+    state.photoCaptions[type + '_' + idx] = {
+      caption: safeString(caption),
+      alt: safeString(alt),
+      photographer: safeString(photographer)
+    };
   }
   function shiftPhotoCaptionsAfterDelete(type, deletedIndex) {
     var next = {};
@@ -2926,6 +2938,14 @@
     });
     return d;
   }
+  /** Canonical media videos live in rg_vid. If that doc is empty, merge from legacy rg_vid_en (Firestore/import quirk) so admin and exports stay aligned; saves still go to rg_vid only. */
+  function mergeRgVidRead(primaryRaw, legacyEnRaw) {
+    var primary = safeMediaVideos(primaryRaw || { h2: '', videos: [] });
+    if (primary.videos && primary.videos.length) return primary;
+    var leg = safeMediaVideos(legacyEnRaw || { h2: '', videos: [] });
+    if (leg.videos && leg.videos.length) return leg;
+    return primary;
+  }
   function safePhotos(raw) {
     var d = isObject(raw) ? clone(raw) : {};
     ['s', 't', 'b'].forEach(function (k) {
@@ -2949,7 +2969,7 @@
     return (cap ? cap + ' · ' : '') + shortSrc;
   }
   function loadMedia() {
-    state.vidData = safeMediaVideos(loadDoc('rg_vid', { h2: '', videos: [] }));
+    state.vidData = mergeRgVidRead(loadDoc('rg_vid', { h2: '', videos: [] }), loadDoc('rg_vid_en', null));
     state.vidIndex = -1;
     state.photosData = safePhotos(loadDoc('rg_photos', { s: [], t: [], b: [] }));
     state.photoCaptions = loadDoc('rg_photo_captions', {});
@@ -3080,7 +3100,7 @@
     var rows = arr.map(function (src, i) { return { src: src, i: i }; }).filter(function (row) {
       if (!q) return true;
       var c = getPhotoCaption(state.photoType, row.i);
-      var hay = [row.src, c.caption, c.photographer].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
+      var hay = [row.src, c.caption, c.alt, c.photographer].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
       return hay.indexOf(q) >= 0;
     });
     if (!rows.length) {
@@ -3094,7 +3114,6 @@
       var c = getPhotoCaption(state.photoType, row.i);
       var badges = [];
       if (isBlank(row.src)) badges.push({ kind: 'warn', label: 'missing image' });
-      if (isBlank(c.caption)) badges.push({ kind: 'warn', label: 'missing caption' });
       return '<div class="' + cls + '" data-idx="' + row.i + '">' + mediaSummaryPhoto(row.src, row.i) + badgesHtml(badges) + '</div>';
     }).join('');
     box.querySelectorAll('.item').forEach(function (el) {
@@ -3116,6 +3135,7 @@
     var c = getPhotoCaption(state.photoType, state.photoIndex);
     $('media-photo-url').value = safeString(src);
     $('media-photo-caption').value = safeString(c.caption);
+    $('media-photo-alt').value = safeString(c.alt);
     $('media-photo-photographer').value = safeString(c.photographer);
     $('media-photo-preview').src = safeString(src);
   }
@@ -3123,7 +3143,7 @@
     if (state.photoIndex < 0) return;
     var arr = state.photosData[state.photoType] || [];
     arr[state.photoIndex] = safeString($('media-photo-url').value);
-    setPhotoCaption(state.photoType, state.photoIndex, $('media-photo-caption').value, $('media-photo-photographer').value);
+    setPhotoCaption(state.photoType, state.photoIndex, $('media-photo-caption').value, $('media-photo-alt').value, $('media-photo-photographer').value);
     state.photosData[state.photoType] = arr;
     renderMediaPhotosList();
     renderMediaPhotoEditor();
@@ -3172,8 +3192,11 @@
     if (!Array.isArray(src) && isObject(src) && Array.isArray(src.value)) src = src.value;
     var arr = Array.isArray(src) ? src : [];
     return arr.filter(function (p) { return isObject(p) || typeof p === 'string'; }).map(function (p) {
-      if (typeof p === 'string') return { url: safeString(p), label: '', credit: '' };
-      return { url: safeString(p.url).trim(), label: safeString(p.label), credit: safeString(p.credit) };
+      if (typeof p === 'string') return { url: safeString(p), caption: '', alt: '', photographer: '', label: '', credit: '' };
+      var caption = safeString(p.caption || p.label);
+      var photographer = safeString(p.photographer || p.credit);
+      var alt = safeString(p.alt);
+      return { url: safeString(p.url).trim(), caption: caption, alt: alt, photographer: photographer, label: caption, credit: photographer };
     });
   }
   function togglePressTab(tab) {
@@ -3226,7 +3249,7 @@
     var q = safeString(state.epkPhotoSearch).toLowerCase().trim();
     var rows = state.epkPhotos.map(function (p, i) { return { p: p, i: i }; }).filter(function (row) {
       if (!q) return true;
-      var hay = [row.p.label, row.p.credit, row.p.url].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
+      var hay = [row.p.caption, row.p.alt, row.p.photographer, row.p.label, row.p.credit, row.p.url].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
       return hay.indexOf(q) >= 0;
     });
     if (!rows.length) {
@@ -3237,11 +3260,10 @@
     }
     box.innerHTML = rows.map(function (row) {
       var cls = row.i === state.epkPhotoIndex ? 'item active' : 'item';
-      var label = safeString(row.p.label) || ('Photo ' + (row.i + 1));
-      var credit = safeString(row.p.credit);
+      var label = safeString(row.p.caption || row.p.label) || ('Photo ' + (row.i + 1));
+      var credit = safeString(row.p.photographer || row.p.credit);
       var badges = [];
       if (isBlank(row.p.url)) badges.push({ kind: 'warn', label: 'missing image' });
-      if (isBlank(row.p.label)) badges.push({ kind: 'warn', label: 'missing label' });
       return '<div class="' + cls + '" data-idx="' + row.i + '">' + label + (credit ? ' · ' + credit : '') + badgesHtml(badges) + '</div>';
     }).join('');
     box.querySelectorAll('.item').forEach(function (el) {
@@ -3258,18 +3280,23 @@
     }
   }
   function renderEpkPhotoEditor() {
-    var p = state.epkPhotos[state.epkPhotoIndex] || { url: '', label: '', credit: '' };
+    var p = state.epkPhotos[state.epkPhotoIndex] || { url: '', caption: '', alt: '', photographer: '', label: '', credit: '' };
     $('epk-photo-url').value = safeString(p.url);
-    $('epk-photo-label').value = safeString(p.label);
-    $('epk-photo-credit').value = safeString(p.credit);
+    $('epk-photo-caption').value = safeString(p.caption || p.label);
+    $('epk-photo-alt').value = safeString(p.alt);
+    $('epk-photo-photographer').value = safeString(p.photographer || p.credit);
     $('epk-photo-preview').src = safeString(p.url);
   }
   function persistEpkPhotoEditor() {
     if (state.epkPhotoIndex < 0) return;
     var p = state.epkPhotos[state.epkPhotoIndex] || {};
     p.url = safeString($('epk-photo-url').value).trim();
-    p.label = safeString($('epk-photo-label').value);
-    p.credit = safeString($('epk-photo-credit').value);
+    p.caption = safeString($('epk-photo-caption').value);
+    p.alt = safeString($('epk-photo-alt').value);
+    p.photographer = safeString($('epk-photo-photographer').value);
+    // Keep legacy keys mirrored for compatibility.
+    p.label = p.caption;
+    p.credit = p.photographer;
     state.epkPhotos[state.epkPhotoIndex] = p;
     renderEpkPhotoList();
     renderEpkPhotoEditor();
@@ -4520,7 +4547,7 @@
     if (!Array.isArray(press)) press = [];
     var perfs = loadDoc('rg_perfs', []);
     if (!Array.isArray(perfs)) perfs = [];
-    var vidData = safeMediaVideos(loadDoc('rg_vid', {}));
+    var vidData = mergeRgVidRead(loadDoc('rg_vid', {}), loadDoc('rg_vid_en', null));
     var rep = loadDoc('rg_rep_cards', []);
     if (!Array.isArray(rep)) rep = [];
 
@@ -4977,7 +5004,7 @@
       if (Array.isArray(progSaved.programs) && progSaved.programs[state.programsIndex]) state.programsDoc.programs[state.programsIndex] = clone(progSaved.programs[state.programsIndex]);
       renderProgramsList(); renderProgramsEditor(); markDirty(true, 'Reverted current program item');
     } else if (section === 'media-vid' && state.vidIndex >= 0) {
-      var vidSaved = safeMediaVideos(getStoredDocRaw('rg_vid', {}));
+      var vidSaved = mergeRgVidRead(getStoredDocRaw('rg_vid', {}), getStoredDocRaw('rg_vid_en', null));
       if (Array.isArray(vidSaved.videos) && vidSaved.videos[state.vidIndex]) state.vidData.videos[state.vidIndex] = clone(vidSaved.videos[state.vidIndex]);
       renderMediaVideosList(); renderMediaVideoEditor(); markDirty(true, 'Reverted current video');
     } else if (section === 'press' && state.pressIndex >= 0) {
@@ -5889,7 +5916,7 @@
       if (!url) return;
       var clean = safeString(url).trim();
       if (!clean) return;
-      state.epkPhotos.push({ url: clean, label: '', credit: '' });
+      state.epkPhotos.push({ url: clean, caption: '', alt: '', photographer: '', label: '', credit: '' });
       state.epkPhotoIndex = state.epkPhotos.length - 1;
       renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo agregada');
     });
@@ -5898,7 +5925,7 @@
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function (ev) {
-        state.epkPhotos.push({ url: safeString(ev.target.result), label: '', credit: '' });
+        state.epkPhotos.push({ url: safeString(ev.target.result), caption: '', alt: '', photographer: '', label: '', credit: '' });
         state.epkPhotoIndex = state.epkPhotos.length - 1;
         renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo subida');
       };
@@ -6063,7 +6090,7 @@
       arr.splice(state.photoIndex + 1, 0, arr[state.photoIndex]);
       var cap = clone(getPhotoCaption(state.photoType, state.photoIndex));
       state.photoIndex += 1;
-      setPhotoCaption(state.photoType, state.photoIndex, cap.caption, cap.photographer);
+      setPhotoCaption(state.photoType, state.photoIndex, cap.caption, cap.alt, cap.photographer);
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto duplicada');
     });
     $('media-photo-del').addEventListener('click', function () {
@@ -6080,8 +6107,8 @@
       var t = arr[i - 1]; arr[i - 1] = arr[i]; arr[i] = t;
       var cA = clone(getPhotoCaption(state.photoType, i - 1));
       var cB = clone(getPhotoCaption(state.photoType, i));
-      setPhotoCaption(state.photoType, i - 1, cB.caption, cB.photographer);
-      setPhotoCaption(state.photoType, i, cA.caption, cA.photographer);
+      setPhotoCaption(state.photoType, i - 1, cB.caption, cB.alt, cB.photographer);
+      setPhotoCaption(state.photoType, i, cA.caption, cA.alt, cA.photographer);
       state.photoIndex = i - 1;
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Photo order updated');
     });
@@ -6091,8 +6118,8 @@
       var t = arr[i + 1]; arr[i + 1] = arr[i]; arr[i] = t;
       var cA = clone(getPhotoCaption(state.photoType, i));
       var cB = clone(getPhotoCaption(state.photoType, i + 1));
-      setPhotoCaption(state.photoType, i, cB.caption, cB.photographer);
-      setPhotoCaption(state.photoType, i + 1, cA.caption, cA.photographer);
+      setPhotoCaption(state.photoType, i, cB.caption, cB.alt, cB.photographer);
+      setPhotoCaption(state.photoType, i + 1, cA.caption, cA.alt, cA.photographer);
       state.photoIndex = i + 1;
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Photo order updated');
     });
@@ -6108,10 +6135,10 @@
       markDirty(true, 'Public PDFs editados');
     });
     bindInputsDirty(['epk-bio-b50','epk-bio-b150','epk-bio-b300p1','epk-bio-b300p2','epk-bio-b300p3','epk-bio-b300p4'], function () { persistEpkBiosFromUi(); markDirty(true, 'EPK bios editadas'); });
-    bindInputsDirty(['epk-photo-url','epk-photo-label','epk-photo-credit'], persistEpkPhotoEditor);
+    bindInputsDirty(['epk-photo-url','epk-photo-caption','epk-photo-alt','epk-photo-photographer'], persistEpkPhotoEditor);
     bindInputsDirty(['media-vid-id','media-vid-title','media-vid-sub','media-vid-tag','media-vid-composer','media-vid-group','media-vid-repertoireCat','media-vid-customThumb','media-vid-featured','media-vid-hidden','media-vid-editorialStatus'], persistMediaVideoEditor);
     bindInputsDirty(['media-vid-h2']);
-    bindInputsDirty(['media-photo-url','media-photo-caption','media-photo-photographer'], persistMediaPhotoEditor);
+    bindInputsDirty(['media-photo-url','media-photo-caption','media-photo-alt','media-photo-photographer'], persistMediaPhotoEditor);
 
     bindInputsDirty(
       [

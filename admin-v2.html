@@ -902,7 +902,7 @@
             </div>
             <div class="toolbar">
               <label>Search
-                <input id="media-photo-search" placeholder="Search URL / caption / photographer">
+                <input id="media-photo-search" placeholder="Search URL / caption / alt / photographer">
               </label>
               <button id="media-photo-add-url">+ Add by URL</button>
               <label class="import-label embed-file-label">+ Embed photo from local file
@@ -921,7 +921,9 @@
                 </div>
                 <label>Image URL<input id="media-photo-url"></label>
                 <label>Caption<input id="media-photo-caption"></label>
+                <label>Alt text<input id="media-photo-alt"></label>
                 <label>Photographer<input id="media-photo-photographer"></label>
+                <p class="muted" style="margin:4px 0 0;line-height:1.35">Caption and Photographer are visible in the media lightbox when filled. Alt text is for accessibility and is not shown as visible caption.</p>
                 <label class="embed-file-label">Embed replacement image from local file
                   <input type="file" id="media-photo-replace-file" accept="image/*">
                 </label>
@@ -1089,7 +1091,7 @@
           <div id="pressPhotosPanel" style="display:none">
             <div class="toolbar">
               <label>Search
-                <input id="epk-photo-search" placeholder="Search label / credit / URL">
+                <input id="epk-photo-search" placeholder="Search caption / alt / photographer / URL">
               </label>
               <button id="epk-photo-add-url">+ Add by URL</button>
               <label class="import-label embed-file-label">+ Embed photo from local file
@@ -1107,8 +1109,10 @@
                   <img id="epk-photo-preview" alt="EPK photo preview">
                 </div>
                 <label>Photo URL<input id="epk-photo-url"></label>
-                <label>Label<input id="epk-photo-label"></label>
-                <label>Credit / Photographer<input id="epk-photo-credit"></label>
+                <label>Caption<input id="epk-photo-caption"></label>
+                <label>Alt text<input id="epk-photo-alt"></label>
+                <label>Photographer<input id="epk-photo-photographer"></label>
+                <p class="muted" style="margin:4px 0 0;line-height:1.35">Caption and Photographer are shown on public EPK cards when filled. Alt text is used only for image alt.</p>
                 <label class="embed-file-label">Embed replacement image from local file
                   <input type="file" id="epk-photo-replace-file" accept="image/*">
                 </label>

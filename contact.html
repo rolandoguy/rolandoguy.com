@@ -25,8 +25,6 @@
 </head>
 <body data-mp-page="contact">
 <a class="skip-link" href="#top" data-i18n="ui.skipMain">Skip to main content</a>
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
 <header class="site-chrome" role="banner">
 <div class="lang-bar">
   <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })">&#127468;&#127463; EN</button>
@@ -75,15 +73,15 @@
     <p class="section-tag" data-num="09" id="contactSectionTag" data-i18n="nav.contact">Contact</p>
     <div class="contact-grid">
       <div class="contact-left reveal">
-        <h2 id="contactTitle">Bookings &amp; <em>Artistic Enquiries</em></h2>
-        <p id="contactSub">For opera, concert, recital, tango, and curated programme enquiries, please get in touch directly. The contact channel is intended for presenters, artistic directors, theatres, festivals, and collaborating ensembles, and every enquiry receives a personal reply.</p>
+        <h2 id="contactTitle"></h2>
+        <p id="contactSub"></p>
         <p class="section-sub" data-i18n="contact.materialsHint">For a faster booking conversation, include venue, city, preferred dates, programme format, and technical needs. Press kit files and media links can be shared in the same thread.</p>
         <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
           <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
         </div>
         <div class="contact-ctas">
           <a id="contactEmailBtn" class="btn-secondary">Send Email</a>
-          <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none">Official Website</a>
+          <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none" data-i18n="contact.webBtn">Official website</a>
         </div>
       </div>
       <div class="contact-form reveal rd2">
@@ -100,7 +98,7 @@
   </div>
 </section>
 
-<section class="mp-onward-band" aria-label="Next steps">
+<section class="mp-onward-band" data-i18n-aria="ui.onwardSectionAria" aria-label="Next steps">
   <div class="section-inner reveal rd2">
   <p class="section-sub mp-onward-note" data-i18n="mp.contactBottomNote">Explore programmes, calendar, and press materials to support casting and programming decisions.</p>
   <div class="contact-ctas mp-onward-ctas">

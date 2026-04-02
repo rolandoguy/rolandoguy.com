@@ -355,12 +355,17 @@
     var arr = Array.isArray(src) ? src : [];
     return arr
       .map(function (ph) {
-        if (typeof ph === 'string') return { url: normalizePhotoUrl(ph), label: '', credit: '' };
+        if (typeof ph === 'string') return { url: normalizePhotoUrl(ph), caption: '', alt: '', photographer: '', label: '', credit: '' };
         if (!ph || typeof ph !== 'object') return null;
+        var caption = typeof ph.caption === 'string' ? ph.caption : (typeof ph.label === 'string' ? ph.label : '');
+        var photographer = typeof ph.photographer === 'string' ? ph.photographer : (typeof ph.credit === 'string' ? ph.credit : '');
         return {
           url: normalizePhotoUrl(typeof ph.url === 'string' ? ph.url : ''),
-          label: typeof ph.label === 'string' ? ph.label : '',
-          credit: typeof ph.credit === 'string' ? ph.credit : ''
+          caption: caption,
+          alt: typeof ph.alt === 'string' ? ph.alt : '',
+          photographer: photographer,
+          label: caption,
+          credit: photographer
         };
       })
       .filter(function (ph) { return ph && ph.url; });
@@ -755,9 +760,9 @@
         var frag = document.createDocumentFragment();
         validPhotos.forEach(function (ph, i) {
           var url = String(ph.url || '').trim();
-          var label = String((ph.label || '').trim() || ('Portrait ' + (i + 1)));
-          var credit = String(ph.credit || '');
-          var alt = credit || 'Press photo — Rolando Guy';
+          var caption = String((ph.caption || ph.label || '').trim());
+          var photographer = String((ph.photographer || ph.credit || '').trim());
+          var alt = String((ph.alt || '').trim()) || caption || photographer || 'Press photo — Rolando Guy';
 
           var card = document.createElement('article');
           card.className = 'epk-press-card';
@@ -772,15 +777,17 @@
 
           var body = document.createElement('div');
           body.className = 'epk-press-body';
-          var labelEl = document.createElement('span');
-          labelEl.className = 'epk-press-label';
-          labelEl.textContent = label;
-          body.appendChild(labelEl);
+          if (caption) {
+            var labelEl = document.createElement('span');
+            labelEl.className = 'epk-press-label';
+            labelEl.textContent = caption;
+            body.appendChild(labelEl);
+          }
 
-          if (credit) {
+          if (photographer) {
             var creditEl = document.createElement('p');
             creditEl.className = 'epk-press-credit';
-            creditEl.textContent = credit;
+            creditEl.textContent = photographer;
             body.appendChild(creditEl);
           }
 

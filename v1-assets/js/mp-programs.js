@@ -25,6 +25,15 @@
     return UI[lang] || UI.en;
   }
 
+  function lp(lang, key, fb) {
+    var p = window.pickMpLocaleString;
+    if (p) {
+      var v = p(lang, key);
+      if (v != null && String(v).trim() !== '') return String(v);
+    }
+    return fb;
+  }
+
   function safeString(v) {
     return typeof v === 'string' ? v : (v == null ? '' : String(v));
   }
@@ -187,7 +196,7 @@
     var closing = document.getElementById('programsClosing');
     var repLink = document.getElementById('repProgramsLink');
 
-    if (sectionTag) sectionTag.textContent = ui.sectionTag;
+    if (sectionTag) sectionTag.textContent = lp(currentLang, 'programs.sectionTag', ui.sectionTag);
     if (h2) h2.innerHTML = String(data.title || '');
     if (subtitle) subtitle.textContent = String(data.subtitle || '');
     if (bridge) {
@@ -217,7 +226,10 @@
       .sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
 
     if (!visible.length) {
-      grid.innerHTML = '<div class="rep-empty" role="status">No programmes available.</div>';
+      grid.innerHTML =
+        '<div class="rep-empty" role="status">' +
+        esc(lp(currentLang, 'programs.gridEmpty', 'No programmes available.')) +
+        '</div>';
       return;
     }
 

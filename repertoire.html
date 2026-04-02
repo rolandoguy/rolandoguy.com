@@ -25,8 +25,6 @@
 </head>
 <body data-mp-page="repertoire">
 <a class="skip-link" href="#top" data-i18n="ui.skipMain">Skip to main content</a>
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
 <header class="site-chrome" role="banner">
 <div class="lang-bar">
   <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })" id="btn-en">&#127468;&#127463; EN</button>
@@ -77,7 +75,7 @@
         <h2 class="reveal rep-title" id="repH2">Selected <em>Repertoire</em></h2>
         <p class="rep-intro-line reveal" id="repIntroLine">Opera roles, arias, operetta, Lied and tango programmes.</p>
       </div>
-      <div class="rep-tabs reveal rd1" role="tablist" aria-label="Repertoire categories">
+      <div class="rep-tabs reveal rd1" role="tablist" data-i18n-aria="rep.categoriesTablistAria" aria-label="Repertoire categories">
         <button type="button" class="rep-tab active" id="repTabOpera" role="tab" aria-selected="true" onclick="setRepCategory('opera')" data-i18n="rep.tabOpera">Opera Roles</button>
         <button type="button" class="rep-tab" id="repTabArias" role="tab" aria-selected="false" onclick="setRepCategory('arias')" data-i18n="rep.tabArias">Opera Arias</button>
         <button type="button" class="rep-tab" id="repTabOperetta" role="tab" aria-selected="false" onclick="setRepCategory('operetta')" data-i18n="rep.tabOperetta">Operetta</button>
@@ -86,20 +84,20 @@
         <button type="button" class="rep-tab" id="repTabTango" role="tab" aria-selected="false" onclick="setRepCategory('tango')" data-i18n="rep.tabTango">Tango</button>
       </div>
       <p class="rep-desc reveal rd2" id="repIntro" aria-live="polite">This page maps practical programme strands for presenters: opera roles and arias, operetta material, Lied/art song lines, and Argentine tango repertoire adaptable to venue, ensemble format, and audience profile.</p>
-      <div class="rep-status-filters" id="repStatusFilters" aria-label="Filter opera roles by status">
+      <div class="rep-status-filters" id="repStatusFilters" data-i18n-aria="rep.statusFilterAria" aria-label="Filter opera roles by status">
         <button type="button" class="rep-status-filter-btn active" data-filter="all" data-i18n="rep.status.all" onclick="setRepStatusFilter('all')">All</button>
         <button type="button" class="rep-status-filter-btn" data-filter="performed" data-i18n="rep.status.performed" onclick="setRepStatusFilter('performed')">Performed</button>
       </div>
       <div class="opera-grid" id="operaGrid"></div>
       <p class="reveal rd2" style="margin-top:18px;text-align:center">
-        <a href="#programs" id="repProgramsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">Explore concert programmes and artistic collaborations</a>
+        <a href="#programs" id="repProgramsLink" data-i18n="rep.programsExplore" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">Explore concert programmes and artistic collaborations</a>
       </p>
     </div>
   </section>
 
   <section id="programs">
     <div class="section-inner">
-      <p class="section-tag" data-num="03" id="programsSectionTag">Programs</p>
+      <p class="section-tag" data-num="03" id="programsSectionTag" data-i18n="programs.sectionTag">Programs</p>
       <div class="programs-header">
         <h2 class="reveal" id="programsH2"></h2>
         <p class="reveal rd1" id="programsSubtitle"></p>
@@ -111,7 +109,7 @@
     </div>
   </section>
 
-  <section class="mp-page-bio-continue mp-onward-band" aria-label="Next steps">
+  <section class="mp-page-bio-continue mp-onward-band" data-i18n-aria="ui.onwardSectionAria" aria-label="Next steps">
     <div class="section-inner">
       <p class="section-tag" data-num="04" data-i18n="rep.moreTag">More</p>
       <p class="section-sub mp-onward-note reveal" data-i18n="rep.moreSub">Hear this repertoire in performance — or get in touch for a tailored programme.</p>

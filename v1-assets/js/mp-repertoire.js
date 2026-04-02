@@ -403,23 +403,36 @@
         : isOpera
           ? t['rep.thOpera'] || 'Opera'
           : t['rep.thWork'] || 'Work';
+    var sortRole = (t['rep.sortByRole'] || 'Sort by role').replace(/"/g, '&quot;');
+    var sortWork = (t['rep.sortByWork'] || 'Sort by work').replace(/"/g, '&quot;');
+    var sortComposer = (t['rep.sortByComposer'] || 'Sort by composer').replace(/"/g, '&quot;');
     var tableHead = isOpera
       ? '<thead><tr>' +
-        '<th class="rep-th-sort" onclick="setRepSort(\'role\')" title="Sort by Role">' +
+        '<th class="rep-th-sort" onclick="setRepSort(\'role\')" title="' +
+        sortRole +
+        '">' +
         (t['rep.thRole'] || 'Role') +
         '</th>' +
-        '<th class="rep-th-sort" onclick="setRepSort(\'opera\')" title="Sort by Work">' +
+        '<th class="rep-th-sort" onclick="setRepSort(\'opera\')" title="' +
+        sortWork +
+        '">' +
         thWork +
         '</th>' +
-        '<th class="rep-th-sort" onclick="setRepSort(\'composer\')" title="Sort by Composer">' +
+        '<th class="rep-th-sort" onclick="setRepSort(\'composer\')" title="' +
+        sortComposer +
+        '">' +
         (t['rep.thComposer'] || 'Composer') +
         '</th>' +
         '</tr></thead>'
       : '<thead><tr>' +
-        '<th class="rep-th-sort" onclick="setRepSort(\'opera\')" title="Sort by Work">' +
+        '<th class="rep-th-sort" onclick="setRepSort(\'opera\')" title="' +
+        sortWork +
+        '">' +
         thWork +
         '</th>' +
-        '<th class="rep-th-sort" onclick="setRepSort(\'composer\')" title="Sort by Composer">' +
+        '<th class="rep-th-sort" onclick="setRepSort(\'composer\')" title="' +
+        sortComposer +
+        '">' +
         (t['rep.thComposer'] || 'Composer') +
         '</th>' +
         '</tr></thead>';
