@@ -128,6 +128,14 @@
             <label>Proof / supporting line (plain text)<textarea id="hero-homeIntroProof" rows="3" placeholder="Calendar, Media, Press…"></textarea></label>
             <div class="grid two">
               <label>Presenter · section label<input id="hero-presenterTag" placeholder="For presenters"></label>
+              <label>Presenter label style
+                <select id="hero-presenterStyle">
+                  <option value="">Default</option>
+                  <option value="spaced">Spaced label</option>
+                  <option value="bold">Bold</option>
+                  <option value="bold_spaced">Bold + spaced</option>
+                </select>
+              </label>
             </div>
             <label>Presenter · bullet 1<input id="hero-presenterP1"></label>
             <label>Presenter · bullet 2<input id="hero-presenterP2"></label>
@@ -1224,7 +1232,7 @@
             <textarea id="ui-json" rows="18" class="mono" style="margin-top:10px"></textarea>
             <div class="toolbar">
               <button id="reloadUiBtn">Reload JSON</button>
-              <button id="saveUiBtn">Save rg_ui_<lang></button>
+              <button id="saveUiBtn">Save UI JSON (current language)</button>
             </div>
           </details>
         </section>

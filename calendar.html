@@ -83,10 +83,10 @@
     </div>
     <div class="perf-list" id="perfList"><p class="perf-empty">Upcoming engagements are listed here. If events do not load in your browser, please use the contact page for current booking information.</p></div>
     <div class="perf-actions no-print" style="text-align:center;margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
-      <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print calendar"><span id="perfPrintBtnText">Print calendar</span></button>
+      <button type="button" id="perfPrintBtn" class="perf-print-btn no-print" onclick="printAgenda();return false;" aria-label="Print calendar" data-i18n-aria="perf.printAgenda"><span id="perfPrintBtnText" data-i18n="perf.printAgenda">Print calendar</span></button>
     </div>
     <section id="pastPerformancesSection" class="perf-past-block" style="display:none;margin-top:42px">
-      <div id="pastPerfDivider" class="perf-past-divider">Selected Past Performances</div>
+      <div id="pastPerfDivider" class="perf-past-divider" data-i18n="perf.pastDividerSelected">Selected Past Performances</div>
       <div class="perf-actions no-print" style="text-align:center;margin:0 0 12px;display:flex;justify-content:center">
         <button id="pastPerfCollapseBtn" type="button" class="perf-print-btn" aria-expanded="false" aria-controls="pastPerfListWrap">View past performances</button>
       </div>
@@ -141,8 +141,8 @@
     <img id="emFlyerImg" src="" alt="" style="display:none;width:100%;max-width:480px;border:1px solid var(--border);border-radius:2px;margin-bottom:28px">
     <div id="emPrice" style="display:none;font-family:var(--ff-caps);font-size:.62rem;letter-spacing:.15em;color:var(--gold);margin-bottom:24px"><span style="color:var(--text-faint);margin-right:8px">Tickets:</span><span id="emPriceVal"></span></div>
     <div id="emActions" style="display:flex;gap:12px;flex-wrap:wrap">
-      <a id="emEventLink" href="#" target="_blank" rel="noopener" class="btn-primary" style="display:none;font-size:.55rem;padding:12px 24px">Tickets & Info</a>
-      <a id="emMapsLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="display:none;font-size:.55rem;padding:12px 24px">📍 Maps</a>
+      <a id="emEventLink" href="#" target="_blank" rel="noopener" class="btn-primary" style="display:none;font-size:.55rem;padding:12px 24px" data-i18n="perf.ticketsInfo">Tickets & Info</a>
+      <a id="emMapsLink" href="#" target="_blank" rel="noopener" class="btn-secondary" style="display:none;font-size:.55rem;padding:12px 24px"><span aria-hidden="true">📍 </span><span data-i18n="perf.maps">Maps</span></a>
     </div>
   </div>
 </div>

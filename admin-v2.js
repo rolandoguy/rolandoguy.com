@@ -9,6 +9,7 @@
     { id: 'hero-homeIntroP2', key: 'home.intro.p2' },
     { id: 'hero-homeIntroProof', key: 'home.intro.proof' },
     { id: 'hero-presenterTag', key: 'home.presenter.tag' },
+    { id: 'hero-presenterStyle', key: 'home.presenter.style' },
     { id: 'hero-presenterP1', key: 'home.presenter.p1' },
     { id: 'hero-presenterP2', key: 'home.presenter.p2' },
     { id: 'hero-presenterP3', key: 'home.presenter.p3' }
@@ -646,11 +647,54 @@
     if (isObject(stored) && hasOwn(stored, key)) return safeString(stored[key]);
     return safeString(fallback && fallback[key]);
   }
+  function pickEffectiveWithSource(stored, fallback, key, fallbackLabel) {
+    var fbLabel = safeString(fallbackLabel || 'Fallback');
+    var hasStored = isObject(stored) && hasOwn(stored, key);
+    var storedVal = hasStored ? safeString(stored[key]) : '';
+    if (hasStored && storedVal.trim()) return { value: storedVal, source: 'Saved here' };
+    var fallbackVal = safeString(fallback && fallback[key]);
+    if (fallbackVal.trim()) return { value: fallbackVal, source: fbLabel };
+    if (hasStored) return { value: storedVal, source: 'Saved here' };
+    return { value: '', source: 'Bundled default' };
+  }
+  function ensureFieldSourceIndicator(el) {
+    if (!el || !el.parentElement) return null;
+    var host = el.parentElement.querySelector('.adm-src-indicator');
+    if (host) return host;
+    host = document.createElement('small');
+    host.className = 'muted adm-src-indicator';
+    host.style.display = 'block';
+    host.style.marginTop = '4px';
+    host.style.fontSize = '.66rem';
+    host.style.lineHeight = '1.35';
+    el.parentElement.appendChild(host);
+    return host;
+  }
+  function setFieldEffectiveValue(el, effective) {
+    if (!el) return;
+    var e = effective || { value: '', source: '' };
+    el.value = safeString(e.value);
+    var ind = ensureFieldSourceIndicator(el);
+    if (ind) ind.textContent = e.source ? ('Source: ' + e.source) : '';
+  }
+  function setFieldFromSources(id, stored, fallback, key, fallbackLabel) {
+    var el = $(id);
+    if (!el) return;
+    setFieldEffectiveValue(el, pickEffectiveWithSource(stored, fallback, key, fallbackLabel));
+  }
+  function friendlyImageSourceLabel(raw) {
+    var s = safeString(raw);
+    if (!s) return 'Bundled default';
+    if (s.indexOf('hero_' + state.lang + '.introImage') >= 0) return 'Saved here';
+    if (s.indexOf('hero_en.introImage') >= 0) return 'Inherited (EN)';
+    if (s.indexOf('default:') === 0) return 'Bundled default';
+    return 'Inherited';
+  }
   function fillHomeRgUiCopyFields(uiStored, uiFallback) {
     HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
       var el = $(row.id);
       if (!el) return;
-      el.value = pickStoredOrFallback(uiStored, uiFallback, row.key);
+      setFieldEffectiveValue(el, pickEffectiveWithSource(uiStored, uiFallback, row.key, 'Inherited'));
     });
   }
   function persistHomeRgUiCopyFields(ui) {
@@ -717,20 +761,27 @@
     flatPublicRgUiCopyFields().forEach(function (f) {
       var el = $(fieldDomIdForUiKey(f.key));
       if (!el) return;
-      el.value = pickStoredOrFallback(d, uiFb, f.key);
+      setFieldEffectiveValue(el, pickEffectiveWithSource(d, uiFb, f.key, 'Inherited'));
     });
   }
   /** Nav inputs + structured public copy only (does not touch Home hero intro fields). */
   function syncUiNavAndPublicCopyFromDoc(d) {
     var doc = isObject(d) ? d : {};
-    if ($('ui-nav-home')) $('ui-nav-home').value = safeString(doc['nav.home']);
-    if ($('ui-nav-bio')) $('ui-nav-bio').value = safeString(doc['nav.bio']);
-    if ($('ui-nav-rep')) $('ui-nav-rep').value = safeString(doc['nav.rep']);
-    if ($('ui-nav-media')) $('ui-nav-media').value = safeString(doc['nav.media']);
-    if ($('ui-nav-cal')) $('ui-nav-cal').value = safeString(doc['nav.cal']);
-    if ($('ui-nav-epk')) $('ui-nav-epk').value = safeString(doc['nav.epk']);
-    if ($('ui-nav-book')) $('ui-nav-book').value = safeString(doc['nav.book']);
-    if ($('ui-nav-contact')) $('ui-nav-contact').value = safeString(doc['nav.contact']);
+    var uiFb = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var t = state.api.uiTable(state.lang);
+        if (isObject(t)) uiFb = t;
+      }
+    } catch (e) {}
+    setFieldFromSources('ui-nav-home', doc, uiFb, 'nav.home', 'Inherited');
+    setFieldFromSources('ui-nav-bio', doc, uiFb, 'nav.bio', 'Inherited');
+    setFieldFromSources('ui-nav-rep', doc, uiFb, 'nav.rep', 'Inherited');
+    setFieldFromSources('ui-nav-media', doc, uiFb, 'nav.media', 'Inherited');
+    setFieldFromSources('ui-nav-cal', doc, uiFb, 'nav.cal', 'Inherited');
+    setFieldFromSources('ui-nav-epk', doc, uiFb, 'nav.epk', 'Inherited');
+    setFieldFromSources('ui-nav-book', doc, uiFb, 'nav.book', 'Inherited');
+    setFieldFromSources('ui-nav-contact', doc, uiFb, 'nav.contact', 'Inherited');
     fillPublicRgUiCopyFields(doc);
   }
   /** Build structured copy DOM and fill nav + public fields from storage (safe on any section). */
@@ -1514,16 +1565,18 @@
         if (isObject(t)) uiFallback = t;
       }
     } catch (e) {}
-    $('hero-eyebrow').value = pickStoredOrFallback(stored, fallback, 'eyebrow');
-    $('hero-subtitle').value = pickStoredOrFallback(stored, fallback, 'subtitle');
-    $('hero-cta1').value = pickStoredOrFallback(stored, fallback, 'cta1');
-    $('hero-cta2').value = pickStoredOrFallback(stored, fallback, 'cta2');
-    $('hero-quickBioLabel').value = pickStoredOrFallback(stored, fallback, 'quickBioLabel');
-    $('hero-quickCalLabel').value = pickStoredOrFallback(stored, fallback, 'quickCalLabel');
-    $('hero-introCtaBio').value = (isObject(stored) && safeString(stored.introCtaBio).trim()) ? safeString(stored.introCtaBio) : pickStoredOrFallback(uiStored, uiFallback, 'home.intro.ctaBio');
-    $('hero-introCtaMedia').value = (isObject(stored) && safeString(stored.introCtaMedia).trim()) ? safeString(stored.introCtaMedia) : pickStoredOrFallback(uiStored, uiFallback, 'home.intro.ctaMedia');
+    setFieldFromSources('hero-eyebrow', stored, fallback, 'eyebrow', 'Bundled default');
+    setFieldFromSources('hero-subtitle', stored, fallback, 'subtitle', 'Bundled default');
+    setFieldFromSources('hero-cta1', stored, fallback, 'cta1', 'Bundled default');
+    setFieldFromSources('hero-cta2', stored, fallback, 'cta2', 'Bundled default');
+    setFieldFromSources('hero-quickBioLabel', stored, fallback, 'quickBioLabel', 'Bundled default');
+    setFieldFromSources('hero-quickCalLabel', stored, fallback, 'quickCalLabel', 'Bundled default');
+    if (isObject(stored) && safeString(stored.introCtaBio).trim()) setFieldEffectiveValue($('hero-introCtaBio'), { value: safeString(stored.introCtaBio), source: 'Saved here' });
+    else setFieldEffectiveValue($('hero-introCtaBio'), pickEffectiveWithSource(uiStored, uiFallback, 'home.intro.ctaBio', 'Inherited'));
+    if (isObject(stored) && safeString(stored.introCtaMedia).trim()) setFieldEffectiveValue($('hero-introCtaMedia'), { value: safeString(stored.introCtaMedia), source: 'Saved here' });
+    else setFieldEffectiveValue($('hero-introCtaMedia'), pickEffectiveWithSource(uiStored, uiFallback, 'home.intro.ctaMedia', 'Inherited'));
     fillHomeRgUiCopyFields(uiStored, uiFallback);
-    $('hero-bgImage').value = pickStoredOrFallback(stored, fallback, 'bgImage');
+    setFieldFromSources('hero-bgImage', stored, fallback, 'bgImage', 'Bundled default');
     // Keep preview blank until final source is resolved (no stale first paint).
     $('hero-introImage').value = '';
     updateHomeIntroPreview();
@@ -1531,6 +1584,7 @@
     resolveHomeIntroFinal().then(function (resolved) {
       if (nonce !== state.homeLoadNonce) return;
       $('hero-introImage').value = safeString(resolved && resolved.url).trim();
+      setFieldEffectiveValue($('hero-introImage'), { value: safeString(resolved && resolved.url).trim(), source: friendlyImageSourceLabel(resolved && resolved.source) });
       updateHomeIntroPreview();
       updateHomeMiniPreviews();
       updateCompletenessIndicators();
@@ -1754,18 +1808,18 @@
     var stored = loadDoc('bio_' + state.lang, null);
     var storedEn = loadDoc('bio_en', null);
     var fallback = getLegacySection('bio');
-    $('bio-introLine').value = pickStoredOrFallback(stored, fallback, 'introLine');
-    $('bio-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
+    setFieldFromSources('bio-introLine', stored, fallback, 'introLine', 'Bundled default');
+    setFieldFromSources('bio-h2', stored, fallback, 'h2', 'Bundled default');
     fillBioParagraphInputsFromStored(stored, fallback);
-    $('bio-continue-tag').value = pickStoredOrFallback(stored, fallback, 'continueSectionTag');
-    $('bio-continue-sub').value = pickStoredOrFallback(stored, fallback, 'continueSub');
-    $('bio-cta-rep').value = pickStoredOrFallback(stored, fallback, 'ctaRepertoire');
-    $('bio-cta-media').value = pickStoredOrFallback(stored, fallback, 'ctaMedia');
-    $('bio-cta-contact').value = pickStoredOrFallback(stored, fallback, 'ctaContact');
-    $('bio-cta-home').value = pickStoredOrFallback(stored, fallback, 'ctaHomeIntro');
-    $('bio-portraitAlt').value = pickStoredOrFallback(stored, fallback, 'portraitAlt');
-    $('bio-quote').value = pickStoredOrFallback(stored, fallback, 'quote');
-    $('bio-cite').value = pickStoredOrFallback(stored, fallback, 'cite');
+    setFieldFromSources('bio-continue-tag', stored, fallback, 'continueSectionTag', 'Bundled default');
+    setFieldFromSources('bio-continue-sub', stored, fallback, 'continueSub', 'Bundled default');
+    setFieldFromSources('bio-cta-rep', stored, fallback, 'ctaRepertoire', 'Bundled default');
+    setFieldFromSources('bio-cta-media', stored, fallback, 'ctaMedia', 'Bundled default');
+    setFieldFromSources('bio-cta-contact', stored, fallback, 'ctaContact', 'Bundled default');
+    setFieldFromSources('bio-cta-home', stored, fallback, 'ctaHomeIntro', 'Bundled default');
+    setFieldFromSources('bio-portraitAlt', stored, fallback, 'portraitAlt', 'Bundled default');
+    setFieldFromSources('bio-quote', stored, fallback, 'quote', 'Bundled default');
+    setFieldFromSources('bio-cite', stored, fallback, 'cite', 'Bundled default');
     var immediate = resolveEffectiveBioPortrait(stored, storedEn, state.bioPortraitDefault);
     if (immediate) {
       $('bio-portraitImage').value = immediate;
@@ -1774,7 +1828,12 @@
     updateBioMiniPreview();
     loadBioPortraitDefault().then(function (src) {
       if (nonce !== state.bioLoadNonce) return;
-      $('bio-portraitImage').value = resolveEffectiveBioPortrait(stored, storedEn, src);
+      var effPortrait = resolveEffectiveBioPortrait(stored, storedEn, src);
+      $('bio-portraitImage').value = effPortrait;
+      var portraitSource = 'Bundled default';
+      if (isObject(stored) && safeString(stored.portraitImage).trim()) portraitSource = 'Saved here';
+      else if (isObject(storedEn) && safeString(storedEn.portraitImage).trim()) portraitSource = 'Inherited (EN)';
+      setFieldEffectiveValue($('bio-portraitImage'), { value: effPortrait, source: portraitSource });
       updateBioPortraitPreview();
       updateBioMiniPreview();
       updateCompletenessIndicators();
@@ -3440,11 +3499,11 @@
     if (!inferredWebUrl && isValidHttpUrl(webBtnRaw)) inferredWebUrl = safeString(webBtnRaw).trim();
     var inferredWebBtn = safeString(webBtnRaw).trim();
     if (isValidHttpUrl(inferredWebBtn)) inferredWebBtn = '';
-    $('contact-title').value = pickStoredOrFallback(stored, fallback, 'title');
-    $('contact-sub').value = pickStoredOrFallback(stored, fallback, 'sub');
-    $('contact-email').value = pickStoredOrFallback(stored, fallback, 'email');
-    $('contact-emailBtn').value = pickStoredOrFallback(stored, fallback, 'emailBtn');
-    $('contact-webBtn').value = inferredWebBtn;
+    setFieldFromSources('contact-title', stored, fallback, 'title', 'Bundled default');
+    setFieldFromSources('contact-sub', stored, fallback, 'sub', 'Bundled default');
+    setFieldFromSources('contact-email', stored, fallback, 'email', 'Bundled default');
+    setFieldFromSources('contact-emailBtn', stored, fallback, 'emailBtn', 'Bundled default');
+    setFieldEffectiveValue($('contact-webBtn'), { value: inferredWebBtn, source: safeString(inferredWebBtn).trim() ? ((isObject(stored) && safeString(stored.webBtn).trim()) ? 'Saved here' : 'Bundled default') : 'Bundled default' });
     if ($('contact-webUrl')) $('contact-webUrl').value = inferredWebUrl;
     updateContactValidation();
     updateContactMiniPreview();
@@ -3490,7 +3549,7 @@
     HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
       var el = $(row.id);
       if (!el) return;
-      el.value = pickStoredOrFallback(doc, uiFbHome, row.key);
+      setFieldEffectiveValue(el, pickEffectiveWithSource(doc, uiFbHome, row.key, 'Inherited'));
     });
   }
   function saveUiNav() {
@@ -5014,6 +5073,7 @@
       if (isBlank($(id) && $(id).value)) homeMissing += 1;
     });
     HOME_RG_UI_COPY_FIELDS.forEach(function (row) {
+      if (row.key === 'home.presenter.style') return;
       if (isBlank($(row.id) && $(row.id).value)) homeMissing += 1;
     });
     setPillStatus('home-completeness', homeMissing ? 'warn' : 'ok', homeMissing ? ('Missing fields: ' + homeMissing) : 'Complete');
@@ -6068,6 +6128,7 @@
         'hero-homeIntroP2',
         'hero-homeIntroProof',
         'hero-presenterTag',
+        'hero-presenterStyle',
         'hero-presenterP1',
         'hero-presenterP2',
         'hero-presenterP3',
@@ -6112,7 +6173,7 @@
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
     bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);
-    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
+    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
       updateContactValidation();
       updateContactMiniPreview();
       updateCompletenessIndicators();

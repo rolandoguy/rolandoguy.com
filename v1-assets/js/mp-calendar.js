@@ -696,11 +696,12 @@
     var mapsWord = tPerf['perf.maps'] || 'Maps';
     function rowHtml(p, i, isPastSection) {
       var isArchive = sortDate(p) < today;
+      var isEffectivePast = !!(isPastSection || isArchive || p.status === 'past');
       var typeLabel = types[p.type] || p.type || types.concert;
       var badge =
         p.status === 'current' && !isPastSection
           ? '<div class="perf-badge">' + typeLabel + '</div>'
-          : isPastSection || p.status === 'past' || isArchive
+          : isEffectivePast
             ? '<div class="perf-badge perf-badge-past">' + typeLabel + '</div>'
             : '<div class="perf-type">' + typeLabel + '</div>';
       var timeHtml = (function () {
@@ -773,7 +774,7 @@
           }
         });
       }
-      var pastClass = isPastSection || p.status === 'past' ? ' perf-item-past' : '';
+      var pastClass = isEffectivePast ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
       var hasVenuePhoto = !!venuePhotoResolved;
@@ -785,7 +786,7 @@
         archiveClass +
         photoClass +
         '">';
-      if (isPastSection || p.status === 'past')
+      if (isEffectivePast)
         h += '<div class="perf-past-stamp">' + (tPerf['perf.pastStamp'] || 'Past') + '</div>';
       if (hasVenuePhoto) {
         var op = (p.venueOpacity || 50) / 100;

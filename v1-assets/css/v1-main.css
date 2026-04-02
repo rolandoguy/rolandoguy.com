@@ -223,6 +223,9 @@ section{position:relative;z-index:2}
   text-transform:uppercase;
   color:var(--gold);
 }
+.presenter-micro-tag.presenter-tag-style-spaced{letter-spacing:.24em}
+.presenter-micro-tag.presenter-tag-style-bold{font-weight:700}
+.presenter-micro-tag.presenter-tag-style-bold-spaced{font-weight:700;letter-spacing:.24em}
 .presenter-micro-list{
   margin:0;
   padding:0;

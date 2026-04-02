@@ -192,7 +192,21 @@
       });
     }
     applyNavLogoFromRgUi(lang);
+    applyPresenterLabelStyle(lang);
     applyPageHeadFromRgUi(lang);
+  }
+
+  function applyPresenterLabelStyle(lang) {
+    var style = pickLocaleString(lang, 'home.presenter.style');
+    var styleKey = String(style || '').trim().toLowerCase();
+    var styleClass = '';
+    if (styleKey === 'spaced') styleClass = 'presenter-tag-style-spaced';
+    else if (styleKey === 'bold') styleClass = 'presenter-tag-style-bold';
+    else if (styleKey === 'bold_spaced') styleClass = 'presenter-tag-style-bold-spaced';
+    document.querySelectorAll('.presenter-micro-tag').forEach(function (el) {
+      el.classList.remove('presenter-tag-style-spaced', 'presenter-tag-style-bold', 'presenter-tag-style-bold-spaced');
+      if (styleClass) el.classList.add(styleClass);
+    });
   }
 
   /** Re-apply [data-i18n*] after async page modules finish rendering (e.g. biography body). */
