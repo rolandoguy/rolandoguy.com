@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="85mm" height="55mm" viewBox="0 0 85 55" aria-label="Rolando Guy business card back without QR">
+  <title>Rolando Guy  back (no QR)</title>
+  <defs>
+    <style type="text/css"><![CDATA[
+      @import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap");
+      .site { font-family: Lato, "Helvetica Neue", Arial, sans-serif; font-size: 3.4mm; font-weight: 400; fill: #F0EDE6; letter-spacing: 0.06em; }
+      .row { font-family: Lato, "Helvetica Neue", Arial, sans-serif; font-size: 2.35mm; font-weight: 300; fill: #9A9080; letter-spacing: 0.06em; }
+      .row strong { font-weight: 400; fill: #B8B0A4; }
+      .tag { font-family: Lato, "Helvetica Neue", Arial, sans-serif; font-size: 1.85mm; font-weight: 300; fill: rgba(212,168,67,0.55); letter-spacing: 0.22em; text-transform: uppercase; }
+    ]]></style>
+  </defs>
+  <rect width="85" height="55" fill="#0D0D12"/>
+  <text x="6" y="22" class="site">rolandoguy.com</text>
+  <text x="6" y="28" class="row">rolandoguy@gmail.com</text>
+  <text x="6" y="33.5" class="row"><tspan font-weight="400" fill="#B8B0A4">Instagram </tspan>@rolando.guy.tenor</text>
+  <text x="6" y="39" class="row"><tspan font-weight="400" fill="#B8B0A4">YouTube </tspan>@rolandoguytenor</text>
+  <line x1="6" y1="44.5" x2="79" y2="44.5" stroke="#D4A843" stroke-opacity="0.12" stroke-width="0.1"/>
+  <text x="42.5" y="51" text-anchor="middle" class="tag">Opera � Recital � Concert � Tango</text>
+</svg>

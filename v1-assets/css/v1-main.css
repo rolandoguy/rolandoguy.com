@@ -720,18 +720,35 @@ html[lang="en"] #vidH2 .title-line2 em{white-space:nowrap}
 .perf-header h2 em{font-style:italic;color:var(--gold)}
 .perf-header p{font-size:.9rem;color:var(--text-dim);line-height:1.82;letter-spacing:.012em;margin-top:14px;max-width:42rem}
 .perf-list{display:flex;flex-direction:column}
-.perf-item{display:grid;grid-template-columns:minmax(100px,140px) 1fr;gap:32px;align-items:start;padding:28px 0;border-bottom:1px solid var(--border);transition:padding .38s var(--ease-soft),background .38s var(--ease-soft),border-color .38s var(--ease-soft);position:relative;overflow:hidden}
+.perf-item{display:grid;grid-template-columns:minmax(100px,140px) 1fr;gap:32px;align-items:center;padding:28px 0;border-bottom:1px solid var(--border);transition:padding .38s var(--ease-soft),background .38s var(--ease-soft),border-color .38s var(--ease-soft);position:relative;overflow:hidden}
 .perf-item:first-child{border-top:1px solid var(--border)}
 .perf-item:hover{padding-left:12px;background:rgba(212,168,67,.04);border-bottom-color:rgba(212,168,67,.16)}
 .perf-venue-bg{z-index:0}
 .perf-item>*:not(.perf-venue-bg){position:relative;z-index:1}
-.perf-date-box{text-align:center;padding:.65rem .5rem;min-width:96px;border:1px solid rgba(212,168,67,.24);background:rgba(8,8,12,.45);border-radius:2px;align-self:start}
+.perf-date-box{text-align:center;padding:.65rem .5rem;min-width:96px;border:1px solid rgba(212,168,67,.24);background:rgba(8,8,12,.45);border-radius:2px;align-self:center}
 .perf-day{font-family:var(--ff-title);font-size:clamp(1.45rem,2.55vw,2.45rem);font-weight:300;color:var(--gold);line-height:1.02;word-break:break-word;letter-spacing:.03em}
 .perf-month{font-family:var(--ff-caps);font-size:var(--perf-month-size,.7rem);letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;margin-top:7px}
+.perf-year{
+  font-family:var(--ff-caps);
+  font-size:clamp(.56rem,.9vw,.64rem);
+  letter-spacing:.14em;
+  color:var(--text-dim);
+  margin-top:5px;
+  line-height:1.25;
+  text-transform:none;
+}
 .perf-time{font-family:var(--ff-body);font-size:.74rem;letter-spacing:.07em;color:var(--text);margin-top:9px;border-top:1px solid rgba(212,168,67,.18);padding-top:9px;font-weight:400}
+.perf-date-box > .perf-day,
+.perf-date-box > .perf-month,
+.perf-date-box > .perf-year,
+.perf-date-box > .perf-time{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+}
 
-.perf-venue-link{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--text);text-decoration:none;text-transform:uppercase;border-bottom:1px dashed rgba(212,168,67,.4);padding-bottom:2px;transition:color .35s var(--ease-soft),border-color .35s var(--ease-soft);cursor:pointer}
-.perf-venue-link:hover{color:var(--gold);border-bottom-color:rgba(212,168,67,.75)}
+.perf-venue-link{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--text);text-decoration:none;text-transform:uppercase;border-bottom:none;padding-bottom:0;transition:color .35s var(--ease-soft);cursor:pointer}
+.perf-venue-link:hover{color:var(--gold)}
 .perf-maps-hint{font-size:.48rem;color:var(--gold-dim);letter-spacing:.1em;transition:color .35s var(--ease-soft)}
 .perf-venue-link:hover .perf-maps-hint{color:var(--gold)}
 .perf-info-title{font-family:var(--ff-title);font-size:1.2rem;font-style:italic;font-weight:400;color:var(--text);margin-bottom:10px;line-height:1.28;letter-spacing:.01em;max-width:42rem}
@@ -832,6 +849,7 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
 .perf-item--archive .perf-date-box{padding:.42rem .38rem;border-color:rgba(212,168,67,.16);background:rgba(8,8,12,.35)}
 .perf-item--archive .perf-day{font-size:clamp(1.08rem,1.65vw,1.38rem);letter-spacing:.02em}
 .perf-item--archive .perf-month{font-size:.58rem;margin-top:5px;letter-spacing:.18em}
+.perf-item--archive .perf-year{font-size:.52rem;margin-top:4px;letter-spacing:.12em}
 .perf-item--archive .perf-time{font-size:.68rem;margin-top:6px;padding-top:6px}
 .perf-item--archive .perf-info-title{
   font-size:1.05rem;
@@ -853,9 +871,9 @@ footer{border-top:1px solid var(--border);padding:44px 0 30px;position:relative;
 .perf-item--archive .perf-type{font-size:.51rem;margin-bottom:6px;color:rgba(154,144,128,.85)}
 .perf-item--archive .perf-badge{margin-bottom:6px;padding:3px 9px;font-size:.44rem}
 .perf-item--archive .perf-venue-link{margin-top:8px}
-.perf-item--archive .perf-date-box + div{
+.perf-item--archive .perf-date-box + div:not(.perf-item-stack),
+.perf-item--archive .perf-item-stack{
   min-width:0;
-  align-self:start;
 }
 .perf-item--archive .perf-info-title,
 .perf-item--archive .perf-info-detail,
@@ -990,8 +1008,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .rep-tabs{flex-wrap:wrap}.rep-tab{flex:1 1 auto;min-width:7rem}
   .photo-grid-4{grid-template-columns:1fr 1fr}
   .photo-grid-3{grid-template-columns:1fr 1fr}
-  .perf-item{grid-template-columns:minmax(90px,120px) 1fr;gap:16px}
-  .perf-item--archive{grid-template-columns:minmax(70px,100px) minmax(0,1fr);gap:14px;padding:18px 0}
+  /* Calendar rows live in #performances — avoid tablet .perf-item grid/gap overrides fighting the dedicated min-width:601 rules */
   .contact-grid{grid-template-columns:1fr;gap:32px}
   .footer-inner{grid-template-columns:1fr;text-align:center;gap:20px}
   .footer-social{
@@ -1480,7 +1497,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 
 @media(max-width:700px){
   .perf-venue-bg{width:45%;mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.5) 50%,rgba(0,0,0,1) 100%);-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.5) 50%,rgba(0,0,0,1) 100%)}
-  .perf-item .perf-info-title,.perf-item .perf-info-detail,.perf-item .perf-type,.perf-item .perf-badge,.perf-item .perf-venue-link{text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 12px rgba(10,10,15,.9)}
+  .perf-item .perf-info-title,.perf-item .perf-info-detail,.perf-item .perf-type,.perf-item .perf-badge,.perf-item .perf-venue-link{text-shadow:0 1px 3px rgba(0,0,0,.62),0 0 8px rgba(10,10,15,.78)}
 #pastPerfList .perf-info-detail.past-desc{
   display:-webkit-box;
   -webkit-line-clamp:3;
@@ -1491,14 +1508,14 @@ textarea.adm-input{resize:vertical;min-height:80px}
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 72%,rgba(0,0,0,0));
 }
 .perf-item-has-photo .perf-venue-bg{
-  filter:brightness(.54) saturate(.88) contrast(1.03);
+  filter:brightness(.5) saturate(.84) contrast(1.02);
   overflow:hidden;
 }
 .perf-item-has-photo .perf-venue-bg::after{
   content:'';
   position:absolute;
   inset:0;
-  background:linear-gradient(to left,rgba(6,8,12,.58),rgba(6,8,12,.18));
+  background:linear-gradient(to left,rgba(6,8,12,.64),rgba(6,8,12,.24));
 }
 .perf-item-no-photo{
   background:linear-gradient(90deg,rgba(20,22,30,.22),rgba(20,22,30,.08));
@@ -1511,7 +1528,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .perf-item .perf-type,
 .perf-item .perf-badge,
 .perf-item .perf-venue-link{
-  text-shadow:0 1px 5px rgba(0,0,0,.78),0 0 14px rgba(8,10,14,.95);
+  text-shadow:0 1px 3px rgba(0,0,0,.62),0 0 9px rgba(8,10,14,.82);
 }
 }
 
@@ -1569,6 +1586,107 @@ textarea.adm-input{resize:vertical;min-height:80px}
   }
 }
 
+@media(max-width:600px){
+  /* Keep card copy lighter and easier to scan on phones. */
+  .perf-item{
+    gap:15px;
+    padding:18px 0;
+    align-items:center;
+  }
+  /* One real right column (.perf-item-stack); CTA lives inside the stack — no display:contents grid splicing */
+  .perf-item .perf-item-stack{
+    grid-column:2;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-height:110px;
+  }
+  .perf-item .perf-info-detail{
+    font-size:.72rem;
+    line-height:1.54;
+    color:rgba(154,144,128,.92);
+  }
+  /* Card subtitle: tighter clamp when "More info" offers the full text; roomier when it does not (mobile only). */
+  .perf-item--more .perf-info-detail{
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .perf-item--nomore .perf-info-detail{
+    display:-webkit-box;
+    -webkit-line-clamp:5;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .perf-item .perf-info-title{
+    font-size:1.08rem;
+    line-height:1.3;
+    margin-bottom:6px;
+  }
+  .perf-item .perf-type,
+  .perf-item .perf-badge{
+    margin-bottom:7px;
+  }
+  .perf-venue-link{
+    color:rgba(240,237,230,.96);
+  }
+  .perf-venue-emoji{
+    display:none;
+  }
+  .perf-maps-hint{
+    color:rgba(212,168,67,.82);
+  }
+  .perf-venue-link{
+    margin-top:12px;
+    gap:7px;
+    font-size:.54rem;
+    line-height:1.5;
+    letter-spacing:.14em;
+    padding-bottom:0;
+    border-bottom:none;
+  }
+  .perf-date-box{
+    padding:.42rem .48rem;
+    width:104px;
+    min-width:104px;
+  }
+  .perf-day{
+    font-size:1.56rem;
+  }
+  .perf-month{
+    margin-top:5px;
+    letter-spacing:.17em;
+  }
+  .perf-year{
+    margin-top:4px;
+    font-size:.56rem;
+    letter-spacing:.12em;
+  }
+  .perf-time{
+    margin-top:6px;
+    padding-top:6px;
+    font-size:.7rem;
+    color:rgba(240,237,230,.9);
+  }
+  .perf-maps-hint{
+    display:none;
+  }
+  .perf-item .perf-more-btn{
+    align-self:flex-start;
+    margin:8px 0 0;
+    padding:8px 14px;
+    font-size:.5rem;
+    letter-spacing:.17em;
+    color:var(--gold);
+    border-color:rgba(212,168,67,.5);
+    background:rgba(212,168,67,.08);
+    width:fit-content;
+    max-width:100%;
+  }
+}
+
 @media(max-width:520px){
   .back-to-top{
     left:auto;
@@ -1580,20 +1698,193 @@ textarea.adm-input{resize:vertical;min-height:80px}
 }
 
 @media(max-width:480px){
+  .perf-item .perf-item-stack{
+    min-height:106px;
+  }
   .perf-item,
   .perf-item--archive{
-    grid-template-columns:minmax(0,1fr);
-    gap:10px;
-    padding:16px 0;
+    grid-template-columns:104px minmax(0,1fr);
+    gap:12px;
+    padding:15px 0;
   }
   .perf-item:hover{padding-left:0}
   .perf-date-box{
-    justify-self:start;
-    width:fit-content;
-    min-width:0;
-    padding:.5rem .58rem;
+    justify-self:center;
+    align-self:center;
+    width:104px;
+    min-width:104px;
+    padding:.46rem .54rem;
+  }
+  .perf-item .perf-info-title{
+    font-size:1.02rem;
+    line-height:1.28;
+    margin-bottom:5px;
+  }
+  .perf-item--more .perf-info-detail{
+    -webkit-line-clamp:3;
+    line-height:1.54;
+  }
+  .perf-item--nomore .perf-info-detail{
+    -webkit-line-clamp:5;
+    line-height:1.54;
+  }
+  .perf-item .perf-type,
+  .perf-item .perf-badge{
+    margin-bottom:6px;
+  }
+  .perf-venue-link{
+    margin-top:11px;
+    font-size:.55rem;
+    line-height:1.52;
+  }
+  .perf-venue-emoji{display:none}
+  .perf-maps-hint{display:none}
+  .perf-item .perf-more-btn{
+    margin-top:8px;
   }
   .perf-venue-bg{width:100%;opacity:.24}
+}
+
+/* Desktop/tablet (#performances): uniform date footprint, tighter card rhythm, CTA locked to text column */
+@media(min-width:601px){
+  .perf-venue-emoji,
+  .perf-maps-hint{
+    display:none;
+  }
+  /*
+    Public calendar — structure-driven layout (mp-calendar emits .perf-item-stack as one block column):
+    Card = flex row + align-items:center (date + stack share one vertical centerline).
+    Stack = normal block flow (type, title, detail, venue, optional print, optional CTA) — no nested grid.
+  */
+  #performances .perf-item:has(.perf-item-stack){
+    display:flex;
+    flex-direction:row;
+    flex-wrap:nowrap;
+    align-items:center;
+    justify-content:flex-start;
+    gap:22px;
+    padding:18px 0;
+  }
+  #performances .perf-item:has(.perf-item-stack) .perf-date-box{
+    flex:0 0 118px;
+    align-self:center;
+    width:118px;
+    max-width:118px;
+    min-width:118px;
+    box-sizing:border-box;
+    min-height:128px;
+    padding:.58rem .5rem;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+  #performances .perf-item:has(.perf-item-stack) .perf-item-stack{
+    flex:1 1 auto;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  #performances .perf-item:has(.perf-item-stack) .perf-more-btn{
+    -webkit-appearance:none;
+    appearance:none;
+    display:block;
+    width:max-content;
+    max-width:100%;
+    margin:10px 0 0;
+    padding:8px 14px;
+    font:inherit;
+    font-size:.5rem;
+    letter-spacing:.17em;
+    font-family:var(--ff-caps);
+    line-height:normal;
+    color:var(--gold);
+    border:1px solid rgba(212,168,67,.5);
+    background:rgba(212,168,67,.08);
+    box-sizing:border-box;
+    text-align:left;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:all .25s;
+  }
+  /* Admin preview (no wrapper): prior two-row grid + CTA row */
+  #performances .perf-item:not(:has(.perf-item-stack)){
+    grid-template-columns:118px minmax(0,1fr);
+    column-gap:22px;
+    row-gap:8px;
+    padding:18px 0;
+    align-items:stretch;
+  }
+  #performances .perf-item:not(:has(.perf-item-stack)) .perf-date-box{
+    grid-column:1;
+    grid-row:1 / span 2;
+    align-self:center;
+    justify-self:stretch;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    min-height:128px;
+    padding:.58rem .5rem;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+  #performances .perf-item:not(:has(.perf-item-stack)) .perf-date-box + div{
+    grid-column:2;
+    grid-row:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-self:center;
+    min-height:0;
+    width:100%;
+    min-width:0;
+  }
+  #performances .perf-item:not(:has(.perf-item-stack)) .perf-more-btn{
+    grid-column:2;
+    grid-row:2;
+    justify-self:start;
+    align-self:start;
+    margin-left:0;
+    margin-top:12px;
+    padding:8px 14px;
+    font-size:.5rem;
+    letter-spacing:.17em;
+    color:var(--gold);
+    border-color:rgba(212,168,67,.5);
+    background:rgba(212,168,67,.08);
+    width:fit-content;
+  }
+  #performances .perf-day{
+    min-height:2.5rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+  }
+  #performances .perf-item--archive{
+    grid-template-columns:118px minmax(0,1fr);
+    column-gap:22px;
+    padding:18px 0;
+  }
+  #performances .perf-item--archive:not(:has(.perf-item-stack)){
+    row-gap:8px;
+  }
+  #performances .perf-item--archive .perf-date-box{
+    padding:.58rem .5rem;
+    min-height:128px;
+  }
+  #performances .perf-item--archive .perf-day{
+    font-size:clamp(1.32rem,1.9vw,1.82rem);
+  }
+}
+
+/* Same nav/section band as max-width:1000px — extra CTA top margin so stack rhythm matches wide desktop */
+@media(min-width:601px) and (max-width:1000px){
+  #performances .perf-item:has(.perf-item-stack) .perf-more-btn{
+    margin-top:16px;
+  }
 }
 
 #backstageGrid{background:transparent;border:none}

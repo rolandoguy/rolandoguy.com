@@ -330,6 +330,22 @@
     }
   ],
   "perfLocales": {
+    "en": {
+      "h2": "Engagements &amp; <em>Concerts</em>",
+      "intro": "Rolando Guy appears in recitals, gala concerts, concerts, and selected stage projects in Germany and across Europe.",
+      "eventTypes": {
+        "opera": "Opera",
+        "concert": "Concert",
+        "recital": "Recital",
+        "show": "Private Event",
+        "gala": "Gala",
+        "collaboration": "Collaboration",
+        "houseconcert": "House Concert",
+        "tango": "Tango Night",
+        "other": "Event",
+        "operetta": "Operetta"
+      }
+    },
     "de": {
       "h2": "Engagements &amp; <em>Konzerte</em>",
       "intro": "Rolando Guy tritt in Liederabenden, Galakonzerten, Konzerten und ausgewählten Bühnenprojekten in Deutschland und in ganz Europa auf.",

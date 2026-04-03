@@ -183,7 +183,8 @@
         collaboration: 'Collaboration',
         houseconcert: 'House Concert',
         tango: 'Tango Night',
-        other: 'Event'
+        other: 'Event',
+        operetta: 'Operetta'
       }
     };
     var out = {};
@@ -196,8 +197,8 @@
     }
     var hadLocH2 = false;
     var hadLocIntro = false;
+    /* Apply perfLocales for every UI language (including en). Primary MP_CAL.perf can be authoring-locale-specific; labels must follow currentLang. */
     if (
-      lang !== 'en' &&
       MP_CAL &&
       MP_CAL.perfLocales &&
       typeof MP_CAL.perfLocales[lang] === 'object' &&
@@ -220,6 +221,30 @@
         for (var ek in pl.eventTypes) {
           if (Object.prototype.hasOwnProperty.call(pl.eventTypes, ek)) {
             out.eventTypes[ek] = pl.eventTypes[ek];
+          }
+        }
+      }
+    }
+    /* Live sync / bad export: primary perf.eventTypes may match German pack while UI is EN — restore English type labels. */
+    if (lang === 'en') {
+      var hasEnPack = !!(MP_CAL && MP_CAL.perfLocales && MP_CAL.perfLocales.en);
+      var deTypes = MP_CAL && MP_CAL.perfLocales && MP_CAL.perfLocales.de && MP_CAL.perfLocales.de.eventTypes;
+      var curTypes = out.eventTypes;
+      if (!hasEnPack && deTypes && curTypes && typeof curTypes === 'object') {
+        var pCon = String(curTypes.concert != null ? curTypes.concert : '').trim();
+        var dCon = String(deTypes.concert != null ? deTypes.concert : '').trim();
+        if (pCon && dCon && pCon === dCon) {
+          out.eventTypes = Object.assign({}, enFallback.eventTypes);
+          var baseEt = base.eventTypes;
+          if (baseEt && typeof baseEt === 'object') {
+            for (var xk in baseEt) {
+              if (
+                Object.prototype.hasOwnProperty.call(baseEt, xk) &&
+                !Object.prototype.hasOwnProperty.call(enFallback.eventTypes, xk)
+              ) {
+                out.eventTypes[xk] = baseEt[xk];
+              }
+            }
           }
         }
       }
@@ -472,9 +497,18 @@
       var month = d
         ? d.toLocaleString(localeTagForMpLang(currentLang), { month: 'short' }).toUpperCase()
         : '';
+      var year = d ? String(d.getFullYear()) : '';
       var showTime = isGoodPastTimeLabel(p.time);
       var when = day || month
-        ? '<div class="perf-date-box"><div class="perf-day">' + escHtml(day) + '</div><div class="perf-month">' + escHtml(month) + '</div>' + (showTime ? '<div class="perf-time">' + escHtml(p.time) + '</div>' : '') + '</div>'
+        ? '<div class="perf-date-box"><div class="perf-day">' +
+          escHtml(day) +
+          '</div><div class="perf-month">' +
+          escHtml(month) +
+          '</div><div class="perf-year">' +
+          (year ? escHtml(year) : '\u00a0') +
+          '</div>' +
+          (showTime ? '<div class="perf-time">' + escHtml(p.time) + '</div>' : '') +
+          '</div>'
         : '';
       var venueCity = (p.place || p.city)
         ? '<a href="https://maps.google.com/?q=' + encodeURIComponent((p.address || p.place || '') + (p.city ? ' ' + p.city : '')) + '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">📍 </span>' + escHtml(p.place || '') + (p.city ? ' · ' + escHtml(p.city) : '') + ' <span class="perf-maps-hint">→ ' + escHtml(mapsWord) + '</span></a>'
@@ -486,7 +520,13 @@
       if (p.image) {
         html += '<div class="perf-venue-bg" style="opacity:.45;background-image:url(&quot;' + escHtml(p.image) + '&quot;)"></div>';
       }
-      html += when + '<div><div class="perf-badge perf-badge-past">' + (t['perf.pastStamp'] || 'Past') + '</div><div class="perf-info-title">' + escHtml(p.title) + '</div>';
+      html +=
+        when +
+        '<div class="perf-item-stack"><div class="perf-badge perf-badge-past">' +
+        (t['perf.pastStamp'] || 'Past') +
+        '</div><div class="perf-info-title">' +
+        escHtml(p.title) +
+        '</div>';
       if (p.description) html += '<div class="perf-info-detail past-desc">' + escHtml(p.description) + '</div>';
       html += venueCity;
       if (link) html += '<div class="perf-info-detail">' + link + '</div>';
@@ -547,6 +587,15 @@
       if (mn[eng]) result = result.replace(new RegExp(eng, 'g'), mn[eng]);
     });
     return result;
+  }
+
+  /** Split "May 2026" / "Mai 2026" into separate card lines after translateMonth (data stays one string). */
+  function splitMonthLineAndYear(translatedMonthStr) {
+    var s = String(translatedMonthStr || '').trim();
+    if (!s) return { month: '', year: '' };
+    var m = s.match(/^(.+?)\s+(\d{4})\s*$/);
+    if (m) return { month: m[1].trim(), year: m[2] };
+    return { month: s, year: '' };
   }
 
   function perfLocaleField(p, base, lang) {
@@ -802,7 +851,7 @@
           '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">\ud83d\udccd </span>' +
           venueShort +
           (p.city ? ((venueShort ? ' · ' : '') + p.city) : '') +
-          ' <span class="perf-maps-hint">\u2192 ' +
+          ' <span class="perf-maps-hint">' +
           mapsWord +
           '</span></a>'
         : '';
@@ -839,6 +888,16 @@
           }
         });
       }
+      var printExt = perfLocaleField(p, 'extDesc', currentLang);
+      var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
+      var hasExtra =
+        !!printExt ||
+        (p.ticketPrice && p.ticketPrice.trim()) ||
+        (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
+        (p.flyerImg && p.flyerImg.trim()) ||
+        (p.modalImg && p.modalImg.trim());
+      var allowModalButton = p.modalEnabled === false ? false : hasExtra;
+      var moreRouteClass = allowModalButton ? ' perf-item--more' : ' perf-item--nomore';
       var pastClass = isEffectivePast ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
@@ -851,6 +910,7 @@
         pastClass +
         archiveClass +
         photoClass +
+        moreRouteClass +
         '" id="' +
         itemId +
         '">';
@@ -868,26 +928,27 @@
             .replace(/</g, '&lt;') +
           '&quot;)"></div>';
       }
+      var monthYearParts = splitMonthLineAndYear(translateMonth(p.month));
       h +=
         '<div class="perf-date-box"><div class="perf-day">' +
-        p.day +
+        escHtml(String(p.day != null ? p.day : '')) +
         '</div><div class="perf-month">' +
-        translateMonth(p.month) +
+        escHtml(monthYearParts.month) +
+        '</div><div class="perf-year">' +
+        (monthYearParts.year ? escHtml(monthYearParts.year) : '\u00a0') +
         '</div>' +
         timeHtml +
         '</div>';
       var listTitle = resolveEventTitle(p, currentLang);
+      h += '<div class="perf-item-stack">';
       h +=
-        '<div>' +
         badge +
         '<div class="perf-info-title">' +
         listTitle +
         '</div>' +
         (detail ? ('<div class="perf-info-detail">' + detail + '</div>') : '') +
-        venueCity +
-        '</div>';
+        venueCity;
       var repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
-      var printExt = perfLocaleField(p, 'extDesc', currentLang);
       if (printExt)
         h +=
           '<div class="perf-print-repertoire print-only"><strong>' +
@@ -899,22 +960,15 @@
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>') +
           '</div>';
-      var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
-      var hasExtra =
-        !!printExt ||
-        (p.ticketPrice && p.ticketPrice.trim()) ||
-        (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
-        (p.flyerImg && p.flyerImg.trim()) ||
-        (p.modalImg && p.modalImg.trim());
-      var allowModalButton = (p.modalEnabled === false) ? false : hasExtra;
+      var moreInfoLabel = tPerf['perf.moreInfo'] || 'More Info';
       if (allowModalButton)
         h +=
           '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal(' +
           p.id +
           ')">' +
-          (tPerf['perf.moreInfo'] || 'More Info') +
-          ' \u2192</button>';
-      h += '</div>';
+          moreInfoLabel +
+          '</button>';
+      h += '</div></div>';
       return h;
     }
     var upcomingByYear = {};

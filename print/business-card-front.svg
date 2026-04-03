@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="85mm" height="55mm" viewBox="0 0 85 55" aria-label="Rolando Guy business card front">
+  <title>Rolando Guy  front</title>
+  <defs>
+    <style type="text/css"><![CDATA[
+      @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lato:wght@300;400&display=swap");
+      .name { font-family: "Cormorant Garamond", Georgia, serif; font-size: 9.2mm; font-weight: 400; fill: #F0EDE6; letter-spacing: 0.02em; }
+      .role { font-family: Lato, "Helvetica Neue", Arial, sans-serif; font-size: 2.1mm; font-weight: 300; fill: #9A9080; letter-spacing: 0.28em; text-transform: uppercase; }
+      .cities { font-family: Lato, "Helvetica Neue", Arial, sans-serif; font-size: 2.45mm; font-weight: 300; fill: #9A9080; letter-spacing: 0.12em; }
+    ]]></style>
+  </defs>
+  <rect width="85" height="55" fill="#0D0D12"/>
+  <!-- Safe area ~5 mm: content from x=6, y=5 -->
+  <text x="6" y="20" class="name">Rolando Guy</text>
+  <text x="6" y="28.5" class="role">Lyric Tenor</text>
+  <line x1="6" y1="32.5" x2="28" y2="32.5" stroke="#D4A843" stroke-opacity="0.45" stroke-width="0.12"/>
+  <text x="6" y="48" class="cities">Buenos Aires � Berlin</text>
+</svg>

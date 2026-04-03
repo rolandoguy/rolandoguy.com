@@ -128,6 +128,7 @@ writeText('press.html', pressHtml);
 // contact.html
 var contactHtml = readText('contact.html');
 var c = contactData.contact || {};
+// contact.html keeps empty #contactTitle / #contactSub in source to avoid a pre-JS English flash; prerender fills EN for crawlers/no-JS.
 contactHtml = replaceById(contactHtml, 'contactTitle', ensureOneLine(c.title || 'Bookings &amp; <em>Artistic Enquiries</em>'));
 contactHtml = replaceById(contactHtml, 'contactSub', escapeHtml(ensureOneLine(c.sub || 'For bookings and artistic enquiries, please get in touch directly.')));
 contactHtml = replaceById(

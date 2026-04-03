@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rolando Guy — Business card (print)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  /*
+   * European business card: 85 × 55 mm, horizontal.
+   * Safe area: ~5 mm inset (keep text inside; add 3 mm bleed in professional PDF export if required).
+   * Print: each .sheet is one physical card. Page 1 = front, 2 = back + QR, 3 = back without QR.
+   */
+  @page {
+    size: 85mm 55mm;
+    margin: 0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #1a1a1f;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .sheet {
+    width: 85mm;
+    height: 55mm;
+    margin: 12mm auto;
+    padding: 5mm 6mm;
+    background: #0d0d12;
+    color: #f0ede6;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  .sheet:last-of-type { page-break-after: auto; }
+
+  @media print {
+    body { background: #fff; }
+    .sheet {
+      margin: 0;
+      box-shadow: none;
+      page-break-after: always;
+    }
+    .sheet:last-of-type { page-break-after: auto; }
+    .no-print { display: none !important; }
+  }
+
+  /* —— Front —— */
+  .front {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .front__name {
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: 26pt;
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    color: #f0ede6;
+    margin: 0;
+    padding-top: 1mm;
+  }
+
+  .front__role {
+    font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 300;
+    font-size: 7pt;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #9a9080;
+    margin: 5mm 0 0;
+  }
+
+  .front__line {
+    width: 22mm;
+    height: 0;
+    border: none;
+    border-top: 1px solid rgba(212, 168, 67, 0.45);
+    margin: 5.5mm 0 0;
+  }
+
+  .front__cities {
+    font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 300;
+    font-size: 8.5pt;
+    letter-spacing: 0.12em;
+    color: #9a9080;
+    margin: 0;
+    padding-bottom: 0.5mm;
+  }
+
+  /* —— Back (shared) —— */
+  .back {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 1fr auto;
+    gap: 3mm 5mm;
+    height: 100%;
+    align-items: start;
+  }
+
+  .back--no-qr {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .back__main {
+    display: flex;
+    flex-direction: column;
+    gap: 2.8mm;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .back--no-qr .back__main {
+    gap: 3.2mm;
+  }
+
+  .back__site {
+    font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    font-size: 11pt;
+    letter-spacing: 0.06em;
+    color: #f0ede6;
+    text-decoration: none;
+    border: none;
+  }
+
+  .back__row {
+    font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 300;
+    font-size: 7.5pt;
+    letter-spacing: 0.06em;
+    color: #9a9080;
+    line-height: 1.35;
+  }
+
+  .back__row a {
+    color: #c9c2b8;
+    text-decoration: none;
+  }
+
+  .back__row strong {
+    font-weight: 400;
+    color: #b8b0a4;
+    margin-right: 0.35em;
+  }
+
+  .back__qr {
+    grid-row: 1 / -1;
+    align-self: center;
+    width: 20mm;
+    height: 20mm;
+    flex-shrink: 0;
+  }
+
+  .back__qr img {
+    width: 20mm;
+    height: 20mm;
+    display: block;
+    object-fit: contain;
+  }
+
+  .back__tagline {
+    grid-column: 1 / -1;
+    font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 300;
+    font-size: 6pt;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(212, 168, 67, 0.55);
+    text-align: center;
+    margin: 0;
+    padding-top: 1mm;
+    border-top: 1px solid rgba(212, 168, 67, 0.12);
+  }
+
+  .back--no-qr .back__tagline {
+    margin-top: auto;
+    padding-top: 3mm;
+  }
+
+  .hint {
+    max-width: 200mm;
+    margin: 8mm auto 16mm;
+    padding: 0 16px;
+    font-family: Lato, sans-serif;
+    font-size: 13px;
+    color: #9a9080;
+    line-height: 1.6;
+  }
+  .hint code { color: #d4a843; }
+</style>
+</head>
+<body>
+
+<p class="hint no-print">
+  <strong>Print</strong> — Use “Save as PDF” or your printer at <strong>100% scale</strong> (no fit-to-page).<br>
+  Page 1: front · Page 2: back with QR · Page 3: back without QR. Card size: <code>85 × 55 mm</code>.<br>
+  For production, add 3 mm bleed and export CMYK from your print shop’s template if required.
+</p>
+
+<!-- —— FRONT —— -->
+<section class="sheet front" aria-label="Business card front">
+  <header>
+    <h1 class="front__name">Rolando Guy</h1>
+    <p class="front__role">Lyric Tenor</p>
+    <hr class="front__line" aria-hidden="true">
+  </header>
+  <p class="front__cities">Buenos Aires · Berlin</p>
+</section>
+
+<!-- —— BACK (with QR) —— -->
+<section class="sheet back" aria-label="Business card back with QR">
+  <div class="back__main">
+    <a class="back__site" href="https://rolandoguy.com/">rolandoguy.com</a>
+    <p class="back__row"><a href="mailto:rolandoguy@gmail.com">rolandoguy@gmail.com</a></p>
+    <p class="back__row"><strong>Instagram</strong> @rolando.guy.tenor</p>
+    <p class="back__row"><strong>YouTube</strong> @rolandoguytenor</p>
+  </div>
+  <div class="back__qr">
+    <!-- Raster QR embeds when printing to PDF from a live page; replace src with a local PNG for offline -->
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&amp;margin=2&amp;data=https://rolandoguy.com" width="240" height="240" alt="QR code: rolandoguy.com">
+  </div>
+  <p class="back__tagline">Opera · Recital · Concert · Tango</p>
+</section>
+
+<!-- —— BACK (no QR) —— -->
+<section class="sheet back back--no-qr" aria-label="Business card back without QR">
+  <div class="back__main">
+    <a class="back__site" href="https://rolandoguy.com/">rolandoguy.com</a>
+    <p class="back__row"><a href="mailto:rolandoguy@gmail.com">rolandoguy@gmail.com</a></p>
+    <p class="back__row"><strong>Instagram</strong> @rolando.guy.tenor</p>
+    <p class="back__row"><strong>YouTube</strong> @rolandoguytenor</p>
+  </div>
+  <p class="back__tagline">Opera · Recital · Concert · Tango</p>
+</section>
+
+</body>
+</html>

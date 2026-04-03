@@ -1,6 +1,7 @@
 'use strict';
 /**
  * Writes v1-assets/data/hero-config.json for mp/ (mp-hero.js background + crop + alt baseline).
+ * Public runtime fetch URL (site root): /v1-assets/data/hero-config.json — same path as this file in the deployed tree.
  *
  * Sources (admin export JSON):
  *   - data.hero_en — required when an export path is passed: object with optional bgImage

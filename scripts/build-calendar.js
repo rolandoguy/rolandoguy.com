@@ -131,7 +131,7 @@ if (!validatePerf(perf)) {
   process.exit(1);
 }
 
-var perfLocales = {};
+var perfLocales = { en: deepClone(perf) };
 ['de', 'es', 'it', 'fr'].forEach(function (lang) {
   var key = 'perf_' + lang;
   var st = data[key];
@@ -144,7 +144,7 @@ var output = {
   perf: perf,
   perfs: perfs
 };
-if (Object.keys(perfLocales).length) output.perfLocales = perfLocales;
+output.perfLocales = perfLocales;
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile, '(' + perfs.length + ' events)');

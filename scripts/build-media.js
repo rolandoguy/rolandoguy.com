@@ -4,6 +4,7 @@
  *
  * Sources (admin export JSON):
  *   - data.rg_vid — required: { h2?, videos: Video[] }; videos non-empty after normalize
+ *   - data.rg_vid_en — optional legacy alias: used only if rg_vid is missing/invalid (same shape as rg_vid)
  *   - data.rg_photos — required: { s, t, b } URL arrays (paths normalized for mp/pages)
  *   - data.rg_photo_captions — optional; lightbox keys s_0, t_1, … → { caption, photographer }
  *   - data.rg_ui_en — optional; string keys photos.h2, photos.sub, photos.studio, photos.stage,
@@ -121,9 +122,14 @@ function normalizeCaptions(raw) {
   for (var k in raw) {
     if (!Object.prototype.hasOwnProperty.call(raw, k)) continue;
     var v = raw[k];
+    if (typeof v === 'string') {
+      out[k] = { caption: String(v), alt: '', photographer: '' };
+      continue;
+    }
     if (!v || typeof v !== 'object') continue;
     out[k] = {
       caption: v.caption != null ? String(v.caption) : '',
+      alt: v.alt != null ? String(v.alt) : '',
       photographer: v.photographer != null ? String(v.photographer) : ''
     };
   }
@@ -171,7 +177,10 @@ if (!data || typeof data !== 'object') {
 
 var rawVid = data.rg_vid;
 if (!rawVid || typeof rawVid !== 'object' || Array.isArray(rawVid)) {
-  console.error('build-media: data.rg_vid missing or invalid');
+  rawVid = data.rg_vid_en;
+}
+if (!rawVid || typeof rawVid !== 'object' || Array.isArray(rawVid)) {
+  console.error('build-media: data.rg_vid (or legacy data.rg_vid_en) missing or invalid');
   process.exit(1);
 }
 
