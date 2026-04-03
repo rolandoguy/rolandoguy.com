@@ -585,6 +585,35 @@
     var d = new Date(str);
     return isNaN(d.getTime()) ? new Date('2099-01-01') : d;
   }
+  function toAbsolutePublicUrl(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^https?:\/\//i.test(s)) return s;
+    try {
+      return new URL(s, window.location.origin).toString();
+    } catch (e) {
+      return '';
+    }
+  }
+  function parseOfferPrice(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return null;
+    var out = { isFree: false, price: null, priceCurrency: null };
+    var low = s.toLowerCase();
+    if (/(^|\b)(free|gratis|libre|gratuito|gratuita|kostenlos|gratuit)\b/.test(low)) {
+      out.isFree = true;
+      return out;
+    }
+    var m = s.replace(',', '.').match(/(\d+(?:\.\d{1,2})?)/);
+    if (!m) return out;
+    var n = Number(m[1]);
+    if (!Number.isFinite(n)) return out;
+    out.price = n.toFixed(2);
+    if (/€|eur/i.test(s)) out.priceCurrency = 'EUR';
+    else if (/\$|usd/i.test(s)) out.priceCurrency = 'USD';
+    else if (/£|gbp/i.test(s)) out.priceCurrency = 'GBP';
+    return out;
+  }
   function updateUpcomingEventSchema(upcomingList) {
     var prev = document.getElementById('calendar-events-jsonld');
     if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
@@ -602,14 +631,30 @@
         var hh = hhmm[0].padStart(2, '0');
         startDate = dateRaw + 'T' + hh + ':' + hhmm[1] + ':00';
       }
+      var eventAnchor = String(p.id || '').trim() ? ('#event-' + safeDomToken(p.id, '')) : '';
+      var eventUrl = 'https://rolandoguy.com/calendar' + eventAnchor;
       var ev = {
         '@type': 'MusicEvent',
         name: title,
         startDate: startDate,
         eventStatus: 'https://schema.org/EventScheduled',
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        url: 'https://rolandoguy.com/calendar'
+        url: eventUrl,
+        mainEntityOfPage: eventUrl,
+        performer: {
+          '@type': 'Person',
+          name: 'Rolando Guy',
+          url: 'https://rolandoguy.com/'
+        },
+        organizer: {
+          '@type': 'Organization',
+          name: 'Rolando Guy',
+          url: 'https://rolandoguy.com/'
+        }
       };
+      if (String(p.id || '').trim()) ev.identifier = String(p.id).trim();
+      var detail = perfLocaleField(p, 'detail', currentLang);
+      if (detail) ev.description = detail;
       var venueName = String(p.venue || '').trim();
       var city = String(p.city || '').trim();
       if (venueName || city) {
@@ -624,18 +669,24 @@
           };
         }
       }
-      if (p.venuePhoto) {
-        ev.image = [String(p.venuePhoto).trim()];
-      } else {
-        ev.image = ['https://rolandoguy.com/og-image.jpg'];
-      }
+      var venueImgAbs = toAbsolutePublicUrl(p.venuePhoto);
+      ev.image = [venueImgAbs || 'https://rolandoguy.com/og-image.jpg'];
       var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
       if (ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
+        var offerParsed = parseOfferPrice(p.ticketPrice);
         ev.offers = {
           '@type': 'Offer',
           url: String(ticketUrl).trim(),
-          availability: 'https://schema.org/InStock'
+          availability: 'https://schema.org/InStock',
+          validFrom: new Date().toISOString()
         };
+        if (offerParsed && offerParsed.isFree) {
+          ev.isAccessibleForFree = true;
+        }
+        if (offerParsed && offerParsed.price != null && offerParsed.priceCurrency) {
+          ev.offers.price = offerParsed.price;
+          ev.offers.priceCurrency = offerParsed.priceCurrency;
+        }
       }
       items.push(ev);
     });
@@ -666,6 +717,13 @@
     if (v.indexOf(',') > -1) v = v.split(',')[0].trim();
     if (v.length > 64) v = v.slice(0, 61).trim() + '...';
     return v;
+  }
+  function safeDomToken(raw, fb) {
+    var s = String(raw == null ? '' : raw).trim();
+    if (!s) s = String(fb || '');
+    s = s.replace(/[^A-Za-z0-9\-_:.]/g, '-');
+    s = s.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+    return s || String(fb || 'item');
   }
 
   function renderPerfs() {
@@ -786,12 +844,15 @@
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
       var hasVenuePhoto = !!venuePhotoResolved;
       var photoClass = hasVenuePhoto ? ' perf-item-has-photo' : ' perf-item-no-photo';
+      var itemId = 'event-' + safeDomToken(p.id, i + 1);
       var h =
         '<div class="perf-item reveal' +
         (i > 0 ? ' rd' + ((i % 4) + 1) : '') +
         pastClass +
         archiveClass +
         photoClass +
+        '" id="' +
+        itemId +
         '">';
       if (isEffectivePast)
         h += '<div class="perf-past-stamp">' + (tPerf['perf.pastStamp'] || 'Past') + '</div>';
