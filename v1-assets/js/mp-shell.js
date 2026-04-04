@@ -519,7 +519,6 @@ function mpPrefersReducedMotion() {
   var ringEl = null;
   var rafId = 0;
   var enabled = false;
-  var touchPrismaTimer = 0;
   var targetX = -100;
   var targetY = -100;
   var lastMouseX = -100;
@@ -528,7 +527,7 @@ function mpPrefersReducedMotion() {
   var ringY = -100;
   var ringEasing = mpPrefersReducedMotion() ? 1 : 0.28;
   var interactiveSelector =
-    'a, button, .lang-btn, .lang-btn-es, .footer-ornament, [role="button"], .photo-item, .perf-item, .calendar-event, .mp-soc, .rep-table tbody tr, .mp-aura-press';
+    'a, button, .lang-btn, [role="button"], .photo-item, .perf-item, .calendar-event, .mp-soc, .rep-table tbody tr';
 
   function ensureCursor() {
     if (dotEl && ringEl) return;
@@ -546,46 +545,9 @@ function mpPrefersReducedMotion() {
     return !!(node && node.closest && node.closest(interactiveSelector));
   }
 
-  function syncAuraState(node, clientX) {
-    if (!ringEl) return;
-    ringEl.classList.remove('mp-cursor-aura-ar');
-    ringEl.classList.remove('mp-cursor-aura-it');
-    ringEl.classList.remove('mp-cursor-aura-prisma');
-    document.querySelectorAll('.footer-ornament.is-prisma').forEach(function (el) {
-      el.classList.remove('is-prisma');
-    });
-    if (!(node && node.closest)) return;
-    if (node.closest('.lang-btn-es') || node.closest('#mob-btn-es')) {
-      ringEl.classList.add('mp-cursor-aura-ar');
-      return;
-    }
-    if (node.closest('#btn-it') || node.closest('#mob-btn-it')) {
-      ringEl.classList.add('mp-cursor-aura-it');
-      return;
-    }
-    if (node.closest('.mp-aura-press')) {
-      ringEl.classList.add('mp-cursor-aura-press');
-      return;
-    }
-    var ornament = node.closest('.footer-ornament');
-    if (!ornament || typeof clientX !== 'number') return;
-    var rect = ornament.getBoundingClientRect();
-    if (!rect.width) return;
-    var localX = clientX - rect.left;
-    if (localX <= rect.width * 0.33) {
-      ringEl.classList.add('mp-cursor-aura-ar');
-    } else if (localX >= rect.width * 0.66) {
-      ringEl.classList.add('mp-cursor-aura-it');
-    } else {
-      ringEl.classList.add('mp-cursor-aura-prisma');
-      ornament.classList.add('is-prisma');
-    }
-  }
-
-  function syncActiveState(node, clientX) {
+  function syncActiveState(node) {
     body.classList.toggle('mp-cursor-active', isInteractiveTarget(node));
     if (ringEl) ringEl.classList.toggle('mp-cursor-ring-active', isInteractiveTarget(node));
-    syncAuraState(node, clientX);
   }
 
   function renderCursor() {
@@ -643,7 +605,7 @@ function mpPrefersReducedMotion() {
       targetY = e.clientY;
       lastMouseX = e.clientX;
       lastMouseY = e.clientY;
-      syncActiveState(e.target, e.clientX);
+      syncActiveState(e.target);
       dotEl.classList.add('is-visible');
       ringEl.classList.add('is-visible');
       queueRender();
@@ -655,7 +617,7 @@ function mpPrefersReducedMotion() {
     'mouseover',
     function (e) {
       if (!enabled || !dotEl || !ringEl) return;
-      syncActiveState(e.target, e.clientX);
+      syncActiveState(e.target);
     },
     { passive: true }
   );
@@ -666,8 +628,6 @@ function mpPrefersReducedMotion() {
     dotEl.classList.remove('is-visible');
     ringEl.classList.remove('is-visible');
     ringEl.classList.remove('mp-cursor-ring-active');
-    ringEl.classList.remove('mp-cursor-aura-ar');
-    ringEl.classList.remove('mp-cursor-aura-it');
     body.classList.remove('mp-cursor-active');
   });
 
@@ -676,25 +636,7 @@ function mpPrefersReducedMotion() {
     dotEl.classList.remove('is-visible');
     ringEl.classList.remove('is-visible');
     ringEl.classList.remove('mp-cursor-ring-active');
-    ringEl.classList.remove('mp-cursor-aura-ar');
-    ringEl.classList.remove('mp-cursor-aura-it');
     body.classList.remove('mp-cursor-active');
-  });
-
-  document.querySelectorAll('.footer-ornament').forEach(function (ornament) {
-    ornament.addEventListener(
-      'touchstart',
-      function () {
-        window.clearTimeout(touchPrismaTimer);
-        ornament.classList.add('is-prisma');
-        ornament.classList.add('is-prisma-touch');
-        touchPrismaTimer = window.setTimeout(function () {
-          ornament.classList.remove('is-prisma');
-          ornament.classList.remove('is-prisma-touch');
-        }, 1000);
-      },
-      { passive: true }
-    );
   });
 
   var handleModeChange = function () {
@@ -703,6 +645,26 @@ function mpPrefersReducedMotion() {
   };
   if (typeof mediaQuery.addEventListener === 'function') mediaQuery.addEventListener('change', handleModeChange);
   else if (typeof mediaQuery.addListener === 'function') mediaQuery.addListener(handleModeChange);
+
+  if ('IntersectionObserver' in window) {
+    var featherObserver = new IntersectionObserver(
+      function (entries, observer) {
+        if (mediaQuery.matches) return;
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
+          entry.target.classList.remove('is-breathe-mobile');
+          void entry.target.offsetWidth;
+          entry.target.classList.add('is-breathe-mobile');
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: [0.5] }
+    );
+
+    document.querySelectorAll('.footer-ornament, .footer-feather-sello').forEach(function (ornament) {
+      featherObserver.observe(ornament);
+    });
+  }
 })();
 
 (function () {
