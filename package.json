@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "node scripts/build-public-safe.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "check:public-smoke": "node scripts/check-public-smoke.js",
+    "test": "npm run check:public-smoke",
     "build:epk-bios": "node scripts/build-epk-bios.js",
     "build:mp-locales": "node scripts/build-mp-locales.js",
     "build:hero-config": "node scripts/build-hero-config.js",

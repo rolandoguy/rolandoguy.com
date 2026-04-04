@@ -1,5 +1,18 @@
 # Content Architecture & Deployment — rolandoguy.com
 
+## Important status note
+
+This document describes the **legacy single-file `index.html` architecture** and should **not** be treated as the canonical description of the current public site.
+
+The active public site in this workspace is the **multipage v1 system** built from:
+
+- shared runtime in `v1-assets/js/mp-shell.js`
+- page modules in `v1-assets/js/mp-*.js`
+- generated public data in `v1-assets/data/*.json`
+- guarded build orchestration in `scripts/build-public-safe.js`
+
+For the current public-site model, trust the live multipage code and the newer project docs first. Use this file only as historical/legacy context unless it is explicitly reconciled with the multipage stack.
+
 Technical audit of content persistence: where content lives, what deploy does, and what is at risk.
 
 ---

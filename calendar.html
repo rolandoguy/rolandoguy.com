@@ -29,7 +29,7 @@
 <div class="lang-bar">
   <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })">&#127468;&#127463; EN</button>
   <button type="button" class="lang-btn" onclick="setLang('de', { persist: true })">&#127465;&#127466; DE</button>
-  <button type="button" class="lang-btn" onclick="setLang('es', { persist: true })">&#127466;&#127480; ES</button>
+  <button type="button" class="lang-btn lang-btn-es" onclick="setLang('es', { persist: true })">&#127462;&#127479; ES</button>
   <button type="button" class="lang-btn" onclick="setLang('it', { persist: true })">&#127470;&#127481; IT</button>
   <button type="button" class="lang-btn" onclick="setLang('fr', { persist: true })">&#127467;&#127479; FR</button>
 </div>
@@ -56,11 +56,11 @@
   <a href="press.html" onclick="closeMenu()" data-i18n="nav.epk">Press & materials</a>
   <a href="contact.html" onclick="closeMenu()" data-i18n="nav.book">Book now</a>
   <div class="lang-row">
-    <button type="button" onclick="setLang('en', { persist: true });closeMenu()" id="mob-btn-en" class="active">EN</button>
-    <button type="button" onclick="setLang('de', { persist: true });closeMenu()" id="mob-btn-de">DE</button>
-    <button type="button" onclick="setLang('es', { persist: true });closeMenu()" id="mob-btn-es">ES</button>
-    <button type="button" onclick="setLang('it', { persist: true });closeMenu()" id="mob-btn-it">IT</button>
-    <button type="button" onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr">FR</button>
+    <button type="button" onclick="setLang('en', { persist: true });closeMenu()" id="mob-btn-en" class="active"><span class="lang-flag" aria-hidden="true">&#127468;&#127463;</span><span class="lang-label">EN</span></button>
+    <button type="button" onclick="setLang('de', { persist: true });closeMenu()" id="mob-btn-de"><span class="lang-flag" aria-hidden="true">&#127465;&#127466;</span><span class="lang-label">DE</span></button>
+    <button type="button" onclick="setLang('es', { persist: true });closeMenu()" id="mob-btn-es"><span class="lang-flag" aria-hidden="true">&#127462;&#127479;</span><span class="lang-label">ES</span></button>
+    <button type="button" onclick="setLang('it', { persist: true });closeMenu()" id="mob-btn-it"><span class="lang-flag" aria-hidden="true">&#127470;&#127481;</span><span class="lang-label">IT</span></button>
+    <button type="button" onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr"><span class="lang-flag" aria-hidden="true">&#127467;&#127479;</span><span class="lang-label">FR</span></button>
   </div>
 </div>
 <button type="button" class="back-to-top" id="backToTop" data-i18n-aria="ui.backToTop" aria-label="Back to top">
@@ -126,9 +126,9 @@
   </div>
 </footer>
 
-<div id="eventModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);overflow-y:auto;cursor:default" onclick="if(event.target===this)closeEventModal()">
+<div id="eventModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="emTitle" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);overflow-y:auto;cursor:default" onclick="if(event.target===this)closeEventModal()">
   <div style="max-width:640px;margin:60px auto;padding:40px 32px;position:relative">
-    <button type="button" onclick="closeEventModal()" data-i18n-aria="ui.close" aria-label="Close" style="position:absolute;top:0;right:0;background:none;border:none;color:var(--text-faint);font-size:1.6rem;cursor:pointer;padding:12px;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'">&times;</button>
+    <button id="eventModalClose" type="button" onclick="closeEventModal()" data-i18n-aria="ui.close" aria-label="Close" style="position:absolute;top:0;right:0;background:none;border:none;color:var(--text-faint);font-size:1.6rem;cursor:pointer;padding:12px;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-faint)'">&times;</button>
     <div id="emVenueImg" style="width:100%;height:200px;background-size:cover;background-position:center;border:1px solid var(--border);margin-bottom:28px;display:none;border-radius:2px"></div>
     <div id="emType" style="font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:12px"></div>
     <h3 id="emTitle" style="font-family:var(--ff-title);font-size:clamp(1.6rem,4vw,2.2rem);font-weight:300;font-style:italic;color:var(--text);margin-bottom:8px"></h3>

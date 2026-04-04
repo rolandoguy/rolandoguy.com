@@ -897,6 +897,99 @@
     if (!s) return true;
     return /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(s);
   }
+  var PUBLIC_SEO_PAGES = [
+    { id: 'index', label: 'Home' },
+    { id: 'biography', label: 'Biography' },
+    { id: 'repertoire', label: 'Repertoire' },
+    { id: 'calendar', label: 'Calendar' },
+    { id: 'media', label: 'Media' },
+    { id: 'press', label: 'Press' },
+    { id: 'contact', label: 'Contact' },
+    { id: 'reviews', label: 'Reviews' }
+  ];
+  function seoKey(pageId, field) {
+    return 'page.' + safeString(pageId).trim() + '.' + safeString(field).trim();
+  }
+  function shortLabelList(list, maxItems) {
+    var arr = Array.isArray(list) ? list.filter(Boolean) : [];
+    var max = typeof maxItems === 'number' ? maxItems : 4;
+    if (arr.length <= max) return arr.join(', ');
+    return arr.slice(0, max).join(', ') + ', +' + (arr.length - max) + ' more';
+  }
+  function collectPublicOutputIssues(lang, snapshot) {
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var issues = [];
+    var ui = getSiteHealthDoc(snapshot, 'rg_ui_' + L, {});
+    var uiEn = getSiteHealthDoc(snapshot, 'rg_ui_en', {});
+    var missingLocalized = [];
+    var sameAsEn = [];
+    var weakTitles = [];
+    var weakDescriptions = [];
+    PUBLIC_SEO_PAGES.forEach(function (page) {
+      var titleKey = seoKey(page.id, 'title');
+      var descKey = seoKey(page.id, 'metaDescription');
+      var curTitle = safeString(ui[titleKey]).trim();
+      var curDesc = safeString(ui[descKey]).trim();
+      var enTitle = safeString(uiEn[titleKey]).trim();
+      var enDesc = safeString(uiEn[descKey]).trim();
+      if (L !== 'en') {
+        if (!curTitle && enTitle) missingLocalized.push(page.label + ' title');
+        if (!curDesc && enDesc) missingLocalized.push(page.label + ' description');
+        if (curTitle && enTitle && curTitle === enTitle) sameAsEn.push(page.label + ' title');
+        if (curDesc && enDesc && curDesc === enDesc) sameAsEn.push(page.label + ' description');
+      }
+      if (curTitle && (curTitle.length < 18 || curTitle.length > 68)) weakTitles.push(page.label + ' (' + curTitle.length + ' chars)');
+      if (curDesc && (curDesc.length < 70 || curDesc.length > 175)) weakDescriptions.push(page.label + ' (' + curDesc.length + ' chars)');
+    });
+    if (missingLocalized.length) {
+      issues.push({
+        kind: 'warn',
+        text: 'Localized SEO fields are missing for ' + L.toUpperCase() + ': ' + shortLabelList(missingLocalized, 5) + '. Public search snippets may fall back to English/default text.',
+        action: { section: 'ui', lang: L }
+      });
+    }
+    if (sameAsEn.length) {
+      issues.push({
+        kind: 'info',
+        text: L.toUpperCase() + ' SEO fields still match EN exactly: ' + shortLabelList(sameAsEn, 5) + '. Search presentation may look untranslated.',
+        action: { section: 'ui', lang: L }
+      });
+    }
+    if (weakTitles.length) {
+      issues.push({
+        kind: 'info',
+        text: 'Saved SEO titles are unusually short or long: ' + shortLabelList(weakTitles, 4) + '.',
+        action: { section: 'ui', lang: L }
+      });
+    }
+    if (weakDescriptions.length) {
+      issues.push({
+        kind: 'info',
+        text: 'Saved meta descriptions are unusually short or long: ' + shortLabelList(weakDescriptions, 4) + '.',
+        action: { section: 'ui', lang: L }
+      });
+    }
+    var perfs = getSiteHealthDoc(snapshot, 'rg_perfs', []);
+    if (!Array.isArray(perfs)) perfs = [];
+    var invalidEventLinks = 0;
+    perfs.forEach(function (e) {
+      var status = safeString(e && e.status || 'upcoming');
+      if (status === 'hidden' || status === 'past') return;
+      var localKey = 'eventLink_' + L;
+      var localUrl = safeString(e && e[localKey]).trim();
+      var fallbackUrl = safeString(e && e.eventLink).trim();
+      var publicUrl = localUrl || fallbackUrl;
+      if (publicUrl && !isValidHttpUrl(publicUrl)) invalidEventLinks += 1;
+    });
+    if (invalidEventLinks) {
+      issues.push({
+        kind: 'warn',
+        text: invalidEventLinks + ' visible calendar event link(s) look invalid for ' + L.toUpperCase() + '. Public "Tickets / Info" buttons may fail.',
+        action: { section: 'calendar', lang: L }
+      });
+    }
+    return issues;
+  }
   function setPillStatus(id, kind, text) {
     var el = $(id);
     if (!el) return;
@@ -1169,7 +1262,7 @@
       overall.textContent = 'Click Run checks now';
     }
     var sb = $('sitehealth-section-status');
-    if (sb) sb.innerHTML = '<p class="muted">Checks use saved content only and run when you click the button (not automatically on open).</p>';
+    if (sb) sb.innerHTML = '<p class="muted">Checks use saved content plus a few lightweight public-output checks inferred from that content. They run only when you click the button.</p>';
     var mb = $('sitehealth-lang-matrix');
     if (mb) mb.innerHTML = '';
     var ib = $('sitehealth-issues');
@@ -1289,11 +1382,14 @@
     var missingSource = 0;
     var missingTranslation = 0;
     var hiddenQuotes = 0;
+    var invalidPressUrls = 0;
     press.forEach(function (p) {
       var visible = !(p && p.visible === false);
       if (visible && isBlank(p && p.source)) missingSource += 1;
       var q = isObject(p && p.quotes_i18n) ? p.quotes_i18n[effectiveLang] : p && p.quote;
       if (visible && isBlank(q)) missingTranslation += 1;
+      var url = safeString(p && p.url).trim();
+      if (visible && url && !isValidHttpUrl(url)) invalidPressUrls += 1;
       if (p && p.visible === false) hiddenQuotes += 1;
     });
     var pdfs = safePublicPdfs(getSiteHealthDoc(snapshot, 'rg_public_pdfs', {}));
@@ -1304,11 +1400,14 @@
       if (d && !isValidHttpUrl(d)) invalidPdfs.push('Dossier ' + L);
       if (a && !isValidHttpUrl(a)) invalidPdfs.push('Artist Sheet ' + L);
     });
-    sectionStatus['Press / EPK'] = invalidPdfs.length ? 'err' : (missingSource + missingTranslation > 0 ? 'warn' : 'ok');
+    var missingAnyEnPdf = !safeString(pdfs.dossier.EN && pdfs.dossier.EN.url).trim() || !safeString(pdfs.artistSheet.EN && pdfs.artistSheet.EN.url).trim();
+    sectionStatus['Press / EPK'] = invalidPdfs.length ? 'err' : (missingSource + missingTranslation > 0 || invalidPressUrls > 0 || missingAnyEnPdf ? 'warn' : 'ok');
     if (missingSource) issues.push({ kind: 'warn', text: missingSource + ' visible press quotes are missing a source.', action: { section: 'press', pressTab: 'quotes' } });
     if (missingTranslation) issues.push({ kind: 'warn', text: missingTranslation + ' visible press quotes are missing ' + effectiveLang.toUpperCase() + ' text.', action: { section: 'press', pressTab: 'quotes' } });
+    if (invalidPressUrls) issues.push({ kind: 'warn', text: invalidPressUrls + ' visible press quotes have invalid source URLs.', action: { section: 'press', pressTab: 'quotes' } });
     if (hiddenQuotes) issues.push({ kind: 'info', text: hiddenQuotes + ' press quotes are hidden intentionally.', action: { section: 'press', pressTab: 'quotes', pressFilter: 'hidden' } });
     if (invalidPdfs.length) issues.push({ kind: 'err', text: 'Invalid PDF URLs: ' + invalidPdfs.join(', ') + '.', action: { section: 'press', pressTab: 'pdfs' } });
+    if (missingAnyEnPdf) issues.push({ kind: 'info', text: 'EN public PDF set is still incomplete. Press page downloads may feel thin on the main language path.', action: { section: 'press', pressTab: 'pdfs', lang: 'en' } });
     var homeCurrent = getSiteHealthDoc(snapshot, 'hero_' + effectiveLang, {});
     var homePrimaryMissing = ['cta1', 'cta2'].filter(function (k) { return isBlank(homeCurrent[k]); }).length;
     var homeIntroMissing = ['introCtaBio', 'introCtaMedia'].filter(function (k) { return isBlank(homeCurrent[k]); }).length;
@@ -1319,8 +1418,10 @@
     if (bioMissingCore) issues.push({ kind: 'warn', text: 'Biography is missing ' + bioMissingCore + ' core field(s) in ' + effectiveLang.toUpperCase() + '.', action: { section: 'bio', lang: effectiveLang } });
     var contactCurrent = getSiteHealthDoc(snapshot, 'contact_' + effectiveLang, {});
     if (!isBlank(contactCurrent.email) && !isValidEmail(contactCurrent.email)) issues.push({ kind: 'err', text: 'Contact email format looks invalid for ' + effectiveLang.toUpperCase() + '.', action: { section: 'contact', lang: effectiveLang } });
+    var contactWebLabelForHealth = safeString(contactCurrent.webBtn).trim();
     var contactWebForHealth = safeString(contactCurrent.webUrl || contactCurrent.webBtn).trim();
     if (!isBlank(contactWebForHealth) && !isValidHttpUrl(contactWebForHealth)) issues.push({ kind: 'warn', text: 'Contact website URL format looks invalid for ' + effectiveLang.toUpperCase() + '.', action: { section: 'contact', lang: effectiveLang } });
+    if (!isBlank(contactWebLabelForHealth) && isBlank(safeString(contactCurrent.webUrl).trim())) issues.push({ kind: 'info', text: 'Contact website button label is set for ' + effectiveLang.toUpperCase() + ' but no website URL is saved, so the public button stays hidden.', action: { section: 'contact', lang: effectiveLang } });
     langs.forEach(function (lang) {
       var pdoc = getProgramsForHealth(snapshot, lang);
       var enDoc = getProgramsForHealth(snapshot, 'en');
@@ -1358,6 +1459,7 @@
         issues.push({ kind: 'info', text: 'PDF set is partial in ' + L + ' (one of Dossier / Artist Sheet is missing).', action: { section: 'press', pressTab: 'pdfs', lang: L.toLowerCase() } });
       }
     });
+    issues = issues.concat(collectPublicOutputIssues(effectiveLang, snapshot));
     var sectionOrder = ['Home / Hero', 'Biography', 'Programs', 'Calendar', 'Media', 'Press / EPK', 'Contact', 'UI / labels'];
     var sectionBox = $('sitehealth-section-status');
     if (sectionBox) {
@@ -2023,6 +2125,33 @@
   function loadProgramsCanonicalForLang(lang) {
     return resolveProgramsDocForLang(lang, null);
   }
+  function describeProgramsProvenance(lang) {
+    var L = safeString(lang || state.lang || 'en').trim().toLowerCase() || 'en';
+    var byLang = loadDoc('rg_programs_' + L, null);
+    if (isObject(byLang) && Array.isArray(byLang.programs)) {
+      return 'Public Programs are currently using the saved ' + L.toUpperCase() + ' programs document.';
+    }
+    if (L === 'en') {
+      var legacyEn = loadDoc('rg_programs', null);
+      if (isObject(legacyEn) && Array.isArray(legacyEn.programs) && legacyEn.programs.length) {
+        return 'Public Programs are currently falling back to the legacy EN programs document because no canonical EN programs document is saved yet.';
+      }
+    }
+    try {
+      if (state.api && typeof state.api.getPrograms === 'function') {
+        var effective = state.api.getPrograms();
+        if (isObject(effective) && Array.isArray(effective.programs) && effective.programs.length) {
+          return 'Public Programs are currently showing fallback content for ' + L.toUpperCase() + '. Save this language to make its canonical source explicit.';
+        }
+      }
+    } catch (e) {}
+    return 'No saved Programs list is currently available for ' + L.toUpperCase() + '.';
+  }
+  function renderProgramsProvenance() {
+    var el = $('programs-provenance');
+    if (!el) return;
+    el.textContent = describeProgramsProvenance(state.lang);
+  }
   function renderProgramsList() {
     var box = $('programs-list');
     var arr = state.programsDoc.programs;
@@ -2125,6 +2254,7 @@
     $('programs-closingNote').value = safeString(state.programsDoc.closingNote);
     $('programs-repLink').value = pickStoredOrFallback(edStored, edFallback, 'repProgramsLink');
     $('programs-epkLink').value = pickStoredOrFallback(edStored, edFallback, 'epkProgramsLink');
+    renderProgramsProvenance();
     state.programsIndex = -1;
     renderProgramsList();
     updateCompletenessIndicators();
@@ -2962,6 +3092,22 @@
     if (leg.videos && leg.videos.length) return leg;
     return primary;
   }
+  function describeMediaVideosProvenance() {
+    var canonical = safeMediaVideos(loadDoc('rg_vid', { h2: '', videos: [] }));
+    if (canonical.videos && canonical.videos.length) {
+      return 'Public videos are currently using the canonical saved video list.';
+    }
+    var legacy = safeMediaVideos(loadDoc('rg_vid_en', null));
+    if (legacy.videos && legacy.videos.length) {
+      return 'Public videos are currently falling back to the legacy EN video list because the canonical saved video list is empty.';
+    }
+    return 'No saved public video list is currently available.';
+  }
+  function renderMediaVideosProvenance() {
+    var el = $('media-vid-provenance');
+    if (!el) return;
+    el.textContent = describeMediaVideosProvenance();
+  }
   function safePhotos(raw) {
     var d = isObject(raw) ? clone(raw) : {};
     ['s', 't', 'b'].forEach(function (k) {
@@ -2994,6 +3140,7 @@
     if ($('media-vid-filter')) $('media-vid-filter').value = state.mediaVidFilter || 'all';
     if ($('media-vid-workflow-filter')) $('media-vid-workflow-filter').value = state.mediaVidWorkflowFilter || 'all';
     $('media-vid-h2').value = state.vidData.h2;
+    renderMediaVideosProvenance();
     renderMediaVideosList();
     renderMediaPhotosList();
     toggleMediaTab(state.mediaTab || 'videos');

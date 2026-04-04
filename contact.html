@@ -29,7 +29,7 @@
 <div class="lang-bar">
   <button type="button" class="lang-btn active" onclick="setLang('en', { persist: true })">&#127468;&#127463; EN</button>
   <button type="button" class="lang-btn" onclick="setLang('de', { persist: true })">&#127465;&#127466; DE</button>
-  <button type="button" class="lang-btn" onclick="setLang('es', { persist: true })">&#127466;&#127480; ES</button>
+  <button type="button" class="lang-btn lang-btn-es" onclick="setLang('es', { persist: true })">&#127462;&#127479; ES</button>
   <button type="button" class="lang-btn" onclick="setLang('it', { persist: true })">&#127470;&#127481; IT</button>
   <button type="button" class="lang-btn" onclick="setLang('fr', { persist: true })">&#127467;&#127479; FR</button>
 </div>
@@ -56,11 +56,11 @@
   <a href="press.html" onclick="closeMenu()" data-i18n="nav.epk">Press & materials</a>
   <a href="contact.html" onclick="closeMenu()" data-i18n="nav.book">Book now</a>
   <div class="lang-row">
-    <button type="button" onclick="setLang('en', { persist: true });closeMenu()" id="mob-btn-en" class="active">EN</button>
-    <button type="button" onclick="setLang('de', { persist: true });closeMenu()" id="mob-btn-de">DE</button>
-    <button type="button" onclick="setLang('es', { persist: true });closeMenu()" id="mob-btn-es">ES</button>
-    <button type="button" onclick="setLang('it', { persist: true });closeMenu()" id="mob-btn-it">IT</button>
-    <button type="button" onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr">FR</button>
+    <button type="button" onclick="setLang('en', { persist: true });closeMenu()" id="mob-btn-en" class="active"><span class="lang-flag" aria-hidden="true">&#127468;&#127463;</span><span class="lang-label">EN</span></button>
+    <button type="button" onclick="setLang('de', { persist: true });closeMenu()" id="mob-btn-de"><span class="lang-flag" aria-hidden="true">&#127465;&#127466;</span><span class="lang-label">DE</span></button>
+    <button type="button" onclick="setLang('es', { persist: true });closeMenu()" id="mob-btn-es"><span class="lang-flag" aria-hidden="true">&#127462;&#127479;</span><span class="lang-label">ES</span></button>
+    <button type="button" onclick="setLang('it', { persist: true });closeMenu()" id="mob-btn-it"><span class="lang-flag" aria-hidden="true">&#127470;&#127481;</span><span class="lang-label">IT</span></button>
+    <button type="button" onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr"><span class="lang-flag" aria-hidden="true">&#127467;&#127479;</span><span class="lang-label">FR</span></button>
   </div>
 </div>
 <button type="button" class="back-to-top" id="backToTop" data-i18n-aria="ui.backToTop" aria-label="Back to top">

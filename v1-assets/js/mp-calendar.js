@@ -13,6 +13,18 @@
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var titleChoiceLogged = false;
   var modalLocaleChoiceLogged = false;
+  var lastEventModalFocus = null;
+
+  function getFocusable(root) {
+    if (!root) return [];
+    return Array.prototype.slice.call(
+      root.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter(function (el) {
+      return !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true';
+    });
+  }
   var supportingLocaleChoiceLogged = false;
   function normalizeLangCode(v) {
     var s = String(v || '').trim().toLowerCase();
@@ -1253,6 +1265,7 @@
 
   function openEventModal(perfId) {
     resolveActiveLang('openEventModal');
+    lastEventModalFocus = document.activeElement;
     var perfs = getPerfs();
     var p = null;
     for (var i = 0; i < perfs.length; i++) {
@@ -1404,13 +1417,27 @@
       mapsEl.style.display = 'none';
     }
 
-    document.getElementById('eventModal').style.display = '';
+    var modal = document.getElementById('eventModal');
+    modal.style.display = '';
+    modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    setTimeout(function () {
+      var closeBtn = document.getElementById('eventModalClose');
+      if (closeBtn) closeBtn.focus();
+    }, 0);
   }
 
   function closeEventModal() {
-    document.getElementById('eventModal').style.display = 'none';
+    var modal = document.getElementById('eventModal');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    if (lastEventModalFocus && typeof lastEventModalFocus.focus === 'function' && document.contains(lastEventModalFocus)) {
+      setTimeout(function () {
+        lastEventModalFocus.focus();
+      }, 0);
+    }
+    lastEventModalFocus = null;
   }
 
   function applyPerfHeader() {
@@ -1422,9 +1449,24 @@
   }
 
   document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape') return;
     var em = document.getElementById('eventModal');
-    if (em && em.style.display !== 'none') closeEventModal();
+    if (!em || em.style.display === 'none') return;
+    if (e.key === 'Escape') {
+      closeEventModal();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    var focusables = getFocusable(em);
+    if (!focusables.length) return;
+    var first = focusables[0];
+    var last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   });
 
   window.togglePastPerfs = function () {};

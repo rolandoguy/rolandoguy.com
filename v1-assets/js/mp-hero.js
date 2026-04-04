@@ -218,6 +218,32 @@
     if (/^img\//i.test(s)) return '../' + s;
     return '../' + s;
   }
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function applyHeroNameMarkup(heroName, rawHtml) {
+    if (!heroName) return;
+    var source = String(rawHtml || '').trim();
+    if (!source) return;
+    var temp = document.createElement('div');
+    temp.innerHTML = source;
+    var lastEl = temp.querySelector('em');
+    var last = lastEl ? String(lastEl.textContent || '').trim() : '';
+    if (lastEl) lastEl.remove();
+    var first = String(temp.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!first && !last) return;
+    if (!last) {
+      heroName.textContent = first;
+      return;
+    }
+    heroName.innerHTML =
+      '<span class="hero-name-first">' + escapeHtml(first) + '</span>' +
+      '<span class="hero-name-last">' + escapeHtml(last) + '</span>';
+  }
   function readHeroFieldFromRecord(record, field) {
     var doc = record && record.value;
     var v = doc && doc[field];
@@ -322,7 +348,7 @@
       else if (quickCalInfo && quickCalInfo.value) heroQuickCal.textContent = quickCalInfo.value;
     }
     var vName = val('hero.nameHtml');
-    if (heroName && vName && vName.value != null) heroName.innerHTML = vName.value;
+    if (heroName && vName && vName.value != null) applyHeroNameMarkup(heroName, vName.value);
     // Avoid cross-language leak: do not use hero_en override for localized intro CTA labels.
     var introBioInfo = getHeroTextOverrideInfoWithoutEn('introCtaBio', L);
     if (homeIntroCtaBio) {
@@ -445,4 +471,5 @@
   } else {
     window.addEventListener('mp:localesready', bootHero, { once: true });
   }
+
 })();

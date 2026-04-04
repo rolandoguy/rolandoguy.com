@@ -1,5 +1,11 @@
 # Export: `v2/data/site-en.json`
 
+## Legacy scope note
+
+This README documents a **legacy / separate v2 export path**. It is **not part of the active multipage public workflow** for the current site in this workspace.
+
+If you are working on the current public site, the active path is the multipage v1 stack with generated `v1-assets/data/*.json`, `scripts/build-public-safe.js`, and `scripts/prerender-public-html.js`.
+
 Generates the English v2 bundle from **committed** literals in **`index.html`** (the same offline defaults v1 uses when Firestore is empty). **No Firestore** and **no v1 runtime changes**.
 
 ## Run (pick one)

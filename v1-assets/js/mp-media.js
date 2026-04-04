@@ -724,13 +724,45 @@
     wrap.style.cursor = '';
   }
 
-  function showTab(n) {
+  function setActivePhotoTab(n) {
     ['studio', 'stage', 'backstage'].forEach(function (x) {
       var tab = document.getElementById('tab-' + x);
       var panel = document.getElementById('panel-' + x);
       if (tab) tab.classList.toggle('active', x === n);
       if (panel) panel.classList.toggle('active', x === n);
     });
+  }
+
+  function getActivePhotoTab() {
+    var active = document.querySelector('.photo-tab.active');
+    if (active && active.id) return active.id.replace('tab-', '');
+    return 'studio';
+  }
+
+  function getPhotoPanelRefs(panelName) {
+    if (panelName === 'stage') {
+      return {
+        panel: document.getElementById('panel-stage'),
+        grid: document.querySelector('#panel-stage .photo-grid-3'),
+        type: 't',
+        itemClass: 'photo-item-s'
+      };
+    }
+    if (panelName === 'backstage') {
+      return {
+        panel: document.getElementById('panel-backstage'),
+        grid: document.getElementById('backstageGrid'),
+        empty: document.getElementById('backstageEmpty'),
+        type: 'b',
+        itemClass: 'photo-item-s'
+      };
+    }
+    return {
+      panel: document.getElementById('panel-studio'),
+      grid: document.querySelector('#panel-studio .photo-grid-4'),
+      type: 's',
+      itemClass: 'photo-item-p'
+    };
   }
 
   var lbSet = 's';
@@ -836,80 +868,40 @@
     var altStudioFb = mpPick(lang, 'mp.photos.studioTab', 'Rolando Guy');
     var altStageFb = mpPick(lang, 'mp.photos.stageTab', 'On Stage');
     var altBackFb = mpPick(lang, 'mp.photos.backstageTab', 'Backstage');
-    var sGrid = document.getElementById('panel-studio');
-    if (sGrid) {
-      var sgrid = sGrid.querySelector('.photo-grid-4');
-      if (sgrid)
-        sgrid.innerHTML = ph.s
-          .map(function (src, i) {
-            var imgSrc = resolvePhotoSrc(src);
-            var cap = getCaption('s', i);
-            var alt = String(cap.alt || '').trim() || altStudioFb;
-            return (
-              '<div class="photo-item photo-item-p reveal rd' +
-              i % 4 +
-              '" onclick="openLb(\'s\',' +
-              i +
-              ')"><img src="' +
-              imgSrc +
-              '" alt="' +
-              alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
-              '" loading="lazy"></div>'
-            );
-          })
-          .join('');
+    var sRefs = getPhotoPanelRefs('studio');
+    var tRefs = getPhotoPanelRefs('stage');
+    var bRefs = getPhotoPanelRefs('backstage');
+
+    function renderItems(refs, items, altFallback) {
+      if (!refs || !refs.grid) return;
+      refs.grid.innerHTML = (items || [])
+        .map(function (src, i) {
+          var imgSrc = resolvePhotoSrc(src);
+          var cap = getCaption(refs.type, i);
+          var alt = String(cap.alt || '').trim() || altFallback;
+          return (
+            '<div class="photo-item ' +
+            refs.itemClass +
+            ' reveal rd' +
+            i % 4 +
+            '" onclick="openLb(\'' +
+            refs.type +
+            '\',' +
+            i +
+            ')"><img src="' +
+            imgSrc +
+            '" alt="' +
+            alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
+            '" loading="lazy" decoding="async"></div>'
+          );
+        })
+        .join('');
     }
-    var tGrid = document.getElementById('panel-stage');
-    if (tGrid) {
-      var tgrid = tGrid.querySelector('.photo-grid-3');
-      if (tgrid)
-        tgrid.innerHTML = ph.t
-          .map(function (src, i) {
-            var imgSrc = resolvePhotoSrc(src);
-            var cap = getCaption('t', i);
-            var alt = String(cap.alt || '').trim() || altStageFb;
-            return (
-              '<div class="photo-item photo-item-s reveal rd' +
-              i % 4 +
-              '" onclick="openLb(\'t\',' +
-              i +
-              ')"><img src="' +
-              imgSrc +
-              '" alt="' +
-              alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
-              '" loading="lazy"></div>'
-            );
-          })
-          .join('');
-    }
-    var bGrid = document.getElementById('backstageGrid');
-    var bEmpty = document.getElementById('backstageEmpty');
-    if (bGrid) {
-      if (ph.b && ph.b.length > 0) {
-        bGrid.innerHTML = ph.b
-          .map(function (src, i) {
-            var imgSrc = resolvePhotoSrc(src);
-            var cap = getCaption('b', i);
-            var alt = String(cap.alt || '').trim() || altBackFb;
-            return (
-              '<div class="photo-item photo-item-s reveal rd' +
-              i % 4 +
-              '" onclick="openLb(\'b\',' +
-              i +
-              ')"><img src="' +
-              imgSrc +
-              '" alt="' +
-              alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
-              '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
-            );
-          })
-          .join('');
-        if (bEmpty) bEmpty.style.display = 'none';
-      } else {
-        bGrid.innerHTML = '';
-        if (bEmpty) bEmpty.style.display = '';
-      }
-    }
+
+    renderItems(sRefs, ph.s, altStudioFb);
+    renderItems(tRefs, ph.t, altStageFb);
+    renderItems(bRefs, ph.b, altBackFb);
+    if (bRefs && bRefs.empty) bRefs.empty.style.display = ph.b && ph.b.length ? 'none' : '';
 
     try {
       document.querySelectorAll('#photos .reveal:not(.visible)').forEach(function (el) {
@@ -927,6 +919,12 @@
         ob.observe(el);
       });
     } catch (e) {}
+  }
+
+  function switchPhotoTab(nextTab) {
+    var next = nextTab || 'studio';
+    setActivePhotoTab(next);
+    renderPhotoGallery();
   }
 
   document.addEventListener('keydown', function (e) {
@@ -953,7 +951,7 @@
   window.openVideoModal = openVideoModal;
   window.closeVideoModal = closeVideoModal;
   window.stopVideo = stopVideo;
-  window.showTab = showTab;
+  window.showTab = switchPhotoTab;
   window.openLb = openLb;
   window.closeLb = closeLb;
   window.closeLbOnBg = closeLbOnBg;
@@ -964,6 +962,7 @@
     if (!MP_MEDIA) return;
     applyPhotosChrome();
     renderVideos();
+    setActivePhotoTab(getActivePhotoTab());
     renderPhotoGallery();
   });
 
@@ -972,6 +971,7 @@
     if (!MP_MEDIA) return;
     applyPhotosChrome();
     renderVideos();
+    setActivePhotoTab(getActivePhotoTab());
     renderPhotoGallery();
   });
 
@@ -988,6 +988,7 @@
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
       applyPhotosChrome();
       renderVideos();
+      setActivePhotoTab(getActivePhotoTab());
       renderPhotoGallery();
     })
     .catch(function () {
@@ -1013,6 +1014,7 @@
       };
       applyPhotosChrome();
       renderVideos();
+      setActivePhotoTab(getActivePhotoTab());
       renderPhotoGallery();
     });
 })();

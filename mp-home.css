@@ -106,7 +106,7 @@ html.mp-site #intro .about-photo img.mp-home-hero-asset {
 /* Text block: keep left column narrow and low so it clears the portrait. */
 @media (min-width: 901px) {
   html.mp-site #hero .hero-content {
-    max-width: min(46vw, 520px) !important;
+    max-width: min(48vw, 620px) !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
     /* Keep block elegantly centered in hero height (not too high). */
@@ -212,6 +212,25 @@ html.mp-site .perf-item--archive .perf-venue-bg {
   background: var(--surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
+  position: relative;
+  isolation: isolate;
+}
+.mp-page-bio::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 520'%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' dominant-baseline='middle' font-family='Cormorant Garamond, Georgia, serif' font-size='180' font-weight='400' letter-spacing='0.02em' fill='%23F0EDE6'%3ERolando Guy%3C/text%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 80%;
+  background-attachment: fixed;
+}
+.mp-page-bio > * {
+  position: relative;
+  z-index: 1;
 }
 .mp-page-bio .rep-header {
   margin-bottom: 2rem;
@@ -247,6 +266,9 @@ html.mp-site #performances .mp-onward-band {
   .mp-page-bio,
   .mp-page-bio-continue {
     padding: 88px 0;
+  }
+  .mp-page-bio::before {
+    background-attachment: scroll;
   }
   .mp-onward-band {
     padding: 44px 0 64px;

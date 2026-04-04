@@ -83,50 +83,26 @@
     };
   }
 
-  function formatRepertoireTitleStack(html) {
-    var s = String(html || '');
-    if (!s || /class=["']rep-title-stack["']/.test(s)) return s;
-    var m = s.match(/^([\s\S]*?)<em(\s[^>]*)?>([\s\S]*?)<\/em>([\s\S]*)$/i);
-    var esc = function (t) {
-      return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    };
-    if (!m) return s;
-    var beforeRaw = m[1];
-    var emAttrs = m[2] || '';
-    var inner = m[3];
-    var after = (m[4] || '').trim();
-    var line1 = beforeRaw
-      .replace(/<br\s*\/?>(\s*)/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    var line2 = '<em' + emAttrs + '>' + inner + '</em>';
-    if (after) line2 += ' ' + after;
-    return (
-      '<span class="rep-title-stack"><span class="rep-title-line1">' +
-      esc(line1) +
-      '</span><span class="rep-title-line2">' +
-      line2 +
-      '</span></span>'
-    );
-  }
-
-  function withTitleEmphasis(section, value) {
-    var raw = String(value || '');
-    var fallback = 'Selected <em>Repertoire</em>';
-    var resolved = raw.trim() ? raw : fallback;
-    if (section === 'rep') return formatRepertoireTitleStack(resolved);
-    return resolved;
+  function repEscapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   function getRep() {
     var lang = currentLang || 'en';
     var base = MP_REP && MP_REP.rep ? MP_REP.rep : { h2: '', intro: '' };
-    var legacyRep = readLegacyJson('rep_' + lang) || (lang !== 'en' ? readLegacyJson('rep_en') : null);
-    if (legacyRep && typeof legacyRep === 'object') {
-      if (legacyRep.h2 != null && String(legacyRep.h2).trim() !== '') base.h2 = String(legacyRep.h2);
-      if (legacyRep.intro != null) base.intro = legacyRep.intro;
+    var legacyRepCurrent = readLegacyJson('rep_' + lang);
+    var legacyRepEn = lang !== 'en' ? readLegacyJson('rep_en') : null;
+    if (legacyRepCurrent && typeof legacyRepCurrent === 'object') {
+      if (legacyRepCurrent.h2 != null && String(legacyRepCurrent.h2).trim() !== '') {
+        base.h2 = String(legacyRepCurrent.h2);
+      }
+      if (legacyRepCurrent.intro != null) base.intro = legacyRepCurrent.intro;
+    } else if (legacyRepEn && typeof legacyRepEn === 'object') {
+      if (legacyRepEn.h2 != null && String(legacyRepEn.h2).trim() !== '') base.h2 = String(legacyRepEn.h2);
+      if (legacyRepEn.intro != null) base.intro = legacyRepEn.intro;
     }
     var langData = {
       h2: base.h2 != null ? String(base.h2) : '',
@@ -285,8 +261,17 @@
     }
     var t = uiTable();
     var ed = getEditorial(t);
-    var h2El = document.getElementById('repH2');
-    if (h2El) h2El.innerHTML = withTitleEmphasis('rep', d.h2 || '');
+    var titleStackEl = document.getElementById('repTitleStack');
+    var adjEl = document.getElementById('repTitleAdj');
+    var mainEl = document.getElementById('repTitleMain');
+    var titleAdj = mpPick(currentLang || 'en', 'rep.titlePrefix', 'Selected');
+    var titleNoun = mpPick(currentLang || 'en', 'nav.rep', 'Repertoire');
+    var isPostpositiveTitle = /^(es|it|fr)$/i.test(currentLang || 'en');
+    if (titleStackEl) titleStackEl.classList.toggle('rep-title-stack--post', isPostpositiveTitle);
+    if (adjEl && mainEl) {
+      adjEl.textContent = titleAdj;
+      mainEl.textContent = titleNoun;
+    }
     var repIntroLineEl = document.getElementById('repIntroLine');
     if (repIntroLineEl) repIntroLineEl.textContent = ed.repIntroLine || '';
     var descMap = {

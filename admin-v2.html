@@ -705,6 +705,7 @@
             <label>Subtitle<input id="programs-subtitle"></label>
           </div>
           <p class="muted">Programs text appears publicly on cards and detail panels. Favor clear audience-facing language over internal notes.</p>
+          <p id="programs-provenance" class="muted"></p>
           <div class="grid one">
             <label>Intro<textarea id="programs-intro" rows="3"></textarea></label>
             <label>Closing note<textarea id="programs-closingNote" rows="3"></textarea></label>
@@ -782,6 +783,7 @@
             <div class="grid one">
               <label>Videos H2 (HTML)<input id="media-vid-h2"></label>
             </div>
+            <p id="media-vid-provenance" class="muted"></p>
             <div class="toolbar">
               <label>Search
                 <input id="media-vid-search" placeholder="Search title / composer / tag">
@@ -1268,6 +1270,7 @@
             <summary>Quick guide · Admin v2</summary>
             <div class="admin-help-body">
               <p class="muted"><strong>How login works.</strong> Open this page (<code>admin-v2.html</code>) after signing in through the <strong>legacy admin</strong> (<code>admin.html</code>). That flow loads the hidden bridge and connects Firebase-backed storage—stay signed in there if this panel says the bridge is not ready.</p>
+              <p class="muted"><strong>Legacy seams still in play.</strong> Media still reads legacy <code>rg_vid_en</code> as a fallback when canonical <code>rg_vid</code> is empty, Programs can still fall back to legacy EN <code>rg_programs</code>, and auth/storage still depend on the hidden legacy bridge. Treat those as compatibility seams, not new write targets.</p>
               <p class="muted"><strong>Before big edits.</strong> Use <strong>Create backup now</strong> (below) or top-bar <strong>Export JSON</strong> so you have a local copy before imports or risky experiments.</p>
               <p class="muted"><strong>Site health.</strong> <strong>Dashboard / Site health</strong> runs editorial checks and links you to places that need attention—good for routine reviews.</p>
               <p class="muted"><strong>Publishing.</strong> The <strong>Publishing</strong> section summarizes draft/review/published counts and “ready” hints; pair it with each section’s own save buttons.</p>
@@ -1328,7 +1331,7 @@
 
         <section id="section-sitehealth" class="section">
           <h2>Dashboard / Site health</h2>
-          <p class="muted">Editorial quality checks across sections and languages. Use quick actions to jump directly to fixes.</p>
+          <p class="muted">Editorial quality checks across sections and languages, plus a few lightweight public-output checks. Use quick actions to jump directly to fixes.</p>
           <div class="toolbar">
             <button id="runHealthChecksBtn" type="button">Run checks now</button>
             <span id="sitehealth-overall" class="pill">Checking…</span>
