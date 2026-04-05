@@ -97,6 +97,36 @@ function includes(text, snippet) {
   return text.indexOf(snippet) !== -1;
 }
 
+function readLocales() {
+  var raw = read('v1-assets/data/mp-locales.json');
+  return JSON.parse(raw).locales;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getTitle(html) {
+  var match = html.match(/<title>([\s\S]*?)<\/title>/i);
+  return match ? match[1].trim() : '';
+}
+
+function getMetaContent(html, attrName, attrValue) {
+  var pattern = new RegExp(
+    '<meta\\s+[^>]*' + attrName + '=["\']' + escapeRegExp(attrValue) + '["\'][^>]*content=["\']([^"\']*)["\']',
+    'i'
+  );
+  var direct = html.match(pattern);
+  if (direct) return direct[1].trim();
+
+  var reversePattern = new RegExp(
+    '<meta\\s+[^>]*content=["\']([^"\']*)["\'][^>]*' + attrName + '=["\']' + escapeRegExp(attrValue) + '["\']',
+    'i'
+  );
+  var reverse = html.match(reversePattern);
+  return reverse ? reverse[1].trim() : '';
+}
+
 requiredHtmlPages.forEach(function (page) {
   check(exists(page.file), 'Missing public HTML file: ' + page.file);
   if (!exists(page.file)) return;
@@ -129,6 +159,75 @@ jsDataPathChecks.forEach(function (item) {
   check(exists(item.file), 'Missing JS runtime file: ' + item.file);
   if (!exists(item.file)) return;
   check(includes(read(item.file), item.expected), item.file + ': missing expected data path ' + item.expected);
+});
+
+var locales = readLocales();
+var baselineKeys = Object.keys(locales.en || {});
+['de', 'es', 'it', 'fr'].forEach(function (lang) {
+  check(!!locales[lang], 'mp-locales.json: missing locale block ' + lang);
+  if (!locales[lang]) return;
+
+  baselineKeys.forEach(function (key) {
+    check(
+      Object.prototype.hasOwnProperty.call(locales[lang], key),
+      'mp-locales.json: locale ' + lang + ' missing key ' + key
+    );
+  });
+});
+
+var staticHeadExpectations = [
+  {
+    file: 'index.html',
+    titleKey: 'page.index.title'
+  },
+  {
+    file: 'biography.html',
+    titleKey: 'page.biography.title'
+  },
+  {
+    file: 'repertoire.html',
+    titleKey: 'page.repertoire.title'
+  },
+  {
+    file: 'media.html',
+    titleKey: 'page.media.title'
+  },
+  {
+    file: 'reviews.html',
+    titleKey: 'page.reviews.title',
+    descriptionKey: 'page.reviews.metaDescription'
+  }
+];
+
+staticHeadExpectations.forEach(function (item) {
+  if (!exists(item.file)) return;
+  var html = read(item.file);
+  var expectedTitle = locales.en[item.titleKey];
+  check(getTitle(html) === expectedTitle, item.file + ': <title> does not match locales.en.' + item.titleKey);
+  check(
+    getMetaContent(html, 'property', 'og:title') === expectedTitle,
+    item.file + ': og:title does not match locales.en.' + item.titleKey
+  );
+  check(
+    getMetaContent(html, 'name', 'twitter:title') === expectedTitle,
+    item.file + ': twitter:title does not match locales.en.' + item.titleKey
+  );
+
+  if (item.descriptionKey) {
+    var expectedDescription = locales.en[item.descriptionKey];
+    check(
+      getMetaContent(html, 'name', 'description') === expectedDescription,
+      item.file + ': meta description does not match locales.en.' + item.descriptionKey
+    );
+    check(
+      getMetaContent(html, 'property', 'og:description') === expectedDescription,
+      item.file + ': og:description does not match locales.en.' + item.descriptionKey
+    );
+    check(
+      getMetaContent(html, 'name', 'twitter:description') === expectedDescription,
+      item.file + ': twitter:description does not match locales.en.' + item.descriptionKey
+    );
+  }
 });
 
 check(exists('robots.txt'), 'Missing robots.txt');

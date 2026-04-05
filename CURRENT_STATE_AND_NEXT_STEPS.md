@@ -4,10 +4,13 @@
 
 - **Multipage public site** with shared **`mp-shell.js`**, per-page **`mp-*.js`**, **`v1-main.css`**, optional **`mp-home.css`**.
 - **i18n:** five languages; strings from **`v1-assets/data/mp-locales.json`** + optional Firestore `rg_ui_<lang>`.
+- **Locale completeness:** `de`, `es`, `it`, and `fr` are structurally complete against `en` in `mp-locales.json`.
 - **Calendar:** **`mp-calendar.js`** renders list from **`calendar-data.json`** with live merge from Firestore; cards expose **More info** when `allowModalButton`; mobile description clamp depends on **`perf-item--more` / `perf-item--nomore`**.
 - **Build:** Full pipeline requires **admin export JSON**; ends with **HTML prerender** for SEO/AI parsers.
 - **Redirects:** **`_redirects`** configured for apex host and legacy `/mp/*` paths.
 - **Parallel admin surfaces:** **`admin.html`** and **`admin-v2.*`** both present.
+- **Static head baseline:** corrected public pages now use an `en`-coherent static `<head>` baseline where explicitly asserted by the smoke check.
+- **Smoke check:** `scripts/check-public-smoke.js` now covers baseline public structure, locale completeness, and selected static-head coherence assertions.
 
 ## Stable invariants (do not break casually)
 
@@ -21,7 +24,7 @@
 2. **Admin consolidation:** Decide whether **`admin-v2`** replaces **`admin.html`** or document when to use which.
 3. **Repo cleanup:** Remove or gitignore **`node-v20.11.1-darwin-arm64/`**, **`.DS_Store`**, and confirm whether **`node_modules`** should be committed.
 4. **v2 export path:** If **`v2/data/site-en.json`** is still used, add **`v2/`** to repo or fix **`README-export.md`** to match reality.
-5. **Tests:** `package.json` **`test`** script is a stub — add smoke tests (e.g. build dry-run, JSON schema checks) if regressions are costly.
+5. **Tests:** `package.json` **`test`** runs the public smoke check. If stronger coverage is needed, extend it incrementally (for example with additional structural assertions) instead of replacing it with a large framework by default.
 6. **Accessibility audit:** Custom cursor, reduced motion, modal focus — optional pass for WCAG goals.
 
 ## Immediate verification after any calendar change

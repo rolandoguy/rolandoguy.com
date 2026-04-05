@@ -6,7 +6,7 @@
    `scripts/build-public-safe.js` exits with usage text if neither `--export` nor `RG_ADMIN_EXPORT` is set. This is intentional to avoid deploying stale generated JSON.
 
 2. **Prerender vs data drift**  
-   `npm run build:public:quick` only runs prerender. If `v1-assets/data/*.json` is old, English baseline HTML can disagree with bundled JSON until a full build runs.
+   `npm run build:public:quick` only runs prerender. If `v1-assets/data/*.json` is old, public content can still drift until a full build runs, even though locale key completeness and selected static-head baseline assertions are now covered by the smoke check.
 
 3. **Calendar script path comment**  
    `scripts/build-calendar.js` header says “mp/calendar.html”; the repo uses **`calendar.html`** at root. Behavior is correct; comment is misleading.
@@ -42,3 +42,11 @@
 
 11. **Not a git repo (in this environment)**  
     No `git log` available here — **needs manual confirmation** for branch strategy and what is actually deployed to Netlify (or other host).
+
+## Recently reduced risks
+
+12. **Locale key gaps (reduced)**  
+    `mp-locales.json` is currently structurally complete for `de`, `es`, `it`, and `fr` against `en`. Future regressions should now be caught by `scripts/check-public-smoke.js`.
+
+13. **Static head mismatch on key public pages (reduced)**  
+    The static base `<head>` on corrected public pages is now aligned with `locales.en`, and selected mismatches are guarded by the smoke check.

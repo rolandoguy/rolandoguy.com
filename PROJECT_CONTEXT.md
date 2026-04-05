@@ -20,11 +20,15 @@ Facts below are taken from **this directory** as of the last doc refresh. If som
 | `calendar.html` | Performances / agenda |
 | `press.html` | Press / EPK-style materials |
 | `contact.html` | Contact |
-| `reviews.html` | Reviews (verify linkage in nav if unused) |
+| `reviews.html` | Reviews (public page, intentionally `noindex`) |
 
 Shared UI: **`mp-shell.js`** (nav, lang, i18n table load, Firestore UI overrides). Locales: **`v1-assets/data/mp-locales.json`** (built from admin export via `scripts/build-mp-locales.js`).
 
 **Languages:** `en`, `de`, `es`, `it`, `fr` — enforced in shell (`MP_LANG_LIST`) and mirrored in HTML lang buttons.
+
+**Locale state:** locale key coverage is currently structurally complete across `de`, `es`, `it`, and `fr` against `en` in `mp-locales.json`.
+
+**Static head baseline:** public HTML files use `en` as the static base layer in `<html lang>`, and corrected page-level `<head>` metadata is expected to align with `locales.en` where asserted by the smoke check.
 
 ## Stylesheets
 

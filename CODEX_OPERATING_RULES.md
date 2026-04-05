@@ -8,6 +8,8 @@ Shared runtime behavior lives in `v1-assets/js/mp-shell.js`, page-specific behav
 
 Public content is largely generated into `v1-assets/data/*.json` by scripts in `scripts/`. The full build runs through `scripts/build-public-safe.js`, requires an admin export JSON, and ends with prerendering. `admin-v2` is the editorial source of truth.
 
+Locale coverage is currently structurally complete across `en`, `de`, `es`, `it`, and `fr`. The corrected static public `<head>` baseline is intended to represent `en` where the smoke check asserts it.
+
 ## Sensitive areas
 
 - Build and deploy flow, especially `scripts/build-public-safe.js`, prerender behavior, and required export-path usage
@@ -41,3 +43,4 @@ Public content is largely generated into `v1-assets/data/*.json` by scripts in `
 - Multilingual behavior and locale fallback/override behavior
 - Calendar card behavior, especially the verified mobile More info clamp rules
 - Existing premium editorial presentation and typography-driven feel
+- The current smoke-check coverage for locale completeness and selected static-head coherence

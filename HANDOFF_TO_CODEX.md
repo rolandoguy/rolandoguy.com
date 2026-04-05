@@ -8,6 +8,13 @@ This file orients an autonomous assistant on **this checkout** of the Rolando Gu
 - **Admin:** **`admin-v2.html` / `admin-v2.js` / `admin-v2.css`** is the editorial source of truth for day-to-day content work. `admin.html` remains in the repo as a legacy surface and still participates in auth/bridge behavior for `admin-v2`.
 - **Build pipeline:** Node scripts in `scripts/` regenerate `v1-assets/data/*.json` from an **admin export JSON**; `scripts/build-public-safe.js` orchestrates the full chain and fails without `--export` / `RG_ADMIN_EXPORT`. See `package.json` scripts and `scripts/README-prerender-public.md`.
 
+## Recently settled public-state facts
+
+- **Locales:** `mp-locales.json` is currently structurally complete across `en`, `de`, `es`, `it`, and `fr`.
+- **Static head baseline:** corrected public pages use `en` as the static base `<head>` layer, aligned with `locales.en` where asserted by the smoke check.
+- **Reviews page:** `reviews.html` remains a real public page but is intentionally `noindex`; do not treat it as an abandoned placeholder unless code changes say otherwise.
+- **Smoke check:** `scripts/check-public-smoke.js` now also protects locale completeness and selected static-head coherence, not just file presence/hooks.
+
 ## Firestore (read path on public pages)
 
 - **Project ID (hardcoded):** `rolandoguy-57d63` in `v1-assets/js/mp-shell.js` (REST `firestore.googleapis.com/.../documents/rg/{key}`).

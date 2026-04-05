@@ -6,6 +6,8 @@
 - Public pages include `index.html`, `biography.html`, `repertoire.html`, `media.html`, `calendar.html`, `press.html`, `contact.html`, and `reviews.html`.
 - Shared runtime lives in `v1-assets/js/mp-shell.js`; page behavior lives in `v1-assets/js/mp-*.js`; core styling lives in `v1-assets/css/v1-main.css`.
 - Public content is generated into `v1-assets/data/*.json` by scripts in `scripts/`.
+- `mp-locales.json` is currently structurally complete across `en`, `de`, `es`, `it`, and `fr`.
+- The corrected static public `<head>` baseline is expected to represent `en` where the smoke check asserts it.
 
 ## Source Of Truth
 
@@ -52,6 +54,7 @@
 - Check all affected languages when i18n is involved.
 - After calendar changes, explicitly verify the current mobile clamp rules and desktop non-regression.
 - After content/build-related changes, verify generated data paths and prerender assumptions still line up.
+- After i18n or SEO-head changes, verify `scripts/check-public-smoke.js` still passes because it now guards locale completeness and selected static-head coherence.
 
 ## Special Notes
 
