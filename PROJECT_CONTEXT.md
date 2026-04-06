@@ -7,7 +7,7 @@ Facts below are taken from **this directory** as of the last doc refresh. If som
 - **Git:** This folder is **not** a git repository in the environment used to generate these docs (**needs manual confirmation** whether your real deploy uses git elsewhere).
 - **Package name:** `rolandoguy-site_1` (`package.json`).
 - **Runtime dependency:** `pdfmake` (for PDF generation scripts).
-- **Node:** A vendored **`node-v20.11.1-darwin-arm64/`** tree exists at repo root (unusual weight; see `REPO_KEEP_ARCHIVE_DELETE.md`).
+- **Node:** No vendored Node runtime is present in this checkout. Earlier docs referenced **`node-v20.11.1-darwin-arm64/`** at repo root; treat that as historical or environment-specific unless manually confirmed elsewhere.
 
 ## Public site structure
 

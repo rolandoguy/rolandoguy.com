@@ -37,8 +37,8 @@
 
 ## Repo hygiene
 
-10. **Vendored Node**  
-    `node-v20.11.1-darwin-arm64/` increases archive size and confuses CI. Prefer documenting Node 18+ requirement (see `scripts/README-export.md`).
+10. **Vendored Node doc drift**  
+    Older docs mention `node-v20.11.1-darwin-arm64/`, but this checkout does not contain that folder. Treat vendored-Node references as historical unless another branch/workspace still ships it.
 
 11. **Not a git repo (in this environment)**  
     No `git log` available here — **needs manual confirmation** for branch strategy and what is actually deployed to Netlify (or other host).

@@ -541,9 +541,10 @@
     var meta = resolved.pressMeta;
     var showReviewsRaw = meta && meta.showReviewsSection;
     var showReviews = asVisibleFlag(showReviewsRaw, true);
-    if (pressSection) pressSection.style.display = showReviews ? '' : 'none';
     var allQuotes = resolved.pressItems;
     var visibleQuotes = allQuotes.filter(function (p) { return asVisibleFlag(p && p.visible, true); });
+    var showResolvedPress = showReviews && visibleQuotes.length > 0;
+    if (pressSection) pressSection.style.display = showResolvedPress ? '' : 'none';
     if (!showReviews) return;
     var el = document.getElementById('pressGrid');
     if (!el) return;
@@ -585,10 +586,7 @@
       };
     };
     if (!items.length) {
-      el.innerHTML =
-        '<div class="press-empty">' +
-        (effectiveUiText(lang, 'press.empty') || 'No press quotes yet.') +
-        '</div>';
+      el.innerHTML = '';
       return;
     }
     el.innerHTML = items

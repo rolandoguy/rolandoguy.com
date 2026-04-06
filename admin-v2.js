@@ -190,9 +190,11 @@
     ]],
     ['Media (videos & photos)', [
       ['vid.brand', 'Video brand line'],
-      ['vid.cat.opera_lied', 'Video category · Opera & art song'],
-      ['vid.cat.gala_crossover', 'Video category · Gala & crossover'],
+      ['vid.cat.opera_operetta', 'Video category · Opera · operetta'],
+      ['vid.cat.recital_lied', 'Video category · Recital · Lied'],
+      ['vid.cat.tango', 'Video category · Tango'],
       ['vid.repCat.opera', 'Video rep filter · Opera'],
+      ['vid.repCat.operetta', 'Video rep filter · Operetta'],
       ['vid.repCat.lied', 'Video rep filter · Lied'],
       ['vid.repCat.concert_sacred', 'Video rep filter · Concert'],
       ['vid.repCat.tango', 'Video rep filter · Tango'],
@@ -204,12 +206,18 @@
       ['mp.videos.h2', 'Videos section H2 (HTML)', 1, 3],
       ['mp.section.videos', 'Section label · Videos'],
       ['mp.section.photos', 'Section label · Photos'],
+      ['mp.section.audio', 'Section label · Audio'],
+      ['mp.jumpToAudio', 'Jump link · Audio'],
       ['mp.photos.h2', 'Photos H2 (HTML)', 1, 3],
       ['mp.photos.sub', 'Photos subtitle', 1],
+      ['mp.audio.h2', 'Audio H2 (HTML)', 1, 3],
+      ['mp.audio.sub', 'Audio subtitle', 1],
       ['mp.photos.studioTab', 'Photos tab · Studio'],
       ['mp.photos.stageTab', 'Photos tab · Stage'],
       ['mp.photos.backstageTab', 'Photos tab · Backstage'],
       ['mp.photos.backstageEmpty', 'Backstage empty'],
+      ['aud.embedUnavailable', 'Audio embed unavailable'],
+      ['aud.openExternal', 'Audio · open listening link'],
       ['mp.mediaLoadError', 'Media load error'],
       ['mp.mediaBottomNote', 'Media page footnote', 1],
       ['mp.mediaBottomPress', 'Media · press downloads link']
@@ -299,8 +307,9 @@
     gate: 'locked',
     failure: ''
   };
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
+  var mediaPhotoDragIndex = -1;
   var activityLog = [];
   var state = {
     lang: 'en',
@@ -326,6 +335,8 @@
     mediaTab: 'videos',
     vidData: { h2: '', videos: [] },
     vidIndex: -1,
+    audioData: { h2: '', sub: '', items: [] },
+    audIndex: -1,
     photosData: { s: [], t: [], b: [] },
     photoCaptions: {},
     photoType: 's',
@@ -336,7 +347,10 @@
     mediaVidSearch: '',
     mediaVidFilter: 'all',
     mediaVidSelected: {},
+    mediaAudSearch: '',
+    mediaAudFilter: 'all',
     mediaPhotoSearch: '',
+    mediaPhotoQuickFilter: 'all',
     pressSearch: '',
     pressVisibleFilter: 'all',
     pressSelected: {},
@@ -360,6 +374,7 @@
     programsSelected: {},
     pressWorkflowFilter: 'all',
     mediaVidWorkflowFilter: 'all',
+    mediaAudWorkflowFilter: 'all',
     perfWorkflowFilter: 'all',
     repWorkflowFilter: 'all',
     pastPerfsSelected: {}
@@ -809,6 +824,17 @@
     });
     return out;
   }
+  function normalizeUiLocaleDoc(doc, lang) {
+    var out = isObject(doc) ? doc : {};
+    var L = safeString(lang || state.lang).toLowerCase();
+    if (L === 'it' && safeString(out['nav.media']).trim().toLowerCase() === 'video') {
+      out['nav.media'] = 'Media';
+    }
+    if (safeString(out['nav.epk']).trim()) {
+      out['nav.epk'] = 'Dossier';
+    }
+    return out;
+  }
   function collectUiSectionInputsToDoc() {
     var d = {};
     d['nav.home'] = safeString($('ui-nav-home') && $('ui-nav-home').value);
@@ -821,7 +847,7 @@
     d['nav.contact'] = safeString($('ui-nav-contact') && $('ui-nav-contact').value);
     d = persistHomeRgUiCopyFields(d);
     d = persistPublicRgUiCopyFields(d);
-    return d;
+    return normalizeUiLocaleDoc(d, state.lang);
   }
   function getLegacySection(section) {
     try {
@@ -921,6 +947,13 @@
     var issues = [];
     var ui = getSiteHealthDoc(snapshot, 'rg_ui_' + L, {});
     var uiEn = getSiteHealthDoc(snapshot, 'rg_ui_en', {});
+    if (L === 'it' && safeString(ui['nav.media']).trim().toLowerCase() === 'video') {
+      issues.push({
+        kind: 'warn',
+        text: 'Italian UI still saves Nav · media as "Video". Save UI once in IT to normalize it back to "Media" for the live public site.',
+        action: { section: 'ui', lang: 'it' }
+      });
+    }
     var missingLocalized = [];
     var sameAsEn = [];
     var weakTitles = [];
@@ -1044,6 +1077,10 @@
       if (!isObject(val)) throw new Error(key + ' must be an object');
       if (!Array.isArray(val.videos)) throw new Error(key + '.videos must be an array');
     }
+    if (key === 'rg_audio') {
+      if (!isObject(val)) throw new Error('rg_audio must be an object');
+      if (!Array.isArray(val.items)) throw new Error('rg_audio.items must be an array');
+    }
     if (key === 'rg_photos') {
       if (!isObject(val)) throw new Error('rg_photos must be an object');
       ['s', 't', 'b'].forEach(function (k) {
@@ -1105,6 +1142,7 @@
     if (k === 'rg_past_perfs') return 'Past performances (public list)';
     if (k === 'rg_vid') return 'Media · videos';
     if (k === 'rg_vid_en') return 'Media · videos (legacy key · read-only merge)';
+    if (k === 'rg_audio') return 'Media · audio';
     if (k === 'rg_photos') return 'Media · photos';
     if (k === 'rg_photo_captions') return 'Media · photo captions';
     if (k === 'rg_press') return 'Press · quotes';
@@ -1160,7 +1198,7 @@
       'contact_en','contact_de','contact_es','contact_it','contact_fr',
       'rg_ui_en','rg_ui_de','rg_ui_es','rg_ui_it','rg_ui_fr',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
-      'rg_perfs','rg_vid','rg_vid_en','rg_photos','rg_press','rg_public_pdfs'
+      'rg_perfs','rg_vid','rg_vid_en','rg_audio','rg_photos','rg_press','rg_public_pdfs'
     ];
   }
   function buildSiteHealthSnapshot() {
@@ -1536,7 +1574,7 @@
     if (scope === 'rep') return /^rep_/.test(key) || key === 'rg_rep_cards';
     if (scope === 'programs') return /^rg_programs/.test(key) || /^programs_/.test(key) || /^rg_editorial_/.test(key);
     if (scope === 'calendar') return /^perf_/.test(key) || key === 'rg_perfs' || key === 'rg_past_perfs';
-    if (scope === 'media') return key === 'rg_vid' || key === 'rg_photos' || key === 'rg_photo_captions';
+    if (scope === 'media') return key === 'rg_vid' || key === 'rg_audio' || key === 'rg_photos' || key === 'rg_photo_captions';
     if (scope === 'press') return !!PRESS_IMPORT_KEYS[key];
     if (scope === 'contact') return /^contact_/.test(key);
     if (scope === 'ui') return /^rg_ui_/.test(key);
@@ -1896,6 +1934,9 @@
       } catch (e) {}
     }
     $('bio-portraitPreview').src = previewSrc;
+    $('bio-portraitPreview').style.objectFit = safeString($('bio-portraitFit').value).trim() || 'cover';
+    $('bio-portraitPreview').style.objectPosition = safeString($('bio-portraitFocus').value).trim() || '50% 26%';
+    updatePreviewFocusMarker($('bio-portraitPreview-wrap'), $('bio-portraitFocus').value);
   }
 
   function resolveEffectiveBioPortrait(storedCurrent, storedEn, defaultPortrait) {
@@ -1923,6 +1964,8 @@
     setFieldFromSources('bio-portraitAlt', stored, fallback, 'portraitAlt', 'Bundled default');
     setFieldFromSources('bio-quote', stored, fallback, 'quote', 'Bundled default');
     setFieldFromSources('bio-cite', stored, fallback, 'cite', 'Bundled default');
+    setFieldFromSources('bio-portraitFit', stored, fallback, 'portraitFit', 'Default cover');
+    setFieldFromSources('bio-portraitFocus', stored, fallback, 'portraitFocus', 'Public default');
     var immediate = resolveEffectiveBioPortrait(stored, storedEn, state.bioPortraitDefault);
     if (immediate) {
       $('bio-portraitImage').value = immediate;
@@ -1961,7 +2004,9 @@
       portraitAlt: safeString($('bio-portraitAlt').value),
       quote: safeString($('bio-quote').value),
       cite: safeString($('bio-cite').value),
-      portraitImage: safeString($('bio-portraitImage').value).trim()
+      portraitImage: safeString($('bio-portraitImage').value).trim(),
+      portraitFit: safeString($('bio-portraitFit').value).trim(),
+      portraitFocus: safeString($('bio-portraitFocus').value).trim()
     };
     saveDoc('bio_' + state.lang, payload);
     // Compatibility mirror for mp/biography runtime override resolution.
@@ -1975,6 +2020,8 @@
         var prev = loadDoc(key, {});
         if (!isObject(prev)) prev = {};
         prev.portraitImage = payload.portraitImage;
+        prev.portraitFit = payload.portraitFit;
+        prev.portraitFocus = payload.portraitFocus;
         saveDoc(key, prev);
         try {
           localStorage.setItem(key, JSON.stringify(prev));
@@ -3067,6 +3114,33 @@
     var d = isObject(raw) ? clone(raw) : {};
     if (!Array.isArray(d.videos)) d.videos = [];
     d.h2 = safeString(d.h2);
+    function inferRepCat(row) {
+      var raw = safeString(row && row.repertoireCat);
+      if (raw === 'tango_crossover') raw = '';
+      if (raw) return raw;
+      var blob = [row && row.tag, row && row.title, row && row.sub].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
+      if (/\btango\b|milonga|bandoneon|bandoneón|tango argentin|tango argentino|tangos\b|tango-loft|tango loft/.test(blob)) return 'tango';
+      if (/\boperetta\b|\boperete\b|\bopereta\b|fledermaus|lustige witwe|land des lächelns|csardas|csárdás|zarewitsch|bajadere|weisses rössl/.test(blob)) return 'operetta';
+      if (/\blied\b|kunstlied|art song|lorelei|schubert|schumann|wolf|liederabend|mélodie|melodie|canción de arte|kunstlie/.test(blob)) return 'lied';
+      if (/sacred|oratorio|requiem|\bmass\b|bach|motet|passion|stabat|kirche|kirch|church|cathedral|\bmesse\b|geistlich|sacro|sacrée|sacra/.test(blob)) return 'concert_sacred';
+      return 'opera';
+    }
+    function normalizeVideoGroupValue(v, row) {
+      var raw = safeString(v);
+      var rep = inferRepCat(row);
+      if (raw === 'tango' || rep === 'tango') return 'tango';
+      if (raw === 'opera_operetta' || raw === 'recital_lied') return raw;
+      if (raw === 'gala_crossover') {
+        if (rep === 'opera' || rep === 'operetta') return 'opera_operetta';
+        return 'recital_lied';
+      }
+      if (raw === 'opera_lied') {
+        if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
+        return 'opera_operetta';
+      }
+      if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
+      return 'opera_operetta';
+    }
     d.videos = d.videos.filter(function (v) { return isObject(v); }).map(function (v) {
       return {
         id: safeString(v.id),
@@ -3076,9 +3150,53 @@
         composer: safeString(v.composer),
         repertoireCat: safeString(v.repertoireCat),
         hidden: !!v.hidden,
-        group: safeString(v.group || 'opera_lied'),
+        group: normalizeVideoGroupValue(v.group || 'opera_operetta', v),
         featured: !!v.featured,
         customThumb: safeString(v.customThumb),
+        editorialStatus: safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft'))
+      };
+    });
+    return d;
+  }
+  function safeMediaAudio(raw) {
+    var d = isObject(raw) ? clone(raw) : {};
+    if (!Array.isArray(d.items)) d.items = [];
+    d.h2 = safeString(d.h2);
+    d.sub = safeString(d.sub);
+    function inferRepCat(row) {
+      var raw = safeString(row && row.repertoireCat);
+      if (raw) return raw;
+      var blob = [row && row.tag, row && row.title, row && row.subline, row && row.composer].map(function (x) {
+        return safeString(x).toLowerCase();
+      }).join(' ');
+      if (/\btango\b|milonga|bandoneon|bandoneón|tango argentin|tango argentino|tangos\b/.test(blob)) return 'tango';
+      if (/\boperetta\b|\boperete\b|\bopereta\b|fledermaus|lustige witwe|land des lächelns|csardas|csárdás|zarewitsch|bajadere|weisses rössl/.test(blob)) return 'operetta';
+      if (/\blied\b|kunstlied|art song|lorelei|schubert|schumann|wolf|liederabend|mélodie|melodie|canción de arte/.test(blob)) return 'lied';
+      if (/sacred|oratorio|requiem|\bmass\b|bach|motet|passion|stabat|\bmesse\b|geistlich|sacro|sacrée|sacra/.test(blob)) return 'concert_sacred';
+      return 'opera';
+    }
+    function normalizeAudioGroupValue(v, row) {
+      var raw = safeString(v);
+      var rep = inferRepCat(row);
+      if (raw === 'tango' || rep === 'tango') return 'tango';
+      if (raw === 'opera_operetta' || raw === 'recital_lied') return raw;
+      if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
+      return 'opera_operetta';
+    }
+    d.items = d.items.filter(function (v) { return isObject(v); }).map(function (v) {
+      return {
+        provider: safeString(v.provider || 'soundcloud'),
+        embedUrl: safeString(v.embedUrl),
+        externalUrl: safeString(v.externalUrl),
+        coverImage: safeString(v.coverImage),
+        title: safeString(v.title),
+        subline: safeString(v.subline != null ? v.subline : v.sub),
+        tag: safeString(v.tag),
+        composer: safeString(v.composer),
+        repertoireCat: safeString(v.repertoireCat),
+        hidden: !!v.hidden,
+        group: normalizeAudioGroupValue(v.group || 'opera_operetta', v),
+        featured: !!v.featured,
         editorialStatus: safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft'))
       };
     });
@@ -3112,36 +3230,251 @@
     var d = isObject(raw) ? clone(raw) : {};
     ['s', 't', 'b'].forEach(function (k) {
       if (!Array.isArray(d[k])) d[k] = [];
-      d[k] = d[k].map(function (x) { return safeString(isObject(x) ? x.url : x); }).filter(Boolean);
+      d[k] = d[k].map(function (x) {
+        var url = safeString(isObject(x) ? x.url : x).trim();
+        if (!url) return null;
+        var orientation = safeString(isObject(x) ? x.orientation : '').trim().toLowerCase();
+        if (orientation !== 'portrait' && orientation !== 'landscape') orientation = '';
+        var focus = safeString(isObject(x) ? (x.focus != null ? x.focus : x.objectPosition) : '').trim();
+        return { url: url, orientation: orientation, focus: focus };
+      }).filter(Boolean);
     });
     return d;
   }
+  function getPhotoEntry(type, idx) {
+    var arr = state.photosData[type] || [];
+    var raw = arr[idx];
+    if (isObject(raw)) {
+      return {
+        url: safeString(raw.url).trim(),
+        orientation: (function (v) {
+          v = safeString(v).trim().toLowerCase();
+          return v === 'portrait' || v === 'landscape' ? v : '';
+        })(raw.orientation),
+        focus: safeString(raw.focus != null ? raw.focus : raw.objectPosition).trim()
+      };
+    }
+    return { url: safeString(raw).trim(), orientation: '', focus: '' };
+  }
+  function setPhotoEntry(type, idx, entry) {
+    if (!Array.isArray(state.photosData[type])) state.photosData[type] = [];
+    state.photosData[type][idx] = {
+      url: safeString(entry && entry.url).trim(),
+      orientation: (function (v) {
+        v = safeString(v).trim().toLowerCase();
+        return v === 'portrait' || v === 'landscape' ? v : '';
+      })(entry && entry.orientation),
+      focus: safeString(entry && entry.focus).trim()
+    };
+  }
+  function inferPhotoOrientation(width, height) {
+    var w = Number(width) || 0;
+    var h = Number(height) || 0;
+    if (!(w > 0 && h > 0)) return '';
+    return w >= h ? 'landscape' : 'portrait';
+  }
+  function updatePreviewFocusMarker(wrap, focusValue) {
+    if (!wrap) return;
+    var raw = safeString(focusValue).trim();
+    var m = raw.match(/^\s*([0-9.]+)%\s+([0-9.]+)%\s*$/);
+    wrap.style.setProperty('--focus-x', m ? m[1] + '%' : '50%');
+    wrap.style.setProperty('--focus-y', m ? m[2] + '%' : '50%');
+  }
+  function applyPreviewFocusFromPointer(wrap, input, previewImg, evt) {
+    if (!wrap || !input || !previewImg) return;
+    var rect = wrap.getBoundingClientRect();
+    if (!(rect.width > 0 && rect.height > 0)) return;
+    var x = Math.max(0, Math.min(rect.width, evt.clientX - rect.left));
+    var y = Math.max(0, Math.min(rect.height, evt.clientY - rect.top));
+    var px = Math.round((x / rect.width) * 1000) / 10;
+    var py = Math.round((y / rect.height) * 1000) / 10;
+    var val = px + '% ' + py + '%';
+    input.value = val;
+    previewImg.style.objectPosition = val;
+    updatePreviewFocusMarker(wrap, val);
+    return val;
+  }
+  function bindPreviewFocusEditor(opts) {
+    var wrap = $(opts.wrapId);
+    var input = $(opts.inputId);
+    var previewImg = $(opts.imgId);
+    if (!wrap || !input || !previewImg || wrap.dataset.focusBinder === '1') return;
+    wrap.dataset.focusBinder = '1';
+    wrap.classList.add('focus-edit');
+    updatePreviewFocusMarker(wrap, input.value);
+    var dragging = false;
+    function applyEvt(evt) {
+      var val = applyPreviewFocusFromPointer(wrap, input, previewImg, evt);
+      if (typeof opts.onChange === 'function' && val) opts.onChange(val);
+    }
+    wrap.addEventListener('pointerdown', function (evt) {
+      dragging = true;
+      try { wrap.setPointerCapture(evt.pointerId); } catch (e) {}
+      applyEvt(evt);
+    });
+    wrap.addEventListener('pointermove', function (evt) {
+      if (!dragging) return;
+      applyEvt(evt);
+    });
+    function endDrag(evt) {
+      if (!dragging) return;
+      dragging = false;
+      try { wrap.releasePointerCapture(evt.pointerId); } catch (e) {}
+    }
+    wrap.addEventListener('pointerup', endDrag);
+    wrap.addEventListener('pointercancel', endDrag);
+  }
+  function setMediaPhotoPreviewMeta(photo, naturalW, naturalH, detected) {
+    var meta = $('media-photo-preview-meta');
+    if (!meta) return;
+    var parts = [];
+    if (naturalW > 0 && naturalH > 0) parts.push('Detected: ' + naturalW + '×' + naturalH);
+    if (detected) parts.push(detected);
+    if (safeString(photo && photo.orientation).trim()) parts.push('Saved orientation: ' + safeString(photo.orientation).trim());
+    if (safeString(photo && photo.focus).trim()) parts.push('Focus: ' + safeString(photo.focus).trim());
+    meta.textContent = parts.length ? parts.join(' · ') : 'Load an image to detect orientation.';
+  }
+  function preferredOrientationForPhotoType(type) {
+    if (type === 's') return 'portrait';
+    if (type === 't' || type === 'b') return 'landscape';
+    return '';
+  }
+  function updateMediaPhotoOrientationWarning(photo) {
+    var el = $('media-photo-orientation-warn');
+    if (!el) return;
+    var saved = safeString(photo && photo.orientation).trim().toLowerCase();
+    var pref = preferredOrientationForPhotoType(state.photoType);
+    if (!saved || !pref || saved === pref) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    var sectionLabel = state.photoType === 's' ? 'Studio' : (state.photoType === 't' ? 'Stage' : 'Backstage');
+    el.style.display = '';
+    el.textContent = sectionLabel + ' usually works better with ' + pref + ' images. This one may crop more heavily.';
+  }
+  function updateMediaPhotoSectionSummary() {
+    var el = $('media-photo-section-summary');
+    if (!el) return;
+    var arr = state.photosData[state.photoType] || [];
+    var counts = { portrait: 0, landscape: 0, focus: 0 };
+    arr.forEach(function (entry, i) {
+      var photo = getPhotoEntry(state.photoType, i);
+      if (photo.orientation === 'portrait') counts.portrait += 1;
+      if (photo.orientation === 'landscape') counts.landscape += 1;
+      if (safeString(photo.focus).trim()) counts.focus += 1;
+    });
+    el.textContent = arr.length + ' photos · ' + counts.portrait + ' portrait · ' + counts.landscape + ' landscape';
+  }
+  function movePhotoCaptions(type, from, to, totalLen) {
+    var caps = [];
+    for (var i = 0; i < totalLen; i++) caps.push(clone(getPhotoCaption(type, i)));
+    var moved = caps.splice(from, 1)[0];
+    caps.splice(to, 0, moved);
+    var next = {};
+    Object.keys(state.photoCaptions).forEach(function (k) {
+      if (k.indexOf(type + '_') !== 0) next[k] = state.photoCaptions[k];
+    });
+    caps.forEach(function (cap, idx) {
+      if (!cap) return;
+      if (!safeString(cap.caption).trim() && !safeString(cap.alt).trim() && !safeString(cap.photographer).trim()) return;
+      next[type + '_' + idx] = cap;
+    });
+    state.photoCaptions = next;
+  }
+  function movePhotoEntry(type, from, to) {
+    var arr = state.photosData[type] || [];
+    if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return;
+    var moved = arr.splice(from, 1)[0];
+    arr.splice(to, 0, moved);
+    state.photosData[type] = arr;
+    movePhotoCaptions(type, from, to, arr.length);
+    state.photoIndex = to;
+    renderMediaPhotosList();
+    renderMediaPhotoEditor();
+    markDirty(true, 'Photo order updated');
+  }
+  function clearPhotoDropClasses(box) {
+    if (!box) return;
+    box.querySelectorAll('.item.drop-before,.item.drop-after,.item.dragging').forEach(function (el) {
+      el.classList.remove('drop-before', 'drop-after', 'dragging');
+    });
+  }
   function mediaSummaryVideo(v) {
     var t = safeString(v.title) || '(untitled)';
-    var g = safeString(v.group || 'opera_lied');
+    var g = safeString(v.group || 'opera_operetta')
+      .replace('opera_operetta', 'Opera · Operetta')
+      .replace('recital_lied', 'Recital · Lied')
+      .replace('tango', 'Tango')
+      .replace('opera_lied', 'Opera · Operetta')
+      .replace('gala_crossover', 'Recital · Lied');
     var flags = [];
     if (v.featured) flags.push('featured');
     if (v.hidden) flags.push('hidden');
     return t + ' · ' + g + (flags.length ? ' · ' + flags.join(', ') : '');
   }
-  function mediaSummaryPhoto(src, i) {
-    var shortSrc = safeString(src);
+  function mediaSummaryPhoto(entry, i) {
+    var photo = isObject(entry) ? entry : { url: entry };
+    var shortSrc = safeString(photo.url);
     if (shortSrc.length > 36) shortSrc = shortSrc.slice(0, 33) + '...';
     var cap = getPhotoCaption(state.photoType, i).caption;
-    return (cap ? cap + ' · ' : '') + shortSrc;
+    var flags = [];
+    if (safeString(photo.orientation).trim()) flags.push(safeString(photo.orientation).trim());
+    if (safeString(photo.focus).trim()) flags.push('custom focus');
+    return (cap ? cap + ' · ' : '') + shortSrc + (flags.length ? ' · ' + flags.join(', ') : '');
+  }
+  function mediaSummaryAudio(a) {
+    var t = safeString(a.title) || '(untitled)';
+    var g = safeString(a.group || 'opera_operetta')
+      .replace('opera_operetta', 'Opera · Operetta')
+      .replace('recital_lied', 'Recital · Lied')
+      .replace('tango', 'Tango');
+    var provider = safeString(a.provider || 'soundcloud');
+    var flags = [provider];
+    if (a.featured) flags.push('featured');
+    if (a.hidden) flags.push('hidden');
+    return t + ' · ' + g + ' · ' + flags.join(', ');
+  }
+  function audioHasEmbed(a) {
+    return isValidHttpUrl(safeString(a && a.embedUrl).trim());
+  }
+  function audioHasExternalLink(a) {
+    return isValidHttpUrl(safeString(a && a.externalUrl).trim());
+  }
+  function audioReadyCheck(a) {
+    var issues = [];
+    if (!a || !isObject(a)) {
+      issues.push('Audio missing');
+      return { ok: false, issues: issues };
+    }
+    if (a.hidden) issues.push('Hidden');
+    if (isBlank(a.title)) issues.push('Title missing');
+    if (!audioHasEmbed(a) && !audioHasExternalLink(a)) issues.push('Embed or external link missing');
+    if (!isBlank(a.embedUrl) && !audioHasEmbed(a)) issues.push('Embed URL looks invalid');
+    if (!isBlank(a.externalUrl) && !audioHasExternalLink(a)) issues.push('External URL looks invalid');
+    return { ok: issues.length === 0, issues: issues };
   }
   function loadMedia() {
     state.vidData = mergeRgVidRead(loadDoc('rg_vid', { h2: '', videos: [] }), loadDoc('rg_vid_en', null));
     state.vidIndex = -1;
+    state.audioData = safeMediaAudio(loadDoc('rg_audio', { h2: '', sub: '', items: [] }));
+    state.audIndex = -1;
     state.photosData = safePhotos(loadDoc('rg_photos', { s: [], t: [], b: [] }));
     state.photoCaptions = loadDoc('rg_photo_captions', {});
     if (!isObject(state.photoCaptions)) state.photoCaptions = {};
     state.photoIndex = -1;
+    if ($('media-photo-quick-filter')) $('media-photo-quick-filter').value = state.mediaPhotoQuickFilter || 'all';
     if ($('media-vid-filter')) $('media-vid-filter').value = state.mediaVidFilter || 'all';
     if ($('media-vid-workflow-filter')) $('media-vid-workflow-filter').value = state.mediaVidWorkflowFilter || 'all';
+    if ($('media-aud-filter')) $('media-aud-filter').value = state.mediaAudFilter || 'all';
+    if ($('media-aud-workflow-filter')) $('media-aud-workflow-filter').value = state.mediaAudWorkflowFilter || 'all';
     $('media-vid-h2').value = state.vidData.h2;
+    if ($('media-aud-h2')) $('media-aud-h2').value = state.audioData.h2;
+    if ($('media-aud-sub')) $('media-aud-sub').value = state.audioData.sub;
     renderMediaVideosProvenance();
     renderMediaVideosList();
+    renderMediaAudioList();
+    renderMediaAudioEditor();
     renderMediaPhotosList();
     toggleMediaTab(state.mediaTab || 'videos');
   }
@@ -3149,8 +3482,10 @@
     state.mediaTab = tab;
     $('mediaTabVideos').classList.toggle('active', tab === 'videos');
     $('mediaTabPhotos').classList.toggle('active', tab === 'photos');
+    $('mediaTabAudio').classList.toggle('active', tab === 'audio');
     $('mediaVideosPanel').style.display = tab === 'videos' ? '' : 'none';
     $('mediaPhotosPanel').style.display = tab === 'photos' ? '' : 'none';
+    $('mediaAudioPanel').style.display = tab === 'audio' ? '' : 'none';
   }
   function renderMediaVideosList() {
     var box = $('media-vid-list');
@@ -3219,7 +3554,9 @@
     $('media-vid-sub').value = safeString(v.sub);
     $('media-vid-tag').value = safeString(v.tag);
     $('media-vid-composer').value = safeString(v.composer);
-    $('media-vid-group').value = safeString(v.group || 'opera_lied');
+    $('media-vid-group').value = safeString(v.group || 'opera_operetta')
+      .replace('opera_lied', 'opera_operetta')
+      .replace('gala_crossover', 'recital_lied');
     $('media-vid-repertoireCat').value = safeString(v.repertoireCat);
     $('media-vid-customThumb').value = safeString(v.customThumb);
     $('media-vid-featured').value = v.featured ? 'true' : 'false';
@@ -3234,7 +3571,7 @@
     v.sub = safeString($('media-vid-sub').value);
     v.tag = safeString($('media-vid-tag').value);
     v.composer = safeString($('media-vid-composer').value);
-    v.group = safeString($('media-vid-group').value || 'opera_lied');
+    v.group = safeString($('media-vid-group').value || 'opera_operetta');
     v.repertoireCat = safeString($('media-vid-repertoireCat').value);
     v.customThumb = safeString($('media-vid-customThumb').value);
     v.featured = $('media-vid-featured').value === 'true';
@@ -3260,24 +3597,42 @@
     var box = $('media-photo-list');
     var arr = state.photosData[state.photoType] || [];
     var q = safeString(state.mediaPhotoSearch).toLowerCase().trim();
-    var rows = arr.map(function (src, i) { return { src: src, i: i }; }).filter(function (row) {
+    var quick = state.mediaPhotoQuickFilter || 'all';
+    var rows = arr.map(function (entry, i) { return { entry: getPhotoEntry(state.photoType, i), i: i }; }).filter(function (row) {
       if (!q) return true;
       var c = getPhotoCaption(state.photoType, row.i);
-      var hay = [row.src, c.caption, c.alt, c.photographer].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
+      var hay = [row.entry.url, row.entry.orientation, row.entry.focus, c.caption, c.alt, c.photographer].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
       return hay.indexOf(q) >= 0;
+    }).filter(function (row) {
+      if (quick === 'all') return true;
+      if (quick === 'portrait') return row.entry.orientation === 'portrait';
+      if (quick === 'landscape') return row.entry.orientation === 'landscape';
+      if (quick === 'focus') return !!safeString(row.entry.focus).trim();
+      return true;
     });
     if (!rows.length) {
       box.innerHTML = '<div class="empty-state">No hay fotos en este grupo. Usa "+ Add by URL".</div>';
       state.photoIndex = -1;
+      updateMediaPhotoSectionSummary();
       renderMediaPhotoEditor();
       return;
     }
     box.innerHTML = rows.map(function (row) {
       var cls = row.i === state.photoIndex ? 'item active' : 'item';
-      var c = getPhotoCaption(state.photoType, row.i);
       var badges = [];
-      if (isBlank(row.src)) badges.push({ kind: 'warn', label: 'missing image' });
-      return '<div class="' + cls + '" data-idx="' + row.i + '">' + mediaSummaryPhoto(row.src, row.i) + badgesHtml(badges) + '</div>';
+      if (isBlank(row.entry.url)) badges.push({ kind: 'warn', label: 'missing image' });
+      var thumbStyle = row.entry.focus ? ' style="object-position:' + row.entry.focus.replace(/"/g, '&quot;') + '"' : '';
+      return (
+        '<div class="' + cls + '" data-idx="' + row.i + '" draggable="true">' +
+        '<div class="item-row">' +
+        '<span class="item-handle" title="Drag to reorder">⋮⋮</span>' +
+        '<div class="item-thumb">' +
+        '<img src="' + safeString(row.entry.url).replace(/"/g, '&quot;') + '"' + thumbStyle + ' alt="">' +
+        '</div>' +
+        '<div class="item-main">' + mediaSummaryPhoto(row.entry, row.i) + badgesHtml(badges) + '</div>' +
+        '</div>' +
+        '</div>'
+      );
     }).join('');
     box.querySelectorAll('.item').forEach(function (el) {
       el.addEventListener('click', function () {
@@ -3285,29 +3640,70 @@
         renderMediaPhotosList();
         renderMediaPhotoEditor();
       });
+      el.addEventListener('dragstart', function (evt) {
+        mediaPhotoDragIndex = Number(el.getAttribute('data-idx'));
+        el.classList.add('dragging');
+        if (evt.dataTransfer) evt.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragover', function (evt) {
+        evt.preventDefault();
+        if (mediaPhotoDragIndex < 0) return;
+        clearPhotoDropClasses(box);
+        var rect = el.getBoundingClientRect();
+        var before = evt.clientY < rect.top + rect.height / 2;
+        el.classList.add(before ? 'drop-before' : 'drop-after');
+      });
+      el.addEventListener('dragleave', function () {
+        el.classList.remove('drop-before', 'drop-after');
+      });
+      el.addEventListener('drop', function (evt) {
+        evt.preventDefault();
+        var target = Number(el.getAttribute('data-idx'));
+        if (mediaPhotoDragIndex < 0 || target < 0) return;
+        var rect = el.getBoundingClientRect();
+        var before = evt.clientY < rect.top + rect.height / 2;
+        var dest = before ? target : target + 1;
+        if (mediaPhotoDragIndex < dest) dest -= 1;
+        clearPhotoDropClasses(box);
+        movePhotoEntry(state.photoType, mediaPhotoDragIndex, Math.max(0, Math.min((state.photosData[state.photoType] || []).length - 1, dest)));
+        mediaPhotoDragIndex = -1;
+      });
+      el.addEventListener('dragend', function () {
+        mediaPhotoDragIndex = -1;
+        clearPhotoDropClasses(box);
+      });
     });
     if (state.photoIndex < 0) {
       state.photoIndex = 0;
       renderMediaPhotosList();
       renderMediaPhotoEditor();
     }
+    updateMediaPhotoSectionSummary();
   }
   function renderMediaPhotoEditor() {
-    var arr = state.photosData[state.photoType] || [];
-    var src = arr[state.photoIndex] || '';
+    var photo = getPhotoEntry(state.photoType, state.photoIndex);
     var c = getPhotoCaption(state.photoType, state.photoIndex);
-    $('media-photo-url').value = safeString(src);
+    $('media-photo-url').value = safeString(photo.url);
+    $('media-photo-orientation').value = safeString(photo.orientation);
+    $('media-photo-focus').value = safeString(photo.focus);
     $('media-photo-caption').value = safeString(c.caption);
     $('media-photo-alt').value = safeString(c.alt);
     $('media-photo-photographer').value = safeString(c.photographer);
-    $('media-photo-preview').src = safeString(src);
+    $('media-photo-preview').src = safeString(photo.url);
+    $('media-photo-preview').style.objectFit = 'cover';
+    $('media-photo-preview').style.objectPosition = safeString(photo.focus) || 'center center';
+    updatePreviewFocusMarker($('media-photo-preview-wrap'), safeString(photo.focus));
+    setMediaPhotoPreviewMeta(photo, $('media-photo-preview').naturalWidth || 0, $('media-photo-preview').naturalHeight || 0, '');
+    updateMediaPhotoOrientationWarning(photo);
   }
   function persistMediaPhotoEditor() {
     if (state.photoIndex < 0) return;
-    var arr = state.photosData[state.photoType] || [];
-    arr[state.photoIndex] = safeString($('media-photo-url').value);
+    setPhotoEntry(state.photoType, state.photoIndex, {
+      url: $('media-photo-url').value,
+      orientation: $('media-photo-orientation').value,
+      focus: $('media-photo-focus').value
+    });
     setPhotoCaption(state.photoType, state.photoIndex, $('media-photo-caption').value, $('media-photo-alt').value, $('media-photo-photographer').value);
-    state.photosData[state.photoType] = arr;
     renderMediaPhotosList();
     renderMediaPhotoEditor();
     markDirty(true, 'Foto editada');
@@ -3316,6 +3712,105 @@
     state.photosData = safePhotos(state.photosData);
     saveDoc('rg_photos', state.photosData);
     saveDoc('rg_photo_captions', state.photoCaptions);
+  }
+  function renderMediaAudioList() {
+    var box = $('media-aud-list');
+    if (!box) return;
+    var arr = state.audioData.items || [];
+    var q = safeString(state.mediaAudSearch).toLowerCase().trim();
+    var filter = state.mediaAudFilter || 'all';
+    var rows = arr.map(function (a, i) { return { a: a, i: i }; }).filter(function (row) {
+      if (!q) return true;
+      var hay = [row.a.title, row.a.composer, row.a.tag, row.a.provider, row.a.embedUrl].map(function (x) { return safeString(x).toLowerCase(); }).join(' ');
+      return hay.indexOf(q) >= 0;
+    }).filter(function (row) {
+      if (filter === 'all') return true;
+      if (filter === 'visible') return !row.a.hidden;
+      if (filter === 'hidden') return !!row.a.hidden;
+      if (filter === 'featured') return !!row.a.featured;
+      return true;
+    }).filter(function (row) {
+      var wf = state.mediaAudWorkflowFilter || 'all';
+      if (wf === 'all') return true;
+      var bucket = safeString(row.a.editorialStatus || (row.a.hidden ? 'hidden' : 'draft'));
+      if (wf === 'ready') return audioReadyCheck(row.a).ok && bucket !== 'hidden';
+      return bucket === wf;
+    });
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty-state">No hay audios. Crea uno con "+ New audio".</div>';
+      state.audIndex = -1;
+      renderMediaAudioEditor();
+      return;
+    }
+    box.innerHTML = rows.map(function (row) {
+      var cls = row.i === state.audIndex ? 'item active' : 'item';
+      var badges = [];
+      var readiness = audioReadyCheck(row.a);
+      if (isBlank(row.a.title)) badges.push({ kind: 'warn', label: 'missing title' });
+      if (!audioHasEmbed(row.a) && !audioHasExternalLink(row.a)) badges.push({ kind: 'warn', label: 'missing source' });
+      else if (!audioHasEmbed(row.a) && audioHasExternalLink(row.a)) badges.push({ kind: 'warn', label: 'external only' });
+      if (!isBlank(row.a.embedUrl) && !audioHasEmbed(row.a)) badges.push({ kind: 'warn', label: 'invalid embed' });
+      if (!isBlank(row.a.externalUrl) && !audioHasExternalLink(row.a)) badges.push({ kind: 'warn', label: 'invalid link' });
+      if (row.a.hidden) badges.push({ kind: 'err', label: 'hidden' });
+      badges.push({ kind: 'warn', label: safeString(row.a.editorialStatus || (row.a.hidden ? 'hidden' : 'draft')) });
+      if ((state.mediaAudWorkflowFilter || 'all') === 'ready' && !readiness.ok) badges.push({ kind: 'warn', label: 'not ready' });
+      return '<div class="' + cls + '" data-idx="' + row.i + '">' + mediaSummaryAudio(row.a) + badgesHtml(badges) + '</div>';
+    }).join('');
+    box.querySelectorAll('.item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.audIndex = Number(el.getAttribute('data-idx'));
+        renderMediaAudioList();
+        renderMediaAudioEditor();
+      });
+    });
+    if (state.audIndex < 0) {
+      state.audIndex = 0;
+      renderMediaAudioList();
+      renderMediaAudioEditor();
+    }
+  }
+  function renderMediaAudioEditor() {
+    if (!$('media-aud-provider')) return;
+    var a = state.audioData.items[state.audIndex] || {};
+    $('media-aud-provider').value = safeString(a.provider || 'soundcloud');
+    $('media-aud-embedUrl').value = safeString(a.embedUrl);
+    $('media-aud-externalUrl').value = safeString(a.externalUrl);
+    $('media-aud-coverImage').value = safeString(a.coverImage);
+    $('media-aud-title').value = safeString(a.title);
+    $('media-aud-subline').value = safeString(a.subline);
+    $('media-aud-tag').value = safeString(a.tag);
+    $('media-aud-composer').value = safeString(a.composer);
+    $('media-aud-group').value = safeString(a.group || 'opera_operetta');
+    $('media-aud-repertoireCat').value = safeString(a.repertoireCat);
+    $('media-aud-featured').value = a.featured ? 'true' : 'false';
+    $('media-aud-hidden').value = a.hidden ? 'true' : 'false';
+    setSelectWithCustomValue('media-aud-editorialStatus', safeString(a.editorialStatus || (a.hidden ? 'hidden' : 'draft')), 'draft');
+  }
+  function persistMediaAudioEditor() {
+    if (state.audIndex < 0 || !$('media-aud-provider')) return;
+    var a = state.audioData.items[state.audIndex] || {};
+    a.provider = safeString($('media-aud-provider').value || 'soundcloud');
+    a.embedUrl = safeString($('media-aud-embedUrl').value);
+    a.externalUrl = safeString($('media-aud-externalUrl').value);
+    a.coverImage = safeString($('media-aud-coverImage').value);
+    a.title = safeString($('media-aud-title').value);
+    a.subline = safeString($('media-aud-subline').value);
+    a.tag = safeString($('media-aud-tag').value);
+    a.composer = safeString($('media-aud-composer').value);
+    a.group = safeString($('media-aud-group').value || 'opera_operetta');
+    a.repertoireCat = safeString($('media-aud-repertoireCat').value);
+    a.featured = $('media-aud-featured').value === 'true';
+    a.hidden = $('media-aud-hidden').value === 'true';
+    a.editorialStatus = safeString($('media-aud-editorialStatus').value || (a.hidden ? 'hidden' : 'draft'));
+    state.audioData.items[state.audIndex] = a;
+    renderMediaAudioList();
+    markDirty(true, 'Audio editado');
+  }
+  function saveMediaAudio() {
+    state.audioData.h2 = safeString($('media-aud-h2').value);
+    state.audioData.sub = safeString($('media-aud-sub').value);
+    state.audioData = safeMediaAudio(state.audioData);
+    saveDoc('rg_audio', state.audioData);
   }
 
   function safePublicPdfs(raw) {
@@ -3722,6 +4217,7 @@
       } catch (e) {}
     }
     if (!isObject(d)) d = {};
+    d = normalizeUiLocaleDoc(d, state.lang);
     $('ui-json').value = JSON.stringify(d, null, 2);
     loadUiNavFieldsFromDoc(d);
     updateCompletenessIndicators();
@@ -3755,6 +4251,7 @@
     if ($('ui-nav-contact')) d['nav.contact'] = safeString($('ui-nav-contact').value);
     d = persistHomeRgUiCopyFields(d);
     d = persistPublicRgUiCopyFields(d);
+    d = normalizeUiLocaleDoc(d, state.lang);
     saveDoc('rg_ui_' + state.lang, d);
     $('ui-json').value = JSON.stringify(d, null, 2);
   }
@@ -5218,6 +5715,7 @@
     try {
       var parsed = JSON.parse($('ui-json').value || '{}');
       if (!isObject(parsed)) throw new Error('JSON must be an object');
+      parsed = normalizeUiLocaleDoc(parsed, state.lang);
       saveDoc('rg_ui_' + state.lang, parsed);
       ensureUiPublicCopyEditorBuilt();
       loadUiNavFieldsFromDoc(parsed);
@@ -5421,7 +5919,7 @@
     if (s === 'rep') return { h2: $('rep-h2').value, intro: $('rep-intro').value, repCards: clone(state.repCards), repIndex: state.repIndex };
     if (s === 'programs') return { programsDoc: clone(state.programsDoc), programsIndex: state.programsIndex };
     if (s === 'calendar') return { h2: $('perf-h2').value, intro: $('perf-intro').value, perfs: clone(state.perfs), perfIndex: state.perfIndex };
-    if (s === 'media') return { vidData: clone(state.vidData), vidIndex: state.vidIndex, photosData: clone(state.photosData), photoCaptions: clone(state.photoCaptions), photoType: state.photoType, photoIndex: state.photoIndex };
+    if (s === 'media') return { vidData: clone(state.vidData), vidIndex: state.vidIndex, audioData: clone(state.audioData), audIndex: state.audIndex, photosData: clone(state.photosData), photoCaptions: clone(state.photoCaptions), photoType: state.photoType, photoIndex: state.photoIndex };
     if (s === 'press') return { press: clone(state.press), pressIndex: state.pressIndex, publicPdfs: clone(state.publicPdfs), epkBios: clone(state.epkBios), epkPhotos: clone(state.epkPhotos), epkPhotoIndex: state.epkPhotoIndex };
     if (s === 'contact') return { title: $('contact-title').value, sub: $('contact-sub').value, email: $('contact-email').value, emailBtn: $('contact-emailBtn').value, webBtn: $('contact-webBtn').value, webUrl: $('contact-webUrl') ? $('contact-webUrl').value : '' };
     if (s === 'ui') return { uiPartial: collectUiSectionInputsToDoc(), json: $('ui-json').value };
@@ -5453,6 +5951,8 @@
       $('bio-quote').value = safeString(d.quote);
       $('bio-cite').value = safeString(d.cite);
       $('bio-portraitImage').value = safeString(d.portraitImage);
+      if ($('bio-portraitFit')) $('bio-portraitFit').value = safeString(d.portraitFit);
+      if ($('bio-portraitFocus')) $('bio-portraitFocus').value = safeString(d.portraitFocus);
       updateBioPortraitPreview(); updateBioMiniPreview();
     } else if (s === 'rep') {
       state.repCards = Array.isArray(d.repCards) ? clone(d.repCards) : [];
@@ -5471,12 +5971,16 @@
     } else if (s === 'media') {
       state.vidData = safeMediaVideos(d.vidData || {});
       state.vidIndex = Number.isFinite(Number(d.vidIndex)) ? Number(d.vidIndex) : -1;
+      state.audioData = safeMediaAudio(d.audioData || {});
+      state.audIndex = Number.isFinite(Number(d.audIndex)) ? Number(d.audIndex) : -1;
       state.photosData = safePhotos(d.photosData || {});
       state.photoCaptions = isObject(d.photoCaptions) ? clone(d.photoCaptions) : {};
       state.photoType = safeString(d.photoType || 's');
       state.photoIndex = Number.isFinite(Number(d.photoIndex)) ? Number(d.photoIndex) : -1;
       $('media-vid-h2').value = safeString(state.vidData.h2);
-      renderMediaVideosList(); renderMediaVideoEditor(); renderMediaPhotosList(); renderMediaPhotoEditor();
+      if ($('media-aud-h2')) $('media-aud-h2').value = safeString(state.audioData.h2);
+      if ($('media-aud-sub')) $('media-aud-sub').value = safeString(state.audioData.sub);
+      renderMediaVideosList(); renderMediaVideoEditor(); renderMediaAudioList(); renderMediaAudioEditor(); renderMediaPhotosList(); renderMediaPhotoEditor();
     } else if (s === 'press') {
       state.press = Array.isArray(d.press) ? clone(d.press) : [];
       state.pressIndex = Number.isFinite(Number(d.pressIndex)) ? Number(d.pressIndex) : -1;
@@ -5576,7 +6080,7 @@
 
   function buildExportPayload() {
     var keys = [
-      'rg_rep_cards','rg_vid','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions',
+      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
       'rg_editorial_en','rg_editorial_de','rg_editorial_es','rg_editorial_it','rg_editorial_fr',
       'hero_en','hero_de','hero_es','hero_it','hero_fr',
@@ -5776,8 +6280,10 @@
     });
     $('mediaTabVideos').addEventListener('click', function () { toggleMediaTab('videos'); });
     $('mediaTabPhotos').addEventListener('click', function () { toggleMediaTab('photos'); });
+    $('mediaTabAudio').addEventListener('click', function () { toggleMediaTab('audio'); });
     $('media-vid-save').addEventListener('click', saveMediaVideos);
     $('media-photo-save').addEventListener('click', saveMediaPhotos);
+    $('media-aud-save').addEventListener('click', saveMediaAudio);
     $('pressTabQuotes').addEventListener('click', function () { togglePressTab('quotes'); });
     $('pressTabPdfs').addEventListener('click', function () { togglePressTab('pdfs'); });
     $('pressTabBios').addEventListener('click', function () { togglePressTab('bios'); });
@@ -5877,6 +6383,21 @@
     if ($('media-vid-select-visible')) $('media-vid-select-visible').addEventListener('click', function () { selectVisibleInto(state.mediaVidSelected, 'media-vid-list'); renderMediaVideosList(); });
     if ($('media-vid-clear-selection')) $('media-vid-clear-selection').addEventListener('click', function () { clearSelected(state.mediaVidSelected); renderMediaVideosList(); });
     if ($('media-vid-apply-bulk')) $('media-vid-apply-bulk').addEventListener('click', applyMediaVidBulk);
+    if ($('media-aud-search')) $('media-aud-search').addEventListener('input', function () { state.mediaAudSearch = $('media-aud-search').value; renderMediaAudioList(); });
+    if ($('media-aud-filter')) $('media-aud-filter').addEventListener('change', function () { state.mediaAudFilter = $('media-aud-filter').value; renderMediaAudioList(); });
+    if ($('media-aud-workflow-filter')) $('media-aud-workflow-filter').addEventListener('change', function () {
+      state.mediaAudWorkflowFilter = $('media-aud-workflow-filter').value;
+      renderMediaAudioList();
+    });
+    if ($('media-aud-reset-filters')) $('media-aud-reset-filters').addEventListener('click', function () {
+      if ($('media-aud-search')) $('media-aud-search').value = '';
+      if ($('media-aud-filter')) $('media-aud-filter').value = 'all';
+      if ($('media-aud-workflow-filter')) $('media-aud-workflow-filter').value = 'all';
+      state.mediaAudSearch = '';
+      state.mediaAudFilter = 'all';
+      state.mediaAudWorkflowFilter = 'all';
+      renderMediaAudioList();
+    });
     if ($('media-photo-search')) $('media-photo-search').addEventListener('input', function () { state.mediaPhotoSearch = $('media-photo-search').value; renderMediaPhotosList(); });
     if ($('press-search')) $('press-search').addEventListener('input', function () { state.pressSearch = $('press-search').value; renderPressList(); });
     if ($('press-visible-filter')) $('press-visible-filter').addEventListener('change', function () { state.pressVisibleFilter = $('press-visible-filter').value; renderPressList(); });
@@ -6177,7 +6698,7 @@
 
     $('media-vid-add').addEventListener('click', function () {
       clearSelected(state.mediaVidSelected);
-      state.vidData.videos.push({ id: '', tag: '', title: '', sub: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_lied', featured: false, editorialStatus: 'draft', customThumb: '' });
+      state.vidData.videos.push({ id: '', tag: '', title: '', sub: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_operetta', featured: false, editorialStatus: 'draft', customThumb: '' });
       state.vidIndex = state.vidData.videos.length - 1;
       renderMediaVideosList(); renderMediaVideoEditor(); markDirty(true, 'Video creado');
     });
@@ -6210,6 +6731,36 @@
     if ($('media-vid-next-item')) $('media-vid-next-item').addEventListener('click', function () { goPrevNext('media-vid', 1); });
     if ($('media-vid-move-apply')) $('media-vid-move-apply').addEventListener('click', function () { applyMoveToPosition('media-vid', 'media-vid-move-pos'); });
     if ($('media-vid-revert-item')) $('media-vid-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('media-vid'); });
+    $('media-aud-add').addEventListener('click', function () {
+      state.audioData.items.push({ provider: 'soundcloud', embedUrl: '', externalUrl: '', coverImage: '', title: '', subline: '', tag: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_operetta', featured: false, editorialStatus: 'draft' });
+      state.audIndex = state.audioData.items.length - 1;
+      renderMediaAudioList(); renderMediaAudioEditor(); markDirty(true, 'Audio creado');
+    });
+    $('media-aud-dup').addEventListener('click', function () {
+      if (state.audIndex < 0) return;
+      state.audioData.items.splice(state.audIndex + 1, 0, clone(state.audioData.items[state.audIndex]));
+      state.audIndex += 1;
+      renderMediaAudioList(); renderMediaAudioEditor(); markDirty(true, 'Audio duplicado');
+    });
+    $('media-aud-del').addEventListener('click', function () {
+      if (state.audIndex < 0) return;
+      if (!window.confirm('Delete the selected audio item?')) return;
+      state.audioData.items.splice(state.audIndex, 1);
+      state.audIndex = Math.max(0, state.audIndex - 1);
+      renderMediaAudioList(); renderMediaAudioEditor(); markDirty(true, 'Audio borrado');
+    });
+    $('media-aud-up').addEventListener('click', function () {
+      var i = state.audIndex; if (i <= 0) return;
+      var t = state.audioData.items[i - 1]; state.audioData.items[i - 1] = state.audioData.items[i]; state.audioData.items[i] = t;
+      state.audIndex = i - 1;
+      renderMediaAudioList(); markDirty(true, 'Audio order updated');
+    });
+    $('media-aud-down').addEventListener('click', function () {
+      var i = state.audIndex; if (i < 0 || i >= state.audioData.items.length - 1) return;
+      var t = state.audioData.items[i + 1]; state.audioData.items[i + 1] = state.audioData.items[i]; state.audioData.items[i] = t;
+      state.audIndex = i + 1;
+      renderMediaAudioList(); markDirty(true, 'Audio order updated');
+    });
 
     ['s', 't', 'b'].forEach(function (type) {
       $('media-photo-filter-' + type).addEventListener('click', function () { setPhotoType(type); });
@@ -6219,9 +6770,20 @@
       if (!url) return;
       var clean = safeString(url).trim();
       if (!clean) return;
-      state.photosData[state.photoType].push(clean);
+      state.photosData[state.photoType].push({ url: clean, orientation: '', focus: '' });
       state.photoIndex = state.photosData[state.photoType].length - 1;
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto agregada');
+    });
+    $('media-photo-add-batch').addEventListener('click', function () {
+      var raw = window.prompt('Paste one image URL per line');
+      if (!raw) return;
+      var urls = raw.split(/\r?\n/).map(function (x) { return safeString(x).trim(); }).filter(Boolean);
+      if (!urls.length) return;
+      urls.forEach(function (url) {
+        state.photosData[state.photoType].push({ url: url, orientation: '', focus: '' });
+      });
+      state.photoIndex = state.photosData[state.photoType].length - 1;
+      renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, urls.length + ' photos added');
     });
     $('media-photo-dup').addEventListener('click', function () {
       if (state.photoIndex < 0) return;
@@ -6230,6 +6792,8 @@
       var insertAt = state.photoIndex + 1;
       shiftPhotoCaptionsAfterInsert(type, insertAt);
       arr.splice(insertAt, 0, arr[state.photoIndex]);
+      var original = getPhotoEntry(type, state.photoIndex);
+      arr[insertAt] = { url: original.url, orientation: original.orientation, focus: original.focus };
       var cap = clone(getPhotoCaption(type, state.photoIndex));
       state.photoIndex = insertAt;
       setPhotoCaption(type, state.photoIndex, cap.caption, cap.alt, cap.photographer);
@@ -6280,7 +6844,9 @@
     bindInputsDirty(['epk-photo-url','epk-photo-caption','epk-photo-alt','epk-photo-photographer'], persistEpkPhotoEditor);
     bindInputsDirty(['media-vid-id','media-vid-title','media-vid-sub','media-vid-tag','media-vid-composer','media-vid-group','media-vid-repertoireCat','media-vid-customThumb','media-vid-featured','media-vid-hidden','media-vid-editorialStatus'], persistMediaVideoEditor);
     bindInputsDirty(['media-vid-h2']);
-    bindInputsDirty(['media-photo-url','media-photo-caption','media-photo-alt','media-photo-photographer'], persistMediaPhotoEditor);
+    bindInputsDirty(['media-aud-provider','media-aud-embedUrl','media-aud-externalUrl','media-aud-coverImage','media-aud-title','media-aud-subline','media-aud-tag','media-aud-composer','media-aud-group','media-aud-repertoireCat','media-aud-featured','media-aud-hidden','media-aud-editorialStatus'], persistMediaAudioEditor);
+    bindInputsDirty(['media-aud-h2','media-aud-sub']);
+    bindInputsDirty(['media-photo-url','media-photo-orientation','media-photo-focus','media-photo-caption','media-photo-alt','media-photo-photographer'], persistMediaPhotoEditor);
 
     bindInputsDirty(
       [
@@ -6330,7 +6896,9 @@
         'bio-portraitAlt',
         'bio-quote',
         'bio-cite',
-        'bio-portraitImage'
+        'bio-portraitImage',
+        'bio-portraitFit',
+        'bio-portraitFocus'
       ],
       function () {
         updateBioPortraitPreview();
@@ -6339,6 +6907,51 @@
         markDirty(true);
       }
     );
+    if ($('media-photo-preview')) {
+      $('media-photo-preview').addEventListener('load', function () {
+        var photo = getPhotoEntry(state.photoType, state.photoIndex);
+        var detected = inferPhotoOrientation(this.naturalWidth, this.naturalHeight);
+        if (!$('media-photo-orientation').value && detected) {
+          $('media-photo-orientation').value = detected;
+          persistMediaPhotoEditor();
+          photo = getPhotoEntry(state.photoType, state.photoIndex);
+        }
+        setMediaPhotoPreviewMeta(photo, this.naturalWidth || 0, this.naturalHeight || 0, detected ? 'Auto-detected: ' + detected : '');
+        updateMediaPhotoOrientationWarning(photo);
+      });
+      bindPreviewFocusEditor({
+        wrapId: 'media-photo-preview-wrap',
+        inputId: 'media-photo-focus',
+        imgId: 'media-photo-preview',
+        onChange: function () { persistMediaPhotoEditor(); }
+      });
+    }
+    if ($('media-photo-quick-filter')) $('media-photo-quick-filter').addEventListener('change', function () {
+      state.mediaPhotoQuickFilter = $('media-photo-quick-filter').value;
+      renderMediaPhotosList();
+    });
+    if ($('bio-portraitPreview')) {
+      $('bio-portraitPreview').addEventListener('load', function () {
+        var meta = $('bio-portraitPreview-meta');
+        if (meta) {
+          var detected = inferPhotoOrientation(this.naturalWidth, this.naturalHeight);
+          meta.textContent = (this.naturalWidth || 0) && (this.naturalHeight || 0)
+            ? 'Detected: ' + this.naturalWidth + '×' + this.naturalHeight + (detected ? ' · ' + detected : '')
+            : 'Portrait preview.';
+        }
+      });
+      bindPreviewFocusEditor({
+        wrapId: 'bio-portraitPreview-wrap',
+        inputId: 'bio-portraitFocus',
+        imgId: 'bio-portraitPreview',
+        onChange: function () {
+          updateBioPortraitPreview();
+          updateBioMiniPreview();
+          updateCompletenessIndicators();
+          markDirty(true);
+        }
+      });
+    }
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
     bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);

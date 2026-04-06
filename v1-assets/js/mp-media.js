@@ -12,6 +12,11 @@
   var MP_MEDIA = null;
   var currentLang = 'en';
   var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var photoSectionObserverBound = false;
+  var videoSectionObserverBound = false;
+  var mediaSectionObserverBound = false;
+  var photoManualTabUntil = 0;
+  var photoManualTarget = '';
 
   function mpPick(lang, key, fb) {
     var p = window.pickMpLocaleString;
@@ -32,9 +37,11 @@
 
   var MP_MEDIA_UI_EN = {
     'vid.brand': 'Rolando Guy · Lyric Tenor',
-    'vid.cat.opera_lied': 'Opera & Art Song',
-    'vid.cat.gala_crossover': 'Gala & Crossover',
+    'vid.cat.opera_operetta': 'Opera · Operetta',
+    'vid.cat.recital_lied': 'Recital · Lied',
+    'vid.cat.tango': 'Tango',
     'vid.repCat.opera': 'Opera',
+    'vid.repCat.operetta': 'Operetta',
     'vid.repCat.lied': 'Lied & art song',
     'vid.repCat.concert_sacred': 'Concert & sacred',
     'vid.repCat.tango': 'Tango',
@@ -43,6 +50,8 @@
     'vid.showLess': '\u2212 Show Less',
     'vid.embedUnavailable': 'Video player unavailable',
     'vid.openYoutube': 'Open on YouTube',
+    'aud.embedUnavailable': 'Audio player unavailable',
+    'aud.openExternal': 'Open listening link',
     'ui.close': 'Close \u2715',
     'ui.closeEmbed': '\u00d7 Close',
     'ui.closeVideoAria': 'Close video'
@@ -100,6 +109,11 @@
       ? MP_MEDIA.vid
       : { h2: '', videos: [] };
   }
+  function getAudio() {
+    return MP_MEDIA && MP_MEDIA.audio && typeof MP_MEDIA.audio === 'object'
+      ? MP_MEDIA.audio
+      : { h2: '', sub: '', items: [] };
+  }
 
   function resolvePhotoSrc(x) {
     if (x == null) return '';
@@ -107,14 +121,35 @@
     if (typeof x === 'object' && x.url != null) return String(x.url);
     return '';
   }
-
-  function getPhotoPaths() {
+  function normalizePhotoEntry(x) {
+    if (x == null) return null;
+    var url = resolvePhotoSrc(x).trim();
+    if (!url) return null;
+    var orientation = '';
+    var focus = '';
+    if (typeof x === 'object') {
+      orientation = String(x.orientation != null ? x.orientation : '').trim().toLowerCase();
+      if (orientation !== 'portrait' && orientation !== 'landscape') orientation = '';
+      focus = String(x.focus != null ? x.focus : x.objectPosition != null ? x.objectPosition : '').trim();
+    }
+    return { url: url, orientation: orientation, focus: focus };
+  }
+  function getPhotoEntries() {
     if (!MP_MEDIA || !MP_MEDIA.photos) return { s: [], t: [], b: [] };
     var p = MP_MEDIA.photos;
     function list(arr) {
-      return (Array.isArray(arr) ? arr : []).map(resolvePhotoSrc);
+      return (Array.isArray(arr) ? arr : []).map(normalizePhotoEntry).filter(Boolean);
     }
     return { s: list(p.s), t: list(p.t), b: list(p.b) };
+  }
+
+  function getPhotoPaths() {
+    var entries = getPhotoEntries();
+    return {
+      s: entries.s.map(function (x) { return x.url; }),
+      t: entries.t.map(function (x) { return x.url; }),
+      b: entries.b.map(function (x) { return x.url; })
+    };
   }
 
   function fetchFirestoreRgDoc(key) {
@@ -144,9 +179,9 @@
 
   function normalizeLivePhotosBlock(raw) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-    var s = Array.isArray(raw.s) ? raw.s.map(resolvePhotoSrc) : [];
-    var t = Array.isArray(raw.t) ? raw.t.map(resolvePhotoSrc) : [];
-    var b = Array.isArray(raw.b) ? raw.b.map(resolvePhotoSrc) : [];
+    var s = Array.isArray(raw.s) ? raw.s.map(normalizePhotoEntry).filter(Boolean) : [];
+    var t = Array.isArray(raw.t) ? raw.t.map(normalizePhotoEntry).filter(Boolean) : [];
+    var b = Array.isArray(raw.b) ? raw.b.map(normalizePhotoEntry).filter(Boolean) : [];
     if (!s.length && !t.length && !b.length) return null;
     return { s: s, t: t, b: b };
   }
@@ -191,7 +226,7 @@
           composer: String(v.composer != null ? v.composer : '').trim(),
           repertoireCat: String(v.repertoireCat != null ? v.repertoireCat : '').trim(),
           hidden: !!v.hidden,
-          group: group || 'opera_lied',
+          group: group || 'opera_operetta',
           featured: !!v.featured,
           customThumb: String(v.customThumb != null ? v.customThumb : '').trim(),
           editorialStatus: String(
@@ -201,6 +236,35 @@
       });
     if (!videos.length) return null;
     return { h2: h2, videos: videos };
+  }
+  function normalizeLiveAudioBlock(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    var h2 = String(raw.h2 != null ? raw.h2 : '').trim();
+    var sub = String(raw.sub != null ? raw.sub : '').trim();
+    var arr = Array.isArray(raw.items) ? raw.items : [];
+    var items = arr
+      .filter(function (v) {
+        return v && typeof v === 'object' && !Array.isArray(v);
+      })
+      .map(function (v) {
+        return {
+          provider: String(v.provider != null ? v.provider : 'soundcloud').trim() || 'soundcloud',
+          embedUrl: String(v.embedUrl != null ? v.embedUrl : '').trim(),
+          externalUrl: String(v.externalUrl != null ? v.externalUrl : '').trim(),
+          coverImage: String(v.coverImage != null ? v.coverImage : '').trim(),
+          title: String(v.title != null ? v.title : '').trim(),
+          subline: String(v.subline != null ? v.subline : v.sub != null ? v.sub : '').trim(),
+          tag: String(v.tag != null ? v.tag : '').trim(),
+          composer: String(v.composer != null ? v.composer : '').trim(),
+          repertoireCat: String(v.repertoireCat != null ? v.repertoireCat : '').trim(),
+          hidden: !!v.hidden,
+          group: String(v.group != null ? v.group : '').trim() || 'opera_operetta',
+          featured: !!v.featured,
+          editorialStatus: String(v.editorialStatus != null ? v.editorialStatus : v.hidden ? 'hidden' : 'draft').trim()
+        };
+      });
+    if (!items.length && !h2 && !sub) return null;
+    return { h2: h2, sub: sub, items: items };
   }
 
   /** Canonical rg_vid; if empty, legacy rg_vid_en (matches admin-v2 mergeRgVidRead). */
@@ -215,18 +279,26 @@
       fetchFirestoreRgDoc('rg_photos'),
       fetchFirestoreRgDoc('rg_photo_captions'),
       fetchFirestoreRgDoc('rg_vid'),
-      fetchFirestoreRgDoc('rg_vid_en')
+      fetchFirestoreRgDoc('rg_vid_en'),
+      fetchFirestoreRgDoc('rg_audio')
     ]).then(function (quads) {
       if (!MP_MEDIA) return;
       var livePhotos = normalizeLivePhotosBlock(quads[0]);
       var liveCaps = normalizeLiveCaptions(quads[1]);
       var liveVid = mergeLiveVidFromFirestore(quads[2], quads[3]);
+      var liveAudio = normalizeLiveAudioBlock(quads[4]);
       if (liveVid) {
         if (!MP_MEDIA.vid) MP_MEDIA.vid = { h2: '', videos: [] };
         var jsonH2 =
           MP_MEDIA.vid && typeof MP_MEDIA.vid.h2 === 'string' ? String(MP_MEDIA.vid.h2).trim() : '';
         MP_MEDIA.vid.h2 = liveVid.h2 || jsonH2;
         MP_MEDIA.vid.videos = liveVid.videos;
+      }
+      if (liveAudio) {
+        if (!MP_MEDIA.audio) MP_MEDIA.audio = { h2: '', sub: '', items: [] };
+        MP_MEDIA.audio.h2 = liveAudio.h2 || String(MP_MEDIA.audio.h2 || '').trim();
+        MP_MEDIA.audio.sub = liveAudio.sub || String(MP_MEDIA.audio.sub || '').trim();
+        MP_MEDIA.audio.items = liveAudio.items;
       }
       if (!livePhotos && !liveCaps) return;
       if (!MP_MEDIA.photos) MP_MEDIA.photos = {};
@@ -257,9 +329,10 @@
     };
   }
 
-  var VIDEO_REP_CATS = ['opera', 'lied', 'concert_sacred', 'tango', 'crossover'];
+  var VIDEO_REP_CATS = ['opera', 'operetta', 'lied', 'concert_sacred', 'tango', 'crossover'];
+  var VIDEO_SECTION_KEYS = ['opera_operetta', 'recital_lied', 'tango'];
   function videoBlobLower(v) {
-    return [v.tag, v.title, v.sub]
+    return [v.tag, v.title, v.sub, v.subline, v.composer]
       .map(function (x) {
         return String(x || '');
       })
@@ -271,6 +344,11 @@
       blob
     );
   }
+  function inferOperettaFromBlob(blob) {
+    return /\boperetta\b|\boperete\b|\bopereta\b|fledermaus|lustige witwe|land des lächelns|csardas|csárdás|zarewitsch|bajadere|weisses rössl/.test(
+      blob
+    );
+  }
   function resolveVideoRepertoireCat(v) {
     var raw = String(v.repertoireCat || '').trim();
     if (raw === 'tango_crossover') {
@@ -279,7 +357,9 @@
     }
     if (VIDEO_REP_CATS.indexOf(raw) !== -1) return raw;
     var blob = videoBlobLower(v);
-    if (v.group === 'gala_crossover') return inferTangoFromBlob(blob) ? 'tango' : 'crossover';
+    if (v.group === 'tango') return 'tango';
+    if (inferTangoFromBlob(blob)) return 'tango';
+    if (inferOperettaFromBlob(blob)) return 'operetta';
     if (
       /\blied\b|kunstlied|art song|lorelei|schubert|schumann|wolf|liederabend|mélodie|melodie|canción de arte|kunstlie/.test(
         blob
@@ -293,6 +373,25 @@
     )
       return 'concert_sacred';
     return 'opera';
+  }
+  function normalizeVideoGroup(v) {
+    var raw = String(v.group || '').trim();
+    if (VIDEO_SECTION_KEYS.indexOf(raw) !== -1) return raw;
+    var rep = resolveVideoRepertoireCat(v);
+    if (raw === 'tango') return 'tango';
+    if (raw === 'opera_lied') {
+      if (rep === 'tango') return 'tango';
+      if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
+      return 'opera_operetta';
+    }
+    if (raw === 'gala_crossover') {
+      if (rep === 'tango') return 'tango';
+      if (rep === 'opera' || rep === 'operetta') return 'opera_operetta';
+      return 'recital_lied';
+    }
+    if (rep === 'tango') return 'tango';
+    if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
+    return 'opera_operetta';
   }
 
   function escVideoHtml(s) {
@@ -317,8 +416,17 @@
           : '';
     var vidH2el = document.getElementById('vidH2');
     if (vidH2el) vidH2el.innerHTML = withTitleEmphasisVid(vidH2);
+    var vidSubEl = document.getElementById('vidSub');
+    if (vidSubEl) {
+      vidSubEl.textContent = mpPick(
+        currentLang,
+        'mp.videos.sub',
+        'Selected performance videos and listening highlights from stage, concert and recital work.'
+      );
+    }
     var vids = Array.isArray(d.videos) ? d.videos.slice() : [];
     var grid = document.getElementById('videoGrid');
+    var nav = document.getElementById('videoSectionNav');
     var more = document.getElementById('videoMore');
     if (!grid || !more) return;
 
@@ -398,24 +506,20 @@
     }
 
     var normalised = vids.map(function (v) {
-      var group = v.group || '';
-      if (!group) {
-        var title = String(v.title || '');
-        if (/libiamo/i.test(title)) group = 'gala_crossover';
-        else group = 'opera_lied';
-      }
       var o = {};
       for (var k in v) {
         if (Object.prototype.hasOwnProperty.call(v, k)) o[k] = v[k];
       }
-      o.group = group;
+      o.group = normalizeVideoGroup(v);
       return o;
     });
 
     var groups = [
-      { key: 'opera_lied', label: t['vid.cat.opera_lied'] || 'Opera & Art Song' },
-      { key: 'gala_crossover', label: t['vid.cat.gala_crossover'] || 'Gala & Crossover' }
+      { key: 'opera_operetta', label: t['vid.cat.opera_operetta'] || 'Opera · Operetta' },
+      { key: 'recital_lied', label: t['vid.cat.recital_lied'] || 'Recital · Lied' },
+      { key: 'tango', label: t['vid.cat.tango'] || 'Tango' }
     ];
+    var visibleGroups = [];
 
     var htmlVisible = '';
     var htmlHidden = '';
@@ -435,7 +539,7 @@
           return { v: v, idx: idx };
         })
         .filter(function (e) {
-          return (e.v.group || 'opera_lied') === gconf.key;
+          return normalizeVideoGroup(e.v) === gconf.key;
         });
       if (!entries.length) return;
 
@@ -453,10 +557,16 @@
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+      var secId = 'video-cat-' + gconf.key;
       if (vis.length) {
+        visibleGroups.push(gconf);
         htmlVisible +=
-          '<div class="video-category">' +
-          '<h3 class="video-category-title">' +
+          '<div class="video-category" id="' +
+          secId +
+          '">' +
+          '<h3 class="video-category-title" id="' +
+          secId +
+          '-title">' +
           secTitle +
           '</h3>' +
           vis
@@ -482,6 +592,20 @@
     });
 
     grid.innerHTML = htmlVisible;
+    if (nav) {
+      nav.classList.toggle('has-tabs', visibleGroups.length > 0);
+      nav.style.display = visibleGroups.length ? '' : 'none';
+      nav.style.setProperty('--video-tab-count', String(Math.max(visibleGroups.length, 1)));
+      nav.innerHTML = visibleGroups
+        .map(function (gconf, idx) {
+          var label = String(gconf.label || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+          return '<a href="#video-cat-' + gconf.key + '-title" class="video-tab' + (idx === 0 ? ' active' : '') + '" id="tab-video-cat-' + gconf.key + '">' + label + '</a>';
+        })
+        .join('');
+    }
 
     if (htmlHidden) {
       var showMoreTxt = t['vid.showMore'] || '+ Show More Videos';
@@ -510,6 +634,222 @@
       );
       ob.observe(el);
     });
+  }
+
+  function bindVideoSectionObserver() {
+    if (videoSectionObserverBound) return;
+    var sections = VIDEO_SECTION_KEYS
+      .map(function (name) {
+        return {
+          name: name,
+          el: document.getElementById('video-cat-' + name),
+          titleEl: document.getElementById('video-cat-' + name + '-title')
+        };
+      })
+      .filter(function (entry) {
+        return !!entry.el && !!entry.titleEl;
+      });
+    if (!sections.length) return;
+    videoSectionObserverBound = true;
+    function setActive(name) {
+      sections.forEach(function (entry) {
+        var tab = document.getElementById('tab-video-cat-' + entry.name);
+        if (tab) tab.classList.toggle('active', entry.name === name);
+      });
+    }
+    sections.forEach(function (entry) {
+      var tab = document.getElementById('tab-video-cat-' + entry.name);
+      if (!tab) return;
+      tab.addEventListener('click', function () {
+        setActive(entry.name);
+      });
+    });
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(
+        function (entries) {
+          var visible = entries
+            .filter(function (entry) {
+              return entry.isIntersecting;
+            })
+            .sort(function (a, b) {
+              return b.intersectionRatio - a.intersectionRatio;
+            });
+          if (!visible.length) return;
+          var found = sections.find(function (entry) {
+            return entry.titleEl === visible[0].target;
+          });
+          if (found) setActive(found.name);
+        },
+        {
+          rootMargin: '-18% 0px -68% 0px',
+          threshold: [0.15, 0.35, 0.55, 0.75]
+        }
+      );
+      sections.forEach(function (entry) {
+        observer.observe(entry.titleEl);
+      });
+      return;
+    }
+    function updateActiveFromScroll() {
+      var active = sections[0].name;
+      sections.forEach(function (entry) {
+        if (entry.titleEl.getBoundingClientRect().top <= 160) active = entry.name;
+      });
+      setActive(active);
+    }
+    window.addEventListener('scroll', updateActiveFromScroll, { passive: true });
+    window.addEventListener('resize', updateActiveFromScroll);
+    updateActiveFromScroll();
+  }
+
+  function renderAudio() {
+    var d = getAudio();
+    var t = uiTable(currentLang);
+    var section = document.getElementById('audio');
+    var h2El = document.getElementById('audioH2');
+    var subEl = document.getElementById('audioSub');
+    var grid = document.getElementById('audioGrid');
+    var nav = document.getElementById('audioSectionNav');
+    if (!section || !h2El || !subEl || !grid || !nav) return;
+
+    var h2 = mpPick(currentLang, 'mp.audio.h2', String(d.h2 || '').trim() || 'Selected <em>Audio</em> &amp; Listening');
+    var sub = mpPick(currentLang, 'mp.audio.sub', String(d.sub || '').trim() || 'Selected embedded recordings and listening excerpts.');
+    h2El.innerHTML = formatSectionTitleIfAmpersand(String(h2 || ''));
+    subEl.textContent = String(sub || '');
+
+    var items = Array.isArray(d.items) ? d.items.slice() : [];
+    var normalised = items.map(function (a) {
+      var o = {};
+      for (var k in a) {
+        if (Object.prototype.hasOwnProperty.call(a, k)) o[k] = a[k];
+      }
+      o.group = normalizeVideoGroup(a);
+      o.repertoireCat = resolveVideoRepertoireCat(a);
+      return o;
+    });
+
+    function providerLabel(provider) {
+      var raw = String(provider || '').trim().toLowerCase();
+      if (raw === 'soundcloud') return 'SoundCloud';
+      if (raw === 'spotify') return 'Spotify';
+      if (raw === 'bandcamp') return 'Bandcamp';
+      return 'Audio';
+    }
+    function isSafeEmbed(url) {
+      var raw = String(url || '').trim();
+      return /^https:\/\/[^\s]+$/i.test(raw);
+    }
+    function hasExternalAudioLink(url) {
+      var raw = String(url || '').trim();
+      return /^https:\/\/[^\s]+$/i.test(raw);
+    }
+    function hasPublicAudioSource(a) {
+      return isSafeEmbed(a && a.embedUrl) || hasExternalAudioLink(a && a.externalUrl);
+    }
+    function mkAudioCard(a) {
+      var title = escVideoHtml(a.title || '');
+      var tag = escVideoHtml(a.tag || '');
+      var subline = escVideoHtml(a.subline || '');
+      var composer = escVideoHtml(a.composer || '');
+      var provider = providerLabel(a.provider);
+      var catKey = 'vid.repCat.' + String(a.repertoireCat || 'opera');
+      var catLabel = escVideoHtml(t[catKey] || String(a.repertoireCat || 'opera').replace(/_/g, ' '));
+      var openText = escVideoHtml(effectiveUiText(currentLang, 'aud.openExternal') || 'Open listening link');
+      var unavailableText = escVideoHtml(effectiveUiText(currentLang, 'aud.embedUnavailable') || 'Audio player unavailable');
+      var linkOnlyText = escVideoHtml(effectiveUiText(currentLang, 'aud.linkOnly') || 'Listening link available below');
+      var embed = isSafeEmbed(a.embedUrl)
+        ? '<iframe src="' + escVideoAttr(a.embedUrl) + '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+        : '<div class="audio-embed-fallback' + (hasExternalAudioLink(a.externalUrl) ? ' audio-embed-linkonly' : '') + '">' + (hasExternalAudioLink(a.externalUrl) ? linkOnlyText : unavailableText) + '</div>';
+      return (
+        '<article class="audio-card' + (a.featured ? ' audio-card-featured' : '') + '">' +
+        '<div class="audio-card-head">' +
+        '<span class="audio-provider">' + escVideoHtml(provider) + '</span>' +
+        '<span class="audio-rep-pill">' + catLabel + '</span>' +
+        '</div>' +
+        '<div class="audio-title-wrap">' +
+        (tag ? '<div class="audio-tagline">' + tag + '</div>' : '') +
+        '<h3 class="audio-title">' + title + '</h3>' +
+        (composer ? '<p class="audio-composer">' + composer + '</p>' : '') +
+        (subline ? '<p class="audio-subline">' + subline + '</p>' : '') +
+        '</div>' +
+        '<div class="audio-embed">' + embed + '</div>' +
+        (a.externalUrl ? '<div class="audio-links"><a href="' + escVideoAttr(a.externalUrl) + '" target="_blank" rel="noopener" class="audio-open-link">' + openText + '</a></div>' : '') +
+        '</article>'
+      );
+    }
+
+    var groups = [
+      { key: 'opera_operetta', label: t['vid.cat.opera_operetta'] || 'Opera · Operetta' },
+      { key: 'recital_lied', label: t['vid.cat.recital_lied'] || 'Recital · Lied' },
+      { key: 'tango', label: t['vid.cat.tango'] || 'Tango' }
+    ];
+    var visibleGroups = [];
+    var html = '';
+    groups.forEach(function (gconf) {
+      var vis = normalised.filter(function (a) {
+        return !a.hidden && normalizeVideoGroup(a) === gconf.key && hasPublicAudioSource(a);
+      });
+      if (!vis.length) return;
+      visibleGroups.push(gconf);
+      html +=
+        '<div class="audio-category" id="audio-cat-' + gconf.key + '">' +
+        '<h3 class="audio-category-title" id="audio-cat-' + gconf.key + '-title">' + escVideoHtml(gconf.label) + '</h3>' +
+        '<div class="audio-card-grid">' + vis.map(mkAudioCard).join('') + '</div>' +
+        '</div>';
+    });
+
+    section.hidden = !visibleGroups.length;
+    section.setAttribute('data-has-items', visibleGroups.length ? 'true' : 'false');
+    grid.innerHTML = html;
+    nav.classList.toggle('has-tabs', visibleGroups.length > 0);
+    nav.style.display = visibleGroups.length ? '' : 'none';
+    nav.style.setProperty('--audio-tab-count', String(Math.max(visibleGroups.length, 1)));
+    nav.innerHTML = visibleGroups.map(function (gconf, idx) {
+      return '<a href="#audio-cat-' + gconf.key + '-title" class="audio-tab' + (idx === 0 ? ' active' : '') + '" id="tab-audio-cat-' + gconf.key + '">' + escVideoHtml(gconf.label) + '</a>';
+    }).join('');
+  }
+
+  function bindAudioSectionObserver() {
+    var section = document.getElementById('audio');
+    if (!section || section.hidden) return;
+    var sections = VIDEO_SECTION_KEYS
+      .map(function (name) {
+        return {
+          name: name,
+          titleEl: document.getElementById('audio-cat-' + name + '-title')
+        };
+      })
+      .filter(function (entry) {
+        return !!entry.titleEl;
+      });
+    if (!sections.length) return;
+    function setActive(name) {
+      sections.forEach(function (entry) {
+        var tab = document.getElementById('tab-audio-cat-' + entry.name);
+        if (tab) tab.classList.toggle('active', entry.name === name);
+      });
+    }
+    sections.forEach(function (entry) {
+      var tab = document.getElementById('tab-audio-cat-' + entry.name);
+      if (!tab) return;
+      tab.addEventListener('click', function () { setActive(entry.name); });
+    });
+    if ('IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(
+        function (entries) {
+          var visible = entries.filter(function (entry) { return entry.isIntersecting; }).sort(function (a, b) {
+            return b.intersectionRatio - a.intersectionRatio;
+          });
+          if (!visible.length) return;
+          var found = sections.find(function (entry) { return entry.titleEl === visible[0].target; });
+          if (found) setActive(found.name);
+        },
+        { rootMargin: '-18% 0px -68% 0px', threshold: [0.15, 0.35, 0.55, 0.75] }
+      );
+      sections.forEach(function (entry) { observer.observe(entry.titleEl); });
+      return;
+    }
+    setActive(sections[0].name);
   }
 
   function toggleMore() {
@@ -727,9 +1067,7 @@
   function setActivePhotoTab(n) {
     ['studio', 'stage', 'backstage'].forEach(function (x) {
       var tab = document.getElementById('tab-' + x);
-      var panel = document.getElementById('panel-' + x);
       if (tab) tab.classList.toggle('active', x === n);
-      if (panel) panel.classList.toggle('active', x === n);
     });
   }
 
@@ -863,7 +1201,7 @@
   }
 
   function renderPhotoGallery() {
-    var ph = getPhotoPaths();
+    var ph = getPhotoEntries();
     var lang = currentLang || 'en';
     var altStudioFb = mpPick(lang, 'mp.photos.studioTab', 'Rolando Guy');
     var altStageFb = mpPick(lang, 'mp.photos.stageTab', 'On Stage');
@@ -872,13 +1210,34 @@
     var tRefs = getPhotoPanelRefs('stage');
     var bRefs = getPhotoPanelRefs('backstage');
 
+    function bestGridCols(count, maxCols) {
+      if (count <= 1) return 1;
+      var limit = Math.min(maxCols, count);
+      var best = 2;
+      var bestEmpty = Infinity;
+      for (var cols = 2; cols <= limit; cols++) {
+        var empty = (cols - (count % cols)) % cols;
+        if (empty < bestEmpty || (empty === bestEmpty && cols > best)) {
+          best = cols;
+          bestEmpty = empty;
+        }
+      }
+      return best;
+    }
+
     function renderItems(refs, items, altFallback) {
       if (!refs || !refs.grid) return;
+      var count = Array.isArray(items) ? items.length : 0;
+      var defaultCols = refs.itemClass === 'photo-item-p' ? 4 : 3;
+      refs.grid.style.gridTemplateColumns = 'repeat(' + bestGridCols(count, defaultCols) + ', 1fr)';
       refs.grid.innerHTML = (items || [])
-        .map(function (src, i) {
-          var imgSrc = resolvePhotoSrc(src);
+        .map(function (entry, i) {
+          var imgSrc = resolvePhotoSrc(entry);
           var cap = getCaption(refs.type, i);
           var alt = String(cap.alt || '').trim() || altFallback;
+          var focusStyle = entry && entry.focus
+            ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + '"'
+            : '';
           return (
             '<div class="photo-item ' +
             refs.itemClass +
@@ -892,7 +1251,9 @@
             imgSrc +
             '" alt="' +
             alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
-            '" loading="lazy" decoding="async"></div>'
+            '" loading="lazy" decoding="async"' +
+            focusStyle +
+            '></div>'
           );
         })
         .join('');
@@ -923,8 +1284,82 @@
 
   function switchPhotoTab(nextTab) {
     var next = nextTab || 'studio';
+    photoManualTarget = next;
+    photoManualTabUntil = Date.now() + 2200;
+    if (window.event && typeof window.event.preventDefault === 'function') {
+      window.event.preventDefault();
+    }
     setActivePhotoTab(next);
-    renderPhotoGallery();
+    var head = document.getElementById('photo-head-' + next);
+    if (head) {
+      var isMobile = window.matchMedia && window.matchMedia('(max-width: 1000px)').matches;
+      var offset = isMobile ? 142 : 118;
+      var top = Math.max(0, window.scrollY + head.getBoundingClientRect().top - offset);
+      try {
+        window.scrollTo({ top: top, behavior: 'smooth' });
+      } catch (e) {
+        window.scrollTo(0, top);
+      }
+    }
+  }
+
+  function bindPhotoSectionObserver() {
+    if (photoSectionObserverBound) return;
+    var panels = ['studio', 'stage', 'backstage']
+      .map(function (name) {
+        return { name: name, el: document.getElementById('panel-' + name) };
+      })
+      .filter(function (entry) {
+        return !!entry.el;
+      });
+    if (!panels.length || !('IntersectionObserver' in window)) return;
+    photoSectionObserverBound = true;
+    var observer = new IntersectionObserver(
+      function (entries) {
+        if (Date.now() < photoManualTabUntil) {
+          if (photoManualTarget) {
+            setActivePhotoTab(photoManualTarget);
+            var targetEl = document.getElementById('panel-' + photoManualTarget);
+            var targetEntry = entries.find(function (entry) {
+              return entry.target === targetEl;
+            });
+            if (targetEntry && targetEntry.isIntersecting) {
+              setActivePhotoTab(photoManualTarget);
+              photoManualTabUntil = 0;
+              photoManualTarget = '';
+            }
+          }
+          return;
+        }
+        var visible = entries
+          .filter(function (entry) {
+            return entry.isIntersecting;
+          })
+          .sort(function (a, b) {
+            return b.intersectionRatio - a.intersectionRatio;
+          });
+        if (!visible.length) return;
+        var found = panels.find(function (entry) {
+          return entry.el === visible[0].target;
+        });
+        if (found) setActivePhotoTab(found.name);
+      },
+      {
+        rootMargin: '-20% 0px -55% 0px',
+        threshold: [0.2, 0.35, 0.5]
+      }
+    );
+    panels.forEach(function (entry) {
+      observer.observe(entry.el);
+    });
+  }
+
+  function bindMediaSectionObserver() {
+    var audioSection = document.getElementById('audio');
+    var hasAudio = !!(audioSection && !audioSection.hidden && audioSection.getAttribute('data-has-items') === 'true');
+    document.querySelectorAll('[data-audio-jump]').forEach(function (el) {
+      el.hidden = !hasAudio;
+    });
   }
 
   document.addEventListener('keydown', function (e) {
@@ -962,8 +1397,11 @@
     if (!MP_MEDIA) return;
     applyPhotosChrome();
     renderVideos();
+    renderAudio();
     setActivePhotoTab(getActivePhotoTab());
     renderPhotoGallery();
+    bindAudioSectionObserver();
+    bindMediaSectionObserver();
   });
 
   window.addEventListener('mp:localesready', function () {
@@ -971,8 +1409,11 @@
     if (!MP_MEDIA) return;
     applyPhotosChrome();
     renderVideos();
+    renderAudio();
     setActivePhotoTab(getActivePhotoTab());
     renderPhotoGallery();
+    bindAudioSectionObserver();
+    bindMediaSectionObserver();
   });
 
   fetch('/v1-assets/data/media-data.json', { cache: 'no-store' })
@@ -988,8 +1429,13 @@
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
       applyPhotosChrome();
       renderVideos();
+      renderAudio();
+      bindVideoSectionObserver();
+      bindAudioSectionObserver();
       setActivePhotoTab(getActivePhotoTab());
       renderPhotoGallery();
+      bindPhotoSectionObserver();
+      bindMediaSectionObserver();
     })
     .catch(function () {
       var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
@@ -998,6 +1444,11 @@
           h2:
             mpPick(lang, 'mp.videos.h2', 'Stage, Concert &amp; <em>Recital Highlights</em>'),
           videos: []
+        },
+        audio: {
+          h2: mpPick(lang, 'mp.audio.h2', 'Selected <em>Audio</em> &amp; Listening'),
+          sub: mpPick(lang, 'mp.audio.sub', 'Selected embedded recordings and listening excerpts.'),
+          items: []
         },
         photos: {
           h2: mpPick(lang, 'mp.photos.h2', 'Portraits, Stage &amp; <em>Backstage</em>'),
@@ -1014,7 +1465,12 @@
       };
       applyPhotosChrome();
       renderVideos();
+      renderAudio();
+      bindVideoSectionObserver();
+      bindAudioSectionObserver();
       setActivePhotoTab(getActivePhotoTab());
       renderPhotoGallery();
+      bindPhotoSectionObserver();
+      bindMediaSectionObserver();
     });
 })();

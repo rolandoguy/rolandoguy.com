@@ -209,14 +209,26 @@
             <label>Attribution (optional)<input id="bio-cite"></label>
             <p class="muted">Saved per language as <code>bio_<em>lang</em></code>. The public page uses these values first and falls back to bundled <code>biography-data.json</code> only when a field is empty. Paragraphs are stored as <code>paragraphs[]</code> plus legacy <code>p1</code>/<code>p2</code> for compatibility.</p>
             <label>Biography portrait (this language only)<input id="bio-portraitImage" placeholder="../img/studio-2.jpg or https://..."></label>
+            <div class="grid two">
+              <label>Biography portrait fit
+                <select id="bio-portraitFit">
+                  <option value="">Default cover</option>
+                  <option value="cover">Cover</option>
+                  <option value="contain">Contain</option>
+                </select>
+              </label>
+              <label>Biography portrait focus / object-position<input id="bio-portraitFocus" placeholder="50% 26%"></label>
+            </div>
             <p class="muted">This image appears only on Biography page. Changes apply only to the currently selected language.</p>
             <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
               <input type="checkbox" id="bio-image-all-langs" style="width:auto">
-              Apply Biography portrait image to all languages
+              Apply Biography portrait image settings to all languages
             </label>
-            <div class="photo-preview-wrap">
+            <div id="bio-portraitPreview-wrap" class="photo-preview-wrap">
               <img id="bio-portraitPreview" alt="Biography portrait preview">
             </div>
+            <p id="bio-portraitPreview-meta" class="muted" style="margin:0">Portrait preview.</p>
+            <p class="muted" style="margin:0">Tip: drag on the preview to set the focal point visually.</p>
             <div id="bio-card-preview" class="mini-preview">
               <h4>Biography text preview</h4>
               <p class="mini-preview__body" id="bio-preview-intro">Intro line</p>
@@ -777,6 +789,7 @@
           <div class="toolbar">
             <button id="mediaTabVideos" class="active">Videos</button>
             <button id="mediaTabPhotos">Photos</button>
+            <button id="mediaTabAudio">Audio</button>
           </div>
 
           <div id="mediaVideosPanel">
@@ -842,20 +855,22 @@
                 <label>Sub<input id="media-vid-sub"></label>
                 <label>Tag<input id="media-vid-tag"></label>
                 <label>Composer<input id="media-vid-composer"></label>
-                <label>Group
+                <label>Public section
                   <select id="media-vid-group">
-                    <option value="opera_lied">opera_lied</option>
-                    <option value="gala_crossover">gala_crossover</option>
+                    <option value="opera_operetta">Opera · Operetta</option>
+                    <option value="recital_lied">Recital · Lied</option>
+                    <option value="tango">Tango</option>
                   </select>
                 </label>
                 <label>Repertoire category
                   <select id="media-vid-repertoireCat">
                     <option value="">(auto)</option>
-                    <option value="opera">opera</option>
-                    <option value="lied">lied</option>
-                    <option value="concert_sacred">concert_sacred</option>
-                    <option value="tango">tango</option>
-                    <option value="crossover">crossover</option>
+                    <option value="opera">Opera</option>
+                    <option value="operetta">Operetta</option>
+                    <option value="lied">Recital / Lied</option>
+                    <option value="concert_sacred">Concert / sacred</option>
+                    <option value="tango">Tango</option>
+                    <option value="crossover">Crossover</option>
                     <option value="tango_crossover">tango_crossover</option>
                   </select>
                 </label>
@@ -901,12 +916,22 @@
               <button id="media-photo-filter-s" class="active">Studio</button>
               <button id="media-photo-filter-t">Stage</button>
               <button id="media-photo-filter-b">Backstage</button>
+              <span id="media-photo-section-summary" class="pill">0 photos</span>
             </div>
             <div class="toolbar">
               <label>Search
                 <input id="media-photo-search" placeholder="Search URL / caption / alt / photographer">
               </label>
+              <label>Quick filter
+                <select id="media-photo-quick-filter">
+                  <option value="all">All</option>
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                  <option value="focus">Custom focus</option>
+                </select>
+              </label>
               <button id="media-photo-add-url">+ Add by URL</button>
+              <button id="media-photo-add-batch">+ Add multiple URLs</button>
               <button id="media-photo-dup">Duplicate</button>
               <button id="media-photo-del" class="danger">Delete</button>
               <button id="media-photo-up">↑</button>
@@ -918,15 +943,130 @@
                 <div id="media-photo-preview-wrap" class="photo-preview-wrap">
                   <img id="media-photo-preview" alt="preview">
                 </div>
+                <p id="media-photo-preview-meta" class="muted" style="margin:0">Load an image to detect orientation.</p>
                 <label>Image URL<input id="media-photo-url"></label>
+                <div class="grid two">
+                  <label>Orientation
+                    <select id="media-photo-orientation">
+                      <option value="">Use section default</option>
+                      <option value="portrait">Portrait</option>
+                      <option value="landscape">Landscape</option>
+                    </select>
+                  </label>
+                  <label>Focus / object-position<input id="media-photo-focus" placeholder="50% 20%"></label>
+                </div>
+                <p id="media-photo-orientation-warn" class="muted warn" style="margin:0;display:none"></p>
                 <label>Caption<input id="media-photo-caption"></label>
                 <label>Alt text<input id="media-photo-alt"></label>
                 <label>Photographer<input id="media-photo-photographer"></label>
-                <p class="muted" style="margin:4px 0 0;line-height:1.35">Caption and Photographer are visible in the media lightbox when filled. Alt text is for accessibility and is not shown as visible caption.</p>
+                <p class="muted" style="margin:4px 0 0;line-height:1.35">Caption and Photographer are visible in the media lightbox when filled. Alt text is for accessibility and is not shown as visible caption. Orientation and Focus are optional and help future portrait/landscape mixes crop more elegantly.</p>
+                <p class="muted" style="margin:0;line-height:1.35">Tip: drag on the preview to set the focal point visually. If Orientation is empty, the admin auto-detects portrait vs landscape when the image loads.</p>
               </div>
             </div>
             <div class="toolbar section-save-bar">
               <button id="media-photo-save" type="button" class="button-primary">Save Photos + Captions</button>
+            </div>
+          </div>
+
+          <div id="mediaAudioPanel" style="display:none">
+            <div class="grid one">
+              <label>Audio H2 (HTML)<input id="media-aud-h2"></label>
+              <label>Audio subtitle<textarea id="media-aud-sub" rows="3"></textarea></label>
+            </div>
+            <div class="toolbar">
+              <label>Search
+                <input id="media-aud-search" placeholder="Search title / composer / tag">
+              </label>
+              <label>Visibility filter
+                <select id="media-aud-filter">
+                  <option value="all">All</option>
+                  <option value="visible">Visible</option>
+                  <option value="hidden">Hidden</option>
+                  <option value="featured">Featured</option>
+                </select>
+              </label>
+              <label>Workflow filter
+                <select id="media-aud-workflow-filter" title="Editorial workflow">
+                  <option value="all">All workflow</option>
+                  <option value="draft">Draft</option>
+                  <option value="needs_translation">Needs translation</option>
+                  <option value="translated">Translated</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="published">Published</option>
+                  <option value="hidden">Hidden</option>
+                  <option value="ready">Ready to publish</option>
+                </select>
+              </label>
+              <button id="media-aud-reset-filters" type="button">Reset filters</button>
+              <button id="media-aud-add">+ New audio</button>
+              <button id="media-aud-dup">Duplicate</button>
+              <button id="media-aud-del" class="danger">Delete</button>
+              <button id="media-aud-up">↑</button>
+              <button id="media-aud-down">↓</button>
+            </div>
+            <div class="split">
+              <div id="media-aud-list" class="item-list"></div>
+              <div class="editor">
+                <label>Provider
+                  <select id="media-aud-provider">
+                    <option value="soundcloud">SoundCloud</option>
+                    <option value="spotify">Spotify</option>
+                    <option value="bandcamp">Bandcamp</option>
+                    <option value="custom">Custom embed</option>
+                  </select>
+                </label>
+                <label>Embed URL<input id="media-aud-embedUrl" placeholder="https://..."></label>
+                <label>External URL (optional)<input id="media-aud-externalUrl" placeholder="https://..."></label>
+                <label>Cover image URL (optional)<input id="media-aud-coverImage" placeholder="https://..."></label>
+                <label>Title<input id="media-aud-title"></label>
+                <label>Sub<input id="media-aud-subline"></label>
+                <label>Tag<input id="media-aud-tag"></label>
+                <label>Composer<input id="media-aud-composer"></label>
+                <label>Public section
+                  <select id="media-aud-group">
+                    <option value="opera_operetta">Opera · Operetta</option>
+                    <option value="recital_lied">Recital · Lied</option>
+                    <option value="tango">Tango</option>
+                  </select>
+                </label>
+                <label>Repertoire category
+                  <select id="media-aud-repertoireCat">
+                    <option value="">(auto)</option>
+                    <option value="opera">Opera</option>
+                    <option value="operetta">Operetta</option>
+                    <option value="lied">Recital / Lied</option>
+                    <option value="concert_sacred">Concert / sacred</option>
+                    <option value="tango">Tango</option>
+                    <option value="crossover">Crossover</option>
+                  </select>
+                </label>
+                <label>Featured
+                  <select id="media-aud-featured">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>Hidden
+                  <select id="media-aud-hidden">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>Publishing status
+                  <select id="media-aud-editorialStatus">
+                    <option value="draft">Draft</option>
+                    <option value="needs_translation">Needs translation</option>
+                    <option value="translated">Translated</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="published">Published</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </label>
+                <p class="muted">Use provider + embed URL instead of raw HTML. This keeps the public Audio section elegant, consistent, and easier to maintain.</p>
+              </div>
+            </div>
+            <div class="toolbar section-save-bar">
+              <button id="media-aud-save" type="button" class="button-primary">Save Audio</button>
             </div>
           </div>
         </section>

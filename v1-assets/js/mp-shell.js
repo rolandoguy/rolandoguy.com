@@ -14,6 +14,8 @@
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var MP_UI_OVERRIDES = {};
   var MP_UI_PROMISES = {};
+  var MP_PRESS_NAV_STATE = { resolved: false, hasQuotes: false };
+  var MP_PRESS_NAV_PROMISE = null;
   var MP_LANG_DEBUG = { detected: 'en', source: 'fallback', applied: 'en', persisted: 'no' };
 
   function normalizeLang(code) {
@@ -106,6 +108,73 @@
       })
       .catch(function () { return null; });
   }
+  function asVisibleFlag(raw, fb) {
+    if (raw === false || raw === 'false' || raw === 0 || raw === '0' || raw === '' || raw == null) return false;
+    if (raw === true || raw === 'true' || raw === 1 || raw === '1') return true;
+    return fb;
+  }
+  function normalizePressItemsForNav(raw) {
+    var src = raw;
+    if (src && typeof src === 'object' && src.value != null) src = src.value;
+    if (typeof src === 'string') {
+      try { src = JSON.parse(src); } catch (e) { src = null; }
+      if (src && typeof src === 'object' && src.value != null) src = src.value;
+    }
+    if (Array.isArray(src)) return src;
+    if (src && typeof src === 'object' && Array.isArray(src.items)) return src.items;
+    if (src && typeof src === 'object') {
+      var numericKeys = Object.keys(src).filter(function (k) { return /^\d+$/.test(k); }).sort(function (a, b) { return Number(a) - Number(b); });
+      if (numericKeys.length) return numericKeys.map(function (k) { return src[k]; });
+    }
+    return [];
+  }
+  function computePressNavHasQuotes(pressRaw, metaRaw) {
+    var meta = metaRaw && typeof metaRaw === 'object' ? metaRaw : {};
+    var showReviews = asVisibleFlag(meta.showReviewsSection, true);
+    var items = normalizePressItemsForNav(pressRaw);
+    var visibleQuotes = items.filter(function (p) { return asVisibleFlag(p && p.visible, true); });
+    return !!(showReviews && visibleQuotes.length > 0);
+  }
+  function resolveNavEpkLabel(lang) {
+    if (!MP_PRESS_NAV_STATE.hasQuotes) return 'Dossier';
+    var L = normalizeLang(lang);
+    var byLang = {
+      en: 'Press & Dossier',
+      de: 'Presse & Dossier',
+      es: 'Prensa y dossier',
+      it: 'Stampa e dossier',
+      fr: 'Presse & dossier'
+    };
+    return byLang[L] || byLang.en;
+  }
+  function ensurePressNavState() {
+    if (MP_PRESS_NAV_STATE.resolved) return Promise.resolve(MP_PRESS_NAV_STATE);
+    if (MP_PRESS_NAV_PROMISE) return MP_PRESS_NAV_PROMISE;
+    MP_PRESS_NAV_PROMISE = Promise.all([
+      fetchFirestoreDocJson('rg_press'),
+      fetchFirestoreDocJson('rg_press_meta')
+    ])
+      .then(function (vals) {
+        var press = (vals[0] && typeof vals[0] === 'object') ? vals[0] : readLegacyJson('rg_press');
+        var meta = (vals[1] && typeof vals[1] === 'object') ? vals[1] : readLegacyJson('rg_press_meta');
+        MP_PRESS_NAV_STATE = {
+          resolved: true,
+          hasQuotes: computePressNavHasQuotes(press, meta)
+        };
+        return MP_PRESS_NAV_STATE;
+      })
+      .catch(function () {
+        MP_PRESS_NAV_STATE = {
+          resolved: true,
+          hasQuotes: computePressNavHasQuotes(readLegacyJson('rg_press'), readLegacyJson('rg_press_meta'))
+        };
+        return MP_PRESS_NAV_STATE;
+      })
+      .finally(function () {
+        MP_PRESS_NAV_PROMISE = null;
+      });
+    return MP_PRESS_NAV_PROMISE;
+  }
   function ensureUiOverrideFor(lang) {
     var L = normalizeLang(lang);
     if (MP_UI_OVERRIDES[L]) return Promise.resolve(MP_UI_OVERRIDES[L]);
@@ -129,8 +198,13 @@
   }
   function getUiOverrideString(lang, key) {
     var L = normalizeLang(lang);
+    if (key === 'nav.epk') return resolveNavEpkLabel(L);
     var d = MP_UI_OVERRIDES[L];
-    if (d && typeof d[key] === 'string' && d[key].trim()) return d[key];
+    if (d && typeof d[key] === 'string' && d[key].trim()) {
+      var raw = String(d[key]).trim();
+      if (L === 'it' && key === 'nav.media' && raw.toLowerCase() === 'video') return 'Media';
+      return raw;
+    }
     // Important: do not fall back to EN runtime overrides for non-EN pages.
     // Otherwise localized bundled strings can be shadowed by English snippets.
     return null;
@@ -351,7 +425,7 @@
       MP_LANG_DEBUG.persisted = 'yes';
     }
     syncLangButtons(lang);
-    ensureUiOverrideFor(lang).finally(function () {
+    Promise.all([ensureUiOverrideFor(lang), ensurePressNavState()]).finally(function () {
       applyChromeI18n(lang);
       dispatchLang(lang);
       markLangReady();
@@ -368,7 +442,7 @@
     document.documentElement.lang = lang;
     MP_LANG_DEBUG.applied = normalizeLang(lang);
     syncLangButtons(lang);
-    Promise.all([ensureUiOverrideFor('en'), ensureUiOverrideFor(lang)]).finally(function () {
+    Promise.all([ensureUiOverrideFor('en'), ensureUiOverrideFor(lang), ensurePressNavState()]).finally(function () {
       applyChromeI18n(lang);
       window.dispatchEvent(
         new CustomEvent('mp:localesready', { detail: { lang: lang } })
@@ -426,7 +500,11 @@ function toggleMenu() {
   mm.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   var first = mm.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
-  if (first) {
+  var shouldAutoFocus = true;
+  try {
+    shouldAutoFocus = !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  } catch (e) {}
+  if (first && shouldAutoFocus) {
     setTimeout(function () { first.focus(); }, 0);
   }
 }

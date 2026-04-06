@@ -220,6 +220,8 @@
       h2: firstNonEmpty(a.h2, b.h2),
       paragraphs: paras,
       portraitAlt: firstNonEmpty(a.portraitAlt, b.portraitAlt),
+      portraitFit: firstNonEmpty(a.portraitFit, b.portraitFit),
+      portraitFocus: firstNonEmpty(a.portraitFocus, b.portraitFocus),
       continueSectionTag: firstNonEmpty(a.continueSectionTag, b.continueSectionTag),
       continueSub: firstNonEmpty(a.continueSub, b.continueSub),
       ctaRepertoire: firstNonEmpty(a.ctaRepertoire, b.ctaRepertoire),
@@ -251,6 +253,8 @@
       img.style.opacity = '0';
       img.src = PORTRAIT_PLACEHOLDER;
       delete img.dataset.currentSrc;
+      img.dataset.fit = String(merged.portraitFit || '').trim() || 'cover';
+      img.style.objectPosition = String(merged.portraitFocus || '').trim() || '';
     }
 
     if (!hasAnyBioBody(merged)) {
@@ -268,9 +272,11 @@
     if (parasEl) {
       parasEl.innerHTML = '';
       var ps = merged.paragraphs || [];
+      var featherIndex = ps.length > 1 ? 1 : (ps.length ? 0 : -1);
       for (var i = 0; i < ps.length; i++) {
         var p = document.createElement('p');
         p.className = 'reveal rd' + (i + 1);
+        if (i === featherIndex) p.className += ' bio-feather-anchor';
         p.textContent = ps[i];
         parasEl.appendChild(p);
       }
@@ -348,9 +354,17 @@
   function renderBioContent() {
     var bundle = pickLocale();
     var lang = currentLang();
-    getBioDocWithFallback(lang).then(function (docWrap) {
+    Promise.all([
+      getBioDocWithFallback(lang),
+      lang === 'en' ? Promise.resolve(null) : getBioDocWithFallback('en')
+    ]).then(function (pair) {
+      var docWrap = pair[0];
+      var enWrap = pair[1];
       var adminDoc = docWrap && docWrap.data && typeof docWrap.data === 'object' ? docWrap.data : {};
+      var enDoc = enWrap && enWrap.data && typeof enWrap.data === 'object' ? enWrap.data : {};
       var merged = mergeBioDisplay(bundle, adminDoc);
+      merged.portraitFit = firstNonEmpty(adminDoc.portraitFit, enDoc.portraitFit, merged.portraitFit);
+      merged.portraitFocus = firstNonEmpty(adminDoc.portraitFocus, enDoc.portraitFocus, merged.portraitFocus);
       var portraitHint = null;
       var rawPi = adminDoc && typeof adminDoc.portraitImage === 'string' ? adminDoc.portraitImage.trim() : '';
       if (rawPi) {
