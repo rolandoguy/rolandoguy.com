@@ -310,6 +310,7 @@
   var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var mediaPhotoDragIndex = -1;
+  var bulkUrlSubmitHandler = null;
   var activityLog = [];
   var state = {
     lang: 'en',
@@ -3399,6 +3400,22 @@
     box.querySelectorAll('.item.drop-before,.item.drop-after,.item.dragging').forEach(function (el) {
       el.classList.remove('drop-before', 'drop-after', 'dragging');
     });
+  }
+  function openBulkUrlDialog(onSubmit) {
+    var dialog = $('bulkUrlDialog');
+    var ta = $('bulkUrlTextarea');
+    if (!dialog || !ta) return;
+    bulkUrlSubmitHandler = typeof onSubmit === 'function' ? onSubmit : null;
+    ta.value = '';
+    dialog.hidden = false;
+    setTimeout(function () { ta.focus(); }, 0);
+  }
+  function closeBulkUrlDialog() {
+    var dialog = $('bulkUrlDialog');
+    var ta = $('bulkUrlTextarea');
+    if (dialog) dialog.hidden = true;
+    if (ta) ta.value = '';
+    bulkUrlSubmitHandler = null;
   }
   function mediaSummaryVideo(v) {
     var t = safeString(v.title) || '(untitled)';
@@ -6775,15 +6792,15 @@
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Foto agregada');
     });
     $('media-photo-add-batch').addEventListener('click', function () {
-      var raw = window.prompt('Paste one image URL per line');
-      if (!raw) return;
-      var urls = raw.split(/\r?\n/).map(function (x) { return safeString(x).trim(); }).filter(Boolean);
-      if (!urls.length) return;
-      urls.forEach(function (url) {
-        state.photosData[state.photoType].push({ url: url, orientation: '', focus: '' });
+      openBulkUrlDialog(function (raw) {
+        var urls = safeString(raw).split(/\r?\n/).map(function (x) { return safeString(x).trim(); }).filter(Boolean);
+        if (!urls.length) return;
+        urls.forEach(function (url) {
+          state.photosData[state.photoType].push({ url: url, orientation: '', focus: '' });
+        });
+        state.photoIndex = state.photosData[state.photoType].length - 1;
+        renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, urls.length + ' photos added');
       });
-      state.photoIndex = state.photosData[state.photoType].length - 1;
-      renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, urls.length + ' photos added');
     });
     $('media-photo-dup').addEventListener('click', function () {
       if (state.photoIndex < 0) return;
@@ -6952,6 +6969,29 @@
         }
       });
     }
+    if ($('bulkUrlCancelBtn')) $('bulkUrlCancelBtn').addEventListener('click', function () {
+      closeBulkUrlDialog();
+    });
+    if ($('bulkUrlSubmitBtn')) $('bulkUrlSubmitBtn').addEventListener('click', function () {
+      var ta = $('bulkUrlTextarea');
+      var handler = bulkUrlSubmitHandler;
+      var raw = ta ? ta.value : '';
+      closeBulkUrlDialog();
+      if (handler) handler(raw);
+    });
+    if ($('bulkUrlDialog')) $('bulkUrlDialog').addEventListener('click', function (evt) {
+      if (evt.target === $('bulkUrlDialog')) closeBulkUrlDialog();
+    });
+    if ($('bulkUrlTextarea')) $('bulkUrlTextarea').addEventListener('keydown', function (evt) {
+      if (evt.key === 'Escape') {
+        evt.preventDefault();
+        closeBulkUrlDialog();
+      }
+      if ((evt.metaKey || evt.ctrlKey) && evt.key === 'Enter') {
+        evt.preventDefault();
+        if ($('bulkUrlSubmitBtn')) $('bulkUrlSubmitBtn').click();
+      }
+    });
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
     bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);

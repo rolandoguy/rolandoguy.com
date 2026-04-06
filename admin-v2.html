@@ -1495,6 +1495,18 @@
     </div>
   </div>
 
+  <div id="bulkUrlDialog" class="admin-dialog" hidden>
+    <div class="admin-dialog__card">
+      <h3>Add multiple image URLs</h3>
+      <p class="muted">Paste one URL per line. Nothing is added until you press <strong>Add URLs</strong>.</p>
+      <textarea id="bulkUrlTextarea" rows="10" class="mono" placeholder="https://...\nhttps://...\nhttps://..."></textarea>
+      <div class="toolbar" style="margin-top:12px">
+        <button id="bulkUrlCancelBtn" type="button">Cancel</button>
+        <button id="bulkUrlSubmitBtn" type="button" class="button-primary">Add URLs</button>
+      </div>
+    </div>
+  </div>
+
   <iframe id="legacyBridge" src="admin.html" hidden></iframe>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>

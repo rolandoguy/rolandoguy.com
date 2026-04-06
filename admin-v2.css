@@ -221,6 +221,11 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 
 .button-primary{border-color:var(--gold);background:rgba(212,168,67,.12);color:var(--gold)}
 .button-primary:hover{border-color:#e0b74a;background:rgba(212,168,67,.18)}
+.admin-dialog{position:fixed;inset:0;z-index:80;background:rgba(5,7,11,.72);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(10px)}
+.admin-dialog[hidden]{display:none!important}
+.admin-dialog__card{width:min(720px,100%);background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+.admin-dialog__card h3{margin:0 0 8px;color:var(--gold)}
+.admin-dialog__card textarea{min-height:220px}
 .section-save-bar{margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
 .toolbar--tight{margin:6px 0 0}
 .closeout-card{margin-top:12px}
