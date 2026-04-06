@@ -1307,10 +1307,14 @@
     if (photoSectionObserverBound) return;
     var panels = ['studio', 'stage', 'backstage']
       .map(function (name) {
-        return { name: name, el: document.getElementById('panel-' + name) };
+        return {
+          name: name,
+          el: document.getElementById('panel-' + name),
+          headEl: document.getElementById('photo-head-' + name)
+        };
       })
       .filter(function (entry) {
-        return !!entry.el;
+        return !!entry.el && !!entry.headEl;
       });
     if (!panels.length || !('IntersectionObserver' in window)) return;
     photoSectionObserverBound = true;
@@ -1319,7 +1323,7 @@
         if (Date.now() < photoManualTabUntil) {
           if (photoManualTarget) {
             setActivePhotoTab(photoManualTarget);
-            var targetEl = document.getElementById('panel-' + photoManualTarget);
+            var targetEl = document.getElementById('photo-head-' + photoManualTarget);
             var targetEntry = entries.find(function (entry) {
               return entry.target === targetEl;
             });
@@ -1336,21 +1340,21 @@
             return entry.isIntersecting;
           })
           .sort(function (a, b) {
-            return b.intersectionRatio - a.intersectionRatio;
+            return Math.abs(a.boundingClientRect.top) - Math.abs(b.boundingClientRect.top);
           });
         if (!visible.length) return;
         var found = panels.find(function (entry) {
-          return entry.el === visible[0].target;
+          return entry.headEl === visible[0].target;
         });
         if (found) setActivePhotoTab(found.name);
       },
       {
-        rootMargin: '-20% 0px -55% 0px',
-        threshold: [0.2, 0.35, 0.5]
+        rootMargin: '-16% 0px -72% 0px',
+        threshold: [0, 0.15, 0.35, 0.55]
       }
     );
     panels.forEach(function (entry) {
-      observer.observe(entry.el);
+      observer.observe(entry.headEl);
     });
   }
 
