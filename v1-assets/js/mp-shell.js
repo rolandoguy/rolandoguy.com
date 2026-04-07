@@ -739,7 +739,7 @@ function mpPrefersReducedMotion() {
       { threshold: [0.5] }
     );
 
-    document.querySelectorAll('.footer-ornament, .footer-feather-sello').forEach(function (ornament) {
+    document.querySelectorAll('.footer-ornament, .footer-feather-sello, .nav-logo').forEach(function (ornament) {
       featherObserver.observe(ornament);
     });
   }

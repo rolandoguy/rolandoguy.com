@@ -47,8 +47,104 @@ html.mp-site #hero .hero-bg {
   background-repeat: no-repeat !important;
   background-position: calc(100% + 210px) -320px !important;
 }
+@media (min-width: 1181px) and (max-width: 1400px) and (max-height: 1100px) and (orientation: landscape) {
+  html.mp-site #hero {
+    background: linear-gradient(
+      90deg,
+      #091113 0%,
+      #0b1416 30%,
+      #11191d 58%,
+      #0e1217 100%
+    ) !important;
+  }
+  html.mp-site #hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        ellipse 62% 92% at 18% 46%,
+        rgba(14, 22, 23, 0.08) 0%,
+        rgba(12, 19, 21, 0.04) 32%,
+        rgba(11, 17, 20, 0.02) 56%,
+        rgba(12, 15, 21, 0) 78%
+      );
+  }
+  html.mp-site #hero .hero-bg {
+    background-size: 82% auto !important;
+    background-color: #091113 !important;
+    background-position: calc(100% + 18px) -250px !important;
+  }
+  html.mp-site #hero .hero-bg::before {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(10, 17, 19, 0.54) 0%,
+        rgba(10, 17, 19, 0.34) 16%,
+        rgba(11, 18, 20, 0.16) 34%,
+        rgba(12, 18, 21, 0.06) 52%,
+        rgba(12, 15, 21, 0) 72%
+      ) !important;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1180px) {
+  html.mp-site #hero {
+    background: linear-gradient(
+      90deg,
+      #172322 0%,
+      #1a2a28 28%,
+      #141d20 54%,
+      #0e1217 100%
+    ) !important;
+  }
+  html.mp-site #hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        ellipse 52% 78% at 26% 44%,
+        rgba(54, 95, 84, 0.46) 0%,
+        rgba(36, 62, 58, 0.28) 34%,
+        rgba(20, 31, 34, 0.1) 58%,
+        rgba(12, 15, 21, 0) 78%
+      );
+  }
+  html.mp-site #hero .hero-bg {
+    background-size: 82% auto !important;
+    background-color: #182624 !important;
+    background-position: calc(100% + 10px) -120px !important;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1180px) and (orientation: portrait) {
+  html.mp-site #hero .hero-bg {
+    background-size: 92% auto !important;
+    background-color: #0d1418 !important;
+    background-position: 66% -4px !important;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1180px) and (orientation: portrait) {
+  html.mp-site #hero .hero-bg::before {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(8, 10, 14, 0.94) 0%,
+        rgba(10, 12, 18, 0.82) 16%,
+        rgba(12, 14, 20, 0.5) 30%,
+        rgba(12, 15, 21, 0.16) 42%,
+        rgba(12, 15, 21, 0) 52%
+      ) !important;
+  }
+}
 /* Desktop mood integration: remove flat gray feel on the left with a deep tonal blend. */
 @media (min-width: 901px) {
+  html.mp-site #hero {
+    background: #091113 !important;
+  }
   html.mp-site #hero .hero-bg::before {
     content: "";
     position: absolute;
@@ -63,6 +159,40 @@ html.mp-site #hero .hero-bg {
         rgba(12, 15, 21, 0.18) 50%,
         rgba(12, 15, 21, 0) 60%
       );
+  }
+  html.mp-site #hero .hero-bg::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -2%;
+    width: min(42vw, 520px);
+    pointer-events: none;
+    filter: blur(8px);
+    background:
+      linear-gradient(
+        90deg,
+        rgba(7, 12, 14, 0.995) 0%,
+        rgba(8, 13, 15, 0.975) 16%,
+        rgba(8, 14, 16, 0.9) 34%,
+        rgba(9, 15, 17, 0.68) 54%,
+        rgba(10, 16, 18, 0.38) 72%,
+        rgba(12, 15, 21, 0) 100%
+      );
+  }
+}
+@media (min-width: 1001px) and (max-width: 1180px) and (orientation: landscape) {
+  html.mp-site #hero .hero-bg::before {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(21, 36, 33, 0.68) 0%,
+        rgba(22, 38, 35, 0.56) 16%,
+        rgba(18, 31, 30, 0.38) 32%,
+        rgba(15, 24, 26, 0.18) 48%,
+        rgba(13, 19, 23, 0.06) 62%,
+        rgba(12, 15, 21, 0) 74%
+      ) !important;
   }
 }
 html.mp-site #intro .about-photo img.mp-home-hero-asset {
@@ -101,6 +231,86 @@ html.mp-site #intro .about-photo img.mp-home-hero-asset {
     background-position: calc(100% + 210px) -320px !important;
   }
 }
+@media (prefers-reduced-motion: reduce) and (min-width: 1181px) and (max-width: 1400px) and (max-height: 1100px) and (orientation: landscape) {
+  html.mp-site #hero {
+    background: linear-gradient(
+      90deg,
+      #091113 0%,
+      #0b1416 30%,
+      #11191d 58%,
+      #0e1217 100%
+    ) !important;
+  }
+  html.mp-site #hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        ellipse 62% 92% at 18% 46%,
+        rgba(14, 22, 23, 0.08) 0%,
+        rgba(12, 19, 21, 0.04) 32%,
+        rgba(11, 17, 20, 0.02) 56%,
+        rgba(12, 15, 21, 0) 78%
+      );
+  }
+  html.mp-site #hero .hero-bg {
+    background-size: 82% auto !important;
+    background-color: #091113 !important;
+    background-position: calc(100% + 18px) -250px !important;
+  }
+  html.mp-site #hero .hero-bg::before {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(10, 17, 19, 0.54) 0%,
+        rgba(10, 17, 19, 0.34) 16%,
+        rgba(11, 18, 20, 0.16) 34%,
+        rgba(12, 18, 21, 0.06) 52%,
+        rgba(12, 15, 21, 0) 72%
+      ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) and (min-width: 1001px) and (max-width: 1180px) {
+  html.mp-site #hero {
+    background: linear-gradient(
+      90deg,
+      #172322 0%,
+      #1a2a28 28%,
+      #141d20 54%,
+      #0e1217 100%
+    ) !important;
+  }
+  html.mp-site #hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        ellipse 52% 78% at 26% 44%,
+        rgba(54, 95, 84, 0.46) 0%,
+        rgba(36, 62, 58, 0.28) 34%,
+        rgba(20, 31, 34, 0.1) 58%,
+        rgba(12, 15, 21, 0) 78%
+      );
+  }
+  html.mp-site #hero .hero-bg {
+    background-size: 82% auto !important;
+    background-color: #182624 !important;
+    background-position: calc(100% + 10px) -120px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) and (min-width: 1001px) and (max-width: 1180px) and (orientation: portrait) {
+  html.mp-site #hero .hero-bg {
+    background-size: 92% auto !important;
+    background-color: #0d1418 !important;
+    background-position: 66% -4px !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) and (max-width: 700px) {
   html.mp-site #hero .hero-bg {
     background-size: 114% auto !important;
@@ -126,6 +336,28 @@ html.mp-site #intro .about-photo img.mp-home-hero-asset {
   }
   html.mp-site #hero .hero-content::before {
     left: 20px !important;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1180px) {
+  html.mp-site #hero .hero-content {
+    max-width: min(46vw, 470px) !important;
+    padding-left: 28px !important;
+    padding-right: 24px !important;
+    padding-bottom: 84px !important;
+  }
+  html.mp-site #hero .hero-content::before {
+    left: 10px !important;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1180px) and (orientation: portrait) {
+  html.mp-site #hero .hero-content {
+    max-width: min(49vw, 500px) !important;
+    padding-left: 20px !important;
+    padding-right: 18px !important;
+    padding-bottom: 76px !important;
+  }
+  html.mp-site #hero .hero-content::before {
+    left: 6px !important;
   }
 }
 @media (max-width: 900px) {
