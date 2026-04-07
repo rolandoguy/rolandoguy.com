@@ -1225,11 +1225,33 @@
       return best;
     }
 
+    function photoSpanClass(index, count, cols) {
+      var remainder = count % cols;
+      if (!remainder) return '';
+      var lastIndex = count - 1;
+      if (remainder === 1 && index === lastIndex) {
+        return ' photo-item-span-' + cols;
+      }
+      if (remainder === 2) {
+        if (cols === 4 && (index === count - 2 || index === lastIndex)) {
+          return ' photo-item-span-2';
+        }
+        if ((cols === 2 || cols === 3) && index === lastIndex) {
+          return ' photo-item-span-2';
+        }
+      }
+      if (remainder === 3 && cols === 4 && index === lastIndex) {
+        return ' photo-item-span-2';
+      }
+      return '';
+    }
+
     function renderItems(refs, items, altFallback) {
       if (!refs || !refs.grid) return;
       var count = Array.isArray(items) ? items.length : 0;
       var defaultCols = refs.itemClass === 'photo-item-p' ? 4 : 3;
-      refs.grid.style.gridTemplateColumns = 'repeat(' + bestGridCols(count, defaultCols) + ', 1fr)';
+      var cols = bestGridCols(count, defaultCols);
+      refs.grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
       refs.grid.innerHTML = (items || [])
         .map(function (entry, i) {
           var imgSrc = resolvePhotoSrc(entry);
@@ -1241,6 +1263,7 @@
           return (
             '<div class="photo-item ' +
             refs.itemClass +
+            photoSpanClass(i, count, cols) +
             ' reveal rd' +
             i % 4 +
             '" onclick="openLb(\'' +
