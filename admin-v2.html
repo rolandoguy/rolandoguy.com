@@ -57,32 +57,39 @@
           <span id="langBadge" class="pill ok">EN</span>
         </div>
         <div class="actions">
-          <span id="saveState" class="pill">Loading…</span>
-          <button id="adm2TopSignOutBtn" type="button" style="display:none">Sign out</button>
-          <label>Import scope
-            <select id="importScope" title="Only matching content from the file will be applied">
-              <option value="all">All compatible content</option>
-              <option value="home">Home / Hero only</option>
-              <option value="bio">Biography only</option>
-              <option value="rep">Repertoire only</option>
-              <option value="programs">Programs only</option>
-              <option value="calendar">Calendar only</option>
-              <option value="media">Media only</option>
-              <option value="press">Press / EPK only</option>
-              <option value="contact">Contact only</option>
-              <option value="ui">UI labels only</option>
-            </select>
-          </label>
-          <button id="exportBtn">Export JSON</button>
-          <label class="import-label">
-            Import JSON
-            <input type="file" id="importInput" accept=".json">
-          </label>
-          <button id="openPublicBtn">View live site</button>
-          <button id="copyPublicUrlBtn" type="button">Copy public URL</button>
-          <button id="undoSectionBtn" type="button">Undo section edit</button>
-          <button id="discardSectionBtn" type="button">Discard section changes</button>
-          <button id="focusModeBtn" type="button">Focus mode</button>
+          <div class="actions-primary">
+            <span id="saveState" class="pill">Loading…</span>
+            <button id="openPublicBtn">View live site</button>
+            <button id="adm2TopSignOutBtn" type="button" style="display:none">Sign out</button>
+          </div>
+          <details class="actions-more" id="topbarMoreTools" open>
+            <summary>More tools</summary>
+            <div class="actions-tools">
+              <label>Import scope
+                <select id="importScope" title="Only matching content from the file will be applied">
+                  <option value="all">All compatible content</option>
+                  <option value="home">Home / Hero only</option>
+                  <option value="bio">Biography only</option>
+                  <option value="rep">Repertoire only</option>
+                  <option value="programs">Programs only</option>
+                  <option value="calendar">Calendar only</option>
+                  <option value="media">Media only</option>
+                  <option value="press">Press / EPK only</option>
+                  <option value="contact">Contact only</option>
+                  <option value="ui">UI labels only</option>
+                </select>
+              </label>
+              <button id="exportBtn">Export JSON</button>
+              <label class="import-label">
+                Import JSON
+                <input type="file" id="importInput" accept=".json">
+              </label>
+              <button id="copyPublicUrlBtn" type="button">Copy public URL</button>
+              <button id="undoSectionBtn" type="button">Undo section edit</button>
+              <button id="discardSectionBtn" type="button">Discard section changes</button>
+              <button id="focusModeBtn" type="button">Focus mode</button>
+            </div>
+          </details>
         </div>
         <p id="activitySummary" class="activity-summary muted" aria-live="polite"></p>
         <p id="langCompareSummary" class="activity-summary muted" aria-live="polite"></p>
@@ -726,6 +733,10 @@
             <label>Link label · from Repertoire<input id="programs-repLink"></label>
             <label>Link label · from EPK<input id="programs-epkLink"></label>
           </div>
+          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
+            <input type="checkbox" id="programs-hideSection" style="width:auto">
+            Hide Programs section and related public links
+          </label>
           <p class="muted">Stored with editorial data for this language (<code>repProgramsLink</code>, <code>epkProgramsLink</code>).</p>
 
           <div class="toolbar">
@@ -1361,8 +1372,38 @@
               <label>Book now<input id="ui-nav-book"></label>
               <label>Contact (section tag)<input id="ui-nav-contact"></label>
             </div>
-            <div class="toolbar">
+          <div class="toolbar">
               <button id="saveUiNavBtn" type="button">Save UI (nav + structured copy)</button>
+            </div>
+            <h3 style="margin-top:18px">Shared chrome effects</h3>
+            <p class="muted">These controls are global for the site and are stored in the EN UI document.</p>
+            <div class="grid two">
+              <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
+                <input type="checkbox" id="ui-logoHaloEnabled" style="width:auto">
+                Menu logo halo breathing enabled
+              </label>
+              <label>Menu logo halo intensity
+                <select id="ui-logoHaloIntensity">
+                  <option value="barely">Very soft</option>
+                  <option value="soft">Soft</option>
+                  <option value="normal">Normal</option>
+                  <option value="rich">Rich</option>
+                  <option value="lush">Very rich</option>
+                </select>
+              </label>
+              <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
+                <input type="checkbox" id="ui-featherHaloEnabled" style="width:auto">
+                Footer feather breathing enabled
+              </label>
+              <label>Footer feather halo intensity
+                <select id="ui-featherHaloIntensity">
+                  <option value="barely">Very soft</option>
+                  <option value="soft">Soft</option>
+                  <option value="normal">Normal</option>
+                  <option value="rich">Rich</option>
+                  <option value="lush">Very rich</option>
+                </select>
+              </label>
             </div>
           </div>
           <div id="ui-public-copy-host" class="editor" style="margin-top:14px"></div>

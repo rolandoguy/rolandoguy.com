@@ -176,6 +176,29 @@
     return '';
   }
 
+  function isProgramsSectionHidden(lang) {
+    var l = (lang || 'en').toLowerCase();
+    var byLang = EDITORIAL_DOCS['rg_editorial_' + l];
+    if (isObject(byLang) && Object.prototype.hasOwnProperty.call(byLang, 'hideProgramsSection')) {
+      return !!byLang.hideProgramsSection;
+    }
+    var en = EDITORIAL_DOCS['rg_editorial_en'];
+    if (isObject(en) && Object.prototype.hasOwnProperty.call(en, 'hideProgramsSection')) {
+      return !!en.hideProgramsSection;
+    }
+    return false;
+  }
+
+  function applyProgramsVisibility() {
+    var hide = isProgramsSectionHidden(currentLang);
+    var section = document.getElementById('programs');
+    if (section) section.hidden = !!hide;
+    var repLink = document.getElementById('repProgramsLink');
+    var repLinkWrap = repLink && repLink.closest ? repLink.closest('.rep-top-jump') : null;
+    if (repLinkWrap) repLinkWrap.hidden = !!hide;
+    else if (repLink) repLink.hidden = !!hide;
+  }
+
 
   function esc(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -196,6 +219,7 @@
     var closing = document.getElementById('programsClosing');
     var repLink = document.getElementById('repProgramsLink');
 
+    applyProgramsVisibility();
     if (sectionTag) sectionTag.textContent = lp(currentLang, 'programs.sectionTag', ui.sectionTag);
     if (h2) h2.innerHTML = String(data.title || '');
     if (subtitle) subtitle.textContent = String(data.subtitle || '');
@@ -208,7 +232,9 @@
     if (closing) closing.textContent = String(data.closingNote || '');
     if (repLink) {
       var repLinkOverride = getEditorialProgramsLink(currentLang);
-      repLink.textContent = String(repLinkOverride || data.linkLabel || repLink.textContent || '');
+      if (repLinkOverride) {
+        repLink.textContent = String(repLinkOverride);
+      }
     }
 
     if (!grid) return;

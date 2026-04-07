@@ -1174,6 +1174,11 @@
     if (!sel || sel.selectedIndex < 0) return 'All compatible content';
     return safeString(sel.options[sel.selectedIndex].textContent) || sel.value;
   }
+  function syncTopbarToolsDisclosure() {
+    var el = $('topbarMoreTools');
+    if (!el) return;
+    el.open = !window.matchMedia('(max-width: 860px)').matches;
+  }
   function escapeHtml(v) {
     return safeString(v)
       .replace(/&/g, '&amp;')
@@ -2302,6 +2307,12 @@
     $('programs-closingNote').value = safeString(state.programsDoc.closingNote);
     $('programs-repLink').value = pickStoredOrFallback(edStored, edFallback, 'repProgramsLink');
     $('programs-epkLink').value = pickStoredOrFallback(edStored, edFallback, 'epkProgramsLink');
+    if ($('programs-hideSection')) {
+      var hideProgramsSection = false;
+      if (isObject(edStored) && hasOwn(edStored, 'hideProgramsSection')) hideProgramsSection = asBoolean(edStored.hideProgramsSection, false);
+      else if (isObject(edFallback) && hasOwn(edFallback, 'hideProgramsSection')) hideProgramsSection = asBoolean(edFallback.hideProgramsSection, false);
+      $('programs-hideSection').checked = !!hideProgramsSection;
+    }
     renderProgramsProvenance();
     state.programsIndex = -1;
     renderProgramsList();
@@ -2318,6 +2329,7 @@
     var prevEd = loadDoc('rg_editorial_' + state.lang, {});
     prevEd.repProgramsLink = safeString($('programs-repLink').value).trim();
     prevEd.epkProgramsLink = safeString($('programs-epkLink').value).trim();
+    prevEd.hideProgramsSection = !!($('programs-hideSection') && $('programs-hideSection').checked);
     saveDoc('rg_editorial_' + state.lang, prevEd);
   }
 
@@ -4242,6 +4254,12 @@
   function loadUiNavFieldsFromDoc(d) {
     var doc = isObject(d) ? d : {};
     syncUiNavAndPublicCopyFromDoc(doc);
+    var uiGlobal = loadDoc('rg_ui_en', {});
+    if (!isObject(uiGlobal)) uiGlobal = {};
+    if ($('ui-logoHaloEnabled')) $('ui-logoHaloEnabled').checked = asBoolean(uiGlobal['chrome.logoHalo.enabled'], true);
+    if ($('ui-logoHaloIntensity')) $('ui-logoHaloIntensity').value = safeString(uiGlobal['chrome.logoHalo.intensity'] || 'normal') || 'normal';
+    if ($('ui-featherHaloEnabled')) $('ui-featherHaloEnabled').checked = asBoolean(uiGlobal['chrome.featherHalo.enabled'], true);
+    if ($('ui-featherHaloIntensity')) $('ui-featherHaloIntensity').value = safeString(uiGlobal['chrome.featherHalo.intensity'] || 'normal') || 'normal';
     var uiFbHome = {};
     try {
       if (typeof state.api.uiTable === 'function') {
@@ -4270,6 +4288,13 @@
     d = persistPublicRgUiCopyFields(d);
     d = normalizeUiLocaleDoc(d, state.lang);
     saveDoc('rg_ui_' + state.lang, d);
+    var globalUi = loadDoc('rg_ui_en', {});
+    if (!isObject(globalUi)) globalUi = {};
+    globalUi['chrome.logoHalo.enabled'] = !!($('ui-logoHaloEnabled') && $('ui-logoHaloEnabled').checked);
+    globalUi['chrome.logoHalo.intensity'] = safeString($('ui-logoHaloIntensity') && $('ui-logoHaloIntensity').value || 'normal') || 'normal';
+    globalUi['chrome.featherHalo.enabled'] = !!($('ui-featherHaloEnabled') && $('ui-featherHaloEnabled').checked);
+    globalUi['chrome.featherHalo.intensity'] = safeString($('ui-featherHaloIntensity') && $('ui-featherHaloIntensity').value || 'normal') || 'normal';
+    saveDoc('rg_ui_en', globalUi);
     $('ui-json').value = JSON.stringify(d, null, 2);
   }
   function mergeMissingStrings(target, source, keys) {
@@ -6141,6 +6166,8 @@
     ].join('\n');
 
     $('menuBtn').addEventListener('click', function () { $('sidebar').classList.toggle('open'); });
+    syncTopbarToolsDisclosure();
+    window.addEventListener('resize', syncTopbarToolsDisclosure);
     document.querySelectorAll('.nav-item').forEach(function (btn) {
       btn.addEventListener('click', function () { openSection(btn.getAttribute('data-section')); });
     });
@@ -6995,7 +7022,7 @@
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
     bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);
-    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
+    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
       updateContactValidation();
       updateContactMiniPreview();
       updateCompletenessIndicators();

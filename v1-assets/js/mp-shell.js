@@ -267,7 +267,31 @@
     }
     applyNavLogoFromRgUi(lang);
     applyPresenterLabelStyle(lang);
+    applyChromeFxFromUi();
     applyPageHeadFromRgUi(lang);
+  }
+
+  function chromeFxString(key, fallback) {
+    var en = MP_UI_OVERRIDES.en;
+    if (en && en[key] != null) {
+      if (typeof en[key] === 'string' && en[key].trim()) return String(en[key]).trim();
+      if (typeof en[key] === 'boolean') return en[key] ? 'true' : 'false';
+      if (typeof en[key] === 'number') return String(en[key]);
+    }
+    return fallback;
+  }
+
+  function applyChromeFxFromUi() {
+    var root = document.documentElement;
+    if (!root) return;
+    var logoEnabled = chromeFxString('chrome.logoHalo.enabled', 'true');
+    var featherEnabled = chromeFxString('chrome.featherHalo.enabled', 'true');
+    var logoIntensity = chromeFxString('chrome.logoHalo.intensity', 'normal').toLowerCase();
+    var featherIntensity = chromeFxString('chrome.featherHalo.intensity', 'normal').toLowerCase();
+    root.setAttribute('data-logo-halo-enabled', logoEnabled === 'false' ? 'false' : 'true');
+    root.setAttribute('data-feather-halo-enabled', featherEnabled === 'false' ? 'false' : 'true');
+    root.setAttribute('data-logo-halo-intensity', /^(barely|soft|normal|rich|lush)$/.test(logoIntensity) ? logoIntensity : 'normal');
+    root.setAttribute('data-feather-halo-intensity', /^(barely|soft|normal|rich|lush)$/.test(featherIntensity) ? featherIntensity : 'normal');
   }
 
   function applyPresenterLabelStyle(lang) {
@@ -425,7 +449,7 @@
       MP_LANG_DEBUG.persisted = 'yes';
     }
     syncLangButtons(lang);
-    Promise.all([ensureUiOverrideFor(lang), ensurePressNavState()]).finally(function () {
+    Promise.all([ensureUiOverrideFor('en'), ensureUiOverrideFor(lang), ensurePressNavState()]).finally(function () {
       applyChromeI18n(lang);
       dispatchLang(lang);
       markLangReady();

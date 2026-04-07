@@ -34,6 +34,8 @@
     epkPhotos: null,
     publicPdfs: null
   };
+  var EDITORIAL_DOCS = {};
+  var EDITORIAL_DOC_PROMISES = {};
   function parseLocalJson(key) {
     try {
       if (!window.localStorage) return null;
@@ -76,6 +78,29 @@
       MP_LIVE = { press: null, pressMeta: null, epkPhotos: null, publicPdfs: null };
       return MP_LIVE;
     });
+  }
+  function ensureEditorialDoc(key) {
+    if (EDITORIAL_DOCS[key]) return Promise.resolve(EDITORIAL_DOCS[key]);
+    if (EDITORIAL_DOC_PROMISES[key]) return EDITORIAL_DOC_PROMISES[key];
+    EDITORIAL_DOC_PROMISES[key] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        var best = (doc && typeof doc === 'object') ? doc : readLegacyJson(key);
+        EDITORIAL_DOCS[key] = (best && typeof best === 'object') ? best : null;
+        return EDITORIAL_DOCS[key];
+      })
+      .catch(function () {
+        var best = readLegacyJson(key);
+        EDITORIAL_DOCS[key] = (best && typeof best === 'object') ? best : null;
+        return EDITORIAL_DOCS[key];
+      })
+      .finally(function () {
+        delete EDITORIAL_DOC_PROMISES[key];
+      });
+    return EDITORIAL_DOC_PROMISES[key];
+  }
+  function loadEditorialOverrides(lang) {
+    var L = String(lang || 'en').toLowerCase();
+    return Promise.all(['rg_editorial_' + L, 'rg_editorial_en'].map(ensureEditorialDoc));
   }
   function unwrapPayload(v) {
     if (v && typeof v === 'object' && v.value != null) return v.value;
@@ -230,6 +255,27 @@
   function effectiveUiText(lang, key) {
     var L = lang || currentLang || 'en';
     return mpPick(L, key, MP_PRESS_UI_EN[key]);
+  }
+
+  function getEditorialProgramsLink(lang) {
+    var L = String(lang || currentLang || 'en').toLowerCase();
+    var byLang = EDITORIAL_DOCS['rg_editorial_' + L];
+    if (byLang && typeof byLang === 'object' && typeof byLang.epkProgramsLink === 'string' && byLang.epkProgramsLink.trim()) return byLang.epkProgramsLink.trim();
+    var en = EDITORIAL_DOCS['rg_editorial_en'];
+    if (en && typeof en === 'object' && typeof en.epkProgramsLink === 'string' && en.epkProgramsLink.trim()) return en.epkProgramsLink.trim();
+    return '';
+  }
+  function isProgramsSectionHidden(lang) {
+    var L = String(lang || currentLang || 'en').toLowerCase();
+    var byLang = EDITORIAL_DOCS['rg_editorial_' + L];
+    if (byLang && typeof byLang === 'object' && Object.prototype.hasOwnProperty.call(byLang, 'hideProgramsSection')) {
+      return !!byLang.hideProgramsSection;
+    }
+    var en = EDITORIAL_DOCS['rg_editorial_en'];
+    if (en && typeof en === 'object' && Object.prototype.hasOwnProperty.call(en, 'hideProgramsSection')) {
+      return !!en.hideProgramsSection;
+    }
+    return false;
   }
 
   var PUBLIC_PDF_DEFAULTS = {
@@ -984,8 +1030,15 @@
     }
     var prog = document.getElementById('epkProgramsLink');
     if (prog) {
-      if (ti['epk.programsLink']) prog.textContent = ti['epk.programsLink'];
-      prog.setAttribute('href', 'repertoire.html#programs');
+      var progWrap = prog.parentElement;
+      var hidePrograms = isProgramsSectionHidden(lang);
+      if (progWrap) progWrap.hidden = !!hidePrograms;
+      else prog.hidden = !!hidePrograms;
+      if (!hidePrograms) {
+        var override = getEditorialProgramsLink(lang);
+        prog.textContent = override || ti['epk.programsLink'] || prog.textContent;
+        prog.setAttribute('href', 'repertoire.html#programs');
+      }
     }
   }
 
@@ -994,18 +1047,22 @@
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
-    if (!MP_PRESS) return;
-    applyPressChrome();
-    renderPress();
-    renderEpk();
+    loadEditorialOverrides(currentLang).finally(function () {
+      if (!MP_PRESS) return;
+      applyPressChrome();
+      renderPress();
+      renderEpk();
+    });
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-    if (!MP_PRESS) return;
-    applyPressChrome();
-    renderPress();
-    renderEpk();
+    loadEditorialOverrides(currentLang).finally(function () {
+      if (!MP_PRESS) return;
+      applyPressChrome();
+      renderPress();
+      renderEpk();
+    });
   });
 
   var epkBiosPromise = fetch('/v1-assets/data/epk-bios.json', { cache: 'no-store' })
@@ -1043,7 +1100,7 @@
     })
     .then(function (data) {
       MP_PRESS = data;
-      return Promise.all([epkBiosPromise, loadLiveRuntimeOverrides()]);
+      return Promise.all([epkBiosPromise, loadLiveRuntimeOverrides(), loadEditorialOverrides(currentLang)]);
     })
     .then(function (vals) {
       return vals[0];

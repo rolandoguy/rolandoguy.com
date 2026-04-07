@@ -24,10 +24,15 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .ctx{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
 .ctx select{min-width:84px}
 #langBadge{font-weight:700;letter-spacing:.06em}
-.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.actions{display:flex;flex-direction:column;align-items:stretch;gap:8px;flex:1 1 580px;min-width:280px}
+.actions-primary,.actions-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.actions-primary .pill{white-space:nowrap}
 .actions label{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .actions label select{min-width:150px;padding:6px 8px;font-size:.78rem}
+.actions-more{margin:0;padding:0;border:0}
+.actions-more summary{display:none}
 .activity-summary{flex-basis:100%;width:100%;margin:4px 0 0;padding:8px 0 0;border-top:1px solid var(--border);font-size:.78rem;line-height:1.45;white-space:pre-wrap;max-height:7.5em;overflow:auto}
+.activity-summary:empty{display:none;margin:0;padding:0;border-top:0}
 .tools-subheading{margin:14px 0 6px;font-size:.88rem;color:var(--gold)}
 .focus-mode .sidebar{display:none}
 .focus-mode .main{width:100%}
@@ -151,9 +156,18 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
   .menu-btn{order:1}
   .ctx{order:2;font-size:.82rem;flex:1 1 calc(100% - 56px);min-width:0;flex-wrap:wrap;row-gap:6px}
   .ctx select{min-width:72px;padding:8px}
-  .actions{order:3;max-width:100%;width:100%;justify-content:flex-start}
-  .actions .pill{flex:1 1 100%;min-width:0}
-  .actions button,.actions .import-label{padding:7px 10px;font-size:.78rem;flex:1 1 calc(50% - 8px);min-width:0;display:inline-flex;align-items:center;justify-content:center}
+  .actions{order:3;max-width:100%;width:100%;justify-content:flex-start;gap:10px}
+  .actions-primary{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .actions-primary .pill{grid-column:1 / -1;justify-self:stretch;text-align:center}
+  .actions-primary button{display:inline-flex;align-items:center;justify-content:center}
+  .actions-more{display:block;width:100%;border:1px solid var(--border);border-radius:10px;background:#11151d}
+  .actions-more summary{display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer;padding:10px 12px;color:var(--muted);font-size:.8rem}
+  .actions-more summary::-webkit-details-marker{display:none}
+  .actions-more summary::after{content:'+';font-size:1rem;color:var(--gold)}
+  .actions-more[open] summary::after{content:'−'}
+  .actions-tools{padding:0 10px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .actions-tools label{grid-column:1 / -1}
+  .actions-tools button,.actions-tools .import-label{padding:8px 10px;font-size:.78rem;min-width:0;display:inline-flex;align-items:center;justify-content:center;text-align:center}
   .content{padding:10px}
   .section{padding:12px;min-width:0}
   .toolbar button,.toolbar .import-label{flex:1 1 calc(50% - 8px);min-width:0;text-align:center}
@@ -162,7 +176,8 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 @media (max-width: 480px){
   .ctx{font-size:.78rem}
   .ctx select{min-width:64px}
-  .actions button,.actions .import-label{flex:1 1 100%}
+  .actions-primary{grid-template-columns:1fr}
+  .actions-tools{grid-template-columns:1fr}
   .toolbar button,.toolbar .import-label{flex:1 1 100%}
 }
 
