@@ -724,25 +724,47 @@ function mpPrefersReducedMotion() {
   if (typeof mediaQuery.addEventListener === 'function') mediaQuery.addEventListener('change', handleModeChange);
   else if (typeof mediaQuery.addListener === 'function') mediaQuery.addListener(handleModeChange);
 
+  function triggerMobileBreath(el) {
+    if (!el || mediaQuery.matches) return;
+    el.classList.remove('is-breathe-mobile');
+    void el.offsetWidth;
+    el.classList.add('is-breathe-mobile');
+  }
+
+  function triggerIntroBreath(el) {
+    if (!el) return;
+    el.classList.remove('is-breathe-intro');
+    void el.offsetWidth;
+    el.classList.add('is-breathe-intro');
+  }
+
   if ('IntersectionObserver' in window) {
     var featherObserver = new IntersectionObserver(
       function (entries, observer) {
-        if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
-          if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
-          entry.target.classList.remove('is-breathe-mobile');
-          void entry.target.offsetWidth;
-          entry.target.classList.add('is-breathe-mobile');
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.12) return;
+          if (entry.target.classList.contains('nav-logo')) {
+            if (!mediaQuery.matches) triggerMobileBreath(entry.target);
+          } else {
+            triggerIntroBreath(entry.target);
+          }
           observer.unobserve(entry.target);
         });
       },
-      { threshold: [0.5] }
+      { threshold: [0.12] }
     );
 
     document.querySelectorAll('.footer-ornament, .footer-feather-sello, .nav-logo').forEach(function (ornament) {
       featherObserver.observe(ornament);
     });
   }
+
+  window.requestAnimationFrame(function () {
+    document.querySelectorAll('.nav-logo').forEach(function (logo) {
+      triggerIntroBreath(logo);
+      if (!mediaQuery.matches) triggerMobileBreath(logo);
+    });
+  });
 })();
 
 (function () {

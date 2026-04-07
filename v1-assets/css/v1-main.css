@@ -132,13 +132,42 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   -webkit-backface-visibility:hidden;
   backface-visibility:hidden;
 }
-.lang-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid transparent;background:transparent;color:var(--text-faint);font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.17em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:color .32s var(--ease-soft),border-color .32s var(--ease-soft),background .32s var(--ease-soft);position:relative;isolation:isolate}
-.lang-btn:hover{color:var(--text-dim);border-color:var(--border)}
-.lang-btn:active{color:var(--text)}
+.lang-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid transparent;background:transparent;color:var(--text-faint);font-family:var(--ff-caps);font-size:.57rem;letter-spacing:.17em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:color .32s var(--ease-soft),border-color .32s var(--ease-soft),background .32s var(--ease-soft),opacity .32s var(--ease-soft);position:relative;isolation:isolate}
+.lang-btn::after{
+  content:'';
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:2px;
+  height:1px;
+  border-radius:999px;
+  background:rgba(212,168,67,.82);
+  box-shadow:0 0 8px rgba(212,168,67,.18);
+  opacity:0;
+  transform:scaleX(.45);
+  transition:opacity .32s var(--ease-soft),transform .32s var(--ease-soft),box-shadow .32s var(--ease-soft);
+  pointer-events:none;
+}
+.lang-btn:not(.active):hover{color:var(--text-dim);border-color:var(--border);opacity:1}
+.lang-btn:not(.active):active{color:var(--text)}
 .lang-btn.active{
   color:var(--gold);
   border-color:transparent;
   background:transparent;
+  opacity:1;
+  text-shadow:0 0 10px rgba(212,168,67,.15);
+}
+.lang-btn.active::after{
+  opacity:1;
+  transform:scaleX(1);
+}
+.lang-btn.active:hover,
+.lang-btn.active:focus-visible,
+.lang-btn.active:active{
+  color:var(--gold);
+  border-color:transparent;
+  background:transparent;
+  box-shadow:none;
 }
 .lang-btn.lang-btn-es:hover,
 .lang-btn.lang-btn-es:focus-visible,
@@ -187,6 +216,15 @@ nav.scrolled{background:rgba(13,13,18,.95);backdrop-filter:blur(12px);padding:12
   opacity:0;
   pointer-events:none;
   z-index:-1;
+}
+.nav-logo.is-breathe-intro::before{
+  animation:footerFeatherPrismaBreath 4.6s ease-in-out 1;
+  filter:blur(46px) saturate(1.24) brightness(1.06);
+}
+.footer-ornament.is-breathe-intro::before,
+.footer-feather-sello.is-breathe-intro::before{
+  animation:footerFeatherPrismaBreath 4.2s ease-in-out 1;
+  filter:blur(40px) saturate(1.28) brightness(1.08);
 }
 .brand-first{color:#F5F5F5;font-weight:300;letter-spacing:.02em;text-transform:none}
 .brand-last{color:var(--gold);font-weight:600;font-size:1.03em;font-style:italic;letter-spacing:.01em;text-transform:none;transition:color .35s var(--ease-soft)}
@@ -1421,7 +1459,6 @@ textarea.adm-input{resize:vertical;min-height:80px}
   nav{background:transparent!important;border-bottom:none!important;box-shadow:none!important}
   nav.scrolled{background:#000!important;border-bottom:1px solid var(--border)!important;box-shadow:none!important}
   footer{background-color:#000}
-  .nav-logo::before{content:none}
   .nav-logo,
   .nav-identity{overflow:visible!important;text-overflow:clip}
 }
@@ -1510,8 +1547,9 @@ textarea.adm-input{resize:vertical;min-height:80px}
 .mobile-menu .lang-row button.active{
   border-color:rgba(212,168,67,.55);
   color:var(--gold);
-  background:transparent;
-  box-shadow:0 0 0 1px rgba(212,168,67,.08),0 8px 24px rgba(0,0,0,.18);
+  background:linear-gradient(180deg, rgba(212,168,67,.06) 0%, rgba(212,168,67,.015) 100%);
+  box-shadow:inset 0 -1px 0 rgba(212,168,67,.78),0 8px 24px rgba(0,0,0,.18);
+  text-shadow:0 0 10px rgba(212,168,67,.12);
 }
 .mobile-menu #mob-btn-es{
   box-shadow:
@@ -1721,6 +1759,11 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .lang-bar{padding:5px 12px;gap:1px;flex-wrap:wrap;justify-content:center;row-gap:6px}
   .lang-btn .lang-label{display:none}
   .lang-btn{padding:5px 8px}
+  .lang-btn::after{
+    left:8px;
+    right:8px;
+    bottom:1px;
+  }
   nav{padding:10px 14px}
   /* Avoid hero taller than the viewport on short phones (was min-height:700px from base #hero) */
   #hero{height:100svh;height:100vh;min-height:0}
