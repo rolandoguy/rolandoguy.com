@@ -1210,73 +1210,105 @@
     var tRefs = getPhotoPanelRefs('stage');
     var bRefs = getPhotoPanelRefs('backstage');
 
-    function bestGridCols(count, maxCols) {
-      if (count <= 1) return 1;
-      var limit = Math.min(maxCols, count);
-      var best = 2;
-      var bestEmpty = Infinity;
-      for (var cols = 2; cols <= limit; cols++) {
-        var empty = (cols - (count % cols)) % cols;
-        if (empty < bestEmpty || (empty === bestEmpty && cols > best)) {
-          best = cols;
-          bestEmpty = empty;
-        }
-      }
-      return best;
+    function maxPhotoCols(itemClass) {
+      var w = window.innerWidth || document.documentElement.clientWidth || 1280;
+      if (w <= 600) return itemClass === 'photo-item-p' ? 2 : 1;
+      if (w <= 1000) return 2;
+      return itemClass === 'photo-item-p' ? 4 : 3;
     }
 
-    function photoSpanClass(index, count, cols) {
-      var remainder = count % cols;
-      if (!remainder) return '';
-      var lastIndex = count - 1;
-      if (remainder === 1 && index === lastIndex) {
-        return ' photo-item-span-' + cols;
-      }
-      if (remainder === 2) {
-        if (cols === 4 && (index === count - 2 || index === lastIndex)) {
-          return ' photo-item-span-2';
+    function balancedRowSizes(count, maxCols, refs) {
+      if (count <= 0) return [];
+      var w = window.innerWidth || document.documentElement.clientWidth || 1280;
+      if (w > 1000) {
+        if (refs.type === 't' || refs.type === 'b') {
+          if (count >= 5) {
+            return [2].concat(balancedRowSizes(count - 2, 3, { type: refs.type, itemClass: refs.itemClass }));
+          }
+          if (count === 4) return [2, 2];
         }
-        if ((cols === 2 || cols === 3) && index === lastIndex) {
-          return ' photo-item-span-2';
+        if (refs.type === 's') {
+          if (count >= 7) {
+            return [3].concat(balancedRowSizes(count - 3, 4, { type: refs.type, itemClass: refs.itemClass }));
+          }
+          if (count === 6) return [3, 3];
+          if (count === 5) return [3, 2];
         }
       }
-      if (remainder === 3 && cols === 4 && index === lastIndex) {
-        return ' photo-item-span-2';
+      var rows = Math.ceil(count / maxCols);
+      var base = Math.floor(count / rows);
+      var extra = count % rows;
+      var sizes = [];
+      for (var i = 0; i < rows; i++) {
+        sizes.push(base + (i < extra ? 1 : 0));
       }
-      return '';
+      return sizes;
+    }
+
+    function renderPhotoItem(refs, entry, i, altFallback) {
+      var imgSrc = resolvePhotoSrc(entry);
+      var cap = getCaption(refs.type, i);
+      var alt = String(cap.alt || '').trim() || altFallback;
+      var caption = String(cap.caption || '').trim();
+      var photographer = String(cap.photographer || '').trim();
+      var orientation = String(entry && entry.orientation || '').trim().toLowerCase();
+      var mismatchContain =
+        (refs.type === 's' && orientation === 'landscape') ||
+        ((refs.type === 't' || refs.type === 'b') && orientation === 'portrait');
+      var focusStyle = entry && entry.focus
+        ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + '"'
+        : '';
+      var metaHtml = '';
+      if (caption || photographer) {
+        metaHtml =
+          '<div class="photo-item-meta">' +
+          (caption ? '<p class="photo-item-caption">' + caption.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</p>' : '') +
+          (photographer ? '<p class="photo-item-credit">&copy; ' + photographer.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</p>' : '') +
+          '</div>';
+      }
+      return (
+        '<div class="photo-item ' +
+        refs.itemClass +
+        (mismatchContain ? ' photo-item-fit-contain' : '') +
+        ' reveal rd' +
+        i % 4 +
+        '" onclick="openLb(\'' +
+        refs.type +
+        '\',' +
+        i +
+        ')"><img src="' +
+        imgSrc +
+        '" alt="' +
+        alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
+        '" loading="lazy" decoding="async"' +
+        focusStyle +
+        '>' +
+        metaHtml +
+        '</div>'
+      );
     }
 
     function renderItems(refs, items, altFallback) {
       if (!refs || !refs.grid) return;
       var count = Array.isArray(items) ? items.length : 0;
-      var defaultCols = refs.itemClass === 'photo-item-p' ? 4 : 3;
-      var cols = bestGridCols(count, defaultCols);
-      refs.grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
-      refs.grid.innerHTML = (items || [])
-        .map(function (entry, i) {
-          var imgSrc = resolvePhotoSrc(entry);
-          var cap = getCaption(refs.type, i);
-          var alt = String(cap.alt || '').trim() || altFallback;
-          var focusStyle = entry && entry.focus
-            ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + '"'
-            : '';
+      var cols = maxPhotoCols(refs.itemClass);
+      var rows = balancedRowSizes(count, cols, refs);
+      var cursor = 0;
+      refs.grid.innerHTML = rows
+        .map(function (rowSize) {
+          var rowItems = (items || []).slice(cursor, cursor + rowSize);
+          var start = cursor;
+          cursor += rowSize;
           return (
-            '<div class="photo-item ' +
-            refs.itemClass +
-            photoSpanClass(i, count, cols) +
-            ' reveal rd' +
-            i % 4 +
-            '" onclick="openLb(\'' +
-            refs.type +
-            '\',' +
-            i +
-            ')"><img src="' +
-            imgSrc +
-            '" alt="' +
-            alt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') +
-            '" loading="lazy" decoding="async"' +
-            focusStyle +
-            '></div>'
+            '<div class="photo-grid-row" style="grid-template-columns:repeat(' +
+            rowSize +
+            ', minmax(0,1fr))">' +
+            rowItems
+              .map(function (entry, rowIdx) {
+                return renderPhotoItem(refs, entry, start + rowIdx, altFallback);
+              })
+              .join('') +
+            '</div>'
           );
         })
         .join('');
