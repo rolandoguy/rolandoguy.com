@@ -209,11 +209,21 @@
     return offset;
   }
 
+  function isProgramsHash(hash) {
+    var h = String(hash || window.location.hash || '').toLowerCase();
+    return h === '#programs' || h === '#programstop';
+  }
+
+  function getProgramsScrollTarget() {
+    return document.getElementById('programsTop') || document.getElementById('programs');
+  }
+
   function scrollProgramsToTop(force) {
-    if (!force && String(window.location.hash || '').toLowerCase() !== '#programs') return;
+    if (!force && !isProgramsHash()) return;
     var section = document.getElementById('programs');
     if (!section || section.hidden) return;
-    var top = window.pageYOffset + section.getBoundingClientRect().top - getProgramsAnchorOffset();
+    var target = getProgramsScrollTarget() || section;
+    var top = window.pageYOffset + target.getBoundingClientRect().top - getProgramsAnchorOffset();
     window.scrollTo({
       top: Math.max(0, Math.round(top)),
       behavior: 'auto'
@@ -221,7 +231,7 @@
   }
 
   function scheduleProgramsScroll(force) {
-    if (!force && String(window.location.hash || '').toLowerCase() !== '#programs') return;
+    if (!force && !isProgramsHash()) return;
     if (PROGRAMS_SCROLL_RAF) return;
     PROGRAMS_SCROLL_RAF = window.requestAnimationFrame(function () {
       PROGRAMS_SCROLL_RAF = window.requestAnimationFrame(function () {
@@ -344,7 +354,7 @@
     })
     .catch(function () {});
 
-  if (String(window.location.hash || '').toLowerCase() === '#programs' && 'scrollRestoration' in window.history) {
+  if (isProgramsHash() && 'scrollRestoration' in window.history) {
     try {
       window.history.scrollRestoration = 'manual';
     } catch (e) {}

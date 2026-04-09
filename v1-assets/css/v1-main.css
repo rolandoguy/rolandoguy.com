@@ -538,6 +538,7 @@ section{position:relative;z-index:2}
 }
 .opera-grid{display:block;margin-top:0}
 #programs{padding:90px 0;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+#programsTop{scroll-margin-top:152px}
 .programs-header{margin-bottom:28px}
 .programs-header h2{font-family:var(--ff-title);color:var(--text)}
 .programs-header h2 em{font-style:italic;color:var(--gold)}
@@ -1674,6 +1675,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .hero-cta{flex-wrap:wrap;gap:10px}
   .hero-cta a{font-size:.55rem;padding:11px 18px}
   .section-inner{padding:0 20px}
+  #programsTop{scroll-margin-top:132px}
   .about-grid{grid-template-columns:1fr;gap:32px}
   .about-photo{max-width:320px;margin:0 auto}
   .about-photo-wrap{max-width:320px;margin:0 auto;width:100%}
@@ -1841,6 +1843,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .hero-subtitle{font-size:.87rem;letter-spacing:.012em;line-height:1.8;margin-top:18px;max-width:min(100%,26rem)}
   .btn-primary,.btn-secondary{font-size:.5rem;padding:10px 14px;letter-spacing:.14em;text-align:center;justify-content:center}
   .section-inner{padding:0 18px}
+  #programsTop{scroll-margin-top:124px}
   #about,#repertoire,#programs,#videos,#photos,#audio,#performances,#contact,#epk{padding:88px 0}
   .section-tag{font-size:.52rem;margin-bottom:30px}
   .about-text h2,.rep-title,.programs-header h2,.videos-header h2,.perf-header h2,.photos-header h2,.contact-left h2{font-size:clamp(2rem,9vw,2.8rem);line-height:1.13;max-width:min(100%,20rem)}
