@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f1ea">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Internal Calendar — Rolando Guy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="v1-assets/css/internal-calendar.css">
+</head>
+<body>
+  <div class="ic-shell">
+    <header class="ic-topbar">
+      <div class="ic-topbar__copy">
+        <p class="ic-kicker" id="icKicker">Internal calendar</p>
+        <h1 id="icTitle">Agenda</h1>
+        <p class="ic-lead" id="icLead">Private working timeline for concerts, shows, and other events, grouped month by month.</p>
+      </div>
+      <div class="ic-topbar__actions">
+        <button type="button" class="ic-btn" id="icFilterAll" data-ic-filter="all" aria-pressed="true">All</button>
+        <button type="button" class="ic-btn" id="icFilterPublic" data-ic-filter="public" aria-pressed="false">Public</button>
+        <button type="button" class="ic-btn" id="icFilterPrivate" data-ic-filter="private" aria-pressed="false">Private</button>
+        <button type="button" class="ic-btn" id="icCollapseAllBtn">Collapse all</button>
+        <button type="button" class="ic-btn" id="icExpandAllBtn">Expand all</button>
+        <button type="button" class="ic-btn ic-btn--primary" id="icPrintBtn">Print agenda</button>
+        <a class="ic-btn" id="icBackAdminBtn" href="admin-v2.html">Back to admin</a>
+      </div>
+    </header>
+
+    <section class="ic-controlsbar" aria-label="Agenda controls">
+      <label class="ic-control">
+        <span id="icAgendaLangLabel">Agenda language</span>
+        <select id="icLangSelect">
+          <option value="en">EN</option>
+          <option value="de">DE</option>
+          <option value="es">ES</option>
+          <option value="it">IT</option>
+          <option value="fr">FR</option>
+        </select>
+      </label>
+      <label class="ic-control">
+        <span id="icScopeLabel">Scope</span>
+        <select id="icScopeSelect">
+          <option value="upcoming">Upcoming only</option>
+          <option value="month">This month</option>
+          <option value="next_3m">Next 3 months</option>
+          <option value="next_6m">Next 6 months</option>
+          <option value="year">This year</option>
+          <option value="custom_year">Custom year</option>
+          <option value="custom_months">Custom months</option>
+        </select>
+      </label>
+      <label class="ic-control" id="icScopeYearWrap" hidden>
+        <span id="icScopeYearLabel">Year</span>
+        <input id="icScopeYear" type="number" min="2000" max="2099" inputmode="numeric">
+      </label>
+      <label class="ic-control" id="icScopeFromWrap" hidden>
+        <span id="icScopeFromLabel">From month</span>
+        <input id="icScopeFrom" type="month">
+      </label>
+      <label class="ic-control" id="icScopeToWrap" hidden>
+        <span id="icScopeToLabel">To month</span>
+        <input id="icScopeTo" type="month">
+      </label>
+      <div class="ic-presets" aria-label="Print presets">
+        <button type="button" class="ic-btn" id="icPresetUpcomingBtn">Upcoming only</button>
+        <button type="button" class="ic-btn" id="icPresetThisYearBtn">This year</button>
+        <button type="button" class="ic-btn" id="icPresetSeasonBtn">2026 season</button>
+        <button type="button" class="ic-btn" id="icPresetPublicOnlyBtn">Public only</button>
+        <button type="button" class="ic-btn" id="icPresetPrivatePlanningBtn">Private planning</button>
+      </div>
+    </section>
+
+    <section class="ic-overview" id="icOverview" aria-label="Calendar overview"></section>
+
+    <div class="ic-stickybar">
+      <div class="ic-month-index" id="icMonthIndex" aria-label="Month index"></div>
+      <div class="ic-summary" id="icSummary" aria-live="polite">Loading calendar…</div>
+    </div>
+
+    <p class="ic-print-note" id="icPrintNote" hidden></p>
+
+    <main class="ic-main" id="icMain">
+      <div class="ic-loading" id="icLoading">Loading calendar…</div>
+      <div id="icMonths"></div>
+    </main>
+  </div>
+
+  <script src="v1-assets/js/internal-calendar.js" defer></script>
+</body>
+</html>

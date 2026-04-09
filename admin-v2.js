@@ -307,11 +307,483 @@
     gate: 'locked',
     failure: ''
   };
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr)$/;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var mediaPhotoDragIndex = -1;
   var bulkUrlSubmitHandler = null;
   var activityLog = [];
+  var PROGRAM_BUILDER_FAMILIES = ['gala', 'italian', 'tango', 'borders'];
+  var PROGRAM_BUILDER_DURATIONS = [30, 45, 60];
+  var PROGRAM_BUILDER_BLUEPRINT_KEYS = ['gala_30','gala_45','gala_60','italian_30','italian_45','italian_60','tango_30','tango_45','tango_60','borders_30','borders_45','borders_60'];
+  var PROGRAM_BUILDER_HISTORY_IMPORT_VERSION = 3;
+  var PROGRAM_BUILDER_TAG_HINTS = {
+    gala: ['gala'],
+    italian: ['italian'],
+    tango: ['tango'],
+    borders: ['borders', 'multilingual', 'cross-border']
+  };
+  var PROGRAM_BUILDER_VOICE_ORDER = ['tenor', 'soprano', 'mezzo', 'baritone'];
+  var PROGRAM_BUILDER_VOICE_CATEGORY_LABELS = {
+    tenor_aria: 'Tenor aria',
+    soprano_aria: 'Soprano aria',
+    mezzo_aria: 'Mezzo aria',
+    baritone_aria: 'Baritone aria',
+    tenor_soprano_duet: 'Tenor-Soprano duet',
+    tenor_mezzo_duet: 'Tenor-Mezzo duet',
+    tenor_baritone_duet: 'Tenor-Baritone duet',
+    soprano_mezzo_duet: 'Soprano-Mezzo duet',
+    soprano_baritone_duet: 'Soprano-Baritone duet',
+    mezzo_baritone_duet: 'Mezzo-Baritone duet',
+    tenor_soprano_mezzo_trio: 'Tenor-Soprano-Mezzo trio',
+    tenor_soprano_baritone_trio: 'Tenor-Soprano-Baritone trio',
+    tenor_mezzo_baritone_trio: 'Tenor-Mezzo-Baritone trio',
+    soprano_mezzo_baritone_trio: 'Soprano-Mezzo-Baritone trio',
+    quartet: 'Quartet',
+    ensemble: 'Ensemble',
+    piano_solo: 'Piano solo',
+    chamber_song: 'Chamber song',
+    tango: 'Argentine tango'
+  };
+  var PROGRAM_BUILDER_SELECTOR_FILTER_LABELS = {
+    all: 'All combinations',
+    tenor_arias: 'Tenor arias',
+    soprano_arias: 'Soprano arias',
+    mezzo_arias: 'Mezzo arias',
+    baritone_arias: 'Baritone arias',
+    tenor_soprano_duets: 'Tenor-Soprano duets',
+    tenor_mezzo_duets: 'Tenor-Mezzo duets',
+    tenor_baritone_duets: 'Tenor-Baritone duets',
+    other_duets: 'Other duets',
+    trios: 'Trios',
+    quartets_ensembles: 'Quartets / Ensembles',
+    piano_solo: 'Piano solo',
+    chamber_song: 'Chamber songs with piano',
+    tango: 'Argentine tango'
+  };
+  var PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS = {
+    opener: 'Opening',
+    development: 'Development',
+    lyrical_center: 'Lyrical center',
+    contrast: 'Contrast',
+    climax: 'Climax',
+    finale: 'Finale',
+    encore: 'Encore'
+  };
+  var PROGRAM_BUILDER_DRAMATIC_ROLE_ORDER = ['opener','development','lyrical_center','contrast','climax','finale','encore'];
+  var PROGRAM_BUILDER_ARC_TEMPLATES = {
+    30: [
+      { id: 'opening', label: 'Opening', hint: 'Start with presence and clarity.' },
+      { id: 'development', label: 'Development', hint: 'Set the tone and broaden the palette.' },
+      { id: 'lyrical_center', label: 'Lyrical center', hint: 'Give the programme its inward moment.' },
+      { id: 'finale', label: 'Finale', hint: 'End with real profile and arrival.' }
+    ],
+    45: [
+      { id: 'opening', label: 'Opening', hint: 'Start with presence and clarity.' },
+      { id: 'early_contrast', label: 'Early contrast', hint: 'Introduce a different colour early.' },
+      { id: 'development', label: 'Development', hint: 'Let the programme grow in profile.' },
+      { id: 'lyrical_center', label: 'Lyrical center', hint: 'Create intimacy or inward focus.' },
+      { id: 'climax', label: 'Climax', hint: 'Reserve a strong emotional or vocal summit.' },
+      { id: 'finale', label: 'Finale', hint: 'Finish with confidence and projection.' }
+    ],
+    60: [
+      { id: 'opening', label: 'Opening', hint: 'Set the artistic profile immediately.' },
+      { id: 'first_development', label: 'First development', hint: 'Expand the first line of the recital.' },
+      { id: 'contrast', label: 'Contrast', hint: 'Shift language, mood, or texture.' },
+      { id: 'lyrical_center', label: 'Lyrical center', hint: 'Hold the emotional centre of the programme.' },
+      { id: 'build_up', label: 'Build-up', hint: 'Prepare the final ascent.' },
+      { id: 'climax', label: 'Climax', hint: 'Place the strongest peak here.' },
+      { id: 'resolution_finale', label: 'Resolution / finale', hint: 'Land the programme with conviction.' }
+    ]
+  };
+  var PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER = [
+    'Lyric tenor arias',
+    'Tenor–Soprano duets',
+    'Tenor–Mezzo duets',
+    'Tenor–Baritone duets',
+    'Trios with tenor',
+    'Quartets / ensembles',
+    'Piano solo',
+    'Chamber songs with piano · German',
+    'Chamber songs with piano · Italian',
+    'Chamber songs with piano · French',
+    'Chamber songs with piano · English',
+    'Chamber songs with piano · Spanish',
+    'Argentine tango'
+  ];
+  var PROGRAM_BUILDER_TEXT = {
+    en: {
+      families: { gala: 'Gala', italian: 'Italian', tango: 'Tango', borders: 'Borders' },
+      durationTarget: 'Target',
+      durationCurrent: 'Current selection',
+      durationEncore: 'Encore total',
+      durationPossible: 'Possible total',
+      currentSelectedTotalLabel: 'Current total',
+      durationMinutes: 'min',
+      statusShort: 'Too short',
+      statusOk: 'Within range',
+      statusSlightlyOver: 'Slightly over',
+      statusLong: 'Too long',
+      durationProgressExact: 'On target',
+      durationProgressShort: 'About {n} min short',
+      durationProgressOver: 'About {n} min over',
+      previewHeading: 'Programme Sheet',
+      repertoireLabel: 'Selected repertoire',
+      repertoireHeadingModes: {
+        suggested: 'Suggested repertoire',
+        agreed: 'Agreed repertoire',
+        possible: 'Possible repertoire'
+      },
+      flexibilityLabel: 'Programme flexibility',
+      contactLabel: 'Contact',
+      websiteLabel: 'Website',
+      emailLabel: 'Email',
+      phoneLabel: 'Mobile',
+      formationLabel: 'Formation',
+      durationLabel: 'Duration',
+      focusLabel: 'Focus',
+      currentSelectionLabel: 'Current selection',
+      encoreOptionsLabel: 'Optional encores',
+      encoreIncludeLabel: 'Include encore options in Programme Sheet',
+      encoreEmpty: 'Keep 1–3 encore options here if you want to have bis choices ready without mixing them into the main programme.',
+      encoreNoteLabel: 'Encore note',
+      approximateDurationLabel: 'Total duration',
+      artistSubtitle: 'Argentine-Italian Lyric Tenor based in Berlin',
+      noPieces: 'Select repertoire to build this programme sheet.',
+      summaryFallback: 'A curated recital proposal designed for presenters, adaptable in pacing and repertoire balance.',
+      flexibleNote: 'Programme length, language balance, and repertoire order may be adjusted in consultation with the presenter and collaborating musicians.',
+      emailLead: 'Thank you for your interest.',
+      emailCloser: 'I would be happy to adapt duration, pacing, and repertoire balance for the occasion.',
+      exportMissingRepertoire: 'Select at least one repertoire item before exporting this Programme Sheet.',
+      exportLanguageMismatch: 'The main programme note still reads in English. Reset it to the language default before exporting.',
+      exportPlaceholderText: 'Remove placeholder text before exporting this Programme Sheet.',
+      exportNotReadyTitle: 'Programme Sheet not ready',
+      exportNotReadyLead: 'This offer cannot be exported yet.'
+    },
+    de: {
+      families: { gala: 'Gala', italian: 'Italienisch', tango: 'Tango', borders: 'Grenzen' },
+      durationTarget: 'Ziel',
+      durationCurrent: 'Aktuelle Auswahl',
+      durationEncore: 'Zugaben gesamt',
+      durationPossible: 'Mögliche Gesamtdauer',
+      currentSelectedTotalLabel: 'Aktuelle Summe',
+      durationMinutes: 'Min.',
+      statusShort: 'Zu kurz',
+      statusOk: 'Passend',
+      statusSlightlyOver: 'Leicht darüber',
+      statusLong: 'Zu lang',
+      durationProgressExact: 'Im Ziel',
+      durationProgressShort: 'Etwa {n} Min. zu kurz',
+      durationProgressOver: 'Etwa {n} Min. darüber',
+      previewHeading: 'Programmblatt',
+      repertoireLabel: 'Ausgewähltes Repertoire',
+      repertoireHeadingModes: {
+        suggested: 'Vorgeschlagenes Repertoire',
+        agreed: 'Vereinbartes Repertoire',
+        possible: 'Mögliches Repertoire'
+      },
+      flexibilityLabel: 'Flexibler Rahmen',
+      contactLabel: 'Kontakt',
+      websiteLabel: 'Website',
+      emailLabel: 'E-Mail',
+      phoneLabel: 'Mobil',
+      formationLabel: 'Besetzung',
+      durationLabel: 'Dauer',
+      focusLabel: 'Programmtyp',
+      currentSelectionLabel: 'Aktuelle Auswahl',
+      encoreOptionsLabel: 'Optionale Zugaben',
+      encoreIncludeLabel: 'Zugaben im Programmblatt zeigen',
+      encoreEmpty: 'Halten Sie hier 1–3 Zugaben bereit, ohne sie mit dem Hauptprogramm zu vermischen.',
+      encoreNoteLabel: 'Notiz zur Zugabe',
+      approximateDurationLabel: 'Gesamtdauer',
+      artistSubtitle: 'Argentinisch-italienischer lyrischer Tenor mit Basis in Berlin',
+      noPieces: 'Wählen Sie Repertoirestücke für diese Version aus.',
+      summaryFallback: 'Ein kuratiertes Konzertangebot für Veranstalter, flexibel an Dramaturgie und Repertoiregewicht anpassbar.',
+      flexibleNote: 'Dauer, Sprachgewicht und Repertoirefolge können in Absprache mit Veranstalter und Mitwirkenden angepasst werden.',
+      emailLead: 'Vielen Dank für Ihr Interesse.',
+      emailCloser: 'Gerne passe ich Dauer, Dramaturgie und Repertoiregewicht an den Anlass an.',
+      exportMissingRepertoire: 'Wählen Sie mindestens ein Repertoirestück, bevor Sie dieses Programmblatt exportieren.',
+      exportLanguageMismatch: 'Die Hauptbeschreibung ist noch auf Englisch. Setzen Sie sie vor dem Export auf den Sprach-Standard zurück.',
+      exportPlaceholderText: 'Entfernen Sie Platzhaltertext, bevor Sie dieses Programmblatt exportieren.'
+    },
+    es: {
+      families: { gala: 'Gala', italian: 'Italiano', tango: 'Tango', borders: 'Sin fronteras' },
+      durationTarget: 'Objetivo',
+      durationCurrent: 'Selección actual',
+      durationEncore: 'Total de bises',
+      durationPossible: 'Duración posible total',
+      currentSelectedTotalLabel: 'Total actual',
+      durationMinutes: 'min',
+      statusShort: 'Demasiado corto',
+      statusOk: 'En rango',
+      statusSlightlyOver: 'Ligeramente por encima',
+      statusLong: 'Demasiado largo',
+      durationProgressExact: 'En objetivo',
+      durationProgressShort: 'Unos {n} min por debajo',
+      durationProgressOver: 'Unos {n} min por encima',
+      previewHeading: 'Hoja de programa',
+      repertoireLabel: 'Repertorio seleccionado',
+      repertoireHeadingModes: {
+        suggested: 'Repertorio sugerido',
+        agreed: 'Repertorio acordado',
+        possible: 'Repertorio posible'
+      },
+      flexibilityLabel: 'Flexibilidad del programa',
+      contactLabel: 'Contacto',
+      websiteLabel: 'Web',
+      emailLabel: 'Correo',
+      phoneLabel: 'Móvil',
+      formationLabel: 'Formación',
+      durationLabel: 'Duración',
+      focusLabel: 'Enfoque',
+      currentSelectionLabel: 'Selección actual',
+      encoreOptionsLabel: 'Bises opcionales',
+      encoreIncludeLabel: 'Incluir bises en la hoja del programa',
+      encoreEmpty: 'Guarda aquí 1–3 opciones de bis sin mezclarlas con el programa principal.',
+      encoreNoteLabel: 'Nota del bis',
+      approximateDurationLabel: 'Duración total',
+      artistSubtitle: 'Tenor lírico argentino-italiano con base en Berlín',
+      noPieces: 'Selecciona repertorio para esta versión concreta.',
+      summaryFallback: 'Una propuesta de recital curada para programadores, adaptable en ritmo y equilibrio de repertorio.',
+      flexibleNote: 'La duración, el equilibrio idiomático y el orden del repertorio pueden ajustarse en diálogo con el programador y los colaboradores artísticos.',
+      emailLead: 'Muchas gracias por su interés.',
+      emailCloser: 'Con gusto puedo ajustar duración, ritmo y selección de repertorio según la ocasión.',
+      exportMissingRepertoire: 'Seleccione al menos un repertorio antes de exportar esta hoja de programa.',
+      exportLanguageMismatch: 'El texto principal del programa sigue en inglés. Restablézcalo al idioma seleccionado antes de exportar.',
+      exportPlaceholderText: 'Elimine el texto de marcador antes de exportar esta hoja de programa.'
+    },
+    it: {
+      families: { gala: 'Gala', italian: 'Italiano', tango: 'Tango', borders: 'Senza frontiere' },
+      durationTarget: 'Obiettivo',
+      durationCurrent: 'Selezione attuale',
+      durationEncore: 'Totale bis',
+      durationPossible: 'Durata totale possibile',
+      currentSelectedTotalLabel: 'Totale attuale',
+      durationMinutes: 'min',
+      statusShort: 'Troppo corto',
+      statusOk: 'Equilibrato',
+      statusSlightlyOver: 'Leggermente oltre',
+      statusLong: 'Troppo lungo',
+      durationProgressExact: 'In linea con l’obiettivo',
+      durationProgressShort: 'Circa {n} min in meno',
+      durationProgressOver: 'Circa {n} min in più',
+      previewHeading: 'Scheda del programma',
+      repertoireLabel: 'Repertorio selezionato',
+      repertoireHeadingModes: {
+        suggested: 'Repertorio suggerito',
+        agreed: 'Repertorio concordato',
+        possible: 'Repertorio possibile'
+      },
+      flexibilityLabel: 'Flessibilità del programma',
+      contactLabel: 'Contatto',
+      websiteLabel: 'Sito',
+      emailLabel: 'Email',
+      phoneLabel: 'Cellulare',
+      formationLabel: 'Formazione',
+      durationLabel: 'Durata',
+      focusLabel: 'Profilo',
+      currentSelectionLabel: 'Selezione attuale',
+      encoreOptionsLabel: 'Bis opzionali',
+      encoreIncludeLabel: 'Includi i bis nella scheda del programma',
+      encoreEmpty: 'Tieni qui 1–3 opzioni di bis senza mescolarle al programma principale.',
+      encoreNoteLabel: 'Nota del bis',
+      approximateDurationLabel: 'Durata totale',
+      artistSubtitle: 'Tenore lirico argentino-italiano con base a Berlino',
+      noPieces: 'Seleziona i brani per questa versione concreta.',
+      summaryFallback: 'Una proposta di recital curata per organizzatori, adattabile nel ritmo e nel bilanciamento del repertorio.',
+      flexibleNote: "Durata, equilibrio linguistico e ordine del repertorio possono essere adattati in dialogo con l'organizzatore e i collaboratori artistici.",
+      emailLead: "Grazie per l'interesse.",
+      emailCloser: 'Sarò lieto di adattare durata, ritmo e repertorio al contesto.',
+      exportMissingRepertoire: 'Seleziona almeno un brano prima di esportare questa scheda del programma.',
+      exportLanguageMismatch: 'Il testo principale del programma è ancora in inglese. Ripristinalo alla lingua selezionata prima di esportare.',
+      exportPlaceholderText: 'Rimuovi il testo segnaposto prima di esportare questa scheda del programma.'
+    },
+    fr: {
+      families: { gala: 'Gala', italian: 'Italien', tango: 'Tango', borders: 'Sans frontières' },
+      durationTarget: 'Objectif',
+      durationCurrent: 'Sélection actuelle',
+      durationEncore: 'Total des bis',
+      durationPossible: 'Durée totale possible',
+      currentSelectedTotalLabel: 'Total actuel',
+      durationMinutes: 'min',
+      statusShort: 'Trop court',
+      statusOk: 'Équilibré',
+      statusSlightlyOver: 'Légèrement au-dessus',
+      statusLong: 'Trop long',
+      durationProgressExact: 'Dans l’objectif',
+      durationProgressShort: 'Environ {n} min de moins',
+      durationProgressOver: 'Environ {n} min de plus',
+      previewHeading: 'Feuille de programme',
+      repertoireLabel: 'Répertoire sélectionné',
+      repertoireHeadingModes: {
+        suggested: 'Répertoire suggéré',
+        agreed: 'Répertoire convenu',
+        possible: 'Répertoire possible'
+      },
+      flexibilityLabel: 'Souplesse du programme',
+      contactLabel: 'Contact',
+      websiteLabel: 'Site',
+      emailLabel: 'E-mail',
+      phoneLabel: 'Mobile',
+      formationLabel: 'Formation',
+      durationLabel: 'Durée',
+      focusLabel: 'Axe',
+      currentSelectionLabel: 'Sélection actuelle',
+      encoreOptionsLabel: 'Bis optionnels',
+      encoreIncludeLabel: 'Inclure les bis dans la feuille de programme',
+      encoreEmpty: 'Gardez ici 1 à 3 options de bis sans les mélanger au programme principal.',
+      encoreNoteLabel: 'Note sur le bis',
+      approximateDurationLabel: 'Durée totale',
+      artistSubtitle: 'Ténor lyrique italo-argentin basé à Berlin',
+      noPieces: 'Sélectionnez le répertoire pour cette version.',
+      summaryFallback: 'Une proposition de récital conçue avec soin pour les programmateurs, adaptable dans son rythme et son équilibre.',
+      flexibleNote: "La durée, l'équilibre des langues et l'ordre du répertoire peuvent être ajustés en concertation avec le programmateur et les artistes partenaires.",
+      emailLead: "Merci beaucoup pour votre intérêt.",
+      emailCloser: "Je peux naturellement ajuster la durée, le rythme et le choix du répertoire selon l'occasion.",
+      exportMissingRepertoire: "Sélectionnez au moins un morceau avant d'exporter cette feuille de programme.",
+      exportLanguageMismatch: "Le texte principal du programme est encore en anglais. Réinitialisez-le à la langue sélectionnée avant l'export.",
+      exportPlaceholderText: "Retirez le texte indicatif avant d'exporter cette feuille de programme."
+    }
+  };
+  var PROGRAMME_FEE_PRESETS = {
+    berlin_local: { label: 'Berlin local', eventType: 'cultural', rehearsalCount: 0, rehearsalFeePerArtist: 0, travelCost: 0, hotelCost: 0, localTransportCost: 20, adminBuffer: 25, artistFeeMultiplier: 1 },
+    germany_regional: { label: 'Germany regional', eventType: 'cultural', rehearsalCount: 1, rehearsalFeePerArtist: 45, travelCost: 90, hotelCost: 0, localTransportCost: 30, adminBuffer: 55, artistFeeMultiplier: 1.08 },
+    germany_overnight: { label: 'Germany overnight', eventType: 'festival', rehearsalCount: 1, rehearsalFeePerArtist: 55, travelCost: 150, hotelCost: 160, localTransportCost: 35, adminBuffer: 80, artistFeeMultiplier: 1.16 },
+    embassy_institutional: { label: 'Embassy / institutional', eventType: 'embassy', rehearsalCount: 1, rehearsalFeePerArtist: 65, travelCost: 120, hotelCost: 180, localTransportCost: 40, adminBuffer: 110, artistFeeMultiplier: 1.3 },
+    church_budget: { label: 'Church budget', eventType: 'church', rehearsalCount: 0, rehearsalFeePerArtist: 0, travelCost: 25, hotelCost: 0, localTransportCost: 15, adminBuffer: 20, artistFeeMultiplier: 0.92 },
+    private_premium: { label: 'Private premium', eventType: 'private', rehearsalCount: 1, rehearsalFeePerArtist: 65, travelCost: 80, hotelCost: 180, localTransportCost: 40, adminBuffer: 140, artistFeeMultiplier: 1.38 }
+  };
+  var PROGRAMME_FEE_COPY = {
+    en: {
+      currency: 'EUR',
+      summaryTitle: 'Internal fee estimate',
+      artisticSubtotal: 'Artistic subtotal',
+      logisticsSubtotal: 'Logistics subtotal',
+      lowBudget: 'Low-budget reality',
+      recommended: 'Fair / recommended',
+      benchmark: 'Public-funded benchmark',
+      premium: 'Premium / private',
+      formation: 'Formation',
+      duration: 'Duration',
+      eventType: 'Event type',
+      participants: 'Artists',
+      rehearsals: 'Rehearsals',
+      notesLabel: 'Notes',
+      benchmarkSource: 'Benchmark source',
+      benchmarkReviewed: 'Benchmark last reviewed',
+      emailLead: 'For this programme offer, my current internal quote frame would be:',
+      emailRecommended: 'fair / recommended',
+      emailLowBudget: 'low-budget reality',
+      emailBenchmark: 'public-funded benchmark reference',
+      emailPremium: 'premium / private context',
+      emailCloser: 'This can be adjusted depending on travel, rehearsal scope, and the final venue context.'
+    },
+    de: {
+      currency: 'EUR',
+      summaryTitle: 'Interne Honorarabschätzung',
+      artisticSubtotal: 'Künstlerische Summe',
+      logisticsSubtotal: 'Logistik',
+      lowBudget: 'Marktrealität / Low-Budget',
+      recommended: 'Fair / empfohlen',
+      benchmark: 'Öffentlicher Benchmark',
+      premium: 'Premium / privat',
+      formation: 'Besetzung',
+      duration: 'Dauer',
+      eventType: 'Veranstaltungstyp',
+      participants: 'Mitwirkende',
+      rehearsals: 'Proben',
+      notesLabel: 'Notizen',
+      benchmarkSource: 'Benchmark-Quelle',
+      benchmarkReviewed: 'Benchmark zuletzt geprüft',
+      emailLead: 'Für dieses Konzertangebot liegt mein aktueller interner Honorarrahmen bei:',
+      emailRecommended: 'fair / empfohlen',
+      emailLowBudget: 'Marktrealität / Low-Budget',
+      emailBenchmark: 'öffentliche Benchmark-Referenz',
+      emailPremium: 'Premium- / Privat-Kontext',
+      emailCloser: 'Je nach Reise, Probenumfang und endgültigem Veranstaltungsrahmen kann dies angepasst werden.',
+      exportNotReadyTitle: 'Programmblatt noch nicht bereit',
+      exportNotReadyLead: 'Dieses Angebot kann noch nicht exportiert werden.'
+    },
+    es: {
+      currency: 'EUR',
+      summaryTitle: 'Estimación interna de honorarios',
+      artisticSubtotal: 'Subtotal artístico',
+      logisticsSubtotal: 'Subtotal logístico',
+      lowBudget: 'Realidad low-budget',
+      recommended: 'Justo / recomendado',
+      benchmark: 'Benchmark público',
+      premium: 'Premium / privado',
+      formation: 'Formación',
+      duration: 'Duración',
+      eventType: 'Tipo de evento',
+      participants: 'Artistas',
+      rehearsals: 'Ensayos',
+      notesLabel: 'Notas',
+      benchmarkSource: 'Fuente del benchmark',
+      benchmarkReviewed: 'Benchmark revisado',
+      emailLead: 'Para esta propuesta de programa, mi marco interno actual de honorarios sería:',
+      emailRecommended: 'justo / recomendado',
+      emailLowBudget: 'realidad low-budget',
+      emailBenchmark: 'referencia de benchmark público',
+      emailPremium: 'premium / privado',
+      emailCloser: 'Esto puede ajustarse según viaje, ensayos y el contexto final de la sala.',
+      exportNotReadyTitle: 'Hoja de programa no lista',
+      exportNotReadyLead: 'Esta propuesta todavía no puede exportarse.'
+    },
+    it: {
+      currency: 'EUR',
+      summaryTitle: 'Stima interna del cachet',
+      artisticSubtotal: 'Subtotale artistico',
+      logisticsSubtotal: 'Subtotale logistico',
+      lowBudget: 'Realtà low-budget',
+      recommended: 'Equo / consigliato',
+      benchmark: 'Benchmark pubblico',
+      premium: 'Premium / privato',
+      formation: 'Formazione',
+      duration: 'Durata',
+      eventType: 'Tipo di evento',
+      participants: 'Artisti',
+      rehearsals: 'Prove',
+      notesLabel: 'Note',
+      benchmarkSource: 'Fonte benchmark',
+      benchmarkReviewed: 'Benchmark rivisto',
+      emailLead: 'Per questa proposta di programma, il mio attuale quadro interno dei compensi sarebbe:',
+      emailRecommended: 'equo / consigliato',
+      emailLowBudget: 'realtà low-budget',
+      emailBenchmark: 'riferimento benchmark pubblico',
+      emailPremium: 'premium / privato',
+      emailCloser: 'Questo può essere adattato in base a viaggio, prove e contesto finale della sede.',
+      exportNotReadyTitle: 'Scheda del programma non pronta',
+      exportNotReadyLead: 'Questa proposta non può ancora essere esportata.'
+    },
+    fr: {
+      currency: 'EUR',
+      summaryTitle: 'Estimation interne des honoraires',
+      artisticSubtotal: 'Sous-total artistique',
+      logisticsSubtotal: 'Sous-total logistique',
+      lowBudget: 'Réalité low-budget',
+      recommended: 'Équitable / recommandé',
+      benchmark: 'Benchmark public',
+      premium: 'Premium / privé',
+      formation: 'Formation',
+      duration: 'Durée',
+      eventType: "Type d'événement",
+      participants: 'Artistes',
+      rehearsals: 'Répétitions',
+      notesLabel: 'Notes',
+      benchmarkSource: 'Source benchmark',
+      benchmarkReviewed: 'Benchmark révisé',
+      emailLead: 'Pour cette proposition de programme, mon cadre interne actuel de devis serait le suivant :',
+      emailRecommended: 'équitable / recommandé',
+      emailLowBudget: 'réalité low-budget',
+      emailBenchmark: 'référence benchmark public',
+      emailPremium: 'premium / privé',
+      emailCloser: 'Cela peut être ajusté selon le voyage, les répétitions et le contexte final du lieu.',
+      exportNotReadyTitle: 'Feuille de programme non prête',
+      exportNotReadyLead: "Cette proposition ne peut pas encore être exportée."
+    }
+  };
+  var PROGRAMME_OFFER_USE_CASES = ['embassy', 'church', 'chamber', 'private', 'festival', 'other'];
+  var PROGRAMME_OFFER_STATUS_VALUES = ['draft', 'active', 'sent', 'archived'];
   var state = {
     lang: 'en',
     section: 'home',
@@ -360,6 +832,8 @@
     epkPhotoSearch: '',
     sectionUndo: {},
     sectionDraftCache: {},
+    draftRestoreBannerKey: '',
+    draftRestoreBannerTs: 0,
     focusMode: false,
     ready: false,
     bioPortraitDefault: '',
@@ -378,10 +852,65 @@
     mediaAudWorkflowFilter: 'all',
     perfWorkflowFilter: 'all',
     repWorkflowFilter: 'all',
+    plannerDoc: { items: [] },
+    plannerIndex: -1,
+    plannerSearch: '',
+    plannerTypeFilter: 'all',
+    plannerLangFilter: '',
+    plannerReadinessFilter: 'all',
+    plannerTagFilter: '',
+    plannerSort: 'sortOrder',
+    plannerOfferStatusFilter: 'all',
+    plannerOfferTypeFilter: 'all',
+    plannerOfferCategoryFilter: 'all',
+    plannerOfferTagFilter: '',
+    plannerOfferLangFilter: '',
+    plannerOfferMatchingOnly: true,
+    plannerOfferFormationOnly: false,
+    plannerOfferShowWithoutTenor: false,
+    blueprintDoc: { blueprints: {} },
+    blueprintFamily: 'gala',
+    blueprintDuration: '30',
+    blueprintPieceIndex: -1,
+    blueprintOutputLang: 'en',
+    quickAddTargetType: 'main',
+    quickAddTargetSlotId: '',
+    quickAddTargetEncoreIndex: -1,
+    programmeOfferSavePhase: '',
+    savedOfferId: '',
+    savedOfferSearch: '',
+    savedOfferTypeFilter: 'all',
+    savedOfferFamilyFilter: 'all',
+    savedOfferDurationFilter: 'all',
+    savedOfferLangFilter: 'all',
+    savedOfferFormationFilter: '',
+    savedOfferStatusFilter: 'all',
+    concertHistoryDoc: { concerts: [] },
+    concertHistoryIndex: -1,
+    concertHistorySearch: '',
+    paperPreview: true,
     pastPerfsSelected: {}
   };
+  var PAPER_PREVIEW_STORAGE_KEY = 'rg_admin_v2_paper_preview';
+  var DRAFT_RESTORE_NOTICE_STORAGE_KEY = 'adm2_draft_notice_v1';
 
   function $(id) { return document.getElementById(id); }
+  function readPaperPreviewPreference() {
+    try {
+      var raw = localStorage.getItem(PAPER_PREVIEW_STORAGE_KEY);
+      if (raw === '0' || raw === 'false') return false;
+      if (raw === '1' || raw === 'true') return true;
+    } catch (e) {}
+    return true;
+  }
+  function applyPaperPreviewMode(enabled, persist) {
+    state.paperPreview = enabled !== false;
+    if (document.body) document.body.classList.toggle('paper-preview-mode', !!state.paperPreview);
+    if ($('paperPreviewToggle')) $('paperPreviewToggle').checked = !!state.paperPreview;
+    if (persist !== false) {
+      try { localStorage.setItem(PAPER_PREVIEW_STORAGE_KEY, state.paperPreview ? '1' : '0'); } catch (e) {}
+    }
+  }
   function isSafariBrowser() {
     var ua = String((window.navigator && window.navigator.userAgent) || '');
     var isWebKit = /WebKit/i.test(ua);
@@ -639,13 +1168,22 @@
     if (flag) setStatus(hint || 'Unsaved changes', 'warn');
     else setStatus(hint || 'Saved', 'ok');
     if (flag) saveLocalDraftForCurrentSection();
-    else clearLocalDraftForCurrentSection();
+    else {
+      clearLocalDraftForCurrentSection();
+      hideDraftRestoreBanner();
+    }
+    if (state.section === 'programbuilder' && $('pb-status')) renderProgramBuilderStatus();
   }
   function ensureReady() {
     if (!state.ready || !state.api) throw new Error('Admin data bridge is not ready.');
   }
   function safeString(v) {
     return typeof v === 'string' ? v : (v == null ? '' : String(v));
+  }
+  function localeForLang(lang) {
+    var map = { en: 'en-US', de: 'de-DE', es: 'es-ES', it: 'it-IT', fr: 'fr-FR' };
+    var s = safeString(lang || state.lang || 'en').trim().toLowerCase().slice(0, 2);
+    return map[s] || 'en-US';
   }
   function asBoolean(v, fb) {
     if (typeof v === 'boolean') return v;
@@ -1110,6 +1648,18 @@
       if (!Array.isArray(val.programs)) throw new Error(key + '.programs must be an array');
     }
     if (key.indexOf('rg_editorial_') === 0 && !isObject(val)) throw new Error(key + ' must be an object');
+    if (key === 'rg_repertoire_planner') {
+      if (!isObject(val)) throw new Error('rg_repertoire_planner must be an object');
+      if (!Array.isArray(val.items)) throw new Error('rg_repertoire_planner.items must be an array');
+    }
+    if (key === 'rg_program_blueprints') {
+      if (!isObject(val)) throw new Error('rg_program_blueprints must be an object');
+      if (!isObject(val.blueprints)) throw new Error('rg_program_blueprints.blueprints must be an object');
+    }
+    if (key === 'rg_concert_history') {
+      if (!isObject(val)) throw new Error('rg_concert_history must be an object');
+      if (!Array.isArray(val.concerts)) throw new Error('rg_concert_history.concerts must be an array');
+    }
   }
 
   function loadDoc(key, fb) {
@@ -1141,6 +1691,9 @@
     if (/^perf_/.test(k)) return 'Calendar intro (' + k.replace(/^perf_/, '').toUpperCase() + ')';
     if (k === 'rg_perfs') return 'Calendar events';
     if (k === 'rg_past_perfs') return 'Past performances (public list)';
+    if (k === 'rg_repertoire_planner') return 'Programme Offers · repertoire library';
+    if (k === 'rg_program_blueprints') return 'Programme Offers · saved offers';
+    if (k === 'rg_concert_history') return 'Programme Offers · concert history archive';
     if (k === 'rg_vid') return 'Media · videos';
     if (k === 'rg_vid_en') return 'Media · videos (legacy key · read-only merge)';
     if (k === 'rg_audio') return 'Media · audio';
@@ -1177,6 +1730,10 @@
   function syncTopbarToolsDisclosure() {
     var el = $('topbarMoreTools');
     if (!el) return;
+    if (state.section === 'programbuilder') {
+      el.open = false;
+      return;
+    }
     el.open = !window.matchMedia('(max-width: 860px)').matches;
   }
   function escapeHtml(v) {
@@ -1186,6 +1743,9 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+  function escapeAttr(v) {
+    return escapeHtml(v).replace(/`/g, '&#96;');
   }
   function getStoredDocRaw(key, fallback) {
     try {
@@ -1579,6 +2139,7 @@
     if (scope === 'bio') return /^bio_/.test(key);
     if (scope === 'rep') return /^rep_/.test(key) || key === 'rg_rep_cards';
     if (scope === 'programs') return /^rg_programs/.test(key) || /^programs_/.test(key) || /^rg_editorial_/.test(key);
+    if (scope === 'programbuilder') return key === 'rg_repertoire_planner' || key === 'rg_program_blueprints' || key === 'rg_concert_history';
     if (scope === 'calendar') return /^perf_/.test(key) || key === 'rg_perfs' || key === 'rg_past_perfs';
     if (scope === 'media') return key === 'rg_vid' || key === 'rg_audio' || key === 'rg_photos' || key === 'rg_photo_captions';
     if (scope === 'press') return !!PRESS_IMPORT_KEYS[key];
@@ -1613,7 +2174,7 @@
     ensureReady();
     validateKeyValue(key, val);
     state.api.save(key, clone(val));
-    markDirty(false, 'Saved: ' + key);
+    markDirty(false, 'Saved: ' + humanStorageKeyLine(key));
     pushActivitySummary('Saved', [humanStorageKeyLine(key), 'Update sent to storage.']);
   }
   function getAuthIdToken() {
@@ -1669,12 +2230,14 @@
   function openSection(id) {
     if (!hasUnsavedChangesPrompt('Leave this section?')) return;
     state.section = id;
+    if (document.body) document.body.classList.toggle('programbuilder-section', id === 'programbuilder');
     document.querySelectorAll('.section').forEach(function (el) { el.classList.remove('active'); });
     document.querySelectorAll('.nav-item').forEach(function (el) { el.classList.remove('active'); });
     $('section-' + id).classList.add('active');
     document.querySelector('.nav-item[data-section="' + id + '"]').classList.add('active');
     $('currentSectionLabel').textContent = document.querySelector('.nav-item[data-section="' + id + '"]').textContent;
     if (window.innerWidth <= 860) $('sidebar').classList.remove('open');
+    syncTopbarToolsDisclosure();
     refreshCurrentSection();
   }
 
@@ -1683,6 +2246,7 @@
     else if (state.section === 'bio') loadBio();
     else if (state.section === 'rep') loadRep();
     else if (state.section === 'programs') loadPrograms();
+    else if (state.section === 'programbuilder') loadProgramBuilder();
     else if (state.section === 'calendar') loadCalendar();
     else if (state.section === 'media') loadMedia();
     else if (state.section === 'pastperfs') loadPastPerfsSection();
@@ -2333,10 +2897,4580 @@
     saveDoc('rg_editorial_' + state.lang, prevEd);
   }
 
+  function plannerFamilyLabel(family) {
+    var f = safeString(family).trim().toLowerCase();
+    if (f === 'gala') return 'Gala';
+    if (f === 'italian') return 'Italian';
+    if (f === 'tango') return 'Tango';
+    if (f === 'borders') return 'Borders';
+    return f || 'Program';
+  }
+  function plannerOutputCopy(lang) {
+    var key = safeString(lang || 'en').trim().toLowerCase();
+    return PROGRAM_BUILDER_TEXT[key] || PROGRAM_BUILDER_TEXT.en;
+  }
+  function normalizeProgramOfferRepertoireMode(value) {
+    var key = safeString(value || 'suggested').trim().toLowerCase();
+    return ['suggested', 'agreed', 'possible'].indexOf(key) >= 0 ? key : 'suggested';
+  }
+  function programOfferRepertoireHeading(copy, mode) {
+    mode = normalizeProgramOfferRepertoireMode(mode);
+    if (copy && copy.repertoireHeadingModes && copy.repertoireHeadingModes[mode]) return copy.repertoireHeadingModes[mode];
+    return (copy && copy.repertoireLabel) || 'Selected repertoire';
+  }
+  function plannerFamilyLabelForLang(family, lang) {
+    var copy = plannerOutputCopy(lang);
+    var f = safeString(family).trim().toLowerCase();
+    return safeString(copy.families && copy.families[f]) || plannerFamilyLabel(family);
+  }
+  function programOfferLocalizedFormation(formation, lang) {
+    var value = safeString(formation).trim();
+    if (!value) return '';
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var replacements = {
+      de: [
+        [/\bFlexible guest artist format\b/gi, 'Flexibles Gastkünstler-Format'],
+        [/\bThree artists \+ Piano\b/gi, 'Drei Künstler + Klavier'],
+        [/\bEnsemble with piano\b/gi, 'Ensemble mit Klavier'],
+        [/\bTenor\b/gi, 'Tenor'],
+        [/\bSoprano\b/gi, 'Sopran'],
+        [/\bBaritone\b/gi, 'Bariton'],
+        [/\bPiano\b/gi, 'Klavier'],
+        [/\bPianist\b/gi, 'Klavier']
+      ],
+      es: [
+        [/\bFlexible guest artist format\b/gi, 'Formato flexible con artista invitado'],
+        [/\bThree artists \+ Piano\b/gi, 'Tres artistas + piano'],
+        [/\bEnsemble with piano\b/gi, 'Conjunto con piano'],
+        [/\bBaritone\b/gi, 'Barítono'],
+        [/\bPianist\b/gi, 'Piano']
+      ],
+      it: [
+        [/\bFlexible guest artist format\b/gi, 'Formato flessibile con artista ospite'],
+        [/\bThree artists \+ Piano\b/gi, 'Tre artisti + Pianoforte'],
+        [/\bEnsemble with piano\b/gi, 'Ensemble con pianoforte'],
+        [/\bTenor\b/gi, 'Tenore'],
+        [/\bBaritone\b/gi, 'Baritono'],
+        [/\bPiano\b/gi, 'Pianoforte'],
+        [/\bPianist\b/gi, 'Pianoforte']
+      ],
+      fr: [
+        [/\bFlexible guest artist format\b/gi, 'Format flexible avec artiste invité'],
+        [/\bThree artists \+ Piano\b/gi, 'Trois artistes + piano'],
+        [/\bEnsemble with piano\b/gi, 'Ensemble avec piano'],
+        [/\bTenor\b/gi, 'Ténor'],
+        [/\bBaritone\b/gi, 'Baryton'],
+        [/\bPiano\b/gi, 'Piano'],
+        [/\bPianist\b/gi, 'Piano']
+      ]
+    };
+    var list = replacements[L];
+    if (!list || !list.length) return value;
+    var result = value;
+    list.forEach(function (pair) {
+      result = result.replace(pair[0], pair[1]);
+    });
+    return result;
+  }
+  function plannerStatusLabel(key, lang) {
+    var copy = plannerOutputCopy(lang);
+    if (key === 'too short') return copy.statusShort;
+    if (key === 'slightly over') return copy.statusSlightlyOver || copy.statusOk;
+    if (key === 'too long') return copy.statusLong;
+    return copy.statusOk;
+  }
+  function defaultBlueprintTitle(family, duration, lang) {
+    return plannerFamilyLabelForLang(family, lang) + ' · ' + duration + ' min';
+  }
+  function defaultBlueprintDescription(family, lang) {
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var map = {
+      en: {
+        gala: 'A polished operatic programme shaped for presenters seeking lyrical contrast, recognisable repertoire, and immediate audience appeal.',
+        italian: 'An Italian-centred recital proposal built around vocal line, colour, text, and atmosphere.',
+        tango: 'A concentrated programme of tango, song, and narrative intensity for intimate and distinctive concert settings.',
+        borders: 'A multilingual recital arc linking languages, styles, and cultural spaces within one coherent evening.'
+      },
+      de: {
+        gala: 'Ein opernhaftes Konzertangebot für Veranstalter, die lyrischen Kontrast, Wiedererkennungswert und klare Dramaturgie suchen.',
+        italian: 'Ein italienisch geprägter Rezitalvorschlag, getragen von vokaler Linie, Farbe, Text und Atmosphäre.',
+        tango: 'Ein konzentriertes Programm zwischen Tango, Lied und Erzählkraft für intime und charaktervolle Konzertformate.',
+        borders: 'Ein mehrsprachiger Rezitalbogen, der Sprachen, Stile und kulturelle Räume in einem schlüssigen Abend verbindet.'
+      },
+      es: {
+        gala: 'Una propuesta operística pensada para programadores que buscan contraste lírico, repertorio reconocible y una dramaturgia clara.',
+        italian: 'Una propuesta de recital de impronta italiana, centrada en la línea vocal, el color, el texto y la atmósfera.',
+        tango: 'Un programa concentrado entre tango, canción y fuerza narrativa para contextos íntimos y con personalidad.',
+        borders: 'Un arco de recital multilingüe que conecta lenguas, estilos y espacios culturales dentro de una velada coherente.'
+      },
+      it: {
+        gala: 'Una proposta operistica pensata per organizzatori che cercano contrasto lirico, repertorio riconoscibile e una drammaturgia chiara.',
+        italian: 'Una proposta di recital di impronta italiana, costruita intorno a linea vocale, colore, parola e atmosfera.',
+        tango: 'Un programma concentrato tra tango, canto e forza narrativa per contesti intimi e dal forte profilo artistico.',
+        borders: 'Un arco di recital multilingue che collega lingue, stili e spazi culturali in una serata coerente.'
+      },
+      fr: {
+        gala: 'Une proposition lyrique pensée pour les programmateurs à la recherche de contraste, de répertoire reconnaissable et de clarté dramaturgique.',
+        italian: "Une proposition de récital d'inspiration italienne, centrée sur la ligne vocale, la couleur, le texte et l'atmosphère.",
+        tango: 'Un programme concentré entre tango, chant et force narrative pour des contextes intimes et singuliers.',
+        borders: 'Un arc de récital multilingue reliant langues, styles et espaces culturels dans une soirée cohérente.'
+      }
+    };
+    return safeString(map[L] && map[L][family]) || plannerOutputCopy(L).summaryFallback;
+  }
+  function defaultBlueprintFlexibleNote(lang) {
+    return plannerOutputCopy(lang).flexibleNote;
+  }
+  function programOfferFeeCopy(lang) {
+    var key = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    return PROGRAMME_FEE_COPY[key] || PROGRAMME_FEE_COPY.en;
+  }
+  function formatEuroAmount(value) {
+    var amount = Math.max(0, Number(value) || 0);
+    try {
+      return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
+    } catch (e) {
+      return 'EUR ' + String(Math.round(amount));
+    }
+  }
+  function inferArtistCountFromFormation(formation) {
+    var text = safeString(formation).trim();
+    if (!text) return 1;
+    var parts = text.split(/\s*\+\s*/).map(function (x) { return safeString(x).trim(); }).filter(Boolean);
+    return Math.max(1, parts.length || 1);
+  }
+  function formationIncludesPianist(formation) {
+    var text = safeString(formation).toLowerCase();
+    return text.indexOf('piano') >= 0 || text.indexOf('pianist') >= 0 || text.indexOf('klavier') >= 0 || text.indexOf('pianoforte') >= 0;
+  }
+  function feeEstimateDurationBucket(duration) {
+    var minutes = Math.max(0, Number(duration) || 0);
+    if (minutes <= 37) return 30;
+    if (minutes <= 52) return 45;
+    return 60;
+  }
+  function roundFeeQuote(value) {
+    var amount = Math.max(0, Number(value) || 0);
+    return Math.round(amount / 10) * 10;
+  }
+  function feeEstimateFormationProfile(formation, numberOfArtists, includesPianist) {
+    var text = safeString(formation).toLowerCase();
+    var artistCount = Math.max(1, Number(numberOfArtists) || inferArtistCountFromFormation(formation));
+    var hasPiano = !!includesPianist || formationIncludesPianist(formation);
+    var hasSoprano = text.indexOf('soprano') >= 0;
+    var hasBaritone = text.indexOf('baritone') >= 0;
+    if (hasPiano && artistCount <= 2) return { key: 'tenor_piano', label: 'Tenor + Piano' };
+    if (hasPiano && hasSoprano) return { key: 'tenor_soprano_piano', label: 'Tenor + Soprano + Piano' };
+    if (hasPiano && hasBaritone) return { key: 'tenor_baritone_piano', label: 'Tenor + Baritone + Piano' };
+    if (hasPiano && artistCount === 3) return { key: 'trio_with_piano', label: 'Three artists + Piano' };
+    if (hasPiano) return { key: 'ensemble_with_piano', label: 'Ensemble with piano' };
+    return { key: 'general', label: safeString(formation).trim() || 'General recital setup' };
+  }
+  function feeEstimateFormationGuides(profileKey, duration) {
+    var bucket = feeEstimateDurationBucket(duration);
+    var guides = {
+      tenor_piano: {
+        30: { low: [350, 500], fair: [700, 1000], base: { lead: 250, collaborator: 0, pianist: 150 } },
+        45: { low: [450, 650], fair: [850, 1200], base: { lead: 300, collaborator: 0, pianist: 180 } },
+        60: { low: [500, 800], fair: [1000, 1500], base: { lead: 350, collaborator: 0, pianist: 220 } }
+      },
+      tenor_soprano_piano: {
+        30: { low: [500, 800], fair: [1000, 1500], base: { lead: 250, collaborator: 160, pianist: 150 } },
+        45: { low: [700, 1000], fair: [1300, 1800], base: { lead: 320, collaborator: 220, pianist: 180 } },
+        60: { low: [800, 1200], fair: [1500, 2200], base: { lead: 380, collaborator: 260, pianist: 220 } }
+      },
+      tenor_baritone_piano: {
+        30: { low: [500, 800], fair: [1000, 1500], base: { lead: 250, collaborator: 160, pianist: 150 } },
+        45: { low: [700, 1000], fair: [1300, 1800], base: { lead: 320, collaborator: 220, pianist: 180 } },
+        60: { low: [800, 1200], fair: [1500, 2200], base: { lead: 380, collaborator: 260, pianist: 220 } }
+      },
+      trio_with_piano: {
+        30: { low: [500, 800], fair: [1000, 1500], base: { lead: 250, collaborator: 160, pianist: 150 } },
+        45: { low: [700, 1000], fair: [1300, 1800], base: { lead: 320, collaborator: 220, pianist: 180 } },
+        60: { low: [800, 1200], fair: [1500, 2200], base: { lead: 380, collaborator: 260, pianist: 220 } }
+      },
+      ensemble_with_piano: {
+        30: { low: [650, 950], fair: [1300, 1800], base: { lead: 260, collaborator: 170, pianist: 160 } },
+        45: { low: [850, 1200], fair: [1600, 2200], base: { lead: 340, collaborator: 230, pianist: 190 } },
+        60: { low: [1000, 1500], fair: [1900, 2600], base: { lead: 400, collaborator: 270, pianist: 230 } }
+      },
+      general: {
+        30: { low: [400, 600], fair: [850, 1200], base: { lead: 260, collaborator: 160, pianist: 150 } },
+        45: { low: [550, 800], fair: [1100, 1500], base: { lead: 320, collaborator: 220, pianist: 180 } },
+        60: { low: [700, 950], fair: [1350, 1800], base: { lead: 380, collaborator: 250, pianist: 220 } }
+      }
+    };
+    var group = guides[profileKey] || guides.general;
+    return group[bucket] || group[45];
+  }
+  function feeEstimateBenchmarkRates(duration) {
+    var bucket = feeEstimateDurationBucket(duration);
+    var map = {
+      30: { lead: 600, collaborator: 425, pianist: 325, rehearsalPerArtist: 90 },
+      45: { lead: 650, collaborator: 475, pianist: 350, rehearsalPerArtist: 95 },
+      60: { lead: 700, collaborator: 525, pianist: 400, rehearsalPerArtist: 100 }
+    };
+    return map[bucket] || map[45];
+  }
+  function feeEstimateEventMultipliers(eventType) {
+    var key = safeString(eventType || 'cultural').trim().toLowerCase();
+    var map = {
+      church: { lowBudgetMultiplier: 1, fairMultiplier: 0.92, benchmarkMultiplier: 0.98, premiumMultiplier: 0.98, label: 'Church / low-budget local' },
+      cultural: { lowBudgetMultiplier: 1, fairMultiplier: 1, benchmarkMultiplier: 1, premiumMultiplier: 1.08, label: 'Cultural standard' },
+      festival: { lowBudgetMultiplier: 1.02, fairMultiplier: 1.08, benchmarkMultiplier: 1.05, premiumMultiplier: 1.16, label: 'Festival uplift' },
+      embassy: { lowBudgetMultiplier: 1.04, fairMultiplier: 1.18, benchmarkMultiplier: 1.12, premiumMultiplier: 1.3, label: 'Embassy / institutional uplift' },
+      private: { lowBudgetMultiplier: 1.08, fairMultiplier: 1.28, benchmarkMultiplier: 1.16, premiumMultiplier: 1.45, label: 'Private premium uplift' },
+      other: { lowBudgetMultiplier: 1, fairMultiplier: 0.98, benchmarkMultiplier: 1, premiumMultiplier: 1.06, label: 'General context' }
+    };
+    return map[key] || map.cultural;
+  }
+  function defaultFeeEstimateForBlueprint(bp) {
+    var formation = safeString(bp && bp.formation).trim() || 'Tenor + Piano';
+    var duration = Math.max(0, Number((bp && bp.totalDuration) || (bp && bp.targetDuration)) || 30);
+    var numberOfArtists = inferArtistCountFromFormation(formation);
+    var includesPianist = formationIncludesPianist(formation);
+    var profile = feeEstimateFormationProfile(formation, numberOfArtists, includesPianist);
+    var guide = feeEstimateFormationGuides(profile.key, duration);
+    return {
+      preset: 'berlin_local',
+      eventType: 'cultural',
+      durationMin: duration,
+      formation: formation,
+      numberOfArtists: numberOfArtists,
+      includesPianist: includesPianist,
+      rehearsalCount: 0,
+      rehearsalFeePerArtist: 0,
+      leadArtistFee: guide.base.lead,
+      collaboratorFee: guide.base.collaborator,
+      pianistFee: guide.base.pianist,
+      travelCost: 0,
+      hotelCost: 0,
+      localTransportCost: 20,
+      adminBuffer: 25,
+      lowBudgetOverride: 0,
+      recommendedOverride: 0,
+      benchmarkOverride: 0,
+      premiumOverride: 0,
+      benchmarkSourceVersion: 'DE/Berlin benchmark v1',
+      benchmarkLastReviewed: '2026-04-08',
+      notes: ''
+    };
+  }
+  function safeBlueprintFeeEstimate(raw, bp) {
+    var seed = defaultFeeEstimateForBlueprint(bp);
+    var fee = isObject(raw) ? raw : {};
+    var presetKey = safeString(fee.preset || seed.preset).trim().toLowerCase();
+    var includesPianist = asBoolean(fee.includesPianist, seed.includesPianist);
+    var numberOfArtists = Math.max(includesPianist ? 2 : 1, Number(fee.numberOfArtists) || seed.numberOfArtists);
+    return {
+      preset: hasOwn(PROGRAMME_FEE_PRESETS, presetKey) ? presetKey : seed.preset,
+      eventType: safeString(fee.eventType || seed.eventType).trim().toLowerCase() || seed.eventType,
+      durationMin: Math.max(0, Number(fee.durationMin) || seed.durationMin),
+      formation: safeString(fee.formation || seed.formation),
+      numberOfArtists: numberOfArtists,
+      includesPianist: includesPianist,
+      rehearsalCount: Math.max(0, Number(fee.rehearsalCount) || 0),
+      rehearsalFeePerArtist: Math.max(0, Number(fee.rehearsalFeePerArtist) || 0),
+      leadArtistFee: Math.max(0, Number(fee.leadArtistFee) || 0),
+      collaboratorFee: Math.max(0, Number(fee.collaboratorFee) || 0),
+      pianistFee: Math.max(0, Number(fee.pianistFee) || 0),
+      travelCost: Math.max(0, Number(fee.travelCost) || 0),
+      hotelCost: Math.max(0, Number(fee.hotelCost) || 0),
+      localTransportCost: Math.max(0, Number(fee.localTransportCost) || 0),
+      adminBuffer: Math.max(0, Number(fee.adminBuffer) || 0),
+      lowBudgetOverride: Math.max(0, Number(fee.lowBudgetOverride) || Number(fee.minimumOverride) || 0),
+      recommendedOverride: Math.max(0, Number(fee.recommendedOverride) || 0),
+      benchmarkOverride: Math.max(0, Number(fee.benchmarkOverride) || 0),
+      premiumOverride: Math.max(0, Number(fee.premiumOverride) || 0),
+      benchmarkSourceVersion: safeString(fee.benchmarkSourceVersion || seed.benchmarkSourceVersion),
+      benchmarkLastReviewed: safeString(fee.benchmarkLastReviewed || seed.benchmarkLastReviewed),
+      notes: safeString(fee.notes)
+    };
+  }
+  function computeBlueprintFeeEstimate(bp) {
+    var fee = safeBlueprintFeeEstimate(bp && bp.feeEstimate, bp);
+    var lang = safeString(bp && bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+    var copy = programOfferFeeCopy(lang);
+    var totalArtists = Math.max(1, Number(fee.numberOfArtists) || 1);
+    var pianistCount = fee.includesPianist ? 1 : 0;
+    var collaboratorCount = Math.max(0, totalArtists - 1 - pianistCount);
+    var rehearsalParticipants = 1 + collaboratorCount + pianistCount;
+    var rehearsalSubtotal = fee.rehearsalCount * fee.rehearsalFeePerArtist * rehearsalParticipants;
+    var artisticSubtotal = fee.leadArtistFee + (collaboratorCount * fee.collaboratorFee) + (pianistCount * fee.pianistFee) + rehearsalSubtotal;
+    var logisticsSubtotal = fee.travelCost + fee.hotelCost + fee.localTransportCost + fee.adminBuffer;
+    var realCostBase = artisticSubtotal + logisticsSubtotal;
+    var adjustment = feeEstimateEventMultipliers(fee.eventType);
+    var profile = feeEstimateFormationProfile(fee.formation, totalArtists, fee.includesPianist);
+    var guide = feeEstimateFormationGuides(profile.key, fee.durationMin);
+    var benchmarkRates = feeEstimateBenchmarkRates(fee.durationMin);
+    var lowGuideFloor = guide.low[0] + logisticsSubtotal;
+    var fairGuideMid = ((guide.fair[0] + guide.fair[1]) / 2) + logisticsSubtotal;
+    var fairGuideHigh = guide.fair[1] + logisticsSubtotal;
+    var benchmarkArtistic = Math.max(fee.leadArtistFee, benchmarkRates.lead) +
+      (collaboratorCount * Math.max(fee.collaboratorFee, benchmarkRates.collaborator)) +
+      (pianistCount * Math.max(fee.pianistFee, benchmarkRates.pianist)) +
+      (fee.rehearsalCount * rehearsalParticipants * Math.max(fee.rehearsalFeePerArtist, benchmarkRates.rehearsalPerArtist));
+    var lowBudgetBase = Math.max(realCostBase, lowGuideFloor);
+    var recommendedBase = Math.max(realCostBase, fairGuideMid);
+    var benchmarkBase = Math.max(realCostBase, benchmarkArtistic + logisticsSubtotal);
+    var premiumBase = Math.max(recommendedBase, fairGuideHigh);
+    var lowBudget = roundFeeQuote(Math.max(realCostBase, lowBudgetBase * adjustment.lowBudgetMultiplier));
+    var recommended = roundFeeQuote(recommendedBase * adjustment.fairMultiplier);
+    var benchmark = roundFeeQuote(benchmarkBase * adjustment.benchmarkMultiplier);
+    var premium = roundFeeQuote(Math.max(recommended, premiumBase * adjustment.premiumMultiplier));
+    var lowBudgetOverrideActive = fee.lowBudgetOverride > 0;
+    var recommendedOverrideActive = fee.recommendedOverride > 0;
+    var benchmarkOverrideActive = fee.benchmarkOverride > 0;
+    var premiumOverrideActive = fee.premiumOverride > 0;
+    if (lowBudgetOverrideActive) lowBudget = fee.lowBudgetOverride;
+    if (recommendedOverrideActive) recommended = fee.recommendedOverride;
+    if (benchmarkOverrideActive) benchmark = fee.benchmarkOverride;
+    if (premiumOverrideActive) premium = fee.premiumOverride;
+    var logicSummary = [
+      'Lead artist ' + formatEuroAmount(fee.leadArtistFee),
+      collaboratorCount ? (String(collaboratorCount) + ' collaborator' + (collaboratorCount === 1 ? '' : 's') + ' × ' + formatEuroAmount(fee.collaboratorFee)) : 'No additional singer fee',
+      pianistCount ? ('Pianist ' + formatEuroAmount(fee.pianistFee)) : 'No pianist fee',
+      fee.rehearsalCount ? (String(fee.rehearsalCount) + ' rehearsal' + (fee.rehearsalCount === 1 ? '' : 's') + ' × ' + String(rehearsalParticipants) + ' artists × ' + formatEuroAmount(fee.rehearsalFeePerArtist)) : 'No rehearsal fee',
+      'Market reality stays close to the real floor ' + formatEuroAmount(realCostBase) + ' and the current ' + profile.label + ' local guide (' + formatEuroAmount(guide.low[0]) + '–' + formatEuroAmount(guide.low[1]) + ' before logistics).',
+      adjustment.label + ': fair ×' + adjustment.fairMultiplier.toFixed(2) + ', benchmark ×' + adjustment.benchmarkMultiplier.toFixed(2) + ', premium ×' + adjustment.premiumMultiplier.toFixed(2) + '.',
+      'Benchmark reference uses ' + formatEuroAmount(benchmarkRates.lead) + ' lead / ' + formatEuroAmount(benchmarkRates.collaborator) + ' collaborator / ' + formatEuroAmount(benchmarkRates.pianist) + ' pianist plus ' + formatEuroAmount(benchmarkRates.rehearsalPerArtist) + ' rehearsal per artist.'
+    ].join(' · ');
+    var negotiation = [];
+    if (fee.eventType === 'church') negotiation.push('For church or low-budget local contexts, use the market-reality layer as the realistic negotiating floor and keep the formation lean.');
+    if (fee.eventType === 'embassy' || fee.eventType === 'festival') negotiation.push('Institutional and festival contexts usually justify moving from market reality toward the fair layer, especially once rehearsals or travel become visible.');
+    if (fee.eventType === 'private') negotiation.push('Private contexts normally justify the premium / private layer, especially for tailored requests or additional rehearsal time.');
+    if ((fee.travelCost + fee.hotelCost) > 0) negotiation.push('Travel and hotel should remain visible as real costs and not be absorbed into the artistic floor.');
+    if (fee.rehearsalCount > 1) negotiation.push('Multiple rehearsals make it easier to defend the fair layer over the low-budget reality figure.');
+    if (!negotiation.length) negotiation.push('Use market reality as the low negotiating floor, the fair quote as the normal target, and the public benchmark as internal reference rather than small-venue expectation.');
+    var adjustmentLine = [
+      'Base cost logic: ' + formatEuroAmount(artisticSubtotal) + ' artistic + ' + formatEuroAmount(logisticsSubtotal) + ' logistics = ' + formatEuroAmount(realCostBase) + '.',
+      adjustment.label + ': market ×' + adjustment.lowBudgetMultiplier.toFixed(2) + ', fair ×' + adjustment.fairMultiplier.toFixed(2) + ', benchmark ×' + adjustment.benchmarkMultiplier.toFixed(2) + ', premium ×' + adjustment.premiumMultiplier.toFixed(2) + '.',
+      'Result: low-budget ' + formatEuroAmount(lowBudget) + (lowBudgetOverrideActive ? ' (manual override)' : '') + ' · fair ' + formatEuroAmount(recommended) + (recommendedOverrideActive ? ' (manual override)' : '') + ' · benchmark ' + formatEuroAmount(benchmark) + (benchmarkOverrideActive ? ' (manual override)' : '') + ' · premium ' + formatEuroAmount(premium) + (premiumOverrideActive ? ' (manual override)' : '') + '.'
+    ].join(' ');
+    var title = safeString((bp && bp.title) || resolveProgramOfferField(bp || {}, 'title', lang)).trim();
+    var summaryText = [
+      copy.summaryTitle,
+      title,
+      copy.formation + ': ' + safeString(fee.formation),
+      copy.duration + ': ' + String(fee.durationMin) + ' min',
+      copy.eventType + ': ' + safeString(fee.eventType),
+      copy.participants + ': ' + String(totalArtists),
+      copy.rehearsals + ': ' + String(fee.rehearsalCount),
+      '',
+      copy.artisticSubtotal + ': ' + formatEuroAmount(artisticSubtotal),
+      copy.logisticsSubtotal + ': ' + formatEuroAmount(logisticsSubtotal),
+      copy.lowBudget + ': ' + formatEuroAmount(lowBudget),
+      copy.recommended + ': ' + formatEuroAmount(recommended),
+      copy.benchmark + ': ' + formatEuroAmount(benchmark),
+      copy.premium + ': ' + formatEuroAmount(premium),
+      copy.benchmarkSource + ': ' + safeString(fee.benchmarkSourceVersion || '—'),
+      copy.benchmarkReviewed + ': ' + safeString(fee.benchmarkLastReviewed || '—'),
+      'Adjustment: ' + adjustmentLine,
+      '',
+      logicSummary,
+      safeString(fee.notes).trim() ? ('\n' + copy.notesLabel + ':\n' + safeString(fee.notes).trim()) : ''
+    ].filter(Boolean).join('\n');
+    var emailText = [
+      copy.emailLead,
+      title + ' · ' + String(fee.durationMin) + ' min · ' + safeString(fee.formation),
+      copy.emailRecommended + ': ' + formatEuroAmount(recommended),
+      copy.emailLowBudget + ': ' + formatEuroAmount(lowBudget),
+      copy.emailBenchmark + ': ' + formatEuroAmount(benchmark),
+      copy.emailPremium + ': ' + formatEuroAmount(premium),
+      copy.emailCloser
+    ].join('\n');
+    return {
+      fee: fee,
+      artisticSubtotal: artisticSubtotal,
+      logisticsSubtotal: logisticsSubtotal,
+      lowBudget: lowBudget,
+      recommended: recommended,
+      benchmark: benchmark,
+      premium: premium,
+      logicSummary: logicSummary,
+      negotiationNotes: negotiation.join(' '),
+      adjustmentLine: adjustmentLine,
+      summaryText: summaryText,
+      emailText: emailText
+    };
+  }
+  function applyBlueprintFeePreset(presetKey) {
+    var bp = currentBlueprint();
+    var current = safeBlueprintFeeEstimate(bp.feeEstimate, bp);
+    var preset = PROGRAMME_FEE_PRESETS[safeString(presetKey).trim().toLowerCase()] || PROGRAMME_FEE_PRESETS.berlin_local;
+    var profile = feeEstimateFormationProfile(current.formation, current.numberOfArtists, current.includesPianist);
+    var guide = feeEstimateFormationGuides(profile.key, current.durationMin);
+    var multiplier = Math.max(0.5, Number(preset.artistFeeMultiplier) || 1);
+    bp.feeEstimate = safeBlueprintFeeEstimate({
+      preset: presetKey,
+      eventType: preset.eventType,
+      durationMin: current.durationMin,
+      formation: current.formation,
+      numberOfArtists: current.numberOfArtists,
+      includesPianist: current.includesPianist,
+      rehearsalCount: preset.rehearsalCount,
+      rehearsalFeePerArtist: preset.rehearsalFeePerArtist,
+      leadArtistFee: roundFeeQuote(guide.base.lead * multiplier),
+      collaboratorFee: roundFeeQuote(guide.base.collaborator * multiplier),
+      pianistFee: roundFeeQuote(guide.base.pianist * multiplier),
+      travelCost: preset.travelCost,
+      hotelCost: preset.hotelCost,
+      localTransportCost: preset.localTransportCost,
+      adminBuffer: preset.adminBuffer,
+      lowBudgetOverride: 0,
+      recommendedOverride: 0,
+      benchmarkOverride: 0,
+      premiumOverride: 0,
+      benchmarkSourceVersion: current.benchmarkSourceVersion,
+      benchmarkLastReviewed: current.benchmarkLastReviewed,
+      notes: current.notes
+    }, bp);
+    renderBlueprintBuilder();
+    markDirty(true, 'Fee preset applied');
+    setStatus('Fee preset applied.', 'ok');
+  }
+  function normalizeProgramOfferUseCase(value) {
+    var key = safeString(value || 'other').trim().toLowerCase();
+    return PROGRAMME_OFFER_USE_CASES.indexOf(key) >= 0 ? key : 'other';
+  }
+  function normalizeSavedProgramStatus(value, saveType) {
+    var key = safeString(value || '').trim().toLowerCase();
+    if (key === 'reusable') key = 'active';
+    if (PROGRAMME_OFFER_STATUS_VALUES.indexOf(key) >= 0) return key;
+    return saveType === 'master_programme' ? 'active' : 'draft';
+  }
+  function normalizeSavedProgramType(value) {
+    var key = safeString(value).trim().toLowerCase();
+    if (key === 'reusable' || key === 'master_programme') return 'master_programme';
+    return 'venue_offer';
+  }
+  function savedProgrammeTypeLabel(saveType) {
+    return normalizeSavedProgramType(saveType) === 'master_programme' ? 'Master Programme' : 'Venue Offer';
+  }
+  function makeProgrammeOfferSavedId(saveType) {
+    var stamp = Date.now().toString(36);
+    var rand = Math.random().toString(36).slice(2, 8);
+    return 'offer_' + (normalizeSavedProgramType(saveType) === 'master_programme' ? 'm' : 'v') + '_' + stamp + '_' + rand;
+  }
+  function formatProgrammeOfferTimestamp(value) {
+    var text = safeString(value).trim();
+    if (!text) return 'Not saved yet';
+    var date = new Date(text);
+    return isNaN(date.getTime()) ? text : date.toLocaleString();
+  }
+  function defaultSavedOfferLabel(snapshot, saveType) {
+    var lang = safeString(snapshot && snapshot.outputLang || 'en').trim().toLowerCase() || 'en';
+    var bits = [
+      safeString(snapshot && snapshot.title).trim() || defaultBlueprintTitle(snapshot.family, snapshot.targetDuration, lang),
+      safeString(snapshot && snapshot.formation).trim()
+    ].filter(Boolean);
+    if (!bits.length) bits.push('Programme offer');
+    return bits.join(' · ');
+  }
+  function loadProgramOfferSourceDocForLang(lang) {
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var byLang = loadDoc('rg_programs_' + L, null);
+    if (isObject(byLang) && Array.isArray(byLang.programs) && byLang.programs.length) return safeProgramsDoc(byLang);
+    if (L === 'en') {
+      var legacy = loadDoc('rg_programs', null);
+      if (isObject(legacy) && Array.isArray(legacy.programs) && legacy.programs.length) return safeProgramsDoc(legacy);
+    }
+    return null;
+  }
+  function publicProgramDefaultForFamily(lang, family) {
+    var doc = loadProgramOfferSourceDocForLang(lang);
+    if (!doc) return null;
+    var items = Array.isArray(doc.programs) ? doc.programs : [];
+    var familyOrder = { gala: 0, italian: 1, tango: 2, borders: 3 };
+    var idx = familyOrder[safeString(family).trim().toLowerCase()];
+    var item = Number.isFinite(idx) ? items[idx] : null;
+    if (!item) return null;
+    return {
+      title: safeString(item.title).trim(),
+      description: safeString(item.description).trim()
+    };
+  }
+  function normalizeProgramOfferFieldMode(mode) {
+    return safeString(mode).trim().toLowerCase() === 'manual' ? 'manual' : 'auto';
+  }
+  function parseProgramOfferAutoContextKey(value) {
+    var parts = safeString(value).trim().split('|');
+    if (parts.length !== 3) return null;
+    return {
+      family: safeString(parts[0] || 'gala').trim().toLowerCase() || 'gala',
+      targetDuration: Math.max(0, Number(parts[1]) || 30),
+      lang: safeString(parts[2] || 'en').trim().toLowerCase() || 'en'
+    };
+  }
+  function normalizeProgramOfferHeaderImageMode(mode) {
+    mode = safeString(mode).trim().toLowerCase();
+    if (mode === 'none' || mode === 'custom') return mode;
+    return 'default';
+  }
+  function programOfferAutoContextKey(family, targetDuration, lang) {
+    var f = safeString(family || 'gala').trim().toLowerCase() || 'gala';
+    var duration = Math.max(0, Number(targetDuration) || 30);
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    return [f, duration, L].join('|');
+  }
+  function programOfferEnglishTextHeuristic(text, field) {
+    var value = safeString(text).trim();
+    if (!value) return false;
+    if (field === 'title') return false;
+    var matches = value.toLowerCase().match(/\b(the|and|with|for|audience|programme|program|recital|offer|designed|presenters|adaptable|balance|proposal|lyrical|contrast|language|music|musical)\b/g);
+    return !!matches && matches.length >= 2;
+  }
+  function programOfferAutoFieldCandidates(field, family, targetDuration, langList) {
+    var seen = {};
+    var langs = Array.isArray(langList) && langList.length ? langList : LANGS;
+    langs.forEach(function (lang) {
+      var value = programOfferAutoFieldValue(field, family, targetDuration, lang, true);
+      if (value) seen[value] = true;
+      var legacyDefault = publicProgramDefaultForFamily(lang, family);
+      if (field === 'title' && legacyDefault && legacyDefault.title) seen[safeString(legacyDefault.title).trim()] = true;
+      if (field === 'description' && legacyDefault && legacyDefault.description) seen[safeString(legacyDefault.description).trim()] = true;
+      var canonicalDoc = safeProgramsDoc(loadProgramsCanonicalForLang(lang));
+      var familyOrder = { gala: 0, italian: 1, tango: 2, borders: 3 };
+      var idx = familyOrder[safeString(family).trim().toLowerCase()];
+      var canonicalItem = Number.isFinite(idx) && canonicalDoc && Array.isArray(canonicalDoc.programs) ? canonicalDoc.programs[idx] : null;
+      if (field === 'title' && canonicalItem && canonicalItem.title) seen[safeString(canonicalItem.title).trim()] = true;
+      if (field === 'description' && canonicalItem && canonicalItem.description) seen[safeString(canonicalItem.description).trim()] = true;
+    });
+    return seen;
+  }
+  function programOfferLooksStaleEnglish(value, field, family, targetDuration, lang) {
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var text = safeString(value).trim();
+    if (!text || L === 'en') return false;
+    if (programOfferAutoFieldCandidates(field, family, targetDuration, ['en'])[text]) return true;
+    return programOfferEnglishTextHeuristic(text, field);
+  }
+  function programOfferValueIsKnownAuto(value, field, family, targetDuration) {
+    var text = safeString(value).trim();
+    if (!text) return false;
+    return !!programOfferAutoFieldCandidates(field, family, targetDuration)[text];
+  }
+  function programOfferFieldBehavesAuto(value, field, family, targetDuration, lang) {
+    var text = safeString(value).trim();
+    if (!text) return true;
+    if (programOfferValueIsKnownAuto(text, field, family, targetDuration)) return true;
+    return programOfferLooksStaleEnglish(text, field, family, targetDuration, lang);
+  }
+  function programOfferAutoFieldValue(field, family, targetDuration, lang, skipCrossLangDetection) {
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var f = safeString(family || 'gala').trim().toLowerCase() || 'gala';
+    var duration = Math.max(0, Number(targetDuration) || 30);
+    var publicDefault = publicProgramDefaultForFamily(L, f);
+    if (field === 'title') {
+      var localizedTitleFallback = defaultBlueprintTitle(f, duration, L);
+      var localizedTitle = safeString(publicDefault && publicDefault.title).trim();
+      if (localizedTitle && L !== 'en' && !skipCrossLangDetection) {
+        var englishTitle = safeString(publicProgramDefaultForFamily('en', f) && publicProgramDefaultForFamily('en', f).title).trim() || defaultBlueprintTitle(f, duration, 'en');
+        if (localizedTitle === englishTitle || programOfferLooksStaleEnglish(localizedTitle, field, f, duration, L)) localizedTitle = '';
+      }
+      return localizedTitle || localizedTitleFallback;
+    }
+    if (field === 'description') {
+      var localizedDescriptionFallback = defaultBlueprintDescription(f, L);
+      var localizedDescription = safeString(publicDefault && publicDefault.description).trim();
+      if (localizedDescription && L !== 'en' && !skipCrossLangDetection) {
+        var englishDescription = safeString(publicProgramDefaultForFamily('en', f) && publicProgramDefaultForFamily('en', f).description).trim() || defaultBlueprintDescription(f, 'en');
+        if (localizedDescription === englishDescription || programOfferLooksStaleEnglish(localizedDescription, field, f, duration, L)) localizedDescription = '';
+      }
+      return localizedDescription || localizedDescriptionFallback;
+    }
+    if (field === 'flexibleNote') return defaultBlueprintFlexibleNote(L);
+    return '';
+  }
+  function inferProgramOfferFieldMode(field, bp, seed) {
+    var explicit = safeString(bp[field + 'Mode']).trim().toLowerCase();
+    var family = safeString(bp.family || (seed && seed.family) || 'gala').trim().toLowerCase() || 'gala';
+    var targetDuration = Math.max(0, Number(bp.targetDuration) || Number(seed && seed.targetDuration) || 30);
+    var value = safeString(bp[field]).trim();
+    var currentLang = safeString(bp.outputLang || (seed && seed.outputLang) || 'en').trim().toLowerCase() || 'en';
+    var autoContext = parseProgramOfferAutoContextKey(bp[field + 'AutoContext']);
+    if (!value) return 'auto';
+    var matchesKnownAuto = programOfferValueIsKnownAuto(value, field, family, targetDuration);
+    var looksAuto = explicit === 'manual'
+      ? matchesKnownAuto
+      : programOfferFieldBehavesAuto(value, field, family, targetDuration, currentLang);
+    if (!looksAuto && autoContext) {
+      var previousAuto = programOfferAutoFieldValue(field, autoContext.family, autoContext.targetDuration, autoContext.lang);
+      if (value === previousAuto) looksAuto = true;
+    }
+    if (explicit === 'auto') return 'auto';
+    if (explicit === 'manual') return looksAuto ? 'auto' : 'manual';
+    return looksAuto ? 'auto' : 'manual';
+  }
+  function resolveProgramOfferField(bp, field, lang) {
+    var family = safeString(bp && bp.family).trim().toLowerCase() || 'gala';
+    var targetDuration = Math.max(0, Number(bp && bp.targetDuration) || 30);
+    var autoValue = programOfferAutoFieldValue(field, family, targetDuration, lang);
+    var stored = safeString(bp && bp[field]).trim();
+    if (normalizeProgramOfferFieldMode(bp && bp[field + 'Mode']) === 'manual') {
+      return stored;
+    }
+    if (autoValue) return autoValue;
+    if (stored && !programOfferLooksStaleEnglish(stored, field, family, targetDuration, lang)) return stored;
+    return '';
+  }
+  function hydrateProgramOfferAutoFields(bp, lang) {
+    ['title','description','flexibleNote'].forEach(function (field) {
+      if (normalizeProgramOfferFieldMode(bp[field + 'Mode']) === 'manual') return;
+      bp[field] = resolveProgramOfferField(bp, field, lang);
+      bp[field + 'AutoContext'] = programOfferAutoContextKey(bp.family, bp.targetDuration, lang);
+    });
+  }
+  function programOfferFieldStateLabel(bp, field, lang) {
+    var mode = normalizeProgramOfferFieldMode(bp && bp[field + 'Mode']);
+    if (mode === 'manual') return 'Custom text for this offer.';
+    return 'Using the ' + safeString(lang || 'en').toUpperCase() + ' language default.';
+  }
+  function resolveProgramOfferHeaderImage(bp, lang) {
+    var mode = normalizeProgramOfferHeaderImageMode(bp && bp.headerImageMode);
+    if (mode === 'none') return '';
+    if (mode === 'custom') {
+      var custom = safeString(bp && bp.headerImageUrl).trim();
+      return custom || '';
+    }
+    return programBuilderPortraitForLang(lang);
+  }
+  function programBuilderHistoricalSource() {
+    return (typeof window !== 'undefined' && isObject(window.PROGRAM_BUILDER_HISTORICAL_IMPORT)) ? window.PROGRAM_BUILDER_HISTORICAL_IMPORT : {};
+  }
+  function programBuilderNormalizeKey(raw) {
+    return safeString(raw)
+      .toLowerCase()
+      .replace(/[’‘`]/g, "'")
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+  function programBuilderSlug(raw) {
+    return programBuilderNormalizeKey(raw).replace(/\s+/g, '_').slice(0, 80) || 'piece';
+  }
+  function programBuilderUniqueStrings(list) {
+    var out = [];
+    (list || []).forEach(function (value) {
+      var clean = safeString(value).trim();
+      if (!clean) return;
+      if (out.indexOf(clean) < 0) out.push(clean);
+    });
+    return out;
+  }
+  function programBuilderSplitLines(raw) {
+    return safeString(raw).split('\n').map(function (line) { return safeString(line).trim(); }).filter(Boolean);
+  }
+  function programBuilderSuggestionSource() {
+    return (typeof window !== 'undefined' && isObject(window.PROGRAM_BUILDER_OUTSIDE_REPERTOIRE)) ? window.PROGRAM_BUILDER_OUTSIDE_REPERTOIRE : {};
+  }
+  function normalizePlannerCategory(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return /^(aria|duet|trio|quartet|ensemble|art_song|tango|piano_solo)$/.test(key) ? key : '';
+  }
+  function normalizePlannerVoiceToken(value) {
+    var key = safeString(value).trim().toLowerCase();
+    if (!key) return '';
+    if (key.indexOf('tenor') >= 0) return 'tenor';
+    if (key.indexOf('soprano') >= 0) return 'soprano';
+    if (key.indexOf('mezzo') >= 0) return 'mezzo';
+    if (key.indexOf('baritone') >= 0 || key.indexOf('baryton') >= 0 || key.indexOf('barytone') >= 0) return 'baritone';
+    return '';
+  }
+  function normalizePlannerVoiceList(list) {
+    var out = [];
+    (list || []).forEach(function (value) {
+      var voice = normalizePlannerVoiceToken(value);
+      if (!voice) return;
+      if (out.indexOf(voice) < 0) out.push(voice);
+    });
+    return PROGRAM_BUILDER_VOICE_ORDER.filter(function (voice) { return out.indexOf(voice) >= 0; });
+  }
+  function normalizePlannerVoiceCategory(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return hasOwn(PROGRAM_BUILDER_VOICE_CATEGORY_LABELS, key) ? key : '';
+  }
+  function plannerVoicesFromVoiceCategory(voiceCategory) {
+    var key = normalizePlannerVoiceCategory(voiceCategory);
+    if (!key) return [];
+    if (/_aria$/.test(key)) return [key.split('_')[0]];
+    if (key === 'tenor_soprano_duet') return ['tenor', 'soprano'];
+    if (key === 'tenor_mezzo_duet') return ['tenor', 'mezzo'];
+    if (key === 'tenor_baritone_duet') return ['tenor', 'baritone'];
+    if (key === 'soprano_mezzo_duet') return ['soprano', 'mezzo'];
+    if (key === 'soprano_baritone_duet') return ['soprano', 'baritone'];
+    if (key === 'mezzo_baritone_duet') return ['mezzo', 'baritone'];
+    if (key === 'tenor_soprano_mezzo_trio') return ['tenor', 'soprano', 'mezzo'];
+    if (key === 'tenor_soprano_baritone_trio') return ['tenor', 'soprano', 'baritone'];
+    if (key === 'tenor_mezzo_baritone_trio') return ['tenor', 'mezzo', 'baritone'];
+    if (key === 'soprano_mezzo_baritone_trio') return ['soprano', 'mezzo', 'baritone'];
+    return [];
+  }
+  function plannerVoicesFromFormationLabel(raw) {
+    var label = normalizeFormationLabel(raw);
+    if (!label) return [];
+    return normalizePlannerVoiceList([
+      label.indexOf('tenor') >= 0 ? 'tenor' : '',
+      label.indexOf('soprano') >= 0 ? 'soprano' : '',
+      label.indexOf('mezzo') >= 0 ? 'mezzo' : '',
+      (label.indexOf('baritone') >= 0 || label.indexOf('baryton') >= 0 || label.indexOf('barytone') >= 0) ? 'baritone' : ''
+    ]);
+  }
+  function plannerVoicesFromItem(item) {
+    var voices = normalizePlannerVoiceList([item.primaryVoice].concat(item.pairedVoices || []));
+    if (voices.length) return voices;
+    (Array.isArray(item.formations) ? item.formations : []).forEach(function (formation) {
+      voices = normalizePlannerVoiceList(voices.concat(plannerVoicesFromFormationLabel(formation)));
+    });
+    if (voices.length) return voices;
+    return plannerVoicesFromVoiceCategory(item.voiceCategory);
+  }
+  function plannerCategoryFromLegacy(item, voices) {
+    var explicit = normalizePlannerCategory(item.category);
+    if (explicit) return explicit;
+    var type = safeString(item.type || 'other').trim().toLowerCase();
+    if (type === 'piano-solo') return 'piano_solo';
+    if (type === 'tango') return 'tango';
+    if (type === 'duet') return 'duet';
+    if (type === 'ensemble') {
+      if (voices.length === 3) return 'trio';
+      if (voices.length === 4) return 'quartet';
+      return 'ensemble';
+    }
+    if (type === 'aria' || type === 'operetta') return 'aria';
+    if (type === 'lied' || type === 'song' || type === 'canzone' || type === 'sacred') return 'art_song';
+    if (type === 'role') return '';
+    if (voices.length === 2) return 'duet';
+    if (voices.length === 3) return 'trio';
+    if (voices.length === 4) return 'quartet';
+    if ((Array.isArray(item.formations) ? item.formations : []).some(function (formation) { return normalizeFormationLabel(formation).indexOf('piano solo') >= 0; })) return 'piano_solo';
+    return '';
+  }
+  function plannerVoiceCategoryFrom(category, voices, explicit) {
+    var explicitKey = normalizePlannerVoiceCategory(explicit);
+    if (explicitKey) return explicitKey;
+    if (category === 'aria') {
+      if (voices.indexOf('tenor') >= 0) return 'tenor_aria';
+      if (voices.indexOf('soprano') >= 0) return 'soprano_aria';
+      if (voices.indexOf('mezzo') >= 0) return 'mezzo_aria';
+      if (voices.indexOf('baritone') >= 0) return 'baritone_aria';
+      return '';
+    }
+    if (category === 'duet') {
+      if (voices.indexOf('tenor') >= 0 && voices.indexOf('soprano') >= 0) return 'tenor_soprano_duet';
+      if (voices.indexOf('tenor') >= 0 && voices.indexOf('mezzo') >= 0) return 'tenor_mezzo_duet';
+      if (voices.indexOf('tenor') >= 0 && voices.indexOf('baritone') >= 0) return 'tenor_baritone_duet';
+      if (voices.indexOf('soprano') >= 0 && voices.indexOf('mezzo') >= 0) return 'soprano_mezzo_duet';
+      if (voices.indexOf('soprano') >= 0 && voices.indexOf('baritone') >= 0) return 'soprano_baritone_duet';
+      if (voices.indexOf('mezzo') >= 0 && voices.indexOf('baritone') >= 0) return 'mezzo_baritone_duet';
+      return '';
+    }
+    if (category === 'trio') {
+      if (voices.indexOf('tenor') >= 0 && voices.indexOf('soprano') >= 0 && voices.indexOf('mezzo') >= 0) return 'tenor_soprano_mezzo_trio';
+      if (voices.indexOf('tenor') >= 0 && voices.indexOf('soprano') >= 0 && voices.indexOf('baritone') >= 0) return 'tenor_soprano_baritone_trio';
+      if (voices.indexOf('tenor') >= 0 && voices.indexOf('mezzo') >= 0 && voices.indexOf('baritone') >= 0) return 'tenor_mezzo_baritone_trio';
+      if (voices.indexOf('soprano') >= 0 && voices.indexOf('mezzo') >= 0 && voices.indexOf('baritone') >= 0) return 'soprano_mezzo_baritone_trio';
+      return '';
+    }
+    if (category === 'quartet') return 'quartet';
+    if (category === 'ensemble') return 'ensemble';
+    if (category === 'piano_solo') return 'piano_solo';
+    if (category === 'art_song') return 'chamber_song';
+    if (category === 'tango') return 'tango';
+    return '';
+  }
+  function plannerPrimaryVoiceFrom(item, category, voices) {
+    var explicit = normalizePlannerVoiceToken(item.primaryVoice);
+    if (explicit) return explicit;
+    if (category === 'piano_solo') return '';
+    if (voices.indexOf('tenor') >= 0) return 'tenor';
+    return voices[0] || '';
+  }
+  function plannerPairedVoicesFrom(item, primaryVoice, voices) {
+    var explicit = normalizePlannerVoiceList(item.pairedVoices);
+    if (explicit.length) return explicit;
+    return voices.filter(function (voice) { return voice !== primaryVoice; });
+  }
+  function plannerAvailabilityStatus(item) {
+    var explicit = safeString(item.availabilityStatus).trim().toLowerCase();
+    if (/^(performed|working|idea|outside_repertoire|ready)$/.test(explicit)) {
+      if (explicit === 'ready') return 'ready';
+      return explicit;
+    }
+    if (safeString(item.performanceStatus).trim().toLowerCase() === 'performed') return 'performed';
+    var readiness = safeString(item.readiness).trim().toLowerCase();
+    if (/^(ready|working|idea)$/.test(readiness)) return readiness;
+    return 'idea';
+  }
+  function plannerEffectiveDuration(item) {
+    var approx = Math.max(0, Number(item.approximateDurationMin) || 0);
+    var exactish = Math.max(0, Number(item.durationMin) || 0);
+    return exactish || approx || 0;
+  }
+  function normalizePlannerDramaticRole(value) {
+    value = safeString(value).trim().toLowerCase();
+    return PROGRAM_BUILDER_DRAMATIC_ROLE_ORDER.indexOf(value) >= 0 ? value : '';
+  }
+  function normalizePlannerLevel(value, allowed) {
+    value = safeString(value).trim().toLowerCase();
+    return allowed.indexOf(value) >= 0 ? value : '';
+  }
+  function inferPlannerMoodTags(item, category, tags, fitTags) {
+    var moods = [];
+    if (category === 'art_song') moods.push('intimate');
+    if (category === 'tango') moods.push('nostalgic', 'seductive');
+    if (safeString(item.type) === 'sacred') moods.push('sacred');
+    if (safeString(item.type) === 'operetta') moods.push('playful', 'comic');
+    if (category === 'aria' || category === 'quartet' || category === 'ensemble' || category === 'trio') moods.push('dramatic');
+    if (tags.indexOf('gala') >= 0 || fitTags.indexOf('gala') >= 0) moods.push('celebratory');
+    if (fitTags.indexOf('italian') >= 0 && moods.indexOf('luminous') < 0) moods.push('luminous');
+    return programBuilderUniqueStrings(moods);
+  }
+  function inferPlannerDramaticRole(item, category, tags, fitTags) {
+    if (tags.indexOf('encore') >= 0 || fitTags.indexOf('encore') >= 0) return 'encore';
+    if (category === 'piano_solo') return 'contrast';
+    if (category === 'art_song') return 'lyrical_center';
+    if (category === 'tango') return 'contrast';
+    if (category === 'quartet' || category === 'ensemble' || category === 'trio') return 'finale';
+    if (category === 'duet') return 'development';
+    if (category === 'aria' && (fitTags.indexOf('gala') >= 0 || fitTags.indexOf('verdi') >= 0)) return 'climax';
+    if (category === 'aria') return 'development';
+    return '';
+  }
+  function inferPlannerEnergyLevel(item, category, fitTags) {
+    if (category === 'art_song') return 'low';
+    if (category === 'piano_solo') return 'medium';
+    if (category === 'tango') return 'medium';
+    if (category === 'quartet' || category === 'ensemble' || category === 'trio') return 'high';
+    if (category === 'aria' && (fitTags.indexOf('gala') >= 0 || fitTags.indexOf('verdi') >= 0 || fitTags.indexOf('bravura') >= 0)) return 'high';
+    if (category === 'aria') return 'medium';
+    if (category === 'duet') return 'medium';
+    return 'medium';
+  }
+  function inferPlannerTempoProfile(item, category) {
+    if (category === 'art_song') return 'slow';
+    if (category === 'piano_solo') return 'flowing';
+    if (category === 'tango') return 'moderate';
+    if (category === 'quartet' || category === 'ensemble') return 'lively';
+    if (category === 'trio') return 'flowing';
+    if (category === 'aria') return 'moderate';
+    if (category === 'duet') return 'flowing';
+    return 'moderate';
+  }
+  function inferPlannerImpactLevel(item, category) {
+    if (category === 'piano_solo') return 'light';
+    if (category === 'art_song') return 'medium';
+    if (category === 'tango') return 'medium';
+    if (category === 'duet') return 'medium';
+    if (category === 'aria' || category === 'quartet' || category === 'ensemble' || category === 'trio') return 'high';
+    return 'medium';
+  }
+  function inferPlannerAudienceAppeal(item, category, tags, fitTags) {
+    if (tags.indexOf('encore') >= 0 || tags.indexOf('audience_favorite') >= 0 || fitTags.indexOf('tango') >= 0) return 'crowd_pleaser';
+    if (category === 'art_song') return 'connoisseur';
+    return 'balanced';
+  }
+  function inferPlannerEncoreCandidate(item, category, tags, fitTags) {
+    if (item.encoreCandidate === true) return true;
+    if (tags.indexOf('encore') >= 0 || tags.indexOf('audience_favorite') >= 0) return true;
+    if (category === 'tango') return true;
+    return false;
+  }
+  function inferPlannerPracticalTags(item, category, voices, duration, tags) {
+    var out = [];
+    if (voices.indexOf('soprano') >= 0) out.push('needs_soprano');
+    if (voices.indexOf('mezzo') >= 0) out.push('needs_mezzo');
+    if (voices.indexOf('baritone') >= 0) out.push('needs_baritone');
+    if (safeString(item.type) === 'sacred') out.push('works_in_church');
+    if (category === 'art_song' || category === 'tango') out.push('spoken_intro_possible');
+    if (tags.indexOf('encore') >= 0 || tags.indexOf('audience_favorite') >= 0) out.push('audience_favorite');
+    if ((category === 'aria' || category === 'ensemble' || category === 'quartet') && duration >= 5) out.push('vocally_heavy');
+    if ((category === 'duet' || category === 'ensemble' || category === 'quartet') && tags.indexOf('gala') >= 0) out.push('better_with_orchestra');
+    return programBuilderUniqueStrings(out);
+  }
+  function plannerFitTagsFrom(item, category, voices) {
+    var tags = programBuilderUniqueStrings((Array.isArray(item.fitTags) ? item.fitTags : []).concat(item.tags || [])).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean);
+    if (category === 'art_song' && tags.indexOf('art_song') < 0) tags.push('art_song');
+    if (category === 'piano_solo' && tags.indexOf('piano_solo') < 0) tags.push('piano_solo');
+    if (category === 'tango' && tags.indexOf('tango') < 0) tags.push('tango');
+    if (voices.indexOf('tenor') >= 0 && tags.indexOf('tenor') < 0) tags.push('tenor');
+    return programBuilderUniqueStrings(tags);
+  }
+  function plannerStoredBoolean(value) {
+    if (value === true || value === false) return value;
+    var key = safeString(value).trim().toLowerCase();
+    if (key === 'true' || key === '1' || key === 'yes') return true;
+    if (key === 'false' || key === '0' || key === 'no') return false;
+    return null;
+  }
+  function inferPlannerTexture(category) {
+    if (category === 'duet') return 'duet';
+    if (category === 'trio') return 'trio';
+    if (category === 'quartet' || category === 'ensemble') return 'ensemble';
+    if (category === 'piano_solo') return 'piano_solo';
+    return 'solo';
+  }
+  function inferPlannerStyleBucket(item, category, rawType, tags, fitTags) {
+    if (rawType === 'operetta' || tags.indexOf('operetta') >= 0 || fitTags.indexOf('operetta') >= 0) return 'operetta';
+    if (rawType === 'canzone' || tags.indexOf('canzone') >= 0 || fitTags.indexOf('canzone') >= 0 || fitTags.indexOf('italian_song') >= 0) return 'canzone';
+    if (category === 'piano_solo' || tags.indexOf('interlude') >= 0 || tags.indexOf('intermezzo') >= 0 || tags.indexOf('prelude') >= 0 || fitTags.indexOf('interlude') >= 0) return 'intermezzo';
+    return 'opera';
+  }
+  function inferPlannerVocalLoad(category, rawType, durationMin, texture, practicalTags) {
+    if (category === 'piano_solo') return 'light';
+    if (texture === 'duet' || texture === 'trio' || texture === 'ensemble') return 'medium';
+    if (rawType === 'canzone' || category === 'tango' || category === 'art_song') return durationMin >= 5 ? 'medium' : 'light';
+    if (category === 'aria') return (durationMin >= 5 || practicalTags.indexOf('vocally_heavy') >= 0) ? 'heavy' : 'medium';
+    return 'medium';
+  }
+  function inferPlannerRecoveryValue(category, texture, interlude, vocalRestSupport) {
+    if (category === 'piano_solo' || interlude || vocalRestSupport) return 'strong';
+    if (texture === 'duet' || texture === 'trio' || texture === 'ensemble') return 'partial';
+    return 'none';
+  }
+  function inferPlannerGalaRole(category, dramaticRole, styleBucket, interlude, recoveryValue) {
+    if (interlude || recoveryValue === 'strong' || category === 'piano_solo') return 'vocal_rest_support';
+    if (dramaticRole === 'opener' || dramaticRole === 'contrast' || dramaticRole === 'lyrical_center' || dramaticRole === 'climax' || dramaticRole === 'finale' || dramaticRole === 'encore') return dramaticRole;
+    if (styleBucket === 'canzone' || styleBucket === 'operetta') return 'contrast';
+    return '';
+  }
+  function normalizePlannerItemRecord(item, i) {
+    var rawType = safeString(item.type || 'other').trim().toLowerCase() || 'other';
+    var formations = (Array.isArray(item.formations) ? item.formations : safeString(item.formations).split('\n')).map(function (x) { return safeString(x).trim(); }).filter(Boolean);
+    var preliminaryVoices = plannerVoicesFromItem({ formations: formations, primaryVoice: item.primaryVoice, pairedVoices: item.pairedVoices, voiceCategory: item.voiceCategory });
+    var category = plannerCategoryFromLegacy(item, preliminaryVoices);
+    var voiceCategory = plannerVoiceCategoryFrom(category, preliminaryVoices, item.voiceCategory);
+    var voices = preliminaryVoices.length ? preliminaryVoices : plannerVoicesFromVoiceCategory(voiceCategory);
+    var primaryVoice = plannerPrimaryVoiceFrom(item, category, voices);
+    var pairedVoices = plannerPairedVoicesFrom(item, primaryVoice, voices);
+    var availabilityStatus = plannerAvailabilityStatus(item);
+    var approximateDurationMin = Math.max(0, Number(item.approximateDurationMin) || Number(item.durationMin) || 0);
+    var durationMin = Math.max(0, Number(item.durationMin) || approximateDurationMin || 0);
+    var fitTags = plannerFitTagsFrom(item, category, voices);
+    var tags = (Array.isArray(item.tags) ? item.tags : safeString(item.tags).split(',')).map(function (x) { return safeString(x).trim().toLowerCase(); }).filter(Boolean);
+    var dramaticRole = normalizePlannerDramaticRole(item.dramaticRole) || inferPlannerDramaticRole(item, category, tags, fitTags);
+    var energyLevel = normalizePlannerLevel(item.energyLevel, ['low','medium','high']) || inferPlannerEnergyLevel(item, category, fitTags);
+    var moodTags = programBuilderUniqueStrings((Array.isArray(item.moodTags) ? item.moodTags : safeString(item.moodTags).split(',')).map(function (x) { return safeString(x).trim().toLowerCase(); }).filter(Boolean));
+    if (!moodTags.length) moodTags = inferPlannerMoodTags(item, category, tags, fitTags);
+    var tempoProfile = normalizePlannerLevel(item.tempoProfile, ['slow','moderate','flowing','lively','brilliant']) || inferPlannerTempoProfile(item, category);
+    var impactLevel = normalizePlannerLevel(item.impactLevel, ['light','medium','high']) || inferPlannerImpactLevel(item, category);
+    var audienceAppeal = normalizePlannerLevel(item.audienceAppeal, ['connoisseur','balanced','crowd_pleaser']) || inferPlannerAudienceAppeal(item, category, tags, fitTags);
+    var encoreCandidate = item.encoreCandidate === true || inferPlannerEncoreCandidate(item, category, tags, fitTags);
+    var practicalTags = programBuilderUniqueStrings((Array.isArray(item.practicalTags) ? item.practicalTags : safeString(item.practicalTags).split(',')).map(function (x) { return safeString(x).trim().toLowerCase(); }).filter(Boolean));
+    if (!practicalTags.length) practicalTags = inferPlannerPracticalTags(item, category, voices, durationMin || approximateDurationMin, tags);
+    var interludeStored = plannerStoredBoolean(item.interlude);
+    var vocalRestSupportStored = plannerStoredBoolean(item.vocalRestSupport);
+    var goodBetweenBlocksStored = plannerStoredBoolean(item.goodBetweenBlocks);
+    var goodBeforeClimaxStored = plannerStoredBoolean(item.goodBeforeClimax);
+    var interlude = interludeStored !== null ? interludeStored : (category === 'piano_solo' || tags.indexOf('interlude') >= 0 || fitTags.indexOf('interlude') >= 0 || practicalTags.indexOf('interlude') >= 0);
+    var vocalRestSupport = vocalRestSupportStored !== null ? vocalRestSupportStored : (category === 'piano_solo' || practicalTags.indexOf('vocal_rest_support') >= 0 || practicalTags.indexOf('spoken_intro_possible') >= 0);
+    var goodBetweenBlocks = goodBetweenBlocksStored !== null ? goodBetweenBlocksStored : (category === 'piano_solo' || practicalTags.indexOf('good_between_blocks') >= 0 || practicalTags.indexOf('interlude') >= 0);
+    var goodBeforeClimax = goodBeforeClimaxStored !== null ? goodBeforeClimaxStored : (practicalTags.indexOf('good_before_climax') >= 0 || tags.indexOf('good_before_climax') >= 0 || fitTags.indexOf('good_before_climax') >= 0);
+    var texture = normalizePlannerLevel(item.texture, ['solo','duet','trio','ensemble','piano_solo']) || inferPlannerTexture(category);
+    var styleBucket = normalizePlannerLevel(item.styleBucket, ['opera','operetta','canzone','intermezzo']) || inferPlannerStyleBucket(item, category, rawType, tags, fitTags);
+    var vocalLoad = normalizePlannerLevel(item.vocalLoad, ['light','medium','heavy']) || inferPlannerVocalLoad(category, rawType, durationMin || approximateDurationMin, texture, practicalTags);
+    var recoveryValue = normalizePlannerLevel(item.recoveryValue, ['none','partial','strong']) || inferPlannerRecoveryValue(category, texture, interlude, vocalRestSupport);
+    var bestDurationFit = (function (value) {
+      value = safeString(value || '').trim().toLowerCase();
+      return ['30','45','60','all'].indexOf(value) >= 0 ? value : 'all';
+    })(item.bestDurationFit);
+    var galaRole = normalizePlannerLevel(item.galaRole, ['opener','contrast','lyrical_center','climax','finale','encore','vocal_rest_support']) || inferPlannerGalaRole(category, dramaticRole, styleBucket, interlude, recoveryValue);
+    var reviewStatus = safeString(item.reviewStatus || 'clean').trim().toLowerCase() === 'manual_review' ? 'manual_review' : 'clean';
+    var offerOnly = item.offerOnly === true;
+    var excludeFromOffers = item.excludeFromOffers === true;
+    if (category === 'piano_solo' && reviewStatus !== 'manual_review') excludeFromOffers = false;
+    if (availabilityStatus === 'outside_repertoire') excludeFromOffers = false;
+    if (offerOnly) excludeFromOffers = true;
+    return {
+      id: safeString(item.id || ('piece_' + (i + 1))).trim(),
+      title: safeString(item.title).trim(),
+      composer: safeString(item.composer).trim(),
+      work: safeString(item.work).trim(),
+      type: rawType,
+      category: category,
+      voiceCategory: voiceCategory,
+      primaryVoice: primaryVoice,
+      pairedVoices: pairedVoices,
+      includesTenor: item.includesTenor === true || voices.indexOf('tenor') >= 0,
+      language: safeString(item.language).trim(),
+      approximateDurationMin: approximateDurationMin,
+      durationMin: durationMin,
+      formations: formations,
+      readiness: (function (v) { v = safeString(v || 'idea').trim().toLowerCase(); return /^(ready|working|idea)$/.test(v) ? v : 'idea'; })(item.readiness),
+      availabilityStatus: availabilityStatus,
+      tags: tags,
+      fitTags: fitTags,
+      dramaticRole: dramaticRole,
+      energyLevel: energyLevel,
+      moodTags: moodTags,
+      tempoProfile: tempoProfile,
+      impactLevel: impactLevel,
+      audienceAppeal: audienceAppeal,
+      encoreCandidate: encoreCandidate,
+      vocalLoad: vocalLoad,
+      galaRole: galaRole,
+      texture: texture,
+      styleBucket: styleBucket,
+      recoveryValue: recoveryValue,
+      bestDurationFit: bestDurationFit,
+      practicalTags: practicalTags,
+      interlude: interlude,
+      vocalRestSupport: vocalRestSupport,
+      goodBetweenBlocks: goodBetweenBlocks,
+      goodBeforeClimax: goodBeforeClimax,
+      notes: safeString(item.notes),
+      publicNotes: safeString(item.publicNotes),
+      sortOrder: Number.isFinite(Number(item.sortOrder)) ? Number(item.sortOrder) : ((i + 1) * 10),
+      performanceStatus: safeString(item.performanceStatus || '').trim().toLowerCase() === 'performed' ? 'performed' : '',
+      performedIn: (Array.isArray(item.performedIn) ? item.performedIn : safeString(item.performedIn).split('\n')).map(function (x) { return safeString(x).trim(); }).filter(Boolean),
+      reviewStatus: reviewStatus,
+      offerOnly: offerOnly,
+      excludeFromOffers: excludeFromOffers,
+      sourceGroup: safeString(item.sourceGroup).trim(),
+      suggestionGroup: safeString(item.suggestionGroup).trim()
+    };
+  }
+  function plannerItemVoiceLabel(item) {
+    var explicit = safeString(PROGRAM_BUILDER_VOICE_CATEGORY_LABELS[safeString(item.voiceCategory).trim().toLowerCase()]);
+    if (explicit) return explicit;
+    var fallback = safeString(item.category || item.type || '').replace(/_/g, ' ').trim();
+    return fallback ? fallback.replace(/\b[a-z]/g, function (ch) { return ch.toUpperCase(); }) : 'Repertoire';
+  }
+  function nextPlannerItemId(seedTitle) {
+    var base = programBuilderSlug(seedTitle || 'piece');
+    var candidate = base;
+    var suffix = 2;
+    var items = (state.plannerDoc && Array.isArray(state.plannerDoc.items)) ? state.plannerDoc.items : [];
+    while (items.some(function (item) { return safeString(item && item.id).trim() === candidate; })) {
+      candidate = base + '_' + suffix;
+      suffix += 1;
+    }
+    return candidate;
+  }
+  function plannerCategoryFilterMatches(item, filter) {
+    var key = safeString(filter || 'all').trim().toLowerCase() || 'all';
+    if (key === 'all') return true;
+    var voiceCategory = safeString(item.voiceCategory).trim().toLowerCase();
+    var category = safeString(item.category).trim().toLowerCase();
+    if (key === 'tenor_arias') return voiceCategory === 'tenor_aria';
+    if (key === 'soprano_arias') return voiceCategory === 'soprano_aria';
+    if (key === 'mezzo_arias') return voiceCategory === 'mezzo_aria';
+    if (key === 'baritone_arias') return voiceCategory === 'baritone_aria';
+    if (key === 'tenor_soprano_duets') return voiceCategory === 'tenor_soprano_duet';
+    if (key === 'tenor_mezzo_duets') return voiceCategory === 'tenor_mezzo_duet';
+    if (key === 'tenor_baritone_duets') return voiceCategory === 'tenor_baritone_duet';
+    if (key === 'other_duets') return category === 'duet' && ['soprano_mezzo_duet','soprano_baritone_duet','mezzo_baritone_duet'].indexOf(voiceCategory) >= 0;
+    if (key === 'trios') return category === 'trio';
+    if (key === 'quartets_ensembles') return category === 'quartet' || category === 'ensemble';
+    if (key === 'piano_solo') return category === 'piano_solo';
+    if (key === 'chamber_song') return voiceCategory === 'chamber_song' || category === 'art_song';
+    if (key === 'tango') return category === 'tango' || voiceCategory === 'tango';
+    return true;
+  }
+  function plannerPieceCombinedTags(piece) {
+    return programBuilderUniqueStrings((((piece && piece.fitTags) && piece.fitTags.length ? piece.fitTags : []).concat((piece && piece.tags) || []).concat((piece && piece.practicalTags) || [])).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+  }
+  function plannerPieceFlags(piece) {
+    var category = safeString(piece && piece.category).trim().toLowerCase();
+    var type = safeString(piece && piece.type).trim().toLowerCase();
+    var voiceCategory = safeString(piece && piece.voiceCategory).trim().toLowerCase();
+    var language = safeString(piece && piece.language).trim().toUpperCase();
+    var tags = plannerPieceCombinedTags(piece);
+    var textBlob = [
+      safeString(piece && piece.title).trim().toLowerCase(),
+      safeString(piece && piece.work).trim().toLowerCase(),
+      safeString(piece && piece.composer).trim().toLowerCase(),
+      safeString(piece && piece.sourceGroup).trim().toLowerCase()
+    ].join(' ');
+    var isOperatic = ['aria', 'duet', 'trio', 'quartet', 'ensemble'].indexOf(category) >= 0;
+    var isPianoSolo = category === 'piano_solo';
+    var isOperaticPiano = isPianoSolo && (
+      tags.indexOf('gala') >= 0 ||
+      tags.indexOf('opera') >= 0 ||
+      tags.indexOf('operatic') >= 0 ||
+      tags.indexOf('interlude') >= 0 ||
+      tags.indexOf('prelude') >= 0 ||
+      /intermezzo|prelude|preludio|opera/.test(textBlob)
+    );
+    var isTango = category === 'tango' || type === 'tango' || voiceCategory === 'tango' || tags.indexOf('tango') >= 0 || tags.indexOf('milonga') >= 0 || tags.indexOf('argentine_tango') >= 0 || tags.indexOf('argentine') >= 0;
+    var isArtSong = category === 'art_song' || voiceCategory === 'chamber_song' || type === 'lied' || type === 'song' || type === 'sacred';
+    var isCanzone = type === 'canzone' || tags.indexOf('canzone') >= 0 || tags.indexOf('romanza') >= 0 || tags.indexOf('romanza_da_camera') >= 0 || tags.indexOf('italian_song') >= 0;
+    var isItalian = language === 'IT' || tags.indexOf('italian') >= 0 || isCanzone;
+    var isInterludeSupport = (piece && piece.interlude === true) || tags.indexOf('interlude') >= 0;
+    var supportsVocalRest = (piece && piece.vocalRestSupport === true) || tags.indexOf('vocal_rest_support') >= 0;
+    var goodBetweenBlocks = (piece && piece.goodBetweenBlocks === true) || tags.indexOf('good_between_blocks') >= 0;
+    var goodBeforeClimax = (piece && piece.goodBeforeClimax === true) || tags.indexOf('good_before_climax') >= 0;
+    var isSupportivePiano = isPianoSolo && (isInterludeSupport || supportsVocalRest || goodBetweenBlocks || goodBeforeClimax);
+    var isTangoCompatiblePiano = isPianoSolo && (isTango || tags.indexOf('tango_compatible') >= 0 || tags.indexOf('tango-compatible') >= 0);
+    var energyLevel = normalizePlannerLevel(piece && piece.energyLevel, ['low','medium','high']) || '';
+    var impactLevel = normalizePlannerLevel(piece && piece.impactLevel, ['light','medium','high']) || '';
+    var audienceAppeal = normalizePlannerLevel(piece && piece.audienceAppeal, ['connoisseur','balanced','crowd_pleaser']) || '';
+    var vocalLoad = normalizePlannerLevel(piece && piece.vocalLoad, ['light','medium','heavy']) || inferPlannerVocalLoad(category, type, Math.max(0, Number(piece && piece.durationMin) || Number(piece && piece.approximateDurationMin) || 0), normalizePlannerLevel(piece && piece.texture, ['solo','duet','trio','ensemble','piano_solo']) || inferPlannerTexture(category), (piece && piece.practicalTags) || []);
+    var galaRole = normalizePlannerLevel(piece && piece.galaRole, ['opener','contrast','lyrical_center','climax','finale','encore','vocal_rest_support']) || inferPlannerGalaRole(category, safeString(piece && piece.dramaticRole).trim().toLowerCase(), normalizePlannerLevel(piece && piece.styleBucket, ['opera','operetta','canzone','intermezzo']) || inferPlannerStyleBucket(piece, category, type, tags, tags), isInterludeSupport, normalizePlannerLevel(piece && piece.recoveryValue, ['none','partial','strong']) || inferPlannerRecoveryValue(category, normalizePlannerLevel(piece && piece.texture, ['solo','duet','trio','ensemble','piano_solo']) || inferPlannerTexture(category), isInterludeSupport, supportsVocalRest));
+    var texture = normalizePlannerLevel(piece && piece.texture, ['solo','duet','trio','ensemble','piano_solo']) || inferPlannerTexture(category);
+    var styleBucket = normalizePlannerLevel(piece && piece.styleBucket, ['opera','operetta','canzone','intermezzo']) || inferPlannerStyleBucket(piece, category, type, tags, tags);
+    var recoveryValue = normalizePlannerLevel(piece && piece.recoveryValue, ['none','partial','strong']) || inferPlannerRecoveryValue(category, texture, isInterludeSupport, supportsVocalRest);
+    var bestDurationFit = (function (value) {
+      value = safeString(value || '').trim().toLowerCase();
+      return ['30','45','60','all'].indexOf(value) >= 0 ? value : 'all';
+    })(piece && piece.bestDurationFit);
+    return {
+      category: category,
+      type: type,
+      voiceCategory: voiceCategory,
+      language: language,
+      tags: tags,
+      isOperatic: isOperatic,
+      isPianoSolo: isPianoSolo,
+      isOperaticPiano: isOperaticPiano,
+      isTango: isTango,
+      isArtSong: isArtSong,
+      isCanzone: isCanzone,
+      isItalian: isItalian,
+      isInterludeSupport: isInterludeSupport,
+      supportsVocalRest: supportsVocalRest,
+      goodBetweenBlocks: goodBetweenBlocks,
+      goodBeforeClimax: goodBeforeClimax,
+      isSupportivePiano: isSupportivePiano,
+      isTangoCompatiblePiano: isTangoCompatiblePiano,
+      energyLevel: energyLevel,
+      impactLevel: impactLevel,
+      audienceAppeal: audienceAppeal,
+      vocalLoad: vocalLoad,
+      galaRole: galaRole,
+      texture: texture,
+      styleBucket: styleBucket,
+      recoveryValue: recoveryValue,
+      bestDurationFit: bestDurationFit
+    };
+  }
+  function pieceFamilyFitTier(piece, family) {
+    if (!piece) return 0;
+    var key = safeString(family || 'gala').trim().toLowerCase() || 'gala';
+    var flags = plannerPieceFlags(piece);
+    if (key === 'gala') {
+      if (flags.isOperatic) return 3;
+      if (flags.isOperaticPiano && flags.isSupportivePiano) return 2;
+      if (flags.isOperaticPiano) return 1;
+      return 0;
+    }
+    if (key === 'italian') {
+      if (flags.isItalian && (flags.isOperatic || flags.isCanzone || flags.isArtSong)) return 3;
+      if (flags.isItalian && flags.isPianoSolo && flags.isSupportivePiano) return 2;
+      if (flags.isItalian && flags.isPianoSolo) return 1;
+      return 0;
+    }
+    if (key === 'tango') {
+      if (flags.isTango && !flags.isPianoSolo) return 3;
+      if (flags.isTangoCompatiblePiano) return 2;
+      return 0;
+    }
+    if (key === 'borders') {
+      if (flags.isTango) return 3;
+      if (flags.isOperatic || flags.isArtSong || flags.isCanzone) return 2;
+      if (flags.isPianoSolo && flags.isSupportivePiano) return 2;
+      if (flags.isPianoSolo) return 1;
+      return 1;
+    }
+    return 0;
+  }
+  function galaOptionsForBlueprint(bp) {
+    return safeBlueprintGalaOptions(bp && bp.galaOptions, bp && bp.targetDuration);
+  }
+  function galaBestDurationMatches(piece, targetDuration) {
+    var fit = safeString(plannerPieceFlags(piece).bestDurationFit || 'all').trim().toLowerCase();
+    return fit === 'all' || fit === String(Math.max(0, Number(targetDuration) || 0));
+  }
+  function galaProgrammeState(bp) {
+    var items = ((bp && bp.items) || []).map(function (it) { return getPlannerItemById(it && it.pieceId); }).filter(Boolean);
+    var stateSummary = {
+      items: items,
+      breathingPoints: 0,
+      heavyTenorRun: 0,
+      hasContrast: false,
+      lastIsStrongEnding: false
+    };
+    var maxHeavyRun = 0;
+    var currentHeavyRun = 0;
+    var styleBuckets = {};
+    var textures = {};
+    items.forEach(function (piece) {
+      var flags = plannerPieceFlags(piece);
+      if (flags.recoveryValue === 'partial' || flags.recoveryValue === 'strong' || flags.galaRole === 'vocal_rest_support') stateSummary.breathingPoints += 1;
+      if (piece.includesTenor === true && flags.texture === 'solo' && flags.vocalLoad === 'heavy') {
+        currentHeavyRun += 1;
+        if (currentHeavyRun > maxHeavyRun) maxHeavyRun = currentHeavyRun;
+      } else {
+        currentHeavyRun = 0;
+      }
+      if (flags.styleBucket) styleBuckets[flags.styleBucket] = true;
+      if (flags.texture) textures[flags.texture] = true;
+    });
+    stateSummary.heavyTenorRun = maxHeavyRun;
+    stateSummary.hasContrast = Object.keys(styleBuckets).length >= 2 || Object.keys(textures).length >= 2;
+    if (items.length) {
+      var finaleFlags = plannerPieceFlags(items[items.length - 1]);
+      stateSummary.lastIsStrongEnding = finaleFlags.galaRole === 'finale' || finaleFlags.galaRole === 'climax' || finaleFlags.audienceAppeal === 'crowd_pleaser' || finaleFlags.impactLevel === 'high';
+    }
+    return stateSummary;
+  }
+  function galaSupportTarget(targetDuration) {
+    var target = Math.max(0, Number(targetDuration) || 30);
+    if (target >= 60) return 2;
+    if (target >= 45) return 1;
+    return 1;
+  }
+  function galaSupportLimit(targetDuration) {
+    var target = Math.max(0, Number(targetDuration) || 30);
+    if (target >= 60) return 2;
+    return 1;
+  }
+  function plannerOfferFamilyFitTier(piece, bp, family) {
+    var key = safeString(family || (bp && bp.family) || 'gala').trim().toLowerCase() || 'gala';
+    if (key !== 'gala') return pieceFamilyFitTier(piece, key);
+    var flags = plannerPieceFlags(piece);
+    var options = galaOptionsForBlueprint(bp);
+    if (flags.isTango || flags.isArtSong) return 0;
+    if (flags.isPianoSolo) {
+      if (!options.allowPianoInterludes) return 0;
+      if (flags.isOperaticPiano || flags.styleBucket === 'intermezzo' || flags.recoveryValue === 'strong' || flags.recoveryValue === 'partial') return 2;
+      return 0;
+    }
+    if (flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone') {
+      return options.includeContrast ? 2 : 0;
+    }
+    if (flags.isOperatic) return 3;
+    return 0;
+  }
+  function plannerOfferVoiceMatch(piece, formation, showWithoutTenor) {
+    if (!piece) return false;
+    if (showWithoutTenor) return true;
+    if (piece.includesTenor === true) return true;
+    if (safeString(piece.category).trim().toLowerCase() === 'piano_solo') return true;
+    var formationVoices = plannerVoicesFromFormationLabel(formation);
+    if (!formationVoices.length) return false;
+    var pieceVoices = plannerVoicesFromItem(piece);
+    return pieceVoices.some(function (voice) { return formationVoices.indexOf(voice) >= 0; });
+  }
+  function plannerFamilySelectorPriority(piece, family, formation, bp) {
+    if (!piece) return 0;
+    var key = safeString(family || 'gala').trim().toLowerCase() || 'gala';
+    var flags = plannerPieceFlags(piece);
+    var voices = plannerVoicesFromItem(piece);
+    var formationVoices = plannerVoicesFromFormationLabel(formation);
+    var voiceCategory = safeString(piece.voiceCategory).trim().toLowerCase();
+    var score = plannerOfferFamilyFitTier(piece, bp, key) * 100;
+    var formationMatch = pieceMatchesFormation(piece, formation);
+    var collaboratorCovered = voices.some(function (voice) { return formationVoices.indexOf(voice) >= 0; });
+    if (formationMatch) score += 10;
+    if (piece.includesTenor === true) score += 8;
+    if (collaboratorCovered) score += 4;
+    if (key === 'gala' && bp) {
+      var options = galaOptionsForBlueprint(bp);
+      var summary = galaProgrammeState(bp);
+      var supportTarget = galaSupportTarget(bp.targetDuration);
+      var supportLimit = galaSupportLimit(bp.targetDuration);
+      var supportPiece = flags.recoveryValue === 'partial' || flags.recoveryValue === 'strong' || flags.galaRole === 'vocal_rest_support';
+      var contrastPiece = flags.galaRole === 'contrast' || flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone' || flags.texture !== 'solo';
+      if (bp.targetDuration <= 30) {
+        if (flags.texture === 'solo') score += 12;
+        if (flags.galaRole === 'opener' || flags.galaRole === 'finale' || flags.galaRole === 'climax') score += 8;
+        if (supportPiece) score += summary.breathingPoints < supportLimit ? 6 : -10;
+      } else if (bp.targetDuration <= 45) {
+        if (options.preferVocalPacing && supportPiece) score += summary.breathingPoints < supportTarget ? 14 : 4;
+        if (!summary.hasContrast && contrastPiece) score += 8;
+      } else {
+        if (options.preferVocalPacing && supportPiece) score += summary.breathingPoints < supportTarget ? 14 : -2;
+        if (!summary.hasContrast && contrastPiece) score += 9;
+        if (flags.galaRole === 'finale' || flags.galaRole === 'climax') score += 6;
+      }
+      if (!galaBestDurationMatches(piece, bp.targetDuration)) score -= 4;
+      if (summary.heavyTenorRun >= 2 && piece.includesTenor === true && flags.texture === 'solo' && flags.vocalLoad === 'heavy') score -= 10;
+    }
+    if (key === 'gala') {
+      if (voiceCategory === 'tenor_aria') score += 34;
+      else if (/^tenor_.*_duet$/.test(voiceCategory)) score += 30;
+      else if ((flags.category === 'trio' || flags.category === 'quartet' || flags.category === 'ensemble') && voices.indexOf('tenor') >= 0) score += 26;
+      else if ((voiceCategory === 'soprano_aria' || voiceCategory === 'mezzo_aria' || voiceCategory === 'baritone_aria') && collaboratorCovered) score += 22;
+      else if (flags.isOperatic) score += 16;
+      else if (flags.isOperaticPiano) score += flags.isSupportivePiano ? 16 : 10;
+      if (flags.isPianoSolo && flags.supportsVocalRest) score += 4;
+      if (flags.goodBetweenBlocks) score += 4;
+      if (flags.goodBeforeClimax) score += 2;
+    } else if (key === 'italian') {
+      if (voiceCategory === 'tenor_aria' && flags.isItalian) score += 34;
+      else if (flags.isItalian && flags.isCanzone) score += 30;
+      else if (flags.isItalian && flags.isArtSong) score += 26;
+      else if (flags.isItalian && /^tenor_.*_duet$/.test(voiceCategory)) score += 24;
+      else if (flags.isItalian && (flags.category === 'trio' || flags.category === 'quartet' || flags.category === 'ensemble')) score += 20;
+      else if (flags.isItalian && (voiceCategory === 'soprano_aria' || voiceCategory === 'mezzo_aria' || voiceCategory === 'baritone_aria') && collaboratorCovered) score += 18;
+      else if (flags.isItalian && flags.isPianoSolo) score += flags.isSupportivePiano ? 16 : 10;
+      if (flags.isItalian && flags.goodBetweenBlocks) score += 4;
+      if (flags.isItalian && flags.goodBeforeClimax) score += 2;
+    } else if (key === 'tango') {
+      if (flags.isTango && piece.includesTenor === true) score += 34;
+      else if (flags.isTango && (flags.category === 'duet' || flags.category === 'trio' || flags.category === 'quartet' || flags.category === 'ensemble')) score += 24;
+      else if (flags.isTangoCompatiblePiano) score += flags.isSupportivePiano ? 16 : 12;
+      else if (flags.isTango) score += 18;
+    } else if (key === 'borders') {
+      score += plannerBordersVarietyScore(piece, currentBlueprint()) * 6;
+      if (flags.language) score += 2;
+      if (flags.isArtSong || flags.isCanzone || flags.isTango) score += 3;
+      if (flags.isPianoSolo && flags.isSupportivePiano) score += 10;
+    }
+    return score;
+  }
+  function plannerBordersVarietyScore(piece, bp) {
+    var flags = plannerPieceFlags(piece);
+    var langs = {};
+    ((bp && bp.items) || []).forEach(function (it) {
+      var selectedPiece = getPlannerItemById(it && it.pieceId);
+      var key = safeString(selectedPiece && selectedPiece.language).trim().toUpperCase();
+      if (key) langs[key] = true;
+    });
+    var score = 0;
+    var lang = flags.language;
+    if (lang && !langs[lang]) score += 3;
+    if (flags.tags.indexOf('borders') >= 0 || flags.tags.indexOf('multilingual') >= 0 || flags.tags.indexOf('cross-border') >= 0) score += 2;
+    if (flags.category === 'tango' || flags.category === 'art_song') score += 1;
+    return score;
+  }
+  function programBuilderApproxDuration(type, titleKey) {
+    var specific = {
+      'celeste_aida': 6,
+      'e_la_solita_storia_del_pastore_lamento_di_federico': 5,
+      'ella_mi_fu_rapita_parmi_veder_le_lagrime': 6,
+      'erlkonig': 5,
+      'vesennie_vody': 4,
+      'dichterliebe_op_48_complete_cycle': 30,
+      'tre_sonetti_di_petrarca': 12,
+      'cinco_canciones_populares_argentinas': 15
+    };
+    if (Number.isFinite(Number(specific[titleKey]))) return specific[titleKey];
+    if (type === 'piano-solo') return 3;
+    if (type === 'duet' || type === 'ensemble') return 5;
+    if (type === 'aria' || type === 'operetta') return 5;
+    if (type === 'tango' || type === 'lied' || type === 'song' || type === 'canzone' || type === 'sacred') return 4;
+    return 4;
+  }
+  function makeHistoricalConcertLookup() {
+    var src = programBuilderHistoricalSource();
+    var map = {};
+    (Array.isArray(src.concerts) ? src.concerts : []).forEach(function (concert) {
+      var cid = safeString(concert.id).trim();
+      (Array.isArray(concert.programmeItems) ? concert.programmeItems : []).forEach(function (title) {
+        var key = programBuilderNormalizeKey(title);
+        if (!key) return;
+        if (!Array.isArray(map[key])) map[key] = [];
+        if (map[key].indexOf(cid) < 0) map[key].push(cid);
+      });
+    });
+    return map;
+  }
+  function programBuilderHistoricalOverrides() {
+    return {
+      composers: {
+        'donizetti': 'Gaetano Donizetti',
+        'cilea': 'Francesco Cilea',
+        'rossini': 'Gioachino Rossini',
+        'puccini': 'Giacomo Puccini',
+        'verdi': 'Giuseppe Verdi',
+        'bizet': 'Georges Bizet',
+        'gounod': 'Charles Gounod',
+        'massenet': 'Jules Massenet',
+        'mozart': 'W. A. Mozart',
+        'tosti': 'Francesco Paolo Tosti',
+        'gastaldon': 'Stanislao Gastaldon',
+        'donaudy': 'Stefano Donaudy',
+        'leoncavallo': 'Ruggero Leoncavallo',
+        'handel': 'George Frideric Handel',
+        'haydn': 'Joseph Haydn',
+        'beethoven': 'Ludwig van Beethoven',
+        'schubert': 'Franz Schubert',
+        'rachmaninov': 'Sergei Rachmaninov',
+        'richard strauss': 'Richard Strauss',
+        'liszt': 'Franz Liszt',
+        'guastavino': 'Carlos Guastavino',
+        'ginastera': 'Alberto Ginastera',
+        'obradors': 'Fernando Obradors',
+        'luzzatti': 'Juan Carlos Rodríguez Luzzatti',
+        'carlos gardel': 'Carlos Gardel',
+        'mariano mores': 'Mariano Mores',
+        'astor piazzolla': 'Astor Piazzolla',
+        'sebastian iradier': 'Sebastián Iradier',
+        'bernstein': 'Leonard Bernstein',
+        'di capua': 'Eduardo di Capua',
+        'gershwin': 'George Gershwin',
+        'carlos lopez buchardo': 'Carlos López Buchardo'
+      },
+      duetFormations: {
+        'all_idea_di_quel_metallo': ['Tenor + Baritone + Piano'],
+        'venti_scudi': ['Tenor + Baritone + Piano'],
+        'o_mimi_tu_piu_non_torni': ['Tenor + Baritone + Piano'],
+        'dio_che_nell_alma_infondere': ['Tenor + Baritone + Piano'],
+        'ashton_tra_queste_mura': ['Tenor + Baritone + Piano'],
+        'solenne_in_quest_ora': ['Tenor + Baritone + Piano'],
+        'au_fond_du_temple_saint': ['Tenor + Baritone + Piano'],
+        'o_soave_fanciulla': ['Tenor + Soprano + Piano'],
+        'parigi_o_cara': ['Tenor + Soprano + Piano'],
+        'ardir_ha_forse_il_cielo': ['Tenor + Soprano + Piano'],
+        'parle_moi_de_ma_mere': ['Tenor + Soprano + Piano'],
+        'nous_vivrons_a_paris': ['Tenor + Soprano + Piano'],
+        'konstanze_konstanze': ['Tenor + Soprano + Piano'],
+        'caro_elisir_sei_mio': ['Tenor + Soprano + Piano'],
+        'toi_vous': ['Tenor + Soprano + Piano'],
+        'signor_ne_principe': ['Tenor + Soprano + Piano'],
+        'vogliatemi_bene': ['Tenor + Soprano + Piano'],
+        'barcarolle': ['Tenor + Soprano + Piano'],
+        'tonight_tonight': ['Tenor + Soprano + Piano'],
+        'por_una_cabeza': ['Tenor + Baritone + Piano'],
+        'come_in_quest_ora_bruna': ['Tenor + Baritone + Piano']
+      },
+      typeOverrides: {
+        'all_idea_di_quel_metallo': 'duet',
+        'venti_scudi': 'duet',
+        'o_mimi_tu_piu_non_torni': 'duet',
+        'dio_che_nell_alma_infondere': 'duet',
+        'ashton_tra_queste_mura': 'duet',
+        'solenne_in_quest_ora': 'duet',
+        'au_fond_du_temple_saint': 'duet',
+        'o_soave_fanciulla': 'duet',
+        'parigi_o_cara': 'duet',
+        'ardir_ha_forse_il_cielo': 'duet',
+        'parle_moi_de_ma_mere': 'duet',
+        'nous_vivrons_a_paris': 'duet',
+        'konstanze_konstanze': 'duet',
+        'caro_elisir_sei_mio': 'duet',
+        'in_un_coupe': 'ensemble',
+        'fra_gli_amplessi': 'duet',
+        'toi_vous': 'duet',
+        'signor_ne_principe': 'duet',
+        'vogliatemi_bene': 'duet',
+        'las_hijas_del_zebedeo': 'operetta',
+        'dichterliebe_op_48_complete_cycle': 'lied',
+        'tre_sonetti_di_petrarca': 'lied',
+        'cinco_canciones_populares_argentinas': 'song'
+      },
+      workOverrides: {
+        'grazie_agli_inganni_tuoi': 'Mozart duet reference',
+        'las_hijas_del_zebedeo': 'Zarzuela reference',
+        'ideale': 'Romanza da salotto',
+        'musica_proibita': 'Romanza da salotto',
+        'l_alba_separa_dalla_luce_l_ombra': 'Romanza da salotto',
+        'la_danza': 'Les soirées musicales',
+        'ombra_mai_fu': 'Serse',
+        'dichterliebe_op_48_complete_cycle': 'Dichterliebe, op. 48',
+        'tre_sonetti_di_petrarca': 'Tre sonetti di Petrarca',
+        'cinco_canciones_populares_argentinas': 'Cinco canciones populares argentinas',
+        'you_ll_never_walk_alone': 'Carousel',
+        'tonight': 'West Side Story',
+        'maria': 'West Side Story',
+        'o_holy_night': 'Cantique de Noël',
+        'stille_nacht': 'Christmas song'
+      },
+      composerOverrides: {
+        'grazie_agli_inganni_tuoi': 'W. A. Mozart',
+        'las_hijas_del_zebedeo': 'Ruperto Chapí',
+        'you_ll_never_walk_alone': 'Richard Rodgers',
+        'o_holy_night': 'Adolphe Adam',
+        'stille_nacht': 'Franz Xaver Gruber'
+      },
+      manualReview: {
+        'grazie_agli_inganni_tuoi': 'Source lacks the full work/context; confirm the exact Mozart excerpt before using publicly.',
+        'in_un_coupe': 'Source identifies the excerpt but exact ensemble context should be confirmed.',
+        'fra_gli_amplessi': 'Confirm exact dramatic context and preferred formation before offering publicly.',
+        'las_hijas_del_zebedeo': 'Source only names the zarzuela reference; confirm exact excerpt and attribution.',
+        'dichterliebe_op_48_complete_cycle': 'Cycle reference imported for archive value; split into individual songs if needed for offers.',
+        'tre_sonetti_di_petrarca': 'Cycle reference imported for archive value; split into individual sonnets if needed for offers.',
+        'cinco_canciones_populares_argentinas': 'Cycle reference imported for archive value; split into individual songs if needed for offers.'
+      }
+    };
+  }
+  function inferHistoricalLanguage(sectionKey, title, work, composer) {
+    var titleKey = programBuilderSlug(title);
+    var workKey = programBuilderNormalizeKey(work);
+    var composerKey = programBuilderNormalizeKey(composer);
+    var operaFrenchWorks = { 'les pecheurs de perles': true, 'romeo et juliette': true, 'carmen': true, 'manon': true };
+    var operaItalianWorks = { 'l elisir d amore': true, 'l arlesiana': true, 'il barbiere di siviglia': true, 'la boheme': true, 'don carlo': true, 'lucia di lammermoor': true, 'la forza del destino': true, 'tosca': true, 'la traviata': true, 'cosi fan tutte': true, 'manon lescaut': true, 'rigoletto': true, 'madama butterfly': true, 'aida': true, 'simon boccanegra': true, 'don giovanni': true };
+    if (sectionKey === 'opera') {
+      if (operaFrenchWorks[workKey]) return 'FR';
+      if (operaItalianWorks[workKey]) return 'IT';
+      if (workKey === 'die entfuhrung aus dem serail') return 'DE';
+      if (titleKey === 'las_hijas_del_zebedeo') return 'ES';
+    }
+    if (sectionKey === 'popular') {
+      if (titleKey === 'la_paloma') return 'ES';
+      if (titleKey === 'o_sole_mio') return 'IT';
+      if (titleKey === 'stille_nacht') return 'DE';
+      return 'EN';
+    }
+    if (sectionKey === 'tango') return 'ES';
+    if (composerKey.indexOf('tosti') >= 0 || composerKey.indexOf('gastaldon') >= 0 || composerKey.indexOf('donaudy') >= 0 || composerKey.indexOf('leoncavallo') >= 0 || titleKey === 'sole_e_amore' || titleKey === 'la_danza' || titleKey === 'ombra_mai_fu' || titleKey === 'tre_sonetti_di_petrarca') return 'IT';
+    if (composerKey.indexOf('haydn') >= 0) return (/o_tuneful_voice|fidelity/.test(titleKey) ? 'EN' : 'DE');
+    if (composerKey.indexOf('mozart') >= 0 || composerKey.indexOf('beethoven') >= 0 || composerKey.indexOf('schubert') >= 0 || composerKey.indexOf('richard strauss') >= 0) return 'DE';
+    if (composerKey.indexOf('rachmaninov') >= 0) return 'RU';
+    if (composerKey.indexOf('guastavino') >= 0 || composerKey.indexOf('ginastera') >= 0 || composerKey.indexOf('obradors') >= 0 || composerKey.indexOf('luzzatti') >= 0 || composerKey.indexOf('buchardo') >= 0) return 'ES';
+    return '';
+  }
+  function inferHistoricalTags(sectionKey, type, language, title) {
+    var tags = [];
+    if (sectionKey === 'opera') tags.push('gala');
+    if (sectionKey === 'tango' || type === 'tango') tags.push('tango');
+    if (sectionKey === 'recital') tags.push('recital');
+    if (type === 'duet') tags.push('duet');
+    if (type === 'ensemble') tags.push('ensemble');
+    if (type === 'lied') tags.push('lied');
+    if (type === 'sacred') tags.push('sacred');
+    if (type === 'operetta') tags.push('operetta');
+    if (type === 'piano-solo') tags.push('interlude');
+    if (safeString(language).toUpperCase() === 'IT') tags.push('italian');
+    if ((safeString(language).toUpperCase() === 'DE' || safeString(language).toUpperCase() === 'EN' || safeString(language).toUpperCase() === 'FR' || safeString(language).toUpperCase() === 'ES' || safeString(language).toUpperCase() === 'RU') && tags.indexOf('tango') < 0 && sectionKey !== 'opera') tags.push('borders');
+    if (sectionKey === 'popular') tags.push('popular');
+    if (title === "Core 'ngrato" || title === 'Granada' || title === 'O sole mio') tags.push('encore');
+    return programBuilderUniqueStrings(tags);
+  }
+  function parseHistoricalRepertoireLine(sectionKey, rawLine, concertLookup) {
+    var overrides = programBuilderHistoricalOverrides();
+    var line = safeString(rawLine).trim();
+    if (!line) return null;
+    var parts = line.split(' — ').map(function (part) { return safeString(part).trim(); }).filter(Boolean);
+    var title = '';
+    var work = '';
+    var composer = '';
+    if (/^[“"]/.test(line)) {
+      title = safeString(parts[0]).replace(/[“”"]/g, '').trim();
+      if (parts.length >= 3) {
+        work = parts[1];
+        composer = parts[2];
+      } else if (parts.length >= 2) {
+        composer = parts[1];
+      }
+    } else {
+      composer = parts[0] || '';
+      title = parts[1] || '';
+      work = parts[2] || '';
+    }
+    var titleKey = programBuilderSlug(title);
+    var composerKey = programBuilderNormalizeKey(composer);
+    composer = safeString(overrides.composerOverrides[titleKey] || overrides.composers[composerKey] || composer).trim();
+    work = safeString(overrides.workOverrides[titleKey] || work).trim();
+    var type = sectionKey === 'opera' ? 'aria' : (sectionKey === 'tango' ? 'tango' : (sectionKey === 'popular' ? 'song' : 'lied'));
+    type = safeString(overrides.typeOverrides[titleKey] || type).trim().toLowerCase() || 'other';
+    var language = inferHistoricalLanguage(sectionKey, title, work, composer);
+    var formations = overrides.duetFormations[titleKey] || ['Tenor + Piano'];
+    var reviewNote = safeString(overrides.manualReview[titleKey]).trim();
+    return {
+      id: titleKey,
+      title: title,
+      composer: composer,
+      work: work,
+      type: type,
+      language: language,
+      durationMin: programBuilderApproxDuration(type, titleKey),
+      formations: clone(formations),
+      readiness: reviewNote ? 'working' : 'ready',
+      tags: inferHistoricalTags(sectionKey, type, language, title),
+      notes: programBuilderHistoricalSource().sourceCompilationNote + (reviewNote ? (' Manual review: ' + reviewNote) : ''),
+      publicNotes: '',
+      sortOrder: 0,
+      performanceStatus: 'performed',
+      performedIn: clone(concertLookup[programBuilderNormalizeKey(title)] || []),
+      reviewStatus: reviewNote ? 'manual_review' : 'clean',
+      excludeFromOffers: type === 'piano-solo'
+    };
+  }
+  function makeHistoricalRepertoireImport() {
+    var src = programBuilderHistoricalSource();
+    var concertLookup = makeHistoricalConcertLookup();
+    var out = [];
+    [['opera', 'opera'], ['recital', 'recital'], ['tango', 'tango'], ['popular', 'popular']].forEach(function (pair) {
+      var sectionKey = pair[0];
+      (Array.isArray(src.repertoireSections && src.repertoireSections[sectionKey]) ? src.repertoireSections[sectionKey] : []).forEach(function (line) {
+        var parsed = parseHistoricalRepertoireLine(sectionKey, line, concertLookup);
+        if (parsed) out.push(parsed);
+      });
+    });
+    (Array.isArray(src.extraPieces) ? src.extraPieces : []).forEach(function (item) {
+      var title = safeString(item.title).trim();
+      if (!title) return;
+      var titleKey = programBuilderSlug(title);
+      var reviewNote = safeString(item.reviewNote).trim();
+      out.push({
+        id: titleKey,
+        title: title,
+        composer: safeString(item.composer).trim(),
+        work: safeString(item.work).trim(),
+        type: safeString(item.type || 'other').trim().toLowerCase() || 'other',
+        language: safeString(item.language).trim(),
+        durationMin: Math.max(0, Number(item.durationMin) || programBuilderApproxDuration(item.type, titleKey)),
+        formations: programBuilderUniqueStrings(Array.isArray(item.formations) ? item.formations : [item.formations]),
+        readiness: safeString(item.readiness || (reviewNote ? 'working' : 'ready')).trim().toLowerCase() || 'ready',
+        tags: programBuilderUniqueStrings(Array.isArray(item.tags) ? item.tags : []).map(function (tag) { return safeString(tag).toLowerCase(); }),
+        notes: 'Imported from historical concert programme.' + (reviewNote ? (' Manual review: ' + reviewNote) : ''),
+        publicNotes: '',
+        sortOrder: 0,
+        performanceStatus: 'performed',
+        performedIn: clone(concertLookup[programBuilderNormalizeKey(title)] || []),
+        reviewStatus: reviewNote ? 'manual_review' : 'clean',
+        excludeFromOffers: item.excludeFromOffers === true
+      });
+    });
+    return out;
+  }
+  function makeOutsideRepertoireImport() {
+    var src = programBuilderSuggestionSource();
+    return (Array.isArray(src.items) ? src.items : []).map(function (item, idx) {
+      var seeded = clone(item);
+      if (!safeString(seeded.id).trim()) seeded.id = 'outside_' + programBuilderSlug(seeded.title || ('item_' + (idx + 1)));
+      if (!safeString(seeded.readiness).trim()) seeded.readiness = 'idea';
+      seeded.performanceStatus = '';
+      seeded.performedIn = [];
+      seeded.publicNotes = safeString(seeded.publicNotes);
+      seeded.sortOrder = Number.isFinite(Number(seeded.sortOrder)) ? Number(seeded.sortOrder) : ((idx + 1) * 10);
+      seeded.reviewStatus = safeString(seeded.reviewStatus || 'clean').trim().toLowerCase() === 'manual_review' ? 'manual_review' : 'clean';
+      return normalizePlannerItemRecord(seeded, idx);
+    });
+  }
+  function mergeHistoricalRepertoireImport(doc, importedItems) {
+    var changed = false;
+    var byKey = {};
+    (doc.items || []).forEach(function (item) {
+      byKey[[programBuilderNormalizeKey(item.title), programBuilderNormalizeKey(item.composer), programBuilderNormalizeKey(item.work)].join('|')] = item;
+    });
+    importedItems.forEach(function (item) {
+      var key = [programBuilderNormalizeKey(item.title), programBuilderNormalizeKey(item.composer), programBuilderNormalizeKey(item.work)].join('|');
+      var existing = byKey[key];
+      if (!existing) {
+        doc.items.push(clone(item));
+        byKey[key] = doc.items[doc.items.length - 1];
+        changed = true;
+        return;
+      }
+      if (!safeString(existing.id).trim()) { existing.id = item.id; changed = true; }
+      if (!safeString(existing.title).trim() && item.title) { existing.title = item.title; changed = true; }
+      if (!safeString(existing.composer).trim() && item.composer) { existing.composer = item.composer; changed = true; }
+      if (!safeString(existing.work).trim() && item.work) { existing.work = item.work; changed = true; }
+      if (!safeString(existing.type).trim() && item.type) { existing.type = item.type; changed = true; }
+      if (!safeString(existing.language).trim() && item.language) { existing.language = item.language; changed = true; }
+      if (!(Number(existing.durationMin) > 0) && Number(item.durationMin) > 0) { existing.durationMin = item.durationMin; changed = true; }
+      var mergedFormations = programBuilderUniqueStrings((existing.formations || []).concat(item.formations || []));
+      if (JSON.stringify(mergedFormations) !== JSON.stringify(existing.formations || [])) { existing.formations = mergedFormations; changed = true; }
+      var mergedTags = programBuilderUniqueStrings((existing.tags || []).concat(item.tags || []).map(function (tag) { return safeString(tag).toLowerCase(); }));
+      if (JSON.stringify(mergedTags) !== JSON.stringify(existing.tags || [])) { existing.tags = mergedTags; changed = true; }
+      var mergedPerformedIn = programBuilderUniqueStrings((existing.performedIn || []).concat(item.performedIn || []));
+      if (JSON.stringify(mergedPerformedIn) !== JSON.stringify(existing.performedIn || [])) { existing.performedIn = mergedPerformedIn; changed = true; }
+      if (safeString(item.performanceStatus) === 'performed' && safeString(existing.performanceStatus) !== 'performed') { existing.performanceStatus = 'performed'; changed = true; }
+      if (safeString(item.reviewStatus) === 'manual_review' && safeString(existing.reviewStatus) !== 'manual_review') { existing.reviewStatus = 'manual_review'; changed = true; }
+      if (safeString(item.reviewStatus) === 'manual_review' && safeString(existing.readiness) === 'ready') { existing.readiness = 'working'; changed = true; }
+      if (item.offerOnly === true && existing.offerOnly !== true) { existing.offerOnly = true; changed = true; }
+      if (item.excludeFromOffers === true && existing.excludeFromOffers !== true) { existing.excludeFromOffers = true; changed = true; }
+      if (!safeString(existing.notes).trim() && item.notes) { existing.notes = item.notes; changed = true; }
+      if (!safeString(existing.readiness).trim() && item.readiness) { existing.readiness = item.readiness; changed = true; }
+    });
+    return changed;
+  }
+  function mergeOutsideRepertoireImport(doc, importedItems) {
+    var changed = false;
+    var byKey = {};
+    (doc.items || []).forEach(function (item) {
+      byKey[[programBuilderNormalizeKey(item.title), programBuilderNormalizeKey(item.composer), programBuilderNormalizeKey(item.work)].join('|')] = item;
+    });
+    importedItems.forEach(function (item) {
+      var key = [programBuilderNormalizeKey(item.title), programBuilderNormalizeKey(item.composer), programBuilderNormalizeKey(item.work)].join('|');
+      var existing = byKey[key];
+      if (!existing) {
+        doc.items.push(clone(item));
+        byKey[key] = doc.items[doc.items.length - 1];
+        changed = true;
+        return;
+      }
+      if (!safeString(existing.category).trim() && item.category) { existing.category = item.category; changed = true; }
+      if (!safeString(existing.voiceCategory).trim() && item.voiceCategory) { existing.voiceCategory = item.voiceCategory; changed = true; }
+      if (!safeString(existing.primaryVoice).trim() && item.primaryVoice) { existing.primaryVoice = item.primaryVoice; changed = true; }
+      var mergedPaired = normalizePlannerVoiceList((existing.pairedVoices || []).concat(item.pairedVoices || []));
+      if (JSON.stringify(mergedPaired) !== JSON.stringify(existing.pairedVoices || [])) { existing.pairedVoices = mergedPaired; changed = true; }
+      if (item.includesTenor === true && existing.includesTenor !== true) { existing.includesTenor = true; changed = true; }
+      if (!(Number(existing.approximateDurationMin) > 0) && Number(item.approximateDurationMin) > 0) { existing.approximateDurationMin = item.approximateDurationMin; changed = true; }
+      if (!(Number(existing.durationMin) > 0) && Number(item.durationMin) > 0) { existing.durationMin = item.durationMin; changed = true; }
+      var mergedFormations = programBuilderUniqueStrings((existing.formations || []).concat(item.formations || []));
+      if (JSON.stringify(mergedFormations) !== JSON.stringify(existing.formations || [])) { existing.formations = mergedFormations; changed = true; }
+      var mergedFitTags = programBuilderUniqueStrings((existing.fitTags || []).concat(item.fitTags || []).concat(existing.tags || []).concat(item.tags || []).map(function (tag) { return safeString(tag).toLowerCase(); }));
+      if (JSON.stringify(mergedFitTags) !== JSON.stringify(existing.fitTags || [])) { existing.fitTags = mergedFitTags; changed = true; }
+      if (!safeString(existing.sourceGroup).trim() && item.sourceGroup) { existing.sourceGroup = item.sourceGroup; changed = true; }
+      if (!safeString(existing.suggestionGroup).trim() && item.suggestionGroup) { existing.suggestionGroup = item.suggestionGroup; changed = true; }
+      if (!safeString(existing.notes).trim() && item.notes) { existing.notes = item.notes; changed = true; }
+      if (safeString(existing.availabilityStatus).trim().toLowerCase() === 'outside_repertoire') {
+        if (!safeString(existing.readiness).trim() && item.readiness) { existing.readiness = item.readiness; changed = true; }
+      }
+    });
+    return changed;
+  }
+  function makeConcertHistorySeed() {
+    return { meta: { historicalImportVersion: 0 }, concerts: [] };
+  }
+  function makeHistoricalConcertImport() {
+    var src = programBuilderHistoricalSource();
+    return (Array.isArray(src.concerts) ? src.concerts : []).map(function (concert) {
+      return {
+        id: safeString(concert.id).trim(),
+        year: Number(concert.year) || 0,
+        title: safeString(concert.title).trim(),
+        format: safeString(concert.format).trim(),
+        collaborators: programBuilderUniqueStrings(concert.collaborators || []),
+        programmeItems: programBuilderUniqueStrings(concert.programmeItems || []),
+        notes: safeString(concert.notes),
+        sourceType: safeString(concert.sourceType || 'historical_manual_import').trim() || 'historical_manual_import'
+      };
+    });
+  }
+  function mergeHistoricalConcertImport(doc, importedConcerts) {
+    var changed = false;
+    var byId = {};
+    (doc.concerts || []).forEach(function (concert) { byId[safeString(concert.id).trim()] = concert; });
+    importedConcerts.forEach(function (concert) {
+      var existing = byId[concert.id];
+      if (!existing) {
+        doc.concerts.push(clone(concert));
+        byId[concert.id] = doc.concerts[doc.concerts.length - 1];
+        changed = true;
+        return;
+      }
+      if (!(Number(existing.year) > 0) && Number(concert.year) > 0) { existing.year = concert.year; changed = true; }
+      if (!safeString(existing.title).trim() && concert.title) { existing.title = concert.title; changed = true; }
+      if (!safeString(existing.format).trim() && concert.format) { existing.format = concert.format; changed = true; }
+      var collaborators = programBuilderUniqueStrings((existing.collaborators || []).concat(concert.collaborators || []));
+      if (JSON.stringify(collaborators) !== JSON.stringify(existing.collaborators || [])) { existing.collaborators = collaborators; changed = true; }
+      var programmeItems = programBuilderUniqueStrings((existing.programmeItems || []).concat(concert.programmeItems || []));
+      if (JSON.stringify(programmeItems) !== JSON.stringify(existing.programmeItems || [])) { existing.programmeItems = programmeItems; changed = true; }
+      if (!safeString(existing.notes).trim() && concert.notes) { existing.notes = concert.notes; changed = true; }
+      if (!safeString(existing.sourceType).trim() && concert.sourceType) { existing.sourceType = concert.sourceType; changed = true; }
+    });
+    return changed;
+  }
+  function makePlannerSeed() {
+    return {
+      meta: { historicalImportVersion: 0 },
+      items: [
+        { id: 'nemorino_una_furtiva', title: 'Una furtiva lagrima', composer: 'Gaetano Donizetti', work: "L'elisir d'amore", type: 'aria', language: 'IT', durationMin: 5, formations: ['Tenor + Piano'], readiness: 'ready', tags: ['gala', 'italian'], notes: '', publicNotes: '', sortOrder: 10, performanceStatus: '', performedIn: [], reviewStatus: 'clean', excludeFromOffers: false },
+        { id: 'rodolfo_che_gelida', title: 'Che gelida manina', composer: 'Giacomo Puccini', work: 'La Bohème', type: 'aria', language: 'IT', durationMin: 5, formations: ['Tenor + Piano'], readiness: 'ready', tags: ['gala', 'italian'], notes: '', publicNotes: '', sortOrder: 20, performanceStatus: '', performedIn: [], reviewStatus: 'clean', excludeFromOffers: false },
+        { id: 'tamino_dies_bildnis', title: 'Dies Bildnis ist bezaubernd schön', composer: 'W. A. Mozart', work: 'Die Zauberflöte', type: 'aria', language: 'DE', durationMin: 4, formations: ['Tenor + Piano'], readiness: 'working', tags: ['gala', 'borders'], notes: '', publicNotes: '', sortOrder: 30, performanceStatus: '', performedIn: [], reviewStatus: 'clean', excludeFromOffers: false },
+        { id: 'canzone_mamma', title: 'Mamma', composer: 'Cesare Andrea Bixio', work: 'Canzone', type: 'canzone', language: 'IT', durationMin: 4, formations: ['Tenor + Piano'], readiness: 'ready', tags: ['italian'], notes: '', publicNotes: '', sortOrder: 40, performanceStatus: '', performedIn: [], reviewStatus: 'clean', excludeFromOffers: false },
+        { id: 'tango_el_dia', title: 'El día que me quieras', composer: 'Carlos Gardel', work: 'Tango', type: 'tango', language: 'ES', durationMin: 4, formations: ['Tenor + Piano'], readiness: 'ready', tags: ['tango'], notes: '', publicNotes: '', sortOrder: 50, performanceStatus: '', performedIn: [], reviewStatus: 'clean', excludeFromOffers: false },
+        { id: 'song_border_sogno', title: 'Sogno', composer: 'Francesco Paolo Tosti', work: 'Romanza da salotto', type: 'song', language: 'IT', durationMin: 3, formations: ['Tenor + Piano'], readiness: 'idea', tags: ['italian', 'borders'], notes: '', publicNotes: '', sortOrder: 60, performanceStatus: '', performedIn: [], reviewStatus: 'clean', excludeFromOffers: false }
+      ]
+    };
+  }
+  function defaultBlueprintGalaOptions(targetDuration) {
+    var target = Math.max(0, Number(targetDuration) || 30);
+    return {
+      preferVocalPacing: target >= 45,
+      allowPianoInterludes: target >= 45,
+      includeContrast: target >= 60,
+      buildWithGalaArc: false
+    };
+  }
+  function safeBlueprintGalaOptions(raw, targetDuration) {
+    var seed = defaultBlueprintGalaOptions(targetDuration);
+    var src = isObject(raw) ? raw : {};
+    return {
+      preferVocalPacing: src.preferVocalPacing === true || (src.preferVocalPacing !== false && seed.preferVocalPacing),
+      allowPianoInterludes: src.allowPianoInterludes === true || (src.allowPianoInterludes !== false && seed.allowPianoInterludes),
+      includeContrast: src.includeContrast === true || (src.includeContrast !== false && seed.includeContrast),
+      buildWithGalaArc: src.buildWithGalaArc === true
+    };
+  }
+  function makeBlueprintSeed(key) {
+    var parts = safeString(key).split('_');
+    var family = safeString(parts[0] || 'gala').toLowerCase();
+    var target = Number(parts[1]) || 30;
+    var autoContext = programOfferAutoContextKey(family, target, 'en');
+    return {
+      title: defaultBlueprintTitle(family, target, 'en'),
+      family: family,
+      targetDuration: target,
+      formation: 'Tenor + Piano',
+      buildMode: 'free',
+      outputLang: 'en',
+      repertoireMode: 'suggested',
+      galaOptions: safeBlueprintGalaOptions({}, target),
+      headerImageMode: 'default',
+      headerImageUrl: '',
+      contactPhoneOverride: '',
+      versionLabel: '',
+      titleMode: 'auto',
+      titleAutoContext: autoContext,
+      description: defaultBlueprintDescription(family, 'en'),
+      descriptionMode: 'auto',
+      descriptionAutoContext: autoContext,
+      flexibleNote: defaultBlueprintFlexibleNote('en'),
+      flexibleNoteMode: 'auto',
+      flexibleNoteAutoContext: autoContext,
+      items: [],
+      encoreItems: [],
+      includeEncoresInExport: false,
+      totalDuration: 0,
+      encoreTotalDuration: 0,
+      combinedDuration: 0,
+      status: 'too short',
+      useCase: 'other',
+      offerStatus: 'draft',
+      sourceMasterId: '',
+      sourceMasterLabel: '',
+      internalNotes: '',
+      createdAt: '',
+      updatedAt: '',
+      lastSavedAt: '',
+      loadedFromSavedOfferId: '',
+      feeEstimate: safeBlueprintFeeEstimate({}, { targetDuration: target, formation: 'Tenor + Piano' })
+    };
+  }
+  function makeBlueprintDocSeed() {
+    var doc = { blueprints: {}, savedOffers: [] };
+    PROGRAM_BUILDER_BLUEPRINT_KEYS.forEach(function (key) {
+      doc.blueprints[key] = makeBlueprintSeed(key);
+    });
+    return doc;
+  }
+  function normalizeBlueprintRecord(raw, key) {
+    var seed = makeBlueprintSeed(key);
+    var bp = isObject(raw) ? raw : {};
+    var rawItems = (Array.isArray(bp.items) ? bp.items : []).filter(isObject).map(function (it, idx) {
+      return {
+        pieceId: safeString(it.pieceId).trim(),
+        customTitle: safeString(it.customTitle),
+        customDuration: Math.max(0, Number(it.customDuration) || 0),
+        notes: safeString(it.notes),
+        slotId: safeString(it.slotId).trim().toLowerCase(),
+        position: Number.isFinite(Number(it.position)) ? Number(it.position) : idx
+      };
+    });
+    var migratedEncoreItems = rawItems.filter(function (it) {
+      return /^encore/.test(safeString(it.slotId).trim().toLowerCase());
+    }).map(function (it, idx) {
+      return {
+        pieceId: safeString(it.pieceId).trim(),
+        customTitle: safeString(it.customTitle),
+        customDuration: Math.max(0, Number(it.customDuration) || 0),
+        note: safeString(it.notes),
+        position: Number.isFinite(Number(it.position)) ? Number(it.position) : idx
+      };
+    });
+    var normalizedEncoreItems = (Array.isArray(bp.encoreItems) ? bp.encoreItems : []).filter(isObject).map(function (it, idx) {
+      return {
+        pieceId: safeString(it.pieceId).trim(),
+        customTitle: safeString(it.customTitle),
+        customDuration: Math.max(0, Number(it.customDuration) || 0),
+        note: safeString(it.note || it.notes),
+        position: Number.isFinite(Number(it.position)) ? Number(it.position) : idx
+      };
+    });
+    if (!normalizedEncoreItems.length && migratedEncoreItems.length) normalizedEncoreItems = migratedEncoreItems;
+    var normalized = {
+      title: safeString(bp.title || seed.title),
+      family: safeString(bp.family || seed.family).trim().toLowerCase() || seed.family,
+      targetDuration: Math.max(0, Number(bp.targetDuration) || seed.targetDuration),
+      formation: safeString(bp.formation || seed.formation),
+      buildMode: safeString(bp.buildMode || seed.buildMode).trim().toLowerCase() === 'dramatic_arc' ? 'dramatic_arc' : 'free',
+      outputLang: (function (v) {
+        v = safeString(v || seed.outputLang || 'en').trim().toLowerCase();
+        return LANGS.indexOf(v) >= 0 ? v : 'en';
+      })(bp.outputLang),
+      repertoireMode: normalizeProgramOfferRepertoireMode(bp.repertoireMode || seed.repertoireMode),
+      galaOptions: safeBlueprintGalaOptions(bp.galaOptions || seed.galaOptions, Math.max(0, Number(bp.targetDuration) || seed.targetDuration)),
+      headerImageMode: normalizeProgramOfferHeaderImageMode(bp.headerImageMode || seed.headerImageMode),
+      headerImageUrl: safeString(bp.headerImageUrl || seed.headerImageUrl),
+      contactPhoneOverride: safeString(bp.contactPhoneOverride || seed.contactPhoneOverride || ''),
+      versionLabel: safeString(bp.versionLabel),
+      titleMode: inferProgramOfferFieldMode('title', bp, seed),
+      titleAutoContext: safeString(bp.titleAutoContext || seed.titleAutoContext || ''),
+      description: safeString(bp.description || seed.description),
+      descriptionMode: inferProgramOfferFieldMode('description', bp, seed),
+      descriptionAutoContext: safeString(bp.descriptionAutoContext || seed.descriptionAutoContext || ''),
+      flexibleNote: safeString(bp.flexibleNote || seed.flexibleNote),
+      flexibleNoteMode: inferProgramOfferFieldMode('flexibleNote', bp, seed),
+      flexibleNoteAutoContext: safeString(bp.flexibleNoteAutoContext || seed.flexibleNoteAutoContext || ''),
+      items: rawItems.filter(function (it) { return !/^encore/.test(safeString(it.slotId).trim().toLowerCase()); }),
+      encoreItems: normalizedEncoreItems.slice(0, 3),
+      includeEncoresInExport: bp.includeEncoresInExport === true,
+      totalDuration: Math.max(0, Number(bp.totalDuration) || 0),
+      encoreTotalDuration: Math.max(0, Number(bp.encoreTotalDuration) || 0),
+      combinedDuration: Math.max(0, Number(bp.combinedDuration) || 0),
+      status: safeString(bp.status || seed.status),
+      useCase: normalizeProgramOfferUseCase(bp.useCase || seed.useCase),
+      offerStatus: normalizeSavedProgramStatus(bp.offerStatus || seed.offerStatus, 'venue_offer'),
+      sourceMasterId: safeString(bp.sourceMasterId || seed.sourceMasterId || ''),
+      sourceMasterLabel: safeString(bp.sourceMasterLabel || seed.sourceMasterLabel || ''),
+      internalNotes: safeString(bp.internalNotes),
+      createdAt: safeString(bp.createdAt || ''),
+      updatedAt: safeString(bp.updatedAt || ''),
+      lastSavedAt: safeString(bp.lastSavedAt || bp.updatedAt || ''),
+      loadedFromSavedOfferId: safeString(bp.loadedFromSavedOfferId || ''),
+      feeEstimate: safeBlueprintFeeEstimate(bp.feeEstimate || seed.feeEstimate, {
+        targetDuration: Math.max(0, Number(bp.targetDuration) || seed.targetDuration),
+        totalDuration: Math.max(0, Number(bp.totalDuration) || 0),
+        formation: safeString(bp.formation || seed.formation)
+      })
+    };
+    if (normalized.family === 'gala') {
+      normalized.buildMode = normalized.galaOptions.buildWithGalaArc ? 'dramatic_arc' : 'free';
+    }
+    normalized.items.sort(function (a, b) { return a.position - b.position; });
+    normalized.items.forEach(function (it, idx) { it.position = idx; });
+    normalized.encoreItems.sort(function (a, b) { return a.position - b.position; });
+    normalized.encoreItems.forEach(function (it, idx) { it.position = idx; });
+    return normalized;
+  }
+  function safeSavedOfferRecord(raw, idx) {
+    var family = safeString(raw && raw.family || 'gala').trim().toLowerCase() || 'gala';
+    var target = Math.max(0, Number(raw && raw.targetDuration) || 30);
+    var saveType = normalizeSavedProgramType(raw && raw.saveType);
+    var normalized = normalizeBlueprintRecord(raw, family + '_' + String(target));
+    normalized.id = safeString(raw && raw.id || ('saved_offer_' + (idx + 1))).trim();
+    normalized.saveType = saveType;
+    normalized.status = normalizeSavedProgramStatus(raw && raw.status, saveType);
+    normalized.useCase = normalizeProgramOfferUseCase(raw && raw.useCase || normalized.useCase);
+    normalized.sourceMasterId = safeString(raw && raw.sourceMasterId || normalized.sourceMasterId || '');
+    normalized.sourceMasterLabel = safeString(raw && raw.sourceMasterLabel || normalized.sourceMasterLabel || '');
+    normalized.createdAt = safeString(raw && raw.createdAt || normalized.createdAt || '');
+    normalized.updatedAt = safeString(raw && raw.updatedAt || normalized.updatedAt || normalized.createdAt || '');
+    normalized.lastSavedAt = safeString(raw && raw.lastSavedAt || normalized.updatedAt || normalized.createdAt || '');
+    normalized.archivedAt = safeString(raw && raw.archivedAt || '');
+    normalized.lastOpenedAt = safeString(raw && raw.lastOpenedAt || '');
+    normalized.loadedFromSavedOfferId = '';
+    return normalized;
+  }
+  function safePlannerDoc(raw) {
+    var d = isObject(raw) ? clone(raw) : {};
+    d.meta = isObject(d.meta) ? d.meta : {};
+    d.meta.historicalImportVersion = Math.max(0, Number(d.meta.historicalImportVersion) || 0);
+    if (!Array.isArray(d.items)) d.items = [];
+    d.items = d.items.filter(isObject).map(normalizePlannerItemRecord);
+    return d;
+  }
+  function safeConcertHistoryDoc(raw) {
+    var d = isObject(raw) ? clone(raw) : {};
+    d.meta = isObject(d.meta) ? d.meta : {};
+    d.meta.historicalImportVersion = Math.max(0, Number(d.meta.historicalImportVersion) || 0);
+    if (!Array.isArray(d.concerts)) d.concerts = [];
+    d.concerts = d.concerts.filter(isObject).map(function (concert, idx) {
+      return {
+        id: safeString(concert.id || ('concert_' + (idx + 1))).trim(),
+        year: Math.max(0, Number(concert.year) || 0),
+        title: safeString(concert.title).trim(),
+        format: safeString(concert.format).trim(),
+        collaborators: (Array.isArray(concert.collaborators) ? concert.collaborators : safeString(concert.collaborators).split('\n')).map(function (x) { return safeString(x).trim(); }).filter(Boolean),
+        programmeItems: (Array.isArray(concert.programmeItems) ? concert.programmeItems : safeString(concert.programmeItems).split('\n')).map(function (x) { return safeString(x).trim(); }).filter(Boolean),
+        notes: safeString(concert.notes),
+        sourceType: safeString(concert.sourceType || 'historical_manual_import').trim() || 'historical_manual_import'
+      };
+    });
+    d.concerts.sort(function (a, b) {
+      if ((Number(b.year) || 0) !== (Number(a.year) || 0)) return (Number(b.year) || 0) - (Number(a.year) || 0);
+      return safeString(a.title).localeCompare(safeString(b.title));
+    });
+    return d;
+  }
+  function safeBlueprintsDoc(raw) {
+    var d = isObject(raw) ? clone(raw) : {};
+    if (!isObject(d.blueprints)) d.blueprints = {};
+    PROGRAM_BUILDER_BLUEPRINT_KEYS.forEach(function (key) {
+      d.blueprints[key] = normalizeBlueprintRecord(d.blueprints[key], key);
+    });
+    if (!Array.isArray(d.savedOffers)) d.savedOffers = [];
+    d.savedOffers = d.savedOffers.filter(isObject).map(safeSavedOfferRecord).sort(function (a, b) {
+      var aTime = new Date(safeString(a.updatedAt || a.createdAt || 0)).getTime() || 0;
+      var bTime = new Date(safeString(b.updatedAt || b.createdAt || 0)).getTime() || 0;
+      return bTime - aTime;
+    });
+    return d;
+  }
+  function applyHistoricalProgramBuilderImports() {
+    var changed = false;
+    if ((state.plannerDoc.meta && Number(state.plannerDoc.meta.historicalImportVersion) || 0) < PROGRAM_BUILDER_HISTORY_IMPORT_VERSION) {
+      changed = mergeHistoricalRepertoireImport(state.plannerDoc, makeHistoricalRepertoireImport()) || changed;
+      changed = mergeOutsideRepertoireImport(state.plannerDoc, makeOutsideRepertoireImport()) || changed;
+      state.plannerDoc.meta.historicalImportVersion = PROGRAM_BUILDER_HISTORY_IMPORT_VERSION;
+      changed = true;
+    }
+    if ((state.concertHistoryDoc.meta && Number(state.concertHistoryDoc.meta.historicalImportVersion) || 0) < PROGRAM_BUILDER_HISTORY_IMPORT_VERSION) {
+      changed = mergeHistoricalConcertImport(state.concertHistoryDoc, makeHistoricalConcertImport()) || changed;
+      state.concertHistoryDoc.meta.historicalImportVersion = PROGRAM_BUILDER_HISTORY_IMPORT_VERSION;
+      changed = true;
+    }
+    state.plannerDoc = safePlannerDoc(state.plannerDoc);
+    state.concertHistoryDoc = safeConcertHistoryDoc(state.concertHistoryDoc);
+    return changed;
+  }
+  function plannerBlueprintKey() {
+    return safeString(state.blueprintFamily || 'gala').toLowerCase() + '_' + safeString(state.blueprintDuration || '30');
+  }
+  function currentBlueprint() {
+    var key = plannerBlueprintKey();
+    if (!state.blueprintDoc || !isObject(state.blueprintDoc.blueprints)) state.blueprintDoc = makeBlueprintDocSeed();
+    if (!isObject(state.blueprintDoc.blueprints[key])) state.blueprintDoc.blueprints[key] = makeBlueprintSeed(key);
+    return state.blueprintDoc.blueprints[key];
+  }
+  function currentSavedOffer() {
+    return findSavedOfferById(state.savedOfferId);
+  }
+  function currentLoadedSavedOffer() {
+    var bp = currentBlueprint();
+    var loadedId = safeString(bp && bp.loadedFromSavedOfferId).trim();
+    return loadedId ? findSavedOfferById(loadedId) : null;
+  }
+  function activeSavedOfferForMainActions() {
+    return currentLoadedSavedOffer();
+  }
+  function currentSavedOfferIsMaster() {
+    var record = currentSavedOffer();
+    return !!record && normalizeSavedProgramType(record.saveType) === 'master_programme';
+  }
+  function closeProgramOfferSaveAsMenu() {
+    var menu = $('pb-save-as-menu');
+    if (menu) menu.open = false;
+  }
+  function syncProgramOfferPrimaryActions() {
+    var active = activeSavedOfferForMainActions();
+    var saving = safeString(state.programmeOfferSavePhase).trim() === 'saving';
+    if ($('pb-save-blueprints')) $('pb-save-blueprints').disabled = saving;
+    if ($('pb-save-master-primary')) $('pb-save-master-primary').disabled = saving;
+    if ($('pb-save-venue-primary')) $('pb-save-venue-primary').disabled = saving;
+    if ($('pb-duplicate-current')) $('pb-duplicate-current').disabled = saving || !active;
+    if ($('pb-archive-current')) $('pb-archive-current').disabled = saving || !active;
+  }
+  function updateSavedOfferRecordFromBlueprint(record, bp, now) {
+    if (!record || !bp) return null;
+    var updated = safeSavedOfferRecord(Object.assign({}, clone(record), clone(bp), {
+      id: record.id,
+      saveType: normalizeSavedProgramType(record.saveType),
+      status: normalizeSavedProgramType(record.saveType) === 'master_programme'
+        ? normalizeSavedProgramStatus(record.status || 'active', 'master_programme')
+        : normalizeSavedProgramStatus(bp.offerStatus || record.status, 'venue_offer'),
+      useCase: normalizeSavedProgramType(record.saveType) === 'master_programme'
+        ? 'other'
+        : normalizeProgramOfferUseCase(bp.useCase || record.useCase),
+      createdAt: safeString(record.createdAt || bp.createdAt || now),
+      updatedAt: now,
+      lastSavedAt: now,
+      archivedAt: safeString(record.archivedAt || ''),
+      lastOpenedAt: safeString(record.lastOpenedAt || ''),
+      loadedFromSavedOfferId: ''
+    }), 0);
+    bp.loadedFromSavedOfferId = updated.id;
+    bp.updatedAt = now;
+    bp.lastSavedAt = now;
+    if (!safeString(bp.createdAt).trim()) bp.createdAt = safeString(updated.createdAt);
+    return updated;
+  }
+  function runProgramOfferSaveAction(task) {
+    if (safeString(state.programmeOfferSavePhase).trim() === 'saving') return;
+    state.programmeOfferSavePhase = 'saving';
+    renderProgramOfferSaveState();
+    renderProgramBuilderStatus();
+    window.setTimeout(function () {
+      try {
+        task();
+      } finally {
+        state.programmeOfferSavePhase = '';
+        renderProgramOfferSaveState();
+        renderProgramBuilderStatus();
+      }
+    }, 0);
+  }
+  function findSavedOfferById(id) {
+    var offers = (state.blueprintDoc && Array.isArray(state.blueprintDoc.savedOffers)) ? state.blueprintDoc.savedOffers : [];
+    var needle = safeString(id).trim();
+    if (!needle) return null;
+    for (var i = 0; i < offers.length; i += 1) {
+      if (safeString(offers[i].id).trim() === needle) return offers[i];
+    }
+    return null;
+  }
+  function savedOfferDisplayLabel(offer) {
+    if (!offer) return 'Untitled saved version';
+    return safeString(offer.versionLabel).trim() || defaultSavedOfferLabel(offer, offer.saveType);
+  }
+  function renderProgramOfferSaveState() {
+    var pill = $('pb-save-state');
+    var title = $('pb-save-state-title');
+    var detail = $('pb-save-state-detail');
+    if (!pill) return;
+    var bp = currentBlueprint();
+    var loaded = currentLoadedSavedOffer();
+    var active = activeSavedOfferForMainActions();
+    var phase = safeString(state.programmeOfferSavePhase).trim();
+    var stateLabel = '';
+    var stateTitle = '';
+    var detailBits = [];
+    if (phase === 'saving') {
+      pill.className = 'pill info';
+      stateLabel = 'Saving...';
+      stateTitle = 'Saving programme changes';
+    } else if (state.dirty) {
+      pill.className = 'pill warn';
+      stateLabel = 'Unsaved changes';
+      stateTitle = loaded ? savedOfferDisplayLabel(loaded) : 'Current programme';
+    } else if (loaded || safeString(bp.lastSavedAt).trim()) {
+      pill.className = 'pill ok';
+      stateLabel = 'Saved';
+      stateTitle = loaded ? savedOfferDisplayLabel(loaded) : 'Working draft';
+    } else {
+      pill.className = 'pill info';
+      stateLabel = 'Draft only';
+      stateTitle = 'Working draft';
+    }
+    if (loaded) {
+      detailBits.push(savedProgrammeTypeLabel(loaded.saveType) + ' · ' + savedOfferDisplayLabel(loaded));
+      if (safeString(loaded.lastSavedAt || loaded.updatedAt).trim()) detailBits.push('Last saved ' + formatProgrammeOfferTimestamp(loaded.lastSavedAt || loaded.updatedAt));
+    } else if (safeString(bp.lastSavedAt).trim()) {
+      detailBits.push('Working draft · last saved ' + formatProgrammeOfferTimestamp(bp.lastSavedAt));
+      detailBits.push('Use Save as... to store it as a Master Programme or Venue Offer');
+    } else {
+      detailBits.push('This programme is still only a working draft');
+      detailBits.push('Use Save as... when you want to reuse it later');
+    }
+    if (!loaded && safeString(bp.sourceMasterLabel || bp.sourceMasterId).trim()) {
+      detailBits.push('Based on ' + safeString(bp.sourceMasterLabel || bp.sourceMasterId).trim());
+    } else if (loaded && normalizeSavedProgramType(loaded.saveType) === 'venue_offer' && safeString(loaded.sourceMasterLabel || loaded.sourceMasterId).trim()) {
+      detailBits.push('Based on ' + safeString(loaded.sourceMasterLabel || loaded.sourceMasterId).trim());
+    } else if (!loaded && active && safeString(active.id).trim() && safeString(bp.loadedFromSavedOfferId).trim() !== safeString(active.id).trim()) {
+      detailBits.push('Selected in browser · ' + savedOfferDisplayLabel(active));
+    }
+    pill.textContent = stateLabel;
+    if (title) title.textContent = stateTitle;
+    if (detail) detail.textContent = detailBits.filter(Boolean).join(' · ');
+    syncProgramOfferPrimaryActions();
+  }
+  function filteredSavedOffers() {
+    var offers = (state.blueprintDoc && Array.isArray(state.blueprintDoc.savedOffers)) ? state.blueprintDoc.savedOffers : [];
+    var search = safeString(state.savedOfferSearch).trim().toLowerCase();
+    var type = safeString(state.savedOfferTypeFilter || 'all').trim().toLowerCase() || 'all';
+    var family = safeString(state.savedOfferFamilyFilter || 'all').trim().toLowerCase() || 'all';
+    var duration = safeString(state.savedOfferDurationFilter || 'all').trim().toLowerCase() || 'all';
+    var lang = safeString(state.savedOfferLangFilter || 'all').trim().toLowerCase() || 'all';
+    var formation = safeString(state.savedOfferFormationFilter).trim().toLowerCase();
+    var status = safeString(state.savedOfferStatusFilter || 'all').trim().toLowerCase() || 'all';
+    return offers.filter(function (offer) {
+      if (type !== 'all' && normalizeSavedProgramType(offer.saveType) !== type) return false;
+      if (family !== 'all' && safeString(offer.family).trim().toLowerCase() !== family) return false;
+      if (duration !== 'all' && String(offer.targetDuration) !== duration) return false;
+      if (lang !== 'all' && safeString(offer.outputLang).trim().toLowerCase() !== lang) return false;
+      if (status !== 'all' && safeString(offer.status).trim().toLowerCase() !== status) return false;
+      if (formation && safeString(offer.formation).trim().toLowerCase().indexOf(formation) < 0) return false;
+      if (!search) return true;
+      var hay = [offer.title, offer.versionLabel, offer.family, offer.formation, offer.outputLang, offer.useCase, offer.status, offer.saveType, savedProgrammeTypeLabel(offer.saveType), offer.sourceMasterLabel, offer.internalNotes].join(' ').toLowerCase();
+      return hay.indexOf(search) >= 0;
+    });
+  }
+  function openSavedOfferBrowser() {
+    var mainHub = $('pb-secondary-hub');
+    if (mainHub) mainHub.open = true;
+    var hub = $('pb-saved-browser');
+    if (!hub) return;
+    hub.open = true;
+    if (typeof hub.scrollIntoView === 'function') hub.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function renderSavedOfferBrowser() {
+    var list = $('pb-saved-list');
+    var summary = $('pb-saved-summary');
+    var count = $('pb-saved-count');
+    if ($('pb-saved-search')) $('pb-saved-search').value = safeString(state.savedOfferSearch);
+    if ($('pb-saved-filter-type')) $('pb-saved-filter-type').value = state.savedOfferTypeFilter || 'all';
+    if ($('pb-saved-filter-family')) $('pb-saved-filter-family').value = state.savedOfferFamilyFilter || 'all';
+    if ($('pb-saved-filter-duration')) $('pb-saved-filter-duration').value = state.savedOfferDurationFilter || 'all';
+    if ($('pb-saved-filter-lang')) $('pb-saved-filter-lang').value = state.savedOfferLangFilter || 'all';
+    if ($('pb-saved-filter-formation')) $('pb-saved-filter-formation').value = safeString(state.savedOfferFormationFilter);
+    if ($('pb-saved-filter-status')) $('pb-saved-filter-status').value = state.savedOfferStatusFilter || 'all';
+    if (!list || !summary) return;
+    var offers = filteredSavedOffers();
+    if (count) count.textContent = offers.length + (offers.length === 1 ? ' saved programme' : ' saved programmes');
+    if (!offers.length) {
+      list.innerHTML = '<div class="empty-state">No saved programmes match the current filters yet.</div>';
+      summary.innerHTML = '<div class="empty-state">Save a Master Programme or a Venue Offer to build your programme library.</div>';
+      state.savedOfferId = '';
+      if ($('pb-create-venue-from-master')) $('pb-create-venue-from-master').disabled = true;
+      return;
+    }
+    if (!currentSavedOffer() || offers.every(function (offer) { return safeString(offer.id) !== safeString(state.savedOfferId); })) {
+      state.savedOfferId = safeString(offers[0].id);
+    }
+    list.innerHTML = offers.map(function (offer) {
+      var active = safeString(offer.id) === safeString(state.savedOfferId) ? 'item active' : 'item';
+      var badges = [
+        '<span class="item-badge">' + escapeHtml(savedProgrammeTypeLabel(offer.saveType)) + '</span>',
+        '<span class="item-badge">' + escapeHtml(safeString(offer.status) || 'draft') + '</span>',
+        '<span class="item-badge">' + escapeHtml(safeString(offer.outputLang).toUpperCase()) + '</span>'
+      ];
+      if (offer.useCase && offer.useCase !== 'other') badges.push('<span class="item-badge">' + escapeHtml(offer.useCase) + '</span>');
+      return '<div class="' + active + '" data-pb-saved-id="' + escapeAttr(offer.id) + '"><div class="item-main"><strong>' + escapeHtml(savedOfferDisplayLabel(offer)) + '</strong><br><span class="muted">' + escapeHtml([plannerFamilyLabelForLang(offer.family, offer.outputLang), String(offer.targetDuration) + ' min', offer.formation].filter(Boolean).join(' · ')) + '</span><div class="item-badges">' + badges.join('') + '</div></div></div>';
+    }).join('');
+    list.querySelectorAll('[data-pb-saved-id]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.savedOfferId = el.getAttribute('data-pb-saved-id');
+        renderSavedOfferBrowser();
+      });
+    });
+    var selected = currentSavedOffer();
+    if (!selected) {
+      summary.innerHTML = '<div class="empty-state">Select a saved programme to review it here.</div>';
+      if ($('pb-create-venue-from-master')) $('pb-create-venue-from-master').disabled = true;
+      return;
+    }
+    if ($('pb-create-venue-from-master')) $('pb-create-venue-from-master').disabled = normalizeSavedProgramType(selected.saveType) !== 'master_programme';
+    summary.innerHTML =
+      '<div class="pb-saved-summary__head">' +
+        '<div class="pb-saved-summary__copy">' +
+          '<h4>' + escapeHtml(savedOfferDisplayLabel(selected)) + '</h4>' +
+          '<p class="muted">' + escapeHtml(selected.title || defaultBlueprintTitle(selected.family, selected.targetDuration, selected.outputLang)) + '</p>' +
+        '</div>' +
+        '<div class="pb-saved-summary__meta"><span class="item-badge">' + escapeHtml(savedProgrammeTypeLabel(selected.saveType)) + '</span><span class="item-badge">' + escapeHtml(selected.status) + '</span></div>' +
+      '</div>' +
+      '<dl class="pb-saved-summary__grid">' +
+        '<dt>Type</dt><dd>' + escapeHtml(savedProgrammeTypeLabel(selected.saveType)) + '</dd>' +
+        '<dt>Family</dt><dd>' + escapeHtml(plannerFamilyLabelForLang(selected.family, selected.outputLang)) + '</dd>' +
+        '<dt>Duration</dt><dd>' + escapeHtml(String(selected.targetDuration) + ' min') + '</dd>' +
+        '<dt>Language</dt><dd>' + escapeHtml(String(selected.outputLang).toUpperCase()) + '</dd>' +
+        '<dt>Formation</dt><dd>' + escapeHtml(selected.formation || '—') + '</dd>' +
+        '<dt>Use case</dt><dd>' + escapeHtml(selected.useCase || 'other') + '</dd>' +
+        (normalizeSavedProgramType(selected.saveType) === 'venue_offer' && safeString(selected.sourceMasterLabel || selected.sourceMasterId).trim() ? ('<dt>Source master</dt><dd>' + escapeHtml(selected.sourceMasterLabel || selected.sourceMasterId) + '</dd>') : '') +
+        '<dt>Pieces</dt><dd>' + escapeHtml(String((selected.items || []).length)) + '</dd>' +
+        '<dt>Created</dt><dd>' + escapeHtml(formatProgrammeOfferTimestamp(selected.createdAt)) + '</dd>' +
+        '<dt>Updated</dt><dd>' + escapeHtml(formatProgrammeOfferTimestamp(selected.updatedAt || selected.lastSavedAt)) + '</dd>' +
+      '</dl>' +
+      '<p class="pb-saved-summary__hint">' + escapeHtml(normalizeSavedProgramType(selected.saveType) === 'master_programme' ? 'Load this Master Programme when you want to reuse it as a strong base or spin off a Venue Offer.' : 'Load this Venue Offer when you want to continue adapting it, export a Programme Sheet, or prepare a new sendable variant.') + '</p>';
+  }
+  function saveCurrentProgramOffer() {
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var bp = currentBlueprint();
+    recomputeBlueprint(bp);
+    var now = new Date().toISOString();
+    if (!safeString(bp.createdAt).trim()) bp.createdAt = now;
+    bp.updatedAt = now;
+    bp.lastSavedAt = now;
+    var loaded = currentLoadedSavedOffer();
+    if (loaded) {
+      var updated = updateSavedOfferRecordFromBlueprint(loaded, bp, now);
+      if (updated) {
+        var offers = state.blueprintDoc.savedOffers || [];
+        for (var i = 0; i < offers.length; i += 1) {
+          if (safeString(offers[i].id).trim() === safeString(updated.id).trim()) {
+            offers[i] = updated;
+            break;
+          }
+        }
+        state.savedOfferId = updated.id;
+      }
+    }
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    saveDoc('rg_program_blueprints', state.blueprintDoc);
+    markDirty(false, loaded ? (savedProgrammeTypeLabel(loaded.saveType) + ' saved') : 'Working offer saved');
+    renderBlueprintBuilder();
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+    setStatus(loaded ? (savedProgrammeTypeLabel(loaded.saveType) + ' updated.') : 'Working offer saved. Use Save as... if you want a reusable Master Programme or Venue Offer.', 'ok');
+  }
+  function saveProgramOfferSnapshot(saveType) {
+    saveType = normalizeSavedProgramType(saveType);
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var bp = currentBlueprint();
+    recomputeBlueprint(bp);
+    var now = new Date().toISOString();
+    if (!safeString(bp.createdAt).trim()) bp.createdAt = now;
+    bp.updatedAt = now;
+    bp.lastSavedAt = now;
+    var record = safeSavedOfferRecord(Object.assign({}, clone(bp), {
+      id: makeProgrammeOfferSavedId(saveType),
+      saveType: saveType,
+      status: saveType === 'master_programme' ? 'active' : normalizeSavedProgramStatus(bp.offerStatus, saveType),
+      useCase: saveType === 'master_programme' ? 'other' : normalizeProgramOfferUseCase(bp.useCase),
+      versionLabel: safeString(bp.versionLabel).trim() || defaultSavedOfferLabel(bp, saveType),
+      sourceMasterId: saveType === 'venue_offer' ? safeString(bp.sourceMasterId || '').trim() : '',
+      sourceMasterLabel: saveType === 'venue_offer' ? safeString(bp.sourceMasterLabel || '').trim() : '',
+      createdAt: now,
+      updatedAt: now,
+      lastSavedAt: now,
+      archivedAt: '',
+      lastOpenedAt: ''
+    }), (state.blueprintDoc.savedOffers || []).length);
+    state.blueprintDoc.savedOffers.unshift(record);
+    state.savedOfferId = record.id;
+    bp.loadedFromSavedOfferId = record.id;
+    bp.updatedAt = now;
+    bp.lastSavedAt = now;
+    if (saveType === 'master_programme') {
+      bp.sourceMasterId = '';
+      bp.sourceMasterLabel = '';
+    }
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    saveDoc('rg_program_blueprints', state.blueprintDoc);
+    markDirty(false, saveType === 'master_programme' ? 'Master Programme saved' : 'Venue Offer saved');
+    closeProgramOfferSaveAsMenu();
+    renderBlueprintBuilder();
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+  }
+  function loadSavedOfferIntoEditor() {
+    var record = currentSavedOffer();
+    if (!record) {
+      setStatus('Select a saved programme first.', 'warn');
+      return;
+    }
+    if (state.dirty && !hasUnsavedChangesPrompt('Load this saved version into the editor?')) return;
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var key = safeString(record.family).trim().toLowerCase() + '_' + String(record.targetDuration);
+    var loaded = normalizeBlueprintRecord(record, key);
+    loaded.loadedFromSavedOfferId = safeString(record.id);
+    loaded.sourceMasterId = normalizeSavedProgramType(record.saveType) === 'venue_offer' ? safeString(record.sourceMasterId || '') : '';
+    loaded.sourceMasterLabel = normalizeSavedProgramType(record.saveType) === 'venue_offer' ? safeString(record.sourceMasterLabel || '') : '';
+    loaded.createdAt = safeString(record.createdAt || loaded.createdAt);
+    loaded.updatedAt = safeString(record.updatedAt || loaded.updatedAt);
+    loaded.lastSavedAt = safeString(record.lastSavedAt || record.updatedAt || loaded.lastSavedAt);
+    state.blueprintDoc.blueprints[key] = loaded;
+    state.blueprintFamily = loaded.family;
+    state.blueprintDuration = String(loaded.targetDuration);
+    state.blueprintOutputLang = loaded.outputLang || 'en';
+    record.lastOpenedAt = new Date().toISOString();
+    markDirty(false, 'Saved programme loaded');
+    renderBlueprintBuilder();
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+    setStatus('Saved programme loaded.', 'ok');
+  }
+  function createVenueOfferFromMaster() {
+    var record = currentSavedOffer();
+    if (!record) {
+      setStatus('Select a Master Programme first.', 'warn');
+      return;
+    }
+    if (normalizeSavedProgramType(record.saveType) !== 'master_programme') {
+      setStatus('Select a Master Programme first.', 'warn');
+      return;
+    }
+    if (state.dirty && !hasUnsavedChangesPrompt('Create a Venue Offer from this Master Programme?')) return;
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var key = safeString(record.family).trim().toLowerCase() + '_' + String(record.targetDuration);
+    var loaded = normalizeBlueprintRecord(record, key);
+    loaded.loadedFromSavedOfferId = safeString(record.id);
+    loaded.sourceMasterId = safeString(record.id);
+    loaded.sourceMasterLabel = savedOfferDisplayLabel(record);
+    loaded.useCase = 'other';
+    loaded.offerStatus = 'draft';
+    state.blueprintDoc.blueprints[key] = loaded;
+    state.blueprintFamily = loaded.family;
+    state.blueprintDuration = String(loaded.targetDuration);
+    state.blueprintOutputLang = loaded.outputLang || 'en';
+    state.savedOfferId = safeString(record.id);
+    markDirty(true, 'Venue Offer created from Master Programme');
+    renderBlueprintBuilder();
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+    setStatus('Master Programme loaded as a new working Venue Offer. Adapt it and save when ready.', 'ok');
+  }
+  function duplicateSavedOffer() {
+    var record = currentSavedOffer();
+    if (!record) {
+      setStatus('Select a saved programme first.', 'warn');
+      return;
+    }
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var now = new Date().toISOString();
+    var copy = safeSavedOfferRecord(Object.assign({}, clone(record), {
+      id: makeProgrammeOfferSavedId(record.saveType),
+      versionLabel: savedOfferDisplayLabel(record) + ' copy',
+      createdAt: now,
+      updatedAt: now,
+      lastSavedAt: now,
+      archivedAt: '',
+      lastOpenedAt: ''
+    }), (state.blueprintDoc.savedOffers || []).length);
+    state.blueprintDoc.savedOffers.unshift(copy);
+    state.savedOfferId = copy.id;
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    saveDoc('rg_program_blueprints', state.blueprintDoc);
+    markDirty(false, savedProgrammeTypeLabel(record.saveType) + ' duplicated');
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+  }
+  function duplicateActiveProgramOffer() {
+    var record = activeSavedOfferForMainActions();
+    if (!record) {
+      setStatus('Save this programme as a Master Programme or Venue Offer first.', 'warn');
+      return;
+    }
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var bp = currentBlueprint();
+    recomputeBlueprint(bp);
+    var now = new Date().toISOString();
+    var saveType = normalizeSavedProgramType(record.saveType);
+    var copy = safeSavedOfferRecord(Object.assign({}, clone(record), clone(bp), {
+      id: makeProgrammeOfferSavedId(saveType),
+      saveType: saveType,
+      versionLabel: savedOfferDisplayLabel(record) + ' copy',
+      status: saveType === 'master_programme'
+        ? normalizeSavedProgramStatus(record.status || 'active', 'master_programme')
+        : normalizeSavedProgramStatus(bp.offerStatus || record.status, 'venue_offer'),
+      useCase: saveType === 'master_programme'
+        ? 'other'
+        : normalizeProgramOfferUseCase(bp.useCase || record.useCase),
+      createdAt: now,
+      updatedAt: now,
+      lastSavedAt: now,
+      archivedAt: '',
+      lastOpenedAt: ''
+    }), (state.blueprintDoc.savedOffers || []).length);
+    state.blueprintDoc.savedOffers.unshift(copy);
+    bp.loadedFromSavedOfferId = copy.id;
+    bp.updatedAt = now;
+    bp.lastSavedAt = now;
+    state.savedOfferId = copy.id;
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    saveDoc('rg_program_blueprints', state.blueprintDoc);
+    markDirty(false, savedProgrammeTypeLabel(saveType) + ' duplicated');
+    renderBlueprintBuilder();
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+  }
+  function archiveSavedOffer() {
+    var record = currentSavedOffer();
+    if (!record) {
+      setStatus('Select a saved programme first.', 'warn');
+      return;
+    }
+    if (!window.confirm('Archive this saved programme?\n\n' + savedOfferDisplayLabel(record))) return;
+    record.status = 'archived';
+    record.archivedAt = new Date().toISOString();
+    record.updatedAt = record.archivedAt;
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    saveDoc('rg_program_blueprints', state.blueprintDoc);
+    markDirty(false, 'Saved version archived');
+    renderSavedOfferBrowser();
+    renderProgramBuilderStatus();
+  }
+  function archiveActiveProgramOffer() {
+    var record = activeSavedOfferForMainActions();
+    if (!record) {
+      setStatus('Save this programme as a Master Programme or Venue Offer first.', 'warn');
+      return;
+    }
+    if (state.dirty && !hasUnsavedChangesPrompt('Archive the saved programme linked to this working offer?')) return;
+    state.savedOfferId = safeString(record.id);
+    archiveSavedOffer();
+  }
+  function dramaticArcSlotsForDuration(targetDuration) {
+    return clone(PROGRAM_BUILDER_ARC_TEMPLATES[Math.max(0, Number(targetDuration) || 30)] || PROGRAM_BUILDER_ARC_TEMPLATES[30]);
+  }
+  function dramaticArcSlotLabel(slotId, targetDuration) {
+    var slots = dramaticArcSlotsForDuration(targetDuration);
+    for (var i = 0; i < slots.length; i += 1) {
+      if (slots[i].id === slotId) return slots[i].label;
+    }
+    return '';
+  }
+  function sortBlueprintItemsForMode(bp) {
+    var slots = dramaticArcSlotsForDuration(bp.targetDuration);
+    var slotOrder = {};
+    slots.forEach(function (slot, idx) { slotOrder[slot.id] = idx; });
+    if (bp.buildMode === 'dramatic_arc') {
+      (bp.items || []).forEach(function (it) {
+        var key = safeString(it.slotId).trim();
+        if (key && !hasOwn(slotOrder, key)) it.slotId = '';
+      });
+    }
+    (bp.items || []).sort(function (a, b) {
+      if (bp.buildMode === 'dramatic_arc') {
+        var aSlotted = !!safeString(a.slotId).trim();
+        var bSlotted = !!safeString(b.slotId).trim();
+        if (aSlotted && bSlotted) {
+          return (Number(slotOrder[safeString(a.slotId).trim()]) || 999) - (Number(slotOrder[safeString(b.slotId).trim()]) || 999);
+        }
+        if (aSlotted !== bSlotted) return aSlotted ? -1 : 1;
+      }
+      return (Number(a.position) || 0) - (Number(b.position) || 0);
+    });
+    (bp.items || []).forEach(function (it, idx) { it.position = idx; });
+  }
+  function blueprintPieceBySlot(bp, slotId) {
+    slotId = safeString(slotId).trim().toLowerCase();
+    return (bp.items || []).find(function (it) { return safeString(it.slotId).trim().toLowerCase() === slotId; }) || null;
+  }
+  function blueprintArcCandidatePool(bp, slotId) {
+    var pool = plannerOfferFilteredItems(slotId).slice();
+    var seen = {};
+    var add = function (piece) {
+      var id = safeString(piece && piece.id).trim();
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      pool.push(piece);
+    };
+    pool.forEach(function (piece) { seen[safeString(piece.id).trim()] = true; });
+    (bp.items || []).forEach(function (it) { add(getPlannerItemById(it.pieceId)); });
+    return pool.filter(Boolean).sort(function (a, b) {
+      var scoreA = plannerArcSlotScore(a, slotId, bp);
+      var scoreB = plannerArcSlotScore(b, slotId, bp);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      var famA = plannerOfferFamilyFitTier(a, bp, bp.family);
+      var famB = plannerOfferFamilyFitTier(b, bp, bp.family);
+      if (famA !== famB) return famB - famA;
+      return safeString(a.title).localeCompare(safeString(b.title));
+    });
+  }
+  function assignBlueprintArcSlot(slotId, pieceId) {
+    var bp = currentBlueprint();
+    if (bp.buildMode !== 'dramatic_arc') return;
+    slotId = safeString(slotId).trim().toLowerCase();
+    pieceId = safeString(pieceId).trim();
+    var existingSlotIndex = (bp.items || []).findIndex(function (it) { return safeString(it.slotId).trim().toLowerCase() === slotId; });
+    if (!pieceId) {
+      if (existingSlotIndex >= 0) bp.items.splice(existingSlotIndex, 1);
+      sortBlueprintItemsForMode(bp);
+      recomputeBlueprint(bp);
+      renderBlueprintBuilder();
+      markDirty(true, 'Programme arc updated');
+      return;
+    }
+    var existingPieceIndex = (bp.items || []).findIndex(function (it) { return safeString(it.pieceId).trim() === pieceId; });
+    if (existingSlotIndex >= 0 && existingSlotIndex !== existingPieceIndex) bp.items.splice(existingSlotIndex, 1);
+    if (existingPieceIndex >= 0) {
+      if (existingSlotIndex >= 0 && existingSlotIndex < existingPieceIndex) existingPieceIndex -= 1;
+      bp.items[existingPieceIndex].slotId = slotId;
+    } else {
+      bp.items.push({ pieceId: pieceId, customTitle: '', customDuration: 0, notes: '', slotId: slotId, position: bp.items.length });
+    }
+    sortBlueprintItemsForMode(bp);
+    recomputeBlueprint(bp);
+    state.blueprintPieceIndex = (bp.items || []).findIndex(function (it) { return safeString(it.slotId).trim().toLowerCase() === slotId; });
+    renderBlueprintBuilder();
+    markDirty(true, 'Programme arc updated');
+  }
+  function getPlannerItemById(id) {
+    var needle = safeString(id).trim();
+    var items = (state.plannerDoc && Array.isArray(state.plannerDoc.items)) ? state.plannerDoc.items : [];
+    for (var i = 0; i < items.length; i += 1) {
+      if (safeString(items[i].id).trim() === needle) return items[i];
+    }
+    return null;
+  }
+  function ensureProgramBuilderDocs() {
+    var plannerRaw = state.api.load('rg_repertoire_planner');
+    if (!isObject(plannerRaw) || !Array.isArray(plannerRaw.items)) {
+      var plannerSeed = makePlannerSeed();
+      validateKeyValue('rg_repertoire_planner', plannerSeed);
+      state.api.save('rg_repertoire_planner', clone(plannerSeed));
+    }
+    var blueprintRaw = state.api.load('rg_program_blueprints');
+    if (!isObject(blueprintRaw) || !isObject(blueprintRaw.blueprints)) {
+      var blueprintSeed = makeBlueprintDocSeed();
+      validateKeyValue('rg_program_blueprints', blueprintSeed);
+      state.api.save('rg_program_blueprints', clone(blueprintSeed));
+    }
+    var historyRaw = state.api.load('rg_concert_history');
+    if (!isObject(historyRaw) || !Array.isArray(historyRaw.concerts)) {
+      var historySeed = makeConcertHistorySeed();
+      validateKeyValue('rg_concert_history', historySeed);
+      state.api.save('rg_concert_history', clone(historySeed));
+    }
+  }
+  function programsDurationTolerance(target) {
+    var duration = Math.max(0, Number(target) || 0);
+    var acceptable = duration <= 30 ? 3 : duration <= 45 ? 3 : duration <= 60 ? 4 : Math.max(4, Math.round(duration * 0.07));
+    return { lower: Math.max(0, duration - acceptable), upper: duration + acceptable, slightOver: acceptable };
+  }
+  function programsDurationState(total, target) {
+    var duration = Math.max(0, Number(target) || 0);
+    var value = Math.max(0, Number(total) || 0);
+    var bands = programsDurationTolerance(duration);
+    if (value < bands.lower) return { key: 'too short', className: 'warn', delta: value - duration, bands: bands };
+    if (value <= bands.upper) return { key: 'within range', className: 'ok', delta: value - duration, bands: bands };
+    if (value <= bands.upper + bands.slightOver) return { key: 'slightly over', className: 'warn', delta: value - duration, bands: bands };
+    return { key: 'too long', className: 'err', delta: value - duration, bands: bands };
+  }
+  function programsDurationProgressText(total, target, lang) {
+    var copy = plannerOutputCopy(lang);
+    var value = Math.max(0, Number(total) || 0);
+    var duration = Math.max(0, Number(target) || 0);
+    var delta = Math.abs(value - duration);
+    if (delta === 0) return copy.durationProgressExact || copy.statusOk || 'On target';
+    if (safeString(lang || 'en').trim().toLowerCase() === 'de') return value < duration ? ('Etwa ' + String(delta) + ' Min. zu kurz') : ('Etwa ' + String(delta) + ' Min. darüber');
+    if (safeString(lang || 'en').trim().toLowerCase() === 'es') return value < duration ? ('Unos ' + String(delta) + ' min por debajo') : ('Unos ' + String(delta) + ' min por encima');
+    if (safeString(lang || 'en').trim().toLowerCase() === 'it') return value < duration ? ('Circa ' + String(delta) + ' min in meno') : ('Circa ' + String(delta) + ' min in più');
+    if (safeString(lang || 'en').trim().toLowerCase() === 'fr') return value < duration ? ('Environ ' + String(delta) + ' min de moins') : ('Environ ' + String(delta) + ' min de plus');
+    return value < duration ? ('About ' + String(delta) + ' min short') : ('About ' + String(delta) + ' min over');
+  }
+  function recomputeBlueprint(bp) {
+    sortBlueprintItemsForMode(bp);
+    var total = 0;
+    (bp.items || []).forEach(function (it, idx) {
+      it.position = idx;
+      var piece = getPlannerItemById(it.pieceId);
+      total += Math.max(0, Number(it.customDuration) || (piece ? plannerEffectiveDuration(piece) || 0 : 0));
+    });
+    var encoreTotal = 0;
+    (bp.encoreItems || []).forEach(function (it, idx) {
+      it.position = idx;
+      var piece = getPlannerItemById(it.pieceId);
+      encoreTotal += Math.max(0, Number(it.customDuration) || (piece ? plannerEffectiveDuration(piece) || 0 : 0));
+    });
+    bp.totalDuration = total;
+    bp.encoreTotalDuration = encoreTotal;
+    bp.combinedDuration = total + encoreTotal;
+    bp.status = programsDurationState(total, bp.targetDuration).key;
+    return bp;
+  }
+  function saveProgramBuilderDocs(withStatus) {
+    state.plannerDoc = safePlannerDoc(state.plannerDoc);
+    state.concertHistoryDoc = safeConcertHistoryDoc(state.concertHistoryDoc);
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    PROGRAM_BUILDER_BLUEPRINT_KEYS.forEach(function (key) { recomputeBlueprint(state.blueprintDoc.blueprints[key]); });
+    saveDoc('rg_repertoire_planner', state.plannerDoc);
+    saveDoc('rg_concert_history', state.concertHistoryDoc);
+    saveDoc('rg_program_blueprints', state.blueprintDoc);
+    if (withStatus !== false) renderProgramBuilderStatus();
+  }
+  function loadProgramBuilder() {
+    ensureProgramBuilderDocs();
+    state.plannerDoc = safePlannerDoc(loadDoc('rg_repertoire_planner', makePlannerSeed()));
+    state.concertHistoryDoc = safeConcertHistoryDoc(loadDoc('rg_concert_history', makeConcertHistorySeed()));
+    state.blueprintDoc = safeBlueprintsDoc(loadDoc('rg_program_blueprints', makeBlueprintDocSeed()));
+    if (applyHistoricalProgramBuilderImports()) {
+      saveDoc('rg_repertoire_planner', state.plannerDoc);
+      saveDoc('rg_concert_history', state.concertHistoryDoc);
+    }
+    state.blueprintOutputLang = safeString((currentBlueprint() && currentBlueprint().outputLang) || state.lang || 'en').trim().toLowerCase() || 'en';
+    state.plannerIndex = -1;
+    state.concertHistoryIndex = -1;
+    if ($('pb-rep-search')) $('pb-rep-search').value = state.plannerSearch;
+    if ($('pb-rep-filter-type')) $('pb-rep-filter-type').value = state.plannerTypeFilter;
+    if ($('pb-rep-filter-lang')) $('pb-rep-filter-lang').value = state.plannerLangFilter;
+    if ($('pb-rep-filter-readiness')) $('pb-rep-filter-readiness').value = state.plannerReadinessFilter;
+    if ($('pb-rep-filter-tag')) $('pb-rep-filter-tag').value = state.plannerTagFilter;
+    if ($('pb-rep-sort')) $('pb-rep-sort').value = state.plannerSort;
+    if ($('pb-offer-filter-status')) $('pb-offer-filter-status').value = state.plannerOfferStatusFilter;
+    if ($('pb-offer-filter-category')) $('pb-offer-filter-category').value = state.plannerOfferCategoryFilter;
+    if ($('pb-offer-filter-tag')) $('pb-offer-filter-tag').value = state.plannerOfferTagFilter;
+    if ($('pb-offer-filter-lang')) $('pb-offer-filter-lang').value = state.plannerOfferLangFilter;
+    if ($('pb-offer-filter-matchingOnly')) $('pb-offer-filter-matchingOnly').checked = state.plannerOfferMatchingOnly !== false;
+    if ($('pb-offer-filter-showAll')) $('pb-offer-filter-showAll').checked = state.plannerOfferMatchingOnly === false;
+    if ($('pb-offer-filter-formation')) $('pb-offer-filter-formation').checked = !!state.plannerOfferFormationOnly;
+    if ($('pb-offer-filter-showWithoutTenor')) $('pb-offer-filter-showWithoutTenor').checked = !!state.plannerOfferShowWithoutTenor;
+    if ($('pb-saved-search')) $('pb-saved-search').value = state.savedOfferSearch;
+    if ($('pb-saved-filter-type')) $('pb-saved-filter-type').value = state.savedOfferTypeFilter;
+    if ($('pb-saved-filter-family')) $('pb-saved-filter-family').value = state.savedOfferFamilyFilter;
+    if ($('pb-saved-filter-duration')) $('pb-saved-filter-duration').value = state.savedOfferDurationFilter;
+    if ($('pb-saved-filter-lang')) $('pb-saved-filter-lang').value = state.savedOfferLangFilter;
+    if ($('pb-saved-filter-formation')) $('pb-saved-filter-formation').value = state.savedOfferFormationFilter;
+    if ($('pb-saved-filter-status')) $('pb-saved-filter-status').value = state.savedOfferStatusFilter;
+    if ($('pb-history-search')) $('pb-history-search').value = state.concertHistorySearch;
+    resetQuickAddManualForm();
+    renderPlannerRepList();
+    renderBlueprintBuilder();
+    renderSavedOfferBrowser();
+    renderConcertHistoryList();
+    renderOutsideRepertoireSuggestions();
+    renderProgramBuilderStatus();
+  }
+  function renderProgramBuilderStatus() {
+    var pill = $('pb-status');
+    if (!pill) return;
+    var bp = currentBlueprint();
+    var total = Number(bp.totalDuration) || 0;
+    var encoreTotal = Number(bp.encoreTotalDuration) || 0;
+    var status = programsDurationState(total, Number(bp.targetDuration) || 0);
+    pill.className = 'pill ' + status.className;
+    var slotLabel = plannerFamilyLabelForLang(bp.family, safeString(bp.outputLang || state.lang || 'en').trim().toLowerCase()) + ' / ' + String(bp.targetDuration) + ' min';
+    var bits = [
+      'Current offer: ' + slotLabel,
+      bp.buildMode === 'dramatic_arc' ? (safeString(bp.family).trim().toLowerCase() === 'gala' ? 'gala arc' : 'dramatic arc') : 'free build',
+      total + ' min main',
+      encoreTotal ? (encoreTotal + ' min encore') : '',
+      plannerStatusLabel(status.key, safeString(bp.outputLang || state.lang || 'en').trim().toLowerCase())
+    ];
+    if (safeString(bp.sourceMasterLabel || bp.sourceMasterId).trim()) bits.push('based on master');
+    pill.textContent = bits.join(' · ');
+    renderProgramOfferSaveState();
+  }
+  function plannerListedIndices() {
+    var search = safeString(state.plannerSearch).trim().toLowerCase();
+    var lang = safeString(state.plannerLangFilter).trim().toLowerCase();
+    var tag = safeString(state.plannerTagFilter).trim().toLowerCase();
+    var items = (state.plannerDoc && Array.isArray(state.plannerDoc.items)) ? state.plannerDoc.items : [];
+    var out = items.map(function (_, i) { return i; }).filter(function (i) {
+      var item = items[i];
+      if (state.plannerTypeFilter !== 'all' && safeString(item.type) !== state.plannerTypeFilter) return false;
+      if (state.plannerReadinessFilter !== 'all' && safeString(item.readiness) !== state.plannerReadinessFilter) return false;
+      if (lang && safeString(item.language).trim().toLowerCase().indexOf(lang) < 0) return false;
+      if (tag && ((item.fitTags || []).concat(item.tags || []).join(' ').toLowerCase()).indexOf(tag) < 0) return false;
+      if (!search) return true;
+      var hay = [item.id, item.title, item.composer, item.work, item.notes, item.publicNotes, (item.fitTags || []).join(' '), (item.performedIn || []).join(' ')].join(' ').toLowerCase();
+      return hay.indexOf(search) >= 0;
+    });
+    var sortKey = state.plannerSort || 'sortOrder';
+    out.sort(function (a, b) {
+      var A = items[a], B = items[b];
+      if (sortKey === 'title') return safeString(A.title).localeCompare(safeString(B.title));
+      if (sortKey === 'composer') return safeString(A.composer).localeCompare(safeString(B.composer));
+      if (sortKey === 'durationMin') return (Number(A.durationMin) || 0) - (Number(B.durationMin) || 0);
+      if (sortKey === 'readiness') return safeString(A.readiness).localeCompare(safeString(B.readiness));
+      return (Number(A.sortOrder) || 0) - (Number(B.sortOrder) || 0);
+    });
+    return out;
+  }
+  function renderPlannerRepList() {
+    var box = $('pb-rep-list');
+    var count = $('pb-rep-count');
+    if (!box) return;
+    var items = state.plannerDoc.items || [];
+    var listed = plannerListedIndices();
+    if (count) count.textContent = listed.length + ' items';
+    if (!listed.length) {
+      box.innerHTML = '<div class="empty-state">No repertoire items match the current filters. Relax the search or filters to review more of the archive.</div>';
+      state.plannerIndex = -1;
+      renderPlannerRepEditor();
+      renderBlueprintBuilder();
+      return;
+    }
+    box.innerHTML = listed.map(function (idx) {
+      var item = items[idx];
+      var active = idx === state.plannerIndex ? 'item active' : 'item';
+      var extraBadges = [];
+      if (safeString(item.performanceStatus) === 'performed') extraBadges.push('<span class="item-badge ok">performed</span>');
+      if (safeString(item.reviewStatus) === 'manual_review') extraBadges.push('<span class="item-badge warn">review</span>');
+      if (item.offerOnly === true) extraBadges.push('<span class="item-badge">offer only</span>');
+      if (item.excludeFromOffers === true) extraBadges.push('<span class="item-badge">hidden from offers</span>');
+      return '<div class="' + active + '" data-pb-rep-idx="' + idx + '"><div class="item-main"><strong>' + escapeHtml(item.title || '(untitled)') + '</strong><br><span class="muted">' + escapeHtml([item.composer, item.work].filter(Boolean).join(' · ')) + '</span><div class="item-badges"><span class="item-badge">' + escapeHtml(plannerItemVoiceLabel(item)) + '</span><span class="item-badge">' + escapeHtml(item.availabilityStatus || item.readiness) + '</span><span class="item-badge">' + escapeHtml(String(plannerEffectiveDuration(item) || 0) + ' min') + '</span>' + (item.dramaticRole ? ('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || item.dramaticRole) + '</span>') : '') + (item.energyLevel ? ('<span class="item-badge">' + escapeHtml(item.energyLevel) + '</span>') : '') + (item.sourceGroup ? ('<span class="item-badge">' + escapeHtml(item.sourceGroup) + '</span>') : '') + extraBadges.join('') + '</div></div></div>';
+    }).join('');
+    box.querySelectorAll('[data-pb-rep-idx]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.plannerIndex = Number(el.getAttribute('data-pb-rep-idx'));
+        renderPlannerRepList();
+        renderPlannerRepEditor();
+      });
+    });
+    if (state.plannerIndex < 0 || listed.indexOf(state.plannerIndex) < 0) {
+      state.plannerIndex = listed[0];
+      renderPlannerRepList();
+      renderPlannerRepEditor();
+      return;
+    }
+    renderPlannerRepEditor();
+  }
+  function renderPlannerRepEditor() {
+    var item = state.plannerDoc.items[state.plannerIndex] || {};
+    if ($('pb-rep-id')) $('pb-rep-id').value = safeString(item.id);
+    if ($('pb-rep-title')) $('pb-rep-title').value = safeString(item.title);
+    if ($('pb-rep-composer')) $('pb-rep-composer').value = safeString(item.composer);
+    if ($('pb-rep-work')) $('pb-rep-work').value = safeString(item.work);
+    if ($('pb-rep-type')) setSelectWithCustomValue('pb-rep-type', safeString(item.type || 'other'), 'other');
+    if ($('pb-rep-language')) $('pb-rep-language').value = safeString(item.language);
+    if ($('pb-rep-durationMin')) $('pb-rep-durationMin').value = item.durationMin || '';
+    if ($('pb-rep-approximateDurationMin')) $('pb-rep-approximateDurationMin').value = item.approximateDurationMin || '';
+    if ($('pb-rep-readiness')) setSelectWithCustomValue('pb-rep-readiness', safeString(item.readiness || 'idea'), 'idea');
+    if ($('pb-rep-availabilityStatus')) setSelectWithCustomValue('pb-rep-availabilityStatus', safeString(item.availabilityStatus || item.readiness || 'idea'), 'idea');
+    if ($('pb-rep-performanceStatus')) $('pb-rep-performanceStatus').value = safeString(item.performanceStatus);
+    if ($('pb-rep-reviewStatus')) $('pb-rep-reviewStatus').value = safeString(item.reviewStatus || 'clean');
+    if ($('pb-rep-category')) setSelectWithCustomValue('pb-rep-category', safeString(item.category), '');
+    if ($('pb-rep-voiceCategory')) setSelectWithCustomValue('pb-rep-voiceCategory', safeString(item.voiceCategory), '');
+    if ($('pb-rep-primaryVoice')) $('pb-rep-primaryVoice').value = safeString(item.primaryVoice);
+    if ($('pb-rep-pairedVoices')) $('pb-rep-pairedVoices').value = Array.isArray(item.pairedVoices) ? item.pairedVoices.join(', ') : '';
+    if ($('pb-rep-includesTenor')) $('pb-rep-includesTenor').checked = item.includesTenor === true;
+    if ($('pb-rep-formations')) $('pb-rep-formations').value = Array.isArray(item.formations) ? item.formations.join('\n') : '';
+    if ($('pb-rep-tags')) $('pb-rep-tags').value = Array.isArray(item.tags) ? item.tags.join(', ') : '';
+    if ($('pb-rep-fitTags')) $('pb-rep-fitTags').value = Array.isArray(item.fitTags) ? item.fitTags.join(', ') : '';
+    if ($('pb-rep-performedIn')) $('pb-rep-performedIn').value = Array.isArray(item.performedIn) ? item.performedIn.join('\n') : '';
+    if ($('pb-rep-offerOnly')) $('pb-rep-offerOnly').checked = item.offerOnly === true;
+    if ($('pb-rep-excludeFromOffers')) $('pb-rep-excludeFromOffers').checked = item.excludeFromOffers === true;
+    if ($('pb-rep-sourceGroup')) $('pb-rep-sourceGroup').value = safeString(item.sourceGroup);
+    if ($('pb-rep-suggestionGroup')) $('pb-rep-suggestionGroup').value = safeString(item.suggestionGroup);
+    if ($('pb-rep-dramaticRole')) setSelectWithCustomValue('pb-rep-dramaticRole', safeString(item.dramaticRole), '');
+    if ($('pb-rep-energyLevel')) setSelectWithCustomValue('pb-rep-energyLevel', safeString(item.energyLevel), '');
+    if ($('pb-rep-tempoProfile')) setSelectWithCustomValue('pb-rep-tempoProfile', safeString(item.tempoProfile), '');
+    if ($('pb-rep-impactLevel')) setSelectWithCustomValue('pb-rep-impactLevel', safeString(item.impactLevel), '');
+    if ($('pb-rep-audienceAppeal')) setSelectWithCustomValue('pb-rep-audienceAppeal', safeString(item.audienceAppeal), '');
+    if ($('pb-rep-galaRole')) setSelectWithCustomValue('pb-rep-galaRole', safeString(item.galaRole), '');
+    if ($('pb-rep-vocalLoad')) setSelectWithCustomValue('pb-rep-vocalLoad', safeString(item.vocalLoad), '');
+    if ($('pb-rep-texture')) setSelectWithCustomValue('pb-rep-texture', safeString(item.texture), '');
+    if ($('pb-rep-styleBucket')) setSelectWithCustomValue('pb-rep-styleBucket', safeString(item.styleBucket), '');
+    if ($('pb-rep-recoveryValue')) setSelectWithCustomValue('pb-rep-recoveryValue', safeString(item.recoveryValue), '');
+    if ($('pb-rep-bestDurationFit')) setSelectWithCustomValue('pb-rep-bestDurationFit', safeString(item.bestDurationFit || 'all'), 'all');
+    if ($('pb-rep-moodTags')) $('pb-rep-moodTags').value = Array.isArray(item.moodTags) ? item.moodTags.join(', ') : '';
+    if ($('pb-rep-practicalTags')) $('pb-rep-practicalTags').value = Array.isArray(item.practicalTags) ? item.practicalTags.join(', ') : '';
+    if ($('pb-rep-encoreCandidate')) $('pb-rep-encoreCandidate').checked = item.encoreCandidate === true;
+    if ($('pb-rep-interlude')) $('pb-rep-interlude').checked = item.interlude === true;
+    if ($('pb-rep-vocalRestSupport')) $('pb-rep-vocalRestSupport').checked = item.vocalRestSupport === true;
+    if ($('pb-rep-goodBetweenBlocks')) $('pb-rep-goodBetweenBlocks').checked = item.goodBetweenBlocks === true;
+    if ($('pb-rep-goodBeforeClimax')) $('pb-rep-goodBeforeClimax').checked = item.goodBeforeClimax === true;
+    if ($('pb-rep-notes')) $('pb-rep-notes').value = safeString(item.notes);
+    if ($('pb-rep-publicNotes')) $('pb-rep-publicNotes').value = safeString(item.publicNotes);
+    if ($('pb-rep-sortOrder')) $('pb-rep-sortOrder').value = Number.isFinite(Number(item.sortOrder)) ? String(item.sortOrder) : '';
+  }
+  function persistPlannerRepEditor() {
+    if (state.plannerIndex < 0) return;
+    var item = state.plannerDoc.items[state.plannerIndex] || {};
+    item.id = safeString($('pb-rep-id').value).trim();
+    item.title = safeString($('pb-rep-title').value).trim();
+    item.composer = safeString($('pb-rep-composer').value).trim();
+    item.work = safeString($('pb-rep-work').value).trim();
+    item.type = safeString($('pb-rep-type').value || 'other').trim().toLowerCase();
+    item.language = safeString($('pb-rep-language').value).trim();
+    item.durationMin = Math.max(0, Number($('pb-rep-durationMin').value) || 0);
+    item.approximateDurationMin = Math.max(0, Number($('pb-rep-approximateDurationMin').value) || item.durationMin || 0);
+    item.readiness = safeString($('pb-rep-readiness').value || 'idea').trim().toLowerCase();
+    item.availabilityStatus = safeString($('pb-rep-availabilityStatus').value || item.readiness || 'idea').trim().toLowerCase();
+    item.performanceStatus = safeString($('pb-rep-performanceStatus').value || '').trim().toLowerCase();
+    item.reviewStatus = safeString($('pb-rep-reviewStatus').value || 'clean').trim().toLowerCase() === 'manual_review' ? 'manual_review' : 'clean';
+    item.category = safeString($('pb-rep-category').value).trim().toLowerCase();
+    item.voiceCategory = safeString($('pb-rep-voiceCategory').value).trim().toLowerCase();
+    item.primaryVoice = safeString($('pb-rep-primaryVoice').value).trim().toLowerCase();
+    item.pairedVoices = safeString($('pb-rep-pairedVoices').value).split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+    item.includesTenor = !!($('pb-rep-includesTenor') && $('pb-rep-includesTenor').checked);
+    item.formations = safeString($('pb-rep-formations').value).split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    item.tags = safeString($('pb-rep-tags').value).split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+    item.fitTags = safeString($('pb-rep-fitTags').value).split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+    item.performedIn = safeString($('pb-rep-performedIn').value).split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    item.offerOnly = !!($('pb-rep-offerOnly') && $('pb-rep-offerOnly').checked);
+    item.excludeFromOffers = !!($('pb-rep-excludeFromOffers') && $('pb-rep-excludeFromOffers').checked);
+    item.sourceGroup = safeString($('pb-rep-sourceGroup').value).trim();
+    item.suggestionGroup = safeString($('pb-rep-suggestionGroup').value).trim();
+    item.dramaticRole = safeString($('pb-rep-dramaticRole').value).trim().toLowerCase();
+    item.energyLevel = safeString($('pb-rep-energyLevel').value).trim().toLowerCase();
+    item.tempoProfile = safeString($('pb-rep-tempoProfile').value).trim().toLowerCase();
+    item.impactLevel = safeString($('pb-rep-impactLevel').value).trim().toLowerCase();
+    item.audienceAppeal = safeString($('pb-rep-audienceAppeal').value).trim().toLowerCase();
+    item.galaRole = safeString($('pb-rep-galaRole').value).trim().toLowerCase();
+    item.vocalLoad = safeString($('pb-rep-vocalLoad').value).trim().toLowerCase();
+    item.texture = safeString($('pb-rep-texture').value).trim().toLowerCase();
+    item.styleBucket = safeString($('pb-rep-styleBucket').value).trim().toLowerCase();
+    item.recoveryValue = safeString($('pb-rep-recoveryValue').value).trim().toLowerCase();
+    item.bestDurationFit = safeString($('pb-rep-bestDurationFit').value || 'all').trim().toLowerCase();
+    item.moodTags = safeString($('pb-rep-moodTags').value).split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+    item.practicalTags = safeString($('pb-rep-practicalTags').value).split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+    item.encoreCandidate = !!($('pb-rep-encoreCandidate') && $('pb-rep-encoreCandidate').checked);
+    item.interlude = !!($('pb-rep-interlude') && $('pb-rep-interlude').checked);
+    item.vocalRestSupport = !!($('pb-rep-vocalRestSupport') && $('pb-rep-vocalRestSupport').checked);
+    item.goodBetweenBlocks = !!($('pb-rep-goodBetweenBlocks') && $('pb-rep-goodBetweenBlocks').checked);
+    item.goodBeforeClimax = !!($('pb-rep-goodBeforeClimax') && $('pb-rep-goodBeforeClimax').checked);
+    item.notes = safeString($('pb-rep-notes').value);
+    item.publicNotes = safeString($('pb-rep-publicNotes').value);
+    item.sortOrder = Number($('pb-rep-sortOrder').value) || ((state.plannerIndex + 1) * 10);
+    state.plannerDoc.items[state.plannerIndex] = normalizePlannerItemRecord(item, state.plannerIndex);
+    renderPlannerRepList();
+    renderBlueprintBuilder();
+    markDirty(true, 'Repertoire library updated');
+  }
+  function pieceMatchesFamily(piece, family) {
+    return plannerOfferFamilyFitTier(piece, currentBlueprint(), family) > 0;
+  }
+  function normalizeFormationLabel(raw) {
+    return safeString(raw)
+      .toLowerCase()
+      .replace(/[’‘`]/g, "'")
+      .replace(/\s+/g, ' ')
+      .replace(/\s*\+\s*/g, ' + ')
+      .trim();
+  }
+  function pieceMatchesFormation(piece, formation) {
+    var target = normalizeFormationLabel(formation);
+    if (!target) return true;
+    var targetHasPiano = target.indexOf('piano') >= 0;
+    var targetHasTenor = target.indexOf('tenor') >= 0;
+    var targetHasSoprano = target.indexOf('soprano') >= 0;
+    var targetHasBaritone = target.indexOf('baritone') >= 0;
+    var pieceIsPianoSolo = safeString(piece && piece.category).trim().toLowerCase() === 'piano_solo';
+    if (pieceIsPianoSolo && targetHasPiano) return true;
+    var forms = Array.isArray(piece && piece.formations) ? piece.formations : [];
+    if (!forms.length) return true;
+    return forms.some(function (rawForm) {
+      var form = normalizeFormationLabel(rawForm);
+      if (!form) return false;
+      if (form === target) return true;
+      if (form.indexOf(target) >= 0 || target.indexOf(form) >= 0) return true;
+      if (targetHasPiano && (form === 'voice + piano' || form === 'voice(s) + piano')) return true;
+      if (targetHasTenor && form === 'tenor + piano') return true;
+      if (targetHasSoprano && form === 'soprano + piano') return true;
+      if (targetHasBaritone && form === 'baritone + piano') return true;
+      if (targetHasTenor && targetHasPiano && form === 'voice + piano') return true;
+      if (targetHasSoprano && targetHasPiano && form === 'voice + piano') return true;
+      if (targetHasBaritone && targetHasPiano && form === 'voice + piano') return true;
+      return false;
+    });
+  }
+  function plannerReadinessRank(value) {
+    var key = safeString(value).trim().toLowerCase();
+    if (key === 'ready') return 0;
+    if (key === 'working') return 1;
+    if (key === 'idea') return 2;
+    return 3;
+  }
+  function plannerAvailabilityRank(value) {
+    var key = safeString(value).trim().toLowerCase();
+    if (key === 'performed') return 0;
+    if (key === 'ready') return 1;
+    if (key === 'working') return 2;
+    if (key === 'idea') return 3;
+    if (key === 'outside_repertoire') return 4;
+    return 5;
+  }
+  function plannerPieceFitSummary(piece, family, formation) {
+    if (!piece) return { className: 'muted', text: 'Missing repertoire item.' };
+    if (safeString(piece.reviewStatus) === 'manual_review') return { className: 'warn', text: 'Historical item flagged for manual review before public reuse.' };
+    if (!pieceMatchesFormation(piece, formation)) return { className: 'warn', text: 'This piece does not match the current formation.' };
+    var tier = plannerOfferFamilyFitTier(piece, currentBlueprint(), family);
+    var flags = plannerPieceFlags(piece);
+    if (flags.isPianoSolo && tier >= 2) return { className: 'ok', text: 'Useful supporting piano interlude for pacing, contrast, or vocal rest in this programme family.' };
+    if (tier >= 3) return { className: 'ok', text: 'Strong match for this programme family.' };
+    if (tier >= 2) return { className: 'ok', text: 'Good stylistic match for this programme family.' };
+    if (tier >= 1) return { className: 'muted', text: 'Usable in this family, though not one of the strongest defaults.' };
+    return { className: 'muted', text: 'Usable, but not one of the strongest tagged matches for this family.' };
+  }
+  function plannerAssignedArcPieces(bp, excludeSlotId) {
+    return ((bp && bp.items) || []).map(function (it) {
+      if (excludeSlotId && safeString(it && it.slotId).trim().toLowerCase() === safeString(excludeSlotId).trim().toLowerCase()) return null;
+      return getPlannerItemById(it && it.pieceId);
+    }).filter(Boolean);
+  }
+  function plannerArcContrastBonus(piece, bp, slotId) {
+    var assigned = plannerAssignedArcPieces(bp, slotId);
+    if (!assigned.length) return 0;
+    var score = 0;
+    var currentLang = safeString(piece && piece.language).trim().toUpperCase();
+    var langs = {};
+    var categories = {};
+    assigned.forEach(function (row) {
+      var lang = safeString(row && row.language).trim().toUpperCase();
+      var category = safeString(row && row.category).trim().toLowerCase();
+      if (lang) langs[lang] = true;
+      if (category) categories[category] = true;
+    });
+    if (currentLang && !langs[currentLang]) score += 4;
+    if (piece && piece.category && !categories[safeString(piece.category).trim().toLowerCase()]) score += 2;
+    return score;
+  }
+  function plannerGalaArcSlotBonus(piece, slotId, bp) {
+    if (!piece || !bp || safeString(bp.family).trim().toLowerCase() !== 'gala') return 0;
+    var flags = plannerPieceFlags(piece);
+    var options = galaOptionsForBlueprint(bp);
+    var score = 0;
+    switch (safeString(slotId).trim().toLowerCase()) {
+      case 'opening':
+        if (flags.galaRole === 'opener') score += 16;
+        if (flags.texture === 'solo') score += 6;
+        if (flags.audienceAppeal === 'crowd_pleaser' || flags.audienceAppeal === 'balanced') score += 3;
+        break;
+      case 'early_contrast':
+      case 'contrast':
+        if (flags.galaRole === 'contrast') score += 16;
+        if (flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone') score += options.includeContrast ? 10 : -8;
+        if (flags.texture !== 'solo' || flags.galaRole === 'vocal_rest_support') score += 6;
+        break;
+      case 'development':
+      case 'first_development':
+        if (flags.vocalLoad === 'medium') score += 6;
+        if (flags.recoveryValue === 'partial') score += 5;
+        break;
+      case 'lyrical_center':
+        if (flags.galaRole === 'lyrical_center') score += 14;
+        if (flags.vocalLoad === 'light' || flags.vocalLoad === 'medium') score += 5;
+        break;
+      case 'build_up':
+        if (flags.galaRole === 'contrast') score += 4;
+        if (flags.goodBeforeClimax) score += 10;
+        if (flags.recoveryValue === 'partial') score += 4;
+        break;
+      case 'climax':
+        if (flags.galaRole === 'climax') score += 18;
+        if (flags.vocalLoad === 'heavy') score += 6;
+        if (flags.texture === 'solo') score += 3;
+        break;
+      case 'resolution':
+      case 'finale':
+        if (flags.galaRole === 'finale') score += 18;
+        if (flags.audienceAppeal === 'crowd_pleaser') score += 5;
+        if (flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone') score += options.includeContrast ? 4 : -4;
+        break;
+      default:
+        break;
+    }
+    return score;
+  }
+  function plannerArcSlotScore(piece, slotId, bp) {
+    if (!piece) return -999;
+    var role = safeString(piece.dramaticRole).trim().toLowerCase();
+    var energy = safeString(piece.energyLevel).trim().toLowerCase();
+    var tempo = safeString(piece.tempoProfile).trim().toLowerCase();
+    var impact = safeString(piece.impactLevel).trim().toLowerCase();
+    var audience = safeString(piece.audienceAppeal).trim().toLowerCase();
+    var flags = plannerPieceFlags(piece);
+    var score = 0;
+    switch (safeString(slotId).trim().toLowerCase()) {
+      case 'opening':
+        if (role === 'opener') score += 30;
+        if (energy === 'high') score += 8;
+        else if (energy === 'medium') score += 5;
+        if (impact === 'high') score += 5;
+        else if (impact === 'medium') score += 3;
+        if (audience === 'balanced' || audience === 'crowd_pleaser') score += 2;
+        break;
+      case 'early_contrast':
+      case 'contrast':
+        if (role === 'contrast') score += 30;
+        score += plannerArcContrastBonus(piece, bp, slotId);
+        if (energy === 'medium') score += 3;
+        if (tempo === 'flowing' || tempo === 'lively') score += 2;
+        if (flags.isPianoSolo && (flags.isInterludeSupport || flags.goodBetweenBlocks)) score += 12;
+        break;
+      case 'development':
+      case 'first_development':
+        if (role === 'development') score += 28;
+        if (energy === 'medium') score += 5;
+        if (tempo === 'flowing' || tempo === 'moderate') score += 4;
+        if (flags.isPianoSolo && flags.supportsVocalRest) score += 12;
+        if (flags.isPianoSolo && flags.goodBetweenBlocks) score += 6;
+        break;
+      case 'lyrical_center':
+        if (role === 'lyrical_center') score += 30;
+        if (energy === 'low' || energy === 'medium') score += 6;
+        if (tempo === 'slow' || tempo === 'flowing') score += 5;
+        if (impact === 'light' || impact === 'medium') score += 3;
+        if (flags.isPianoSolo && flags.supportsVocalRest) score += 7;
+        break;
+      case 'build_up':
+        if (role === 'development') score += 16;
+        if (role === 'climax') score += 8;
+        if (energy === 'medium' || energy === 'high') score += 5;
+        if (tempo === 'flowing' || tempo === 'lively' || tempo === 'brilliant') score += 4;
+        if (flags.isPianoSolo && flags.goodBeforeClimax) score += 14;
+        else if (flags.isPianoSolo && flags.goodBetweenBlocks) score += 8;
+        break;
+      case 'climax':
+        if (role === 'climax') score += 30;
+        if (impact === 'high') score += 8;
+        if (energy === 'high') score += 7;
+        if (audience === 'crowd_pleaser') score += 3;
+        break;
+      case 'resolution':
+      case 'finale':
+        if (role === 'finale') score += 30;
+        if (role === 'climax') score += 14;
+        if (impact === 'high') score += 6;
+        if (energy === 'medium' || energy === 'high') score += 4;
+        if (audience === 'crowd_pleaser' || audience === 'balanced') score += 3;
+        break;
+      case 'encore_1':
+      case 'encore_2':
+      case 'encore_optional':
+        if (piece.encoreCandidate === true) score += 30;
+        if (role === 'encore') score += 28;
+        if (audience === 'crowd_pleaser') score += 5;
+        if (impact === 'medium' || impact === 'high') score += 2;
+        break;
+      default:
+        break;
+    }
+    score += plannerGalaArcSlotBonus(piece, slotId, bp);
+    return score;
+  }
+  function plannerOfferFilteredItems(slotId) {
+    var items = (state.plannerDoc && Array.isArray(state.plannerDoc.items)) ? state.plannerDoc.items : [];
+    var needle = safeString($('pb-add-piece-search') && $('pb-add-piece-search').value).trim().toLowerCase();
+    var filterStatus = safeString(state.plannerOfferStatusFilter || 'all').trim().toLowerCase() || 'all';
+    var filterCategory = safeString(state.plannerOfferCategoryFilter || 'all').trim().toLowerCase() || 'all';
+    var filterTag = safeString(state.plannerOfferTagFilter || '').trim().toLowerCase();
+    var filterLang = safeString(state.plannerOfferLangFilter || '').trim().toLowerCase();
+    var matchingOnly = state.plannerOfferMatchingOnly !== false;
+    var formationOnly = !!state.plannerOfferFormationOnly;
+    var showWithoutTenor = !!state.plannerOfferShowWithoutTenor;
+    var bp = currentBlueprint();
+    var currentFormation = safeString(($('pb-blueprint-formation') && $('pb-blueprint-formation').value) || (bp && bp.formation)).trim();
+    var currentFamily = safeString((bp && bp.family) || state.blueprintFamily || 'gala').trim().toLowerCase() || 'gala';
+    var filtered = items.filter(function (item) {
+      var availability = safeString(item.availabilityStatus || '').trim().toLowerCase();
+      var effectiveTags = (item.fitTags && item.fitTags.length ? item.fitTags : item.tags) || [];
+      var familyTier = plannerOfferFamilyFitTier(item, bp, currentFamily);
+      if (availability === 'outside_repertoire') return false;
+      if (item.excludeFromOffers === true && safeString(item.category) !== 'piano_solo') return false;
+      if (item.offerOnly === true) return false;
+      if (filterCategory === 'all' && safeString(item.type) === 'role') return false;
+      if (!plannerOfferVoiceMatch(item, currentFormation, showWithoutTenor)) return false;
+      if (matchingOnly && familyTier <= 0) return false;
+      if (filterStatus === 'performed' && availability !== 'performed' && safeString(item.performanceStatus) !== 'performed') return false;
+      if (filterStatus !== 'all' && filterStatus !== 'performed' && availability !== filterStatus && safeString(item.readiness) !== filterStatus) return false;
+      if (filterCategory !== 'all' && !plannerCategoryFilterMatches(item, filterCategory)) return false;
+      if (filterLang && safeString(item.language).trim().toLowerCase().indexOf(filterLang) < 0) return false;
+      if (filterTag && effectiveTags.join(' ').toLowerCase().indexOf(filterTag) < 0) return false;
+      if (formationOnly && !pieceMatchesFormation(item, currentFormation)) return false;
+      if (!needle) return true;
+      return [item.title, item.composer, item.work, plannerItemVoiceLabel(item), safeString(item.category), safeString(item.sourceGroup), effectiveTags.join(' '), item.notes, item.publicNotes].join(' ').toLowerCase().indexOf(needle) >= 0;
+    });
+    filtered.sort(function (a, b) {
+      var famA = plannerFamilySelectorPriority(a, currentFamily, currentFormation, bp);
+      var famB = plannerFamilySelectorPriority(b, currentFamily, currentFormation, bp);
+      if (famA !== famB) return famB - famA;
+      if (slotId) {
+        var slotA = plannerArcSlotScore(a, slotId, bp);
+        var slotB = plannerArcSlotScore(b, slotId, bp);
+        if (slotA !== slotB) return slotB - slotA;
+      }
+      var formA = pieceMatchesFormation(a, currentFormation) ? 1 : 0;
+      var formB = pieceMatchesFormation(b, currentFormation) ? 1 : 0;
+      if (formA !== formB) return formB - formA;
+      if (currentFamily === 'borders') {
+        var varietyA = plannerBordersVarietyScore(a, bp);
+        var varietyB = plannerBordersVarietyScore(b, bp);
+        if (varietyA !== varietyB) return varietyB - varietyA;
+      }
+      var availA = plannerAvailabilityRank(a.availabilityStatus || a.performanceStatus || a.readiness);
+      var availB = plannerAvailabilityRank(b.availabilityStatus || b.performanceStatus || b.readiness);
+      if (availA !== availB) return availA - availB;
+      var reviewA = safeString(a.reviewStatus) === 'manual_review' ? 1 : 0;
+      var reviewB = safeString(b.reviewStatus) === 'manual_review' ? 1 : 0;
+      if (reviewA !== reviewB) return reviewA - reviewB;
+      var readyA = plannerReadinessRank(a.readiness);
+      var readyB = plannerReadinessRank(b.readiness);
+      if (readyA !== readyB) return readyA - readyB;
+      var voiceA = plannerItemVoiceLabel(a);
+      var voiceB = plannerItemVoiceLabel(b);
+      if (voiceA !== voiceB) return safeString(voiceA).localeCompare(safeString(voiceB));
+      return safeString(a.title).localeCompare(safeString(b.title));
+    });
+    return filtered;
+  }
+  function renderBlueprintPieceOptions() {
+    var select = $('pb-add-piece-select');
+    var count = $('pb-available-count');
+    if (!select) return;
+    var filtered = plannerOfferFilteredItems();
+    if (count) {
+      var family = safeString((currentBlueprint() && currentBlueprint().family) || state.blueprintFamily || 'gala').trim().toLowerCase() || 'gala';
+      var familyLabel = ({ gala: 'Gala', italian: 'Italian', tango: 'Tango', borders: 'Borders' })[family] || 'programme';
+      count.textContent = filtered.length + (state.plannerOfferMatchingOnly !== false ? (' matching ' + familyLabel.toLowerCase() + ' pieces') : ' pieces in view');
+    }
+    if (!filtered.length) {
+      select.innerHTML = '<option value="">' + (state.plannerOfferMatchingOnly !== false ? 'No matching repertoire item for this programme family — relax the filters or switch to Show all repertoire' : 'No repertoire item matches the current filters') + '</option>';
+      return;
+    }
+    select.innerHTML = filtered.map(function (item) {
+      var labels = [item.title, item.composer, plannerItemVoiceLabel(item), String(plannerEffectiveDuration(item) || 0) + ' min'];
+      if (item.dramaticRole) labels.push(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || item.dramaticRole);
+      if (item.interlude === true) labels.push('interlude');
+      if (item.vocalRestSupport === true) labels.push('rest');
+      if (plannerOfferFamilyFitTier(item, currentBlueprint(), safeString((currentBlueprint() && currentBlueprint().family) || state.blueprintFamily || 'gala').trim().toLowerCase()) >= 3) labels.push('fit');
+      if (safeString(item.performanceStatus) === 'performed') labels.push('performed');
+      if (safeString(item.reviewStatus) === 'manual_review') labels.push('review');
+      return '<option value="' + escapeHtml(item.id) + '">' + escapeHtml(labels.filter(Boolean).join(' · ')) + '</option>';
+    }).join('');
+  }
+  function renderConcertHistoryList() {
+    var box = $('pb-history-list');
+    var count = $('pb-history-count');
+    if (!box) return;
+    var search = safeString(state.concertHistorySearch).trim().toLowerCase();
+    var concerts = (state.concertHistoryDoc && Array.isArray(state.concertHistoryDoc.concerts)) ? state.concertHistoryDoc.concerts : [];
+    var listed = concerts.map(function (_, idx) { return idx; }).filter(function (idx) {
+      if (!search) return true;
+      var concert = concerts[idx];
+      return [
+        concert.year,
+        concert.title,
+        concert.format,
+        (concert.collaborators || []).join(' '),
+        (concert.programmeItems || []).join(' '),
+        concert.notes
+      ].join(' ').toLowerCase().indexOf(search) >= 0;
+    });
+    if (count) count.textContent = listed.length + ' concerts';
+    if (!listed.length) {
+      box.innerHTML = '<div class="empty-state">No archived concerts match the current search. Try year, title, collaborator, or a programme item.</div>';
+      state.concertHistoryIndex = -1;
+      renderConcertHistoryEditor();
+      return;
+    }
+    box.innerHTML = listed.map(function (idx) {
+      var concert = concerts[idx];
+      var active = idx === state.concertHistoryIndex ? 'item active' : 'item';
+      return '<div class="' + active + '" data-pb-history-idx="' + idx + '"><div class="item-main"><strong>' + escapeHtml(String(concert.year || '—') + ' · ' + (concert.title || '(untitled)')) + '</strong><br><span class="muted">' + escapeHtml(concert.format || '') + '</span><div class="item-badges"><span class="item-badge">' + escapeHtml(String((concert.programmeItems || []).length) + ' items') + '</span><span class="item-badge">' + escapeHtml(concert.sourceType || 'history') + '</span></div></div></div>';
+    }).join('');
+    box.querySelectorAll('[data-pb-history-idx]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.concertHistoryIndex = Number(el.getAttribute('data-pb-history-idx'));
+        renderConcertHistoryList();
+        renderConcertHistoryEditor();
+      });
+    });
+    if (state.concertHistoryIndex < 0 || listed.indexOf(state.concertHistoryIndex) < 0) {
+      state.concertHistoryIndex = listed[0];
+      renderConcertHistoryList();
+      renderConcertHistoryEditor();
+      return;
+    }
+    renderConcertHistoryEditor();
+  }
+  function renderConcertHistoryEditor() {
+    var concert = (state.concertHistoryDoc && state.concertHistoryDoc.concerts && state.concertHistoryDoc.concerts[state.concertHistoryIndex]) || {};
+    if ($('pb-history-year')) $('pb-history-year').value = Number(concert.year) || '';
+    if ($('pb-history-title')) $('pb-history-title').value = safeString(concert.title);
+    if ($('pb-history-format')) $('pb-history-format').value = safeString(concert.format);
+    if ($('pb-history-sourceType')) $('pb-history-sourceType').value = safeString(concert.sourceType);
+    if ($('pb-history-collaborators')) $('pb-history-collaborators').value = Array.isArray(concert.collaborators) ? concert.collaborators.join('\n') : '';
+    if ($('pb-history-programmeItems')) $('pb-history-programmeItems').value = Array.isArray(concert.programmeItems) ? concert.programmeItems.join('\n') : '';
+    if ($('pb-history-notes')) $('pb-history-notes').value = safeString(concert.notes);
+  }
+  function persistConcertHistoryEditor() {
+    if (state.concertHistoryIndex < 0) return;
+    var concert = state.concertHistoryDoc.concerts[state.concertHistoryIndex] || {};
+    concert.year = Math.max(0, Number($('pb-history-year').value) || 0);
+    concert.title = safeString($('pb-history-title').value).trim();
+    concert.format = safeString($('pb-history-format').value).trim();
+    concert.sourceType = safeString($('pb-history-sourceType').value || 'historical_manual_import').trim() || 'historical_manual_import';
+    concert.collaborators = safeString($('pb-history-collaborators').value).split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    concert.programmeItems = safeString($('pb-history-programmeItems').value).split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    concert.notes = safeString($('pb-history-notes').value);
+    state.concertHistoryDoc.concerts[state.concertHistoryIndex] = concert;
+    renderConcertHistoryList();
+    markDirty(true, 'Concert history updated');
+  }
+  function renderBlueprintPieces() {
+    var list = $('pb-blueprint-list');
+    if (!list) return;
+    var bp = currentBlueprint();
+    recomputeBlueprint(bp);
+    if ($('pb-selected-count')) $('pb-selected-count').textContent = bp.items.length + (bp.items.length === 1 ? ' piece selected' : ' pieces selected');
+    if (!bp.items.length) {
+      list.innerHTML = '<div class="empty-state">No repertoire selected yet. Add the pieces you want to include in this concrete programme offer.</div>';
+      state.blueprintPieceIndex = -1;
+      renderBlueprintPieceEditor();
+      return;
+    }
+    list.innerHTML = bp.items.map(function (it, idx) {
+      var piece = getPlannerItemById(it.pieceId);
+      var title = safeString(it.customTitle).trim() || safeString(piece && piece.title);
+      var duration = Math.max(0, Number(it.customDuration) || (piece ? plannerEffectiveDuration(piece) || 0 : 0));
+      var active = idx === state.blueprintPieceIndex ? 'item active' : 'item';
+      var compat = pieceMatchesFamily(piece, bp.family);
+      var formationMatch = pieceMatchesFormation(piece, bp.formation);
+      var badges = ['<span class="item-badge">' + escapeHtml(String(duration) + ' min') + '</span>'];
+      if (bp.buildMode === 'dramatic_arc' && safeString(it.slotId).trim()) badges.push('<span class="item-badge">' + escapeHtml(dramaticArcSlotLabel(it.slotId, bp.targetDuration) || it.slotId) + '</span>');
+      if (piece) badges.push('<span class="item-badge">' + escapeHtml(plannerItemVoiceLabel(piece)) + '</span>');
+      if (piece && piece.dramaticRole) badges.push('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[piece.dramaticRole] || piece.dramaticRole) + '</span>');
+      if (safeString(piece && piece.performanceStatus) === 'performed') badges.push('<span class="item-badge ok">performed</span>');
+      if (safeString(piece && piece.reviewStatus) === 'manual_review') badges.push('<span class="item-badge warn">review</span>');
+      else if (compat && formationMatch) badges.push('<span class="item-badge ok">strong fit</span>');
+      else if (!formationMatch) badges.push('<span class="item-badge warn">formation</span>');
+      else if (!compat) badges.push('<span class="item-badge">related</span>');
+      return '<div class="' + active + '" data-pb-piece-idx="' + idx + '"><div class="pb-item-row"><span class="pb-blueprint-list__order">' + escapeHtml(String(idx + 1)) + '</span><div class="item-main"><strong>' + escapeHtml(title || '(missing piece)') + '</strong><br><span class="muted">' + escapeHtml(piece ? [piece.composer, piece.work].filter(Boolean).join(' · ') : 'Missing repertoire item') + '</span><div class="item-badges">' + badges.join('') + '</div></div></div></div>';
+    }).join('');
+    list.querySelectorAll('[data-pb-piece-idx]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.blueprintPieceIndex = Number(el.getAttribute('data-pb-piece-idx'));
+        renderBlueprintPieces();
+        renderBlueprintPieceEditor();
+      });
+    });
+    if (state.blueprintPieceIndex < 0 || state.blueprintPieceIndex >= bp.items.length) {
+      state.blueprintPieceIndex = 0;
+      renderBlueprintPieces();
+      renderBlueprintPieceEditor();
+      return;
+    }
+    renderBlueprintPieceEditor();
+  }
+  function plannerEncoreCandidatePool(bp) {
+    var selectedIds = {};
+    (bp.items || []).forEach(function (it) { selectedIds[safeString(it.pieceId).trim()] = true; });
+    var pool = plannerOfferFilteredItems().filter(function (piece) {
+      var id = safeString(piece && piece.id).trim();
+      return id && !selectedIds[id];
+    }).slice();
+    pool.sort(function (a, b) {
+      var encoreA = a.encoreCandidate === true || safeString(a.dramaticRole).trim().toLowerCase() === 'encore' ? 1 : 0;
+      var encoreB = b.encoreCandidate === true || safeString(b.dramaticRole).trim().toLowerCase() === 'encore' ? 1 : 0;
+      if (encoreA !== encoreB) return encoreB - encoreA;
+      var crowdA = safeString(a.audienceAppeal).trim().toLowerCase() === 'crowd_pleaser' ? 1 : 0;
+      var crowdB = safeString(b.audienceAppeal).trim().toLowerCase() === 'crowd_pleaser' ? 1 : 0;
+      if (crowdA !== crowdB) return crowdB - crowdA;
+      return safeString(a.title).localeCompare(safeString(b.title));
+    });
+    return pool;
+  }
+  function renderEncoreOptions() {
+    var wrap = $('pb-encore-list');
+    var toggle = $('pb-encore-export');
+    var addBtn = $('pb-encore-add');
+    var panel = $('pb-encore-panel');
+    if (!wrap) return;
+    var bp = currentBlueprint();
+    var lang = safeString(bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+    var copy = plannerOutputCopy(lang);
+    if (toggle) toggle.checked = bp.includeEncoresInExport === true;
+    if (addBtn) addBtn.disabled = (bp.encoreItems || []).length >= 3;
+    if (!(bp.encoreItems || []).length) {
+      if (panel) {
+        panel.hidden = true;
+        panel.open = false;
+      }
+      wrap.innerHTML = '<div class="pb-encore-item__empty">' + escapeHtml(copy.encoreEmpty) + '<br><button type="button" data-pb-encore-quick-add="-1">Quick add manually</button></div>';
+      wrap.querySelectorAll('[data-pb-encore-quick-add]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openQuickAddManual('encore', { encoreIndex: Number(btn.getAttribute('data-pb-encore-quick-add')) });
+        });
+      });
+      return;
+    }
+    if (panel) {
+      if (panel.hidden) panel.open = true;
+      panel.hidden = false;
+    }
+    var pool = plannerEncoreCandidatePool(bp);
+    wrap.innerHTML = (bp.encoreItems || []).map(function (entry, idx) {
+      var currentId = safeString(entry.pieceId).trim();
+      var currentPiece = currentId ? getPlannerItemById(currentId) : null;
+      var currentOption = currentPiece ? '<option value="' + escapeAttr(currentId) + '" selected>' + escapeHtml([currentPiece.title, currentPiece.composer, String(plannerEffectiveDuration(currentPiece) || 0) + ' min'].filter(Boolean).join(' · ')) + '</option>' : '';
+      var options = ['<option value="">Choose encore…</option>', currentOption].concat(pool.filter(function (piece) {
+        return safeString(piece.id) !== currentId;
+      }).map(function (piece) {
+        var labels = [piece.title, piece.composer, String(plannerEffectiveDuration(piece) || 0) + ' min'];
+        if (piece.encoreCandidate === true) labels.push('encore');
+        if (safeString(piece.audienceAppeal) === 'crowd_pleaser') labels.push('crowd');
+        return '<option value="' + escapeAttr(piece.id) + '">' + escapeHtml(labels.filter(Boolean).join(' · ')) + '</option>';
+      })).join('');
+      return '<div class="pb-encore-item" data-pb-encore-idx="' + idx + '">' +
+        '<div class="pb-encore-item__head"><span class="pb-encore-item__label">Encore ' + escapeHtml(String(idx + 1)) + '</span></div>' +
+        '<div class="pb-encore-item__grid">' +
+          '<label>Piece<select data-pb-encore-piece="' + idx + '">' + options + '</select></label>' +
+          '<label>' + escapeHtml(copy.encoreNoteLabel) + '<input data-pb-encore-note="' + idx + '" value="' + escapeAttr(safeString(entry.note)) + '" placeholder="Optional"></label>' +
+          '<div class="button-row"><button type="button" data-pb-encore-up="' + idx + '"' + (idx === 0 ? ' disabled' : '') + '>Move up</button><button type="button" data-pb-encore-down="' + idx + '"' + (idx === (bp.encoreItems.length - 1) ? ' disabled' : '') + '>Move down</button><button type="button" data-pb-encore-quick-add="' + idx + '">Quick add manually</button><button type="button" class="danger" data-pb-encore-remove="' + idx + '">Remove encore</button></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    wrap.querySelectorAll('[data-pb-encore-piece]').forEach(function (el) {
+      el.addEventListener('change', function () {
+        var i = Number(el.getAttribute('data-pb-encore-piece'));
+        var target = bp.encoreItems[i];
+        if (!target) return;
+        target.pieceId = safeString(el.value).trim();
+        recomputeBlueprint(bp);
+        renderBlueprintBuilder();
+        markDirty(true, 'Encore options updated');
+      });
+    });
+    wrap.querySelectorAll('[data-pb-encore-note]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var i = Number(el.getAttribute('data-pb-encore-note'));
+        var target = bp.encoreItems[i];
+        if (!target) return;
+        target.note = safeString(el.value);
+        markDirty(true, 'Encore note updated');
+      });
+    });
+    wrap.querySelectorAll('[data-pb-encore-remove]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = Number(btn.getAttribute('data-pb-encore-remove'));
+        bp.encoreItems.splice(i, 1);
+        recomputeBlueprint(bp);
+        renderBlueprintBuilder();
+        markDirty(true, 'Encore removed');
+      });
+    });
+    wrap.querySelectorAll('[data-pb-encore-quick-add]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openQuickAddManual('encore', { encoreIndex: Number(btn.getAttribute('data-pb-encore-quick-add')) });
+      });
+    });
+    wrap.querySelectorAll('[data-pb-encore-up]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = Number(btn.getAttribute('data-pb-encore-up'));
+        if (i <= 0) return;
+        var t = bp.encoreItems[i - 1]; bp.encoreItems[i - 1] = bp.encoreItems[i]; bp.encoreItems[i] = t;
+        recomputeBlueprint(bp);
+        renderBlueprintBuilder();
+        markDirty(true, 'Encore order updated');
+      });
+    });
+    wrap.querySelectorAll('[data-pb-encore-down]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = Number(btn.getAttribute('data-pb-encore-down'));
+        if (i < 0 || i >= bp.encoreItems.length - 1) return;
+        var t = bp.encoreItems[i + 1]; bp.encoreItems[i + 1] = bp.encoreItems[i]; bp.encoreItems[i] = t;
+        recomputeBlueprint(bp);
+        renderBlueprintBuilder();
+        markDirty(true, 'Encore order updated');
+      });
+    });
+  }
+  function addEncoreOption() {
+    var bp = currentBlueprint();
+    if ((bp.encoreItems || []).length >= 3) {
+      setStatus('You can keep up to three encore options here.', 'warn');
+      return;
+    }
+    bp.encoreItems.push({ pieceId: '', customTitle: '', customDuration: 0, note: '', position: bp.encoreItems.length });
+    recomputeBlueprint(bp);
+    renderBlueprintBuilder();
+    markDirty(true, 'Encore option added');
+  }
+  function plannerAddPieceToCurrentOffer(pieceId) {
+    pieceId = safeString(pieceId).trim();
+    if (!pieceId) return;
+    var bp = currentBlueprint();
+    var existingIndex = (bp.items || []).findIndex(function (it) { return safeString(it.pieceId) === pieceId; });
+    if (existingIndex >= 0) {
+      state.blueprintPieceIndex = existingIndex;
+      renderBlueprintBuilder();
+      setStatus('Piece already included in this offer.', 'warn');
+      return;
+    }
+    bp.items.push({ pieceId: pieceId, customTitle: '', customDuration: 0, notes: '', slotId: '', position: bp.items.length });
+    state.blueprintPieceIndex = bp.items.length - 1;
+    renderBlueprintBuilder();
+    markDirty(true, 'Programme repertoire added');
+  }
+  function plannerAddPieceToEncore(pieceId, encoreIndex) {
+    pieceId = safeString(pieceId).trim();
+    if (!pieceId) return;
+    var bp = currentBlueprint();
+    var index = Number.isFinite(Number(encoreIndex)) ? Number(encoreIndex) : -1;
+    if (index < 0 || index >= (bp.encoreItems || []).length) {
+      if ((bp.encoreItems || []).length >= 3) {
+        setStatus('You can keep up to three encore options here.', 'warn');
+        return;
+      }
+      bp.encoreItems.push({ pieceId: '', customTitle: '', customDuration: 0, note: '', position: bp.encoreItems.length });
+      index = bp.encoreItems.length - 1;
+    }
+    bp.encoreItems[index].pieceId = pieceId;
+    recomputeBlueprint(bp);
+    renderBlueprintBuilder();
+    markDirty(true, 'Encore options updated');
+  }
+  function quickAddContextLabel() {
+    var type = safeString(state.quickAddTargetType || 'main').trim().toLowerCase() || 'main';
+    if (type === 'arc') {
+      var bp = currentBlueprint();
+      var slotLabel = dramaticArcSlotLabel(state.quickAddTargetSlotId, bp.targetDuration) || 'dramatic arc slot';
+      return 'This quick entry will be added directly to ' + slotLabel + '.';
+    }
+    if (type === 'encore') {
+      var idx = Number.isFinite(Number(state.quickAddTargetEncoreIndex)) && Number(state.quickAddTargetEncoreIndex) >= 0
+        ? ('Encore ' + String(Number(state.quickAddTargetEncoreIndex) + 1))
+        : 'the encore options';
+      return 'This quick entry will be added directly to ' + idx + '.';
+    }
+    return 'This quick entry will be added to the main programme list.';
+  }
+  function renderQuickAddContext() {
+    if ($('pb-quick-add-context')) $('pb-quick-add-context').textContent = quickAddContextLabel();
+  }
+  function renderQuickAddManualDefaults(force) {
+    if (!force && $('pb-quick-formation') && safeString($('pb-quick-formation').value).trim()) return;
+    var formation = safeString(($('pb-blueprint-formation') && $('pb-blueprint-formation').value) || (currentBlueprint() && currentBlueprint().formation)).trim();
+    if ($('pb-quick-formation')) $('pb-quick-formation').value = formation;
+  }
+  function openQuickAddManual(targetType, targetMeta) {
+    state.quickAddTargetType = safeString(targetType || state.quickAddTargetType || 'main').trim().toLowerCase() || 'main';
+    state.quickAddTargetSlotId = safeString(targetMeta && targetMeta.slotId || '').trim().toLowerCase();
+    state.quickAddTargetEncoreIndex = Number.isFinite(Number(targetMeta && targetMeta.encoreIndex)) ? Number(targetMeta.encoreIndex) : -1;
+    var panel = $('pb-quick-add-panel');
+    if (panel) panel.hidden = false;
+    document.body.classList.add('programme-offer-modal-active');
+    resetQuickAddManualForm();
+    setTimeout(function () {
+      var titleInput = $('pb-quick-title');
+      if (titleInput && typeof titleInput.focus === 'function') {
+        titleInput.focus();
+        if (typeof titleInput.select === 'function') titleInput.select();
+      }
+    }, 20);
+  }
+  function closeQuickAddManual() {
+    var panel = $('pb-quick-add-panel');
+    if (panel) panel.hidden = true;
+    document.body.classList.remove('programme-offer-modal-active');
+  }
+  function resetQuickAddManualForm() {
+    if ($('pb-quick-title')) $('pb-quick-title').value = '';
+    if ($('pb-quick-composer')) $('pb-quick-composer').value = '';
+    if ($('pb-quick-work')) $('pb-quick-work').value = '';
+    if ($('pb-quick-type')) $('pb-quick-type').value = 'aria';
+    if ($('pb-quick-language')) $('pb-quick-language').value = '';
+    if ($('pb-quick-duration')) $('pb-quick-duration').value = '';
+    renderQuickAddManualDefaults(true);
+    if ($('pb-quick-saveMode')) $('pb-quick-saveMode').value = 'offer_only';
+    if ($('pb-quick-needsReview')) $('pb-quick-needsReview').checked = true;
+    if ($('pb-quick-outside')) $('pb-quick-outside').checked = false;
+    if ($('pb-quick-add-state')) $('pb-quick-add-state').textContent = 'Quick-added pieces can still be refined later in the full Repertoire Library editor.';
+    renderQuickAddContext();
+  }
+  function quickAddManualPiece() {
+    var title = safeString($('pb-quick-title') && $('pb-quick-title').value).trim();
+    if (!title) {
+      setStatus('Add at least a title for the quick manual entry.', 'warn');
+      if ($('pb-quick-add-state')) $('pb-quick-add-state').textContent = 'Add a title first, then quick-add the piece.';
+      return;
+    }
+    state.plannerDoc = safePlannerDoc(state.plannerDoc);
+    var composer = safeString($('pb-quick-composer') && $('pb-quick-composer').value).trim();
+    var work = safeString($('pb-quick-work') && $('pb-quick-work').value).trim();
+    var type = safeString($('pb-quick-type') && $('pb-quick-type').value || 'other').trim().toLowerCase() || 'other';
+    var language = safeString($('pb-quick-language') && $('pb-quick-language').value).trim().toUpperCase();
+    var duration = Math.max(0, Number($('pb-quick-duration') && $('pb-quick-duration').value) || 0);
+    var formation = safeString($('pb-quick-formation') && $('pb-quick-formation').value).trim() || safeString((currentBlueprint() && currentBlueprint().formation) || '').trim();
+    var saveMode = safeString($('pb-quick-saveMode') && $('pb-quick-saveMode').value || 'offer_only').trim().toLowerCase();
+    var needsReview = !!($('pb-quick-needsReview') && $('pb-quick-needsReview').checked);
+    var outsideSuggestion = !!($('pb-quick-outside') && $('pb-quick-outside').checked);
+    var family = safeString((currentBlueprint() && currentBlueprint().family) || state.blueprintFamily || 'gala').trim().toLowerCase() || 'gala';
+    var fitTags = [];
+    if (family === 'gala') fitTags.push('gala');
+    if (family === 'italian' || language === 'IT' || type === 'canzone') fitTags.push('italian');
+    if (family === 'tango' || type === 'tango') fitTags.push('tango');
+    if (family === 'borders') fitTags.push('borders');
+    if (type === 'duet') fitTags.push('duet');
+    if (type === 'ensemble') fitTags.push('ensemble');
+    if (type === 'lied') fitTags.push('lied');
+    if (type === 'sacred') fitTags.push('sacred');
+    if (type === 'operetta') fitTags.push('operetta');
+    var offerOnly = saveMode === 'offer_only';
+    var raw = {
+      id: nextPlannerItemId([composer, title].filter(Boolean).join(' ')),
+      title: title,
+      composer: composer,
+      work: work,
+      type: type,
+      language: language,
+      durationMin: duration,
+      approximateDurationMin: duration,
+      formations: formation ? [formation] : [],
+      readiness: outsideSuggestion ? 'idea' : 'working',
+      availabilityStatus: outsideSuggestion ? 'outside_repertoire' : 'working',
+      tags: programBuilderUniqueStrings(fitTags),
+      fitTags: programBuilderUniqueStrings(fitTags),
+      notes: offerOnly ? 'Quick manual entry for current offer.' : 'Quick manual entry.',
+      publicNotes: '',
+      sortOrder: ((state.plannerDoc.items || []).length + 1) * 10,
+      performanceStatus: '',
+      performedIn: [],
+      reviewStatus: needsReview ? 'manual_review' : 'clean',
+      offerOnly: offerOnly,
+      excludeFromOffers: offerOnly,
+      sourceGroup: 'Quick add',
+      suggestionGroup: outsideSuggestion ? 'Quick manual suggestions' : ''
+    };
+    var normalized = normalizePlannerItemRecord(raw, (state.plannerDoc.items || []).length);
+    state.plannerDoc.items.push(normalized);
+    saveDoc('rg_repertoire_planner', state.plannerDoc);
+    state.plannerIndex = state.plannerDoc.items.length - 1;
+    if (state.quickAddTargetType === 'arc' && safeString(state.quickAddTargetSlotId).trim()) {
+      assignBlueprintArcSlot(state.quickAddTargetSlotId, normalized.id);
+    } else if (state.quickAddTargetType === 'encore') {
+      plannerAddPieceToEncore(normalized.id, state.quickAddTargetEncoreIndex);
+    } else {
+      plannerAddPieceToCurrentOffer(normalized.id);
+    }
+    renderPlannerRepList();
+    resetQuickAddManualForm();
+    if ($('pb-quick-add-state')) {
+      $('pb-quick-add-state').textContent = '"' + normalized.title + '" was added ' + (state.quickAddTargetType === 'arc' ? 'to the dramatic arc slot' : (state.quickAddTargetType === 'encore' ? 'to the encore options' : 'to the current offer')) + (offerOnly ? ' as an offer-only draft' : ' and saved to the repertoire library') + (needsReview ? ', marked for review' : '') + (outsideSuggestion ? ', and tagged as an outside-repertoire suggestion' : '') + '.';
+    }
+    closeQuickAddManual();
+    setStatus('Quick manual repertoire entry added.', 'ok');
+  }
+  function renderBlueprintQuickPicks() {
+    var box = $('pb-quick-picks');
+    if (!box) return;
+    var bp = currentBlueprint();
+    var selectedIds = {};
+    (bp.items || []).forEach(function (it) { selectedIds[safeString(it.pieceId)] = true; });
+    var suggestions = plannerOfferFilteredItems().filter(function (item) {
+      return !selectedIds[safeString(item.id)];
+    }).slice(0, 6);
+    if (!suggestions.length) {
+      box.innerHTML = '<div class="pb-quick-picks__empty">' + (state.plannerOfferMatchingOnly !== false ? 'No quick picks fit this family cleanly right now. Relax the filters or switch to Show all repertoire if you want to browse more broadly.' : 'No quick picks available with the current filters. Relax the filters or use the full repertoire selector above.') + '</div>';
+      return;
+    }
+    box.innerHTML = suggestions.map(function (item) {
+      var badges = [];
+      var family = safeString(bp.family || state.blueprintFamily || 'gala').trim().toLowerCase();
+      var formation = safeString(bp.formation).trim();
+      var familyTier = plannerOfferFamilyFitTier(item, bp, family);
+      var flags = plannerPieceFlags(item);
+      if (familyTier >= 3 && pieceMatchesFormation(item, formation)) badges.push('<span class="item-badge ok">strong fit</span>');
+      else if (familyTier >= 2) badges.push('<span class="item-badge ok">good fit</span>');
+      else if (familyTier >= 1) badges.push('<span class="item-badge">broad fit</span>');
+      if (safeString(item.performanceStatus) === 'performed') badges.push('<span class="item-badge ok">performed</span>');
+      if (safeString(item.reviewStatus) === 'manual_review') badges.push('<span class="item-badge warn">review</span>');
+      badges.push('<span class="item-badge">' + escapeHtml(plannerItemVoiceLabel(item)) + '</span>');
+      if (item.dramaticRole) badges.push('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || item.dramaticRole) + '</span>');
+      if (family === 'gala') {
+        if (flags.recoveryValue === 'partial' || flags.recoveryValue === 'strong' || flags.galaRole === 'vocal_rest_support') badges.push('<span class="item-badge">breathing point</span>');
+        if (flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone' || flags.galaRole === 'contrast') badges.push('<span class="item-badge">contrast</span>');
+        if (flags.galaRole === 'finale' || flags.galaRole === 'climax') badges.push('<span class="item-badge ok">strong close</span>');
+      }
+      var meta = [item.composer, item.work, item.language, String(plannerEffectiveDuration(item) || 0) + ' min'].filter(Boolean).join(' · ');
+      return '<div class="pb-quick-picks__item">' +
+        '<div class="pb-quick-picks__body">' +
+          '<span class="pb-quick-picks__title">' + escapeHtml(item.title || '(untitled)') + '</span>' +
+          '<span class="pb-quick-picks__meta">' + escapeHtml(meta) + '</span>' +
+          (badges.length ? '<div class="item-badges">' + badges.join('') + '</div>' : '') +
+        '</div>' +
+        '<button type="button" data-pb-quick-add="' + escapeAttr(item.id) + '">Add</button>' +
+      '</div>';
+    }).join('');
+    box.querySelectorAll('[data-pb-quick-add]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        plannerAddPieceToCurrentOffer(btn.getAttribute('data-pb-quick-add'));
+      });
+    });
+  }
+  function programmeArcHints(bp) {
+    if (bp.buildMode !== 'dramatic_arc') return [];
+    var slots = dramaticArcSlotsForDuration(bp.targetDuration);
+    var ordered = slots.map(function (slot) {
+      var entry = blueprintPieceBySlot(bp, slot.id);
+      if (!entry) return null;
+      var piece = getPlannerItemById(entry.pieceId);
+      return piece ? { slot: slot, piece: piece } : null;
+    }).filter(Boolean);
+    var hints = [];
+    if (!ordered.length) {
+      return [{ kind: 'warn', text: 'Start by assigning an opening and a finale so the programme has a clear shape.' }];
+    }
+    var finaleSlot = slots.filter(function (slot) { return slot.id.indexOf('finale') >= 0 || slot.id.indexOf('resolution') >= 0; }).pop();
+    var finaleEntry = finaleSlot ? ordered.find(function (row) { return row.slot.id === finaleSlot.id; }) : ordered[ordered.length - 1];
+    if (!finaleEntry || ['finale','climax','encore'].indexOf(safeString(finaleEntry.piece.dramaticRole)) < 0 && safeString(finaleEntry.piece.impactLevel) !== 'high') {
+      hints.push({ kind: 'warn', text: 'The ending still feels soft. Consider a stronger finale or a piece with higher impact.' });
+    }
+    for (var i = 0; i <= ordered.length - 3; i += 1) {
+      var slowRun = ordered.slice(i, i + 3).every(function (row) {
+        return safeString(row.piece.tempoProfile) === 'slow' || safeString(row.piece.energyLevel) === 'low';
+      });
+      if (slowRun) {
+        hints.push({ kind: 'warn', text: 'There are too many slow or inward pieces in a row around the middle of the arc.' });
+        break;
+      }
+    }
+    for (var j = 0; j <= ordered.length - 3; j += 1) {
+      var highRun = ordered.slice(j, j + 3).every(function (row) {
+        return safeString(row.piece.impactLevel) === 'high' || safeString(row.piece.energyLevel) === 'high';
+      });
+      if (highRun) {
+        hints.push({ kind: 'warn', text: 'High-impact items are clustering together. The programme may need more breathing room.' });
+        break;
+      }
+    }
+    if (!(bp.encoreItems || []).length) {
+      var encoreSelected = ordered.some(function (row) { return row.piece.encoreCandidate === true || safeString(row.piece.dramaticRole) === 'encore'; });
+      if (!encoreSelected) hints.push({ kind: 'warn', text: 'No encore option is set aside yet. That is fine, but consider keeping one in reserve.' });
+    }
+    var languages = {};
+    ordered.forEach(function (row) {
+      var key = safeString(row.piece.language).trim().toUpperCase();
+      if (key) languages[key] = true;
+    });
+    if (ordered.length >= 4 && Object.keys(languages).length <= 1) {
+      hints.push({ kind: 'warn', text: 'Language colour is quite narrow. If desired, add a contrast point in another language or style.' });
+    }
+    if (!hints.length) hints.push({ kind: 'ok', text: 'The dramatic arc reads coherently as a first recital draft.' });
+    return hints;
+  }
+  function programmeGalaHints(bp) {
+    if (!bp || safeString(bp.family).trim().toLowerCase() !== 'gala') return [];
+    var ordered = ((bp.items || []).map(function (it) {
+      var piece = getPlannerItemById(it && it.pieceId);
+      return piece ? { entry: it, piece: piece, flags: plannerPieceFlags(piece) } : null;
+    }).filter(Boolean));
+    var hints = [];
+    var options = galaOptionsForBlueprint(bp);
+    var summary = galaProgrammeState(bp);
+    if (!ordered.length) return [{ kind: 'warn', text: 'Start with a clear opening piece, then shape the rest of the gala around pacing and a convincing ending.' }];
+    for (var i = 0; i <= ordered.length - 2; i += 1) {
+      if (ordered[i].piece.includesTenor === true && ordered[i + 1].piece.includesTenor === true && ordered[i].flags.texture === 'solo' && ordered[i + 1].flags.texture === 'solo' && ordered[i].flags.vocalLoad === 'heavy' && ordered[i + 1].flags.vocalLoad === 'heavy') {
+        hints.push({ kind: 'warn', text: 'There are too many heavy tenor arias in a row. Consider adding a duet, ensemble, or lighter contrast point.' });
+        break;
+      }
+    }
+    if (!summary.hasContrast && ordered.length >= 3) {
+      hints.push({ kind: 'warn', text: 'The gala still lacks contrast. A duet, ensemble, operetta/canzone turn, or a supportive interlude could help the shape breathe.' });
+    }
+    if (!summary.lastIsStrongEnding) {
+      hints.push({ kind: 'warn', text: 'No strong ending is selected yet. Consider a clearer finale or a piece with more public impact.' });
+    }
+    if (bp.targetDuration >= 45 && summary.breathingPoints < galaSupportTarget(bp.targetDuration)) {
+      hints.push({ kind: 'warn', text: 'This gala could use a clearer breathing point. A duet, ensemble, or piano interlude may help vocal pacing.' });
+    }
+    if ((bp.encoreItems || []).length || plannerEncoreCandidatePool(bp).some(function (piece) { return piece.encoreCandidate === true || safeString(piece.galaRole).trim().toLowerCase() === 'encore'; })) {
+      hints.push({ kind: 'ok', text: 'An encore candidate is available if you want to keep one in reserve.' });
+    }
+    if (options.preferVocalPacing) {
+      hints.push({ kind: 'ok', text: bp.targetDuration >= 60 ? 'Vocal pacing is active: aim for one or two breathing points before the final climb.' : 'Vocal pacing is active: leave at least one clear breathing point inside the gala arc.' });
+    }
+    if (!hints.length) hints.push({ kind: 'ok', text: 'This Opera Gala reads as a convincing recital draft with a workable pacing shape.' });
+    return hints;
+  }
+  function renderGalaSetupOptions() {
+    var bp = currentBlueprint();
+    var isGala = safeString(bp.family).trim().toLowerCase() === 'gala';
+    var wrap = $('pb-gala-setup');
+    var buildWrap = $('pb-build-mode-wrap');
+    var options = galaOptionsForBlueprint(bp);
+    if (wrap) wrap.hidden = !isGala;
+    if (buildWrap) buildWrap.hidden = isGala;
+    if ($('pb-gala-preferPacing')) $('pb-gala-preferPacing').checked = options.preferVocalPacing;
+    if ($('pb-gala-allowPianoInterludes')) $('pb-gala-allowPianoInterludes').checked = options.allowPianoInterludes;
+    if ($('pb-gala-includeContrast')) $('pb-gala-includeContrast').checked = options.includeContrast;
+    if ($('pb-gala-buildArc')) $('pb-gala-buildArc').checked = options.buildWithGalaArc === true;
+  }
+  function renderGalaHints() {
+    var box = $('pb-gala-hints');
+    if (!box) return;
+    var bp = currentBlueprint();
+    if (safeString(bp.family).trim().toLowerCase() !== 'gala') {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    var hints = programmeGalaHints(bp);
+    box.hidden = !hints.length;
+    box.innerHTML = hints.map(function (hint) {
+      return '<div class="pb-arc-hint ' + escapeAttr(hint.kind || 'warn') + '">' + escapeHtml(hint.text) + '</div>';
+    }).join('');
+  }
+  function renderDramaticArcBuilder() {
+    var wrap = $('pb-arc-builder');
+    var slotsBox = $('pb-arc-slots');
+    var hintsBox = $('pb-arc-hints');
+    var panel = $('pb-arc-panel');
+    if (!wrap || !slotsBox || !hintsBox) return;
+    var bp = currentBlueprint();
+    if (safeString(bp.buildMode || 'free') !== 'dramatic_arc') {
+      if (panel) {
+        panel.hidden = true;
+        panel.open = false;
+      }
+      wrap.hidden = true;
+      slotsBox.innerHTML = '';
+      hintsBox.innerHTML = '';
+      return;
+    }
+    if (panel) panel.hidden = false;
+    wrap.hidden = false;
+    var slots = dramaticArcSlotsForDuration(bp.targetDuration);
+    slotsBox.innerHTML = slots.map(function (slot) {
+      var pool = blueprintArcCandidatePool(bp, slot.id);
+      var entry = blueprintPieceBySlot(bp, slot.id);
+      var currentId = safeString(entry && entry.pieceId).trim();
+      var currentPiece = currentId ? getPlannerItemById(currentId) : null;
+      var options = ['<option value="">Choose piece…</option>'].concat(pool.map(function (piece) {
+        var selected = safeString(piece.id) === currentId ? ' selected' : '';
+        var labels = [piece.title, piece.composer, plannerItemVoiceLabel(piece), String(plannerEffectiveDuration(piece) || 0) + ' min'];
+        if (piece.dramaticRole) labels.push(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[piece.dramaticRole] || piece.dramaticRole);
+        if (plannerOfferFamilyFitTier(piece, bp, bp.family) >= 3) labels.push('family fit');
+        if (plannerArcSlotScore(piece, slot.id, bp) >= 24) labels.push('slot fit');
+        return '<option value="' + escapeAttr(piece.id) + '"' + selected + '>' + escapeHtml(labels.filter(Boolean).join(' · ')) + '</option>';
+      })).join('');
+      var roleHint = currentPiece && currentPiece.dramaticRole ? '<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[currentPiece.dramaticRole] || currentPiece.dramaticRole) + '</span>' : (slot.optional ? '<span class="item-badge">optional</span>' : '');
+      return '<div class="pb-arc-slot">' +
+        '<div class="pb-arc-slot__label"><strong>' + escapeHtml(slot.label) + '</strong><span>' + escapeHtml(slot.hint || '') + '</span>' + roleHint + '</div>' +
+        '<label><select data-pb-arc-slot="' + escapeAttr(slot.id) + '">' + options + '</select></label>' +
+        '<div class="pb-arc-slot__actions"><button type="button" data-pb-arc-quick-add="' + escapeAttr(slot.id) + '">Quick add manually</button><button type="button" data-pb-arc-clear="' + escapeAttr(slot.id) + '">Clear</button></div>' +
+      '</div>';
+    }).join('');
+    slotsBox.querySelectorAll('[data-pb-arc-slot]').forEach(function (select) {
+      select.addEventListener('change', function () {
+        assignBlueprintArcSlot(select.getAttribute('data-pb-arc-slot'), select.value);
+      });
+    });
+    slotsBox.querySelectorAll('[data-pb-arc-clear]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        assignBlueprintArcSlot(btn.getAttribute('data-pb-arc-clear'), '');
+      });
+    });
+    slotsBox.querySelectorAll('[data-pb-arc-quick-add]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openQuickAddManual('arc', { slotId: btn.getAttribute('data-pb-arc-quick-add') });
+      });
+    });
+    var hints = programmeArcHints(bp);
+    hintsBox.innerHTML = hints.map(function (hint) {
+      return '<div class="pb-arc-hint ' + escapeAttr(hint.kind || 'warn') + '">' + escapeHtml(hint.text) + '</div>';
+    }).join('');
+  }
+  function plannerOutsideSuggestions() {
+    var items = (state.plannerDoc && Array.isArray(state.plannerDoc.items)) ? state.plannerDoc.items : [];
+    return items.filter(function (item) {
+      return safeString(item.availabilityStatus).trim().toLowerCase() === 'outside_repertoire';
+    }).sort(function (a, b) {
+      var groupA = PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER.indexOf(safeString(a.suggestionGroup));
+      var groupB = PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER.indexOf(safeString(b.suggestionGroup));
+      if (groupA !== groupB) return (groupA < 0 ? 999 : groupA) - (groupB < 0 ? 999 : groupB);
+      return safeString(a.title).localeCompare(safeString(b.title));
+    });
+  }
+  function promoteOutsideSuggestion(pieceId) {
+    pieceId = safeString(pieceId).trim();
+    if (!pieceId) return;
+    var idx = (state.plannerDoc.items || []).findIndex(function (item) { return safeString(item.id) === pieceId; });
+    if (idx < 0) return;
+    var item = clone(state.plannerDoc.items[idx]);
+    item.availabilityStatus = 'idea';
+    if (!safeString(item.readiness).trim()) item.readiness = 'idea';
+    item.excludeFromOffers = false;
+    state.plannerDoc.items[idx] = normalizePlannerItemRecord(item, idx);
+    state.plannerIndex = idx;
+    renderPlannerRepList();
+    renderBlueprintBuilder();
+    renderOutsideRepertoireSuggestions();
+    setStatus('Suggestion moved into the working repertoire library.', 'ok');
+    markDirty(true, 'Outside repertoire suggestion adopted');
+  }
+  function renderOutsideRepertoireSuggestions() {
+    var box = $('pb-outside-suggestions');
+    if (!box) return;
+    var suggestions = plannerOutsideSuggestions();
+    if (!suggestions.length) {
+      box.innerHTML = '<div class="empty-state">No outside suggestions are currently seeded. Suggestions added here stay separate from the main selector until you move them into the working repertoire.</div>';
+      return;
+    }
+    var grouped = {};
+    suggestions.forEach(function (item) {
+      var key = safeString(item.suggestionGroup || 'Outside repertoire');
+      if (!Array.isArray(grouped[key])) grouped[key] = [];
+      grouped[key].push(item);
+    });
+    var groups = Object.keys(grouped).sort(function (a, b) {
+      return (PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER.indexOf(a) < 0 ? 999 : PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER.indexOf(a)) - (PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER.indexOf(b) < 0 ? 999 : PROGRAM_BUILDER_OUTSIDE_GROUP_ORDER.indexOf(b));
+    });
+    box.innerHTML = groups.map(function (group) {
+      return '<div class="pb-suggestion-group">' +
+        '<div class="pb-suggestion-group__head"><h4>' + escapeHtml(group) + '</h4><span class="pill">' + escapeHtml(String(grouped[group].length) + ' suggestions') + '</span></div>' +
+        '<div class="pb-suggestion-group__list">' + grouped[group].map(function (item) {
+          var meta = [item.composer, item.work, item.language, plannerItemVoiceLabel(item), String(plannerEffectiveDuration(item) || 0) + ' min'].filter(Boolean).join(' · ');
+          var fitTags = (item.fitTags || []).slice(0, 4);
+          return '<div class="pb-suggestion-card">' +
+            '<div class="pb-suggestion-card__body">' +
+              '<strong>' + escapeHtml(item.title) + '</strong>' +
+              '<span class="pb-suggestion-card__meta">' + escapeHtml(meta) + '</span>' +
+              (fitTags.length ? '<div class="item-badges">' + fitTags.map(function (tag) { return '<span class="item-badge">' + escapeHtml(tag) + '</span>'; }).join('') + '</div>' : '') +
+              '<p class="muted">' + escapeHtml(item.notes || '') + (item.sourceGroup ? (' Source: ' + safeString(item.sourceGroup)) : '') + '</p>' +
+            '</div>' +
+            '<button type="button" data-pb-suggestion-promote="' + escapeAttr(item.id) + '">Move to repertoire</button>' +
+          '</div>';
+        }).join('') + '</div>' +
+      '</div>';
+    }).join('');
+    box.querySelectorAll('[data-pb-suggestion-promote]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        promoteOutsideSuggestion(btn.getAttribute('data-pb-suggestion-promote'));
+      });
+    });
+  }
+  function renderBlueprintHeader() {
+    var bp = currentBlueprint();
+    recomputeBlueprint(bp);
+    var lang = safeString(bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+    hydrateProgramOfferAutoFields(bp, lang);
+    var copy = plannerOutputCopy(lang);
+    if ($('pb-blueprint-key')) $('pb-blueprint-key').textContent = 'Working slot · ' + plannerFamilyLabelForLang(bp.family, lang) + ' / ' + String(bp.targetDuration) + ' ' + copy.durationMinutes;
+    if ($('pb-family')) $('pb-family').value = bp.family;
+    if ($('pb-duration')) $('pb-duration').value = String(bp.targetDuration);
+    if ($('pb-blueprint-title')) $('pb-blueprint-title').value = resolveProgramOfferField(bp, 'title', lang);
+    if ($('pb-blueprint-formation')) $('pb-blueprint-formation').value = safeString(bp.formation);
+    if ($('pb-build-mode')) $('pb-build-mode').value = safeString(bp.buildMode || 'free');
+    if ($('pb-output-lang')) $('pb-output-lang').value = lang;
+    if ($('pb-repertoire-mode')) $('pb-repertoire-mode').value = normalizeProgramOfferRepertoireMode(bp.repertoireMode || 'suggested');
+    if ($('pb-header-image-mode')) $('pb-header-image-mode').value = normalizeProgramOfferHeaderImageMode(bp.headerImageMode);
+    if ($('pb-header-image-url')) $('pb-header-image-url').value = safeString(bp.headerImageUrl);
+    if ($('pb-header-image-url-wrap')) $('pb-header-image-url-wrap').hidden = normalizeProgramOfferHeaderImageMode(bp.headerImageMode) !== 'custom';
+    if ($('pb-contact-phone')) $('pb-contact-phone').value = safeString(bp.contactPhoneOverride || programBuilderContactForLang(lang).phone || '');
+    if ($('pb-offer-filter-status')) $('pb-offer-filter-status').value = state.plannerOfferStatusFilter || 'all';
+    if ($('pb-offer-filter-category')) $('pb-offer-filter-category').value = state.plannerOfferCategoryFilter || 'all';
+    if ($('pb-offer-filter-tag')) $('pb-offer-filter-tag').value = safeString(state.plannerOfferTagFilter);
+    if ($('pb-offer-filter-lang')) $('pb-offer-filter-lang').value = safeString(state.plannerOfferLangFilter);
+    if ($('pb-offer-filter-matchingOnly')) $('pb-offer-filter-matchingOnly').checked = state.plannerOfferMatchingOnly !== false;
+    if ($('pb-offer-filter-showAll')) $('pb-offer-filter-showAll').checked = state.plannerOfferMatchingOnly === false;
+    if ($('pb-offer-filter-formation')) $('pb-offer-filter-formation').checked = !!state.plannerOfferFormationOnly;
+    if ($('pb-offer-filter-showWithoutTenor')) $('pb-offer-filter-showWithoutTenor').checked = !!state.plannerOfferShowWithoutTenor;
+    if ($('pb-version-label')) $('pb-version-label').value = safeString(bp.versionLabel);
+    if ($('pb-offer-useCase')) $('pb-offer-useCase').value = normalizeProgramOfferUseCase(bp.useCase || 'other');
+    if ($('pb-offer-status')) $('pb-offer-status').value = normalizeSavedProgramStatus(bp.offerStatus || 'draft', 'venue_offer');
+    if ($('pb-offer-description')) $('pb-offer-description').value = resolveProgramOfferField(bp, 'description', lang);
+    if ($('pb-flexible-note')) $('pb-flexible-note').value = resolveProgramOfferField(bp, 'flexibleNote', lang);
+    if ($('pb-encore-export')) $('pb-encore-export').checked = bp.includeEncoresInExport === true;
+    if ($('pb-blueprint-title-state')) $('pb-blueprint-title-state').textContent = programOfferFieldStateLabel(bp, 'title', lang);
+    if ($('pb-offer-description-state')) $('pb-offer-description-state').textContent = programOfferFieldStateLabel(bp, 'description', lang);
+    if ($('pb-flexible-note-state')) $('pb-flexible-note-state').textContent = programOfferFieldStateLabel(bp, 'flexibleNote', lang);
+    if ($('pb-blueprint-notes')) $('pb-blueprint-notes').value = safeString(bp.internalNotes);
+    if ($('pb-target-duration')) $('pb-target-duration').textContent = copy.durationTarget + ': ' + String(bp.targetDuration) + ' ' + copy.durationMinutes;
+    if ($('pb-current-duration')) $('pb-current-duration').textContent = copy.durationCurrent + ': ' + String(bp.totalDuration || 0) + ' ' + copy.durationMinutes;
+    if ($('pb-duration-delta')) $('pb-duration-delta').textContent = programsDurationProgressText(bp.totalDuration || 0, bp.targetDuration || 0, lang);
+    if ($('pb-encore-duration')) $('pb-encore-duration').textContent = copy.durationEncore + ': ' + String(bp.encoreTotalDuration || 0) + ' ' + copy.durationMinutes;
+    if ($('pb-combined-duration')) $('pb-combined-duration').textContent = copy.durationPossible + ': ' + String(bp.combinedDuration || bp.totalDuration || 0) + ' ' + copy.durationMinutes;
+    var status = programsDurationState(bp.totalDuration || 0, bp.targetDuration || 0);
+    if ($('pb-duration-status')) {
+      $('pb-duration-status').className = 'pill ' + status.className;
+      $('pb-duration-status').textContent = plannerStatusLabel(status.key, lang);
+    }
+    if ($('pb-selected-count')) $('pb-selected-count').textContent = (bp.items || []).length + (((bp.items || []).length === 1) ? ' piece selected' : ' pieces selected');
+    renderQuickAddContext();
+    renderProgramOfferSaveState();
+  }
+  function renderBlueprintPieceEditor() {
+    var bp = currentBlueprint();
+    var item = bp.items[state.blueprintPieceIndex] || {};
+    if ($('pb-piece-customTitle')) $('pb-piece-customTitle').value = safeString(item.customTitle);
+    if ($('pb-piece-customDuration')) $('pb-piece-customDuration').value = item.customDuration || '';
+    if ($('pb-piece-notes')) $('pb-piece-notes').value = safeString(item.notes);
+    var piece = getPlannerItemById(item.pieceId);
+    var compat = $('pb-piece-compatibility');
+    if (compat) {
+      var fit = plannerPieceFitSummary(piece, bp.family, bp.formation);
+      compat.className = 'muted ' + fit.className;
+      var slotText = (bp.buildMode === 'dramatic_arc' && safeString(item.slotId).trim()) ? (' Assigned to ' + (dramaticArcSlotLabel(item.slotId, bp.targetDuration) || item.slotId) + '.') : '';
+      compat.textContent = 'Fit note: ' + fit.text + slotText;
+    }
+  }
+  function renderBlueprintFeeEstimate() {
+    var bp = currentBlueprint();
+    var computed = computeBlueprintFeeEstimate(bp);
+    var fee = computed.fee;
+    var adjustment = feeEstimateEventMultipliers(fee.eventType);
+    if ($('pb-fee-preset')) $('pb-fee-preset').value = safeString(fee.preset || 'berlin_local');
+    if ($('pb-fee-eventType')) $('pb-fee-eventType').value = safeString(fee.eventType || 'cultural');
+    if ($('pb-fee-durationMin')) $('pb-fee-durationMin').value = fee.durationMin || '';
+    if ($('pb-fee-formation')) $('pb-fee-formation').value = safeString(fee.formation);
+    if ($('pb-fee-numberOfArtists')) $('pb-fee-numberOfArtists').value = fee.numberOfArtists || 1;
+    if ($('pb-fee-includesPianist')) $('pb-fee-includesPianist').checked = !!fee.includesPianist;
+    if ($('pb-fee-rehearsalCount')) $('pb-fee-rehearsalCount').value = fee.rehearsalCount || 0;
+    if ($('pb-fee-rehearsalFeePerArtist')) $('pb-fee-rehearsalFeePerArtist').value = fee.rehearsalFeePerArtist || 0;
+    if ($('pb-fee-leadArtistFee')) $('pb-fee-leadArtistFee').value = fee.leadArtistFee || 0;
+    if ($('pb-fee-collaboratorFee')) $('pb-fee-collaboratorFee').value = fee.collaboratorFee || 0;
+    if ($('pb-fee-pianistFee')) $('pb-fee-pianistFee').value = fee.pianistFee || 0;
+    if ($('pb-fee-travelCost')) $('pb-fee-travelCost').value = fee.travelCost || 0;
+    if ($('pb-fee-hotelCost')) $('pb-fee-hotelCost').value = fee.hotelCost || 0;
+    if ($('pb-fee-localTransportCost')) $('pb-fee-localTransportCost').value = fee.localTransportCost || 0;
+    if ($('pb-fee-adminBuffer')) $('pb-fee-adminBuffer').value = fee.adminBuffer || 0;
+    if ($('pb-fee-lowBudgetOverride')) $('pb-fee-lowBudgetOverride').value = fee.lowBudgetOverride || '';
+    if ($('pb-fee-recommendedOverride')) $('pb-fee-recommendedOverride').value = fee.recommendedOverride || '';
+    if ($('pb-fee-benchmarkOverride')) $('pb-fee-benchmarkOverride').value = fee.benchmarkOverride || '';
+    if ($('pb-fee-premiumOverride')) $('pb-fee-premiumOverride').value = fee.premiumOverride || '';
+    if ($('pb-fee-benchmarkSourceVersion')) $('pb-fee-benchmarkSourceVersion').value = safeString(fee.benchmarkSourceVersion);
+    if ($('pb-fee-benchmarkLastReviewed')) $('pb-fee-benchmarkLastReviewed').value = safeString(fee.benchmarkLastReviewed);
+    if ($('pb-fee-notes')) $('pb-fee-notes').value = safeString(fee.notes);
+    if ($('pb-fee-artisticSubtotal')) $('pb-fee-artisticSubtotal').textContent = formatEuroAmount(computed.artisticSubtotal);
+    if ($('pb-fee-logisticsSubtotal')) $('pb-fee-logisticsSubtotal').textContent = formatEuroAmount(computed.logisticsSubtotal);
+    if ($('pb-fee-lowBudgetQuote')) $('pb-fee-lowBudgetQuote').textContent = formatEuroAmount(computed.lowBudget);
+    if ($('pb-fee-recommendedQuote')) $('pb-fee-recommendedQuote').textContent = formatEuroAmount(computed.recommended);
+    if ($('pb-fee-publicBenchmarkQuote')) $('pb-fee-publicBenchmarkQuote').textContent = formatEuroAmount(computed.benchmark);
+    if ($('pb-fee-premiumQuote')) $('pb-fee-premiumQuote').textContent = formatEuroAmount(computed.premium);
+    if ($('pb-fee-eventtype-help')) $('pb-fee-eventtype-help').textContent = adjustment.label + ': low-budget reality stays close to the real floor, while fair, benchmark, and premium layers are positioned at x' + adjustment.fairMultiplier.toFixed(2) + ', x' + adjustment.benchmarkMultiplier.toFixed(2) + ', and x' + adjustment.premiumMultiplier.toFixed(2) + ' respectively.';
+    if ($('pb-fee-adjustment-breakdown')) $('pb-fee-adjustment-breakdown').textContent = computed.adjustmentLine;
+    if ($('pb-fee-logic')) $('pb-fee-logic').value = computed.logicSummary;
+    if ($('pb-fee-negotiation')) $('pb-fee-negotiation').value = computed.negotiationNotes;
+    if ($('pb-fee-summary-output')) $('pb-fee-summary-output').value = computed.summaryText;
+    if ($('pb-fee-email-output')) $('pb-fee-email-output').value = computed.emailText;
+  }
+  function persistBlueprintFeeEstimate() {
+    var bp = currentBlueprint();
+    bp.feeEstimate = safeBlueprintFeeEstimate({
+      preset: $('pb-fee-preset') && $('pb-fee-preset').value,
+      eventType: $('pb-fee-eventType') && $('pb-fee-eventType').value,
+      durationMin: $('pb-fee-durationMin') && $('pb-fee-durationMin').value,
+      formation: $('pb-fee-formation') && $('pb-fee-formation').value,
+      numberOfArtists: $('pb-fee-numberOfArtists') && $('pb-fee-numberOfArtists').value,
+      includesPianist: !!($('pb-fee-includesPianist') && $('pb-fee-includesPianist').checked),
+      rehearsalCount: $('pb-fee-rehearsalCount') && $('pb-fee-rehearsalCount').value,
+      rehearsalFeePerArtist: $('pb-fee-rehearsalFeePerArtist') && $('pb-fee-rehearsalFeePerArtist').value,
+      leadArtistFee: $('pb-fee-leadArtistFee') && $('pb-fee-leadArtistFee').value,
+      collaboratorFee: $('pb-fee-collaboratorFee') && $('pb-fee-collaboratorFee').value,
+      pianistFee: $('pb-fee-pianistFee') && $('pb-fee-pianistFee').value,
+      travelCost: $('pb-fee-travelCost') && $('pb-fee-travelCost').value,
+      hotelCost: $('pb-fee-hotelCost') && $('pb-fee-hotelCost').value,
+      localTransportCost: $('pb-fee-localTransportCost') && $('pb-fee-localTransportCost').value,
+      adminBuffer: $('pb-fee-adminBuffer') && $('pb-fee-adminBuffer').value,
+      lowBudgetOverride: $('pb-fee-lowBudgetOverride') && $('pb-fee-lowBudgetOverride').value,
+      recommendedOverride: $('pb-fee-recommendedOverride') && $('pb-fee-recommendedOverride').value,
+      benchmarkOverride: $('pb-fee-benchmarkOverride') && $('pb-fee-benchmarkOverride').value,
+      premiumOverride: $('pb-fee-premiumOverride') && $('pb-fee-premiumOverride').value,
+      benchmarkSourceVersion: $('pb-fee-benchmarkSourceVersion') && $('pb-fee-benchmarkSourceVersion').value,
+      benchmarkLastReviewed: $('pb-fee-benchmarkLastReviewed') && $('pb-fee-benchmarkLastReviewed').value,
+      notes: $('pb-fee-notes') && $('pb-fee-notes').value
+    }, bp);
+    renderBlueprintFeeEstimate();
+    markDirty(true, 'Fee estimate updated');
+  }
+  function generateBlueprintOutputs() {
+    var bp = currentBlueprint();
+    var model = buildProgramOfferPreviewModel();
+    var copy = model.copy;
+    var pieceLines = model.pieces.map(function (piece, idx) {
+      return (idx + 1) + '. ' + piece.title + (programOfferPieceMeta(piece) ? ' — ' + programOfferPieceMeta(piece) : '');
+    });
+    var highlightLines = model.pieces.slice(0, 5).map(function (piece) { return '• ' + piece.title; });
+    var offerDuration = String(Math.max(0, Number(model.targetDuration) || 0)) + ' min';
+    var internalText = [
+      'Programme offer',
+      model.title,
+      safeString(bp.versionLabel).trim() ? ('Version: ' + safeString(bp.versionLabel).trim()) : '',
+      copy.formationLabel + ': ' + safeString(model.formation),
+      copy.durationLabel + ': ' + offerDuration,
+      copy.focusLabel + ': ' + model.familyLabel,
+      '',
+      model.description,
+      '',
+      model.repertoireHeading + ':',
+      pieceLines.length ? pieceLines.join('\n') : copy.noPieces,
+      '',
+      copy.flexibilityLabel + ':',
+      model.flexibleNote,
+      safeString(bp.internalNotes).trim() ? ('\nPrivate notes:\n' + safeString(bp.internalNotes).trim()) : ''
+    ].filter(Boolean).join('\n');
+    var emailBlocks = [
+      copy.emailLead,
+      model.title + '\n' + offerDuration + ' · ' + safeString(model.formation),
+      model.description
+    ];
+    if (highlightLines.length) emailBlocks.push(model.repertoireHeading + ':\n' + highlightLines.join('\n'));
+    emailBlocks.push(model.flexibleNote);
+    if (model.contact.webUrl || model.contact.email) {
+      emailBlocks.push([
+        model.contact.webUrl ? (copy.websiteLabel + ': ' + model.contact.webUrl) : '',
+        model.contact.email ? (copy.emailLabel + ': ' + model.contact.email) : ''
+      ].filter(Boolean).join('\n'));
+    }
+    emailBlocks.push(copy.emailCloser + '\nRolando Guy');
+    var emailText = emailBlocks.filter(Boolean).join('\n\n');
+    var publicText = [
+      model.title,
+      model.description,
+      pieceLines.length ? (model.repertoireHeading + ':\n' + highlightLines.join('\n')) : copy.noPieces,
+      copy.approximateDurationLabel + ': ' + offerDuration,
+      model.flexibleNote
+    ].filter(Boolean).join('\n\n');
+    if ($('pb-output-internal')) $('pb-output-internal').value = internalText;
+    if ($('pb-output-email')) $('pb-output-email').value = emailText;
+    if ($('pb-output-public')) $('pb-output-public').value = publicText;
+  }
+  function programBuilderContactForLang(lang) {
+    var key = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var stored = loadDoc('contact_' + key, null);
+    var fallbackStored = key !== 'en' ? loadDoc('contact_en', null) : null;
+    var fallback = getLegacySection('contact');
+    var email = safeString((stored && stored.email) || (fallbackStored && fallbackStored.email) || (fallback && fallback.email)).trim();
+    var phone = safeString((stored && stored.phone) || (fallbackStored && fallbackStored.phone) || (fallback && fallback.phone)).trim();
+    var webUrl = safeString((stored && stored.webUrl) || (fallbackStored && fallbackStored.webUrl) || '').trim();
+    var webBtn = safeString((stored && stored.webBtn) || (fallbackStored && fallbackStored.webBtn) || (fallback && fallback.webBtn)).trim();
+    if (!webUrl && isValidHttpUrl(webBtn)) webUrl = webBtn;
+    if (!webUrl) webUrl = 'https://rolandoguy.com';
+    return { email: email, phone: phone, webUrl: webUrl };
+  }
+  function programBuilderPortraitForLang(lang) {
+    var key = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var docs = [
+      loadDoc('bio_' + key, null),
+      key !== 'en' ? loadDoc('bio_en', null) : null,
+      getLegacySection('bio')
+    ];
+    for (var i = 0; i < docs.length; i += 1) {
+      var src = safeString(docs[i] && docs[i].portraitImage).trim();
+      if (src) return src;
+    }
+    return '';
+  }
+  function buildProgramOfferPreviewModel() {
+    var bp = currentBlueprint();
+    var lang = safeString(bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+    var copy = plannerOutputCopy(lang);
+    var contact = programBuilderContactForLang(lang);
+    var contactPhoneOverride = safeString(bp.contactPhoneOverride).trim();
+    if (contactPhoneOverride) contact.phone = contactPhoneOverride;
+    var portraitUrl = resolveProgramOfferHeaderImage(bp, lang);
+    var publicDefault = publicProgramDefaultForFamily(lang, bp.family);
+    var pieces = (bp.items || []).map(function (it) {
+      var piece = getPlannerItemById(it.pieceId);
+      if (!piece) return null;
+      var title = safeString(it.customTitle).trim() || piece.title;
+      var duration = Math.max(0, Number(it.customDuration) || plannerEffectiveDuration(piece) || 0);
+      return {
+        title: title,
+        composer: piece.composer,
+        work: piece.work,
+        duration: duration
+      };
+    }).filter(Boolean);
+    var encores = (bp.encoreItems || []).map(function (it) {
+      var piece = getPlannerItemById(it.pieceId);
+      if (!piece) return null;
+      var title = safeString(it.customTitle).trim() || piece.title;
+      var duration = Math.max(0, Number(it.customDuration) || plannerEffectiveDuration(piece) || 0);
+      return {
+        title: title,
+        composer: piece.composer,
+        work: piece.work,
+        duration: duration,
+        note: safeString(it.note)
+      };
+    }).filter(Boolean);
+    return {
+      lang: lang,
+      copy: copy,
+      title: resolveProgramOfferField(bp, 'title', lang) || safeString(publicDefault && publicDefault.title).trim() || defaultBlueprintTitle(bp.family, bp.targetDuration, lang),
+      familyLabel: plannerFamilyLabelForLang(bp.family, lang),
+      repertoireHeading: programOfferRepertoireHeading(copy, bp.repertoireMode),
+      description: resolveProgramOfferField(bp, 'description', lang) || safeString(publicDefault && publicDefault.description).trim() || defaultBlueprintDescription(bp.family, lang),
+      flexibleNote: resolveProgramOfferField(bp, 'flexibleNote', lang) || defaultBlueprintFlexibleNote(lang),
+      formation: programOfferLocalizedFormation(bp.formation, lang),
+      targetDuration: bp.targetDuration,
+      totalDuration: bp.totalDuration,
+      encoreTotalDuration: bp.encoreTotalDuration,
+      combinedDuration: bp.combinedDuration,
+      statusLabel: plannerStatusLabel(bp.status, lang),
+      pieces: pieces,
+      encores: encores,
+      includeEncoresInExport: bp.includeEncoresInExport === true,
+      contact: contact,
+      portraitUrl: portraitUrl
+    };
+  }
+  function programOfferPieceMeta(piece) {
+    return [safeString(piece && piece.composer), safeString(piece && piece.work)].filter(Boolean).join(' · ');
+  }
+  function programOfferPieceListHtml(model, mode) {
+    var usePrint = mode === 'print';
+    if (!model.pieces.length) return '<p class="' + (usePrint ? 'pb-print-sheet__empty' : 'pb-preview-sheet__empty') + '">' + escapeHtml(model.copy.noPieces) + '</p>';
+    return '<ol class="' + (usePrint ? 'pb-print-sheet__list' : 'pb-preview-sheet__list') + '">' + model.pieces.map(function (piece) {
+      var meta = programOfferPieceMeta(piece);
+      return '<li>' +
+        '<span class="' + (usePrint ? 'pb-print-sheet__piece-title' : 'pb-preview-sheet__piece-title') + '">' + escapeHtml(piece.title) + '</span>' +
+        (meta ? '<span class="' + (usePrint ? 'pb-print-sheet__piece-meta' : 'pb-preview-sheet__piece-meta') + '">' + escapeHtml(meta) + '</span>' : '') +
+      '</li>';
+    }).join('') + '</ol>';
+  }
+  function programOfferEncoreListHtml(model, mode) {
+    var usePrint = mode === 'print';
+    if (!model.includeEncoresInExport || !model.encores.length) return '';
+    return '<ol class="' + (usePrint ? 'pb-print-sheet__list' : 'pb-preview-sheet__list') + '">' + model.encores.map(function (piece) {
+      var meta = programOfferPieceMeta(piece);
+      var note = safeString(piece.note).trim();
+      return '<li>' +
+        '<span class="' + (usePrint ? 'pb-print-sheet__piece-title' : 'pb-preview-sheet__piece-title') + '">' + escapeHtml(piece.title) + '</span>' +
+        (meta ? '<span class="' + (usePrint ? 'pb-print-sheet__piece-meta' : 'pb-preview-sheet__piece-meta') + '">' + escapeHtml(meta) + '</span>' : '') +
+        (note ? '<span class="' + (usePrint ? 'pb-print-sheet__piece-meta' : 'pb-preview-sheet__piece-meta') + '">' + escapeHtml(note) + '</span>' : '') +
+      '</li>';
+    }).join('') + '</ol>';
+  }
+  function programOfferHasPlaceholderText(text) {
+    var value = safeString(text).trim().toLowerCase();
+    if (!value) return false;
+    return [
+      'wählen sie repertoirestücke',
+      'select repertoire to build this programme sheet',
+      'select repertoire to build this program sheet',
+      'select repertoire',
+      'choose piece',
+      'choose repertoire',
+      'please select repertoire',
+      'no pieces selected'
+    ].some(function (needle) { return value.indexOf(needle) >= 0; });
+  }
+  function programOfferExportValidation(model) {
+    var bp = currentBlueprint();
+    var lang = safeString(model && model.lang || bp.outputLang || 'en').trim().toLowerCase() || 'en';
+    var copy = plannerOutputCopy(lang);
+    var errors = [];
+    var pieces = Array.isArray(model && model.pieces) ? model.pieces : [];
+    if (!pieces.length) errors.push(copy.exportMissingRepertoire || copy.noPieces || 'Select at least one repertoire item before exporting this Programme Sheet.');
+    if (programOfferHasPlaceholderText(model && model.description) || programOfferHasPlaceholderText(model && model.flexibleNote) || programOfferHasPlaceholderText(model && model.title)) {
+      errors.push(copy.exportPlaceholderText || 'Remove placeholder text before exporting this Programme Sheet.');
+    }
+    if (lang !== 'en' && programOfferLooksStaleEnglish(model && model.description, 'description', bp.family, bp.targetDuration, lang)) {
+      errors.push(copy.exportLanguageMismatch || 'The main programme note still reads in English. Reset it to the language default before exporting.');
+    }
+    if (lang !== 'en' && programOfferLooksStaleEnglish(model && model.flexibleNote, 'flexibleNote', bp.family, bp.targetDuration, lang)) {
+      errors.push(copy.exportLanguageMismatch || 'The flexibility note still reads in English. Reset it to the language default before exporting.');
+    }
+    return { ok: !errors.length, errors: errors };
+  }
+  function renderProgramOfferPreviewWarning(model, errors) {
+    var copy = plannerOutputCopy(model && model.lang);
+    return '<div class="pb-preview-sheet__warning">' +
+      '<p class="pb-preview-sheet__eyebrow">' + escapeHtml(copy.previewHeading || 'Programme Sheet') + '</p>' +
+      '<h3 class="pb-preview-sheet__title">' + escapeHtml(copy.exportNotReadyTitle || 'Programme Sheet not ready') + '</h3>' +
+      '<p>' + escapeHtml(copy.exportNotReadyLead || 'This offer cannot be exported yet.') + '</p>' +
+      '<div class="pb-preview-sheet__warning-box">' + errors.map(function (err) { return '<p class="pb-preview-sheet__empty">' + escapeHtml(err) + '</p>'; }).join('') + '</div>' +
+      '</div>';
+  }
+  function programOfferDetailsHtml(model, mode) {
+    var usePrint = mode === 'print';
+    var wrapClass = usePrint ? 'pb-print-sheet__details' : 'pb-preview-sheet__details';
+    var rowClass = usePrint ? 'pb-print-sheet__detail' : 'pb-preview-sheet__detail';
+    var rows = [
+      model.formation ? { label: model.copy.formationLabel, value: model.formation } : null,
+      { label: model.copy.durationLabel, value: String(Math.max(0, Number(model.targetDuration) || 0)) + ' min' },
+      !usePrint ? { label: model.copy.currentSelectedTotalLabel, value: String(model.totalDuration || 0) + ' min' } : null,
+      (!usePrint && model.includeEncoresInExport && model.encores.length) ? { label: model.copy.encoreOptionsLabel, value: String(model.encoreTotalDuration || 0) + ' min' } : null,
+      { label: model.copy.focusLabel, value: model.familyLabel }
+    ].filter(Boolean);
+    return '<div class="' + wrapClass + '">' + rows.map(function (row) {
+      return '<div class="' + rowClass + '"><strong>' + escapeHtml(row.label) + '</strong><span>' + escapeHtml(row.value) + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function renderProgramOfferPreview() {
+    var box = $('pb-preview-sheet');
+    if (!box) return;
+    var model = buildProgramOfferPreviewModel();
+    var validation = programOfferExportValidation(model);
+    if ($('pb-export-pdf')) $('pb-export-pdf').disabled = !validation.ok;
+    if (!validation.ok) {
+      box.innerHTML = renderProgramOfferPreviewWarning(model, validation.errors);
+      setProgramOfferExportHint(validation.errors[0] || 'Programme Sheet not ready.', 'err');
+      return;
+    }
+    var details = programOfferDetailsHtml(model, 'preview');
+    var listHtml = programOfferPieceListHtml(model, 'preview');
+    var encoreHtml = programOfferEncoreListHtml(model, 'preview');
+    var contactBits = [];
+    if (model.contact.email) contactBits.push('<span><strong>' + escapeHtml(model.copy.emailLabel) + ':</strong> ' + escapeHtml(model.contact.email) + '</span>');
+    if (model.contact.phone) contactBits.push('<span><strong>' + escapeHtml(model.copy.phoneLabel) + ':</strong> ' + escapeHtml(model.contact.phone) + '</span>');
+    if (model.contact.webUrl) contactBits.push('<a href="' + escapeAttr(model.contact.webUrl) + '" target="_blank" rel="noopener"><strong>' + escapeHtml(model.copy.websiteLabel) + ':</strong> ' + escapeHtml(model.contact.webUrl) + '</a>');
+    box.innerHTML =
+      '<div class="pb-preview-sheet__header">' +
+        '<div class="pb-preview-sheet__identity">' +
+          '<div class="pb-preview-sheet__rule" aria-hidden="true"></div>' +
+          '<div>' +
+            '<h4 class="pb-preview-sheet__artist">Rolando Guy</h4>' +
+            '<p class="pb-preview-sheet__subtitle">' + escapeHtml(model.copy.artistSubtitle) + '</p>' +
+          '</div>' +
+        '</div>' +
+        (model.portraitUrl ? '<img class="pb-preview-sheet__portrait" src="' + escapeAttr(model.portraitUrl) + '" alt="Programme header image">' : '') +
+      '</div>' +
+      '<div class="pb-preview-sheet__divider"></div>' +
+      '<div class="pb-preview-sheet__body">' +
+        '<p class="pb-preview-sheet__eyebrow">' + escapeHtml(model.copy.previewHeading) + '</p>' +
+        '<h3 class="pb-preview-sheet__title">' + escapeHtml(model.title) + '</h3>' +
+        '<p>' + escapeHtml(model.description) + '</p>' +
+        details +
+      '</div>' +
+      '<div class="pb-preview-sheet__section">' +
+        '<p class="pb-preview-sheet__section-title">' + escapeHtml(model.repertoireHeading) + '</p>' +
+        listHtml +
+      '</div>' +
+      (encoreHtml ? ('<div class="pb-preview-sheet__section"><p class="pb-preview-sheet__section-title">' + escapeHtml(model.copy.encoreOptionsLabel) + '</p>' + encoreHtml + '</div>') : '') +
+      '<div class="pb-preview-sheet__footer">' +
+        '<div><p class="pb-preview-sheet__section-title">' + escapeHtml(model.copy.flexibilityLabel) + '</p><p>' + escapeHtml(model.flexibleNote) + '</p></div>' +
+        '<div class="pb-preview-sheet__contact"><p class="pb-preview-sheet__section-title">' + escapeHtml(model.copy.contactLabel) + '</p>' + contactBits.join('') + '</div>' +
+      '</div>';
+    setProgramOfferExportHint('', '');
+  }
+  function setProgramOfferExportHint(text, kind) {
+    var el = $('pb-export-hint');
+    if (!el) return;
+    el.textContent = safeString(text);
+    el.className = 'muted pb-export-hint' + (kind ? (' ' + kind) : '');
+  }
+  function renderProgramOfferPrintSheet(model) {
+    var root = $('pb-print-sheet');
+    if (!root) return;
+    var details = programOfferDetailsHtml(model, 'print');
+    var listHtml = programOfferPieceListHtml(model, 'print');
+    var encoreHtml = programOfferEncoreListHtml(model, 'print');
+    var contactBits = [];
+    if (model.contact.email) contactBits.push('<span>' + escapeHtml(model.copy.emailLabel) + ': ' + escapeHtml(model.contact.email) + '</span>');
+    if (model.contact.phone) contactBits.push('<span>' + escapeHtml(model.copy.phoneLabel) + ': ' + escapeHtml(model.contact.phone) + '</span>');
+    if (model.contact.webUrl) contactBits.push('<a href="' + escapeAttr(model.contact.webUrl) + '" target="_blank" rel="noopener">' + escapeHtml(model.copy.websiteLabel) + ': ' + escapeHtml(model.contact.webUrl) + '</a>');
+    root.innerHTML =
+      '<div class="pb-print-sheet__page">' +
+        '<div class="pb-print-sheet__header">' +
+          '<div class="pb-print-sheet__identity">' +
+            '<div class="pb-print-sheet__rule" aria-hidden="true"></div>' +
+            '<div>' +
+              '<h1 class="pb-print-sheet__artist">Rolando Guy</h1>' +
+              '<p class="pb-print-sheet__subtitle">' + escapeHtml(model.copy.artistSubtitle) + '</p>' +
+            '</div>' +
+          '</div>' +
+          (model.portraitUrl ? '<img class="pb-print-sheet__portrait" src="' + escapeAttr(model.portraitUrl) + '" alt="Programme header image">' : '') +
+        '</div>' +
+        '<div class="pb-print-sheet__divider"></div>' +
+        '<div class="pb-print-sheet__body">' +
+          '<h2 class="pb-print-sheet__title">' + escapeHtml(model.title) + '</h2>' +
+          '<p>' + escapeHtml(model.description) + '</p>' +
+          details +
+        '</div>' +
+        '<div class="pb-print-sheet__section">' +
+          '<p class="pb-print-sheet__section-title">' + escapeHtml(model.repertoireHeading) + '</p>' +
+          listHtml +
+        '</div>' +
+        (encoreHtml ? ('<div class="pb-print-sheet__section"><p class="pb-print-sheet__section-title">' + escapeHtml(model.copy.encoreOptionsLabel) + '</p>' + encoreHtml + '</div>') : '') +
+        '<div class="pb-print-sheet__footer">' +
+          '<p class="pb-print-sheet__section-title">' + escapeHtml(model.copy.flexibilityLabel) + '</p>' +
+          '<p>' + escapeHtml(model.flexibleNote) + '</p>' +
+          '<div class="pb-print-sheet__contact">' +
+            '<p class="pb-print-sheet__section-title">' + escapeHtml(model.copy.contactLabel) + '</p>' +
+            contactBits.join('') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  function closeProgramOfferPrintView() {
+    var view = $('pb-print-view');
+    if (view) view.hidden = true;
+    document.body.classList.remove('programme-print-active');
+  }
+  function ensureProgramOfferPrintPortal() {
+    var view = $('pb-print-view');
+    if (!view) return null;
+    if (view.parentNode !== document.body) {
+      document.body.appendChild(view);
+    }
+    return view;
+  }
+  function waitForProgramOfferPrintAssets(root) {
+    var waits = [];
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+      waits.push(Promise.race([
+        document.fonts.ready.catch(function () {}),
+        new Promise(function (resolve) { setTimeout(resolve, 900); })
+      ]));
+    }
+    Array.prototype.forEach.call(root.querySelectorAll('img'), function (img) {
+      waits.push(new Promise(function (resolve) {
+        if (img.complete && img.naturalWidth) return resolve();
+        var done = function () { resolve(); };
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+        setTimeout(done, 900);
+      }));
+    });
+    return Promise.all(waits);
+  }
+  function triggerProgramOfferPrintDialog() {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        try {
+          window.print();
+          setStatus('Programme Sheet ready. If Safari does not open the print dialog, use Cmd+P.', 'warn');
+          setProgramOfferExportHint('Programme Sheet ready. If the print dialog does not open automatically, use File > Print or press Cmd+P.', 'warn');
+        } catch (err) {
+          setStatus('Programme Sheet ready. Use Cmd+P to save as PDF.', 'warn');
+          setProgramOfferExportHint('Programme Sheet ready. Use File > Print or press Cmd+P to save it as PDF.', 'warn');
+        }
+      });
+    });
+  }
+  function exportProgramOfferPdf() {
+    var model = buildProgramOfferPreviewModel();
+    var validation = programOfferExportValidation(model);
+    if (!validation.ok) {
+      setStatus(validation.errors[0] || 'Programme Sheet is not ready for export.', 'err');
+      setProgramOfferExportHint(validation.errors[0] || 'Programme Sheet is not ready for export.', 'err');
+      renderProgramOfferPreview();
+      return;
+    }
+    var view = ensureProgramOfferPrintPortal();
+    var root = $('pb-print-sheet');
+    if (!view || !root) {
+      setStatus('Could not prepare Programme Sheet print view.', 'err');
+      setProgramOfferExportHint('Could not prepare the Programme Sheet print view.', 'err');
+      return;
+    }
+    renderProgramOfferPrintSheet(model);
+    view.hidden = false;
+    document.body.classList.add('programme-print-active');
+    setProgramOfferExportHint('Preparing Programme Sheet print view…', 'warn');
+    if (!state.programmePrintLifecycleBound) {
+      state.programmePrintLifecycleBound = true;
+      window.addEventListener('afterprint', function () {
+        if (document.body.classList.contains('programme-print-active')) closeProgramOfferPrintView();
+      });
+    }
+    waitForProgramOfferPrintAssets(root).then(function () {
+      setTimeout(triggerProgramOfferPrintDialog, 120);
+    });
+  }
+  function renderBlueprintBuilder() {
+    renderQuickAddManualDefaults(false);
+    renderBlueprintPieceOptions();
+    renderBlueprintHeader();
+    renderGalaSetupOptions();
+    renderBlueprintQuickPicks();
+    renderDramaticArcBuilder();
+    renderBlueprintPieces();
+    renderGalaHints();
+    renderEncoreOptions();
+    renderBlueprintFeeEstimate();
+    generateBlueprintOutputs();
+    renderProgramOfferPreview();
+    renderOutsideRepertoireSuggestions();
+    renderProgramBuilderStatus();
+  }
+  function syncProgramOfferEditableField(bp, field, inputValue, autoValue) {
+    var modeKey = field + 'Mode';
+    var autoContextKey = field + 'AutoContext';
+    var value = safeString(inputValue).trim();
+    if (!value || value === autoValue) {
+      bp[modeKey] = 'auto';
+      bp[field] = autoValue;
+      bp[autoContextKey] = programOfferAutoContextKey(bp.family, bp.targetDuration, bp.outputLang);
+      return;
+    }
+    bp[modeKey] = 'manual';
+    bp[field] = value;
+  }
+  function syncProgramOfferFieldOnContextChange(bp, field, inputValue, oldAutoValue, newAutoValue) {
+    var modeKey = field + 'Mode';
+    var autoContextKey = field + 'AutoContext';
+    var currentMode = normalizeProgramOfferFieldMode(bp[modeKey]);
+    var value = safeString(inputValue).trim();
+    var autoContext = parseProgramOfferAutoContextKey(bp[autoContextKey]);
+    var previousAutoMatches = false;
+    if (autoContext) {
+      previousAutoMatches = value === programOfferAutoFieldValue(field, autoContext.family, autoContext.targetDuration, autoContext.lang);
+    }
+    if (!value || value === oldAutoValue || value === newAutoValue || currentMode !== 'manual' || programOfferValueIsKnownAuto(value, field, bp.family, bp.targetDuration) || previousAutoMatches) {
+      bp[modeKey] = 'auto';
+      bp[field] = newAutoValue;
+      bp[autoContextKey] = programOfferAutoContextKey(bp.family, bp.targetDuration, bp.outputLang);
+      return;
+    }
+    bp[modeKey] = 'manual';
+    bp[field] = value;
+  }
+  function resetProgramOfferFieldToDefault(field) {
+    var bp = currentBlueprint();
+    var lang = safeString(bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+    var autoValue = programOfferAutoFieldValue(field, bp.family, bp.targetDuration, lang);
+    bp[field + 'Mode'] = 'auto';
+    bp[field] = autoValue;
+    bp[field + 'AutoContext'] = programOfferAutoContextKey(bp.family, bp.targetDuration, lang);
+    renderBlueprintBuilder();
+    markDirty(true, 'Programme offer text reset');
+    setStatus('Reset to ' + String(lang).toUpperCase() + ' language default.', 'ok');
+  }
+  function revertProgrammeOfferContextControls() {
+    var bp = currentBlueprint();
+    if ($('pb-family')) $('pb-family').value = safeString(bp.family || 'gala');
+    if ($('pb-duration')) $('pb-duration').value = String(bp.targetDuration || 30);
+    if ($('pb-output-lang')) $('pb-output-lang').value = safeString(bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+  }
+  function canSwitchProgrammeOfferWorkingSlot(nextFamily, nextDuration) {
+    var currentKey = plannerBlueprintKey();
+    var nextKey = safeString(nextFamily || 'gala').trim().toLowerCase() + '_' + String(Math.max(0, Number(nextDuration) || 30));
+    if (currentKey === nextKey) return true;
+    return hasUnsavedChangesPrompt('Switch to a different programme working slot?');
+  }
+  function persistBlueprintHeader(reason) {
+    reason = safeString(reason || 'manual').trim().toLowerCase() || 'manual';
+    var bp = currentBlueprint();
+    var prevFamily = safeString(bp.family || 'gala').trim().toLowerCase();
+    var prevTarget = Math.max(0, Number(bp.targetDuration) || 30);
+    var prevLang = safeString(bp.outputLang || state.blueprintOutputLang || state.lang || 'en').trim().toLowerCase() || 'en';
+    var prevFormation = safeString(bp.formation || 'Tenor + Piano').trim() || 'Tenor + Piano';
+    var titleInput = safeString($('pb-blueprint-title').value).trim();
+    var descriptionInput = safeString($('pb-offer-description').value).trim();
+    var flexibleInput = safeString($('pb-flexible-note').value).trim();
+    var nextFamily = safeString($('pb-family').value || 'gala').trim().toLowerCase();
+    var nextTarget = Math.max(0, Number($('pb-duration').value) || 30);
+    var nextLang = safeString($('pb-output-lang').value || state.lang || 'en').trim().toLowerCase();
+    var nextBuildMode = safeString($('pb-build-mode').value || 'free').trim().toLowerCase() === 'dramatic_arc' ? 'dramatic_arc' : 'free';
+    bp.family = nextFamily;
+    bp.targetDuration = nextTarget;
+    bp.galaOptions = safeBlueprintGalaOptions(bp.galaOptions, nextTarget);
+    if (bp.family === 'gala') {
+      bp.galaOptions.preferVocalPacing = !!($('pb-gala-preferPacing') && $('pb-gala-preferPacing').checked);
+      bp.galaOptions.allowPianoInterludes = !!($('pb-gala-allowPianoInterludes') && $('pb-gala-allowPianoInterludes').checked);
+      bp.galaOptions.includeContrast = !!($('pb-gala-includeContrast') && $('pb-gala-includeContrast').checked);
+      bp.galaOptions.buildWithGalaArc = !!($('pb-gala-buildArc') && $('pb-gala-buildArc').checked);
+      bp.buildMode = bp.galaOptions.buildWithGalaArc ? 'dramatic_arc' : 'free';
+    } else {
+      bp.buildMode = nextBuildMode;
+    }
+    bp.outputLang = nextLang;
+    bp.repertoireMode = normalizeProgramOfferRepertoireMode($('pb-repertoire-mode') && $('pb-repertoire-mode').value);
+    if (LANGS.indexOf(bp.outputLang) < 0) bp.outputLang = 'en';
+    bp.headerImageMode = normalizeProgramOfferHeaderImageMode($('pb-header-image-mode') && $('pb-header-image-mode').value);
+    bp.headerImageUrl = safeString($('pb-header-image-url') && $('pb-header-image-url').value).trim();
+    bp.contactPhoneOverride = safeString($('pb-contact-phone') && $('pb-contact-phone').value).trim();
+    bp.includeEncoresInExport = !!($('pb-encore-export') && $('pb-encore-export').checked);
+    var contextChanged = prevFamily !== bp.family || prevTarget !== bp.targetDuration || prevLang !== bp.outputLang;
+    var oldDefaultTitle = programOfferAutoFieldValue('title', prevFamily, prevTarget, prevLang);
+    var newDefaultTitle = programOfferAutoFieldValue('title', bp.family, bp.targetDuration, bp.outputLang);
+    var oldDefaultDescription = programOfferAutoFieldValue('description', prevFamily, prevTarget, prevLang);
+    var newDefaultDescription = programOfferAutoFieldValue('description', bp.family, bp.targetDuration, bp.outputLang);
+    var oldDefaultFlexible = programOfferAutoFieldValue('flexibleNote', prevFamily, prevTarget, prevLang);
+    var newDefaultFlexible = programOfferAutoFieldValue('flexibleNote', bp.family, bp.targetDuration, bp.outputLang);
+    if (contextChanged || reason === 'context') {
+      syncProgramOfferFieldOnContextChange(bp, 'title', titleInput, oldDefaultTitle, newDefaultTitle);
+      syncProgramOfferFieldOnContextChange(bp, 'description', descriptionInput, oldDefaultDescription, newDefaultDescription);
+      syncProgramOfferFieldOnContextChange(bp, 'flexibleNote', flexibleInput, oldDefaultFlexible, newDefaultFlexible);
+    } else {
+      syncProgramOfferEditableField(bp, 'title', titleInput, newDefaultTitle);
+      syncProgramOfferEditableField(bp, 'description', descriptionInput, newDefaultDescription);
+      syncProgramOfferEditableField(bp, 'flexibleNote', flexibleInput, newDefaultFlexible);
+    }
+    bp.formation = safeString($('pb-blueprint-formation').value).trim();
+    var feeEstimate = safeBlueprintFeeEstimate(bp.feeEstimate, { targetDuration: prevTarget, formation: prevFormation });
+    if (!feeEstimate.durationMin || feeEstimate.durationMin === prevTarget) feeEstimate.durationMin = bp.targetDuration;
+    if (!safeString(feeEstimate.formation).trim() || safeString(feeEstimate.formation).trim() === prevFormation) feeEstimate.formation = bp.formation;
+    if ((Number(feeEstimate.numberOfArtists) || 1) === inferArtistCountFromFormation(prevFormation)) feeEstimate.numberOfArtists = inferArtistCountFromFormation(bp.formation);
+    if (!!feeEstimate.includesPianist === formationIncludesPianist(prevFormation)) feeEstimate.includesPianist = formationIncludesPianist(bp.formation);
+    bp.feeEstimate = safeBlueprintFeeEstimate(feeEstimate, bp);
+    bp.versionLabel = safeString($('pb-version-label').value).trim();
+    bp.useCase = normalizeProgramOfferUseCase($('pb-offer-useCase') && $('pb-offer-useCase').value);
+    bp.offerStatus = normalizeSavedProgramStatus($('pb-offer-status') && $('pb-offer-status').value, 'venue_offer');
+    bp.internalNotes = safeString($('pb-blueprint-notes').value);
+    state.blueprintFamily = bp.family;
+    state.blueprintDuration = String(bp.targetDuration);
+    state.blueprintOutputLang = bp.outputLang;
+    recomputeBlueprint(bp);
+    renderBlueprintBuilder();
+    markDirty(true, 'Programme offer updated');
+  }
+  function persistBlueprintPieceEditor() {
+    var bp = currentBlueprint();
+    if (state.blueprintPieceIndex < 0 || state.blueprintPieceIndex >= bp.items.length) return;
+    var it = bp.items[state.blueprintPieceIndex];
+    it.customTitle = safeString($('pb-piece-customTitle').value);
+    it.customDuration = Math.max(0, Number($('pb-piece-customDuration').value) || 0);
+    it.notes = safeString($('pb-piece-notes').value);
+    recomputeBlueprint(bp);
+    renderBlueprintBuilder();
+    markDirty(true, 'Programme repertoire updated');
+  }
+  function copyTextValue(id, label) {
+    var el = $(id);
+    var text = el ? safeString(el.value) : '';
+    if (!text) return;
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(function () {
+        setStatus(label + ' copied', 'ok');
+      }).catch(function () {
+        window.prompt('Copy text:', text);
+      });
+    } else {
+      window.prompt('Copy text:', text);
+    }
+  }
+
   function renderPerfList() {
     var box = $('perf-list');
     var filter = state.perfStatusFilter || 'all';
     var wfPerf = state.perfWorkflowFilter || 'all';
+    function perfListSortDate(row) {
+      var s = normalizeSortDateForInput(row && row.e && row.e.sortDate);
+      if (!s) return null;
+      var dt = new Date(s + 'T00:00:00');
+      return isNaN(dt.getTime()) ? null : dt;
+    }
+    function perfListDateLabel(e) {
+      var dt = perfListSortDate({ e: e });
+      if (dt) {
+        return new Intl.DateTimeFormat(localeForLang(state.lang), { day: 'numeric', month: 'long', year: 'numeric' }).format(dt);
+      }
+      var day = safeString(e && e.day).trim();
+      var month = safeString(e && e.month).trim();
+      var fallback = [day, month].filter(Boolean).join(' ');
+      return fallback || 'Date missing';
+    }
     var rows = state.perfs.map(function (e, i) { return { e: e, i: i }; }).filter(function (row) {
       if (filter === 'all') return true;
       return safeString(row.e.status || 'upcoming') === filter;
@@ -2345,6 +7479,24 @@
       var b = workflowBucketPerf(row.e);
       if (wfPerf === 'ready') return perfReadyCheck(row.e).ok && safeString(row.e.status) !== 'hidden';
       return passesWorkflowFilter(b, wfPerf);
+    }).sort(function (a, b) {
+      var da = perfListSortDate(a);
+      var db = perfListSortDate(b);
+      if (da && db) {
+        var diff = da.getTime() - db.getTime();
+        if (diff) return diff;
+      } else if (da && !db) {
+        return -1;
+      } else if (!da && db) {
+        return 1;
+      }
+      var ta = safeString(a.e.day || '') + ' ' + safeString(a.e.month || '');
+      var tb = safeString(b.e.day || '') + ' ' + safeString(b.e.month || '');
+      if (ta.trim() || tb.trim()) {
+        var td = ta.localeCompare(tb);
+        if (td) return td;
+      }
+      return a.i - b.i;
     });
     if (!rows.length) {
       box.innerHTML = '<div class="empty-state">No hay eventos. Crea uno con "+ Nuevo evento".</div>';
@@ -2356,13 +7508,14 @@
     box.innerHTML = rows.map(function (row) {
       var e = row.e;
       var i = row.i;
-      var t = (e.day || '') + ' ' + (e.month || '') + ' · ' + (e.title || '(untitled)');
+      var t = perfListDateLabel(e) + ' · ' + (e.title || '(untitled)');
       var cls = i === state.perfIndex ? 'item active' : 'item';
       var checked = state.perfSelected[i] ? ' checked' : '';
       var st = safeString(e.editorialStatus || '');
       var badge = st ? badgesHtml([{ kind: 'warn', label: st }]) : '';
       return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main">' + t + badge + '</div></div></div>';
     }).join('');
+    box.scrollTop = 0;
     setSelectionCount('perf-selection-count', state.perfSelected);
     box.querySelectorAll('.row-select').forEach(function (el) {
       el.addEventListener('click', function (evt) { evt.stopPropagation(); });
@@ -2402,12 +7555,25 @@
     $('perf-venuePhoto').value = safeString(e.venuePhoto);
     var op = Number(e.venueOpacity);
     if (!Number.isFinite(op)) op = 50;
-    if (op < 30) op = 30;
+    if (op < 10) op = 10;
     if (op > 100) op = 100;
+    var brightness = Number(e.venueBrightness);
+    if (!Number.isFinite(brightness)) brightness = 100;
+    if (brightness < 40) brightness = 40;
+    if (brightness > 140) brightness = 140;
+    var contrast = Number(e.venueContrast);
+    if (!Number.isFinite(contrast)) contrast = 100;
+    if (contrast < 40) contrast = 40;
+    if (contrast > 140) contrast = 140;
     $('perf-venueOpacity').value = String(op);
     $('perf-venueOpacityValue').value = String(op) + '%';
+    $('perf-venueBrightness').value = String(brightness);
+    $('perf-venueBrightnessValue').value = String(brightness) + '%';
+    $('perf-venueContrast').value = String(contrast);
+    $('perf-venueContrastValue').value = String(contrast) + '%';
     $('perf-venuePreview').src = safeString(e.venuePhoto);
     $('perf-venuePreview').style.opacity = String(op / 100);
+    $('perf-venuePreview').style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
     setSelectWithCustomValue('perf-status', safeString(e.status), 'upcoming');
     setSelectWithCustomValue('perf-type', safeString(e.type), 'concert');
     setSelectWithCustomValue('perf-editorialStatus', safeString(e.editorialStatus || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft')), 'draft');
@@ -2476,14 +7642,23 @@
     var bg = safeString($('perf-venuePhoto').value).trim();
     var op = parseInt($('perf-venueOpacity').value, 10);
     if (!Number.isFinite(op)) op = 50;
-    if (op < 30) op = 30;
+    if (op < 10) op = 10;
     if (op > 100) op = 100;
+    var brightness = parseInt($('perf-venueBrightness').value, 10);
+    if (!Number.isFinite(brightness)) brightness = 100;
+    if (brightness < 40) brightness = 40;
+    if (brightness > 140) brightness = 140;
+    var contrast = parseInt($('perf-venueContrast').value, 10);
+    if (!Number.isFinite(contrast)) contrast = 100;
+    if (contrast < 40) contrast = 40;
+    if (contrast > 140) contrast = 140;
     $('perf-preview-date').textContent = perfPreviewDateLabel();
     $('perf-preview-title').textContent = title || 'Event title';
     $('perf-preview-detail').textContent = detail || 'Event detail';
     $('perf-preview-venue').textContent = ((venue || 'Venue') + ' · ' + (city || 'City'));
     $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
     $('perf-cardPreviewBg').style.opacity = String(op / 100);
+    $('perf-cardPreviewBg').style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
   }
   function updatePerfPublicVisibilitySummary() {
     var box = $('perf-public-visibility');
@@ -2752,12 +7927,25 @@
     if (dateDisplay) $('perf-sortDate').value = dateDisplay;
     var op = parseInt($('perf-venueOpacity').value, 10);
     if (!Number.isFinite(op)) op = 50;
-    if (op < 30) op = 30;
+    if (op < 10) op = 10;
     if (op > 100) op = 100;
+    var brightness = parseInt($('perf-venueBrightness').value, 10);
+    if (!Number.isFinite(brightness)) brightness = 100;
+    if (brightness < 40) brightness = 40;
+    if (brightness > 140) brightness = 140;
+    var contrast = parseInt($('perf-venueContrast').value, 10);
+    if (!Number.isFinite(contrast)) contrast = 100;
+    if (contrast < 40) contrast = 40;
+    if (contrast > 140) contrast = 140;
     e.venueOpacity = op;
+    e.venueBrightness = brightness;
+    e.venueContrast = contrast;
     $('perf-venueOpacityValue').value = String(op) + '%';
+    $('perf-venueBrightnessValue').value = String(brightness) + '%';
+    $('perf-venueContrastValue').value = String(contrast) + '%';
     $('perf-venuePreview').src = e.venuePhoto;
     $('perf-venuePreview').style.opacity = String(op / 100);
+    $('perf-venuePreview').style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
     e.status = $('perf-status').value;
     e.type = syncPairedValue('perf-type', 'perf-modal-type');
     e.editorialStatus = safeString($('perf-editorialStatus').value || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft'));
@@ -4216,6 +9404,7 @@
     setFieldFromSources('contact-title', stored, fallback, 'title', 'Bundled default');
     setFieldFromSources('contact-sub', stored, fallback, 'sub', 'Bundled default');
     setFieldFromSources('contact-email', stored, fallback, 'email', 'Bundled default');
+    setFieldFromSources('contact-phone', stored, fallback, 'phone', 'Bundled default');
     setFieldFromSources('contact-emailBtn', stored, fallback, 'emailBtn', 'Bundled default');
     setFieldEffectiveValue($('contact-webBtn'), { value: inferredWebBtn, source: safeString(inferredWebBtn).trim() ? ((isObject(stored) && safeString(stored.webBtn).trim()) ? 'Saved here' : 'Bundled default') : 'Bundled default' });
     if ($('contact-webUrl')) $('contact-webUrl').value = inferredWebUrl;
@@ -4228,6 +9417,7 @@
       title: safeString($('contact-title').value),
       sub: safeString($('contact-sub').value),
       email: safeString($('contact-email').value),
+      phone: safeString($('contact-phone').value),
       emailBtn: safeString($('contact-emailBtn').value),
       webBtn: safeString($('contact-webBtn').value),
       webUrl: safeString($('contact-webUrl') && $('contact-webUrl').value).trim()
@@ -4376,6 +9566,7 @@
       { id: 'contact-title', key: 'title' },
       { id: 'contact-sub', key: 'sub' },
       { id: 'contact-email', key: 'email' },
+      { id: 'contact-phone', key: 'phone' },
       { id: 'contact-emailBtn', key: 'emailBtn' },
       { id: 'contact-webBtn', key: 'webBtn' },
       { id: 'contact-webUrl', key: 'webUrl' }
@@ -5822,7 +11013,7 @@
     setPillStatus('programs-completeness', programMissing ? 'warn' : 'ok', programMissing ? (hasPrograms ? 'Missing header text' : 'No program cards') : 'Complete');
 
     var contactMissing = 0;
-    ['contact-title', 'contact-sub', 'contact-email'].forEach(function (id) {
+    ['contact-title', 'contact-sub', 'contact-email', 'contact-phone'].forEach(function (id) {
       if (isBlank($(id) && $(id).value)) contactMissing += 1;
     });
     setPillStatus('contact-completeness', contactMissing ? 'warn' : 'ok', contactMissing ? ('Missing fields: ' + contactMissing) : 'Complete');
@@ -5929,6 +11120,153 @@
   function currentDraftKey() {
     return 'adm2_draft_' + safeString(state.section) + '_' + safeString(state.lang);
   }
+  function readDraftRestoreNoticeState() {
+    try {
+      var raw = sessionStorage.getItem(DRAFT_RESTORE_NOTICE_STORAGE_KEY);
+      if (!raw) return {};
+      var parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function writeDraftRestoreNoticeState(obj) {
+    try {
+      sessionStorage.setItem(DRAFT_RESTORE_NOTICE_STORAGE_KEY, JSON.stringify(obj || {}));
+    } catch (e) {}
+  }
+  function getDraftRestoreNoticeRecord(key) {
+    var stateMap = readDraftRestoreNoticeState();
+    return isObject(stateMap[key]) ? stateMap[key] : null;
+  }
+  function setDraftRestoreNoticeRecord(key, patch) {
+    var stateMap = readDraftRestoreNoticeState();
+    var next = isObject(stateMap[key]) ? clone(stateMap[key]) : {};
+    Object.assign(next, patch || {});
+    stateMap[key] = next;
+    writeDraftRestoreNoticeState(stateMap);
+    return next;
+  }
+  function clearDraftRestoreNoticeRecord(key) {
+    var stateMap = readDraftRestoreNoticeState();
+    if (stateMap[key]) {
+      delete stateMap[key];
+      writeDraftRestoreNoticeState(stateMap);
+    }
+  }
+  function readCurrentLocalDraftSnapshot() {
+    var key = currentDraftKey();
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.data) return null;
+      if (!safeString(parsed.draftId).trim()) {
+        parsed.draftId = makeLocalDraftId();
+        if (!Number(parsed.createdAt)) parsed.createdAt = Number(parsed.ts) || Date.now();
+        try { localStorage.setItem(key, JSON.stringify(parsed)); } catch (e1) {}
+      }
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+  function makeLocalDraftId() {
+    return 'draft_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+  function localDraftRestoreText(ts) {
+    var text = formatProgrammeOfferTimestamp(ts);
+    return text && text !== 'Not saved yet' ? text : '';
+  }
+  function hideDraftRestoreBanner() {
+    var banner = $('draftRestoreBanner');
+    if (!banner) return;
+    banner.hidden = true;
+    banner.innerHTML = '';
+    state.draftRestoreBannerKey = '';
+    state.draftRestoreBannerTs = 0;
+  }
+  function showDraftRestoreBanner(snapshot, force) {
+    var banner = $('draftRestoreBanner');
+    if (!banner) return false;
+    var key = currentDraftKey();
+    var ts = Number(snapshot && snapshot.ts) || 0;
+    var draftId = safeString(snapshot && snapshot.draftId).trim();
+    if (!snapshot || !snapshot.data) {
+      hideDraftRestoreBanner();
+      return false;
+    }
+    var notice = getDraftRestoreNoticeRecord(key) || {};
+    var sameDraft = draftId && safeString(notice.draftId).trim() === draftId;
+    if (!force && sameDraft && (notice.seen || notice.dismissed || notice.restored)) {
+      hideDraftRestoreBanner();
+      return false;
+    }
+    state.draftRestoreBannerKey = key;
+    state.draftRestoreBannerTs = ts;
+    var lastSaved = localDraftRestoreText(ts);
+    banner.innerHTML =
+      '<div class="draft-restore-banner__copy">' +
+        '<p class="draft-restore-banner__title">A local draft exists for this section/language.</p>' +
+        (lastSaved ? '<p class="draft-restore-banner__meta">Last saved: ' + escapeHtml(lastSaved) + '</p>' : '') +
+      '</div>' +
+      '<div class="draft-restore-banner__actions">' +
+        '<button type="button" data-draft-restore-action="restore">Restore draft</button>' +
+        '<button type="button" data-draft-restore-action="dismiss">Dismiss</button>' +
+        '<button type="button" class="muted-link" data-draft-restore-action="clear">Clear draft</button>' +
+      '</div>';
+    banner.hidden = false;
+    setDraftRestoreNoticeRecord(key, { draftId: draftId, ts: ts, seen: true, seenAt: Date.now(), dismissed: false, restored: false });
+    return true;
+  }
+  function refreshDraftRestoreBanner(force) {
+    if (state.section === 'sitehealth') {
+      hideDraftRestoreBanner();
+      return false;
+    }
+    var snapshot = readCurrentLocalDraftSnapshot();
+    if (!snapshot || !snapshot.data) {
+      hideDraftRestoreBanner();
+      return false;
+    }
+    return showDraftRestoreBanner(snapshot, !!force);
+  }
+  function dismissDraftRestoreBanner(clearDraft) {
+    var key = currentDraftKey();
+    var snapshot = readCurrentLocalDraftSnapshot();
+    var ts = Number(snapshot && snapshot.ts) || Date.now();
+    var draftId = safeString(snapshot && snapshot.draftId).trim();
+    if (clearDraft) clearLocalDraftForCurrentSection();
+    setDraftRestoreNoticeRecord(key, {
+      draftId: draftId,
+      ts: ts,
+      seen: true,
+      seenAt: Date.now(),
+      dismissed: true,
+      restored: false,
+      cleared: !!clearDraft
+    });
+    hideDraftRestoreBanner();
+  }
+  function restoreDraftFromBanner() {
+    var snapshot = readCurrentLocalDraftSnapshot();
+    if (!snapshot || !snapshot.data) {
+      hideDraftRestoreBanner();
+      return;
+    }
+    applySectionDraftObject(state.section, snapshot.data);
+    markDirty(true, 'Local draft restored');
+    pushActivitySummary('Draft restored', [state.section + ' · ' + state.lang.toUpperCase()]);
+    setDraftRestoreNoticeRecord(currentDraftKey(), {
+      draftId: safeString(snapshot.draftId).trim(),
+      ts: Number(snapshot.ts) || Date.now(),
+      seen: true,
+      seenAt: Date.now(),
+      dismissed: false,
+      restored: true
+    });
+    hideDraftRestoreBanner();
+  }
   function serializeCurrentSectionDraft() {
     var s = state.section;
     if (s === 'home') return {
@@ -5960,10 +11298,44 @@
     }
     if (s === 'rep') return { h2: $('rep-h2').value, intro: $('rep-intro').value, repCards: clone(state.repCards), repIndex: state.repIndex };
     if (s === 'programs') return { programsDoc: clone(state.programsDoc), programsIndex: state.programsIndex };
+    if (s === 'programbuilder') return {
+      plannerDoc: clone(state.plannerDoc),
+      plannerIndex: state.plannerIndex,
+      plannerSearch: state.plannerSearch,
+      plannerTypeFilter: state.plannerTypeFilter,
+      plannerLangFilter: state.plannerLangFilter,
+      plannerReadinessFilter: state.plannerReadinessFilter,
+      plannerTagFilter: state.plannerTagFilter,
+      plannerSort: state.plannerSort,
+      plannerOfferStatusFilter: state.plannerOfferStatusFilter,
+      plannerOfferTypeFilter: state.plannerOfferTypeFilter,
+      plannerOfferCategoryFilter: state.plannerOfferCategoryFilter,
+      plannerOfferTagFilter: state.plannerOfferTagFilter,
+      plannerOfferLangFilter: state.plannerOfferLangFilter,
+      plannerOfferMatchingOnly: state.plannerOfferMatchingOnly !== false,
+      plannerOfferFormationOnly: !!state.plannerOfferFormationOnly,
+      plannerOfferShowWithoutTenor: !!state.plannerOfferShowWithoutTenor,
+      blueprintDoc: clone(state.blueprintDoc),
+      blueprintFamily: state.blueprintFamily,
+      blueprintDuration: state.blueprintDuration,
+      blueprintPieceIndex: state.blueprintPieceIndex,
+      blueprintOutputLang: state.blueprintOutputLang,
+      savedOfferId: state.savedOfferId,
+      savedOfferSearch: state.savedOfferSearch,
+      savedOfferTypeFilter: state.savedOfferTypeFilter,
+      savedOfferFamilyFilter: state.savedOfferFamilyFilter,
+      savedOfferDurationFilter: state.savedOfferDurationFilter,
+      savedOfferLangFilter: state.savedOfferLangFilter,
+      savedOfferFormationFilter: state.savedOfferFormationFilter,
+      savedOfferStatusFilter: state.savedOfferStatusFilter,
+      concertHistoryDoc: clone(state.concertHistoryDoc),
+      concertHistoryIndex: state.concertHistoryIndex,
+      concertHistorySearch: state.concertHistorySearch
+    };
     if (s === 'calendar') return { h2: $('perf-h2').value, intro: $('perf-intro').value, perfs: clone(state.perfs), perfIndex: state.perfIndex };
     if (s === 'media') return { vidData: clone(state.vidData), vidIndex: state.vidIndex, audioData: clone(state.audioData), audIndex: state.audIndex, photosData: clone(state.photosData), photoCaptions: clone(state.photoCaptions), photoType: state.photoType, photoIndex: state.photoIndex };
     if (s === 'press') return { press: clone(state.press), pressIndex: state.pressIndex, publicPdfs: clone(state.publicPdfs), epkBios: clone(state.epkBios), epkPhotos: clone(state.epkPhotos), epkPhotoIndex: state.epkPhotoIndex };
-    if (s === 'contact') return { title: $('contact-title').value, sub: $('contact-sub').value, email: $('contact-email').value, emailBtn: $('contact-emailBtn').value, webBtn: $('contact-webBtn').value, webUrl: $('contact-webUrl') ? $('contact-webUrl').value : '' };
+    if (s === 'contact') return { title: $('contact-title').value, sub: $('contact-sub').value, email: $('contact-email').value, phone: $('contact-phone') ? $('contact-phone').value : '', emailBtn: $('contact-emailBtn').value, webBtn: $('contact-webBtn').value, webUrl: $('contact-webUrl') ? $('contact-webUrl').value : '' };
     if (s === 'ui') return { uiPartial: collectUiSectionInputsToDoc(), json: $('ui-json').value };
     return null;
   }
@@ -6005,6 +11377,42 @@
       state.programsDoc = safeProgramsDoc(d.programsDoc || {});
       state.programsIndex = Number.isFinite(Number(d.programsIndex)) ? Number(d.programsIndex) : -1;
       renderProgramsList(); renderProgramsEditor();
+    } else if (s === 'programbuilder') {
+      state.plannerDoc = safePlannerDoc(d.plannerDoc || {});
+      state.plannerIndex = Number.isFinite(Number(d.plannerIndex)) ? Number(d.plannerIndex) : -1;
+      state.plannerSearch = safeString(d.plannerSearch);
+      state.plannerTypeFilter = safeString(d.plannerTypeFilter || 'all') || 'all';
+      state.plannerLangFilter = safeString(d.plannerLangFilter);
+      state.plannerReadinessFilter = safeString(d.plannerReadinessFilter || 'all') || 'all';
+      state.plannerTagFilter = safeString(d.plannerTagFilter);
+      state.plannerSort = safeString(d.plannerSort || 'sortOrder') || 'sortOrder';
+      state.plannerOfferStatusFilter = safeString(d.plannerOfferStatusFilter || 'all') || 'all';
+      state.plannerOfferTypeFilter = safeString(d.plannerOfferTypeFilter || 'all') || 'all';
+      state.plannerOfferCategoryFilter = safeString(d.plannerOfferCategoryFilter || 'all') || 'all';
+      state.plannerOfferTagFilter = safeString(d.plannerOfferTagFilter);
+      state.plannerOfferLangFilter = safeString(d.plannerOfferLangFilter);
+      state.plannerOfferMatchingOnly = d.plannerOfferMatchingOnly !== false;
+      state.plannerOfferFormationOnly = d.plannerOfferFormationOnly === true;
+      state.plannerOfferShowWithoutTenor = d.plannerOfferShowWithoutTenor === true;
+      state.blueprintDoc = safeBlueprintsDoc(d.blueprintDoc || {});
+      state.blueprintFamily = safeString(d.blueprintFamily || 'gala') || 'gala';
+      state.blueprintDuration = safeString(d.blueprintDuration || '30') || '30';
+      state.blueprintPieceIndex = Number.isFinite(Number(d.blueprintPieceIndex)) ? Number(d.blueprintPieceIndex) : -1;
+      state.blueprintOutputLang = safeString(d.blueprintOutputLang || state.lang || 'en') || 'en';
+      state.savedOfferId = safeString(d.savedOfferId);
+      state.savedOfferSearch = safeString(d.savedOfferSearch);
+      state.savedOfferTypeFilter = safeString(d.savedOfferTypeFilter || 'all') || 'all';
+      state.savedOfferFamilyFilter = safeString(d.savedOfferFamilyFilter || 'all') || 'all';
+      state.savedOfferDurationFilter = safeString(d.savedOfferDurationFilter || 'all') || 'all';
+      state.savedOfferLangFilter = safeString(d.savedOfferLangFilter || 'all') || 'all';
+      state.savedOfferFormationFilter = safeString(d.savedOfferFormationFilter);
+      state.savedOfferStatusFilter = safeString(d.savedOfferStatusFilter || 'all') || 'all';
+      state.concertHistoryDoc = safeConcertHistoryDoc(d.concertHistoryDoc || {});
+      state.concertHistoryIndex = Number.isFinite(Number(d.concertHistoryIndex)) ? Number(d.concertHistoryIndex) : -1;
+      state.concertHistorySearch = safeString(d.concertHistorySearch);
+      renderPlannerRepList();
+      renderBlueprintBuilder();
+      renderConcertHistoryList();
     } else if (s === 'calendar') {
       state.perfs = Array.isArray(d.perfs) ? clone(d.perfs) : [];
       state.perfIndex = Number.isFinite(Number(d.perfIndex)) ? Number(d.perfIndex) : -1;
@@ -6032,7 +11440,7 @@
       state.epkPhotoIndex = Number.isFinite(Number(d.epkPhotoIndex)) ? Number(d.epkPhotoIndex) : -1;
       loadPressPdfsIntoUi(); loadEpkBiosIntoUi(); renderPressList(); renderPressEditor(); renderEpkPhotoList(); renderEpkPhotoEditor();
     } else if (s === 'contact') {
-      $('contact-title').value = safeString(d.title); $('contact-sub').value = safeString(d.sub); $('contact-email').value = safeString(d.email); $('contact-emailBtn').value = safeString(d.emailBtn); $('contact-webBtn').value = safeString(d.webBtn); if ($('contact-webUrl')) $('contact-webUrl').value = safeString(d.webUrl);
+      $('contact-title').value = safeString(d.title); $('contact-sub').value = safeString(d.sub); $('contact-email').value = safeString(d.email); if ($('contact-phone')) $('contact-phone').value = safeString(d.phone); $('contact-emailBtn').value = safeString(d.emailBtn); $('contact-webBtn').value = safeString(d.webBtn); if ($('contact-webUrl')) $('contact-webUrl').value = safeString(d.webUrl);
       updateContactValidation(); updateContactMiniPreview();
     } else if (s === 'ui') {
       $('ui-json').value = safeString(d.json);
@@ -6063,7 +11471,18 @@
     var key = currentDraftKey();
     try {
       var prevRaw = localStorage.getItem(key);
-      var nextRaw = JSON.stringify({ ts: Date.now(), section: state.section, lang: state.lang, data: draft });
+      var prev = null;
+      try { prev = prevRaw ? JSON.parse(prevRaw) : null; } catch (e1) { prev = null; }
+      var draftId = prev && safeString(prev.draftId).trim() ? safeString(prev.draftId).trim() : makeLocalDraftId();
+      var createdAt = prev && Number(prev.createdAt) ? Number(prev.createdAt) : Date.now();
+      var nextRaw = JSON.stringify({
+        draftId: draftId,
+        createdAt: createdAt,
+        ts: Date.now(),
+        section: state.section,
+        lang: state.lang,
+        data: draft
+      });
       if (prevRaw && prevRaw !== nextRaw) state.sectionUndo[key] = prevRaw;
       localStorage.setItem(key, nextRaw);
     } catch (e) {}
@@ -6071,24 +11490,13 @@
   function clearLocalDraftForCurrentSection() {
     try { localStorage.removeItem(currentDraftKey()); } catch (e) {}
   }
-  function maybeRestoreDraftForCurrentSection() {
-    var key = currentDraftKey();
-    if (state.sectionDraftCache[key]) return;
-    state.sectionDraftCache[key] = true;
-    try {
-      var raw = localStorage.getItem(key);
-      if (!raw) return;
-      var parsed = JSON.parse(raw);
-      if (!parsed || !parsed.data) return;
-      if (!window.confirm('A local unsaved draft exists for this section/language. Restore it now?')) return;
-      applySectionDraftObject(state.section, parsed.data);
-      markDirty(true, 'Local draft restored');
-      pushActivitySummary('Draft restored', [state.section + ' · ' + state.lang.toUpperCase()]);
-    } catch (e) {}
+  function maybeRestoreDraftForCurrentSection(force) {
+    refreshDraftRestoreBanner(!!force);
   }
   function discardCurrentSectionChanges() {
     if (!window.confirm('Discard all local unsaved changes in this section and reload saved content?')) return;
     clearLocalDraftForCurrentSection();
+    hideDraftRestoreBanner();
     refreshCurrentSection();
     markDirty(false, 'Section changes discarded');
     pushActivitySummary('Section discarded', [state.section + ' reloaded from saved content']);
@@ -6122,7 +11530,7 @@
 
   function buildExportPayload() {
     var keys = [
-      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions',
+      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions','rg_repertoire_planner','rg_program_blueprints','rg_concert_history',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
       'rg_editorial_en','rg_editorial_de','rg_editorial_es','rg_editorial_it','rg_editorial_fr',
       'hero_en','hero_de','hero_es','hero_it','hero_fr',
@@ -6168,6 +11576,9 @@
     $('menuBtn').addEventListener('click', function () { $('sidebar').classList.toggle('open'); });
     syncTopbarToolsDisclosure();
     window.addEventListener('resize', syncTopbarToolsDisclosure);
+    if ($('paperPreviewToggle')) $('paperPreviewToggle').addEventListener('change', function () {
+      applyPaperPreviewMode(!!$('paperPreviewToggle').checked, true);
+    });
     document.querySelectorAll('.nav-item').forEach(function (btn) {
       btn.addEventListener('click', function () { openSection(btn.getAttribute('data-section')); });
     });
@@ -6199,6 +11610,187 @@
     $('saveRepHeaderBtn').addEventListener('click', saveRepHeader);
     $('saveRepCardsBtn').addEventListener('click', saveRepCards);
     $('programs-save').addEventListener('click', savePrograms);
+    if ($('pb-save-repertoire')) $('pb-save-repertoire').addEventListener('click', function () {
+      state.plannerDoc = safePlannerDoc(state.plannerDoc);
+      state.concertHistoryDoc = safeConcertHistoryDoc(state.concertHistoryDoc);
+      saveDoc('rg_repertoire_planner', state.plannerDoc);
+      saveDoc('rg_concert_history', state.concertHistoryDoc);
+      renderBlueprintBuilder();
+      renderConcertHistoryList();
+      renderProgramBuilderStatus();
+    });
+    if ($('pb-save-blueprints')) $('pb-save-blueprints').addEventListener('click', function () {
+      runProgramOfferSaveAction(saveCurrentProgramOffer);
+    });
+    if ($('pb-open-saved-browser')) $('pb-open-saved-browser').addEventListener('click', openSavedOfferBrowser);
+    if ($('pb-save-master-primary')) $('pb-save-master-primary').addEventListener('click', function () { runProgramOfferSaveAction(function () { saveProgramOfferSnapshot('master_programme'); }); });
+    if ($('pb-save-venue-primary')) $('pb-save-venue-primary').addEventListener('click', function () { runProgramOfferSaveAction(function () { saveProgramOfferSnapshot('venue_offer'); }); });
+    if ($('pb-duplicate-current')) $('pb-duplicate-current').addEventListener('click', duplicateActiveProgramOffer);
+    if ($('pb-archive-current')) $('pb-archive-current').addEventListener('click', archiveActiveProgramOffer);
+    if ($('pb-save-master')) $('pb-save-master').addEventListener('click', function () { runProgramOfferSaveAction(function () { saveProgramOfferSnapshot('master_programme'); }); });
+    if ($('pb-save-venue')) $('pb-save-venue').addEventListener('click', function () { runProgramOfferSaveAction(function () { saveProgramOfferSnapshot('venue_offer'); }); });
+    if ($('pb-load-saved')) $('pb-load-saved').addEventListener('click', loadSavedOfferIntoEditor);
+    if ($('pb-create-venue-from-master')) $('pb-create-venue-from-master').addEventListener('click', createVenueOfferFromMaster);
+    if ($('pb-duplicate-saved')) $('pb-duplicate-saved').addEventListener('click', duplicateSavedOffer);
+    if ($('pb-archive-saved')) $('pb-archive-saved').addEventListener('click', archiveSavedOffer);
+    if ($('pb-saved-search')) $('pb-saved-search').addEventListener('input', function () { state.savedOfferSearch = $('pb-saved-search').value; renderSavedOfferBrowser(); });
+    if ($('pb-saved-filter-type')) $('pb-saved-filter-type').addEventListener('change', function () { state.savedOfferTypeFilter = $('pb-saved-filter-type').value; renderSavedOfferBrowser(); });
+    if ($('pb-saved-filter-family')) $('pb-saved-filter-family').addEventListener('change', function () { state.savedOfferFamilyFilter = $('pb-saved-filter-family').value; renderSavedOfferBrowser(); });
+    if ($('pb-saved-filter-duration')) $('pb-saved-filter-duration').addEventListener('change', function () { state.savedOfferDurationFilter = $('pb-saved-filter-duration').value; renderSavedOfferBrowser(); });
+    if ($('pb-saved-filter-lang')) $('pb-saved-filter-lang').addEventListener('change', function () { state.savedOfferLangFilter = $('pb-saved-filter-lang').value; renderSavedOfferBrowser(); });
+    if ($('pb-saved-filter-formation')) $('pb-saved-filter-formation').addEventListener('input', function () { state.savedOfferFormationFilter = $('pb-saved-filter-formation').value; renderSavedOfferBrowser(); });
+    if ($('pb-saved-filter-status')) $('pb-saved-filter-status').addEventListener('change', function () { state.savedOfferStatusFilter = $('pb-saved-filter-status').value; renderSavedOfferBrowser(); });
+    if ($('pb-rep-search')) $('pb-rep-search').addEventListener('input', function () { state.plannerSearch = $('pb-rep-search').value; renderPlannerRepList(); });
+    if ($('pb-rep-filter-type')) $('pb-rep-filter-type').addEventListener('change', function () { state.plannerTypeFilter = $('pb-rep-filter-type').value; renderPlannerRepList(); });
+    if ($('pb-rep-filter-lang')) $('pb-rep-filter-lang').addEventListener('input', function () { state.plannerLangFilter = $('pb-rep-filter-lang').value; renderPlannerRepList(); });
+    if ($('pb-rep-filter-readiness')) $('pb-rep-filter-readiness').addEventListener('change', function () { state.plannerReadinessFilter = $('pb-rep-filter-readiness').value; renderPlannerRepList(); });
+    if ($('pb-rep-filter-tag')) $('pb-rep-filter-tag').addEventListener('input', function () { state.plannerTagFilter = $('pb-rep-filter-tag').value; renderPlannerRepList(); });
+    if ($('pb-rep-sort')) $('pb-rep-sort').addEventListener('change', function () { state.plannerSort = $('pb-rep-sort').value; renderPlannerRepList(); });
+    if ($('pb-rep-add')) $('pb-rep-add').addEventListener('click', function () {
+      state.plannerDoc.items.push(normalizePlannerItemRecord({ id: 'piece_' + (state.plannerDoc.items.length + 1), title: '', composer: '', work: '', type: 'other', language: '', approximateDurationMin: 0, durationMin: 0, formations: [], readiness: 'idea', availabilityStatus: 'idea', tags: [], fitTags: [], dramaticRole: '', energyLevel: '', moodTags: [], tempoProfile: '', impactLevel: '', audienceAppeal: '', vocalLoad: '', galaRole: '', texture: '', styleBucket: '', recoveryValue: '', bestDurationFit: 'all', encoreCandidate: false, practicalTags: [], interlude: false, vocalRestSupport: false, goodBetweenBlocks: false, goodBeforeClimax: false, notes: '', publicNotes: '', sortOrder: (state.plannerDoc.items.length + 1) * 10, performanceStatus: '', performedIn: [], reviewStatus: 'clean', offerOnly: false, excludeFromOffers: false, sourceGroup: '', suggestionGroup: '' }, state.plannerDoc.items.length));
+      state.plannerIndex = state.plannerDoc.items.length - 1;
+      renderPlannerRepList();
+      renderBlueprintBuilder();
+      markDirty(true, 'Repertoire item added');
+    });
+    if ($('pb-rep-del')) $('pb-rep-del').addEventListener('click', function () {
+      if (state.plannerIndex < 0) return;
+      var deleted = state.plannerDoc.items.splice(state.plannerIndex, 1)[0];
+      var linkedOffers = 0;
+      Object.keys(state.blueprintDoc.blueprints || {}).forEach(function (key) {
+        linkedOffers += (state.blueprintDoc.blueprints[key].items || []).filter(function (it) { return safeString(it.pieceId) === safeString(deleted && deleted.id); }).length;
+      });
+      if (!window.confirm('Delete this repertoire item from the library?\n\n' + safeString(deleted && deleted.title || 'Untitled item') + (linkedOffers ? ('\nThis will also remove it from ' + linkedOffers + ' saved offer slot(s).') : ''))) {
+        state.plannerDoc.items.splice(state.plannerIndex, 0, deleted);
+        return;
+      }
+      Object.keys(state.blueprintDoc.blueprints || {}).forEach(function (key) {
+        state.blueprintDoc.blueprints[key].items = (state.blueprintDoc.blueprints[key].items || []).filter(function (it) { return safeString(it.pieceId) !== safeString(deleted && deleted.id); });
+      });
+      state.plannerIndex = Math.max(0, state.plannerIndex - 1);
+      renderPlannerRepList();
+      renderBlueprintBuilder();
+      markDirty(true, 'Repertoire item deleted');
+    });
+    if ($('pb-rep-up')) $('pb-rep-up').addEventListener('click', function () {
+      var i = state.plannerIndex; if (i <= 0) return;
+      var t = state.plannerDoc.items[i - 1]; state.plannerDoc.items[i - 1] = state.plannerDoc.items[i]; state.plannerDoc.items[i] = t;
+      state.plannerIndex = i - 1;
+      renderPlannerRepList();
+      markDirty(true, 'Repertoire order updated');
+    });
+    if ($('pb-rep-down')) $('pb-rep-down').addEventListener('click', function () {
+      var i = state.plannerIndex; if (i < 0 || i >= state.plannerDoc.items.length - 1) return;
+      var t = state.plannerDoc.items[i + 1]; state.plannerDoc.items[i + 1] = state.plannerDoc.items[i]; state.plannerDoc.items[i] = t;
+      state.plannerIndex = i + 1;
+      renderPlannerRepList();
+      markDirty(true, 'Repertoire order updated');
+    });
+    if ($('pb-family')) $('pb-family').addEventListener('change', function () {
+      var nextFamily = $('pb-family').value;
+      var nextDuration = $('pb-duration') ? $('pb-duration').value : state.blueprintDuration;
+      if (!canSwitchProgrammeOfferWorkingSlot(nextFamily, nextDuration)) {
+        revertProgrammeOfferContextControls();
+        return;
+      }
+      state.blueprintFamily = nextFamily;
+      persistBlueprintHeader('context');
+    });
+    if ($('pb-duration')) $('pb-duration').addEventListener('change', function () {
+      var nextFamily = $('pb-family') ? $('pb-family').value : state.blueprintFamily;
+      var nextDuration = $('pb-duration').value;
+      if (!canSwitchProgrammeOfferWorkingSlot(nextFamily, nextDuration)) {
+        revertProgrammeOfferContextControls();
+        return;
+      }
+      state.blueprintDuration = nextDuration;
+      persistBlueprintHeader('context');
+    });
+    if ($('pb-output-lang')) $('pb-output-lang').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-build-mode')) $('pb-build-mode').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-repertoire-mode')) $('pb-repertoire-mode').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-gala-preferPacing')) $('pb-gala-preferPacing').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-gala-allowPianoInterludes')) $('pb-gala-allowPianoInterludes').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-gala-includeContrast')) $('pb-gala-includeContrast').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-gala-buildArc')) $('pb-gala-buildArc').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-blueprint-title-reset')) $('pb-blueprint-title-reset').addEventListener('click', function () { resetProgramOfferFieldToDefault('title'); });
+    if ($('pb-offer-description-reset')) $('pb-offer-description-reset').addEventListener('click', function () { resetProgramOfferFieldToDefault('description'); });
+    if ($('pb-flexible-note-reset')) $('pb-flexible-note-reset').addEventListener('click', function () { resetProgramOfferFieldToDefault('flexibleNote'); });
+    if ($('pb-fee-apply-preset')) $('pb-fee-apply-preset').addEventListener('click', function () {
+      applyBlueprintFeePreset($('pb-fee-preset') && $('pb-fee-preset').value);
+    });
+    if ($('pb-add-piece-search')) $('pb-add-piece-search').addEventListener('input', renderBlueprintBuilder);
+    if ($('pb-offer-filter-status')) $('pb-offer-filter-status').addEventListener('change', function () { state.plannerOfferStatusFilter = $('pb-offer-filter-status').value; renderBlueprintBuilder(); });
+    if ($('pb-offer-filter-category')) $('pb-offer-filter-category').addEventListener('change', function () { state.plannerOfferCategoryFilter = $('pb-offer-filter-category').value; renderBlueprintBuilder(); });
+    if ($('pb-offer-filter-tag')) $('pb-offer-filter-tag').addEventListener('input', function () { state.plannerOfferTagFilter = $('pb-offer-filter-tag').value; renderBlueprintBuilder(); });
+    if ($('pb-offer-filter-lang')) $('pb-offer-filter-lang').addEventListener('input', function () { state.plannerOfferLangFilter = $('pb-offer-filter-lang').value; renderBlueprintBuilder(); });
+    if ($('pb-offer-filter-matchingOnly')) $('pb-offer-filter-matchingOnly').addEventListener('change', function () {
+      state.plannerOfferMatchingOnly = !!$('pb-offer-filter-matchingOnly').checked;
+      if ($('pb-offer-filter-showAll')) $('pb-offer-filter-showAll').checked = !state.plannerOfferMatchingOnly;
+      renderBlueprintBuilder();
+    });
+    if ($('pb-offer-filter-showAll')) $('pb-offer-filter-showAll').addEventListener('change', function () {
+      state.plannerOfferMatchingOnly = !$('pb-offer-filter-showAll').checked;
+      if ($('pb-offer-filter-matchingOnly')) $('pb-offer-filter-matchingOnly').checked = state.plannerOfferMatchingOnly;
+      renderBlueprintBuilder();
+    });
+    if ($('pb-offer-filter-formation')) $('pb-offer-filter-formation').addEventListener('change', function () { state.plannerOfferFormationOnly = !!$('pb-offer-filter-formation').checked; renderBlueprintBuilder(); });
+    if ($('pb-offer-filter-showWithoutTenor')) $('pb-offer-filter-showWithoutTenor').addEventListener('change', function () { state.plannerOfferShowWithoutTenor = !!$('pb-offer-filter-showWithoutTenor').checked; renderBlueprintBuilder(); });
+    if ($('pb-add-piece')) $('pb-add-piece').addEventListener('click', function () {
+      plannerAddPieceToCurrentOffer($('pb-add-piece-select').value);
+    });
+    if ($('pb-open-quick-add')) $('pb-open-quick-add').addEventListener('click', function () { openQuickAddManual('main'); });
+    if ($('pb-quick-add-submit')) $('pb-quick-add-submit').addEventListener('click', quickAddManualPiece);
+    if ($('pb-quick-add-close')) $('pb-quick-add-close').addEventListener('click', closeQuickAddManual);
+    document.querySelectorAll('[data-pb-quick-close]').forEach(function (el) {
+      el.addEventListener('click', closeQuickAddManual);
+    });
+    if ($('pb-encore-add')) $('pb-encore-add').addEventListener('click', addEncoreOption);
+    if ($('pb-encore-open-quick-add')) $('pb-encore-open-quick-add').addEventListener('click', function () { openQuickAddManual('encore', { encoreIndex: -1 }); });
+    if ($('pb-encore-export')) $('pb-encore-export').addEventListener('change', function () {
+      persistBlueprintHeader('manual');
+    });
+    if ($('pb-piece-remove')) $('pb-piece-remove').addEventListener('click', function () {
+      var bp = currentBlueprint();
+      if (state.blueprintPieceIndex < 0 || state.blueprintPieceIndex >= bp.items.length) return;
+      var piece = getPlannerItemById(bp.items[state.blueprintPieceIndex] && bp.items[state.blueprintPieceIndex].pieceId);
+      if (!window.confirm('Remove this piece from the current offer?\n\n' + safeString((bp.items[state.blueprintPieceIndex] && bp.items[state.blueprintPieceIndex].customTitle) || (piece && piece.title) || 'Selected piece'))) return;
+      bp.items.splice(state.blueprintPieceIndex, 1);
+      state.blueprintPieceIndex = Math.max(0, state.blueprintPieceIndex - 1);
+      renderBlueprintBuilder();
+      markDirty(true, 'Programme repertoire removed');
+    });
+    if ($('pb-piece-up')) $('pb-piece-up').addEventListener('click', function () {
+      var bp = currentBlueprint(); var i = state.blueprintPieceIndex; if (i <= 0) return;
+      if (safeString(bp.buildMode) === 'dramatic_arc' && safeString((bp.items[i] || {}).slotId).trim()) {
+        setStatus('Slot-managed lines follow the dramatic arc order. Change the slot instead.', 'warn');
+        return;
+      }
+      var t = bp.items[i - 1]; bp.items[i - 1] = bp.items[i]; bp.items[i] = t; state.blueprintPieceIndex = i - 1;
+      renderBlueprintBuilder(); markDirty(true, 'Programme order updated');
+    });
+    if ($('pb-piece-down')) $('pb-piece-down').addEventListener('click', function () {
+      var bp = currentBlueprint(); var i = state.blueprintPieceIndex; if (i < 0 || i >= bp.items.length - 1) return;
+      if (safeString(bp.buildMode) === 'dramatic_arc' && safeString((bp.items[i] || {}).slotId).trim()) {
+        setStatus('Slot-managed lines follow the dramatic arc order. Change the slot instead.', 'warn');
+        return;
+      }
+      var t = bp.items[i + 1]; bp.items[i + 1] = bp.items[i]; bp.items[i] = t; state.blueprintPieceIndex = i + 1;
+      renderBlueprintBuilder(); markDirty(true, 'Programme order updated');
+    });
+    if ($('pb-export-pdf')) $('pb-export-pdf').addEventListener('click', exportProgramOfferPdf);
+    if ($('pb-print-now')) $('pb-print-now').addEventListener('click', function () {
+      setProgramOfferExportHint('Programme Sheet ready. Use File > Print or press Cmd+P if Safari does not open the dialog.', 'warn');
+      triggerProgramOfferPrintDialog();
+    });
+    if ($('pb-close-print-view')) $('pb-close-print-view').addEventListener('click', closeProgramOfferPrintView);
+    if ($('pb-copy-email-primary')) $('pb-copy-email-primary').addEventListener('click', function () { copyTextValue('pb-output-email', 'Email draft'); });
+    if ($('pb-copy-fee-summary')) $('pb-copy-fee-summary').addEventListener('click', function () { copyTextValue('pb-fee-summary-output', 'Budget summary'); });
+    if ($('pb-copy-fee-email')) $('pb-copy-fee-email').addEventListener('click', function () { copyTextValue('pb-fee-email-output', 'Quote email'); });
+    if ($('pb-copy-internal')) $('pb-copy-internal').addEventListener('click', function () { copyTextValue('pb-output-internal', 'Private draft'); });
+    if ($('pb-copy-email')) $('pb-copy-email').addEventListener('click', function () { copyTextValue('pb-output-email', 'Email draft'); });
+    if ($('pb-copy-public')) $('pb-copy-public').addEventListener('click', function () { copyTextValue('pb-output-public', 'Short blurb'); });
+    if ($('pb-history-search')) $('pb-history-search').addEventListener('input', function () { state.concertHistorySearch = $('pb-history-search').value; renderConcertHistoryList(); });
     if ($('copyProgramsFromEnBtn')) $('copyProgramsFromEnBtn').addEventListener('click', function () { copyProgramsFromEn(false); });
     if ($('copyProgramsMissingFromEnBtn')) $('copyProgramsMissingFromEnBtn').addEventListener('click', function () { copyProgramsFromEn(true); });
     if ($('compareProgramsWithEnBtn')) $('compareProgramsWithEnBtn').addEventListener('click', compareProgramsWithEn);
@@ -6480,6 +12072,9 @@
     if ($('perf-apply-bulk')) $('perf-apply-bulk').addEventListener('click', applyPerfBulk);
     if ($('perf-apply-editorial-bulk')) $('perf-apply-editorial-bulk').addEventListener('click', applyPerfEditorialBulk);
     if ($('perf-archive-current-btn')) $('perf-archive-current-btn').addEventListener('click', perfArchiveCurrentEvent);
+    if ($('perf-open-internal-calendar')) $('perf-open-internal-calendar').addEventListener('click', function () {
+      window.open('internal-calendar.html', '_blank', 'noopener');
+    });
     if ($('copyPressBiosMissingFromEnBtn')) $('copyPressBiosMissingFromEnBtn').addEventListener('click', copyPressBiosMissingFromEn);
     if ($('comparePressBiosWithEnBtn')) $('comparePressBiosWithEnBtn').addEventListener('click', comparePressBiosWithEn);
     if ($('markPressBiosNeedsTranslationBtn')) $('markPressBiosNeedsTranslationBtn').addEventListener('click', function () { setSectionEditorialReview('press_bios', 'needs_translation'); });
@@ -6876,7 +12471,13 @@
 
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category','rep-editorialStatus'], persistRepEditor);
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['pb-rep-id','pb-rep-title','pb-rep-composer','pb-rep-work','pb-rep-type','pb-rep-language','pb-rep-durationMin','pb-rep-approximateDurationMin','pb-rep-readiness','pb-rep-availabilityStatus','pb-rep-category','pb-rep-voiceCategory','pb-rep-primaryVoice','pb-rep-pairedVoices','pb-rep-includesTenor','pb-rep-formations','pb-rep-performanceStatus','pb-rep-reviewStatus','pb-rep-tags','pb-rep-fitTags','pb-rep-performedIn','pb-rep-offerOnly','pb-rep-excludeFromOffers','pb-rep-sourceGroup','pb-rep-suggestionGroup','pb-rep-dramaticRole','pb-rep-energyLevel','pb-rep-tempoProfile','pb-rep-impactLevel','pb-rep-audienceAppeal','pb-rep-galaRole','pb-rep-vocalLoad','pb-rep-texture','pb-rep-styleBucket','pb-rep-recoveryValue','pb-rep-bestDurationFit','pb-rep-moodTags','pb-rep-practicalTags','pb-rep-encoreCandidate','pb-rep-interlude','pb-rep-vocalRestSupport','pb-rep-goodBetweenBlocks','pb-rep-goodBeforeClimax','pb-rep-notes','pb-rep-publicNotes','pb-rep-sortOrder'], persistPlannerRepEditor);
+    bindInputsDirty(['pb-blueprint-formation','pb-blueprint-notes','pb-version-label','pb-build-mode','pb-repertoire-mode','pb-header-image-mode','pb-header-image-url','pb-contact-phone','pb-offer-useCase','pb-offer-status','pb-gala-preferPacing','pb-gala-allowPianoInterludes','pb-gala-includeContrast','pb-gala-buildArc'], persistBlueprintHeader);
+    bindInputsDirty(['pb-fee-eventType','pb-fee-durationMin','pb-fee-formation','pb-fee-numberOfArtists','pb-fee-includesPianist','pb-fee-rehearsalCount','pb-fee-rehearsalFeePerArtist','pb-fee-leadArtistFee','pb-fee-collaboratorFee','pb-fee-pianistFee','pb-fee-travelCost','pb-fee-hotelCost','pb-fee-localTransportCost','pb-fee-adminBuffer','pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride','pb-fee-benchmarkSourceVersion','pb-fee-benchmarkLastReviewed','pb-fee-notes'], persistBlueprintFeeEstimate);
+    bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
+    bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
+    bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-venueBrightness','perf-venueContrast','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
@@ -7022,7 +12623,7 @@
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
     bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);
-    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
+    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
       updateContactValidation();
       updateContactMiniPreview();
       updateCompletenessIndicators();
@@ -7051,6 +12652,9 @@
     if ($('copyPublicUrlBtn')) $('copyPublicUrlBtn').addEventListener('click', copyCurrentPublicUrl);
     if ($('undoSectionBtn')) $('undoSectionBtn').addEventListener('click', undoLastSectionEdit);
     if ($('discardSectionBtn')) $('discardSectionBtn').addEventListener('click', discardCurrentSectionChanges);
+    if ($('checkLocalDraftBtn')) $('checkLocalDraftBtn').addEventListener('click', function () {
+      maybeRestoreDraftForCurrentSection(true);
+    });
     if ($('focusModeBtn')) $('focusModeBtn').addEventListener('click', toggleFocusMode);
     $('openLegacyBtn').addEventListener('click', function () { window.open('admin.html', '_blank', 'noopener'); });
     $('openPressPdfsToolBtn').addEventListener('click', function () {
@@ -7065,7 +12669,7 @@
     $('restoreCurrentBtn').addEventListener('click', function () {
       if (typeof state.api.restoreDefaults !== 'function') return alert('Restore is not available in this session.');
       var map = { home: 'hero', bio: 'bio', rep: 'repertoire', programs: 'programs', calendar: 'calendar', media: 'videos', press: 'press', contact: 'contact', ui: 'site-ui' };
-      var labels = { home: 'Home / Hero', bio: 'Biography', rep: 'Repertoire', programs: 'Programs', calendar: 'Calendar', media: 'Media', press: 'Press / EPK', contact: 'Contact', ui: 'UI / Translations' };
+      var labels = { home: 'Home / Hero', bio: 'Biography', rep: 'Repertoire', programs: 'Programs', programbuilder: 'Programme Offers', calendar: 'Calendar', media: 'Media', press: 'Press / EPK', contact: 'Contact', ui: 'UI / Translations' };
       var s = map[state.section];
       if (!s) return;
       if (!confirm('Reset this section to built-in defaults?\nThis can overwrite saved content for the section.')) return;
@@ -7182,12 +12786,14 @@
       state.api = await waitForLegacyApi();
       var lang = (state.api.currentLang && LANGS.indexOf(state.api.currentLang) >= 0) ? state.api.currentLang : 'en';
       state.lang = lang;
+      state.paperPreview = readPaperPreviewPreference();
       $('langSelect').value = lang;
       updateLangBadge();
       state.ready = true;
       state.bridgeReadyAt = Date.now();
       setStatus('Ready · ' + lang.toUpperCase(), 'ok');
       setupEvents();
+      applyPaperPreviewMode(state.paperPreview, false);
       refreshCurrentSection();
       primeUiPublicCopyFromStorage();
     } catch (e) {

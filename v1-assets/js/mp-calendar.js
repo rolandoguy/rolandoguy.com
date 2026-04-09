@@ -930,9 +930,22 @@
         h += '<div class="perf-past-stamp">' + (tPerf['perf.pastStamp'] || 'Past') + '</div>';
       if (hasVenuePhoto) {
         var op = (p.venueOpacity || 50) / 100;
+        var brightness = Number(p.venueBrightness);
+        if (!Number.isFinite(brightness)) brightness = 100;
+        if (brightness < 40) brightness = 40;
+        if (brightness > 140) brightness = 140;
+        var contrast = Number(p.venueContrast);
+        if (!Number.isFinite(contrast)) contrast = 100;
+        if (contrast < 40) contrast = 40;
+        if (contrast > 140) contrast = 140;
         h +=
           '<div class="perf-venue-bg" style="opacity:' +
           op +
+          ';filter:brightness(' +
+          brightness +
+          '%) contrast(' +
+          contrast +
+          '%)' +
           ';background-image:url(&quot;' +
           String(venuePhotoResolved)
             .replace(/&/g, '&amp;')

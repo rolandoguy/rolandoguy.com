@@ -27,6 +27,7 @@
         <button data-section="bio" class="nav-item">Biography</button>
         <button data-section="rep" class="nav-item">Repertoire</button>
         <button data-section="programs" class="nav-item">Programs</button>
+        <button data-section="programbuilder" class="nav-item">Programme Offers</button>
         <button data-section="calendar" class="nav-item">Calendar</button>
         <button data-section="pastperfs" class="nav-item">Past Events</button>
         <button data-section="media" class="nav-item">Media</button>
@@ -61,6 +62,10 @@
             <span id="saveState" class="pill">Loading…</span>
             <button id="openPublicBtn">View live site</button>
             <button id="adm2TopSignOutBtn" type="button" style="display:none">Sign out</button>
+            <label class="toggle-chip" id="paperPreviewToggleWrap">
+              <input id="paperPreviewToggle" type="checkbox" checked>
+              <span>Paper Preview</span>
+            </label>
           </div>
           <details class="actions-more" id="topbarMoreTools" open>
             <summary>More tools</summary>
@@ -72,6 +77,7 @@
                   <option value="bio">Biography only</option>
                   <option value="rep">Repertoire only</option>
                   <option value="programs">Programs only</option>
+                  <option value="programbuilder">Programme Offers only</option>
                   <option value="calendar">Calendar only</option>
                   <option value="media">Media only</option>
                   <option value="press">Press / EPK only</option>
@@ -87,6 +93,7 @@
               <button id="copyPublicUrlBtn" type="button">Copy public URL</button>
               <button id="undoSectionBtn" type="button">Undo section edit</button>
               <button id="discardSectionBtn" type="button">Discard section changes</button>
+              <button id="checkLocalDraftBtn" type="button">Check local drafts</button>
               <button id="focusModeBtn" type="button">Focus mode</button>
             </div>
           </details>
@@ -95,6 +102,8 @@
         <p id="langCompareSummary" class="activity-summary muted" aria-live="polite"></p>
         <div id="lang-compare-panel" class="lang-compare-panel" hidden></div>
       </header>
+
+      <div id="draftRestoreBanner" class="draft-restore-banner" hidden></div>
 
       <main class="content">
         <section id="section-home" class="section active">
@@ -397,6 +406,7 @@
           <h2>Calendar</h2>
           <div class="toolbar">
             <span id="calendar-completeness" class="pill">Checking…</span>
+            <button id="perf-open-internal-calendar" type="button">Open internal calendar</button>
           </div>
           <div class="editor-section">
             <h3>Calendar section content</h3>
@@ -500,9 +510,17 @@
                 <h3>Visual appearance</h3>
                 <label>Background image URL<input id="perf-venuePhoto" placeholder="https://..."></label>
                 <label>Background opacity
-                  <input id="perf-venueOpacity" type="range" min="30" max="100" step="1">
+                  <input id="perf-venueOpacity" type="range" min="10" max="100" step="1">
                 </label>
                 <label>Opacity value<input id="perf-venueOpacityValue" readonly></label>
+                <label>Background brightness
+                  <input id="perf-venueBrightness" type="range" min="40" max="140" step="1">
+                </label>
+                <label>Brightness value<input id="perf-venueBrightnessValue" readonly></label>
+                <label>Background contrast
+                  <input id="perf-venueContrast" type="range" min="40" max="140" step="1">
+                </label>
+                <label>Contrast value<input id="perf-venueContrastValue" readonly></label>
                 <div id="perf-venuePreviewWrap" class="photo-preview-wrap">
                   <img id="perf-venuePreview" alt="Event background preview">
                 </div>
@@ -792,6 +810,909 @@
             </label>
             <button id="programs-move-apply" type="button">Move</button>
             <button id="programs-revert-item" type="button">Revert current item</button>
+          </div>
+        </section>
+
+        <section id="section-programbuilder" class="section">
+          <h2>Programme Offers</h2>
+          <p class="muted">Prepare a clean programme offer for presenters: choose the programme shape, select the repertoire, review the sheet, then export PDF or copy the outreach text.</p>
+
+          <div class="split pb-split pb-offer-layout">
+            <div class="editor pb-main-column">
+              <div class="editor-section pb-main-step">
+                <div class="pb-step-heading">
+                  <span class="pb-step-kicker">1. Setup</span>
+                  <h3>Set the programme frame</h3>
+                  <p class="muted">Choose the basic offer shape first.</p>
+                </div>
+                <div class="grid two pb-steps-grid">
+                  <label>Programme family
+                    <select id="pb-family">
+                      <option value="gala">Gala</option>
+                      <option value="italian">Italian</option>
+                      <option value="tango">Tango</option>
+                      <option value="borders">Borders</option>
+                    </select>
+                  </label>
+                  <label>Duration
+                    <select id="pb-duration">
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                      <option value="60">60</option>
+                    </select>
+                  </label>
+                  <label>Offer language
+                    <select id="pb-output-lang">
+                      <option value="en">English</option>
+                      <option value="de">Deutsch</option>
+                      <option value="es">Español</option>
+                      <option value="it">Italiano</option>
+                      <option value="fr">Français</option>
+                    </select>
+                  </label>
+                  <label>Formation
+                    <input id="pb-blueprint-formation" placeholder="Tenor + Piano">
+                  </label>
+                </div>
+                <details class="pb-compact-toggle">
+                  <summary>More setup options</summary>
+                  <div class="grid two">
+                    <label id="pb-build-mode-wrap">Build style
+                      <select id="pb-build-mode">
+                        <option value="free">Free build</option>
+                        <option value="dramatic_arc">Build with dramatic arc</option>
+                      </select>
+                    </label>
+                    <label>Repertoire wording
+                      <select id="pb-repertoire-mode">
+                        <option value="suggested">Suggested repertoire</option>
+                        <option value="agreed">Agreed repertoire</option>
+                        <option value="possible">Possible repertoire</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div id="pb-gala-setup" class="pb-gala-setup" hidden>
+                    <p class="muted">Use these only when you want the Opera Gala offer to shape breathing points, contrast, and a stronger recital arc more deliberately.</p>
+                    <div class="grid two">
+                      <label class="checkline"><input id="pb-gala-preferPacing" type="checkbox"> Prefer vocal pacing</label>
+                      <label class="checkline"><input id="pb-gala-allowPianoInterludes" type="checkbox"> Allow piano interludes</label>
+                    </div>
+                    <div class="grid two">
+                      <label class="checkline"><input id="pb-gala-includeContrast" type="checkbox"> Include operetta / canzone for contrast</label>
+                      <label class="checkline"><input id="pb-gala-buildArc" type="checkbox"> Build with gala arc</label>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <div class="editor-section pb-main-step">
+                <div class="pb-step-heading">
+                  <span class="pb-step-kicker">2. Build</span>
+                  <h3>Choose the repertoire</h3>
+                  <p class="muted">Add pieces quickly, then keep the final programme selection clear below.</p>
+                </div>
+                <div class="pb-build-summary">
+                  <span id="pb-target-duration" class="pill">Target 30 min</span>
+                  <span id="pb-current-duration" class="pill">Current selection 0 min</span>
+                  <span id="pb-duration-delta" class="pill">Within range</span>
+                  <span id="pb-encore-duration" class="pill">Encore 0 min</span>
+                  <span id="pb-combined-duration" class="pill">Possible total 0 min</span>
+                  <span id="pb-duration-status" class="pill">Within range</span>
+                  <span id="pb-selected-count" class="pill">0 pieces selected</span>
+                </div>
+                <div class="toolbar pb-selector-toolbar pb-selector-toolbar--simple">
+                  <label>Find piece
+                    <input id="pb-add-piece-search" placeholder="Search title, composer, work, or tag">
+                  </label>
+                  <label>Add repertoire item
+                    <select id="pb-add-piece-select"></select>
+                  </label>
+                  <button id="pb-add-piece" type="button">Add piece</button>
+                  <button id="pb-open-quick-add" type="button">Quick add manually</button>
+                </div>
+                <details class="pb-compact-toggle">
+                  <summary>Refine repertoire suggestions</summary>
+                  <div class="toolbar pb-selector-toolbar">
+                    <label>Availability
+                      <select id="pb-offer-filter-status">
+                        <option value="all">All status</option>
+                        <option value="performed">Performed</option>
+                        <option value="ready">Ready</option>
+                        <option value="working">Working</option>
+                        <option value="idea">Idea</option>
+                      </select>
+                    </label>
+                    <label>Browse by vocal combination
+                      <select id="pb-offer-filter-category">
+                        <option value="all">All combinations</option>
+                        <option value="tenor_arias">Tenor arias</option>
+                        <option value="soprano_arias">Soprano arias</option>
+                        <option value="mezzo_arias">Mezzo arias</option>
+                        <option value="baritone_arias">Baritone arias</option>
+                        <option value="tenor_soprano_duets">Tenor-Soprano duets</option>
+                        <option value="tenor_mezzo_duets">Tenor-Mezzo duets</option>
+                        <option value="tenor_baritone_duets">Tenor-Baritone duets</option>
+                        <option value="other_duets">Other duets</option>
+                        <option value="trios">Trios</option>
+                        <option value="quartets_ensembles">Quartets / Ensembles</option>
+                        <option value="piano_solo">Piano solo</option>
+                        <option value="chamber_song">Chamber songs with piano</option>
+                        <option value="tango">Argentine tango</option>
+                      </select>
+                    </label>
+                    <label>Language
+                      <input id="pb-offer-filter-lang" placeholder="IT / DE / ES / EN / FR">
+                    </label>
+                    <label>Tag
+                      <input id="pb-offer-filter-tag" placeholder="gala / italian / tango / sacred">
+                    </label>
+                    <label class="checkline"><input id="pb-offer-filter-matchingOnly" type="checkbox" checked> Show only matching repertoire</label>
+                    <label class="checkline"><input id="pb-offer-filter-showAll" type="checkbox"> Show all repertoire</label>
+                    <label class="checkline"><input id="pb-offer-filter-formation" type="checkbox"> Only matching formation</label>
+                    <label class="checkline"><input id="pb-offer-filter-showWithoutTenor" type="checkbox"> Show pieces without tenor</label>
+                    <span id="pb-available-count" class="pill">0 matching pieces</span>
+                  </div>
+                </details>
+                <div class="pb-quick-picks-wrap">
+                  <div class="pb-quick-picks-head">
+                    <h4>Quick picks</h4>
+                    <p class="muted">Top matches for this offer. Use these one-click additions when you want to assemble a solid draft quickly.</p>
+                  </div>
+                  <div id="pb-quick-picks" class="pb-quick-picks"></div>
+                </div>
+                <div class="pb-selected-wrap">
+                  <div class="pb-selected-head">
+                    <div>
+                      <h4>Selected repertoire</h4>
+                      <p class="muted">Build the main programme first, then keep encore options separate only if you need them.</p>
+                    </div>
+                    <button id="pb-encore-add" type="button">Add encore option</button>
+                  </div>
+                  <div id="pb-blueprint-list" class="item-list"></div>
+                  <div class="toolbar pb-selected-actions">
+                    <button id="pb-piece-remove" type="button" class="danger">Remove from offer</button>
+                    <button id="pb-piece-up" type="button">Move up</button>
+                    <button id="pb-piece-down" type="button">Move down</button>
+                  </div>
+                </div>
+                <div id="pb-gala-hints" class="pb-arc-hints" hidden></div>
+                <details id="pb-encore-panel" class="pb-compact-toggle" hidden>
+                  <summary>Encore options</summary>
+                  <p class="muted pb-helper-copy">Keep up to three optional bis choices here without mixing them into the main programme order.</p>
+                  <div class="toolbar pb-selector-toolbar">
+                    <label class="checkline"><input id="pb-encore-export" type="checkbox"> Include encore options in Programme Sheet</label>
+                    <button id="pb-encore-open-quick-add" type="button">Quick add manually</button>
+                  </div>
+                  <div id="pb-encore-list" class="pb-encore-list"></div>
+                </details>
+                <details id="pb-arc-panel" class="pb-compact-toggle" hidden>
+                  <summary>Dramatic arc</summary>
+                  <div id="pb-arc-builder" class="pb-arc-builder">
+                    <div class="pb-arc-builder__head">
+                      <h4>Dramatic arc</h4>
+                      <p class="muted">Assign pieces to the arc slots when you want the offer to read like a shaped recital rather than a simple list.</p>
+                    </div>
+                    <div id="pb-arc-slots" class="pb-arc-slots"></div>
+                    <div id="pb-arc-hints" class="pb-arc-hints"></div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <div class="editor pb-preview-column">
+              <div class="editor-section pb-main-step pb-output-step">
+                <div class="pb-step-heading">
+                  <span class="pb-step-kicker">3. Output</span>
+                  <h3>Review, save, and send</h3>
+                  <p class="muted">Keep the Programme Sheet stable here, then export or copy what you need.</p>
+                </div>
+                <div class="toolbar pb-save-strip">
+                  <div class="pb-save-state-wrap">
+                    <span id="pb-save-state" class="pill info">Draft only</span>
+                    <div class="pb-save-state-copy">
+                      <strong id="pb-save-state-title">Working draft</strong>
+                      <span id="pb-save-state-detail">This programme is still only a working draft.</span>
+                    </div>
+                  </div>
+                  <div class="pb-save-actions">
+                    <button id="pb-export-pdf" type="button" class="button-primary">Export programme PDF</button>
+                    <button id="pb-copy-email-primary" type="button">Copy email draft</button>
+                    <button id="pb-save-blueprints" type="button">Save</button>
+                    <details id="pb-save-as-menu" class="pb-save-as-menu">
+                      <summary>Save as...</summary>
+                      <div class="pb-save-as-menu__panel">
+                        <button id="pb-save-master-primary" type="button">Save as Master Programme</button>
+                        <button id="pb-save-venue-primary" type="button">Save as Venue Offer</button>
+                      </div>
+                    </details>
+                    <button id="pb-duplicate-current" type="button">Duplicate</button>
+                    <button id="pb-archive-current" type="button" class="danger">Archive</button>
+                  </div>
+                </div>
+                <p class="muted pb-helper-copy">This preview mirrors the exported Programme Sheet. Use Paper Preview above for a lighter, document-like reading mode.</p>
+                <p id="pb-export-hint" class="muted pb-export-hint" aria-live="polite"></p>
+                <div id="pb-preview-sheet" class="pb-preview-sheet"></div>
+              </div>
+            </div>
+          </div>
+          <details id="pb-secondary-hub" class="editor-section pb-secondary-hub">
+            <summary>More options: saved programmes, library, history &amp; text drafts</summary>
+            <p class="muted">Open this only when you want to save a named version, maintain the repertoire archive, review concert history, or copy alternate text outputs.</p>
+            <div class="pb-secondary-stack">
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Edit selected repertoire line</summary>
+              <div class="editor">
+                <div class="grid two">
+                  <label>Custom line title<input id="pb-piece-customTitle"></label>
+                  <label>Custom duration (min)<input id="pb-piece-customDuration" type="number" min="0" step="1"></label>
+                </div>
+                <label>Selection note (private)<textarea id="pb-piece-notes" rows="2"></textarea></label>
+                <p id="pb-piece-compatibility" class="muted">Fit note: —</p>
+              </div>
+              </details>
+
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Outside Repertoire Suggestions</summary>
+              <p class="muted pb-helper-copy">Curated external suggestions stay separate from the active selector. Move one into the repertoire library when you want to start working with it.</p>
+              <div id="pb-outside-suggestions" class="pb-suggestion-groups"></div>
+              </details>
+
+              <details id="pb-saved-browser" class="editor-section pb-secondary-toggle">
+              <summary>Saved programmes</summary>
+              <p class="muted">Save strong reusable programme bases as Master Programmes, then spin off Venue Offers when you need a concrete version for a presenter or venue.</p>
+              <div class="toolbar">
+                <button id="pb-save-master" type="button">Save as Master Programme</button>
+                <button id="pb-save-venue" type="button">Save as Venue Offer</button>
+                <button id="pb-load-saved" type="button">Load saved programme</button>
+                <button id="pb-create-venue-from-master" type="button">Create Venue Offer from Master</button>
+                <button id="pb-duplicate-saved" type="button">Duplicate</button>
+                <button id="pb-archive-saved" type="button" class="danger">Archive</button>
+                <span id="pb-saved-count" class="pill">0 saved programmes</span>
+              </div>
+              <div class="toolbar">
+                <label>Search
+                  <input id="pb-saved-search" placeholder="Title, label, use case, or formation">
+                </label>
+                <label>Type
+                  <select id="pb-saved-filter-type">
+                    <option value="all">All types</option>
+                    <option value="master_programme">Master Programmes</option>
+                    <option value="venue_offer">Venue Offers</option>
+                  </select>
+                </label>
+                <label>Family
+                  <select id="pb-saved-filter-family">
+                    <option value="all">All families</option>
+                    <option value="gala">Gala</option>
+                    <option value="italian">Italian</option>
+                    <option value="tango">Tango</option>
+                    <option value="borders">Borders</option>
+                  </select>
+                </label>
+                <label>Duration
+                  <select id="pb-saved-filter-duration">
+                    <option value="all">All durations</option>
+                    <option value="30">30 min</option>
+                    <option value="45">45 min</option>
+                    <option value="60">60 min</option>
+                  </select>
+                </label>
+                <label>Language
+                  <select id="pb-saved-filter-lang">
+                    <option value="all">All languages</option>
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                    <option value="es">Español</option>
+                    <option value="it">Italiano</option>
+                    <option value="fr">Français</option>
+                  </select>
+                </label>
+                <label>Formation
+                  <input id="pb-saved-filter-formation" placeholder="Tenor + Piano">
+                </label>
+                <label>Status
+                  <select id="pb-saved-filter-status">
+                    <option value="all">All status</option>
+                    <option value="draft">Draft</option>
+                    <option value="active">Active</option>
+                    <option value="sent">Sent</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+              </div>
+              <div class="split pb-inner-split">
+                <div id="pb-saved-list" class="item-list"></div>
+                <div class="editor">
+                  <div id="pb-saved-summary" class="pb-saved-summary">
+                    <div class="empty-state">Select a saved programme to review its details here.</div>
+                  </div>
+                </div>
+              </div>
+              </details>
+
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Offer wording, saved version &amp; private notes</summary>
+              <p class="muted">Use this section only when you want to adjust the title, public framing, or save a named internal version.</p>
+              <div class="toolbar">
+                <span id="pb-status" class="pill info">Checking…</span>
+                <span id="pb-blueprint-key" class="pill">Saved offer</span>
+              </div>
+              <div class="grid two">
+                <label>Programme title<input id="pb-blueprint-title" placeholder="Opera Gala · 45 min"></label>
+                <label>Offer label (private)<input id="pb-version-label" placeholder="Spring 2026 / Embassy version"></label>
+              </div>
+              <div class="grid two">
+                <label>Use case
+                  <select id="pb-offer-useCase">
+                    <option value="other">Other</option>
+                    <option value="embassy">Embassy</option>
+                    <option value="church">Church</option>
+                    <option value="chamber">Chamber</option>
+                    <option value="private">Private</option>
+                    <option value="festival">Festival</option>
+                  </select>
+                </label>
+                <label>Saved status
+                  <select id="pb-offer-status">
+                    <option value="draft">Draft</option>
+                    <option value="active">Active</option>
+                    <option value="sent">Sent</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </label>
+              </div>
+              <div class="pb-offer-field">
+                <div class="pb-offer-field__actions pb-offer-field__actions--title">
+                  <span id="pb-blueprint-title-state" class="muted">Using language default.</span>
+                  <button id="pb-blueprint-title-reset" type="button">Reset title to language default</button>
+                </div>
+              </div>
+              <div class="grid two">
+                <label>Header image
+                  <select id="pb-header-image-mode">
+                    <option value="default">Use default portrait</option>
+                    <option value="none">No image</option>
+                    <option value="custom">Use custom image for this offer</option>
+                  </select>
+                </label>
+                <label id="pb-header-image-url-wrap" hidden>Custom image URL<input id="pb-header-image-url" placeholder="https://..."></label>
+              </div>
+              <p class="muted pb-helper-copy">Use the default portrait for a solo offer, switch to no image for a cleaner sheet, or paste a custom image URL for duet and ensemble versions.</p>
+              <div class="pb-offer-field">
+                <label>Mobile phone for Programme Sheet<input id="pb-contact-phone" placeholder="+49 …"></label>
+                <div class="pb-offer-field__actions">
+                  <span class="muted">Used in the Programme Sheet CONTACT block. Leave empty to use the Contact section mobile.</span>
+                </div>
+              </div>
+              <div class="pb-offer-field">
+                <label>Short programme note<textarea id="pb-offer-description" rows="3" placeholder="A concise public-facing paragraph that frames this offer."></textarea></label>
+                <div class="pb-offer-field__actions">
+                  <span id="pb-offer-description-state" class="muted">Using language default.</span>
+                  <button id="pb-offer-description-reset" type="button">Reset to language default</button>
+                </div>
+              </div>
+              <div class="pb-offer-field">
+                <label>Flexible note<textarea id="pb-flexible-note" rows="2" placeholder="Short note on adaptable duration, language balance, or repertoire focus."></textarea></label>
+                <div class="pb-offer-field__actions">
+                  <span id="pb-flexible-note-state" class="muted">Using language default.</span>
+                  <button id="pb-flexible-note-reset" type="button">Reset to language default</button>
+                </div>
+              </div>
+              <label>Private notes<textarea id="pb-blueprint-notes" rows="3" placeholder="Private notes for this concrete offer version."></textarea></label>
+              </details>
+
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Fee Estimate</summary>
+              <p class="muted">Internal quote helper only. Use this to separate real low-budget market reality, a fair professional quote, and a public-funded benchmark reference without exposing any pricing in the Programme Sheet PDF.</p>
+              <div class="toolbar">
+                <label>Preset
+                  <select id="pb-fee-preset">
+                    <option value="berlin_local">Berlin local</option>
+                    <option value="germany_regional">Germany regional</option>
+                    <option value="germany_overnight">Germany overnight</option>
+                    <option value="embassy_institutional">Embassy / institutional</option>
+                    <option value="church_budget">Church budget</option>
+                    <option value="private_premium">Private premium</option>
+                  </select>
+                </label>
+                <button id="pb-fee-apply-preset" type="button">Apply preset</button>
+                <button id="pb-copy-fee-summary" type="button">Copy budget summary</button>
+                <button id="pb-copy-fee-email" type="button">Copy quote email text</button>
+              </div>
+              <div class="grid two">
+                <label title="Event type influences how strongly the fair, benchmark, and premium layers are positioned. The low-budget layer stays close to real base costs.">Event type
+                  <select id="pb-fee-eventType">
+                    <option value="church">Church / low-budget local</option>
+                    <option value="cultural">Cultural standard</option>
+                    <option value="festival">Festival</option>
+                    <option value="embassy">Embassy / institutional</option>
+                    <option value="private">Private premium</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+                <label>Programme duration (min)<input id="pb-fee-durationMin" type="number" min="0" step="1"></label>
+              </div>
+              <p id="pb-fee-eventtype-help" class="muted pb-fee-adjustment-line">Event type changes how assertively the fair, benchmark, and premium layers are positioned, while low-budget reality stays close to real artistic and logistics costs.</p>
+              <div class="pb-fee-explainer">
+                <p><strong>Market reality</strong> = what modest organisers may actually offer in small-scale Berlin/Germany contexts.</p>
+                <p><strong>Fair quote</strong> = a healthier professional target for negotiation and sustainable practice.</p>
+                <p><strong>Public benchmark</strong> = internal reference layer informed by public-sector guidance, not typical small-venue market reality.</p>
+              </div>
+              <div class="grid two">
+                <label>Formation<input id="pb-fee-formation" placeholder="Tenor + Piano"></label>
+                <label>Number of artists<input id="pb-fee-numberOfArtists" type="number" min="1" step="1"></label>
+              </div>
+              <div class="grid two">
+                <label class="checkline"><input id="pb-fee-includesPianist" type="checkbox"> Includes pianist</label>
+                <label>Rehearsal count<input id="pb-fee-rehearsalCount" type="number" min="0" step="1"></label>
+              </div>
+              <div class="grid two">
+                <label>Rehearsal fee per artist<input id="pb-fee-rehearsalFeePerArtist" type="number" min="0" step="10"></label>
+                <label>Lead artist fee<input id="pb-fee-leadArtistFee" type="number" min="0" step="10"></label>
+              </div>
+              <div class="grid two">
+                <label>Collaborator fee<input id="pb-fee-collaboratorFee" type="number" min="0" step="10"></label>
+                <label>Pianist fee<input id="pb-fee-pianistFee" type="number" min="0" step="10"></label>
+              </div>
+              <div class="grid two">
+                <label>Travel cost<input id="pb-fee-travelCost" type="number" min="0" step="10"></label>
+                <label>Hotel cost<input id="pb-fee-hotelCost" type="number" min="0" step="10"></label>
+              </div>
+              <div class="grid two">
+                <label>Local transport<input id="pb-fee-localTransportCost" type="number" min="0" step="10"></label>
+                <label>Admin buffer<input id="pb-fee-adminBuffer" type="number" min="0" step="10"></label>
+              </div>
+              <details class="pb-compact-toggle">
+                <summary>Manual quote overrides</summary>
+                <div class="grid two">
+                  <label>Low-budget reality override<input id="pb-fee-lowBudgetOverride" type="number" min="0" step="10"></label>
+                  <label>Fair / recommended override<input id="pb-fee-recommendedOverride" type="number" min="0" step="10"></label>
+                </div>
+                <div class="grid two">
+                  <label>Public benchmark override<input id="pb-fee-benchmarkOverride" type="number" min="0" step="10"></label>
+                  <label>Premium / private override<input id="pb-fee-premiumOverride" type="number" min="0" step="10"></label>
+                </div>
+              </details>
+              <label>Notes<textarea id="pb-fee-notes" rows="3" placeholder="Internal context, funding constraints, travel realities, or negotiation reminders."></textarea></label>
+              <div class="grid two">
+                <label>Benchmark source version<input id="pb-fee-benchmarkSourceVersion" placeholder="DE/Berlin benchmark v1"></label>
+                <label>Benchmark last reviewed<input id="pb-fee-benchmarkLastReviewed" type="date"></label>
+              </div>
+              <div class="pb-fee-metrics">
+                <div class="pb-fee-metric"><span>Artistic subtotal</span><strong id="pb-fee-artisticSubtotal">€0</strong></div>
+                <div class="pb-fee-metric"><span>Logistics subtotal</span><strong id="pb-fee-logisticsSubtotal">€0</strong></div>
+                <div class="pb-fee-metric"><span>Low-budget reality</span><strong id="pb-fee-lowBudgetQuote">€0</strong></div>
+                <div class="pb-fee-metric"><span>Fair / recommended</span><strong id="pb-fee-recommendedQuote">€0</strong></div>
+                <div class="pb-fee-metric"><span>Public-funded benchmark</span><strong id="pb-fee-publicBenchmarkQuote">€0</strong></div>
+                <div class="pb-fee-metric"><span>Premium / private</span><strong id="pb-fee-premiumQuote">€0</strong></div>
+              </div>
+              <p id="pb-fee-adjustment-breakdown" class="muted pb-fee-adjustment-line">Base cost logic, event-type weighting, and final quote positioning will appear here.</p>
+              <div class="grid two">
+                <label>Per-artist logic summary<textarea id="pb-fee-logic" rows="4" readonly></textarea></label>
+                <label>Negotiation notes<textarea id="pb-fee-negotiation" rows="4" readonly></textarea></label>
+              </div>
+              <label>Internal budget summary<textarea id="pb-fee-summary-output" rows="8" readonly></textarea></label>
+              <label>Short quote email text<textarea id="pb-fee-email-output" rows="6" readonly></textarea></label>
+              </details>
+
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Repertoire Library</summary>
+              <p class="muted">Maintain the internal repertoire library behind the offer generator. Historical performance markers and manual-review flags stay here.</p>
+              <div class="toolbar">
+                <button id="pb-save-repertoire" type="button">Save library &amp; history</button>
+              </div>
+              <div class="toolbar">
+                <label>Search
+                  <input id="pb-rep-search" placeholder="Title / composer / work / notes">
+                </label>
+                <label>Type
+                  <select id="pb-rep-filter-type">
+                    <option value="all">All types</option>
+                    <option value="aria">Aria</option>
+                    <option value="duet">Duet</option>
+                    <option value="ensemble">Ensemble</option>
+                    <option value="song">Song</option>
+                    <option value="tango">Tango</option>
+                    <option value="lied">Lied</option>
+                    <option value="canzone">Canzone</option>
+                    <option value="sacred">Sacred</option>
+                    <option value="operetta">Operetta</option>
+                    <option value="piano-solo">Piano solo</option>
+                    <option value="role">Role</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+                <label>Language
+                  <input id="pb-rep-filter-lang" placeholder="IT / DE / ES / EN">
+                </label>
+                <label>Readiness
+                  <select id="pb-rep-filter-readiness">
+                    <option value="all">All readiness</option>
+                    <option value="ready">Ready</option>
+                    <option value="working">Working</option>
+                    <option value="idea">Idea</option>
+                  </select>
+                </label>
+                <label>Tag
+                  <input id="pb-rep-filter-tag" placeholder="gala / italian / tango / borders">
+                </label>
+                <label>Sort
+                  <select id="pb-rep-sort">
+                    <option value="sortOrder">Manual order</option>
+                    <option value="title">Title</option>
+                    <option value="composer">Composer</option>
+                    <option value="durationMin">Duration</option>
+                    <option value="readiness">Readiness</option>
+                  </select>
+                </label>
+              </div>
+              <div class="toolbar">
+                <button id="pb-rep-add" type="button">+ Add item</button>
+                <button id="pb-rep-del" type="button" class="danger">Delete item</button>
+                <button id="pb-rep-up" type="button">↑</button>
+                <button id="pb-rep-down" type="button">↓</button>
+                <span id="pb-rep-count" class="pill">0 items</span>
+              </div>
+              <div class="split pb-inner-split">
+                <div id="pb-rep-list" class="item-list"></div>
+                <div class="editor">
+                  <div class="grid two">
+                    <label>ID<input id="pb-rep-id" placeholder="piece_001"></label>
+                    <label>Title<input id="pb-rep-title"></label>
+                  </div>
+                  <div class="grid two">
+                    <label>Composer<input id="pb-rep-composer"></label>
+                    <label>Work<input id="pb-rep-work"></label>
+                  </div>
+                  <div class="grid two">
+                    <label>Type
+                      <select id="pb-rep-type">
+                        <option value="aria">Aria</option>
+                        <option value="duet">Duet</option>
+                        <option value="ensemble">Ensemble</option>
+                        <option value="song">Song</option>
+                        <option value="tango">Tango</option>
+                        <option value="lied">Lied</option>
+                        <option value="canzone">Canzone</option>
+                        <option value="sacred">Sacred</option>
+                        <option value="operetta">Operetta</option>
+                        <option value="piano-solo">Piano solo</option>
+                        <option value="role">Role</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </label>
+                    <label>Language<input id="pb-rep-language" placeholder="IT"></label>
+                  </div>
+                  <div class="grid two">
+                    <label>Duration (min)<input id="pb-rep-durationMin" type="number" min="1" step="1"></label>
+                    <label>Approx. duration (min)<input id="pb-rep-approximateDurationMin" type="number" min="0" step="1"></label>
+                  </div>
+                  <div class="grid two">
+                    <label>Readiness
+                      <select id="pb-rep-readiness">
+                        <option value="ready">Ready</option>
+                        <option value="working">Working</option>
+                        <option value="idea">Idea</option>
+                      </select>
+                    </label>
+                    <label>Availability status
+                      <select id="pb-rep-availabilityStatus">
+                        <option value="performed">Performed</option>
+                        <option value="ready">Ready</option>
+                        <option value="working">Working</option>
+                        <option value="idea">Idea</option>
+                        <option value="outside_repertoire">Outside repertoire</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="grid two">
+                    <label>Performance status
+                      <select id="pb-rep-performanceStatus">
+                        <option value="">Not set</option>
+                        <option value="performed">Performed</option>
+                      </select>
+                    </label>
+                    <label>Review status
+                      <select id="pb-rep-reviewStatus">
+                        <option value="clean">Clean</option>
+                        <option value="manual_review">Manual review</option>
+                      </select>
+                    </label>
+                  </div>
+                  <details class="pb-compact-toggle">
+                    <summary>Classification &amp; offer intelligence</summary>
+                    <div class="grid two">
+                      <label>Category
+                        <select id="pb-rep-category">
+                          <option value="">(auto)</option>
+                          <option value="aria">Aria</option>
+                          <option value="duet">Duet</option>
+                          <option value="trio">Trio</option>
+                          <option value="quartet">Quartet</option>
+                          <option value="ensemble">Ensemble</option>
+                          <option value="art_song">Art song</option>
+                          <option value="tango">Tango</option>
+                          <option value="piano_solo">Piano solo</option>
+                        </select>
+                      </label>
+                      <label>Voice category
+                        <select id="pb-rep-voiceCategory">
+                          <option value="">(auto)</option>
+                          <option value="tenor_aria">Tenor aria</option>
+                          <option value="soprano_aria">Soprano aria</option>
+                          <option value="mezzo_aria">Mezzo aria</option>
+                          <option value="baritone_aria">Baritone aria</option>
+                          <option value="tenor_soprano_duet">Tenor-Soprano duet</option>
+                          <option value="tenor_mezzo_duet">Tenor-Mezzo duet</option>
+                          <option value="tenor_baritone_duet">Tenor-Baritone duet</option>
+                          <option value="soprano_mezzo_duet">Soprano-Mezzo duet</option>
+                          <option value="soprano_baritone_duet">Soprano-Baritone duet</option>
+                          <option value="mezzo_baritone_duet">Mezzo-Baritone duet</option>
+                          <option value="tenor_soprano_mezzo_trio">Tenor-Soprano-Mezzo trio</option>
+                          <option value="tenor_soprano_baritone_trio">Tenor-Soprano-Baritone trio</option>
+                          <option value="tenor_mezzo_baritone_trio">Tenor-Mezzo-Baritone trio</option>
+                          <option value="soprano_mezzo_baritone_trio">Soprano-Mezzo-Baritone trio</option>
+                          <option value="quartet">Quartet</option>
+                          <option value="ensemble">Ensemble</option>
+                          <option value="piano_solo">Piano solo</option>
+                          <option value="chamber_song">Chamber song</option>
+                          <option value="tango">Argentine tango</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid two">
+                      <label>Primary voice<input id="pb-rep-primaryVoice" placeholder="tenor"></label>
+                      <label>Paired voices (comma separated)<input id="pb-rep-pairedVoices" placeholder="soprano, baritone"></label>
+                    </div>
+                    <label class="checkline"><input id="pb-rep-includesTenor" type="checkbox"> Includes tenor</label>
+                    <label>Fit tags (comma separated)<input id="pb-rep-fitTags" placeholder="gala, italian, tango, duet"></label>
+                    <div class="grid two">
+                      <label>Source group<input id="pb-rep-sourceGroup" placeholder="Opera-Arias / LiederNet / Todo Tango"></label>
+                      <label>Suggestion group<input id="pb-rep-suggestionGroup" placeholder="Lyric tenor arias"></label>
+                    </div>
+                    <div class="grid two">
+                      <label>Dramatic role
+                        <select id="pb-rep-dramaticRole">
+                          <option value="">(auto)</option>
+                          <option value="opener">Opener</option>
+                          <option value="development">Development</option>
+                          <option value="lyrical_center">Lyrical center</option>
+                          <option value="contrast">Contrast</option>
+                          <option value="climax">Climax</option>
+                          <option value="finale">Finale</option>
+                          <option value="encore">Encore</option>
+                        </select>
+                      </label>
+                      <label>Energy level
+                        <select id="pb-rep-energyLevel">
+                          <option value="">(auto)</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid two">
+                      <label>Tempo profile
+                        <select id="pb-rep-tempoProfile">
+                          <option value="">(auto)</option>
+                          <option value="slow">Slow</option>
+                          <option value="moderate">Moderate</option>
+                          <option value="flowing">Flowing</option>
+                          <option value="lively">Lively</option>
+                          <option value="brilliant">Brilliant</option>
+                        </select>
+                      </label>
+                      <label>Impact level
+                        <select id="pb-rep-impactLevel">
+                          <option value="">(auto)</option>
+                          <option value="light">Light</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid two">
+                      <label>Audience appeal
+                        <select id="pb-rep-audienceAppeal">
+                          <option value="">(auto)</option>
+                          <option value="connoisseur">Connoisseur</option>
+                          <option value="balanced">Balanced</option>
+                          <option value="crowd_pleaser">Crowd pleaser</option>
+                        </select>
+                      </label>
+                      <label>Mood tags (comma separated)<input id="pb-rep-moodTags" placeholder="luminous, intimate, nostalgic"></label>
+                    </div>
+                    <div class="grid two">
+                      <label>Gala role
+                        <select id="pb-rep-galaRole">
+                          <option value="">(auto)</option>
+                          <option value="opener">Opener</option>
+                          <option value="contrast">Contrast</option>
+                          <option value="lyrical_center">Lyrical center</option>
+                          <option value="climax">Climax</option>
+                          <option value="finale">Finale</option>
+                          <option value="encore">Encore</option>
+                          <option value="vocal_rest_support">Vocal rest support</option>
+                        </select>
+                      </label>
+                      <label>Vocal load
+                        <select id="pb-rep-vocalLoad">
+                          <option value="">(auto)</option>
+                          <option value="light">Light</option>
+                          <option value="medium">Medium</option>
+                          <option value="heavy">Heavy</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid two">
+                      <label>Texture
+                        <select id="pb-rep-texture">
+                          <option value="">(auto)</option>
+                          <option value="solo">Solo</option>
+                          <option value="duet">Duet</option>
+                          <option value="trio">Trio</option>
+                          <option value="ensemble">Ensemble</option>
+                          <option value="piano_solo">Piano solo</option>
+                        </select>
+                      </label>
+                      <label>Style bucket
+                        <select id="pb-rep-styleBucket">
+                          <option value="">(auto)</option>
+                          <option value="opera">Opera</option>
+                          <option value="operetta">Operetta</option>
+                          <option value="canzone">Canzone</option>
+                          <option value="intermezzo">Intermezzo</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid two">
+                      <label>Recovery value
+                        <select id="pb-rep-recoveryValue">
+                          <option value="">(auto)</option>
+                          <option value="none">None</option>
+                          <option value="partial">Partial</option>
+                          <option value="strong">Strong</option>
+                        </select>
+                      </label>
+                      <label>Best duration fit
+                        <select id="pb-rep-bestDurationFit">
+                          <option value="">(auto)</option>
+                          <option value="30">30 min</option>
+                          <option value="45">45 min</option>
+                          <option value="60">60 min</option>
+                          <option value="all">All</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label>Practical tags (comma separated)<input id="pb-rep-practicalTags" placeholder="works_in_church, audience_favorite, needs_soprano"></label>
+                    <label class="checkline"><input id="pb-rep-encoreCandidate" type="checkbox"> Suitable as encore</label>
+                    <div class="grid two">
+                      <label class="checkline"><input id="pb-rep-interlude" type="checkbox"> Useful as interlude</label>
+                      <label class="checkline"><input id="pb-rep-vocalRestSupport" type="checkbox"> Supports vocal rest</label>
+                    </div>
+                    <div class="grid two">
+                      <label class="checkline"><input id="pb-rep-goodBetweenBlocks" type="checkbox"> Good between blocks</label>
+                      <label class="checkline"><input id="pb-rep-goodBeforeClimax" type="checkbox"> Good before climax</label>
+                    </div>
+                  </details>
+                  <label>Formations (one per line)<textarea id="pb-rep-formations" rows="3"></textarea></label>
+                  <label>Tags (comma separated)<input id="pb-rep-tags" placeholder="gala, italian, borders"></label>
+                  <label>Performed in (one concert id / year-title reference per line)<textarea id="pb-rep-performedIn" rows="3"></textarea></label>
+                  <label class="checkline"><input id="pb-rep-excludeFromOffers" type="checkbox"> Hide from Programme Offer selector by default</label>
+                  <label class="checkline"><input id="pb-rep-offerOnly" type="checkbox"> Keep as offer-only entry</label>
+                  <label>Public notes<textarea id="pb-rep-publicNotes" rows="3"></textarea></label>
+                  <label>Internal notes<textarea id="pb-rep-notes" rows="3"></textarea></label>
+                  <label>Manual sort order<input id="pb-rep-sortOrder" type="number" min="0" step="1"></label>
+                </div>
+              </div>
+              </details>
+
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Concert History Archive</summary>
+              <p class="muted">Structured archive of past concerts used to enrich performed repertoire without exposing raw historical records in the offer selector.</p>
+              <div class="toolbar">
+                <label>Search
+                  <input id="pb-history-search" placeholder="Year / title / collaborator / note">
+                </label>
+                <span id="pb-history-count" class="pill">0 concerts</span>
+              </div>
+              <div class="split pb-inner-split">
+                <div id="pb-history-list" class="item-list"></div>
+                <div class="editor">
+                  <div class="grid two">
+                    <label>Year<input id="pb-history-year" type="number" min="1900" step="1"></label>
+                    <label>Source type<input id="pb-history-sourceType" placeholder="historical_manual_import"></label>
+                  </div>
+                  <label>Title<input id="pb-history-title"></label>
+                  <label>Format<input id="pb-history-format"></label>
+                  <label>Collaborators (one per line)<textarea id="pb-history-collaborators" rows="4"></textarea></label>
+                  <label>Programme items (one per line)<textarea id="pb-history-programmeItems" rows="6"></textarea></label>
+                  <label>Notes<textarea id="pb-history-notes" rows="5"></textarea></label>
+                </div>
+              </div>
+              </details>
+
+              <details class="editor-section pb-secondary-toggle">
+              <summary>Offer Text Outputs</summary>
+              <p class="muted">Use these polished text blocks for email outreach, short summaries, or a private working draft.</p>
+              <div class="toolbar">
+                <button id="pb-copy-internal" type="button">Copy private draft</button>
+                <button id="pb-copy-email" type="button">Copy email draft</button>
+                <button id="pb-copy-public" type="button">Copy short blurb</button>
+              </div>
+              <label>Private draft<textarea id="pb-output-internal" rows="9" readonly></textarea></label>
+              <label>Email draft<textarea id="pb-output-email" rows="7" readonly></textarea></label>
+              <label>Short blurb<textarea id="pb-output-public" rows="7" readonly></textarea></label>
+              </details>
+            </div>
+          </details>
+          <div id="pb-quick-add-panel" class="pb-quick-add-modal" hidden>
+            <div class="pb-quick-add-modal__backdrop" data-pb-quick-close="backdrop"></div>
+            <div class="pb-quick-add-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="pb-quick-add-title">
+              <div class="pb-quick-add-modal__header">
+                <div>
+                  <h4 id="pb-quick-add-title">Quick add manually</h4>
+                  <p class="muted pb-helper-copy">Use this when the piece is not yet in the selector and you want to place it into the current offer immediately.</p>
+                </div>
+                <button id="pb-quick-add-close" type="button">Close</button>
+              </div>
+              <p id="pb-quick-add-context" class="muted">This quick entry will be added to the main programme list.</p>
+              <div class="grid two">
+                <label>Title<input id="pb-quick-title" placeholder="Che gelida manina"></label>
+                <label>Composer<input id="pb-quick-composer" placeholder="Giacomo Puccini"></label>
+              </div>
+              <div class="grid two">
+                <label>Work<input id="pb-quick-work" placeholder="La Bohème"></label>
+                <label>Type
+                  <select id="pb-quick-type">
+                    <option value="aria">Aria</option>
+                    <option value="duet">Duet</option>
+                    <option value="ensemble">Ensemble</option>
+                    <option value="song">Song</option>
+                    <option value="tango">Tango</option>
+                    <option value="lied">Lied</option>
+                    <option value="canzone">Canzone</option>
+                    <option value="sacred">Sacred</option>
+                    <option value="operetta">Operetta</option>
+                    <option value="piano-solo">Piano solo</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+              </div>
+              <div class="grid two">
+                <label>Language<input id="pb-quick-language" placeholder="IT"></label>
+                <label>Duration (min)<input id="pb-quick-duration" type="number" min="0" step="1" placeholder="5"></label>
+              </div>
+              <div class="grid two">
+                <label>Voice combination / formation<input id="pb-quick-formation" placeholder="Tenor + Piano"></label>
+                <label>Entry mode
+                  <select id="pb-quick-saveMode">
+                    <option value="offer_only">Add only to current offer</option>
+                    <option value="library">Also save to repertoire library</option>
+                  </select>
+                </label>
+              </div>
+              <div class="toolbar pb-selector-toolbar">
+                <label class="checkline"><input id="pb-quick-needsReview" type="checkbox" checked> Mark as temporary / needs review</label>
+                <label class="checkline"><input id="pb-quick-outside" type="checkbox"> Mark as outside repertoire suggestion</label>
+                <button id="pb-quick-add-submit" type="button" class="button-primary">Add piece</button>
+              </div>
+              <p id="pb-quick-add-state" class="muted">Quick-added pieces can still be refined later in the full Repertoire Library editor.</p>
+            </div>
+          </div>
+          <div id="pb-print-view" class="pb-print-view" hidden>
+            <div class="pb-print-view__controls">
+              <div class="pb-print-view__copy">
+                <strong>Programme Sheet ready for print</strong>
+                <p>Use File &gt; Print or press Cmd+P to save this Programme Sheet as PDF if Safari does not open the print dialog automatically.</p>
+              </div>
+              <div class="pb-print-view__actions">
+                <button id="pb-print-now" type="button" class="button-primary">Print now</button>
+                <button id="pb-close-print-view" type="button">Back to admin</button>
+              </div>
+            </div>
+            <div id="pb-print-sheet" class="pb-print-sheet"></div>
           </div>
         </section>
 
@@ -1329,6 +2250,7 @@
             <small class="muted">This section is public and language-specific. Keep CTA copy direct and action-oriented.</small>
             <label>Email<input id="contact-email"></label>
             <p id="contact-email-validation" class="muted"></p>
+            <label>Phone / mobile<input id="contact-phone" placeholder="+49 …"></label>
             <label>Email button<input id="contact-emailBtn"></label>
             <label>Website button label<input id="contact-webBtn"></label>
             <label>Website URL<input id="contact-webUrl" placeholder="https://..."></label>
@@ -1551,6 +2473,7 @@
   <iframe id="legacyBridge" src="admin.html" hidden></iframe>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="admin-v2-program-builder-data.js"></script>
   <script src="admin-v2.js"></script>
 </body>
 </html>
