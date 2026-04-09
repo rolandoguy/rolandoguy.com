@@ -605,8 +605,29 @@ body.programme-print-active{overflow:hidden}
   .menu-btn{order:1}
   .ctx{order:2;font-size:.82rem;flex:1 1 calc(100% - 56px);min-width:0;flex-wrap:wrap;row-gap:6px}
   .ctx select{min-width:72px;padding:8px}
+  .pb-split,
+  .pb-main-column,
+  .pb-preview-column,
+  .pb-main-step,
+  .pb-selected-wrap,
+  .pb-quick-picks-wrap,
+  .pb-encore-list,
+  .pb-suggestion-groups,
+  .pb-suggestion-group,
+  .pb-fee-explainer,
+  .pb-fee-metrics,
+  .pb-preview-sheet,
+  .pb-print-sheet__page,
+  .pb-save-strip,
+  .pb-save-state-wrap,
+  .pb-save-actions{
+    min-width:0;
+  }
   .pb-split .editor-section .toolbar label{min-width:0;flex:1 1 100%}
   .pb-split .editor-section .toolbar button{flex:1 1 auto}
+  .pb-selector-toolbar--simple{display:grid;grid-template-columns:1fr;gap:8px}
+  .pb-selector-toolbar--simple label{min-width:0;width:100%}
+  .pb-selector-toolbar--simple button{width:100%}
   #pb-rep-count,#pb-blueprint-key,#pb-target-duration,#pb-current-duration,#pb-duration-status,#pb-status{white-space:normal}
   .pb-offer-field__actions{align-items:flex-start}
   .pb-offer-field__actions--title{justify-content:flex-start}
@@ -619,12 +640,20 @@ body.programme-print-active{overflow:hidden}
   .pb-saved-summary__head{display:block}
   .pb-saved-summary__grid{grid-template-columns:1fr}
   .pb-fee-metrics{grid-template-columns:1fr 1fr}
-  .pb-preview-sheet{padding:16px}
-  .pb-preview-sheet__title{font-size:1.6rem}
-  .pb-preview-sheet__artist{font-size:1.7rem}
-  .pb-preview-sheet__header{gap:14px}
-  .pb-preview-sheet__portrait{width:88px;height:88px}
-  .pb-preview-sheet__detail{grid-template-columns:98px minmax(0,1fr)}
+  .pb-preview-sheet{padding:16px;max-width:100%}
+  .item-badges{display:flex;flex-wrap:wrap;gap:4px 6px;margin-left:0}
+  .item-badge{margin:0}
+  .pb-quick-picks__body .item-badges,
+  .pb-suggestion-card__body .item-badges{margin-top:6px}
+  .pb-build-summary{gap:6px}
+  .pb-build-summary .pill{white-space:normal;line-height:1.3}
+  .pb-preview-sheet__title{font-size:1.58rem}
+  .pb-preview-sheet__artist{font-size:1.68rem}
+  .pb-preview-sheet__header{display:grid;grid-template-columns:1fr;gap:12px}
+  .pb-preview-sheet__identity{width:100%}
+  .pb-preview-sheet__portrait{width:76px;height:76px}
+  .pb-preview-sheet__detail{grid-template-columns:1fr;gap:2px}
+  .pb-preview-sheet__detail strong{font-size:.72rem;letter-spacing:.1em}
   .pb-helper-copy{max-width:none}
   .pb-print-view{padding:12px}
   .pb-print-view__controls{display:block;padding:12px 14px}
@@ -668,6 +697,108 @@ body.programme-print-active{overflow:hidden}
   .actions-primary{grid-template-columns:1fr}
   .actions-tools{grid-template-columns:1fr}
   .toolbar button,.toolbar .import-label{flex:1 1 100%}
+  .pb-preview-sheet{padding:14px}
+  .pb-preview-sheet__portrait{width:68px;height:68px}
+}
+@media (max-width: 430px){
+  .content{padding:8px}
+  .section{padding:10px}
+  .pb-split,
+  .pb-main-column,
+  .pb-preview-column,
+  .pb-main-step,
+  .pb-output-step,
+  .pb-quick-picks-wrap,
+  .pb-selected-wrap,
+  .pb-encore-list,
+  .pb-arc-builder,
+  .pb-suggestion-groups,
+  .pb-suggestion-group,
+  .pb-fee-explainer,
+  .pb-fee-metrics,
+  .pb-save-strip,
+  .pb-save-state-wrap,
+  .pb-save-actions,
+  .pb-preview-sheet,
+  .pb-print-sheet__page{
+    width:100%;
+    min-width:0;
+  }
+  .pb-selector-toolbar--simple,
+  .pb-split .editor-section .toolbar,
+  .pb-save-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .pb-selector-toolbar--simple label,
+  .pb-split .editor-section .toolbar label{
+    min-width:0;
+    width:100%;
+  }
+  .pb-selector-toolbar--simple button,
+  .pb-split .editor-section .toolbar button,
+  .pb-save-actions button,
+  .pb-save-actions .details-block{
+    width:100%;
+  }
+  .pb-quick-picks__item,
+  .pb-suggestion-card,
+  .pb-encore-item,
+  .pb-arc-slot{
+    padding:10px 11px;
+  }
+  .pb-quick-picks__item button,
+  .pb-suggestion-card button,
+  .pb-arc-slot button,
+  .pb-encore-item button{
+    width:100%;
+    min-width:0;
+  }
+  .pb-preview-sheet__header,
+  .pb-print-sheet__header{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .pb-preview-sheet__identity,
+  .pb-print-sheet__identity{
+    width:100%;
+  }
+  .pb-preview-sheet__artist,
+  .pb-print-sheet__artist{
+    font-size:1.52rem;
+  }
+  .pb-preview-sheet__title,
+  .pb-print-sheet__title{
+    font-size:1.42rem;
+  }
+  .pb-preview-sheet__detail,
+  .pb-print-sheet__detail{
+    grid-template-columns:1fr;
+    gap:2px;
+  }
+  .pb-preview-sheet__portrait,
+  .pb-print-sheet__portrait{
+    width:64px;
+    height:64px;
+  }
+  .pb-preview-sheet__body p,
+  .pb-preview-sheet__piece-meta,
+  .pb-preview-sheet__contact a,
+  .pb-preview-sheet__contact span,
+  .pb-print-sheet__body p,
+  .pb-print-sheet__piece-meta,
+  .pb-print-sheet__contact a,
+  .pb-print-sheet__contact span{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  .pb-build-summary{gap:6px}
+  .pb-build-summary .pill{white-space:normal;line-height:1.3}
+  .item-badges{display:flex;flex-wrap:wrap;gap:4px 6px;margin-left:0}
+  .item-badge{margin:0}
+  .item-main,.pb-quick-picks__body,.pb-suggestion-card__body,.pb-arc-slot__label,.pb-save-state-copy{min-width:0}
 }
 @page{
   size:A4 portrait;
