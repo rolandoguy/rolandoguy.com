@@ -1,6 +1,6 @@
 /**
- * Biography page: visible editorial copy merges admin `bio_<lang>` first, then bundled
- * `v1-assets/data/biography-data.json` (build artifact) as fallback. Portrait resolution unchanged.
+ * Biography page: visible editorial copy merges the editorial DE source first, then the
+ * language bundle, then saved admin overrides. Portrait resolution follows the same DE-first chain.
  */
 (function () {
   'use strict';
@@ -44,6 +44,8 @@
       var byShort = readLegacyJson('bio_' + shortLang);
       if (byShort && typeof byShort.portraitImage === 'string' && byShort.portraitImage.trim()) return byShort.portraitImage.trim();
     }
+    var de = readLegacyJson('bio_de');
+    if (de && typeof de.portraitImage === 'string' && de.portraitImage.trim()) return de.portraitImage.trim();
     var en = readLegacyJson('bio_en');
     if (en && typeof en.portraitImage === 'string' && en.portraitImage.trim()) return en.portraitImage.trim();
     return '';
@@ -123,6 +125,7 @@
     var shortLang = String(lang || 'en').split('-')[0];
     var chain = [lang];
     if (shortLang && shortLang !== lang) chain.push(shortLang);
+    if (chain.indexOf('de') < 0) chain.push('de');
     if (chain.indexOf('en') < 0) chain.push('en');
     var idx = 0;
     function next() {
@@ -175,7 +178,7 @@
     var lang = currentLang();
     var L = MP_BIO && MP_BIO.locales;
     if (!L) return null;
-    return L[lang] || L.en || null;
+    return L[lang] || L.de || L.en || null;
   }
 
   function firstNonEmpty() {
@@ -184,6 +187,78 @@
       if (v != null && String(v).trim() !== '') return String(v);
     }
     return '';
+  }
+  function normalizeComparableText(v) {
+    return String(v == null ? '' : v)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&[a-z0-9#]+;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+  function bioSignature(doc) {
+    if (!doc || typeof doc !== 'object') return '';
+    var parts = [];
+    ['introLine', 'h2', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro', 'portraitAlt'].forEach(function (k) {
+      if (doc[k] != null && String(doc[k]).trim() !== '') parts.push(normalizeComparableText(doc[k]));
+    });
+    if (Array.isArray(doc.paragraphs) && doc.paragraphs.length) {
+      doc.paragraphs.forEach(function (p) {
+        if (p != null && String(p).trim() !== '') parts.push(normalizeComparableText(p));
+      });
+    } else {
+      ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (k) {
+        if (doc[k] != null && String(doc[k]).trim() !== '') parts.push(normalizeComparableText(doc[k]));
+      });
+    }
+    return parts.join('|');
+  }
+  var BIO_COMPARE_KEYS = ['introLine', 'h2', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro', 'portraitAlt', 'quote', 'cite'];
+  function bioLocaleSimilarityScore(doc, ref) {
+    if (!doc || !ref || typeof doc !== 'object' || typeof ref !== 'object') return 0;
+    var score = 0;
+    BIO_COMPARE_KEYS.forEach(function (k) {
+      var a = normalizeComparableText(doc[k]);
+      var b = normalizeComparableText(ref[k]);
+      if (a && b && a === b) score += 1;
+    });
+    var docParas = normalizeParagraphsFromDoc(doc);
+    var refParas = normalizeParagraphsFromDoc(ref);
+    var max = Math.max(docParas.length, refParas.length);
+    for (var i = 0; i < max; i += 1) {
+      var pa = normalizeComparableText(docParas[i]);
+      var pb = normalizeComparableText(refParas[i]);
+      if (pa && pb && pa === pb) score += 1;
+    }
+    return score;
+  }
+  function detectBiographyLocaleMatch(doc) {
+    var sig = bioSignature(doc);
+    if (!sig || !MP_BIO || !MP_BIO.locales) return '';
+    var out = '';
+    Object.keys(MP_BIO.locales).some(function (lang) {
+      var candidate = MP_BIO.locales[lang];
+      if (!candidate || typeof candidate !== 'object') return false;
+      if (bioSignature(candidate) === sig) {
+        out = lang;
+        return true;
+      }
+      return false;
+    });
+    return out;
+  }
+  function shouldSuppressBiographyAdminDoc(lang, doc) {
+    var L = String(lang || 'en').toLowerCase();
+    if (L === 'de' || !doc || typeof doc !== 'object' || !MP_BIO || !MP_BIO.locales) return false;
+    var deLocale = MP_BIO.locales.de || MP_BIO.locales.en || null;
+    var enLocale = MP_BIO.locales.en || null;
+    if (!deLocale || !enLocale) return false;
+    var matchedLocale = detectBiographyLocaleMatch(doc);
+    if (matchedLocale && matchedLocale !== L) return true;
+    var deScore = bioLocaleSimilarityScore(doc, deLocale);
+    var englishScore = bioLocaleSimilarityScore(doc, enLocale);
+    if (L === 'en') return deScore >= 4 && deScore > englishScore + 1;
+    return englishScore >= 4 && englishScore > deScore + 1;
   }
 
   function normalizeParagraphsFromDoc(doc) {
@@ -203,7 +278,8 @@
     return out;
   }
 
-  function mergeBioDisplay(bundleLocale, adminDoc) {
+  function mergeBioDisplay(canonicalLocale, bundleLocale, adminDoc) {
+    var c = canonicalLocale && typeof canonicalLocale === 'object' ? canonicalLocale : {};
     var b = bundleLocale && typeof bundleLocale === 'object' ? bundleLocale : {};
     var a = adminDoc && typeof adminDoc === 'object' ? adminDoc : {};
     var adminParas = normalizeParagraphsFromDoc(a);
@@ -214,20 +290,27 @@
           })
           .filter(Boolean)
       : [];
-    var paras = adminParas.length ? adminParas : bundleParas;
+    var canonicalParas = Array.isArray(c.paragraphs)
+      ? c.paragraphs
+          .map(function (x) {
+            return String(x == null ? '' : x).trim();
+          })
+          .filter(Boolean)
+      : [];
+    var paras = adminParas.length ? adminParas : (bundleParas.length ? bundleParas : canonicalParas);
     return {
-      introLine: firstNonEmpty(a.introLine, b.introLine),
-      h2: firstNonEmpty(a.h2, b.h2),
+      introLine: firstNonEmpty(a.introLine, b.introLine, c.introLine),
+      h2: firstNonEmpty(a.h2, b.h2, c.h2),
       paragraphs: paras,
-      portraitAlt: firstNonEmpty(a.portraitAlt, b.portraitAlt),
-      portraitFit: firstNonEmpty(a.portraitFit, b.portraitFit),
-      portraitFocus: firstNonEmpty(a.portraitFocus, b.portraitFocus),
-      continueSectionTag: firstNonEmpty(a.continueSectionTag, b.continueSectionTag),
-      continueSub: firstNonEmpty(a.continueSub, b.continueSub),
-      ctaRepertoire: firstNonEmpty(a.ctaRepertoire, b.ctaRepertoire),
-      ctaMedia: firstNonEmpty(a.ctaMedia, b.ctaMedia),
-      ctaContact: firstNonEmpty(a.ctaContact, b.ctaContact),
-      ctaHomeIntro: firstNonEmpty(a.ctaHomeIntro, b.ctaHomeIntro)
+      portraitAlt: firstNonEmpty(a.portraitAlt, b.portraitAlt, c.portraitAlt),
+      portraitFit: firstNonEmpty(a.portraitFit, b.portraitFit, c.portraitFit),
+      portraitFocus: firstNonEmpty(a.portraitFocus, b.portraitFocus, c.portraitFocus),
+      continueSectionTag: firstNonEmpty(a.continueSectionTag, b.continueSectionTag, c.continueSectionTag),
+      continueSub: firstNonEmpty(a.continueSub, b.continueSub, c.continueSub),
+      ctaRepertoire: firstNonEmpty(a.ctaRepertoire, b.ctaRepertoire, c.ctaRepertoire),
+      ctaMedia: firstNonEmpty(a.ctaMedia, b.ctaMedia, c.ctaMedia),
+      ctaContact: firstNonEmpty(a.ctaContact, b.ctaContact, c.ctaContact),
+      ctaHomeIntro: firstNonEmpty(a.ctaHomeIntro, b.ctaHomeIntro, c.ctaHomeIntro)
     };
   }
 
@@ -352,19 +435,25 @@
   }
 
   function renderBioContent() {
+    var canonical = MP_BIO && MP_BIO.locales ? MP_BIO.locales.de || MP_BIO.locales.en || null : null;
     var bundle = pickLocale();
     var lang = currentLang();
     Promise.all([
       getBioDocWithFallback(lang),
-      lang === 'en' ? Promise.resolve(null) : getBioDocWithFallback('en')
+      lang === 'de' ? Promise.resolve(null) : getBioDocWithFallback('de')
     ]).then(function (pair) {
       var docWrap = pair[0];
-      var enWrap = pair[1];
+      var deWrap = pair[1];
       var adminDoc = docWrap && docWrap.data && typeof docWrap.data === 'object' ? docWrap.data : {};
-      var enDoc = enWrap && enWrap.data && typeof enWrap.data === 'object' ? enWrap.data : {};
-      var merged = mergeBioDisplay(bundle, adminDoc);
-      merged.portraitFit = firstNonEmpty(adminDoc.portraitFit, enDoc.portraitFit, merged.portraitFit);
-      merged.portraitFocus = firstNonEmpty(adminDoc.portraitFocus, enDoc.portraitFocus, merged.portraitFocus);
+      var deDoc = deWrap && deWrap.data && typeof deWrap.data === 'object' ? deWrap.data : {};
+      var adminLocaleMatch = detectBiographyLocaleMatch(adminDoc);
+      var adminDocForDisplay = adminDoc;
+      if ((lang === 'en' && adminLocaleMatch && adminLocaleMatch !== 'en') || shouldSuppressBiographyAdminDoc(lang, adminDoc)) {
+        adminDocForDisplay = {};
+      }
+      var merged = mergeBioDisplay(canonical, bundle, adminDocForDisplay);
+      merged.portraitFit = firstNonEmpty(adminDoc.portraitFit, deDoc.portraitFit, merged.portraitFit);
+      merged.portraitFocus = firstNonEmpty(adminDoc.portraitFocus, deDoc.portraitFocus, merged.portraitFocus);
       var portraitHint = null;
       var rawPi = adminDoc && typeof adminDoc.portraitImage === 'string' ? adminDoc.portraitImage.trim() : '';
       if (rawPi) {

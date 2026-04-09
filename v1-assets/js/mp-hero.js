@@ -3,10 +3,12 @@
   var INTRO_PLACEHOLDER_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   /** Hero background: /v1-assets/data/hero-config.json (npm run build:hero-config -- <export.json>). */
   var HERO_EN_FALLBACK = {
-    'hero.eyebrow': 'LYRIC TENOR · OPERA · CONCERT · RECITAL',
+    'hero.eyebrow': 'LYRIC TENOR · OPERA · RECITAL · CONCERT',
     'hero.subtitle': 'Argentine-Italian lyric tenor based in Berlin',
     'hero.cta1': 'WATCH & LISTEN',
-    'hero.cta2': 'BOOK NOW',
+    'hero.ctaBio': 'BIOGRAPHY',
+    'hero.cta2': 'CALENDAR',
+    'hero.cta3': 'BOOK NOW',
     'hero.nameHtml': 'Rolando<br><em>Guy</em>'
   };
   var LAST_HERO_IMAGE = '';
@@ -304,7 +306,8 @@
         'hero.eyebrow': 'eyebrow',
         'hero.subtitle': 'subtitle',
         'hero.cta1': 'cta1',
-        'hero.cta2': 'cta2'
+        'hero.cta2': 'cta2',
+        'hero.cta3': 'cta3'
       };
       var field = map[key];
       var v = pick ? pick(L, key) : null;
@@ -323,8 +326,10 @@
     var heroCta2 = document.getElementById('heroCta2');
     var heroQuickBio = document.getElementById('heroQuickBio');
     var heroQuickCal = document.getElementById('heroQuickCal');
+    var heroCta3 = document.getElementById('heroCta3');
     var homeIntroCtaBio = document.getElementById('homeIntroCtaBio');
     var homeIntroCtaMedia = document.getElementById('homeIntroCtaMedia');
+    var homeIntroCtaPress = document.getElementById('homeIntroCtaPress');
     var heroName = document.getElementById('heroName');
     var v;
     var vEyebrow = val('hero.eyebrow');
@@ -335,9 +340,11 @@
     if (heroCta1 && vCta1 && vCta1.value != null) heroCta1.textContent = vCta1.value;
     var vCta2 = val('hero.cta2');
     if (heroCta2 && vCta2 && vCta2.value != null) heroCta2.textContent = vCta2.value;
+    var vCta3 = val('hero.cta3');
+    if (heroCta3 && vCta3 && vCta3.value != null) heroCta3.textContent = vCta3.value;
     var quickBioInfo = getHeroTextOverrideInfo('quickBioLabel', L);
     if (heroQuickBio) {
-      var quickBioFallback = pick ? pick(L, 'nav.bio') : null;
+      var quickBioFallback = pick ? pick(L, 'hero.ctaBio') : null;
       if (quickBioFallback != null && quickBioFallback !== '') heroQuickBio.textContent = quickBioFallback;
       else if (quickBioInfo && quickBioInfo.value) heroQuickBio.textContent = quickBioInfo.value;
     }
@@ -363,6 +370,12 @@
       if (introMediaFallback != null && introMediaFallback !== '') homeIntroCtaMedia.textContent = introMediaFallback;
       else if (introMediaInfo && introMediaInfo.value) homeIntroCtaMedia.textContent = introMediaInfo.value;
     }
+    var introPressInfo = getHeroTextOverrideInfoWithoutEn('introCtaPress', L);
+    if (homeIntroCtaPress) {
+      var introPressFallback = pick ? pick(L, 'home.intro.ctaPress') : null;
+      if (introPressFallback != null && introPressFallback !== '') homeIntroCtaPress.textContent = introPressFallback;
+      else if (introPressInfo && introPressInfo.value) homeIntroCtaPress.textContent = introPressInfo.value;
+    }
     if (!HERO_SOURCE_LOGGED) {
       HERO_SOURCE_LOGGED = true;
       console.log('[Hero] Runtime source trace', {
@@ -371,6 +384,7 @@
         subtitle: vSubtitle && vSubtitle.source,
         cta1: vCta1 && vCta1.source,
         cta2: vCta2 && vCta2.source,
+        cta3: vCta3 && vCta3.source,
         quickBio: heroQuickBio ? heroQuickBio.textContent : '',
         quickCal: heroQuickCal ? heroQuickCal.textContent : ''
       });

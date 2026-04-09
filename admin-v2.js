@@ -837,6 +837,10 @@
     focusMode: false,
     ready: false,
     bioPortraitDefault: '',
+    bioBundle: null,
+    bioBundlePromise: null,
+    bioBundleFailed: false,
+    bioBundleLiveLoaded: false,
     bioLoadNonce: 0,
     homeIntroDefault: '',
     homeLoadNonce: 0,
@@ -2047,11 +2051,11 @@
           issues.push({ kind: 'warn', text: 'EN has Home label "' + k + '" but ' + effectiveLang.toUpperCase() + ' is missing it.', action: { section: 'home', lang: effectiveLang } });
         }
       });
-      var bioEn = getSiteHealthDoc(snapshot, 'bio_en', {});
+      var bioEn = getSiteHealthDoc(snapshot, 'bio_de', {});
       var bioLocal = getSiteHealthDoc(snapshot, 'bio_' + effectiveLang, {});
       ['h2', 'p1', 'p2'].forEach(function (k) {
         if (!isBlank(bioEn && bioEn[k]) && isBlank(bioLocal && bioLocal[k])) {
-          issues.push({ kind: 'warn', text: 'EN biography has "' + k + '" but ' + effectiveLang.toUpperCase() + ' is missing it.', action: { section: 'bio', lang: effectiveLang } });
+          issues.push({ kind: 'warn', text: 'DE biography has "' + k + '" but ' + effectiveLang.toUpperCase() + ' is missing it.', action: { section: 'bio', lang: effectiveLang } });
         }
       });
     }
@@ -2469,29 +2473,238 @@
     return out;
   }
   function fillBioParagraphInputsFromStored(stored, fallback) {
-    var paras = normalizeParagraphsFromBioStored(isObject(stored) ? stored : {});
-    if (!paras.length) paras = normalizeParagraphsFromBioStored(isObject(fallback) ? fallback : {});
+    var storedParas = normalizeParagraphsFromBioStored(isObject(stored) ? stored : {});
+    var fallbackParas = normalizeParagraphsFromBioStored(isObject(fallback) ? fallback : {});
     var ids = bioParagraphFieldIds();
     for (var i = 0; i < ids.length; i++) {
       var el = $(ids[i]);
-      if (el) el.value = safeString(paras[i]);
+      if (!el) continue;
+      var v = storedParas[i];
+      if (isBlank(v) && !isBlank(fallbackParas[i])) v = fallbackParas[i];
+      el.value = safeString(v);
     }
   }
   function loadBioPortraitDefault() {
     if (state.bioPortraitDefault) return Promise.resolve(state.bioPortraitDefault);
-    return fetch('v1-assets/data/biography-data.json', { cache: 'no-store' })
+    return loadBiographyBundle().then(function () {
+      return state.bioPortraitDefault || '';
+    });
+  }
+  function loadBiographyBundleDefaultsSync() {
+    if (state.bioBundle && Object.keys(state.bioBundle).length) return state.bioBundle;
+    var urls = ['v1-assets/data/biography-data.json', 'v1-assets/build/biography-defaults.json'];
+    for (var i = 0; i < urls.length; i += 1) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', urls[i], false);
+        xhr.send(null);
+        if (xhr.status >= 200 && xhr.status < 300 && safeString(xhr.responseText).trim()) {
+          var data = JSON.parse(xhr.responseText);
+          var locales = isObject(data && data.locales) ? data.locales : {};
+          if (locales && Object.keys(locales).length) {
+            state.bioBundle = locales;
+            if (safeString(data && data.portraitImage).trim()) state.bioPortraitDefault = safeString(data.portraitImage).trim();
+            bioDebug('bundle:sync-ok', { url: urls[i], locales: Object.keys(locales).join(',') });
+            return locales;
+          }
+        }
+      } catch (e) {}
+    }
+    if (!isObject(state.bioBundle)) state.bioBundle = {};
+    bioDebug('bundle:sync-failed', { urls: urls.join(',') });
+    return state.bioBundle;
+  }
+  function loadBiographyBundle() {
+    if (state.bioBundlePromise) return state.bioBundlePromise;
+    if (state.bioBundleLiveLoaded) return Promise.resolve(state.bioBundle || {});
+    state.bioBundleFailed = false;
+    state.bioBundlePromise = fetch('v1-assets/data/biography-data.json', { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) throw new Error(String(r.status || 'bio json load failed'));
         return r.json();
       })
       .then(function (data) {
+        var locales = isObject(data && data.locales) ? data.locales : {};
+        state.bioBundle = Object.assign({}, state.bioBundle || {}, locales);
         var src = safeString(data && data.portraitImage).trim();
-        state.bioPortraitDefault = src;
-        return src;
+        if (src) state.bioPortraitDefault = src;
+        state.bioBundleLiveLoaded = true;
+        bioDebug('bundle:live-ok', { locales: Object.keys(locales).join(',') });
+        return locales;
       })
       .catch(function () {
-        return '';
+        state.bioBundleFailed = true;
+        state.bioBundleLiveLoaded = true;
+        bioDebug('bundle:live-failed', { lang: state.lang });
+        return state.bioBundle;
+      })
+      .then(function (locales) {
+        state.bioBundlePromise = null;
+        return locales;
       });
+    return state.bioBundlePromise;
+  }
+  loadBiographyBundleDefaultsSync();
+  loadBiographyBundle();
+  function mergeBiographySourceDoc(bundled, stored) {
+    var out = Object.assign({}, isObject(bundled) ? bundled : {});
+    if (!isObject(stored)) return out;
+    Object.keys(stored).forEach(function (k) {
+      if (k === 'paragraphs') {
+        var paras = normalizeParagraphsFromBioStored(stored);
+        if (paras.length) out.paragraphs = paras.slice();
+        return;
+      }
+      var v = stored[k];
+      if (!isBlank(v)) out[k] = v;
+    });
+    return out;
+  }
+  function getBiographyStoredDoc(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var doc = loadDoc('bio_' + L, {});
+    return isObject(doc) ? doc : {};
+  }
+  function getBiographyBundleDoc(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    return state.bioBundle && isObject(state.bioBundle[L]) ? state.bioBundle[L] : {};
+  }
+  function getBiographyLocalizedDoc(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    return mergeBiographySourceDoc(getBiographyBundleDoc(L), getBiographyStoredDoc(L));
+  }
+  function getBiographyCanonicalDoc() {
+    // German is the editorial source of truth for Biography.
+    return getBiographyLocalizedDoc('de');
+  }
+  function getBiographySafeStoredDoc(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var raw = getBiographyStoredDoc(L);
+    if (L === 'de') return raw;
+    if (!isObject(raw) || !hasBiographyMeaningfulContent(raw)) return raw;
+    var matchedLocale = detectBiographyLocaleMatch(raw, state.bioBundle || {});
+    if (matchedLocale && matchedLocale !== L) {
+      bioDebug('source:ignore-locale-mismatch', { lang: L, matchedLocale: matchedLocale });
+      var safeByMatch = {};
+      ['portraitImage', 'portraitFit', 'portraitFocus'].forEach(function (k) {
+        if (!isBlank(raw[k])) safeByMatch[k] = safeString(raw[k]);
+      });
+      return safeByMatch;
+    }
+    if (!state.bioBundle || !isObject(state.bioBundle.en)) return raw;
+    var canonical = getBiographyCanonicalDoc();
+    var deScore = bioLocaleSimilarityScore(raw, canonical);
+    var englishScore = bioLocaleSimilarityScore(raw, state.bioBundle.en);
+    if (englishScore >= 4 && englishScore > deScore + 1) {
+      bioDebug('source:ignore-english', { lang: L, englishScore: englishScore, deScore: deScore });
+      var safe = {};
+      ['portraitImage', 'portraitFit', 'portraitFocus'].forEach(function (k) {
+        if (!isBlank(raw[k])) safe[k] = safeString(raw[k]);
+      });
+      return safe;
+    }
+    return raw;
+  }
+  function getBiographyFallbackDoc(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    return mergeBiographySourceDoc(getBiographyCanonicalDoc(), getBiographyBundleDoc(L));
+  }
+  function getBiographySourceDoc(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var key = 'bio_' + L;
+    var rawStored = getBiographyStoredDoc(L);
+    var stored = getBiographySafeStoredDoc(L);
+    var canonical = getBiographyCanonicalDoc();
+    var localizedFallback = getBiographyFallbackDoc(L);
+    var matchedLocale = detectBiographyLocaleMatch(rawStored, state.bioBundle || {});
+    if (matchedLocale && matchedLocale !== L) {
+      bioDebug('source:locale-mismatch', { lang: L, matchedLocale: matchedLocale, key: key });
+    }
+    if (L !== 'de' && state.bioBundle && isObject(state.bioBundle.en)) {
+      var deScore = bioLocaleSimilarityScore(rawStored, canonical);
+      var englishScore = bioLocaleSimilarityScore(rawStored, state.bioBundle.en);
+      if (englishScore >= 4 && englishScore > deScore + 1) {
+        bioDebug('source:looks-english', { lang: L, englishScore: englishScore, deScore: deScore, key: key });
+      }
+    }
+    bioDebug('source:resolved', {
+      lang: L,
+      key: key,
+      storedKeys: Object.keys(rawStored).length,
+      safeStoredKeys: Object.keys(stored).length,
+      canonicalKeys: Object.keys(canonical).length,
+      localizedFallbackKeys: Object.keys(localizedFallback).length
+    });
+    return mergeBiographySourceDoc(localizedFallback, stored);
+  }
+  function normalizeBioComparableText(v) {
+    return String(v == null ? '' : v)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&[a-z0-9#]+;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+  function bioDocSignature(doc) {
+    if (!isObject(doc)) return '';
+    var parts = [];
+    ['introLine', 'h2', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro', 'portraitAlt'].forEach(function (k) {
+      var v = doc[k];
+      if (v != null && String(v).trim() !== '') parts.push(normalizeBioComparableText(v));
+    });
+    if (Array.isArray(doc.paragraphs) && doc.paragraphs.length) {
+      doc.paragraphs.forEach(function (p) {
+        if (p != null && String(p).trim() !== '') parts.push(normalizeBioComparableText(p));
+      });
+    } else {
+      ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (k) {
+        var v = doc[k];
+        if (v != null && String(v).trim() !== '') parts.push(normalizeBioComparableText(v));
+      });
+    }
+    return parts.join('|');
+  }
+  var BIO_COMPARE_KEYS = ['introLine', 'h2', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro', 'portraitAlt', 'quote', 'cite'];
+  function hasBiographyMeaningfulContent(doc) {
+    if (!isObject(doc)) return false;
+    if (normalizeBioComparableText(bioDocSignature(doc))) return true;
+    return false;
+  }
+  function bioDebug(stage, payload) {
+    try {
+      if (!window.console || typeof console.info !== 'function') return;
+      console.info('[admin-v2 biography]', stage, payload || {});
+    } catch (e) {}
+  }
+  function bioLocaleSimilarityScore(doc, ref) {
+    if (!isObject(doc) || !isObject(ref)) return 0;
+    var score = 0;
+    BIO_COMPARE_KEYS.forEach(function (k) {
+      var a = normalizeBioComparableText(doc[k]);
+      var b = normalizeBioComparableText(ref[k]);
+      if (a && b && a === b) score += 1;
+    });
+    var docParas = normalizeParagraphsFromBioStored(doc);
+    var refParas = normalizeParagraphsFromBioStored(ref);
+    var max = Math.max(docParas.length, refParas.length);
+    for (var i = 0; i < max; i += 1) {
+      var pa = normalizeBioComparableText(docParas[i]);
+      var pb = normalizeBioComparableText(refParas[i]);
+      if (pa && pb && pa === pb) score += 1;
+    }
+    return score;
+  }
+  function detectBiographyLocaleMatch(doc, locales) {
+    var sig = bioDocSignature(doc);
+    if (!sig) return '';
+    var out = '';
+    Object.keys(locales || {}).forEach(function (lang) {
+      if (out) return;
+      var candidate = locales[lang];
+      if (!isObject(candidate)) return;
+      if (bioDocSignature(candidate) === sig) out = lang;
+    });
+    return out;
   }
   function updateBioPortraitPreview() {
     var src = safeString($('bio-portraitImage').value).trim();
@@ -2519,36 +2732,78 @@
 
   function loadBio() {
     var nonce = ++state.bioLoadNonce;
-    var stored = loadDoc('bio_' + state.lang, null);
-    var storedEn = loadDoc('bio_en', null);
-    var fallback = getLegacySection('bio');
-    setFieldFromSources('bio-introLine', stored, fallback, 'introLine', 'Bundled default');
-    setFieldFromSources('bio-h2', stored, fallback, 'h2', 'Bundled default');
-    fillBioParagraphInputsFromStored(stored, fallback);
-    setFieldFromSources('bio-continue-tag', stored, fallback, 'continueSectionTag', 'Bundled default');
-    setFieldFromSources('bio-continue-sub', stored, fallback, 'continueSub', 'Bundled default');
-    setFieldFromSources('bio-cta-rep', stored, fallback, 'ctaRepertoire', 'Bundled default');
-    setFieldFromSources('bio-cta-media', stored, fallback, 'ctaMedia', 'Bundled default');
-    setFieldFromSources('bio-cta-contact', stored, fallback, 'ctaContact', 'Bundled default');
-    setFieldFromSources('bio-cta-home', stored, fallback, 'ctaHomeIntro', 'Bundled default');
-    setFieldFromSources('bio-portraitAlt', stored, fallback, 'portraitAlt', 'Bundled default');
-    setFieldFromSources('bio-quote', stored, fallback, 'quote', 'Bundled default');
-    setFieldFromSources('bio-cite', stored, fallback, 'cite', 'Bundled default');
-    setFieldFromSources('bio-portraitFit', stored, fallback, 'portraitFit', 'Default cover');
-    setFieldFromSources('bio-portraitFocus', stored, fallback, 'portraitFocus', 'Public default');
-    var immediate = resolveEffectiveBioPortrait(stored, storedEn, state.bioPortraitDefault);
+    var storedRaw = getBiographyStoredDoc(state.lang);
+    var storedSafe = getBiographySafeStoredDoc(state.lang);
+    var storedDe = getBiographySourceDoc('de');
+    var legacyFallback = getLegacySection('bio');
+    var bioFallback = getBiographyFallbackDoc(state.lang);
+    var bioFallbackLabel = state.lang === 'de' ? 'Bundled DE source' : 'Bundled DE source + translation';
+    bioDebug('load:start', {
+      lang: state.lang,
+      sourceGuess: hasBiographyMeaningfulContent(storedSafe) ? 'saved' : (hasBiographyMeaningfulContent(bioFallback) ? 'fallback' : 'empty'),
+      storedKeys: isObject(storedRaw) ? Object.keys(storedRaw).length : 0,
+      safeStoredKeys: isObject(storedSafe) ? Object.keys(storedSafe).length : 0,
+      canonicalKeys: isObject(storedDe) ? Object.keys(storedDe).length : 0,
+      fallbackKeys: isObject(bioFallback) ? Object.keys(bioFallback).length : 0,
+      legacyFallbackKeys: isObject(legacyFallback) ? Object.keys(legacyFallback).length : 0,
+      bundleFailed: !!state.bioBundleFailed,
+      liveLoaded: !!state.bioBundleLiveLoaded,
+      draftPresent: !!readCurrentLocalDraftSnapshot()
+    });
+    setFieldFromSources('bio-introLine', storedSafe, bioFallback, 'introLine', bioFallbackLabel);
+    setFieldFromSources('bio-h2', storedSafe, bioFallback, 'h2', bioFallbackLabel);
+    fillBioParagraphInputsFromStored(storedSafe, bioFallback);
+    setFieldFromSources('bio-continue-tag', storedSafe, bioFallback, 'continueSectionTag', bioFallbackLabel);
+    setFieldFromSources('bio-continue-sub', storedSafe, bioFallback, 'continueSub', bioFallbackLabel);
+    setFieldFromSources('bio-cta-rep', storedSafe, bioFallback, 'ctaRepertoire', bioFallbackLabel);
+    setFieldFromSources('bio-cta-media', storedSafe, bioFallback, 'ctaMedia', bioFallbackLabel);
+    setFieldFromSources('bio-cta-contact', storedSafe, bioFallback, 'ctaContact', bioFallbackLabel);
+    setFieldFromSources('bio-cta-home', storedSafe, bioFallback, 'ctaHomeIntro', bioFallbackLabel);
+    setFieldFromSources('bio-portraitAlt', storedSafe, bioFallback, 'portraitAlt', bioFallbackLabel);
+    setFieldFromSources('bio-quote', storedSafe, bioFallback, 'quote', bioFallbackLabel);
+    setFieldFromSources('bio-cite', storedSafe, bioFallback, 'cite', bioFallbackLabel);
+    setFieldFromSources('bio-portraitFit', storedSafe, bioFallback, 'portraitFit', 'Default cover');
+    setFieldFromSources('bio-portraitFocus', storedSafe, bioFallback, 'portraitFocus', 'Public default');
+    var immediate = resolveEffectiveBioPortrait(storedRaw, storedDe, state.bioPortraitDefault);
     if (immediate) {
       $('bio-portraitImage').value = immediate;
       updateBioPortraitPreview();
     }
     updateBioMiniPreview();
-    loadBioPortraitDefault().then(function (src) {
+    loadBiographyBundle().then(function (locales) {
       if (nonce !== state.bioLoadNonce) return;
-      var effPortrait = resolveEffectiveBioPortrait(stored, storedEn, src);
+      var liveFallback = getBiographyFallbackDoc(state.lang);
+      if (!hasBiographyMeaningfulContent(liveFallback)) {
+        bioDebug('load:skip-live', {
+          lang: state.lang,
+          reason: 'live fallback empty',
+          storedKeys: isObject(storedRaw) ? Object.keys(storedRaw).length : 0
+        });
+        return;
+      }
+      var liveFallbackLabel = state.lang === 'de' ? 'Bundled DE source' : 'Bundled DE source + translation';
+      bioDebug('load:apply-live', {
+        lang: state.lang,
+        fallbackKeys: Object.keys(liveFallback || {}).length,
+        storedKeys: isObject(storedRaw) ? Object.keys(storedRaw).length : 0
+      });
+      setFieldFromSources('bio-introLine', storedSafe, liveFallback, 'introLine', liveFallbackLabel);
+      setFieldFromSources('bio-h2', storedSafe, liveFallback, 'h2', liveFallbackLabel);
+      fillBioParagraphInputsFromStored(storedSafe, liveFallback);
+      setFieldFromSources('bio-continue-tag', storedSafe, liveFallback, 'continueSectionTag', liveFallbackLabel);
+      setFieldFromSources('bio-continue-sub', storedSafe, liveFallback, 'continueSub', liveFallbackLabel);
+      setFieldFromSources('bio-cta-rep', storedSafe, liveFallback, 'ctaRepertoire', liveFallbackLabel);
+      setFieldFromSources('bio-cta-media', storedSafe, liveFallback, 'ctaMedia', liveFallbackLabel);
+      setFieldFromSources('bio-cta-contact', storedSafe, liveFallback, 'ctaContact', liveFallbackLabel);
+      setFieldFromSources('bio-cta-home', storedSafe, liveFallback, 'ctaHomeIntro', liveFallbackLabel);
+      setFieldFromSources('bio-portraitAlt', storedSafe, liveFallback, 'portraitAlt', liveFallbackLabel);
+      setFieldFromSources('bio-quote', storedSafe, liveFallback, 'quote', liveFallbackLabel);
+      setFieldFromSources('bio-cite', storedSafe, liveFallback, 'cite', liveFallbackLabel);
+      var effPortrait = resolveEffectiveBioPortrait(storedRaw, storedDe, state.bioPortraitDefault);
       $('bio-portraitImage').value = effPortrait;
       var portraitSource = 'Bundled default';
-      if (isObject(stored) && safeString(stored.portraitImage).trim()) portraitSource = 'Saved here';
-      else if (isObject(storedEn) && safeString(storedEn.portraitImage).trim()) portraitSource = 'Inherited (EN)';
+      if (isObject(storedRaw) && safeString(storedRaw.portraitImage).trim()) portraitSource = 'Saved here';
+      else if (isObject(storedDe) && safeString(storedDe.portraitImage).trim()) portraitSource = 'Inherited (DE)';
       setFieldEffectiveValue($('bio-portraitImage'), { value: effPortrait, source: portraitSource });
       updateBioPortraitPreview();
       updateBioMiniPreview();
@@ -2578,6 +2833,12 @@
       portraitFit: safeString($('bio-portraitFit').value).trim(),
       portraitFocus: safeString($('bio-portraitFocus').value).trim()
     };
+    bioDebug('save', {
+      lang: state.lang,
+      target: 'bio_' + state.lang,
+      paragraphCount: paras.length,
+      applyAllPortraits: applyAll
+    });
     saveDoc('bio_' + state.lang, payload);
     // Compatibility mirror for mp/biography runtime override resolution.
     try {
@@ -6968,6 +7229,7 @@
     var key = safeString(lang || 'en').trim().toLowerCase() || 'en';
     var docs = [
       loadDoc('bio_' + key, null),
+      key !== 'de' ? loadDoc('bio_de', null) : null,
       key !== 'en' ? loadDoc('bio_en', null) : null,
       getLegacySection('bio')
     ];
@@ -9515,8 +9777,7 @@
   function copyBioFromEn() {
     if (state.lang === 'en') return setStatus('Already EN.', 'warn');
     if (!window.confirm('Copy Biography text fields from EN for this language? Portrait image is not overwritten.')) return;
-    var en = loadDoc('bio_en', {});
-    if (!isObject(en)) en = {};
+    var en = getBiographySourceDoc('en');
     $('bio-introLine').value = safeString(en.introLine);
     $('bio-h2').value = safeString(en.h2);
     fillBioParagraphInputsFromStored(en, {});
@@ -9673,8 +9934,7 @@
   }
   function copyBioMissingFromEn() {
     if (state.lang === 'en') return setStatus('Already EN.', 'warn');
-    var en = loadDoc('bio_en', {});
-    if (!isObject(en)) en = {};
+    var en = getBiographySourceDoc('en');
     var map = [
       { id: 'bio-introLine', key: 'introLine' },
       { id: 'bio-h2', key: 'h2' },
@@ -9827,8 +10087,8 @@
     compareFieldsWithEn('Home / Hero + intro UI', curH, enH);
   }
   function compareBioWithEn() {
-    var cur = loadDoc('bio_' + state.lang, {}) || {};
-    var en = loadDoc('bio_en', {}) || {};
+    var cur = getBiographySourceDoc(state.lang) || {};
+    var en = getBiographySourceDoc('en') || {};
     function flatBio(d) {
       var o = isObject(d) ? d : {};
       var base = {
@@ -9940,8 +10200,8 @@
     var ed = getEditorialMeta(L);
     var he = loadDoc('hero_en', {}) || {};
     var hc = loadDoc('hero_' + L, {}) || {};
-    var be = loadDoc('bio_en', {}) || {};
-    var bc = loadDoc('bio_' + L, {}) || {};
+    var be = getBiographySourceDoc('en') || {};
+    var bc = getBiographySourceDoc(L) || {};
     var ce = loadDoc('contact_en', {}) || {};
     var cc = loadDoc('contact_' + L, {}) || {};
     var ue = loadDoc('rg_ui_en', {}) || {};
@@ -10112,13 +10372,13 @@
     [['cta1', 'Home CTA 1'], ['cta2', 'Home CTA 2'], ['introCtaBio', 'Home intro CTA bio'], ['introCtaMedia', 'Home intro CTA media']].forEach(function (pair) {
       if (!isBlank(he[pair[0]]) && isBlank(hc[pair[0]])) issues.push(pair[1] + ' empty while EN has text.');
     });
-    var be = loadDoc('bio_en', {}) || {};
-    var bc = loadDoc('bio_' + L, {}) || {};
+    var be = getBiographyLocalizedDoc('de') || {};
+    var bc = getBiographySourceDoc(L) || {};
     ['h2', 'p1', 'p2'].forEach(function (k) {
-      if (!isBlank(be[k]) && isBlank(bc[k])) issues.push('Biography field "' + k + '" empty while EN has text.');
+      if (!isBlank(be[k]) && isBlank(bc[k])) issues.push('Biography field "' + k + '" empty while DE has text.');
       var et = safeString(be[k]).trim();
       var ct = safeString(bc[k]).trim();
-      if (et.length > 40 && ct === et) issues.push('Biography "' + k + '" still identical to EN (may be untranslated).');
+      if (et.length > 40 && ct === et) issues.push('Biography "' + k + '" still identical to DE (may be untranslated).');
     });
     var ue = loadDoc('rg_ui_en', {}) || {};
     var uc = loadDoc('rg_ui_' + L, {}) || {};
@@ -10206,7 +10466,7 @@
       hideIf('hero-introCtaBio', he.introCtaBio, $('hero-introCtaBio').value);
       hideIf('hero-introCtaMedia', he.introCtaMedia, $('hero-introCtaMedia').value);
     } else if (sec === 'bio') {
-      var be = loadDoc('bio_en', {}) || {};
+      var be = getBiographyCanonicalDoc() || {};
       hideIf('bio-introLine', be.introLine, $('bio-introLine').value);
       hideIf('bio-h2', be.h2, $('bio-h2').value);
       bioParagraphFieldIds().forEach(function (id, idx) {
@@ -11217,6 +11477,7 @@
       '</div>';
     banner.hidden = false;
     setDraftRestoreNoticeRecord(key, { draftId: draftId, ts: ts, seen: true, seenAt: Date.now(), dismissed: false, restored: false });
+    bioDebug('draft:banner', { lang: state.lang, draftId: draftId, ts: ts, force: !!force });
     return true;
   }
   function refreshDraftRestoreBanner(force) {
@@ -11247,6 +11508,7 @@
       cleared: !!clearDraft
     });
     hideDraftRestoreBanner();
+    bioDebug('draft:dismiss', { lang: state.lang, clearDraft: !!clearDraft, draftId: draftId, ts: ts });
   }
   function restoreDraftFromBanner() {
     var snapshot = readCurrentLocalDraftSnapshot();
@@ -11266,6 +11528,7 @@
       restored: true
     });
     hideDraftRestoreBanner();
+    bioDebug('draft:restore', { lang: state.lang, draftId: safeString(snapshot.draftId).trim(), ts: Number(snapshot.ts) || Date.now() });
   }
   function serializeCurrentSectionDraft() {
     var s = state.section;

@@ -12,6 +12,7 @@
   var PROGRAMS_DOC_PROMISES = {};
   var EDITORIAL_DOCS = {};
   var EDITORIAL_DOC_PROMISES = {};
+  var PROGRAMS_SCROLL_RAF = 0;
 
   var UI = {
     en: { sectionTag: 'Programs', formations: 'Format', duration: 'Duration', idealFor: 'Ideal for' },
@@ -199,6 +200,37 @@
     else if (repLink) repLink.hidden = !!hide;
   }
 
+  function getProgramsAnchorOffset() {
+    var offset = 12;
+    var nav = document.getElementById('nav');
+    var langBar = document.querySelector('.lang-bar');
+    if (langBar) offset += Math.ceil(langBar.getBoundingClientRect().height || 0);
+    if (nav) offset += Math.ceil(nav.getBoundingClientRect().height || 0);
+    return offset;
+  }
+
+  function scrollProgramsToTop(force) {
+    if (!force && String(window.location.hash || '').toLowerCase() !== '#programs') return;
+    var section = document.getElementById('programs');
+    if (!section || section.hidden) return;
+    var top = window.pageYOffset + section.getBoundingClientRect().top - getProgramsAnchorOffset();
+    window.scrollTo({
+      top: Math.max(0, Math.round(top)),
+      behavior: 'auto'
+    });
+  }
+
+  function scheduleProgramsScroll(force) {
+    if (!force && String(window.location.hash || '').toLowerCase() !== '#programs') return;
+    if (PROGRAMS_SCROLL_RAF) return;
+    PROGRAMS_SCROLL_RAF = window.requestAnimationFrame(function () {
+      PROGRAMS_SCROLL_RAF = window.requestAnimationFrame(function () {
+        PROGRAMS_SCROLL_RAF = 0;
+        scrollProgramsToTop(force);
+      });
+    });
+  }
+
 
   function esc(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -280,6 +312,8 @@
         );
       })
       .join('');
+
+    scheduleProgramsScroll();
   }
 
   window.addEventListener('mp:langchange', function (e) {
@@ -309,4 +343,18 @@
       });
     })
     .catch(function () {});
+
+  if (String(window.location.hash || '').toLowerCase() === '#programs' && 'scrollRestoration' in window.history) {
+    try {
+      window.history.scrollRestoration = 'manual';
+    } catch (e) {}
+  }
+
+  window.addEventListener('load', function () {
+    scheduleProgramsScroll();
+  });
+
+  window.addEventListener('hashchange', function () {
+    scheduleProgramsScroll();
+  });
 })();
