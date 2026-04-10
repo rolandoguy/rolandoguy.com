@@ -892,6 +892,8 @@
     concertHistoryDoc: { concerts: [] },
     concertHistoryIndex: -1,
     concertHistorySearch: '',
+    legacySaveHooksInstalled: false,
+    pendingLegacySaves: {},
     paperPreview: true,
     pastPerfsSelected: {}
   };
@@ -1184,6 +1186,13 @@
   function safeString(v) {
     return typeof v === 'string' ? v : (v == null ? '' : String(v));
   }
+  function normalizeLangCode(lang) {
+    var raw = safeString(lang || '').trim().toLowerCase();
+    if (!raw) return 'en';
+    var primary = raw.split(/[-_]/)[0];
+    if (LANGS.indexOf(primary) >= 0) return primary;
+    return 'en';
+  }
   function localeForLang(lang) {
     var map = { en: 'en-US', de: 'de-DE', es: 'es-ES', it: 'it-IT', fr: 'fr-FR' };
     var s = safeString(lang || state.lang || 'en').trim().toLowerCase().slice(0, 2);
@@ -1392,11 +1401,63 @@
     d = persistPublicRgUiCopyFields(d);
     return normalizeUiLocaleDoc(d, state.lang);
   }
-  function getLegacySection(section) {
+  function getLegacyBiographyBridgeFallback(langOpt) {
+    var L = normalizeLangCode(langOpt || state.lang) || 'en';
+    var out = {};
+    try {
+      if (typeof state.api.admEffectiveSectionField === 'function') {
+        ['h2', 'p1', 'p2', 'quote', 'cite'].forEach(function (k) {
+          var v = safeString(state.api.admEffectiveSectionField('bio', k)).trim();
+          if (v) out[k] = v;
+        });
+      }
+      if (typeof state.api.uiTable === 'function') {
+        var t = state.api.uiTable(L);
+        if (isObject(t)) {
+          var introLine = safeString(t['home.intro.proof']).trim();
+          var continueTag = safeString(t['home.presenter.tag']).trim();
+          var continueSub = safeString(t['home.presenter.style']).trim();
+          var ctaRep = safeString(t['nav.rep']).trim();
+          var ctaMedia = safeString(t['nav.media']).trim();
+          var ctaContact = safeString(t['nav.book'] || t['nav.contact']).trim();
+          var ctaPrograms = safeString(t['home.intro.ctaPress']).trim();
+          if (introLine) out.introLine = introLine;
+          if (continueTag) out.continueSectionTag = continueTag;
+          if (continueSub) out.continueSub = continueSub;
+          if (ctaRep) out.ctaRepertoire = ctaRep;
+          if (ctaMedia) out.ctaMedia = ctaMedia;
+          if (ctaContact) out.ctaContact = ctaContact;
+          if (ctaPrograms) out.ctaHomeIntro = ctaPrograms;
+        }
+      }
+    } catch (e) {}
+    return out;
+  }
+  function getLegacySection(section, langOpt) {
+    var L = normalizeLangCode(langOpt || state.lang) || 'en';
+    if (section === 'bio') {
+      var merged = {};
+      try {
+        var pool = state.api && state.api.LANG_CONTENT;
+        var baseEn = pool && isObject(pool.en) && isObject(pool.en.bio) ? pool.en.bio : null;
+        var byLang = pool && isObject(pool[L]) && isObject(pool[L].bio) ? pool[L].bio : null;
+        if (isObject(baseEn)) merged = Object.assign(merged, baseEn);
+        if (isObject(byLang)) merged = Object.assign(merged, byLang);
+      } catch (e) {}
+      try {
+        if (typeof state.api.get === 'function') {
+          var d = state.api.get(section);
+          if (isObject(d) && hasBiographyMeaningfulContent(d)) merged = Object.assign(merged, d);
+        }
+      } catch (e) {}
+      merged = Object.assign(merged, getLegacyBiographyBridgeFallback(L));
+      if (Object.keys(merged).length) return merged;
+      return {};
+    }
     try {
       if (typeof state.api.get === 'function') {
-        var d = state.api.get(section);
-        if (isObject(d)) return d;
+        var sec = state.api.get(section);
+        if (isObject(sec)) return sec;
       }
     } catch (e) {}
     return {};
@@ -1607,6 +1668,62 @@
       }
       frame.addEventListener('load', check, { once: true });
       check();
+    });
+  }
+
+  function pendingLegacySaveList(key) {
+    var k = safeString(key);
+    if (!k) return [];
+    if (!state.pendingLegacySaves[k]) state.pendingLegacySaves[k] = [];
+    return state.pendingLegacySaves[k];
+  }
+
+  function settleLegacySave(key, ok, err) {
+    var k = safeString(key);
+    if (!k || !state.pendingLegacySaves[k] || !state.pendingLegacySaves[k].length) return;
+    var pending = state.pendingLegacySaves[k].slice();
+    delete state.pendingLegacySaves[k];
+    pending.forEach(function (entry) {
+      try { clearTimeout(entry.timer); } catch (e) {}
+      if (ok) entry.resolve({ key: k });
+      else entry.reject(err || new Error('Save failed for ' + k));
+    });
+  }
+
+  function installLegacySaveHooks(api) {
+    if (!api || state.legacySaveHooksInstalled) return;
+    var origStart = typeof api.rgSaveStart === 'function' ? api.rgSaveStart : null;
+    var origOk = typeof api.rgSaveOk === 'function' ? api.rgSaveOk : null;
+    var origFailed = typeof api.rgSaveFailed === 'function' ? api.rgSaveFailed : null;
+
+    api.rgSaveStart = function (key) {
+      if (origStart) origStart.apply(api, arguments);
+      setStatus('Saving · ' + humanStorageKeyLine(key), 'warn');
+    };
+    api.rgSaveOk = function (key) {
+      if (origOk) origOk.apply(api, arguments);
+      settleLegacySave(key, true, null);
+    };
+    api.rgSaveFailed = function (key, err) {
+      if (origFailed) origFailed.apply(api, arguments);
+      settleLegacySave(key, false, err || new Error('Save failed for ' + key));
+    };
+    state.legacySaveHooksInstalled = true;
+  }
+
+  function waitForLegacySaveResult(key) {
+    if (!state.api || !state.legacySaveHooksInstalled) {
+      return Promise.resolve({ key: safeString(key), mode: 'optimistic' });
+    }
+    return new Promise(function (resolve, reject) {
+      var entry = {
+        resolve: resolve,
+        reject: reject,
+        timer: setTimeout(function () {
+          reject(new Error('Timed out waiting for cloud save: ' + safeString(key)));
+        }, 12000)
+      };
+      pendingLegacySaveList(key).push(entry);
     });
   }
 
@@ -2177,9 +2294,30 @@
   function saveDoc(key, val) {
     ensureReady();
     validateKeyValue(key, val);
-    state.api.save(key, clone(val));
-    markDirty(false, 'Saved: ' + humanStorageKeyLine(key));
-    pushActivitySummary('Saved', [humanStorageKeyLine(key), 'Update sent to storage.']);
+    var label = humanStorageKeyLine(key);
+    var payload = clone(val);
+    var pending = waitForLegacySaveResult(key);
+    try {
+      state.api.save(key, payload);
+    } catch (err) {
+      settleLegacySave(key, false, err);
+      setStatus('Save failed · ' + label, 'err');
+      pushActivitySummary('Save failed', [label, safeString(err && err.message ? err.message : err)]);
+      return Promise.resolve(false);
+    }
+    return pending.then(function () {
+      markDirty(false, 'Saved: ' + label);
+      pushActivitySummary('Saved', [label, 'Saved and synced to the cloud.']);
+      return true;
+    }).catch(function (err) {
+      markDirty(true, 'Unsaved changes');
+      setStatus('Cloud save failed · ' + label, 'err');
+      pushActivitySummary('Save failed', [
+        label,
+        safeString(err && err.message ? err.message : 'The edit was not confirmed in the cloud.')
+      ]);
+      return false;
+    });
   }
   function getAuthIdToken() {
     if (!firebaseAuth || !firebaseAuth.currentUser || typeof firebaseAuth.currentUser.getIdToken !== 'function') {
@@ -2378,14 +2516,15 @@
       bgImage: safeString($('hero-bgImage').value),
       introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim())
     };
-    saveDoc(heroKey, payload);
+    var heroSaved = await saveDoc(heroKey, payload);
     try {
       localStorage.setItem(heroKey, JSON.stringify(payload));
     } catch (e) {}
     var uiMerged = loadDoc('rg_ui_' + state.lang, null);
     if (!isObject(uiMerged)) uiMerged = {};
     uiMerged = persistHomeRgUiCopyFields(uiMerged);
-    saveDoc('rg_ui_' + state.lang, uiMerged);
+    var uiSaved = await saveDoc('rg_ui_' + state.lang, uiMerged);
+    if (!heroSaved || !uiSaved) return;
     var fsWrite = await writeHeroDocToFirestore(heroKey, payload);
     var fsReadBack = await readHeroDocFromFirestore(heroKey);
     var fsCta1 = safeString(fsReadBack && fsReadBack.cta1);
@@ -2411,7 +2550,7 @@
 
   function loadHomeIntroDefault() {
     if (state.homeIntroDefault) return Promise.resolve(state.homeIntroDefault);
-    return fetch('v1-assets/data/hero-config.json', { cache: 'no-store' })
+    return fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) throw new Error(String(r.status || 'hero config load failed'));
         return r.json();
@@ -2484,6 +2623,29 @@
       el.value = safeString(v);
     }
   }
+  function isBiographyEditorVisiblyEmpty() {
+    var ids = ['bio-introLine', 'bio-h2', 'bio-p1', 'bio-p2', 'bio-continue-tag', 'bio-continue-sub', 'bio-cta-rep', 'bio-cta-media', 'bio-cta-contact', 'bio-cta-home'];
+    for (var i = 0; i < ids.length; i += 1) {
+      var el = $(ids[i]);
+      if (el && safeString(el.value).trim()) return false;
+    }
+    return true;
+  }
+  function forceFillBiographyEditorFromDoc(doc, sourceLabel) {
+    var src = isObject(doc) ? doc : {};
+    setFieldEffectiveValue($('bio-introLine'), { value: safeString(src.introLine), source: sourceLabel });
+    setFieldEffectiveValue($('bio-h2'), { value: safeString(src.h2), source: sourceLabel });
+    fillBioParagraphInputsFromStored({}, src);
+    setFieldEffectiveValue($('bio-continue-tag'), { value: safeString(src.continueSectionTag), source: sourceLabel });
+    setFieldEffectiveValue($('bio-continue-sub'), { value: safeString(src.continueSub), source: sourceLabel });
+    setFieldEffectiveValue($('bio-cta-rep'), { value: safeString(src.ctaRepertoire), source: sourceLabel });
+    setFieldEffectiveValue($('bio-cta-media'), { value: safeString(src.ctaMedia), source: sourceLabel });
+    setFieldEffectiveValue($('bio-cta-contact'), { value: safeString(src.ctaContact), source: sourceLabel });
+    setFieldEffectiveValue($('bio-cta-home'), { value: normalizeLegacyBioProgramsCta(src.ctaHomeIntro, state.lang), source: sourceLabel });
+    setFieldEffectiveValue($('bio-portraitAlt'), { value: safeString(src.portraitAlt), source: sourceLabel });
+    setFieldEffectiveValue($('bio-quote'), { value: safeString(src.quote), source: sourceLabel });
+    setFieldEffectiveValue($('bio-cite'), { value: safeString(src.cite), source: sourceLabel });
+  }
   function loadBioPortraitDefault() {
     if (state.bioPortraitDefault) return Promise.resolve(state.bioPortraitDefault);
     return loadBiographyBundle().then(function () {
@@ -2492,7 +2654,12 @@
   }
   function loadBiographyBundleDefaultsSync() {
     if (state.bioBundle && Object.keys(state.bioBundle).length) return state.bioBundle;
-    var urls = ['v1-assets/data/biography-data.json', 'v1-assets/build/biography-defaults.json'];
+    var urls = [
+      '/v1-assets/data/biography-data.json',
+      '/v1-assets/build/biography-defaults.json',
+      'v1-assets/data/biography-data.json',
+      'v1-assets/build/biography-defaults.json'
+    ];
     for (var i = 0; i < urls.length; i += 1) {
       try {
         var xhr = new XMLHttpRequest();
@@ -2518,24 +2685,39 @@
     if (state.bioBundlePromise) return state.bioBundlePromise;
     if (state.bioBundleLiveLoaded) return Promise.resolve(state.bioBundle || {});
     state.bioBundleFailed = false;
-    state.bioBundlePromise = fetch('v1-assets/data/biography-data.json', { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) throw new Error(String(r.status || 'bio json load failed'));
-        return r.json();
-      })
-      .then(function (data) {
-        var locales = isObject(data && data.locales) ? data.locales : {};
-        state.bioBundle = Object.assign({}, state.bioBundle || {}, locales);
-        var src = safeString(data && data.portraitImage).trim();
-        if (src) state.bioPortraitDefault = src;
-        state.bioBundleLiveLoaded = true;
-        bioDebug('bundle:live-ok', { locales: Object.keys(locales).join(',') });
-        return locales;
-      })
+    var urls = [
+      '/v1-assets/data/biography-data.json',
+      '/v1-assets/build/biography-defaults.json',
+      'v1-assets/data/biography-data.json',
+      'v1-assets/build/biography-defaults.json'
+    ];
+    function tryLoad(idx) {
+      if (idx >= urls.length) return Promise.reject(new Error('bio bundle unavailable'));
+      var url = urls[idx];
+      return fetch(url, { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error(String(r.status || 'bio json load failed'));
+          return r.json();
+        })
+        .then(function (data) {
+          var locales = isObject(data && data.locales) ? data.locales : {};
+          if (!Object.keys(locales).length) throw new Error('bio locales missing');
+          state.bioBundle = Object.assign({}, state.bioBundle || {}, locales);
+          var src = safeString(data && data.portraitImage).trim();
+          if (src) state.bioPortraitDefault = src;
+          state.bioBundleLiveLoaded = true;
+          bioDebug('bundle:live-ok', { url: url, locales: Object.keys(locales).join(',') });
+          return locales;
+        })
+        .catch(function () {
+          return tryLoad(idx + 1);
+        });
+    }
+    state.bioBundlePromise = tryLoad(0)
       .catch(function () {
         state.bioBundleFailed = true;
         state.bioBundleLiveLoaded = true;
-        bioDebug('bundle:live-failed', { lang: state.lang });
+        bioDebug('bundle:live-failed', { lang: state.lang, urls: urls.join(',') });
         return state.bioBundle;
       })
       .then(function (locales) {
@@ -2609,6 +2791,11 @@
     var L = normalizeLangCode(lang) || 'en';
     return mergeBiographySourceDoc(getBiographyCanonicalDoc(), getBiographyBundleDoc(L));
   }
+  function getBiographyRuntimeFallbackDoc(lang) {
+    var fallback = getBiographyFallbackDoc(lang);
+    var legacy = getLegacySection('bio', lang);
+    return mergeBiographySourceDoc(fallback, legacy);
+  }
   function getBiographySourceDoc(lang) {
     var L = normalizeLangCode(lang) || 'en';
     var key = 'bio_' + L;
@@ -2669,6 +2856,41 @@
     if (!isObject(doc)) return false;
     if (normalizeBioComparableText(bioDocSignature(doc))) return true;
     return false;
+  }
+  function normalizeLegacyBioProgramsCta(value, lang) {
+    var raw = safeString(value).trim();
+    if (!raw) return '';
+    var lower = raw.toLowerCase();
+    var legacy = [
+      'home',
+      'home — introduction',
+      'home — einführung',
+      'inicio — introducción',
+      'home — introduzione',
+      'accueil — introduction'
+    ];
+    if (legacy.indexOf(lower) >= 0) return '';
+    var englishBundle = safeString(getBiographyBundleDoc('en').ctaHomeIntro).trim().toLowerCase();
+    var localizedBundle = safeString(getBiographyBundleDoc(lang || state.lang).ctaHomeIntro).trim().toLowerCase();
+    if ((lang || state.lang) !== 'en' && englishBundle && lower === englishBundle && localizedBundle && localizedBundle !== englishBundle) return '';
+    var navHome = '';
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        var table = state.api.uiTable(lang || state.lang);
+        if (isObject(table)) navHome = safeString(table['nav.home']).trim().toLowerCase();
+        if (isObject(table)) {
+          var localizedPrograms = safeString(table['home.intro.ctaPress']).trim().toLowerCase();
+          var englishPrograms = '';
+          try {
+            var enTable = state.api.uiTable('en');
+            if (isObject(enTable)) englishPrograms = safeString(enTable['home.intro.ctaPress']).trim().toLowerCase();
+          } catch (ee) {}
+          if ((lang || state.lang) !== 'en' && englishPrograms && lower === englishPrograms && localizedPrograms && localizedPrograms !== englishPrograms) return '';
+        }
+      }
+    } catch (e) {}
+    if (navHome && lower === navHome) return '';
+    return raw;
   }
   function bioDebug(stage, payload) {
     try {
@@ -2734,10 +2956,14 @@
     var nonce = ++state.bioLoadNonce;
     var storedRaw = getBiographyStoredDoc(state.lang);
     var storedSafe = getBiographySafeStoredDoc(state.lang);
+    var storedDisplay = isObject(storedSafe) ? Object.assign({}, storedSafe) : {};
+    if (isObject(storedDisplay)) storedDisplay.ctaHomeIntro = normalizeLegacyBioProgramsCta(storedDisplay.ctaHomeIntro, state.lang);
     var storedDe = getBiographySourceDoc('de');
-    var legacyFallback = getLegacySection('bio');
-    var bioFallback = getBiographyFallbackDoc(state.lang);
-    var bioFallbackLabel = state.lang === 'de' ? 'Bundled DE source' : 'Bundled DE source + translation';
+    var legacyFallback = getLegacySection('bio', state.lang);
+    var bioFallback = getBiographyRuntimeFallbackDoc(state.lang);
+    var bioFallbackLabel = state.lang === 'de'
+      ? 'DE source (bundle/legacy)'
+      : 'DE source + localized fallback';
     bioDebug('load:start', {
       lang: state.lang,
       sourceGuess: hasBiographyMeaningfulContent(storedSafe) ? 'saved' : (hasBiographyMeaningfulContent(bioFallback) ? 'fallback' : 'empty'),
@@ -2750,29 +2976,33 @@
       liveLoaded: !!state.bioBundleLiveLoaded,
       draftPresent: !!readCurrentLocalDraftSnapshot()
     });
-    setFieldFromSources('bio-introLine', storedSafe, bioFallback, 'introLine', bioFallbackLabel);
-    setFieldFromSources('bio-h2', storedSafe, bioFallback, 'h2', bioFallbackLabel);
-    fillBioParagraphInputsFromStored(storedSafe, bioFallback);
-    setFieldFromSources('bio-continue-tag', storedSafe, bioFallback, 'continueSectionTag', bioFallbackLabel);
-    setFieldFromSources('bio-continue-sub', storedSafe, bioFallback, 'continueSub', bioFallbackLabel);
-    setFieldFromSources('bio-cta-rep', storedSafe, bioFallback, 'ctaRepertoire', bioFallbackLabel);
-    setFieldFromSources('bio-cta-media', storedSafe, bioFallback, 'ctaMedia', bioFallbackLabel);
-    setFieldFromSources('bio-cta-contact', storedSafe, bioFallback, 'ctaContact', bioFallbackLabel);
-    setFieldFromSources('bio-cta-home', storedSafe, bioFallback, 'ctaHomeIntro', bioFallbackLabel);
-    setFieldFromSources('bio-portraitAlt', storedSafe, bioFallback, 'portraitAlt', bioFallbackLabel);
-    setFieldFromSources('bio-quote', storedSafe, bioFallback, 'quote', bioFallbackLabel);
-    setFieldFromSources('bio-cite', storedSafe, bioFallback, 'cite', bioFallbackLabel);
-    setFieldFromSources('bio-portraitFit', storedSafe, bioFallback, 'portraitFit', 'Default cover');
-    setFieldFromSources('bio-portraitFocus', storedSafe, bioFallback, 'portraitFocus', 'Public default');
+    setFieldFromSources('bio-introLine', storedDisplay, bioFallback, 'introLine', bioFallbackLabel);
+    setFieldFromSources('bio-h2', storedDisplay, bioFallback, 'h2', bioFallbackLabel);
+    fillBioParagraphInputsFromStored(storedDisplay, bioFallback);
+    setFieldFromSources('bio-continue-tag', storedDisplay, bioFallback, 'continueSectionTag', bioFallbackLabel);
+    setFieldFromSources('bio-continue-sub', storedDisplay, bioFallback, 'continueSub', bioFallbackLabel);
+    setFieldFromSources('bio-cta-rep', storedDisplay, bioFallback, 'ctaRepertoire', bioFallbackLabel);
+    setFieldFromSources('bio-cta-media', storedDisplay, bioFallback, 'ctaMedia', bioFallbackLabel);
+    setFieldFromSources('bio-cta-contact', storedDisplay, bioFallback, 'ctaContact', bioFallbackLabel);
+    setFieldFromSources('bio-cta-home', storedDisplay, bioFallback, 'ctaHomeIntro', bioFallbackLabel);
+    setFieldFromSources('bio-portraitAlt', storedDisplay, bioFallback, 'portraitAlt', bioFallbackLabel);
+    setFieldFromSources('bio-quote', storedDisplay, bioFallback, 'quote', bioFallbackLabel);
+    setFieldFromSources('bio-cite', storedDisplay, bioFallback, 'cite', bioFallbackLabel);
+    setFieldFromSources('bio-portraitFit', storedDisplay, bioFallback, 'portraitFit', 'Default cover');
+    setFieldFromSources('bio-portraitFocus', storedDisplay, bioFallback, 'portraitFocus', 'Public default');
     var immediate = resolveEffectiveBioPortrait(storedRaw, storedDe, state.bioPortraitDefault);
     if (immediate) {
       $('bio-portraitImage').value = immediate;
       updateBioPortraitPreview();
     }
+    if (isBiographyEditorVisiblyEmpty() && hasBiographyMeaningfulContent(bioFallback)) {
+      bioDebug('load:force-fill-initial', { lang: state.lang, source: bioFallbackLabel });
+      forceFillBiographyEditorFromDoc(bioFallback, bioFallbackLabel);
+    }
     updateBioMiniPreview();
-    loadBiographyBundle().then(function (locales) {
+    loadBiographyBundle().then(function () {
       if (nonce !== state.bioLoadNonce) return;
-      var liveFallback = getBiographyFallbackDoc(state.lang);
+      var liveFallback = getBiographyRuntimeFallbackDoc(state.lang);
       if (!hasBiographyMeaningfulContent(liveFallback)) {
         bioDebug('load:skip-live', {
           lang: state.lang,
@@ -2781,24 +3011,26 @@
         });
         return;
       }
-      var liveFallbackLabel = state.lang === 'de' ? 'Bundled DE source' : 'Bundled DE source + translation';
+      var liveFallbackLabel = state.lang === 'de'
+        ? 'DE source (bundle/legacy)'
+        : 'DE source + localized fallback';
       bioDebug('load:apply-live', {
         lang: state.lang,
         fallbackKeys: Object.keys(liveFallback || {}).length,
         storedKeys: isObject(storedRaw) ? Object.keys(storedRaw).length : 0
       });
-      setFieldFromSources('bio-introLine', storedSafe, liveFallback, 'introLine', liveFallbackLabel);
-      setFieldFromSources('bio-h2', storedSafe, liveFallback, 'h2', liveFallbackLabel);
-      fillBioParagraphInputsFromStored(storedSafe, liveFallback);
-      setFieldFromSources('bio-continue-tag', storedSafe, liveFallback, 'continueSectionTag', liveFallbackLabel);
-      setFieldFromSources('bio-continue-sub', storedSafe, liveFallback, 'continueSub', liveFallbackLabel);
-      setFieldFromSources('bio-cta-rep', storedSafe, liveFallback, 'ctaRepertoire', liveFallbackLabel);
-      setFieldFromSources('bio-cta-media', storedSafe, liveFallback, 'ctaMedia', liveFallbackLabel);
-      setFieldFromSources('bio-cta-contact', storedSafe, liveFallback, 'ctaContact', liveFallbackLabel);
-      setFieldFromSources('bio-cta-home', storedSafe, liveFallback, 'ctaHomeIntro', liveFallbackLabel);
-      setFieldFromSources('bio-portraitAlt', storedSafe, liveFallback, 'portraitAlt', liveFallbackLabel);
-      setFieldFromSources('bio-quote', storedSafe, liveFallback, 'quote', liveFallbackLabel);
-      setFieldFromSources('bio-cite', storedSafe, liveFallback, 'cite', liveFallbackLabel);
+      setFieldFromSources('bio-introLine', storedDisplay, liveFallback, 'introLine', liveFallbackLabel);
+      setFieldFromSources('bio-h2', storedDisplay, liveFallback, 'h2', liveFallbackLabel);
+      fillBioParagraphInputsFromStored(storedDisplay, liveFallback);
+      setFieldFromSources('bio-continue-tag', storedDisplay, liveFallback, 'continueSectionTag', liveFallbackLabel);
+      setFieldFromSources('bio-continue-sub', storedDisplay, liveFallback, 'continueSub', liveFallbackLabel);
+      setFieldFromSources('bio-cta-rep', storedDisplay, liveFallback, 'ctaRepertoire', liveFallbackLabel);
+      setFieldFromSources('bio-cta-media', storedDisplay, liveFallback, 'ctaMedia', liveFallbackLabel);
+      setFieldFromSources('bio-cta-contact', storedDisplay, liveFallback, 'ctaContact', liveFallbackLabel);
+      setFieldFromSources('bio-cta-home', storedDisplay, liveFallback, 'ctaHomeIntro', liveFallbackLabel);
+      setFieldFromSources('bio-portraitAlt', storedDisplay, liveFallback, 'portraitAlt', liveFallbackLabel);
+      setFieldFromSources('bio-quote', storedDisplay, liveFallback, 'quote', liveFallbackLabel);
+      setFieldFromSources('bio-cite', storedDisplay, liveFallback, 'cite', liveFallbackLabel);
       var effPortrait = resolveEffectiveBioPortrait(storedRaw, storedDe, state.bioPortraitDefault);
       $('bio-portraitImage').value = effPortrait;
       var portraitSource = 'Bundled default';
@@ -2806,6 +3038,10 @@
       else if (isObject(storedDe) && safeString(storedDe.portraitImage).trim()) portraitSource = 'Inherited (DE)';
       setFieldEffectiveValue($('bio-portraitImage'), { value: effPortrait, source: portraitSource });
       updateBioPortraitPreview();
+      if (isBiographyEditorVisiblyEmpty() && hasBiographyMeaningfulContent(liveFallback)) {
+        bioDebug('load:force-fill-live', { lang: state.lang, source: liveFallbackLabel });
+        forceFillBiographyEditorFromDoc(liveFallback, liveFallbackLabel);
+      }
       updateBioMiniPreview();
       updateCompletenessIndicators();
     });
@@ -3155,7 +3391,15 @@
     prevEd.repProgramsLink = safeString($('programs-repLink').value).trim();
     prevEd.epkProgramsLink = safeString($('programs-epkLink').value).trim();
     prevEd.hideProgramsSection = !!($('programs-hideSection') && $('programs-hideSection').checked);
+    if (hasOwn(prevEd, 'hideProgramsEntryPoints')) delete prevEd.hideProgramsEntryPoints;
     saveDoc('rg_editorial_' + state.lang, prevEd);
+  }
+  async function saveProgramsVisibilityOnly() {
+    var prevEd = loadDoc('rg_editorial_' + state.lang, {});
+    prevEd.hideProgramsSection = !!($('programs-hideSection') && $('programs-hideSection').checked);
+    if (hasOwn(prevEd, 'hideProgramsEntryPoints')) delete prevEd.hideProgramsEntryPoints;
+    var ok = await saveDoc('rg_editorial_' + state.lang, prevEd);
+    if (!ok) throw new Error('programs-visibility-save-failed');
   }
 
   function plannerFamilyLabel(family) {
@@ -7231,7 +7475,7 @@
       loadDoc('bio_' + key, null),
       key !== 'de' ? loadDoc('bio_de', null) : null,
       key !== 'en' ? loadDoc('bio_en', null) : null,
-      getLegacySection('bio')
+      getLegacySection('bio', key)
     ];
     for (var i = 0; i < docs.length; i += 1) {
       var src = safeString(docs[i] && docs[i].portraitImage).trim();
@@ -12077,6 +12321,15 @@
     if ($('programs-review-publish-btn')) $('programs-review-publish-btn').addEventListener('click', programReviewAndPublishCurrent);
     if ($('programs-add-template')) $('programs-add-template').addEventListener('click', addProgramFromTemplate);
     if ($('programs-duplicate-to-lang')) $('programs-duplicate-to-lang').addEventListener('click', duplicateCurrentProgramToLanguage);
+    if ($('programs-hideSection')) $('programs-hideSection').addEventListener('change', function () {
+      saveProgramsVisibilityOnly()
+        .then(function () {
+          setStatus('Programs visibility saved. Reload Home/Biography/Repertoire to verify.', 'ok');
+        })
+        .catch(function () {
+          setStatus('Could not save Programs visibility toggle.', 'err');
+        });
+    });
     $('savePerfHeaderBtn').addEventListener('click', savePerfHeader);
     $('savePerfEventsBtn').addEventListener('click', savePerfEvents);
     if ($('perf-tx-copy-all-btn')) $('perf-tx-copy-all-btn').addEventListener('click', function () {
@@ -13047,6 +13300,7 @@
       await awaitAuthorizedUser();
       setStatus('Connecting to data bridge…', 'warn');
       state.api = await waitForLegacyApi();
+      installLegacySaveHooks(state.api);
       var lang = (state.api.currentLang && LANGS.indexOf(state.api.currentLang) >= 0) ? state.api.currentLang : 'en';
       state.lang = lang;
       state.paperPreview = readPaperPreviewPreference();

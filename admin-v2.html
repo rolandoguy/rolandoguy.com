@@ -219,7 +219,7 @@
             <label>CTA · Repertoire<input id="bio-cta-rep"></label>
             <label>CTA · Media<input id="bio-cta-media"></label>
             <label>CTA · Contact / Book (optional; falls back to nav “Book” label)<input id="bio-cta-contact"></label>
-            <label>CTA · Home (optional; falls back to nav “Home” label)<input id="bio-cta-home"></label>
+            <label>CTA · Programmes (optional; falls back to “View programmes” for this language)<input id="bio-cta-home"></label>
             <label>Portrait image alt (overrides bundled alt when set)<input id="bio-portraitAlt"></label>
             <label>Quote (optional; not shown on current public biography layout)<input id="bio-quote"></label>
             <label>Attribution (optional)<input id="bio-cite"></label>
@@ -755,7 +755,7 @@
             <input type="checkbox" id="programs-hideSection" style="width:auto">
             Hide Programs section and related public links
           </label>
-          <p class="muted">Stored with editorial data for this language (<code>repProgramsLink</code>, <code>epkProgramsLink</code>).</p>
+          <p class="muted">Stored with editorial data for this language (<code>repProgramsLink</code>, <code>epkProgramsLink</code>, <code>hideProgramsSection</code>).</p>
 
           <div class="toolbar">
             <button id="programs-add">+ New</button>
@@ -2470,10 +2470,10 @@
     </div>
   </div>
 
-  <iframe id="legacyBridge" src="admin.html" hidden></iframe>
+  <iframe id="legacyBridge" src="admin.html?v=20260410l" hidden></iframe>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="admin-v2-program-builder-data.js"></script>
-  <script src="admin-v2.js"></script>
+  <script src="admin-v2.js?v=20260410l"></script>
 </body>
 </html>

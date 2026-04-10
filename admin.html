@@ -2618,6 +2618,38 @@ async function loadFromFirestore() {
     });
   } catch(e) { console.warn('Firestore load error:', e); }
 }
+function shouldHydrateLocalOverrideKey(localKey) {
+  if (typeof localKey !== 'string' || localKey.indexOf('rg_local_') !== 0) return false;
+  const key = localKey.slice('rg_local_'.length);
+  if (!key) return false;
+  if (
+    key === 'rg_rep_cards' || key === 'rg_perfs' || key === 'rg_past_perfs' || key === 'rg_vid' ||
+    key === 'rg_vid_en' || key === 'rg_audio' || key === 'rg_photos' || key === 'rg_photo_captions' ||
+    key === 'rg_press' || key === 'rg_press_meta' || key === 'rg_epk_bios' || key === 'rg_epk_photos' ||
+    key === 'rg_epk_cvs' || key === 'rg_public_pdfs' || key === 'rg_programs' ||
+    key === 'rg_repertoire_planner' || key === 'rg_program_blueprints' || key === 'rg_concert_history'
+  ) return true;
+  if (/^(hero_|bio_|rep_|perf_|contact_|rg_ui_|rg_programs_|rg_editorial_)/.test(key)) return true;
+  return false;
+}
+function hydrateLocalUnsyncedIntoDb() {
+  try {
+    if (typeof localStorage === 'undefined' || !localStorage) return;
+    for (let i = 0; i < localStorage.length; i++) {
+      const localKey = localStorage.key(i);
+      if (!shouldHydrateLocalOverrideKey(localKey)) continue;
+      const raw = localStorage.getItem(localKey);
+      if (!raw) continue;
+      let parsed = null;
+      try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+      if (!parsed || typeof parsed !== 'object' || !Object.prototype.hasOwnProperty.call(parsed, 'value')) continue;
+      const key = localKey.slice('rg_local_'.length);
+      DB[key] = parsed.value;
+    }
+  } catch (e) {
+    console.warn('Local override hydration failed:', e);
+  }
+}
 
 function load(key) {
   return (DB[key] !== undefined && DB[key] !== null) ? DB[key] : null;
@@ -3482,10 +3514,51 @@ function resolveInitialLang() {
 // load() and save() defined above via Firebase
 
 // Get content: lang-specific custom override → lang default → fallback to 'en'
+function hasMeaningfulSectionOverride(section, doc) {
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return false;
+  const keys = Object.keys(doc);
+  if (!keys.length) return false;
+  if (section === 'bio') {
+    const bioPayloadKeys = {
+      introLine: true,
+      h2: true,
+      p1: true, p2: true, p3: true, p4: true, p5: true, p6: true,
+      paragraphs: true,
+      continueSectionTag: true,
+      continueSub: true,
+      ctaRepertoire: true,
+      ctaMedia: true,
+      ctaContact: true,
+      ctaHomeIntro: true,
+      portraitAlt: true,
+      portraitImage: true,
+      quote: true,
+      cite: true
+    };
+    let hasAnyPayloadKey = false;
+    let hasAnyMeaningfulValue = false;
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      if (!bioPayloadKeys[k]) continue;
+      hasAnyPayloadKey = true;
+      const v = doc[k];
+      if (Array.isArray(v)) {
+        if (v.some(x => String(x == null ? '' : x).trim() !== '')) hasAnyMeaningfulValue = true;
+      } else if (typeof v === 'string') {
+        if (v.trim() !== '') hasAnyMeaningfulValue = true;
+      } else if (v !== undefined && v !== null) {
+        hasAnyMeaningfulValue = true;
+      }
+    }
+    if (!hasAnyPayloadKey) return false;
+    return hasAnyMeaningfulValue;
+  }
+  return true;
+}
 function get(key) {
   const langKey = key + '_' + currentLang;
   const st = load(langKey);
-  if (st !== undefined && st !== null && typeof st === 'object' && !Array.isArray(st)) {
+  if (hasMeaningfulSectionOverride(key, st)) {
     return st;
   }
   return LANG_CONTENT[currentLang][key] || LANG_CONTENT['en'][key] || DEFAULTS[key] || {};
@@ -11322,6 +11395,7 @@ document.getElementById('bioPhoto').src="img/studio-1.jpg";
   } catch(e) {
     console.warn('Firestore load timeout/error:', e);
   }
+  hydrateLocalUnsyncedIntoDb();
 
   try {
     (function admMigrateRepEnHeading(){
