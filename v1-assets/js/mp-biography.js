@@ -8,6 +8,7 @@
   var MP_BIO = null;
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var BIO_DOC_CACHE = {};
+  var BIO_RENDER_SEQ = 0;
   /** Invisible placeholder so the browser never paints bundled/HTML default portrait before JS resolves the real URL. */
   var PORTRAIT_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
@@ -29,6 +30,20 @@
       }
       var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
       if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function readLocalUnsyncedJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem('rg_local_' + key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
+        return parsed.value;
+      }
       return null;
     } catch (e) {
       return null;
@@ -84,6 +99,11 @@
     var key = 'bio_' + lang;
     if (BIO_DOC_CACHE[key]) return Promise.resolve(BIO_DOC_CACHE[key]);
     return fetchFirestoreDocJsonWithMeta(key).then(function (live) {
+      var localUnsynced = readLocalUnsyncedJson(key);
+      if (localUnsynced && typeof localUnsynced === 'object') {
+        BIO_DOC_CACHE[key] = { data: localUnsynced, updateTime: '' };
+        return BIO_DOC_CACHE[key];
+      }
       if (live && live.data) {
         BIO_DOC_CACHE[key] = live;
         return live;
@@ -170,8 +190,25 @@
     img.dataset.currentSrc = nextSrc;
   }
 
+  function normalizeLangCode(v) {
+    var s = String(v || '').trim().toLowerCase().slice(0, 2);
+    return /^(en|de|es|it|fr)$/.test(s) ? s : '';
+  }
+
+  function activeLangFromUi() {
+    var btn = document.querySelector('.lang-bar .lang-btn.active[id^="btn-"]');
+    if (btn && btn.id) {
+      var m = btn.id.match(/^btn-(en|de|es|it|fr)$/);
+      if (m) return m[1];
+    }
+    return '';
+  }
+
   function currentLang() {
-    return (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+    var fromUi = normalizeLangCode(activeLangFromUi());
+    var fromDoc = normalizeLangCode(document && document.documentElement ? document.documentElement.lang : '');
+    var fromShell = normalizeLangCode(typeof window.getMpSiteLang === 'function' && window.getMpSiteLang());
+    return fromUi || fromDoc || fromShell || 'en';
   }
 
   function pickLocale() {
@@ -318,6 +355,72 @@
     return !!(merged.introLine || merged.h2 || (merged.paragraphs && merged.paragraphs.length));
   }
 
+  function normalizeLegacyProgramsCta(value, lang, pick) {
+    var raw = safeString(value).trim();
+    if (!raw) return '';
+    var lower = raw.toLowerCase();
+    var legacy = [
+      'home',
+      'home — introduction',
+      'home — einführung',
+      'inicio — introducción',
+      'home — introduzione',
+      'accueil — introduction'
+    ];
+    if (legacy.indexOf(lower) >= 0) return '';
+    var englishBundle = safeString(MP_BIO && MP_BIO.locales && MP_BIO.locales.en && MP_BIO.locales.en.ctaHomeIntro).trim().toLowerCase();
+    var localizedBundle = safeString(MP_BIO && MP_BIO.locales && MP_BIO.locales[lang] && MP_BIO.locales[lang].ctaHomeIntro).trim().toLowerCase();
+    if (lang !== 'en' && englishBundle && lower === englishBundle && localizedBundle && localizedBundle !== englishBundle) return '';
+    if (pick) {
+      var navHome = safeString(pick(lang, 'nav.home')).trim().toLowerCase();
+      if (navHome && lower === navHome) return '';
+      var englishPrograms = safeString(pick('en', 'home.intro.ctaPress')).trim().toLowerCase();
+      var localizedPrograms = safeString(pick(lang, 'home.intro.ctaPress')).trim().toLowerCase();
+      if (lang !== 'en' && englishPrograms && lower === englishPrograms && localizedPrograms && localizedPrograms !== englishPrograms) return '';
+    }
+    return raw;
+  }
+
+  function defaultProgramsCtaForLang(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var map = {
+      en: 'View programmes',
+      de: 'Programme ansehen',
+      es: 'Ver programas',
+      it: 'Vedi i programmi',
+      fr: 'Voir les programmes'
+    };
+    return map[L] || map.en;
+  }
+
+  function resolveProgramsCtaLang(explicitLang) {
+    var fromArg = normalizeLangCode(explicitLang);
+    var fromUi = normalizeLangCode(activeLangFromUi());
+    var fromDoc = normalizeLangCode(document && document.documentElement ? document.documentElement.lang : '');
+    var fromShell = normalizeLangCode(typeof window.getMpSiteLang === 'function' && window.getMpSiteLang());
+    return fromArg || fromUi || fromDoc || fromShell || 'en';
+  }
+
+  function applyProgramsEntryPointVisibility(lang, localVisible) {
+    var wrap = document.getElementById('bioCtaHomeWrap');
+    if (!wrap) return;
+    if (!localVisible) {
+      wrap.style.display = 'none';
+      return;
+    }
+    if (typeof window.getMpProgramsVisibility !== 'function') {
+      wrap.style.display = '';
+      return;
+    }
+    window.getMpProgramsVisibility(lang)
+      .then(function (prefs) {
+        wrap.style.display = prefs && prefs.hideProgramsEntryPoints ? 'none' : '';
+      })
+      .catch(function () {
+        wrap.style.display = '';
+      });
+  }
+
   function applyMergedBioToDom(merged, portraitHint) {
     var intro = document.getElementById('bioIntroLine');
     var h2 = document.getElementById('bio-heading');
@@ -328,7 +431,7 @@
     var ctaRep = document.getElementById('bioCtaRepertoire');
     var ctaMed = document.getElementById('bioCtaMedia');
     var ctaCon = document.getElementById('bioCtaContact');
-    var ctaHome = document.getElementById('bioCtaHomeIntro');
+    var ctaPrograms = document.getElementById('bioCtaHomeIntro');
     var lang = currentLang();
     var pick = typeof window.pickMpLocaleString === 'function' ? window.pickMpLocaleString : null;
 
@@ -415,19 +518,17 @@
         if (nb != null && String(nb).trim() !== '') ctaCon.textContent = String(nb);
       }
     }
-    if (ctaHome) {
-      if (merged.ctaHomeIntro) ctaHome.textContent = merged.ctaHomeIntro;
-      else if (pick) {
-        var nh = pick(lang, 'nav.home');
-        if (nh != null && String(nh).trim() !== '') ctaHome.textContent = String(nh);
-      }
+    var labelLang = resolveProgramsCtaLang(lang);
+    if (ctaPrograms) {
+      ctaPrograms.textContent = defaultProgramsCtaForLang(labelLang);
     }
 
-    var homeWrap = document.getElementById('bioCtaHomeWrap');
-    if (homeWrap) {
-      var showHome = !!(merged.ctaHomeIntro || (pick && pick(lang, 'nav.home')));
-      homeWrap.style.display = showHome ? '' : 'none';
+    var programsWrap = document.getElementById('bioCtaHomeWrap');
+    var showPrograms = !!defaultProgramsCtaForLang(labelLang);
+    if (programsWrap) {
+      programsWrap.style.display = showPrograms ? '' : 'none';
     }
+    applyProgramsEntryPointVisibility(labelLang, showPrograms);
 
     if (typeof window.applyPageHeadFromRgUi === 'function') {
       window.applyPageHeadFromRgUi(lang);
@@ -438,10 +539,12 @@
     var canonical = MP_BIO && MP_BIO.locales ? MP_BIO.locales.de || MP_BIO.locales.en || null : null;
     var bundle = pickLocale();
     var lang = currentLang();
+    var renderSeq = ++BIO_RENDER_SEQ;
     Promise.all([
       getBioDocWithFallback(lang),
       lang === 'de' ? Promise.resolve(null) : getBioDocWithFallback('de')
     ]).then(function (pair) {
+      if (renderSeq !== BIO_RENDER_SEQ) return;
       var docWrap = pair[0];
       var deWrap = pair[1];
       var adminDoc = docWrap && docWrap.data && typeof docWrap.data === 'object' ? docWrap.data : {};

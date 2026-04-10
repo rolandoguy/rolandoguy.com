@@ -1,20 +1,101 @@
 /**
- * v1 repertoire module for mp/repertoire.html — same rendering logic as live index (EN).
- * Data: v1-assets/data/repertoire-data.json (generate: node scripts/build-repertoire.js <export.json>).
+ * v1 repertoire module for mp/repertoire.html.
+ * Base data comes from /v1-assets/data/repertoire-data.json, but runtime reads rep_<lang>
+ * and rg_rep_cards from Firestore first so admin edits appear without rebuilding.
  */
 (function () {
   'use strict';
 
   var MP_REP = null;
+  var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var LIVE_REP_DOCS = {};
+  var LIVE_REP_PROMISES = {};
+  var LIVE_REP_CARDS = null;
+
   function readLegacyJson(key) {
     try {
       if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem(key);
-      if (!raw) return null;
-      return JSON.parse(raw);
+      var parseMaybe = function (raw) {
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch (e) { return null; }
+      };
+      var direct = parseMaybe(window.localStorage.getItem(key));
+      if (direct != null) {
+        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
+        return direct;
+      }
+      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
+      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
+      return null;
     } catch (e) {
       return null;
     }
+  }
+  function readLocalUnsyncedJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem('rg_local_' + key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.value != null) return parsed.value;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function fetchFirestoreDocJson(key) {
+    var url =
+      'https://firestore.googleapis.com/v1/projects/' +
+      FIRESTORE_PROJECT_ID +
+      '/databases/(default)/documents/rg/' +
+      encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!v || typeof v !== 'string') return null;
+        try { return JSON.parse(v); } catch (e) { return null; }
+      })
+      .catch(function () { return null; });
+  }
+
+  function ensureLiveRepDoc(key) {
+    if (Object.prototype.hasOwnProperty.call(LIVE_REP_DOCS, key)) return Promise.resolve(LIVE_REP_DOCS[key]);
+    if (LIVE_REP_PROMISES[key]) return LIVE_REP_PROMISES[key];
+    LIVE_REP_PROMISES[key] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        var localUnsynced = readLocalUnsyncedJson(key);
+        var best = localUnsynced != null ? localUnsynced : doc;
+        if (best == null) best = readLegacyJson(key);
+        LIVE_REP_DOCS[key] = best != null ? best : null;
+        return LIVE_REP_DOCS[key];
+      })
+      .catch(function () {
+        var best = readLocalUnsyncedJson(key);
+        if (best == null) best = readLegacyJson(key);
+        LIVE_REP_DOCS[key] = best != null ? best : null;
+        return LIVE_REP_DOCS[key];
+      })
+      .finally(function () {
+        delete LIVE_REP_PROMISES[key];
+      });
+    return LIVE_REP_PROMISES[key];
+  }
+
+  function ensureLiveRepertoireHeader(lang) {
+    var L = String(lang || 'en').trim().toLowerCase();
+    return ensureLiveRepDoc('rep_' + (/^(en|de|es|it|fr)$/.test(L) ? L : 'en'));
+  }
+
+  function ensureLiveRepertoireCards() {
+    return ensureLiveRepDoc('rg_rep_cards').then(function (doc) {
+      LIVE_REP_CARDS = Array.isArray(doc) ? doc : LIVE_REP_CARDS;
+      return LIVE_REP_CARDS;
+    });
   }
 
   function mpPick(lang, key, fb) {
@@ -93,16 +174,16 @@
   function getRep() {
     var lang = currentLang || 'en';
     var base = MP_REP && MP_REP.rep ? MP_REP.rep : { h2: '', intro: '' };
-    var legacyRepCurrent = readLegacyJson('rep_' + lang);
-    var legacyRepEn = lang !== 'en' ? readLegacyJson('rep_en') : null;
-    if (legacyRepCurrent && typeof legacyRepCurrent === 'object') {
-      if (legacyRepCurrent.h2 != null && String(legacyRepCurrent.h2).trim() !== '') {
-        base.h2 = String(legacyRepCurrent.h2);
+    var liveRepCurrent = LIVE_REP_DOCS['rep_' + lang];
+    var liveRepEn = lang !== 'en' ? LIVE_REP_DOCS.rep_en : null;
+    if (liveRepCurrent && typeof liveRepCurrent === 'object') {
+      if (liveRepCurrent.h2 != null && String(liveRepCurrent.h2).trim() !== '') {
+        base.h2 = String(liveRepCurrent.h2);
       }
-      if (legacyRepCurrent.intro != null) base.intro = legacyRepCurrent.intro;
-    } else if (legacyRepEn && typeof legacyRepEn === 'object') {
-      if (legacyRepEn.h2 != null && String(legacyRepEn.h2).trim() !== '') base.h2 = String(legacyRepEn.h2);
-      if (legacyRepEn.intro != null) base.intro = legacyRepEn.intro;
+      if (liveRepCurrent.intro != null) base.intro = liveRepCurrent.intro;
+    } else if (liveRepEn && typeof liveRepEn === 'object') {
+      if (liveRepEn.h2 != null && String(liveRepEn.h2).trim() !== '') base.h2 = String(liveRepEn.h2);
+      if (liveRepEn.intro != null) base.intro = liveRepEn.intro;
     }
     var langData = {
       h2: base.h2 != null ? String(base.h2) : '',
@@ -126,8 +207,11 @@
       var bundleH2 = mpPick(lang, 'rep.pageH2', '');
       if (bundleH2 != null && String(bundleH2).trim() !== '') langData.h2 = bundleH2;
     }
+    var liveCards = Array.isArray(LIVE_REP_CARDS) ? LIVE_REP_CARDS : null;
     var legacyCards = readLegacyJson('rg_rep_cards');
-    var rawCards = Array.isArray(legacyCards)
+    var rawCards = Array.isArray(liveCards)
+      ? liveCards
+      : Array.isArray(legacyCards)
       ? legacyCards
       : MP_REP && Array.isArray(MP_REP.cards)
         ? MP_REP.cards
@@ -557,11 +641,17 @@
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
     if (MP_REP) renderRep();
+    ensureLiveRepertoireHeader(currentLang).finally(function () {
+      if (MP_REP) renderRep();
+    });
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
     if (MP_REP) renderRep();
+    ensureLiveRepertoireHeader(currentLang).finally(function () {
+      if (MP_REP) renderRep();
+    });
   });
 
   fetch('/v1-assets/data/repertoire-data.json', { cache: 'no-store' })
@@ -572,15 +662,26 @@
       MP_REP = data;
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
       renderRep();
+      Promise.all([ensureLiveRepertoireCards(), ensureLiveRepertoireHeader(currentLang)]).finally(function () {
+        renderRep();
+      });
     })
     .catch(function () {
-      var grid = document.getElementById('operaGrid');
-      var msg = mpPick(currentLang || 'en', 'rep.loadError', 'Repertoire data could not be loaded.');
-      if (grid) {
-        grid.innerHTML =
-          '<div class="rep-empty" role="status">' +
-          msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
-          '</div>';
-      }
+      MP_REP = { rep: {}, cards: [] };
+      if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
+      Promise.all([ensureLiveRepertoireCards(), ensureLiveRepertoireHeader(currentLang)]).finally(function () {
+        if (Array.isArray(LIVE_REP_CARDS) && LIVE_REP_CARDS.length) {
+          renderRep();
+          return;
+        }
+        var grid = document.getElementById('operaGrid');
+        var msg = mpPick(currentLang || 'en', 'rep.loadError', 'Repertoire data could not be loaded.');
+        if (grid) {
+          grid.innerHTML =
+            '<div class="rep-empty" role="status">' +
+            msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+            '</div>';
+        }
+      });
     });
 })();

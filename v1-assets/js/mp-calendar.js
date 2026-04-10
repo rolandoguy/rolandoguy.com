@@ -1,7 +1,8 @@
 /**
  * v1 performances module for mp/calendar.html — same rendering logic as live index
  * (upcoming by year, past archive by category, modal, print).
- * Data: v1-assets/data/calendar-data.json (generate: node scripts/build-calendar.js <export.json>).
+ * Base data comes from v1-assets/data/calendar-data.json, but perf_<lang>, rg_perfs,
+ * and rg_past_perfs are resolved live from Firestore when available.
  */
 (function () {
   'use strict';
@@ -11,6 +12,8 @@
   var currentLang = 'en';
   var MP_PAST_PERFS = [];
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var LIVE_PERF_HEADER_DOCS = {};
+  var LIVE_PERF_HEADER_PROMISES = {};
   var titleChoiceLogged = false;
   var modalLocaleChoiceLogged = false;
   var lastEventModalFocus = null;
@@ -76,6 +79,18 @@
       return null;
     }
   }
+  function readLocalUnsyncedJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem('rg_local_' + key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.value != null) return parsed.value;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
   function fetchFirestoreDocJson(key) {
     var url = 'https://firestore.googleapis.com/v1/projects/' + MP_FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
     return fetch(url, { cache: 'no-store' })
@@ -89,6 +104,31 @@
         try { return JSON.parse(v); } catch (e) { return null; }
       })
       .catch(function () { return null; });
+  }
+
+  function ensureLivePerfHeader(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var key = 'perf_' + L;
+    if (Object.prototype.hasOwnProperty.call(LIVE_PERF_HEADER_DOCS, key)) return Promise.resolve(LIVE_PERF_HEADER_DOCS[key]);
+    if (LIVE_PERF_HEADER_PROMISES[key]) return LIVE_PERF_HEADER_PROMISES[key];
+    LIVE_PERF_HEADER_PROMISES[key] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        var localUnsynced = readLocalUnsyncedJson(key);
+        var best = (localUnsynced && typeof localUnsynced === 'object')
+          ? localUnsynced
+          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
+        LIVE_PERF_HEADER_DOCS[key] = (best && typeof best === 'object') ? best : null;
+        return LIVE_PERF_HEADER_DOCS[key];
+      })
+      .catch(function () {
+        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
+        LIVE_PERF_HEADER_DOCS[key] = (best && typeof best === 'object') ? best : null;
+        return LIVE_PERF_HEADER_DOCS[key];
+      })
+      .finally(function () {
+        delete LIVE_PERF_HEADER_PROMISES[key];
+      });
+    return LIVE_PERF_HEADER_PROMISES[key];
   }
 
   function mpPick(lang, key, fb) {
@@ -181,6 +221,7 @@
 
   function getPerfMerged() {
     var lang = currentLang || 'en';
+    var liveHeader = LIVE_PERF_HEADER_DOCS['perf_' + lang];
     var base =
       MP_CAL && MP_CAL.perf && typeof MP_CAL.perf === 'object'
         ? MP_CAL.perf
@@ -268,6 +309,10 @@
     if (!hadLocIntro) {
       var pint = mpPick(lang, 'perf.pageIntro', '');
       if (pint != null && String(pint).trim() !== '') out.intro = pint;
+    }
+    if (liveHeader && typeof liveHeader === 'object') {
+      if (liveHeader.h2 != null && String(liveHeader.h2).trim() !== '') out.h2 = String(liveHeader.h2).trim();
+      if (liveHeader.intro != null && String(liveHeader.intro).trim() !== '') out.intro = String(liveHeader.intro).trim();
     }
     return out;
   }
@@ -1495,19 +1540,25 @@
     currentLang = (e.detail && e.detail.lang) || 'en';
     console.log('[Calendar] mp:langchange received', { lang: currentLang });
     resolveActiveLang('mp:langchange');
-    if (MP_CAL) {
+    if (!MP_CAL) return;
+    applyPerfHeader();
+    renderPerfs();
+    ensureLivePerfHeader(currentLang).finally(function () {
       applyPerfHeader();
       renderPerfs();
-    }
+    });
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
     resolveActiveLang('mp:localesready');
-    if (MP_CAL) {
+    if (!MP_CAL) return;
+    applyPerfHeader();
+    renderPerfs();
+    ensureLivePerfHeader(currentLang).finally(function () {
       applyPerfHeader();
       renderPerfs();
-    }
+    });
   });
 
   var dataUrl = '/v1-assets/data/calendar-data.json';
@@ -1545,7 +1596,11 @@
     .then(function (parts) {
       MP_CAL = parts[0];
       var rgPerfsLive = parts[2];
-      if (Array.isArray(rgPerfsLive)) {
+      var rgPerfsLocalUnsynced = readLocalUnsyncedJson('rg_perfs');
+      if (Array.isArray(rgPerfsLocalUnsynced)) {
+        MP_CAL.perfs = normalizeRgPerfsList(rgPerfsLocalUnsynced);
+        console.log('[Calendar] Using local unsynced rg_perfs override:', MP_CAL.perfs.length);
+      } else if (Array.isArray(rgPerfsLive)) {
         MP_CAL.perfs = normalizeRgPerfsList(rgPerfsLive);
         console.log('[Calendar] Using live rg_perfs from Firestore:', MP_CAL.perfs.length);
       } else {
@@ -1562,5 +1617,9 @@
       resolveActiveLang('initial-load');
       applyPerfHeader();
       renderPerfs();
+      ensureLivePerfHeader(currentLang).finally(function () {
+        applyPerfHeader();
+        renderPerfs();
+      });
     });
 })();

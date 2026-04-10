@@ -14,6 +14,8 @@
   var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var MP_UI_OVERRIDES = {};
   var MP_UI_PROMISES = {};
+  var MP_EDITORIAL_OVERRIDES = {};
+  var MP_EDITORIAL_PROMISES = {};
   var MP_PRESS_NAV_STATE = { resolved: false, hasQuotes: false };
   var MP_PRESS_NAV_PROMISE = null;
   var MP_LANG_DEBUG = { detected: 'en', source: 'fallback', applied: 'en', persisted: 'no' };
@@ -63,6 +65,8 @@
     return { lang: detected, source: source, persisted: false };
   }
   function getMpSiteLang() {
+    var fromDoc = normalizeLang(document && document.documentElement ? document.documentElement.lang : '');
+    if (MP_LANG_LIST.indexOf(fromDoc) >= 0) return fromDoc;
     return resolveInitialLang().lang;
   }
 
@@ -89,6 +93,20 @@
       }
       var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
       if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function readLocalUnsyncedJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem('rg_local_' + key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
+        return parsed.value;
+      }
       return null;
     } catch (e) {
       return null;
@@ -182,12 +200,15 @@
     var key = 'rg_ui_' + L;
     MP_UI_PROMISES[L] = fetchFirestoreDocJson(key)
       .then(function (doc) {
-        var best = (doc && typeof doc === 'object') ? doc : readLegacyJson(key);
+        var localUnsynced = readLocalUnsyncedJson(key);
+        var best = (localUnsynced && typeof localUnsynced === 'object')
+          ? localUnsynced
+          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
         MP_UI_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
         return MP_UI_OVERRIDES[L];
       })
       .catch(function () {
-        var best = readLegacyJson(key);
+        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
         MP_UI_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
         return MP_UI_OVERRIDES[L];
       })
@@ -196,12 +217,76 @@
       });
     return MP_UI_PROMISES[L];
   }
+  function ensureEditorialOverrideFor(lang) {
+    var L = normalizeLang(lang);
+    if (MP_EDITORIAL_OVERRIDES[L]) return Promise.resolve(MP_EDITORIAL_OVERRIDES[L]);
+    if (MP_EDITORIAL_PROMISES[L]) return MP_EDITORIAL_PROMISES[L];
+    var key = 'rg_editorial_' + L;
+    MP_EDITORIAL_PROMISES[L] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        var localUnsynced = readLocalUnsyncedJson(key);
+        var best = (localUnsynced && typeof localUnsynced === 'object')
+          ? localUnsynced
+          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
+        MP_EDITORIAL_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
+        return MP_EDITORIAL_OVERRIDES[L];
+      })
+      .catch(function () {
+        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
+        MP_EDITORIAL_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
+        return MP_EDITORIAL_OVERRIDES[L];
+      })
+      .finally(function () {
+        delete MP_EDITORIAL_PROMISES[L];
+      });
+    return MP_EDITORIAL_PROMISES[L];
+  }
+  function getEditorialOverrideValue(lang, key) {
+    var L = normalizeLang(lang);
+    var byLang = MP_EDITORIAL_OVERRIDES[L];
+    if (byLang && Object.prototype.hasOwnProperty.call(byLang, key)) return byLang[key];
+    var en = MP_EDITORIAL_OVERRIDES.en;
+    if (en && Object.prototype.hasOwnProperty.call(en, key)) return en[key];
+    return null;
+  }
+  function asBooleanFlag(v, fallback) {
+    if (typeof v === 'boolean') return v;
+    if (v === 'true' || v === 1 || v === '1') return true;
+    if (v === 'false' || v === 0 || v === '0' || v == null || v === '') return false;
+    return !!fallback;
+  }
+  window.ensureMpEditorialOverrideFor = ensureEditorialOverrideFor;
+  window.getMpProgramsVisibility = function (lang) {
+    var L = normalizeLang(lang);
+    delete MP_EDITORIAL_OVERRIDES[L];
+    delete MP_EDITORIAL_OVERRIDES.en;
+    delete MP_EDITORIAL_PROMISES[L];
+    delete MP_EDITORIAL_PROMISES.en;
+    return Promise.all([ensureEditorialOverrideFor(L), ensureEditorialOverrideFor('en')]).then(function () {
+      var byLang = MP_EDITORIAL_OVERRIDES[L] && typeof MP_EDITORIAL_OVERRIDES[L] === 'object' ? MP_EDITORIAL_OVERRIDES[L] : {};
+      var en = MP_EDITORIAL_OVERRIDES.en && typeof MP_EDITORIAL_OVERRIDES.en === 'object' ? MP_EDITORIAL_OVERRIDES.en : {};
+      var hideSection = asBooleanFlag(byLang.hideProgramsSection, false) || asBooleanFlag(en.hideProgramsSection, false);
+      return {
+        hideProgramsSection: !!hideSection,
+        hideProgramsEntryPoints: !!hideSection
+      };
+    });
+  };
   function getUiOverrideString(lang, key) {
     var L = normalizeLang(lang);
     if (key === 'nav.epk') return resolveNavEpkLabel(L);
     var d = MP_UI_OVERRIDES[L];
     if (d && typeof d[key] === 'string' && d[key].trim()) {
       var raw = String(d[key]).trim();
+      if (key === 'home.intro.ctaPress' && L !== 'en') {
+        var table = window.MP_LOCALE_TABLE || {};
+        var enVal = table && table.en && table.en[key] != null ? String(table.en[key]).trim() : '';
+        var localVal = table && table[L] && table[L][key] != null ? String(table[L][key]).trim() : '';
+        var rawNorm = raw.toLowerCase();
+        var enNorm = enVal.toLowerCase();
+        var localNorm = localVal.toLowerCase();
+        if (enNorm && localNorm && localNorm !== enNorm && rawNorm === enNorm) return localVal;
+      }
       if (L === 'it' && key === 'nav.media' && raw.toLowerCase() === 'video') return 'Media';
       return raw;
     }

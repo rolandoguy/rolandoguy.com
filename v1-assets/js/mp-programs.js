@@ -66,6 +66,26 @@
       return null;
     }
   }
+  function readLocalUnsyncedJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem('rg_local_' + key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
+        return parsed.value;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function asBooleanFlag(v) {
+    if (typeof v === 'boolean') return v;
+    if (v === 'true' || v === 1 || v === '1') return true;
+    if (v === 'false' || v === 0 || v === '0' || v == null || v === '') return false;
+    return !!v;
+  }
 
   function fetchFirestoreDocJson(key) {
     var url = 'https://firestore.googleapis.com/v1/projects/' + FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
@@ -87,12 +107,15 @@
     if (promises[key]) return promises[key];
     promises[key] = fetchFirestoreDocJson(key)
       .then(function (doc) {
-        var best = (doc && typeof doc === 'object') ? doc : readLegacyJson(key);
+        var localUnsynced = readLocalUnsyncedJson(key);
+        var best = (localUnsynced && typeof localUnsynced === 'object')
+          ? localUnsynced
+          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
         cache[key] = (best && typeof best === 'object') ? best : null;
         return cache[key];
       })
       .catch(function () {
-        var best = readLegacyJson(key);
+        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
         cache[key] = (best && typeof best === 'object') ? best : null;
         return cache[key];
       })
@@ -119,7 +142,12 @@
 
   function loadEditorialOverrides(lang) {
     var L = String(lang || 'en').toLowerCase();
-    return Promise.all(['rg_editorial_' + L, 'rg_editorial_en'].map(ensureEditorialDoc));
+    var keys = ['rg_editorial_' + L, 'rg_editorial_en'];
+    keys.forEach(function (key) {
+      delete EDITORIAL_DOCS[key];
+      delete EDITORIAL_DOC_PROMISES[key];
+    });
+    return Promise.all(keys.map(ensureEditorialDoc));
   }
 
   function getProgramsPayloadInfo(lang) {
@@ -180,14 +208,14 @@
   function isProgramsSectionHidden(lang) {
     var l = (lang || 'en').toLowerCase();
     var byLang = EDITORIAL_DOCS['rg_editorial_' + l];
-    if (isObject(byLang) && Object.prototype.hasOwnProperty.call(byLang, 'hideProgramsSection')) {
-      return !!byLang.hideProgramsSection;
-    }
     var en = EDITORIAL_DOCS['rg_editorial_en'];
-    if (isObject(en) && Object.prototype.hasOwnProperty.call(en, 'hideProgramsSection')) {
-      return !!en.hideProgramsSection;
-    }
-    return false;
+    var localFlag = isObject(byLang) && Object.prototype.hasOwnProperty.call(byLang, 'hideProgramsSection')
+      ? asBooleanFlag(byLang.hideProgramsSection)
+      : false;
+    var globalFlag = isObject(en) && Object.prototype.hasOwnProperty.call(en, 'hideProgramsSection')
+      ? asBooleanFlag(en.hideProgramsSection)
+      : false;
+    return !!(localFlag || globalFlag);
   }
 
   function applyProgramsVisibility() {

@@ -114,6 +114,39 @@
       ? MP_MEDIA.audio
       : { h2: '', sub: '', items: [] };
   }
+  function parseLocalJson(key) {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+  function readLocalUnsyncedJson(key) {
+    var wrapped = parseLocalJson('rg_local_' + key);
+    if (wrapped && typeof wrapped === 'object' && wrapped.value != null && typeof wrapped.value === 'object') {
+      return wrapped.value;
+    }
+    return null;
+  }
+  function readLegacyJson(key) {
+    var direct = parseLocalJson(key);
+    if (direct && typeof direct === 'object') {
+      if (direct.value != null && typeof direct.value === 'object') return direct.value;
+      return direct;
+    }
+    var wrapped = readLocalUnsyncedJson(key);
+    return wrapped && typeof wrapped === 'object' ? wrapped : null;
+  }
+  function pickLiveDocWithLocalPriority(key, firestoreDoc) {
+    var localUnsynced = readLocalUnsyncedJson(key);
+    if (localUnsynced && typeof localUnsynced === 'object') return localUnsynced;
+    if (firestoreDoc && typeof firestoreDoc === 'object') return firestoreDoc;
+    var legacy = readLegacyJson(key);
+    return legacy && typeof legacy === 'object' ? legacy : null;
+  }
 
   function resolvePhotoSrc(x) {
     if (x == null) return '';
@@ -283,10 +316,15 @@
       fetchFirestoreRgDoc('rg_audio')
     ]).then(function (quads) {
       if (!MP_MEDIA) return;
-      var livePhotos = normalizeLivePhotosBlock(quads[0]);
-      var liveCaps = normalizeLiveCaptions(quads[1]);
-      var liveVid = mergeLiveVidFromFirestore(quads[2], quads[3]);
-      var liveAudio = normalizeLiveAudioBlock(quads[4]);
+      var photosRaw = pickLiveDocWithLocalPriority('rg_photos', quads[0]);
+      var captionsRaw = pickLiveDocWithLocalPriority('rg_photo_captions', quads[1]);
+      var vidRaw = pickLiveDocWithLocalPriority('rg_vid', quads[2]);
+      var vidLegacyRaw = pickLiveDocWithLocalPriority('rg_vid_en', quads[3]);
+      var audioRaw = pickLiveDocWithLocalPriority('rg_audio', quads[4]);
+      var livePhotos = normalizeLivePhotosBlock(photosRaw);
+      var liveCaps = normalizeLiveCaptions(captionsRaw);
+      var liveVid = mergeLiveVidFromFirestore(vidRaw, vidLegacyRaw);
+      var liveAudio = normalizeLiveAudioBlock(audioRaw);
       if (liveVid) {
         if (!MP_MEDIA.vid) MP_MEDIA.vid = { h2: '', videos: [] };
         var jsonH2 =

@@ -16,7 +16,7 @@
       "ctaRepertoire": "Repertoire",
       "ctaMedia": "Media",
       "ctaContact": "Contact",
-      "ctaHomeIntro": "Home — introduction"
+      "ctaHomeIntro": "View programmes"
     },
     "de": {
       "introLine": "In Berlin ansässiger argentinisch-italienischer Lyriktenor, aktiv in Opernproduktionen, Konzertprogrammen, Rezitalreihen und kuratierten Crossover-Formaten in Deutschland und Europa.",
@@ -33,7 +33,7 @@
       "ctaRepertoire": "Repertoire",
       "ctaMedia": "Medien",
       "ctaContact": "Kontakt",
-      "ctaHomeIntro": "Home — Einführung"
+      "ctaHomeIntro": "Programme ansehen"
     },
     "es": {
       "introLine": "Tenor lírico argentino-italiano con base en Berlín, activo en producciones de ópera, programas de concierto, ciclos de recital y formatos curados de crossover en Alemania y Europa.",
@@ -50,7 +50,7 @@
       "ctaRepertoire": "Repertorio",
       "ctaMedia": "Medios",
       "ctaContact": "Contacto",
-      "ctaHomeIntro": "Inicio — introducción"
+      "ctaHomeIntro": "Ver programas"
     },
     "it": {
       "introLine": "Tenore lirico argentino-italiano con base a Berlino, attivo in produzioni d’opera, programmi da concerto, cicli di recital e formati crossover curati in Germania e in Europa.",
@@ -67,7 +67,7 @@
       "ctaRepertoire": "Repertorio",
       "ctaMedia": "Media",
       "ctaContact": "Contatto",
-      "ctaHomeIntro": "Home — introduzione"
+      "ctaHomeIntro": "Vedi i programmi"
     },
     "fr": {
       "introLine": "Ténor lyrique argentin-italien basé à Berlin, actif en productions d’opéra, programmes de concert, séries de récitals et formats crossover curatés en Allemagne et en Europe.",
@@ -84,7 +84,7 @@
       "ctaRepertoire": "Répertoire",
       "ctaMedia": "Médias",
       "ctaContact": "Contact",
-      "ctaHomeIntro": "Accueil — introduction"
+      "ctaHomeIntro": "Voir les programmes"
     }
   }
 }

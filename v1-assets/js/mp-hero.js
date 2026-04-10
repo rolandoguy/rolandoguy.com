@@ -21,11 +21,12 @@
     var fromArg = normalizeLangCode(preferred);
     var fromDoc = normalizeLangCode(document && document.documentElement ? document.documentElement.lang : '');
     var fromShell = (window.getMpSiteLang && normalizeLangCode(window.getMpSiteLang())) || '';
-    return fromDoc || fromArg || fromShell || 'en';
+    return fromArg || fromDoc || fromShell || 'en';
   }
   var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var LIVE_HERO_DOCS = {};
   var LIVE_HERO_PROMISES = {};
+  var LAST_PROGRAMS_CTA_VISIBILITY_LANG = '';
 
   function escUrl(u) {
     return String(u).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -64,6 +65,8 @@
     return rec ? rec.value : null;
   }
   function readLiveHeroRecord(key) {
+    var local = readLegacyRecord(key);
+    if (local && local.value && typeof local.value === 'object') return local;
     var v = LIVE_HERO_DOCS[key];
     if (!v || typeof v !== 'object') return null;
     return { value: v, ts: 0 };
@@ -88,6 +91,11 @@
     if (LIVE_HERO_PROMISES[key]) return LIVE_HERO_PROMISES[key];
     LIVE_HERO_PROMISES[key] = fetchFirestoreDocJson(key)
       .then(function (doc) {
+        var local = readLegacyJson(key);
+        if (local && typeof local === 'object') {
+          LIVE_HERO_DOCS[key] = local;
+          return LIVE_HERO_DOCS[key];
+        }
         if (doc && typeof doc === 'object') LIVE_HERO_DOCS[key] = doc;
         return LIVE_HERO_DOCS[key] || null;
       })
@@ -296,6 +304,25 @@
     }
     return null;
   }
+  function applyProgramsEntryPointVisibility(lang) {
+    var target = document.getElementById('homeIntroCtaPress');
+    if (!target) return;
+    var L = resolveHeroLang(lang);
+    LAST_PROGRAMS_CTA_VISIBILITY_LANG = L;
+    if (typeof window.getMpProgramsVisibility !== 'function') {
+      target.hidden = false;
+      return;
+    }
+    window.getMpProgramsVisibility(L)
+      .then(function (prefs) {
+        if (LAST_PROGRAMS_CTA_VISIBILITY_LANG !== L || !target) return;
+        target.hidden = !!(prefs && prefs.hideProgramsEntryPoints);
+      })
+      .catch(function () {
+        if (LAST_PROGRAMS_CTA_VISIBILITY_LANG !== L || !target) return;
+        target.hidden = false;
+      });
+  }
 
   function applyHeroCopy(lang) {
     var pick =
@@ -376,6 +403,7 @@
       if (introPressFallback != null && introPressFallback !== '') homeIntroCtaPress.textContent = introPressFallback;
       else if (introPressInfo && introPressInfo.value) homeIntroCtaPress.textContent = introPressInfo.value;
     }
+    applyProgramsEntryPointVisibility(L);
     if (!HERO_SOURCE_LOGGED) {
       HERO_SOURCE_LOGGED = true;
       console.log('[Hero] Runtime source trace', {
