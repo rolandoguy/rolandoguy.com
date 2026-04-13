@@ -958,8 +958,46 @@
   };
   var PAPER_PREVIEW_STORAGE_KEY = 'rg_admin_v2_paper_preview';
   var DRAFT_RESTORE_NOTICE_STORAGE_KEY = 'adm2_draft_notice_v1';
+  var MOBILE_NAV_PRIMARY_STORAGE_KEY = 'rg_admin_v2_mobile_nav_primary_v1';
+  var MOBILE_NAV_SECTION_ORDER = ['home', 'bio', 'rep', 'programs', 'programbuilder', 'discovery', 'outreach', 'calendar', 'income', 'pastperfs', 'media', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
+  var MOBILE_NAV_PRIMARY_DEFAULT = ['rep', 'programs', 'programbuilder', 'discovery', 'outreach', 'calendar', 'income'];
 
   function $(id) { return document.getElementById(id); }
+  function readMobileNavPrimarySections() {
+    try {
+      var raw = localStorage.getItem(MOBILE_NAV_PRIMARY_STORAGE_KEY);
+      if (!raw) return MOBILE_NAV_PRIMARY_DEFAULT.slice();
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return MOBILE_NAV_PRIMARY_DEFAULT.slice();
+      var seen = {};
+      var cleaned = [];
+      parsed.forEach(function (id) {
+        var key = safeString(id).trim();
+        if (!key || seen[key]) return;
+        if (MOBILE_NAV_SECTION_ORDER.indexOf(key) < 0) return;
+        seen[key] = true;
+        cleaned.push(key);
+      });
+      return cleaned.length ? cleaned : MOBILE_NAV_PRIMARY_DEFAULT.slice();
+    } catch (e) {
+      return MOBILE_NAV_PRIMARY_DEFAULT.slice();
+    }
+  }
+  function writeMobileNavPrimarySections(list) {
+    try { localStorage.setItem(MOBILE_NAV_PRIMARY_STORAGE_KEY, JSON.stringify(Array.isArray(list) ? list : MOBILE_NAV_PRIMARY_DEFAULT)); } catch (e) {}
+  }
+  function renderMobileNavConfigItems() {
+    var box = $('nav-mobile-config-items');
+    if (!box) return;
+    var selected = {};
+    (state.mobileNavPrimarySections || []).forEach(function (id) { selected[id] = true; });
+    box.innerHTML = MOBILE_NAV_SECTION_ORDER.map(function (sectionId) {
+      var btn = document.querySelector('.nav-item[data-section="' + sectionId + '"]');
+      var label = safeString(btn && btn.textContent).trim() || sectionId;
+      var checked = selected[sectionId] ? ' checked' : '';
+      return '<label class="nav-mobile-config__item"><input type="checkbox" data-mobile-nav-section="' + escapeAttr(sectionId) + '"' + checked + '><span>' + escapeHtml(label) + '</span></label>';
+    }).join('');
+  }
   function readPaperPreviewPreference() {
     try {
       var raw = localStorage.getItem(PAPER_PREVIEW_STORAGE_KEY);
@@ -2632,6 +2670,39 @@
       .catch(function () { return null; });
   }
 
+  function syncMobileNavMoreSections(forceCollapseOnMobile) {
+    var nav = $('nav');
+    var more = $('nav-more-sections');
+    var moreItems = more && more.querySelector('.nav-more__items');
+    var mobileConfig = $('nav-mobile-config');
+    if (!nav || !more || !moreItems) return;
+    var isMobile = window.innerWidth <= 860;
+    var selected = {};
+    (state.mobileNavPrimarySections || []).forEach(function (id) { selected[id] = true; });
+
+    MOBILE_NAV_SECTION_ORDER.forEach(function (sectionId) {
+      var btn = document.querySelector('.nav-item[data-section="' + sectionId + '"]');
+      if (!btn) return;
+      if (!isMobile) {
+        nav.insertBefore(btn, more);
+        return;
+      }
+      if (selected[sectionId]) nav.insertBefore(btn, more);
+      else moreItems.appendChild(btn);
+    });
+
+    if (!isMobile) {
+      more.open = true;
+      more.hidden = true;
+      if (mobileConfig) mobileConfig.hidden = true;
+      return;
+    }
+    more.hidden = false;
+    if (mobileConfig) mobileConfig.hidden = false;
+    renderMobileNavConfigItems();
+    if (forceCollapseOnMobile) more.open = false;
+  }
+
   function openSection(id) {
     if (!hasUnsavedChangesPrompt('Leave this section?')) return;
     state.section = id;
@@ -2639,8 +2710,13 @@
     document.querySelectorAll('.section').forEach(function (el) { el.classList.remove('active'); });
     document.querySelectorAll('.nav-item').forEach(function (el) { el.classList.remove('active'); });
     $('section-' + id).classList.add('active');
-    document.querySelector('.nav-item[data-section="' + id + '"]').classList.add('active');
-    $('currentSectionLabel').textContent = document.querySelector('.nav-item[data-section="' + id + '"]').textContent;
+    var navBtn = document.querySelector('.nav-item[data-section="' + id + '"]');
+    if (navBtn) {
+      navBtn.classList.add('active');
+      var navMore = navBtn.closest('.nav-more');
+      if (navMore) navMore.open = true;
+      $('currentSectionLabel').textContent = navBtn.textContent;
+    }
     if (window.innerWidth <= 860) $('sidebar').classList.remove('open');
     syncTopbarToolsDisclosure();
     refreshCurrentSection();
@@ -15719,8 +15795,31 @@
     ].join('\n');
 
     $('menuBtn').addEventListener('click', function () { $('sidebar').classList.toggle('open'); });
+    state.mobileNavPrimarySections = readMobileNavPrimarySections();
+    syncMobileNavMoreSections(true);
+    if ($('nav-mobile-config-items')) {
+      $('nav-mobile-config-items').addEventListener('change', function (ev) {
+        var input = ev && ev.target;
+        if (!input || input.type !== 'checkbox') return;
+        var sectionId = safeString(input.getAttribute('data-mobile-nav-section')).trim();
+        if (!sectionId) return;
+        var selected = {};
+        (state.mobileNavPrimarySections || []).forEach(function (id) { selected[id] = true; });
+        if (input.checked) selected[sectionId] = true;
+        else delete selected[sectionId];
+        var next = MOBILE_NAV_SECTION_ORDER.filter(function (id) { return !!selected[id]; });
+        if (!next.length) {
+          input.checked = true;
+          return;
+        }
+        state.mobileNavPrimarySections = next;
+        writeMobileNavPrimarySections(next);
+        syncMobileNavMoreSections(false);
+      });
+    }
     syncTopbarToolsDisclosure();
     window.addEventListener('resize', syncTopbarToolsDisclosure);
+    window.addEventListener('resize', function () { syncMobileNavMoreSections(false); });
     window.addEventListener('resize', function () {
       if (state.section === 'programbuilder') syncProgramBuilderResponsiveUi(false);
     });

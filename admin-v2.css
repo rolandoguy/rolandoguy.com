@@ -19,6 +19,13 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .nav{display:flex;flex-direction:column;gap:6px}
 .nav-item{background:transparent;border:1px solid var(--border);color:var(--text);padding:10px 12px;text-align:left;border-radius:10px;cursor:pointer}
 .nav-item.active{border-color:var(--gold);color:var(--gold);background:rgba(212,168,67,.08)}
+.nav-more{display:block}
+.nav-more__summary{display:none}
+.nav-more__items{display:flex;flex-direction:column;gap:6px}
+.nav-mobile-config{display:none}
+.nav-mobile-config__items{display:grid;gap:6px;padding:0 8px 8px}
+.nav-mobile-config__item{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.78rem}
+.nav-mobile-config__item input{width:auto;margin:0;accent-color:var(--gold)}
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(15,17,21,.95);backdrop-filter:blur(8px);z-index:10;flex-wrap:wrap}
 .ctx{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
@@ -863,6 +870,17 @@ body.programme-print-active{overflow:hidden}
   .pb-suggestion-card button{width:100%}
 }
 @media (max-width: 860px){
+  .nav-more{border:1px solid var(--border);border-radius:10px;background:#11151d}
+  .nav-more__summary{display:block;list-style:none;cursor:pointer;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:.82rem}
+  .nav-more__summary::-webkit-details-marker{display:none}
+  .nav-more__summary::after{content:'+';float:right;color:#c9d2e4}
+  .nav-more[open] .nav-more__summary::after{content:'−'}
+  .nav-more__items{padding:0 8px 8px}
+  .nav-mobile-config{display:block;border:1px dashed var(--border);border-radius:10px;background:#10141c}
+  .nav-mobile-config__summary{list-style:none;cursor:pointer;padding:9px 12px;border-radius:10px;color:var(--muted);font-size:.78rem}
+  .nav-mobile-config__summary::-webkit-details-marker{display:none}
+  .nav-mobile-config__summary::after{content:'+';float:right;color:#c9d2e4}
+  .nav-mobile-config[open] .nav-mobile-config__summary::after{content:'−'}
   .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .24s ease;z-index:30}
   .sidebar.open{transform:translateX(0)}
   .menu-btn{display:inline-block}

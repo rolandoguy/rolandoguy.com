@@ -23,8 +23,6 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">Admin v2.0</div>
       <nav class="nav" id="nav">
-        <button data-section="home" class="nav-item active">Home / Hero</button>
-        <button data-section="bio" class="nav-item">Biography</button>
         <button data-section="rep" class="nav-item">Repertoire</button>
         <button data-section="programs" class="nav-item">Programs</button>
         <button data-section="programbuilder" class="nav-item">Programme Offers</button>
@@ -32,15 +30,26 @@
         <button data-section="outreach" class="nav-item">Venues / Outreach</button>
         <button data-section="calendar" class="nav-item">Calendar</button>
         <button data-section="income" class="nav-item">Income / Earnings</button>
-        <button data-section="pastperfs" class="nav-item">Past Events</button>
-        <button data-section="media" class="nav-item">Media</button>
-        <button data-section="press" class="nav-item">Press / EPK</button>
-        <button data-section="contact" class="nav-item">Contact</button>
-        <button data-section="ui" class="nav-item">UI / Translations</button>
-        <button data-section="publishing" class="nav-item">Publishing</button>
-        <button data-section="translation" class="nav-item">Translation</button>
-        <button data-section="sitehealth" class="nav-item">Dashboard / Site health</button>
-        <button data-section="tools" class="nav-item">System / Tools</button>
+        <details class="nav-more" id="nav-more-sections">
+          <summary class="nav-more__summary">More sections</summary>
+          <div class="nav-more__items">
+            <button data-section="home" class="nav-item active">Home / Hero</button>
+            <button data-section="bio" class="nav-item">Biography</button>
+            <button data-section="pastperfs" class="nav-item">Past Events</button>
+            <button data-section="media" class="nav-item">Media</button>
+            <button data-section="press" class="nav-item">Press / EPK</button>
+            <button data-section="contact" class="nav-item">Contact</button>
+            <button data-section="ui" class="nav-item">UI / Translations</button>
+            <button data-section="publishing" class="nav-item">Publishing</button>
+            <button data-section="translation" class="nav-item">Translation</button>
+            <button data-section="sitehealth" class="nav-item">Dashboard / Site health</button>
+            <button data-section="tools" class="nav-item">System / Tools</button>
+          </div>
+        </details>
+        <details class="nav-mobile-config" id="nav-mobile-config" hidden>
+          <summary class="nav-mobile-config__summary">Customize mobile menu</summary>
+          <div class="nav-mobile-config__items" id="nav-mobile-config-items"></div>
+        </details>
       </nav>
     </aside>
 
