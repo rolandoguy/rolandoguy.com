@@ -307,7 +307,7 @@
     gate: 'locked',
     failure: ''
   };
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history)$/;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history|rg_repertoire_discovery|rg_outreach_tracker)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var mediaPhotoDragIndex = -1;
   var bulkUrlSubmitHandler = null;
@@ -409,6 +409,35 @@
     'Chamber songs with piano · English',
     'Chamber songs with piano · Spanish',
     'Argentine tango'
+  ];
+  var REPERTOIRE_DISCOVERY_STATE_OPTIONS = [
+    { value: 'bookmarked', label: 'Bookmarked' },
+    { value: 'interesting', label: 'Interesting' },
+    { value: 'worth_studying', label: 'Worth studying' },
+    { value: 'maybe_later', label: 'Maybe later' },
+    { value: 'imported_to_repertoire_library', label: 'Imported to repertoire library' },
+    { value: 'dismissed', label: 'Dismissed' }
+  ];
+  var OUTREACH_STATUS_OPTIONS = [
+    { value: 'idea', label: 'Idea' },
+    { value: 'to_contact', label: 'To contact' },
+    { value: 'sent', label: 'Sent' },
+    { value: 'replied', label: 'Replied' },
+    { value: 'negotiating', label: 'Negotiating' },
+    { value: 'confirmed', label: 'Confirmed' },
+    { value: 'declined', label: 'Declined' },
+    { value: 'archived', label: 'Archived' }
+  ];
+  var OUTREACH_HISTORY_EVENT_OPTIONS = [
+    { value: 'created', label: 'Created' },
+    { value: 'first_contact_sent', label: 'First contact sent' },
+    { value: 'replied', label: 'Replied' },
+    { value: 'follow_up_made', label: 'Follow-up made' },
+    { value: 'negotiation_note', label: 'Negotiation note' },
+    { value: 'tentative_date_discussed', label: 'Tentative date discussed' },
+    { value: 'confirmed', label: 'Confirmed' },
+    { value: 'declined', label: 'Declined' },
+    { value: 'archived', label: 'Archived' }
   ];
   var PROGRAM_BUILDER_TEXT = {
     en: {
@@ -828,6 +857,10 @@
     pressVisibleFilter: 'all',
     pressSelected: {},
     perfStatusFilter: 'all',
+    incomeEventScope: 'upcoming',
+    incomeStatusFilter: 'all',
+    incomeCompletenessFilter: 'all',
+    incomeMonthFilter: 'all',
     perfSelected: {},
     epkPhotoSearch: '',
     sectionUndo: {},
@@ -855,6 +888,7 @@
     mediaVidWorkflowFilter: 'all',
     mediaAudWorkflowFilter: 'all',
     perfWorkflowFilter: 'all',
+    perfRevenueFilter: 'all',
     repWorkflowFilter: 'all',
     plannerDoc: { items: [] },
     plannerIndex: -1,
@@ -892,6 +926,31 @@
     concertHistoryDoc: { concerts: [] },
     concertHistoryIndex: -1,
     concertHistorySearch: '',
+    programmeDraftHistory: {},
+    programmeDiscoveryCandidates: {},
+    discoveryDoc: { records: [] },
+    discoverySelectedId: '',
+    discoverySearch: '',
+    discoveryProfileFilter: 'all',
+    discoveryFamilyFilter: 'all',
+    discoveryLanguageFilter: '',
+    discoveryComposerFilter: '',
+    discoveryWorkFilter: '',
+    discoveryTypeFilter: 'all',
+    discoveryCombinationFilter: 'all',
+    discoveryRoleFilter: 'all',
+    discoveryDurationMinFilter: '',
+    discoveryDurationMaxFilter: '',
+    discoveryReadinessFilter: 'all',
+    discoveryStateFilter: 'all',
+    discoveryResultLimit: 24,
+    outreachDoc: { records: [] },
+    outreachSelectedId: '',
+    outreachSearch: '',
+    outreachViewMode: 'cards',
+    outreachStatusFilter: 'all',
+    outreachFollowupFilter: 'all',
+    outreachQuickFilter: 'all',
     legacySaveHooksInstalled: false,
     pendingLegacySaves: {},
     paperPreview: true,
@@ -1553,8 +1612,9 @@
     var uiEn = getSiteHealthDoc(snapshot, 'rg_ui_en', {});
     if (L === 'it' && safeString(ui['nav.media']).trim().toLowerCase() === 'video') {
       issues.push({
-        kind: 'warn',
-        text: 'Italian UI still saves Nav · media as "Video". Save UI once in IT to normalize it back to "Media" for the live public site.',
+        severity: 'recommended',
+        section: 'UI / labels',
+        text: 'The Italian navigation still uses "Video" for the media label. Save the IT UI once to normalize the live label back to "Media".',
         action: { section: 'ui', lang: 'it' }
       });
     }
@@ -1580,29 +1640,33 @@
     });
     if (missingLocalized.length) {
       issues.push({
-        kind: 'warn',
-        text: 'Localized SEO fields are missing for ' + L.toUpperCase() + ': ' + shortLabelList(missingLocalized, 5) + '. Public search snippets may fall back to English/default text.',
+        severity: 'recommended',
+        section: 'UI / labels',
+        text: 'Some SEO fields are still missing in ' + L.toUpperCase() + ': ' + shortLabelList(missingLocalized, 5) + '. Search snippets may fall back to English/default wording.',
         action: { section: 'ui', lang: L }
       });
     }
     if (sameAsEn.length) {
       issues.push({
-        kind: 'info',
-        text: L.toUpperCase() + ' SEO fields still match EN exactly: ' + shortLabelList(sameAsEn, 5) + '. Search presentation may look untranslated.',
+        severity: 'structural',
+        section: 'UI / labels',
+        text: 'Some ' + L.toUpperCase() + ' SEO text still matches EN exactly: ' + shortLabelList(sameAsEn, 5) + '. Search presentation may look untranslated.',
         action: { section: 'ui', lang: L }
       });
     }
     if (weakTitles.length) {
       issues.push({
-        kind: 'info',
-        text: 'Saved SEO titles are unusually short or long: ' + shortLabelList(weakTitles, 4) + '.',
+        severity: 'structural',
+        section: 'UI / labels',
+        text: 'Some SEO titles are unusually short or long: ' + shortLabelList(weakTitles, 4) + '.',
         action: { section: 'ui', lang: L }
       });
     }
     if (weakDescriptions.length) {
       issues.push({
-        kind: 'info',
-        text: 'Saved meta descriptions are unusually short or long: ' + shortLabelList(weakDescriptions, 4) + '.',
+        severity: 'structural',
+        section: 'UI / labels',
+        text: 'Some meta descriptions are unusually short or long: ' + shortLabelList(weakDescriptions, 4) + '.',
         action: { section: 'ui', lang: L }
       });
     }
@@ -1620,8 +1684,9 @@
     });
     if (invalidEventLinks) {
       issues.push({
-        kind: 'warn',
-        text: invalidEventLinks + ' visible calendar event link(s) look invalid for ' + L.toUpperCase() + '. Public "Tickets / Info" buttons may fail.',
+        severity: 'critical',
+        section: 'Calendar',
+        text: invalidEventLinks + ' visible calendar event link' + (invalidEventLinks === 1 ? ' looks' : 's look') + ' invalid for ' + L.toUpperCase() + '. Public Tickets / Info buttons may fail.',
         action: { section: 'calendar', lang: L }
       });
     }
@@ -1781,6 +1846,14 @@
       if (!isObject(val)) throw new Error('rg_concert_history must be an object');
       if (!Array.isArray(val.concerts)) throw new Error('rg_concert_history.concerts must be an array');
     }
+    if (key === 'rg_repertoire_discovery') {
+      if (!isObject(val)) throw new Error('rg_repertoire_discovery must be an object');
+      if (!Array.isArray(val.records)) throw new Error('rg_repertoire_discovery.records must be an array');
+    }
+    if (key === 'rg_outreach_tracker') {
+      if (!isObject(val)) throw new Error('rg_outreach_tracker must be an object');
+      if (!Array.isArray(val.records)) throw new Error('rg_outreach_tracker.records must be an array');
+    }
   }
 
   function loadDoc(key, fb) {
@@ -1815,6 +1888,8 @@
     if (k === 'rg_repertoire_planner') return 'Programme Offers · repertoire library';
     if (k === 'rg_program_blueprints') return 'Programme Offers · saved offers';
     if (k === 'rg_concert_history') return 'Programme Offers · concert history archive';
+    if (k === 'rg_repertoire_discovery') return 'Repertoire Discovery';
+    if (k === 'rg_outreach_tracker') return 'Venues / Outreach';
     if (k === 'rg_vid') return 'Media · videos';
     if (k === 'rg_vid_en') return 'Media · videos (legacy key · read-only merge)';
     if (k === 'rg_audio') return 'Media · audio';
@@ -1856,6 +1931,105 @@
       return;
     }
     el.open = !window.matchMedia('(max-width: 860px)').matches;
+  }
+  function isProgramBuilderCompactViewport() {
+    return !!(window.matchMedia && window.matchMedia('(max-width: 860px)').matches);
+  }
+  function setProgramBuilderDisclosureOpen(el, open) {
+    if (!el) return;
+    el.dataset.syncing = '1';
+    el.open = !!open;
+    window.setTimeout(function () {
+      if (el) delete el.dataset.syncing;
+    }, 0);
+  }
+  function syncProgramBuilderSelectionUi(bp) {
+    bp = bp || currentBlueprint();
+    var count = Array.isArray(bp && bp.items) ? bp.items.length : 0;
+    if (document.body) document.body.classList.toggle('pb-programme-has-selection', count > 0);
+    if ($('pb-mobile-selected-label')) $('pb-mobile-selected-label').textContent = count ? ('Selected (' + String(count) + ')') : 'Selected';
+  }
+  function focusProgramBuilderSelection(openEditor, shouldScroll) {
+    if ($('pb-step-build')) setProgramBuilderDisclosureOpen($('pb-step-build'), true);
+    if ($('pb-step-selected')) setProgramBuilderDisclosureOpen($('pb-step-selected'), true);
+    if (openEditor && $('pb-piece-editor-panel')) setProgramBuilderDisclosureOpen($('pb-piece-editor-panel'), true);
+    if (shouldScroll !== false && isProgramBuilderCompactViewport()) scrollProgramBuilderAnchor('pb-step-selected');
+  }
+  function syncProgramBuilderResponsiveUi(forceDefaults) {
+    if (state.section !== 'programbuilder') return;
+    var compact = isProgramBuilderCompactViewport();
+    ['pb-step-setup', 'pb-step-build', 'pb-step-selected'].forEach(function (id) {
+      var shell = $(id);
+      if (!shell || (!forceDefaults && shell.dataset.userToggled === '1')) return;
+      setProgramBuilderDisclosureOpen(shell, true);
+    });
+    var outputShell = $('pb-output-shell');
+    if (outputShell && (forceDefaults || outputShell.dataset.userToggled !== '1')) {
+      setProgramBuilderDisclosureOpen(outputShell, true);
+    }
+    var previewShell = $('pb-preview-shell');
+    if (previewShell && (forceDefaults || previewShell.dataset.userToggled !== '1')) {
+      setProgramBuilderDisclosureOpen(previewShell, !compact);
+    }
+    var quickPicksShell = $('pb-quick-picks-shell');
+    if (quickPicksShell && (forceDefaults || quickPicksShell.dataset.userToggled !== '1')) {
+      setProgramBuilderDisclosureOpen(quickPicksShell, !compact);
+    }
+    var secondaryHub = $('pb-secondary-hub');
+    if (secondaryHub && (forceDefaults || secondaryHub.dataset.userToggled !== '1')) {
+      setProgramBuilderDisclosureOpen(secondaryHub, false);
+    }
+    var pieceEditor = $('pb-piece-editor-panel');
+    if (pieceEditor && compact && (forceDefaults || pieceEditor.dataset.userToggled !== '1')) {
+      setProgramBuilderDisclosureOpen(pieceEditor, false);
+    }
+  }
+  function scrollProgramBuilderAnchor(id) {
+    var target = $(id);
+    if (!target) return;
+    if (target.tagName === 'DETAILS') target.open = true;
+    if (id === 'pb-step-selected' && $('pb-step-build')) $('pb-step-build').open = true;
+    if (id === 'pb-step-output' && $('pb-output-shell')) $('pb-output-shell').open = true;
+    if (id === 'pb-step-advanced' && $('pb-secondary-hub')) $('pb-secondary-hub').open = true;
+    window.setTimeout(function () {
+      if (typeof target.scrollIntoView === 'function') target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  }
+  function bindProgramBuilderUiChrome() {
+    if (document.body && document.body.dataset.pbUiChromeWired === '1') return;
+    if (document.body) document.body.dataset.pbUiChromeWired = '1';
+    document.querySelectorAll('[data-pb-jump]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        scrollProgramBuilderAnchor(btn.getAttribute('data-pb-jump'));
+      });
+    });
+    document.querySelectorAll('[data-pb-mobile-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.getAttribute('data-pb-mobile-action');
+        if (action === 'generate' && $('pb-generate-draft')) {
+          $('pb-generate-draft').click();
+          return;
+        }
+        if (action === 'add' && $('pb-add-piece')) {
+          if ($('pb-step-build')) setProgramBuilderDisclosureOpen($('pb-step-build'), true);
+          $('pb-add-piece').click();
+          return;
+        }
+        if (action === 'selected') {
+          focusProgramBuilderSelection(true, true);
+          return;
+        }
+        if (action === 'save' && $('pb-save-blueprints')) $('pb-save-blueprints').click();
+      });
+    });
+    ['pb-step-setup', 'pb-step-build', 'pb-step-selected', 'pb-output-shell', 'pb-preview-shell', 'pb-quick-picks-shell', 'pb-secondary-hub', 'pb-piece-editor-panel'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('toggle', function () {
+        if (el.dataset.syncing === '1') return;
+        el.dataset.userToggled = '1';
+      });
+    });
   }
   function escapeHtml(v) {
     return safeString(v)
@@ -1998,11 +2172,48 @@
     if (missingCount > 0) return 'warn';
     return 'ok';
   }
-  function issuesCountByKind(list, kind) {
-    return (list || []).filter(function (x) { return x && x.kind === kind; }).length;
+  function normalizeHealthSeverity(issue) {
+    var severity = safeString(issue && issue.severity).trim().toLowerCase();
+    if (severity === 'critical' || severity === 'recommended' || severity === 'structural') return severity;
+    var kind = safeString(issue && issue.kind).trim().toLowerCase();
+    if (kind === 'err') return 'critical';
+    if (kind === 'info') return 'structural';
+    return 'recommended';
+  }
+  function healthSeverityMeta(severity) {
+    if (severity === 'critical') return { tone: 'err', label: 'Critical' };
+    if (severity === 'structural') return { tone: 'info', label: 'Structural difference' };
+    return { tone: 'warn', label: 'Recommended' };
+  }
+  function countHealthIssuesBySeverity(list, severity) {
+    return (list || []).filter(function (x) { return x && x.severity === severity; }).length;
   }
   function statusBadgeHtml(status, label) {
     return '<span class="pill ' + status + '">' + escapeHtml(label) + '</span>';
+  }
+  function healthSectionBadge(status) {
+    if (status === 'err') return statusBadgeHtml('err', 'Critical');
+    if (status === 'warn') return statusBadgeHtml('warn', 'Recommended');
+    return statusBadgeHtml('ok', 'Ready');
+  }
+  function siteHealthActionLabel(action) {
+    action = action || {};
+    var lang = safeString(action.lang).trim().toUpperCase();
+    var suffix = lang ? ' (' + lang + ')' : '';
+    if (action.section === 'press' && action.pressTab === 'pdfs') return 'Open PDF links' + suffix;
+    if (action.section === 'press' && action.pressTab === 'quotes' && action.pressFilter === 'hidden') return 'Open hidden quotes' + suffix;
+    if (action.section === 'press' && action.pressTab === 'quotes') return 'Open quotes' + suffix;
+    if (action.section === 'media' && action.mediaTab === 'videos') return 'Open videos' + suffix;
+    if (action.section === 'media' && action.mediaTab === 'photos') return 'Open photos' + suffix;
+    if (action.section === 'home') return 'Open Home editor' + suffix;
+    if (action.section === 'bio') return 'Open Biography editor' + suffix;
+    if (action.section === 'programs') return 'Open Programmes editor' + suffix;
+    if (action.section === 'calendar') return 'Open Calendar editor' + suffix;
+    if (action.section === 'contact') return 'Open Contact editor' + suffix;
+    if (action.section === 'ui') return 'Open UI labels' + suffix;
+    if (action.section === 'press') return 'Open Press editor' + suffix;
+    if (action.section === 'media') return 'Open Media editor' + suffix;
+    return 'Open relevant section' + suffix;
   }
   function languageSectionStatus(lang, snapshot) {
     var hero = getSiteHealthDoc(snapshot, 'hero_' + lang, {});
@@ -2089,9 +2300,9 @@
     var perfPastMissing = perfs.filter(function (e) { return safeString(e && e.status) === 'past' && (isBlank(e && e.sortDate) || isBlank(e && e.time) || isBlank(e && e.venue)); }).length;
     var perfHidden = perfs.filter(function (e) { return safeString(e && e.status) === 'hidden'; }).length;
     sectionStatus['Calendar'] = perfMissingCritical > 0 ? 'err' : (perfPastMissing > 0 ? 'warn' : 'ok');
-    if (perfMissingCritical) issues.push({ kind: 'err', text: perfMissingCritical + ' upcoming calendar events are missing date/time/venue.', action: { section: 'calendar' } });
-    if (perfPastMissing) issues.push({ kind: 'info', text: perfPastMissing + ' past events are missing some details (optional cleanup).', action: { section: 'calendar' } });
-    if (perfHidden) issues.push({ kind: 'info', text: perfHidden + ' calendar events are hidden intentionally.', action: { section: 'calendar', filter: 'hidden' } });
+    if (perfMissingCritical) issues.push({ severity: 'critical', section: 'Calendar', text: perfMissingCritical + ' upcoming event' + (perfMissingCritical === 1 ? ' is' : 's are') + ' missing a public date, time, or venue. Visitors would see incomplete listing details.', action: { section: 'calendar' } });
+    if (perfPastMissing) issues.push({ severity: 'recommended', section: 'Calendar', text: perfPastMissing + ' past event' + (perfPastMissing === 1 ? ' is' : 's are') + ' missing some archived details. The live calendar still works, but the archive could be tidier.', action: { section: 'calendar' } });
+    if (perfHidden) issues.push({ severity: 'structural', section: 'Calendar', text: perfHidden + ' calendar event' + (perfHidden === 1 ? ' is' : 's are') + ' intentionally hidden from the public site.', action: { section: 'calendar' } });
     var vid = mergeRgVidRead(getSiteHealthDoc(snapshot, 'rg_vid', {}), getSiteHealthDoc(snapshot, 'rg_vid_en', null));
     var videos = Array.isArray(vid.videos) ? vid.videos : [];
     var vidsMissing = videos.filter(function (v) { return isBlank(v && v.id) || isBlank(v && v.title); }).length;
@@ -2099,9 +2310,9 @@
     var photos = safePhotos(getSiteHealthDoc(snapshot, 'rg_photos', {}));
     var photoCount = (photos.s || []).length + (photos.t || []).length + (photos.b || []).length;
     sectionStatus['Media'] = vidsMissing ? 'warn' : (photoCount ? 'ok' : 'warn');
-    if (vidsMissing) issues.push({ kind: 'warn', text: vidsMissing + ' videos are missing title or video ID.', action: { section: 'media', mediaTab: 'videos' } });
-    if (!photoCount) issues.push({ kind: 'err', text: 'No media photos found.', action: { section: 'media', mediaTab: 'photos' } });
-    if (vidsHidden) issues.push({ kind: 'info', text: vidsHidden + ' videos are currently hidden.', action: { section: 'media', mediaTab: 'videos' } });
+    if (vidsMissing) issues.push({ severity: 'recommended', section: 'Media', text: vidsMissing + ' video entr' + (vidsMissing === 1 ? 'y is' : 'ies are') + ' missing a title or video ID, so that item may not present cleanly.', action: { section: 'media', mediaTab: 'videos' } });
+    if (!photoCount) issues.push({ severity: 'critical', section: 'Media', text: 'No media photos are available. The public media section will feel incomplete.', action: { section: 'media', mediaTab: 'photos' } });
+    if (vidsHidden) issues.push({ severity: 'structural', section: 'Media', text: vidsHidden + ' video' + (vidsHidden === 1 ? ' is' : 's are') + ' currently hidden by choice.', action: { section: 'media', mediaTab: 'videos' } });
     var press = getSiteHealthDoc(snapshot, 'rg_press', []);
     if (!Array.isArray(press)) press = [];
     var missingSource = 0;
@@ -2127,26 +2338,39 @@
     });
     var missingAnyEnPdf = !safeString(pdfs.dossier.EN && pdfs.dossier.EN.url).trim() || !safeString(pdfs.artistSheet.EN && pdfs.artistSheet.EN.url).trim();
     sectionStatus['Press / EPK'] = invalidPdfs.length ? 'err' : (missingSource + missingTranslation > 0 || invalidPressUrls > 0 || missingAnyEnPdf ? 'warn' : 'ok');
-    if (missingSource) issues.push({ kind: 'warn', text: missingSource + ' visible press quotes are missing a source.', action: { section: 'press', pressTab: 'quotes' } });
-    if (missingTranslation) issues.push({ kind: 'warn', text: missingTranslation + ' visible press quotes are missing ' + effectiveLang.toUpperCase() + ' text.', action: { section: 'press', pressTab: 'quotes' } });
-    if (invalidPressUrls) issues.push({ kind: 'warn', text: invalidPressUrls + ' visible press quotes have invalid source URLs.', action: { section: 'press', pressTab: 'quotes' } });
-    if (hiddenQuotes) issues.push({ kind: 'info', text: hiddenQuotes + ' press quotes are hidden intentionally.', action: { section: 'press', pressTab: 'quotes', pressFilter: 'hidden' } });
-    if (invalidPdfs.length) issues.push({ kind: 'err', text: 'Invalid PDF URLs: ' + invalidPdfs.join(', ') + '.', action: { section: 'press', pressTab: 'pdfs' } });
-    if (missingAnyEnPdf) issues.push({ kind: 'info', text: 'EN public PDF set is still incomplete. Press page downloads may feel thin on the main language path.', action: { section: 'press', pressTab: 'pdfs', lang: 'en' } });
+    if (missingSource) issues.push({ severity: 'recommended', section: 'Press / EPK', text: missingSource + ' visible press quote' + (missingSource === 1 ? ' is' : 's are') + ' missing a publication/source credit.', action: { section: 'press', pressTab: 'quotes' } });
+    if (missingTranslation) issues.push({ severity: 'recommended', section: 'Press / EPK', text: missingTranslation + ' visible press quote' + (missingTranslation === 1 ? ' is' : 's are') + ' still missing ' + effectiveLang.toUpperCase() + ' wording, so this language path feels less complete.', action: { section: 'press', pressTab: 'quotes' } });
+    if (invalidPressUrls) issues.push({ severity: 'recommended', section: 'Press / EPK', text: invalidPressUrls + ' visible press quote source link' + (invalidPressUrls === 1 ? ' looks' : 's look') + ' invalid.', action: { section: 'press', pressTab: 'quotes' } });
+    if (hiddenQuotes) issues.push({ severity: 'structural', section: 'Press / EPK', text: hiddenQuotes + ' press quote' + (hiddenQuotes === 1 ? ' is' : 's are') + ' hidden intentionally.', action: { section: 'press', pressTab: 'quotes', pressFilter: 'hidden' } });
+    if (invalidPdfs.length) issues.push({ severity: 'critical', section: 'Press / EPK', text: 'Some public PDF links are invalid: ' + invalidPdfs.join(', ') + '.', action: { section: 'press', pressTab: 'pdfs' } });
+    if (missingAnyEnPdf) issues.push({ severity: 'recommended', section: 'Press / EPK', text: 'The EN public PDF set is still incomplete, so the main press page offers fewer downloads than expected.', action: { section: 'press', pressTab: 'pdfs', lang: 'en' } });
     var homeCurrent = getSiteHealthDoc(snapshot, 'hero_' + effectiveLang, {});
     var homePrimaryMissing = ['cta1', 'cta2'].filter(function (k) { return isBlank(homeCurrent[k]); }).length;
     var homeIntroMissing = ['introCtaBio', 'introCtaMedia'].filter(function (k) { return isBlank(homeCurrent[k]); }).length;
-    if (homePrimaryMissing) issues.push({ kind: 'warn', text: homePrimaryMissing + ' Home primary button label(s) are missing in ' + effectiveLang.toUpperCase() + '.', action: { section: 'home', lang: effectiveLang } });
-    if (homeIntroMissing) issues.push({ kind: 'info', text: homeIntroMissing + ' Home intro CTA label(s) are missing in ' + effectiveLang.toUpperCase() + ' (optional but recommended).', action: { section: 'home', lang: effectiveLang } });
+    if (homePrimaryMissing) issues.push({ severity: 'recommended', section: 'Home / Hero', text: homePrimaryMissing + ' primary Home button label' + (homePrimaryMissing === 1 ? ' is' : 's are') + ' still empty in ' + effectiveLang.toUpperCase() + '.', action: { section: 'home', lang: effectiveLang } });
+    if (homeIntroMissing) issues.push({ severity: 'structural', section: 'Home / Hero', text: homeIntroMissing + ' secondary Home intro label' + (homeIntroMissing === 1 ? ' is' : 's are') + ' still empty in ' + effectiveLang.toUpperCase() + '. The page still works without them.', action: { section: 'home', lang: effectiveLang } });
     var bioCurrent = getSiteHealthDoc(snapshot, 'bio_' + effectiveLang, {});
     var bioMissingCore = ['h2', 'p1', 'p2'].filter(function (k) { return isBlank(bioCurrent[k]); }).length;
-    if (bioMissingCore) issues.push({ kind: 'warn', text: 'Biography is missing ' + bioMissingCore + ' core field(s) in ' + effectiveLang.toUpperCase() + '.', action: { section: 'bio', lang: effectiveLang } });
+    if (bioMissingCore) issues.push({ severity: 'recommended', section: 'Biography', text: 'Biography content in ' + effectiveLang.toUpperCase() + ' is still missing ' + bioMissingCore + ' core text block' + (bioMissingCore === 1 ? '' : 's') + '.', action: { section: 'bio', lang: effectiveLang } });
+    var programsCurrent = getProgramsForHealth(snapshot, effectiveLang);
+    if (isBlank(programsCurrent.title)) {
+      issues.push({ severity: 'recommended', section: 'Programs', text: 'The Programs page title is still empty in ' + effectiveLang.toUpperCase() + '.', action: { section: 'programs', lang: effectiveLang } });
+    }
     var contactCurrent = getSiteHealthDoc(snapshot, 'contact_' + effectiveLang, {});
-    if (!isBlank(contactCurrent.email) && !isValidEmail(contactCurrent.email)) issues.push({ kind: 'err', text: 'Contact email format looks invalid for ' + effectiveLang.toUpperCase() + '.', action: { section: 'contact', lang: effectiveLang } });
+    var contactMissingCore = ['title', 'sub', 'email'].filter(function (k) { return isBlank(contactCurrent[k]); });
+    if (contactMissingCore.length) {
+      issues.push({
+        severity: contactMissingCore.indexOf('email') >= 0 ? 'critical' : 'recommended',
+        section: 'Contact',
+        text: 'The Contact section in ' + effectiveLang.toUpperCase() + ' is still missing: ' + contactMissingCore.join(', ') + '.',
+        action: { section: 'contact', lang: effectiveLang }
+      });
+    }
+    if (!isBlank(contactCurrent.email) && !isValidEmail(contactCurrent.email)) issues.push({ severity: 'critical', section: 'Contact', text: 'The public contact email in ' + effectiveLang.toUpperCase() + ' looks invalid, so replies may fail.', action: { section: 'contact', lang: effectiveLang } });
     var contactWebLabelForHealth = safeString(contactCurrent.webBtn).trim();
     var contactWebForHealth = safeString(contactCurrent.webUrl || contactCurrent.webBtn).trim();
-    if (!isBlank(contactWebForHealth) && !isValidHttpUrl(contactWebForHealth)) issues.push({ kind: 'warn', text: 'Contact website URL format looks invalid for ' + effectiveLang.toUpperCase() + '.', action: { section: 'contact', lang: effectiveLang } });
-    if (!isBlank(contactWebLabelForHealth) && isBlank(safeString(contactCurrent.webUrl).trim())) issues.push({ kind: 'info', text: 'Contact website button label is set for ' + effectiveLang.toUpperCase() + ' but no website URL is saved, so the public button stays hidden.', action: { section: 'contact', lang: effectiveLang } });
+    if (!isBlank(contactWebForHealth) && !isValidHttpUrl(contactWebForHealth)) issues.push({ severity: 'recommended', section: 'Contact', text: 'The saved website link in Contact for ' + effectiveLang.toUpperCase() + ' does not look valid.', action: { section: 'contact', lang: effectiveLang } });
+    if (!isBlank(contactWebLabelForHealth) && isBlank(safeString(contactCurrent.webUrl).trim())) issues.push({ severity: 'structural', section: 'Contact', text: 'A website label is saved in Contact for ' + effectiveLang.toUpperCase() + ', but there is no website URL behind it.', action: { section: 'contact', lang: effectiveLang } });
     langs.forEach(function (lang) {
       var pdoc = getProgramsForHealth(snapshot, lang);
       var enDoc = getProgramsForHealth(snapshot, 'en');
@@ -2154,25 +2378,37 @@
       var hasEn = Array.isArray(enDoc.programs) && enDoc.programs.length;
       if (!hasLocal) {
         issues.push({
-          kind: lang === 'en' || !hasEn ? 'err' : 'warn',
-          text: lang.toUpperCase() + ' programs list is empty' + (lang !== 'en' && hasEn ? ' (EN fallback may still show content).' : '.'),
+          severity: lang === 'en' || !hasEn ? 'critical' : 'recommended',
+          section: 'Programs',
+          text: lang.toUpperCase() + ' programme list is empty' + (lang !== 'en' && hasEn ? '. English fallback may still cover the public page, but this language path is not curated yet.' : '.'),
           action: { section: 'programs', lang: lang }
         });
       }
     });
+    var uiCurrent = getSiteHealthDoc(snapshot, 'rg_ui_' + effectiveLang, {});
+    var navKeys = ['nav.home', 'nav.bio', 'nav.rep', 'nav.media', 'nav.cal', 'nav.epk', 'nav.book', 'nav.contact'];
+    var uiMissing = navKeys.filter(function (k) { return isBlank(uiCurrent[k]); });
+    if (uiMissing.length) {
+      issues.push({
+        severity: uiMissing.length >= 3 ? 'recommended' : 'structural',
+        section: 'UI / labels',
+        text: effectiveLang.toUpperCase() + ' is still missing ' + uiMissing.length + ' navigation label' + (uiMissing.length === 1 ? '' : 's') + '.',
+        action: { section: 'ui', lang: effectiveLang }
+      });
+    }
     if (effectiveLang !== 'en') {
       var heroEn = getSiteHealthDoc(snapshot, 'hero_en', {});
       var heroLocal = getSiteHealthDoc(snapshot, 'hero_' + effectiveLang, {});
       ['cta1', 'cta2', 'quickBioLabel', 'quickCalLabel'].forEach(function (k) {
         if (!isBlank(heroEn && heroEn[k]) && isBlank(heroLocal && heroLocal[k])) {
-          issues.push({ kind: 'warn', text: 'EN has Home label "' + k + '" but ' + effectiveLang.toUpperCase() + ' is missing it.', action: { section: 'home', lang: effectiveLang } });
+          issues.push({ severity: 'structural', section: 'Home / Hero', text: 'The ' + effectiveLang.toUpperCase() + ' Home view is still missing the label used for "' + k + '" in EN.', action: { section: 'home', lang: effectiveLang } });
         }
       });
       var bioEn = getSiteHealthDoc(snapshot, 'bio_de', {});
       var bioLocal = getSiteHealthDoc(snapshot, 'bio_' + effectiveLang, {});
       ['h2', 'p1', 'p2'].forEach(function (k) {
         if (!isBlank(bioEn && bioEn[k]) && isBlank(bioLocal && bioLocal[k])) {
-          issues.push({ kind: 'warn', text: 'DE biography has "' + k + '" but ' + effectiveLang.toUpperCase() + ' is missing it.', action: { section: 'bio', lang: effectiveLang } });
+          issues.push({ severity: 'structural', section: 'Biography', text: 'The ' + effectiveLang.toUpperCase() + ' biography is still missing one text block that exists in DE.', action: { section: 'bio', lang: effectiveLang } });
         }
       });
     }
@@ -2181,18 +2417,48 @@
       var d = safeString(pdfs.dossier[L] && pdfs.dossier[L].url).trim();
       var a = safeString(pdfs.artistSheet[L] && pdfs.artistSheet[L].url).trim();
       if ((!!d) !== (!!a)) {
-        issues.push({ kind: 'info', text: 'PDF set is partial in ' + L + ' (one of Dossier / Artist Sheet is missing).', action: { section: 'press', pressTab: 'pdfs', lang: L.toLowerCase() } });
+        issues.push({ severity: 'structural', section: 'Press / EPK', text: 'The public PDF set is partial in ' + L + ': one of Dossier or Artist Sheet is still missing.', action: { section: 'press', pressTab: 'pdfs', lang: L.toLowerCase() } });
       }
     });
     issues = issues.concat(collectPublicOutputIssues(effectiveLang, snapshot));
+    var normalizedIssues = issues.map(function (it) {
+      var severity = normalizeHealthSeverity(it);
+      var meta = healthSeverityMeta(severity);
+      return {
+        severity: severity,
+        tone: meta.tone,
+        label: meta.label,
+        section: safeString(it && it.section).trim(),
+        text: safeString(it && it.text),
+        action: (it && it.action) || {}
+      };
+    });
+    var severityRank = { critical: 0, recommended: 1, structural: 2 };
+    normalizedIssues.sort(function (a, b) {
+      var ar = hasOwn(severityRank, a.severity) ? severityRank[a.severity] : 9;
+      var br = hasOwn(severityRank, b.severity) ? severityRank[b.severity] : 9;
+      if (ar !== br) return ar - br;
+      return safeString(a.text).localeCompare(safeString(b.text));
+    });
+    function sectionHasSeverity(sectionName, severity) {
+      return normalizedIssues.some(function (issue) {
+        return issue.section === sectionName && issue.severity === severity;
+      });
+    }
     var sectionOrder = ['Home / Hero', 'Biography', 'Programs', 'Calendar', 'Media', 'Press / EPK', 'Contact', 'UI / labels'];
+    sectionOrder.forEach(function (name) {
+      if (sectionHasSeverity(name, 'critical')) sectionStatus[name] = 'err';
+      else if (sectionHasSeverity(name, 'recommended')) sectionStatus[name] = 'warn';
+      else if (!sectionStatus[name]) sectionStatus[name] = 'ok';
+      else if (sectionStatus[name] !== 'err' && sectionStatus[name] !== 'warn') sectionStatus[name] = 'ok';
+      else if (!sectionHasSeverity(name, 'critical') && !sectionHasSeverity(name, 'recommended')) sectionStatus[name] = 'ok';
+    });
     var sectionBox = $('sitehealth-section-status');
     if (sectionBox) {
       sectionBox.className = 'health-list';
       sectionBox.innerHTML = sectionOrder.map(function (name) {
         var st = sectionStatus[name] || 'ok';
-        var label = st === 'ok' ? 'Complete' : (st === 'warn' ? 'Needs review' : 'Action needed');
-        return '<div class="health-row"><span class="label">' + escapeHtml(name) + '</span>' + statusBadgeHtml(st, label) + '</div>';
+        return '<div class="health-row"><span class="label">' + escapeHtml(name) + '</span>' + healthSectionBadge(st) + '</div>';
       }).join('');
     }
     var matrixBox = $('sitehealth-lang-matrix');
@@ -2210,47 +2476,42 @@
         }).join('') +
         '</tbody></table>';
     }
-    var normalizedIssues = issues.map(function (it) {
-      var kind = safeString(it && it.kind).trim();
-      if (kind !== 'err' && kind !== 'warn' && kind !== 'info') kind = 'warn';
-      return { kind: kind, text: safeString(it && it.text), action: (it && it.action) || {} };
-    });
     var issueBox = $('sitehealth-issues');
     if (issueBox) {
       if (!normalizedIssues.length) {
-        issueBox.innerHTML = '<div class="empty-state">No issues detected right now.</div>';
+        issueBox.innerHTML = '<div class="empty-state">No critical, recommended, or structural follow-ups were detected right now.</div>';
       } else {
         issueBox.className = 'health-issues';
         issueBox.innerHTML = normalizedIssues.map(function (it, idx) {
           var action = it.action || {};
-          return '<div class="health-issue ' + escapeHtml(it.kind || 'warn') + '"><span class="text">' + escapeHtml(it.text) + '</span><div class="actions"><button type="button" data-health-action="1" data-action-idx="' + idx + '"' +
+          return '<div class="health-issue ' + escapeHtml(it.tone || 'warn') + '"><div class="text"><span class="pill ' + escapeHtml(it.tone || 'warn') + '">' + escapeHtml(it.label || 'Recommended') + '</span> ' + escapeHtml(it.text) + '</div><div class="actions"><button type="button" data-health-action="1" data-action-idx="' + idx + '"' +
             (action.section ? ' data-section="' + escapeHtml(action.section) + '"' : '') +
             (action.lang ? ' data-lang="' + escapeHtml(action.lang) + '"' : '') +
             (action.pressTab ? ' data-press-tab="' + escapeHtml(action.pressTab) + '"' : '') +
             (action.mediaTab ? ' data-media-tab="' + escapeHtml(action.mediaTab) + '"' : '') +
             (action.pressFilter ? ' data-press-filter="' + escapeHtml(action.pressFilter) + '"' : '') +
-            '>Open</button></div></div>';
+            '>' + escapeHtml(siteHealthActionLabel(action)) + '</button></div></div>';
         }).join('');
       }
     }
-    var errCount = issuesCountByKind(normalizedIssues, 'err');
-    var warnCount = issuesCountByKind(normalizedIssues, 'warn');
-    var infoCount = issuesCountByKind(normalizedIssues, 'info');
+    var errCount = countHealthIssuesBySeverity(normalizedIssues, 'critical');
+    var warnCount = countHealthIssuesBySeverity(normalizedIssues, 'recommended');
+    var infoCount = countHealthIssuesBySeverity(normalizedIssues, 'structural');
     var overall = $('sitehealth-overall');
     if (overall) {
       overall.classList.remove('ok', 'warn', 'err', 'info');
       if (errCount) {
         overall.classList.add('err');
-        overall.textContent = errCount + ' high-risk issue(s) · ' + warnCount + ' warning(s)';
+        overall.textContent = errCount + ' critical · ' + warnCount + ' recommended';
       } else if (warnCount) {
         overall.classList.add('warn');
-        overall.textContent = warnCount + ' warning(s) · ' + infoCount + ' info item(s)';
+        overall.textContent = warnCount + ' recommended · ' + infoCount + ' structural';
       } else if (infoCount) {
         overall.classList.add('info');
-        overall.textContent = infoCount + ' informational note(s)';
+        overall.textContent = infoCount + ' structural difference' + (infoCount === 1 ? '' : 's');
       } else {
         overall.classList.add('ok');
-        overall.textContent = 'Healthy';
+        overall.textContent = 'Ready';
       }
     }
   }
@@ -2261,6 +2522,8 @@
     if (scope === 'rep') return /^rep_/.test(key) || key === 'rg_rep_cards';
     if (scope === 'programs') return /^rg_programs/.test(key) || /^programs_/.test(key) || /^rg_editorial_/.test(key);
     if (scope === 'programbuilder') return key === 'rg_repertoire_planner' || key === 'rg_program_blueprints' || key === 'rg_concert_history';
+    if (scope === 'discovery') return key === 'rg_repertoire_discovery';
+    if (scope === 'outreach') return key === 'rg_outreach_tracker';
     if (scope === 'calendar') return /^perf_/.test(key) || key === 'rg_perfs' || key === 'rg_past_perfs';
     if (scope === 'media') return key === 'rg_vid' || key === 'rg_audio' || key === 'rg_photos' || key === 'rg_photo_captions';
     if (scope === 'press') return !!PRESS_IMPORT_KEYS[key];
@@ -2383,13 +2646,40 @@
     refreshCurrentSection();
   }
 
+  function readAdminDeepLink() {
+    try {
+      var params = new URLSearchParams(window.location && window.location.search ? window.location.search : '');
+      var section = safeString(params.get('section')).trim();
+      var perfId = safeString(params.get('perfId')).trim();
+      var okSection = section && document.querySelector('.nav-item[data-section="' + section + '"]');
+      return { section: okSection ? section : '', perfId: perfId };
+    } catch (e) {
+      return { section: '', perfId: '' };
+    }
+  }
+
+  function openCalendarEventById(perfId) {
+    var target = safeString(perfId).trim();
+    if (!target) return false;
+    if (!Array.isArray(state.perfs) || !state.perfs.length) return false;
+    var idx = state.perfs.findIndex(function (e) { return safeString(e && e.id).trim() === target; });
+    if (idx < 0) return false;
+    state.perfIndex = idx;
+    renderPerfList();
+    renderPerfEditor();
+    return true;
+  }
+
   function refreshCurrentSection() {
     if (state.section === 'home') loadHome();
     else if (state.section === 'bio') loadBio();
     else if (state.section === 'rep') loadRep();
     else if (state.section === 'programs') loadPrograms();
     else if (state.section === 'programbuilder') loadProgramBuilder();
+    else if (state.section === 'discovery') loadDiscovery();
+    else if (state.section === 'outreach') loadOutreach();
     else if (state.section === 'calendar') loadCalendar();
+    else if (state.section === 'income') loadIncome();
     else if (state.section === 'media') loadMedia();
     else if (state.section === 'pastperfs') loadPastPerfsSection();
     else if (state.section === 'press') loadPress();
@@ -3428,6 +3718,21 @@
     var f = safeString(family).trim().toLowerCase();
     return safeString(copy.families && copy.families[f]) || plannerFamilyLabel(family);
   }
+  function normalizeProgramOfferStyleFocus(value) {
+    value = safeString(value || '').trim().toLowerCase();
+    return ['mixed','baroque','classical','belcanto','romantic','verismo'].indexOf(value) >= 0 ? value : 'mixed';
+  }
+  function plannerStyleFocusLabel(value) {
+    var key = normalizeProgramOfferStyleFocus(value);
+    return ({
+      mixed: 'Open / Mixed',
+      baroque: 'Baroque',
+      classical: 'Classical',
+      belcanto: 'Belcanto',
+      romantic: 'Romantic',
+      verismo: 'Verismo'
+    })[key] || 'Open / Mixed';
+  }
   function programOfferLocalizedFormation(formation, lang) {
     var value = safeString(formation).trim();
     if (!value) return '';
@@ -4070,6 +4375,1188 @@
   function programBuilderSuggestionSource() {
     return (typeof window !== 'undefined' && isObject(window.PROGRAM_BUILDER_OUTSIDE_REPERTOIRE)) ? window.PROGRAM_BUILDER_OUTSIDE_REPERTOIRE : {};
   }
+  function repertoireDiscoverySource() {
+    return (typeof window !== 'undefined' && isObject(window.REPERTOIRE_DISCOVERY_CURATED)) ? window.REPERTOIRE_DISCOVERY_CURATED : {};
+  }
+  function discoveryStateLabel(value) {
+    var key = safeString(value).trim().toLowerCase();
+    var row = REPERTOIRE_DISCOVERY_STATE_OPTIONS.find(function (option) { return option.value === key; });
+    return row ? row.label : 'Unreviewed';
+  }
+  function discoveryProfileLabel(value) {
+    return ({
+      lyric_tenor: 'Lyric tenor',
+      mozart_tenor: 'Mozart / classical tenor',
+      belcanto_tenor: 'Belcanto tenor',
+      tenor_plus_guest: 'Tenor + guest artist',
+      piano_interlude: 'Piano interlude',
+      sacred_lyric_tenor: 'Sacred lyric tenor',
+      recital_focus: 'Recital focus'
+    })[safeString(value).trim().toLowerCase()] || '';
+  }
+  function normalizeDiscoveryRole(value) {
+    value = safeString(value).trim().toLowerCase();
+    if (value === 'interlude') return 'interlude';
+    return normalizePlannerDramaticRole(value);
+  }
+  function discoveryCombinationFromOutside(item) {
+    var formations = Array.isArray(item && item.formations) ? item.formations : [];
+    var normalized = formations.map(function (value) { return normalizeFormationLabel(value); }).filter(Boolean);
+    if (normalized.some(function (label) { return label === 'tenor + piano'; })) return 'tenor_piano';
+    if (normalized.some(function (label) { return label === 'tenor + soprano + piano'; })) return 'tenor_soprano_piano';
+    if (normalized.some(function (label) { return label === 'tenor + mezzo + piano'; })) return 'tenor_mezzo_piano';
+    if (normalized.some(function (label) { return label === 'tenor + baritone + piano'; })) return 'tenor_baritone_piano';
+    if (normalized.some(function (label) { return label.indexOf('piano solo') >= 0; })) return 'piano_solo';
+    if (normalized.some(function (label) { return label.indexOf('tenor') >= 0; })) return 'tenor_ensemble_piano';
+    return '';
+  }
+  function discoveryProgrammeFitFromOutside(item) {
+    var raw = programBuilderUniqueStrings(((item && item.fitTags) || []).concat((item && item.tags) || []).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var out = [];
+    if (raw.indexOf('gala') >= 0) out.push('gala');
+    if (raw.indexOf('tango') >= 0 || safeString(item && item.category).trim().toLowerCase() === 'tango') out.push('tango');
+    if (raw.indexOf('sacred') >= 0) out.push('sacred');
+    if (raw.indexOf('church') >= 0) out.push('church');
+    if (raw.indexOf('borders') >= 0) out.push('borders');
+    if (raw.indexOf('crossover') >= 0) out.push('crossover');
+    if (safeString(item && item.category).trim().toLowerCase() === 'art_song') out.push('recital', 'chamber');
+    if (safeString(item && item.sourceGroup).trim().toLowerCase() === 'liedernet') out.push('recital', 'chamber');
+    if (safeString(item && item.sourceGroup).trim().toLowerCase() === 'imslp') out.push('recital', 'chamber');
+    return programBuilderUniqueStrings(out);
+  }
+  function discoveryProfileFromOutside(item) {
+    var raw = programBuilderUniqueStrings(((item && item.fitTags) || []).concat((item && item.tags) || []).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var out = [];
+    var composer = safeString(item && item.composer).trim().toLowerCase();
+    var category = safeString(item && item.category).trim().toLowerCase();
+    var combination = discoveryCombinationFromOutside(item);
+    if (composer.indexOf('mozart') >= 0 || raw.indexOf('classical') >= 0) out.push('mozart_tenor');
+    if (composer.indexOf('bellini') >= 0 || composer.indexOf('donizetti') >= 0 || composer.indexOf('rossini') >= 0 || raw.indexOf('belcanto') >= 0) out.push('belcanto_tenor');
+    if (combination === 'tenor_soprano_piano' || combination === 'tenor_mezzo_piano' || combination === 'tenor_baritone_piano' || combination === 'tenor_ensemble_piano') out.push('tenor_plus_guest');
+    if (category === 'piano_solo') out.push('piano_interlude');
+    if (raw.indexOf('sacred') >= 0) out.push('sacred_lyric_tenor');
+    if (category === 'art_song') out.push('recital_focus');
+    if (category !== 'piano_solo') out.push('lyric_tenor');
+    return programBuilderUniqueStrings(out);
+  }
+  function discoveryFitNoteFromOutside(item, combination, programmeFit) {
+    var source = safeString(item && item.sourceGroup).trim();
+    var bits = [];
+    if (source === 'Opera-Arias') bits.push('Opera aria or ensemble reference');
+    else if (source === 'LiederNet') bits.push('Art-song / lied reference');
+    else if (source === 'IMSLP') bits.push('Piano interlude reference');
+    else if (source === 'Todo Tango') bits.push('Tango reference');
+    if (combination === 'tenor_piano') bits.push('works for tenor + piano');
+    else if (combination === 'piano_solo') bits.push('useful as a piano interlude');
+    else if (combination) bits.push('guest-artist option');
+    if (programmeFit.indexOf('gala') >= 0) bits.push('can support gala planning');
+    if (programmeFit.indexOf('recital') >= 0) bits.push('can support recital planning');
+    if (programmeFit.indexOf('tango') >= 0) bits.push('fits tango-focused discovery');
+    return bits.join(' · ') || 'Curated discovery reference for future repertoire development.';
+  }
+  function normalizeDiscoveryOutsideRecord(raw) {
+    var item = isObject(raw) ? raw : {};
+    var tags = programBuilderUniqueStrings(((item.fitTags || []).concat(item.tags || [])).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var combination = discoveryCombinationFromOutside(item);
+    var programmeFit = discoveryProgrammeFitFromOutside(item);
+    return normalizeDiscoveryRecord({
+      id: 'outside_' + programBuilderSlug([item.composer, item.title, item.work].filter(Boolean).join(' ')),
+      title: item.title,
+      composer: item.composer,
+      work: item.work,
+      language: item.language,
+      type: safeString(item.type).trim().toLowerCase() === 'lied' ? 'song' : safeString(item.type).trim().toLowerCase().replace('piano-solo', 'piano_solo'),
+      category: item.category,
+      voiceCategory: item.voiceCategory,
+      primaryVoice: item.primaryVoice,
+      pairedVoices: item.pairedVoices || [],
+      formations: item.formations || [],
+      vocalCombination: combination,
+      profileFocus: discoveryProfileFromOutside(item),
+      programmeFit: programmeFit,
+      dramaticRole: item.dramaticRole || '',
+      approximateDurationMin: item.approximateDurationMin || item.durationMin || 0,
+      readinessIntent: safeString(item.readiness).trim().toLowerCase() === 'ready' ? 'worth_studying' : 'ideas_only',
+      source: safeString(item.sourceGroup).trim() || 'Curated external-style source',
+      sourceNote: safeString(item.suggestionGroup).trim() || 'Imported from the broader discovery source layer.',
+      tags: tags,
+      fitNote: discoveryFitNoteFromOutside(item, combination, programmeFit),
+      cautionNote: safeString(item.notes).trim() || 'Verify key, cut, edition, and practical fit before import.',
+      audienceAppeal: safeString(item.audienceAppeal).trim().toLowerCase(),
+      styleFamilies: plannerPieceStyleFamilies(normalizePlannerItemRecord(item, 0))
+    });
+  }
+  function discoveryTypeFromPlannerLike(item) {
+    var type = safeString(item && item.type).trim().toLowerCase();
+    var category = safeString(item && item.category).trim().toLowerCase();
+    var tags = []
+      .concat(Array.isArray(item && item.tags) ? item.tags : [])
+      .concat(Array.isArray(item && item.fitTags) ? item.fitTags : [])
+      .map(function (tag) { return safeString(tag).trim().toLowerCase(); })
+      .filter(Boolean);
+    if (category === 'trio') return 'trio';
+    if (category === 'quartet' || category === 'ensemble') return 'quartet';
+    if (category === 'duet') return 'duet';
+    if (category === 'piano_solo' || type === 'piano-solo') return 'piano_solo';
+    if (category === 'tango' || type === 'tango') return 'tango';
+    if (type === 'sacred' || tags.indexOf('sacred') >= 0 || tags.indexOf('church') >= 0 || tags.indexOf('christmas') >= 0) return 'sacred';
+    if (category === 'art_song' || type === 'lied' || type === 'song' || type === 'canzone' || type === 'operetta') return 'song';
+    if (category === 'aria' || type === 'aria') return 'aria';
+    return type || category || 'song';
+  }
+  function discoveryHistoricalSourceLabel(item) {
+    if (safeString(item && item.performanceStatus).trim().toLowerCase() === 'performed') return 'Historical concert archive';
+    return 'Historical repertoire archive';
+  }
+  function discoveryFitNoteFromHistorical(item, combination, programmeFit) {
+    var bits = ['Historical repertoire reference'];
+    if (safeString(item && item.performanceStatus).trim().toLowerCase() === 'performed' && Array.isArray(item && item.performedIn) && item.performedIn.length) {
+      bits.push('appears in past concert material');
+    }
+    if (combination === 'tenor_piano') bits.push('works for tenor + piano');
+    else if (combination === 'piano_solo') bits.push('useful as a piano interlude');
+    else if (combination) bits.push('guest-artist option');
+    if (programmeFit.indexOf('gala') >= 0) bits.push('can support gala planning');
+    if (programmeFit.indexOf('recital') >= 0) bits.push('can support recital planning');
+    if (programmeFit.indexOf('church') >= 0 || programmeFit.indexOf('sacred') >= 0) bits.push('useful for sacred or church contexts');
+    if (programmeFit.indexOf('tango') >= 0) bits.push('fits tango-focused discovery');
+    return bits.join(' · ');
+  }
+  function normalizeDiscoveryHistoricalRecord(raw) {
+    var seeded = normalizePlannerItemRecord(raw, 0);
+    var combination = discoveryCombinationFromOutside(seeded);
+    var programmeFit = discoveryProgrammeFitFromOutside(seeded);
+    var historicalTags = programBuilderUniqueStrings((seeded.tags || []).concat(seeded.fitTags || []).concat(['historical_archive']));
+    var sourceLabel = discoveryHistoricalSourceLabel(seeded);
+    return normalizeDiscoveryRecord({
+      id: 'historical_' + programBuilderSlug([seeded.composer, seeded.title, seeded.work].filter(Boolean).join(' ')),
+      title: seeded.title,
+      composer: seeded.composer,
+      work: seeded.work,
+      language: seeded.language,
+      type: discoveryTypeFromPlannerLike(seeded),
+      category: seeded.category,
+      voiceCategory: seeded.voiceCategory,
+      primaryVoice: seeded.primaryVoice,
+      pairedVoices: seeded.pairedVoices || [],
+      formations: seeded.formations || [],
+      vocalCombination: combination,
+      profileFocus: discoveryProfileFromOutside(seeded),
+      programmeFit: programmeFit,
+      dramaticRole: seeded.dramaticRole,
+      approximateDurationMin: seeded.approximateDurationMin || seeded.durationMin || 0,
+      readinessIntent: seeded.reviewStatus === 'manual_review' ? 'ideas_only' : (safeString(seeded.readiness).trim().toLowerCase() === 'ready' ? 'worth_studying' : 'good_candidate'),
+      source: sourceLabel,
+      sourceNote: safeString(seeded.performedIn && seeded.performedIn[0]).trim() || 'Imported from the historical repertoire archive.',
+      tags: historicalTags,
+      fitNote: discoveryFitNoteFromHistorical(seeded, combination, programmeFit),
+      cautionNote: safeString(seeded.notes).trim() || 'Verify edition, key, cut, and current practical fit before import.',
+      audienceAppeal: safeString(seeded.audienceAppeal).trim().toLowerCase(),
+      styleFamilies: plannerPieceStyleFamilies(seeded)
+    });
+  }
+  function normalizeDiscoveryRecord(raw) {
+    var item = isObject(raw) ? raw : {};
+    var tags = programBuilderUniqueStrings((Array.isArray(item.tags) ? item.tags : safeString(item.tags).split(',')).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var programmeFit = programBuilderUniqueStrings((Array.isArray(item.programmeFit) ? item.programmeFit : safeString(item.programmeFit).split(',')).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var profileFocus = programBuilderUniqueStrings((Array.isArray(item.profileFocus) ? item.profileFocus : safeString(item.profileFocus).split(',')).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var styleFamilies = programBuilderUniqueStrings((Array.isArray(item.styleFamilies) ? item.styleFamilies : safeString(item.styleFamilies).split(',')).map(function (tag) {
+      return normalizeProgramOfferStyleFocus(safeString(tag).trim().toLowerCase());
+    }).filter(function (tag) { return tag && tag !== 'mixed'; }));
+    return {
+      id: safeString(item.id || programBuilderSlug([item.composer, item.title].filter(Boolean).join(' '))).trim(),
+      title: safeString(item.title).trim(),
+      composer: safeString(item.composer).trim(),
+      work: safeString(item.work).trim(),
+      language: safeString(item.language).trim().toUpperCase(),
+      type: safeString(item.type).trim().toLowerCase(),
+      category: safeString(item.category).trim().toLowerCase(),
+      voiceCategory: safeString(item.voiceCategory).trim().toLowerCase(),
+      primaryVoice: safeString(item.primaryVoice).trim().toLowerCase(),
+      pairedVoices: normalizePlannerVoiceList(item.pairedVoices || []),
+      formations: (Array.isArray(item.formations) ? item.formations : safeString(item.formations).split('\n')).map(function (value) { return safeString(value).trim(); }).filter(Boolean),
+      vocalCombination: safeString(item.vocalCombination).trim().toLowerCase(),
+      profileFocus: profileFocus,
+      programmeFit: programmeFit,
+      dramaticRole: normalizeDiscoveryRole(item.dramaticRole),
+      approximateDurationMin: Math.max(0, Number(item.approximateDurationMin) || Number(item.durationMin) || 0),
+      readinessIntent: (function (value) {
+        value = safeString(value || 'ideas_only').trim().toLowerCase();
+        return ['ideas_only', 'good_candidate', 'worth_studying'].indexOf(value) >= 0 ? value : 'ideas_only';
+      })(item.readinessIntent),
+      source: safeString(item.source).trim(),
+      sourceNote: safeString(item.sourceNote).trim(),
+      tags: tags,
+      fitNote: safeString(item.fitNote).trim(),
+      cautionNote: safeString(item.cautionNote).trim(),
+      audienceAppeal: safeString(item.audienceAppeal).trim().toLowerCase(),
+      styleFamilies: styleFamilies
+    };
+  }
+  function discoveryDatasetItems() {
+    var src = repertoireDiscoverySource();
+    return (Array.isArray(src.items) ? src.items : []).map(normalizeDiscoveryRecord).filter(function (item) {
+      return !!safeString(item.id).trim();
+    });
+  }
+  function discoveryOutsideDatasetItems() {
+    var src = programBuilderSuggestionSource();
+    return (Array.isArray(src.items) ? src.items : []).map(normalizeDiscoveryOutsideRecord).filter(function (item) {
+      return !!safeString(item.id).trim();
+    });
+  }
+  function discoveryHistoricalDatasetItems() {
+    return makeHistoricalRepertoireImport().map(normalizeDiscoveryHistoricalRecord).filter(function (item) {
+      return !!safeString(item.id).trim();
+    });
+  }
+  function makeDiscoverySeed() {
+    return { meta: { datasetVersion: Math.max(0, Number(repertoireDiscoverySource().version) || 1) }, records: [] };
+  }
+  function safeDiscoveryDoc(raw) {
+    var doc = isObject(raw) ? clone(raw) : {};
+    doc.meta = isObject(doc.meta) ? doc.meta : {};
+    doc.meta.datasetVersion = Math.max(0, Number(doc.meta.datasetVersion) || Math.max(0, Number(repertoireDiscoverySource().version) || 1));
+    if (!Array.isArray(doc.records)) doc.records = [];
+    doc.records = doc.records.filter(isObject).map(function (row) {
+      var stateValue = safeString(row.state).trim().toLowerCase();
+      return {
+        id: safeString(row.id).trim(),
+        state: REPERTOIRE_DISCOVERY_STATE_OPTIONS.some(function (option) { return option.value === stateValue; }) ? stateValue : '',
+        editorialNotes: safeString(row.editorialNotes),
+        importedItemId: safeString(row.importedItemId).trim(),
+        importedAt: safeString(row.importedAt).trim(),
+        updatedAt: safeString(row.updatedAt).trim()
+      };
+    }).filter(function (row) { return !!row.id; });
+    return doc;
+  }
+  function discoveryRecordById(id) {
+    id = safeString(id).trim();
+    if (!id) return null;
+    var records = (state.discoveryDoc && Array.isArray(state.discoveryDoc.records)) ? state.discoveryDoc.records : [];
+    return records.find(function (row) { return safeString(row.id).trim() === id; }) || null;
+  }
+  function ensureDiscoveryRecord(id) {
+    state.discoveryDoc = safeDiscoveryDoc(state.discoveryDoc);
+    var existing = discoveryRecordById(id);
+    if (existing) return existing;
+    var row = { id: safeString(id).trim(), state: '', editorialNotes: '', importedItemId: '', importedAt: '', updatedAt: '' };
+    state.discoveryDoc.records.push(row);
+    return row;
+  }
+  function discoveryItemsMerged() {
+    var allItems = [];
+    var seen = {};
+    discoveryDatasetItems().concat(discoveryOutsideDatasetItems()).concat(discoveryHistoricalDatasetItems()).forEach(function (item) {
+      var key = [programBuilderNormalizeKey(item.title), programBuilderNormalizeKey(item.composer), programBuilderNormalizeKey(item.work)].join('|');
+      if (seen[key]) return;
+      seen[key] = true;
+      allItems.push(item);
+    });
+    return allItems.map(function (item) {
+      var record = discoveryRecordById(item.id) || {};
+      return Object.assign({}, item, {
+        editorialState: safeString(record.state).trim().toLowerCase(),
+        editorialNotes: safeString(record.editorialNotes),
+        importedItemId: safeString(record.importedItemId).trim(),
+        importedAt: safeString(record.importedAt).trim(),
+        stateLabel: discoveryStateLabel(record.state)
+      });
+    });
+  }
+  function discoveryStateCounts(items) {
+    var counts = { total: (items || []).length, unreviewed: 0 };
+    REPERTOIRE_DISCOVERY_STATE_OPTIONS.forEach(function (option) { counts[option.value] = 0; });
+    (items || []).forEach(function (item) {
+      var key = safeString(item.editorialState).trim().toLowerCase();
+      if (key && hasOwn(counts, key)) counts[key] += 1;
+      else counts.unreviewed += 1;
+    });
+    return counts;
+  }
+  function outreachStatusLabel(value) {
+    var key = safeString(value).trim().toLowerCase();
+    var row = OUTREACH_STATUS_OPTIONS.find(function (option) { return option.value === key; });
+    return row ? row.label : 'Idea';
+  }
+  function outreachStatusClass(value) {
+    return ({
+      idea: 'outreach-status--idea',
+      to_contact: 'outreach-status--to-contact',
+      sent: 'outreach-status--sent',
+      replied: 'outreach-status--replied',
+      negotiating: 'outreach-status--negotiating',
+      confirmed: 'outreach-status--confirmed',
+      declined: 'outreach-status--declined',
+      archived: 'outreach-status--archived'
+    })[safeString(value).trim().toLowerCase()] || 'outreach-status--idea';
+  }
+  function outreachLanguageLabel(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return ({ en: 'English', de: 'German', es: 'Spanish', it: 'Italian', fr: 'French' })[key] || 'Flexible';
+  }
+  function outreachDateValue(raw) {
+    var value = safeString(raw).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    var m = value.match(/^(\d{2})[.\/-](\d{2})[.\/-](\d{4})$/);
+    if (m) {
+      var iso = m[3] + '-' + m[2] + '-' + m[1];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return value.slice(0, 10);
+    return '';
+  }
+  function outreachFormatLocalYmd(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+    var y = String(date.getFullYear());
+    var m = String(date.getMonth() + 1).padStart(2, '0');
+    var d = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  }
+  function outreachLocalDatePlusDays(days) {
+    var base = new Date();
+    base.setHours(12, 0, 0, 0);
+    base.setDate(base.getDate() + Math.max(0, Number(days) || 0));
+    return outreachFormatLocalYmd(base);
+  }
+  function outreachTodayIso() {
+    return outreachFormatLocalYmd(new Date());
+  }
+  function outreachParseDate(raw) {
+    var value = outreachDateValue(raw);
+    if (!value) return null;
+    var date = new Date(value + 'T00:00:00');
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  function outreachDaysUntil(raw) {
+    var date = outreachParseDate(raw);
+    if (!date) return null;
+    var today = outreachParseDate(outreachTodayIso());
+    if (!today) return null;
+    return Math.round((date.getTime() - today.getTime()) / 86400000);
+  }
+  function outreachFormatDate(raw) {
+    var date = outreachParseDate(raw);
+    if (!date) return '';
+    try {
+      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch (err) {
+      return raw;
+    }
+  }
+  function outreachStatusClosed(value) {
+    value = safeString(value).trim().toLowerCase();
+    return value === 'confirmed' || value === 'declined' || value === 'archived';
+  }
+  function normalizeOutreachHistoryEntry(raw, idx) {
+    var row = isObject(raw) ? clone(raw) : {};
+    var type = safeString(row.type || 'follow_up_made').trim().toLowerCase();
+    var eventDate = outreachDateValue(row.eventDate || row.date) || outreachDateValue(row.createdAt) || outreachTodayIso();
+    return {
+      id: safeString(row.id || ('outreach_history_' + String(idx + 1))).trim(),
+      type: OUTREACH_HISTORY_EVENT_OPTIONS.some(function (option) { return option.value === type; }) ? type : 'follow_up_made',
+      eventDate: eventDate,
+      note: safeString(row.note).trim(),
+      createdAt: safeString(row.createdAt || '').trim()
+    };
+  }
+  function normalizeOutreachRecord(raw, idx) {
+    var row = isObject(raw) ? clone(raw) : {};
+    var status = safeString(row.status || 'idea').trim().toLowerCase();
+    var fitTags = programBuilderUniqueStrings((Array.isArray(row.fitTags) ? row.fitTags : safeString(row.fitTags).split(',')).map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    var linkedOfferIds = programBuilderUniqueStrings((Array.isArray(row.linkedOfferIds) ? row.linkedOfferIds : safeString(row.linkedOfferIds).split(',')).map(function (id) {
+      return safeString(id).trim();
+    }).filter(Boolean));
+    var history = (Array.isArray(row.history) ? row.history : []).map(normalizeOutreachHistoryEntry).sort(function (a, b) {
+      var aDate = outreachDateValue(a.eventDate);
+      var bDate = outreachDateValue(b.eventDate);
+      if (aDate && bDate && aDate !== bDate) return bDate.localeCompare(aDate);
+      return safeString(b.createdAt).localeCompare(safeString(a.createdAt));
+    });
+    var historySeen = {};
+    history = history.filter(function (entry) {
+      var note = safeString(entry && entry.note).trim();
+      if (note) return true;
+      var key = [
+        safeString(entry && entry.type).trim().toLowerCase(),
+        outreachDateValue(entry && entry.eventDate),
+        ''
+      ].join('|');
+      if (historySeen[key]) return false;
+      historySeen[key] = true;
+      return true;
+    });
+    var venueName = safeString(row.venueName).trim();
+    var city = safeString(row.city).trim();
+    var createdAt = safeString(row.createdAt || row.updatedAt).trim();
+    if (!history.length && createdAt) {
+      history = [normalizeOutreachHistoryEntry({ type: 'created', eventDate: createdAt.slice(0, 10), note: 'Record created.', createdAt: createdAt }, 0)];
+    }
+    return {
+      id: safeString(row.id || ('outreach_' + programBuilderSlug([venueName, city || String(idx + 1)].filter(Boolean).join(' ')))).trim(),
+      venueName: venueName,
+      city: city,
+      country: safeString(row.country).trim(),
+      venueType: safeString(row.venueType).trim(),
+      contactName: safeString(row.contactName).trim(),
+      contactEmail: safeString(row.contactEmail).trim(),
+      outreachLanguage: (function (value) {
+        value = safeString(value || 'en').trim().toLowerCase();
+        return ['en', 'de', 'es', 'it', 'fr'].indexOf(value) >= 0 ? value : 'en';
+      })(row.outreachLanguage),
+      fitTags: fitTags,
+      plannedRepertoire: safeString(row.plannedRepertoire || row.repertoirePlan || ''),
+      notes: safeString(row.notes),
+      messageSent: safeString(row.messageSent || row.message || row.lastMessage || ''),
+      cacheProposed: safeString(row.cacheProposed || row.feeProposed || ''),
+      cacheNegotiated: safeString(row.cacheNegotiated || row.feeNegotiated || ''),
+      status: OUTREACH_STATUS_OPTIONS.some(function (option) { return option.value === status; }) ? status : 'idea',
+      lastContactDate: outreachDateValue(row.lastContactDate),
+      nextFollowUpDate: outreachDateValue(row.nextFollowUpDate),
+      linkedOfferIds: linkedOfferIds,
+      history: history,
+      createdAt: createdAt,
+      updatedAt: safeString(row.updatedAt || row.createdAt).trim()
+    };
+  }
+  function makeOutreachSeed() {
+    return { meta: { version: 1 }, records: [] };
+  }
+  function safeOutreachDoc(raw) {
+    var doc = isObject(raw) ? clone(raw) : {};
+    doc.meta = isObject(doc.meta) ? doc.meta : {};
+    doc.meta.version = Math.max(1, Number(doc.meta.version) || 1);
+    if (!Array.isArray(doc.records)) doc.records = [];
+    doc.records = doc.records.filter(isObject).map(normalizeOutreachRecord).filter(function (row) { return !!row.id; });
+    return doc;
+  }
+  function outreachRecordById(id) {
+    id = safeString(id).trim();
+    if (!id) return null;
+    var records = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records : [];
+    return records.find(function (row) { return safeString(row.id).trim() === id; }) || null;
+  }
+  function ensureOutreachRecord(id) {
+    state.outreachDoc = safeOutreachDoc(state.outreachDoc);
+    var existing = outreachRecordById(id);
+    if (existing) return existing;
+    var record = normalizeOutreachRecord({ id: id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, state.outreachDoc.records.length);
+    state.outreachDoc.records.push(record);
+    return record;
+  }
+  function outreachSavedOfferRows() {
+    var offers = (state.blueprintDoc && Array.isArray(state.blueprintDoc.savedOffers)) ? state.blueprintDoc.savedOffers : [];
+    var seen = {};
+    return offers.filter(function (offer) {
+      var id = safeString(offer && offer.id).trim();
+      if (!id || seen[id]) return false;
+      seen[id] = true;
+      return true;
+    }).slice().sort(function (a, b) {
+      return safeString(savedOfferDisplayLabel(a)).localeCompare(safeString(savedOfferDisplayLabel(b)));
+    });
+  }
+  function outreachLinkedOffers(record) {
+    return (Array.isArray(record && record.linkedOfferIds) ? record.linkedOfferIds : []).map(function (id) {
+      return findSavedOfferById(id);
+    }).filter(Boolean);
+  }
+  function outreachFollowupState(record) {
+    var status = safeString(record && record.status).trim().toLowerCase();
+    var nextDate = outreachDateValue(record && record.nextFollowUpDate);
+    if (outreachStatusClosed(status)) {
+      return { weight: 5, className: 'outreach-followup--calm', label: outreachStatusLabel(status) };
+    }
+    if (!nextDate) {
+      return { weight: 2, className: 'outreach-followup--missing', label: 'Set next follow-up' };
+    }
+    var days = outreachDaysUntil(nextDate);
+    if (days == null) return { weight: 4, className: 'outreach-followup--calm', label: outreachFormatDate(nextDate) };
+    if (days < 0) return { weight: 0, className: 'outreach-followup--overdue', label: 'Overdue since ' + outreachFormatDate(nextDate) };
+    if (days === 0) return { weight: 1, className: 'outreach-followup--today', label: 'Follow up today' };
+    if (days <= 14) return { weight: 3, className: 'outreach-followup--upcoming', label: 'Follow up by ' + outreachFormatDate(nextDate) };
+    return { weight: 4, className: 'outreach-followup--calm', label: 'Next follow-up ' + outreachFormatDate(nextDate) };
+  }
+  function outreachFilteredRecords() {
+    var records = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records.slice() : [];
+    var search = safeString(state.outreachSearch).trim().toLowerCase();
+    var statusFilter = safeString(state.outreachStatusFilter || 'all').trim().toLowerCase() || 'all';
+    var followupFilter = safeString(state.outreachFollowupFilter || 'all').trim().toLowerCase() || 'all';
+    var quickFilter = safeString(state.outreachQuickFilter || 'all').trim().toLowerCase() || 'all';
+    return records.filter(function (record) {
+      var follow = outreachFollowupState(record);
+      var hay = [
+        record.venueName, record.city, record.country, record.venueType, record.contactName, record.contactEmail, record.notes, (record.fitTags || []).join(' ')
+      ].join(' ').toLowerCase();
+      if (search && hay.indexOf(search) < 0) return false;
+      if (statusFilter !== 'all' && safeString(record.status).trim().toLowerCase() !== statusFilter) return false;
+      if (followupFilter === 'overdue' && !(follow.weight === 0)) return false;
+      if (followupFilter === 'today' && !(follow.weight === 1)) return false;
+      if (followupFilter === 'missing' && !(follow.weight === 2)) return false;
+      if (followupFilter === 'upcoming' && !(follow.weight === 3)) return false;
+      if (followupFilter === 'active' && outreachStatusClosed(record.status)) return false;
+      if (followupFilter === 'closed' && !outreachStatusClosed(record.status)) return false;
+      if (quickFilter === 'missing-message' && !!safeString(record.messageSent).trim()) return false;
+      if (quickFilter === 'missing-repertoire' && !!safeString(record.plannedRepertoire).trim()) return false;
+      if (quickFilter === 'no-linked-offer' && outreachLinkedOfferCount(record) > 0) return false;
+      return true;
+    }).sort(function (a, b) {
+      function outreachUrgencySortRank(record) {
+        var follow = outreachFollowupState(record);
+        if (follow.weight === 0) return 0;
+        if (follow.weight === 1) return 1;
+        if (follow.weight === 3) return 2;
+        if (follow.weight === 2) return 3;
+        return 4;
+      }
+      var rankA = outreachUrgencySortRank(a);
+      var rankB = outreachUrgencySortRank(b);
+      if (rankA !== rankB) return rankA - rankB;
+      var dateA = outreachDateValue(a.nextFollowUpDate);
+      var dateB = outreachDateValue(b.nextFollowUpDate);
+      if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB);
+      if (dateA && !dateB) return -1;
+      if (!dateA && dateB) return 1;
+      var lastA = outreachDateValue(a.lastContactDate);
+      var lastB = outreachDateValue(b.lastContactDate);
+      if (lastA && lastB && lastA !== lastB) return lastA.localeCompare(lastB);
+      if (lastA && !lastB) return -1;
+      if (!lastA && lastB) return 1;
+      return safeString(a.venueName).localeCompare(safeString(b.venueName));
+    });
+  }
+  function outreachContactSummary(record) {
+    var bits = [record.contactName, record.contactEmail, record.contactPhone].filter(Boolean);
+    return bits.length ? bits.join(' · ') : 'Add contact details';
+  }
+  function outreachStatusOpen(value) {
+    return !outreachStatusClosed(value);
+  }
+  function outreachDateShortLabel(raw, fallback) {
+    var value = outreachDateValue(raw);
+    return value ? outreachFormatDate(value) : (fallback || 'Not set');
+  }
+  function outreachHistoryEventLabel(value) {
+    var key = safeString(value).trim().toLowerCase();
+    var row = OUTREACH_HISTORY_EVENT_OPTIONS.find(function (option) { return option.value === key; });
+    return row ? row.label : 'Follow-up made';
+  }
+  function outreachHistoryTypeClass(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return ({
+      created: 'outreach-history__badge--calm',
+      first_contact_sent: 'outreach-history__badge--info',
+      replied: 'outreach-history__badge--info',
+      follow_up_made: 'outreach-history__badge--info',
+      negotiation_note: 'outreach-history__badge--gold',
+      tentative_date_discussed: 'outreach-history__badge--gold',
+      confirmed: 'outreach-history__badge--ok',
+      declined: 'outreach-history__badge--err',
+      archived: 'outreach-history__badge--calm'
+    })[key] || 'outreach-history__badge--info';
+  }
+  function outreachHistoryQuickButtonLabel(type) {
+    return ({
+      first_contact_sent: 'Log first send',
+      replied: 'Log reply',
+      follow_up_made: 'Log follow-up',
+      negotiation_note: 'Log negotiation',
+      confirmed: 'Log confirmed',
+      declined: 'Log declined'
+    })[safeString(type).trim().toLowerCase()] || 'Add entry';
+  }
+  function outreachNextHistoryId(record) {
+    var total = Array.isArray(record && record.history) ? record.history.length : 0;
+    return 'outreach_history_' + programBuilderSlug([record && record.id, String(total + 1), Date.now()].join(' '));
+  }
+  function outreachAddHistoryEntry(record, type, eventDate, note) {
+    if (!record) return false;
+    if (!Array.isArray(record.history)) record.history = [];
+    var normalizedType = safeString(type).trim().toLowerCase();
+    var normalizedDate = outreachDateValue(eventDate) || outreachTodayIso();
+    var normalizedNote = safeString(note).trim();
+    var alreadyExists = record.history.some(function (row) {
+      return safeString(row && row.type).trim().toLowerCase() === normalizedType &&
+        outreachDateValue(row && row.eventDate) === normalizedDate &&
+        safeString(row && row.note).trim() === normalizedNote;
+    });
+    if (alreadyExists) return false;
+    var entry = normalizeOutreachHistoryEntry({
+      id: outreachNextHistoryId(record),
+      type: normalizedType,
+      eventDate: normalizedDate,
+      note: normalizedNote,
+      createdAt: new Date().toISOString()
+    }, record.history.length);
+    record.history.unshift(entry);
+    record.history = record.history.slice().sort(function (a, b) {
+      var aDate = outreachDateValue(a.eventDate);
+      var bDate = outreachDateValue(b.eventDate);
+      if (aDate && bDate && aDate !== bDate) return bDate.localeCompare(aDate);
+      return safeString(b.createdAt).localeCompare(safeString(a.createdAt));
+    });
+    if (entry.type === 'first_contact_sent') {
+      record.status = 'sent';
+      record.lastContactDate = entry.eventDate;
+    } else if (entry.type === 'replied') {
+      record.status = 'replied';
+      record.lastContactDate = entry.eventDate;
+    } else if (entry.type === 'follow_up_made') {
+      record.lastContactDate = entry.eventDate;
+    } else if (entry.type === 'negotiation_note' || entry.type === 'tentative_date_discussed') {
+      record.status = 'negotiating';
+      record.lastContactDate = entry.eventDate;
+    } else if (entry.type === 'confirmed') {
+      record.status = 'confirmed';
+      record.lastContactDate = entry.eventDate;
+      record.nextFollowUpDate = '';
+    } else if (entry.type === 'declined') {
+      record.status = 'declined';
+      record.lastContactDate = entry.eventDate;
+      record.nextFollowUpDate = '';
+    } else if (entry.type === 'archived') {
+      record.status = 'archived';
+      record.nextFollowUpDate = '';
+    }
+    record.updatedAt = new Date().toISOString();
+    return true;
+  }
+  function outreachHistoryListHtml(record) {
+    var items = Array.isArray(record && record.history) ? record.history : [];
+    if (!items.length) {
+      return '<div class="empty-state">No relationship history yet. Add a quick event to keep the outreach story visible.</div>';
+    }
+    var latest = items[0];
+    var latestSummary = '<div class="outreach-history__latest">' +
+      '<strong>Latest: ' + escapeHtml(outreachHistoryEventLabel(latest.type)) + '</strong> ' +
+      '<span class="muted">(' + escapeHtml(outreachDateShortLabel(latest.eventDate, 'no date')) + ')</span>' +
+      (latest.note ? '<br><span class="muted">' + escapeHtml(latest.note.substring(0, 80)) + (latest.note.length > 80 ? '...' : '') + '</span>' : '') +
+      '</div>';
+    return '<div class="outreach-history">' + latestSummary + items.map(function (entry, idx) {
+      var isLatest = idx === 0;
+      return '<div class="outreach-history__item' + (isLatest ? ' outreach-history__item--latest' : '') + '">' +
+        '<div class="outreach-history__date">' + escapeHtml(outreachDateShortLabel(entry.eventDate, 'Date not set')) + '</div>' +
+        '<div class="outreach-history__body">' +
+          '<div class="outreach-history__head"><span class="item-badge ' + escapeAttr(outreachHistoryTypeClass(entry.type)) + '">' + escapeHtml(outreachHistoryEventLabel(entry.type)) + '</span></div>' +
+          (entry.note ? '<p>' + escapeHtml(entry.note) + '</p>' : '<p class="muted">No note added.</p>') +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  function outreachFitPreview(record, limit) {
+    return (record.fitTags || []).slice(0, Math.max(0, Number(limit) || 0));
+  }
+  function outreachShortNote(record, limit) {
+    var note = safeString(record && record.notes).trim();
+    var max = Math.max(0, Number(limit) || 0);
+    if (!note || !max) return '';
+    return note.length > max ? (note.slice(0, max) + '…') : note;
+  }
+  function outreachDueThisWeek(record) {
+    if (!outreachStatusOpen(record && record.status)) return false;
+    var nextDate = outreachDateValue(record && record.nextFollowUpDate);
+    if (!nextDate) return true;
+    var days = outreachDaysUntil(nextDate);
+    return days != null && days <= 7;
+  }
+  function outreachLinkedOfferCount(record) {
+    return Array.isArray(record && record.linkedOfferIds) ? record.linkedOfferIds.length : 0;
+  }
+  function outreachSummaryTile(label, value, tone, sublabel) {
+    return '<div class="outreach-summary-tile outreach-summary-tile--' + escapeAttr(tone || 'default') + '">' +
+      '<span>' + escapeHtml(label) + '</span>' +
+      '<strong>' + escapeHtml(String(value)) + '</strong>' +
+      (sublabel ? '<small>' + escapeHtml(sublabel) + '</small>' : '') +
+    '</div>';
+  }
+  function outreachStatusBadge(record) {
+    return '<span class="pill outreach-status-pill ' + escapeAttr(outreachStatusClass(record && record.status)) + '">' + escapeHtml(outreachStatusLabel(record && record.status)) + '</span>';
+  }
+  function outreachFollowupBadge(record) {
+    var follow = outreachFollowupState(record);
+    return '<span class="pill info outreach-followup-pill ' + escapeAttr(follow.className) + '">' + escapeHtml(follow.label) + '</span>';
+  }
+  function outreachDaysSince(raw) {
+    var date = outreachParseDate(raw);
+    var today = outreachParseDate(outreachTodayIso());
+    if (!date || !today) return null;
+    return Math.round((today.getTime() - date.getTime()) / 86400000);
+  }
+  function outreachRecentContactContext(record) {
+    var last = outreachDateValue(record && record.lastContactDate);
+    if (!last) return 'No recent contact logged';
+    var daysSince = outreachDaysSince(last);
+    if (daysSince == null) return 'Last contact ' + outreachFormatDate(last);
+    if (daysSince <= 0) return 'Last contact today';
+    if (daysSince === 1) return 'Last contact yesterday';
+    if (daysSince <= 7) return 'Last contact ' + String(daysSince) + ' days ago';
+    if (daysSince <= 30) return 'Last contact this month';
+    return 'Last contact ' + outreachFormatDate(last);
+  }
+  function outreachUrgencySummary(record) {
+    var follow = outreachFollowupState(record);
+    var nextDate = outreachDateValue(record && record.nextFollowUpDate);
+    var days = nextDate ? outreachDaysUntil(nextDate) : null;
+    if (follow.weight === 0) return { className: 'outreach-urgency--overdue', label: 'Urgent: overdue' };
+    if (follow.weight === 1) return { className: 'outreach-urgency--today', label: 'Urgent: today' };
+    if (follow.weight === 2) return { className: 'outreach-urgency--missing', label: 'Set follow-up date' };
+    if (follow.weight === 3) {
+      if (days != null && days <= 7) return { className: 'outreach-urgency--soon', label: 'Due this week' };
+      return { className: 'outreach-urgency--soon', label: 'Due soon' };
+    }
+    return { className: 'outreach-urgency--calm', label: 'No urgent action' };
+  }
+  function outreachOfferBadge(record) {
+    var count = outreachLinkedOfferCount(record);
+    return '<span class="item-badge">' + escapeHtml(count ? (String(count) + ' linked offer' + (count === 1 ? '' : 's')) : 'No linked offer yet') + '</span>';
+  }
+  function outreachSnapshotSignals(record) {
+    var messageSent = safeString(record && record.messageSent).trim();
+    var hasMessage = !!messageSent;
+    var planned = safeString(record && record.plannedRepertoire).trim();
+    var hasPlanned = !!planned;
+    var linkedCount = outreachLinkedOfferCount(record);
+    return [
+      '<span class="item-badge outreach-signal ' + (hasMessage ? 'outreach-signal--ok' : 'outreach-signal--warn') + '">' + escapeHtml(hasMessage ? 'Message sent' : 'No message yet') + '</span>',
+      '<span class="item-badge outreach-signal ' + (hasPlanned ? 'outreach-signal--ok' : 'outreach-signal--warn') + '">' + escapeHtml(hasPlanned ? 'Repertoire planned' : 'No repertoire') + '</span>',
+      '<span class="item-badge outreach-signal ' + (linkedCount ? 'outreach-signal--ok' : 'outreach-signal--calm') + '">' + escapeHtml(linkedCount ? (String(linkedCount) + ' offer' + (linkedCount === 1 ? '' : 's') + ' linked') : 'No offer linked') + '</span>'
+    ].join('');
+  }
+  function outreachStatusFilterLabel(value) {
+    var key = safeString(value || 'all').trim().toLowerCase() || 'all';
+    if (key === 'all') return 'All statuses';
+    return outreachStatusLabel(key);
+  }
+  function outreachFollowupFilterLabel(value) {
+    var key = safeString(value || 'all').trim().toLowerCase() || 'all';
+    return ({
+      all: 'All records',
+      overdue: 'Overdue',
+      today: 'Due today',
+      missing: 'No follow-up date',
+      upcoming: 'Upcoming (within 14 days)',
+      active: 'Active only',
+      closed: 'Closed only'
+    })[key] || 'All records';
+  }
+  function outreachCurrentFilterContext() {
+    var bits = [];
+    var search = safeString(state.outreachSearch).trim();
+    bits.push('Search: ' + (search || 'Any'));
+    bits.push('Status: ' + outreachStatusFilterLabel(state.outreachStatusFilter));
+    bits.push('Follow-up: ' + outreachFollowupFilterLabel(state.outreachFollowupFilter));
+    return bits;
+  }
+  function outreachSyncQuickFilterButtons() {
+    var quickFilter = safeString(state.outreachQuickFilter || 'all').trim().toLowerCase() || 'all';
+    if (!$('outreach-quick-filters')) return;
+    var records = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records.slice() : [];
+    var search = safeString(state.outreachSearch).trim().toLowerCase();
+    var statusFilter = safeString(state.outreachStatusFilter || 'all').trim().toLowerCase() || 'all';
+    var followupFilter = safeString(state.outreachFollowupFilter || 'all').trim().toLowerCase() || 'all';
+    var scoped = records.filter(function (record) {
+      var follow = outreachFollowupState(record);
+      var hay = [
+        record.venueName, record.city, record.country, record.venueType, record.contactName, record.contactEmail, record.notes, (record.fitTags || []).join(' ')
+      ].join(' ').toLowerCase();
+      if (search && hay.indexOf(search) < 0) return false;
+      if (statusFilter !== 'all' && safeString(record.status).trim().toLowerCase() !== statusFilter) return false;
+      if (followupFilter === 'overdue' && !(follow.weight === 0)) return false;
+      if (followupFilter === 'today' && !(follow.weight === 1)) return false;
+      if (followupFilter === 'missing' && !(follow.weight === 2)) return false;
+      if (followupFilter === 'upcoming' && !(follow.weight === 3)) return false;
+      if (followupFilter === 'active' && outreachStatusClosed(record.status)) return false;
+      if (followupFilter === 'closed' && !outreachStatusClosed(record.status)) return false;
+      return true;
+    });
+    function quickCount(key) {
+      if (key === 'missing-message') {
+        return scoped.filter(function (record) { return !safeString(record.messageSent).trim(); }).length;
+      }
+      if (key === 'missing-repertoire') {
+        return scoped.filter(function (record) { return !safeString(record.plannedRepertoire).trim(); }).length;
+      }
+      if (key === 'no-linked-offer') {
+        return scoped.filter(function (record) { return outreachLinkedOfferCount(record) < 1; }).length;
+      }
+      return 0;
+    }
+    $('outreach-quick-filters').querySelectorAll('[data-outreach-quick-filter]').forEach(function (btn) {
+      var key = safeString(btn.getAttribute('data-outreach-quick-filter')).trim().toLowerCase();
+      var label = safeString(btn.getAttribute('data-outreach-quick-label')).trim() || btn.textContent;
+      var count = quickCount(key);
+      btn.classList.toggle('active', key === quickFilter && quickFilter !== 'all');
+      btn.innerHTML = '<span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(String(count)) + '</strong>';
+    });
+  }
+  function outreachReportLinkedOfferText(record) {
+    var offers = outreachLinkedOffers(record);
+    if (!offers.length) return '0';
+    var first = safeString(savedOfferDisplayLabel(offers[0])).trim();
+    if (first.length > 26) first = first.slice(0, 25).trim() + '…';
+    var more = offers.length > 1 ? (' + ' + String(offers.length - 1)) : '';
+    return String(offers.length) + (first ? (' · ' + first + more) : '');
+  }
+  function outreachReportNoteText(record) {
+    var fit = outreachFitPreview(record, 3).join(', ');
+    var note = outreachShortNote(record, 90);
+    return [fit, note].filter(Boolean).join(' · ') || '—';
+  }
+  function outreachPrintTimestamp() {
+    try {
+      return new Date().toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (err) {
+      return new Date().toISOString();
+    }
+  }
+  function outreachReportDocumentHtml(records) {
+    var counts = outreachSummaryCounts(records);
+    var filterContext = outreachCurrentFilterContext();
+    return '<!doctype html><html><head><meta charset="utf-8">' +
+      '<title>Outreach report</title>' +
+      '<style>' +
+        '@page{size:A4 landscape;margin:10mm;}' +
+        'html,body{margin:0;padding:0;background:#fff;color:#121722;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+        'body{padding:0;}' +
+        '.report{display:grid;gap:12px;}' +
+        '.report__head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #d7deea;padding-bottom:10px;}' +
+        '.report__head h1{margin:0;font-size:20px;line-height:1.15;color:#121722;}' +
+        '.report__head p{margin:4px 0 0;font-size:11px;line-height:1.5;color:#516075;max-width:70ch;}' +
+        '.report__meta{text-align:right;font-size:10px;line-height:1.5;color:#516075;white-space:nowrap;}' +
+        '.summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}' +
+        '.summary__tile{border:1px solid #d7deea;border-radius:10px;padding:8px 10px;background:#f7f9fc;display:grid;gap:4px;}' +
+        '.summary__tile span{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#607086;}' +
+        '.summary__tile strong{font-size:18px;line-height:1;color:#121722;}' +
+        '.summary__tile small{font-size:10px;line-height:1.4;color:#607086;}' +
+        '.filters{display:grid;gap:4px;padding:8px 10px;border:1px solid #d7deea;border-radius:10px;background:#fbfcfe;}' +
+        '.filters strong{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#607086;}' +
+        '.filters__row{font-size:11px;line-height:1.5;color:#243043;}' +
+        '.report-table{display:block;}' +
+        '.report-cards{display:none;}' +
+        'table{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed;}' +
+        'thead th{padding:7px 8px;border:1px solid #d7deea;background:#eef3fa;color:#364359;font-size:9px;letter-spacing:.12em;text-transform:uppercase;text-align:left;}' +
+        'tbody td{padding:7px 8px;border:1px solid #d7deea;vertical-align:top;color:#162031;line-height:1.4;word-break:normal;overflow-wrap:break-word;}' +
+        'tbody tr:nth-child(even){background:#fafbfd;}' +
+        '.col-venue strong{word-break:normal;overflow-wrap:normal;hyphens:none;}' +
+        '.col-type{word-break:normal;overflow-wrap:normal;}' +
+        '.col-email{font-size:10px;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;}' +
+        '.col-linked{font-size:9.7px;line-height:1.35;word-break:normal;overflow-wrap:normal;}' +
+        '.status{display:inline-block;padding:2px 7px;border-radius:999px;border:1px solid #d7deea;font-size:9px;line-height:1.3;background:#fff;}' +
+        '.status--negotiating{background:#fff4da;border-color:#ecd18b;}' +
+        '.status--confirmed{background:#e8f8ee;border-color:#b9e2c8;}' +
+        '.status--declined,.status--archived{background:#f4f5f7;border-color:#d9dce1;}' +
+        '.status--sent,.status--replied,.status--to-contact{background:#eef5ff;border-color:#c8d8f1;}' +
+        '.muted{color:#607086;}' +
+        '.report-card{border:1px solid #d7deea;border-radius:10px;background:#fbfcfe;padding:10px;display:grid;gap:8px;}' +
+        '.report-card__head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}' +
+        '.report-card__head h2{margin:0;font-size:13px;line-height:1.3;color:#121722;}' +
+        '.report-card__loc{margin:0;font-size:10.5px;line-height:1.4;color:#607086;}' +
+        '.report-card__grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin:0;}' +
+        '.report-card__grid div{min-width:0;}' +
+        '.report-card__grid dt{margin:0 0 2px;font-size:9px;line-height:1.25;letter-spacing:.1em;text-transform:uppercase;color:#607086;}' +
+        '.report-card__grid dd{margin:0;font-size:10.5px;line-height:1.35;color:#162031;word-break:normal;overflow-wrap:break-word;}' +
+        '.report-card__grid dd.email{overflow-wrap:anywhere;word-break:break-word;}' +
+        '@media (max-width:780px){' +
+          '.report{gap:10px;}' +
+          '.report__head{display:grid;gap:8px;}' +
+          '.report__meta{text-align:left;white-space:normal;}' +
+          '.summary{grid-template-columns:repeat(2,minmax(0,1fr));}' +
+          '.report-table{display:none;}' +
+          '.report-cards{display:grid;gap:8px;}' +
+          '.report-card__grid{grid-template-columns:1fr;}' +
+        '}' +
+      '</style></head><body>' +
+      '<div class="report">' +
+        '<div class="report__head">' +
+          '<div><h1>Venues / Outreach report</h1><p>Filtered outreach review with current status, follow-up pressure, and Programme Offer linkage.</p></div>' +
+          '<div class="report__meta">Generated ' + escapeHtml(outreachPrintTimestamp()) + '<br>Rolando Guy admin-v2</div>' +
+        '</div>' +
+        '<div class="summary">' +
+          '<div class="summary__tile"><span>In view</span><strong>' + escapeHtml(String(counts.total)) + '</strong><small>Filtered records</small></div>' +
+          '<div class="summary__tile"><span>Active venues</span><strong>' + escapeHtml(String(counts.active)) + '</strong><small>Still moving</small></div>' +
+          '<div class="summary__tile"><span>Follow-up this week</span><strong>' + escapeHtml(String(counts.dueThisWeek)) + '</strong><small>' + escapeHtml(counts.due ? (String(counts.due) + ' urgent now') : 'Nothing urgent today') + '</small></div>' +
+          '<div class="summary__tile"><span>Negotiating</span><strong>' + escapeHtml(String(counts.negotiating)) + '</strong><small>Warm conversations</small></div>' +
+          '<div class="summary__tile"><span>Confirmed</span><strong>' + escapeHtml(String(counts.confirmed)) + '</strong><small>Already secured</small></div>' +
+          '<div class="summary__tile"><span>No linked offer yet</span><strong>' + escapeHtml(String(counts.noLinkedOffer)) + '</strong><small>Worth pairing</small></div>' +
+        '</div>' +
+        '<div class="filters"><strong>Current filters</strong>' +
+          filterContext.map(function (row) { return '<div class="filters__row">' + escapeHtml(row) + '</div>'; }).join('') +
+        '</div>' +
+        '<div class="report-table"><table>' +
+          '<thead><tr>' +
+            '<th class="col-venue" style="width:14%">Venue</th>' +
+            '<th style="width:10%">City</th>' +
+            '<th class="col-type" style="width:9%">Type</th>' +
+            '<th style="width:9%">Contact</th>' +
+            '<th class="col-email" style="width:16%">Email</th>' +
+            '<th style="width:8%">Status</th>' +
+            '<th style="width:8%">Last contact</th>' +
+            '<th style="width:10%">Next follow-up</th>' +
+            '<th class="col-linked" style="width:6%">Linked offers</th>' +
+            '<th style="width:10%">Short notes / fit tags</th>' +
+          '</tr></thead>' +
+          '<tbody>' + records.map(function (record) {
+            var statusKey = safeString(record.status).trim().toLowerCase();
+            return '<tr>' +
+              '<td class="col-venue"><strong>' + escapeHtml(record.venueName || 'Untitled venue') + '</strong></td>' +
+              '<td>' + escapeHtml(record.city || '—') + '<div class="muted">' + escapeHtml(record.country || '') + '</div></td>' +
+              '<td class="col-type">' + escapeHtml(record.venueType || '—') + '</td>' +
+              '<td>' + escapeHtml(record.contactName || '—') + '</td>' +
+              '<td class="col-email">' + escapeHtml(record.contactEmail || '—') + '</td>' +
+              '<td><span class="status status--' + escapeAttr(statusKey.replace(/_/g, '-')) + '">' + escapeHtml(outreachStatusLabel(record.status)) + '</span></td>' +
+              '<td>' + escapeHtml(outreachDateShortLabel(record.lastContactDate, '—')) + '</td>' +
+              '<td>' + escapeHtml(outreachFollowupState(record).label) + '</td>' +
+              '<td class="col-linked">' + escapeHtml(outreachReportLinkedOfferText(record)) + '</td>' +
+              '<td>' + escapeHtml(outreachReportNoteText(record)) + '</td>' +
+            '</tr>';
+          }).join('') + '</tbody>' +
+        '</table></div>' +
+        '<div class="report-cards">' + records.map(function (record) {
+          var statusKey = safeString(record.status).trim().toLowerCase();
+          return '<article class="report-card">' +
+            '<div class="report-card__head"><h2>' + escapeHtml(record.venueName || 'Untitled venue') + '</h2>' +
+            '<span class="status status--' + escapeAttr(statusKey.replace(/_/g, '-')) + '">' + escapeHtml(outreachStatusLabel(record.status)) + '</span></div>' +
+            '<p class="report-card__loc">' + escapeHtml((record.city || '—') + (record.country ? (', ' + record.country) : '')) + '</p>' +
+            '<dl class="report-card__grid">' +
+              '<div><dt>Type</dt><dd>' + escapeHtml(record.venueType || '—') + '</dd></div>' +
+              '<div><dt>Contact</dt><dd>' + escapeHtml(record.contactName || '—') + '</dd></div>' +
+              '<div><dt>Email</dt><dd class="email">' + escapeHtml(record.contactEmail || '—') + '</dd></div>' +
+              '<div><dt>Last contact</dt><dd>' + escapeHtml(outreachDateShortLabel(record.lastContactDate, '—')) + '</dd></div>' +
+              '<div><dt>Next follow-up</dt><dd>' + escapeHtml(outreachFollowupState(record).label) + '</dd></div>' +
+              '<div><dt>Linked offers</dt><dd>' + escapeHtml(outreachReportLinkedOfferText(record)) + '</dd></div>' +
+              '<div><dt>Short notes / fit tags</dt><dd>' + escapeHtml(outreachReportNoteText(record)) + '</dd></div>' +
+            '</dl>' +
+          '</article>';
+        }).join('') + '</div>' +
+      '</div>' +
+      '</body></html>';
+  }
+  function exportOutreachReportPdf() {
+    var records = outreachFilteredRecords();
+    if (!records.length) {
+      setStatus('No outreach records match the current filters.', 'warn');
+      return;
+    }
+    var popup = window.open('', '_blank', 'width=1480,height=960');
+    if (!popup) {
+      setStatus('Could not open the outreach report window. Check the popup blocker and try again.', 'err');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(outreachReportDocumentHtml(records));
+    popup.document.close();
+    var printNow = function () {
+      try {
+        popup.focus();
+        popup.print();
+        setStatus('Outreach report ready. Use Save as PDF in the print dialog.', 'warn');
+      } catch (err) {
+        setStatus('Outreach report opened. Use Cmd+P to save it as PDF.', 'warn');
+      }
+    };
+    if (popup.document.readyState === 'complete') {
+      setTimeout(printNow, 120);
+    } else {
+      popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
+    }
+  }
+  function renderOutreachCards(records) {
+    return records.map(function (record) {
+      var isActive = safeString(state.outreachSelectedId).trim() === safeString(record.id).trim();
+      var active = isActive ? 'outreach-card active' : 'outreach-card';
+      var activeFlag = active.indexOf(' active') >= 0 ? '<span class="outreach-card__active-flag">Selected</span>' : '';
+      var location = outreachRecordLocation(record) || 'Add city and country';
+      var venueType = record.venueType || 'Add venue type';
+      var contact = outreachContactSummary(record);
+      var note = outreachShortNote(record, 150);
+      var plannedRepertoire = safeString(record.plannedRepertoire).trim();
+      var plannedPreview = plannedRepertoire ? (plannedRepertoire.length > 120 ? (plannedRepertoire.slice(0, 119).trim() + '…') : plannedRepertoire) : '';
+      var fitTags = outreachFitPreview(record, 3);
+      var urgency = outreachUrgencySummary(record);
+      var recentContact = outreachRecentContactContext(record);
+      var snapshotSignals = outreachSnapshotSignals(record);
+      var quickActions = (!isActive || outreachStatusClosed(record.status)) ? '' : '<div class="outreach-card__actions">' +
+        '<span class="outreach-card__action" data-outreach-card-id="' + escapeAttr(record.id) + '" data-outreach-card-action="contact-today">Mark contacted today</span>' +
+        '<span class="outreach-card__action" data-outreach-card-id="' + escapeAttr(record.id) + '" data-outreach-card-action="followup-7">Follow up in 7 days</span>' +
+        '<span class="outreach-card__action" data-outreach-card-id="' + escapeAttr(record.id) + '" data-outreach-card-action="mark-negotiating">Mark negotiating</span>' +
+      '</div>';
+      return '<button type="button" class="' + active + '" data-outreach-select="' + escapeAttr(record.id) + '">' +
+        '<div class="outreach-card__head">' +
+          '<div class="outreach-card__identity">' +
+            '<strong>' + escapeHtml(record.venueName || '(untitled venue)') + '</strong>' +
+            '<div class="outreach-card__meta">' + escapeHtml(location) + '</div>' +
+          '</div>' +
+          activeFlag +
+          outreachStatusBadge(record) +
+        '</div>' +
+        '<div class="outreach-card__decision">' +
+          '<span class="pill outreach-card__urgency ' + escapeAttr(urgency.className) + '">' + escapeHtml(urgency.label) + '</span>' +
+          '<span class="outreach-card__recent">' + escapeHtml(recentContact) + '</span>' +
+        '</div>' +
+        quickActions +
+        '<div class="outreach-card__signals">' + snapshotSignals + '</div>' +
+        '<div class="outreach-card__grid">' +
+          '<div><span class="outreach-card__label">Venue type</span><div class="outreach-card__value">' + escapeHtml(venueType) + '</div></div>' +
+          '<div><span class="outreach-card__label">Contact</span><div class="outreach-card__value">' + escapeHtml(contact) + '</div></div>' +
+          '<div><span class="outreach-card__label">Last contact</span><div class="outreach-card__value">' + escapeHtml(outreachDateShortLabel(record.lastContactDate, 'Not logged yet')) + '</div></div>' +
+          '<div><span class="outreach-card__label">Next follow-up</span><div class="outreach-card__value">' + outreachFollowupBadge(record) + '</div></div>' +
+          (record.cacheProposed || record.cacheNegotiated ? '<div><span class="outreach-card__label">Cache</span><div class="outreach-card__value">' + escapeHtml([record.cacheProposed, record.cacheNegotiated].filter(Boolean).join(' / ') || '—') + '</div></div>' : '') +
+        '</div>' +
+        '<div class="outreach-card__footer">' +
+          '<div class="item-badges">' +
+            outreachOfferBadge(record) +
+            fitTags.map(function (tag) { return '<span class="item-badge">' + escapeHtml(tag) + '</span>'; }).join('') +
+          '</div>' +
+        '</div>' +
+        (plannedPreview ? '<p class="outreach-card__planned"><span>Planned repertoire</span>' + escapeHtml(plannedPreview) + '</p>' : '') +
+        (note ? '<p class="outreach-card__note">' + escapeHtml(note) + '</p>' : '') +
+      '</button>';
+    }).join('');
+  }
+  function renderOutreachReport(records) {
+    return '<div class="outreach-report-wrap"><table class="outreach-report">' +
+      '<thead><tr>' +
+        '<th>Venue</th>' +
+        '<th>Location</th>' +
+        '<th>Status</th>' +
+        '<th>Contact</th>' +
+        '<th>Last contact</th>' +
+        '<th>Next follow-up</th>' +
+        '<th>Offers</th>' +
+        '<th>Fit / note</th>' +
+      '</tr></thead><tbody>' +
+      records.map(function (record) {
+        var fitPreview = outreachFitPreview(record, 2).join(', ');
+        var note = outreachShortNote(record, 80);
+        var fitCell = [fitPreview, note].filter(Boolean).join(' · ');
+        var active = safeString(state.outreachSelectedId).trim() === safeString(record.id).trim() ? ' class="active"' : '';
+        return '<tr data-outreach-select="' + escapeAttr(record.id) + '"' + active + '>' +
+          '<td><strong>' + escapeHtml(record.venueName || '(untitled venue)') + '</strong><div class="outreach-report__sub">' + escapeHtml(record.venueType || 'Type not set') + '</div></td>' +
+          '<td>' + escapeHtml(outreachRecordLocation(record) || 'Add location') + '</td>' +
+          '<td><div class="outreach-report__badges">' + outreachStatusBadge(record) + outreachFollowupBadge(record) + '</div></td>' +
+          '<td>' + escapeHtml(outreachContactSummary(record)) + '</td>' +
+          '<td>' + escapeHtml(outreachDateShortLabel(record.lastContactDate, 'Not logged')) + '</td>' +
+          '<td>' + escapeHtml(outreachDateShortLabel(record.nextFollowUpDate, 'Not set')) + '</td>' +
+          '<td>' + escapeHtml(String(outreachLinkedOfferCount(record))) + '</td>' +
+          '<td>' + escapeHtml(fitCell || 'No fit note yet') + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+  function discoveryCurrentDuration(item) {
+    return Math.max(0, Number(item && item.approximateDurationMin) || 0);
+  }
+  function discoverySourceLayers(items) {
+    var seen = {};
+    (items || []).forEach(function (item) {
+      var key = safeString(item && item.source).trim();
+      if (key) seen[key] = true;
+    });
+    return Object.keys(seen).sort();
+  }
+  function resetDiscoveryResultLimit() {
+    state.discoveryResultLimit = 24;
+  }
+  function discoveryCombinationLabel(value) {
+    return ({
+      tenor_piano: 'Tenor + Piano',
+      tenor_soprano_piano: 'Tenor + Soprano + Piano',
+      tenor_mezzo_piano: 'Tenor + Mezzo + Piano',
+      tenor_baritone_piano: 'Tenor + Baritone + Piano',
+      tenor_ensemble_piano: 'Tenor ensemble + Piano',
+      piano_solo: 'Piano solo'
+    })[safeString(value).trim().toLowerCase()] || '';
+  }
+  function discoveryReadinessLabel(value) {
+    return ({
+      ideas_only: 'Ideas only',
+      good_candidate: 'Good candidate',
+      worth_studying: 'Worth studying'
+    })[safeString(value).trim().toLowerCase()] || 'Ideas only';
+  }
+  function plannerTypeFromDiscovery(item) {
+    var type = safeString(item && item.type).trim().toLowerCase();
+    if (type === 'aria' || type === 'duet' || type === 'tango' || type === 'sacred') return type;
+    if (type === 'piano_solo') return 'piano-solo';
+    if (type === 'song') return 'song';
+    if (type === 'lied') return 'lied';
+    if (type === 'trio' || type === 'quartet') return 'ensemble';
+    return 'other';
+  }
+  function plannerCategoryFromDiscovery(item) {
+    var category = safeString(item && item.category).trim().toLowerCase();
+    if (category) return category;
+    var type = safeString(item && item.type).trim().toLowerCase();
+    if (type === 'trio' || type === 'quartet') return type;
+    if (type === 'piano_solo') return 'piano_solo';
+    if (type === 'song') return 'art_song';
+    return '';
+  }
+  function discoveryImportNotes(item, editorialNotes) {
+    var prepSteps = [
+      'Confirm formation, duration, and voice classification.',
+      'Review key, cut, edition, and partner needs where relevant.',
+      'Refine tags, dramatic role, and style metadata for future offers.',
+      'Keep excludeFromOffers on until the item is genuinely prepared.',
+      'When ready, update readiness / availability and remove manual review.'
+    ];
+    return [
+      'Imported from Repertoire Discovery.',
+      item && item.source ? ('Source: ' + item.source + '.') : '',
+      item && item.sourceNote ? ('Source note: ' + item.sourceNote) : '',
+      item && item.fitNote ? ('Fit note: ' + item.fitNote) : '',
+      item && item.cautionNote ? ('Caution: ' + item.cautionNote) : '',
+      editorialNotes ? ('Editorial note: ' + editorialNotes) : '',
+      'Preparation checklist:',
+      prepSteps.map(function (step) { return '- ' + step; }).join('\n')
+    ].filter(Boolean).join('\n');
+  }
+  function discoveryImportStatusPreviewHtml(item) {
+    var record = ensureDiscoveryRecord(item.id);
+    var imported = !!safeString(record.importedItemId || item.importedItemId).trim();
+    var title = imported ? 'Imported library status' : 'Library status after import';
+    var lead = imported
+      ? 'This discovery item is already in the repertoire library as a review-only record.'
+      : 'Import creates a review-only library record, not an offer-ready repertoire entry.';
+    var steps = [
+      'Confirm formation, category, and voice metadata.',
+      'Check source note, caution note, key, cut, and edition.',
+      'Refine readiness, practical tags, and dramatic role once the piece is truly prepared.',
+      'Remove the Programme Offers block only when the entry is ready for real offer use.'
+    ];
+    return '<div class="discovery-detail__block">' +
+      '<strong>' + escapeHtml(title) + '</strong>' +
+      '<p class="muted">' + escapeHtml(lead) + '</p>' +
+      '<div class="item-badges">' +
+        '<span class="item-badge">idea</span>' +
+        '<span class="item-badge warn">manual review</span>' +
+        '<span class="item-badge">hidden from Programme Offers</span>' +
+      '</div>' +
+      '<p class="muted">' + escapeHtml('Next step after import: open the repertoire library record, confirm metadata, then change readiness / availability and remove the offer block only when the piece is genuinely prepared.') + '</p>' +
+      '<p class="muted">' + escapeHtml(steps.join(' · ')) + '</p>' +
+    '</div>';
+  }
   function normalizePlannerCategory(value) {
     var key = safeString(value).trim().toLowerCase();
     return /^(aria|duet|trio|quartet|ensemble|art_song|tango|piano_solo)$/.test(key) ? key : '';
@@ -4191,6 +5678,36 @@
     if (category === 'piano_solo') return '';
     if (voices.indexOf('tenor') >= 0) return 'tenor';
     return voices[0] || '';
+  }
+  function plannerKnownMetadataOverride(item) {
+    var titleKey = programBuilderSlug(item && item.title);
+    if (titleKey === 'in_un_coupe') {
+      return {
+        composer: 'Giacomo Puccini',
+        work: 'La bohème',
+        type: 'duet',
+        category: 'duet',
+        voiceCategory: 'tenor_baritone_duet',
+        primaryVoice: 'tenor',
+        pairedVoices: ['baritone'],
+        formations: ['Tenor + Baritone + Piano'],
+        reviewStatus: 'manual_review'
+      };
+    }
+    return null;
+  }
+  function plannerDisplayVoiceLabel(voice) {
+    return ({
+      tenor: 'Tenor',
+      soprano: 'Soprano',
+      mezzo: 'Mezzo',
+      baritone: 'Baritone'
+    })[safeString(voice).trim().toLowerCase()] || '';
+  }
+  function plannerDerivedFormationFromVoices(voices, hasPiano) {
+    var labels = normalizePlannerVoiceList(voices).map(plannerDisplayVoiceLabel).filter(Boolean);
+    if (!labels.length) return hasPiano ? 'Voice(s) + Piano' : '';
+    return labels.join(' + ') + (hasPiano ? ' + Piano' : '');
   }
   function plannerPairedVoicesFrom(item, primaryVoice, voices) {
     var explicit = normalizePlannerVoiceList(item.pairedVoices);
@@ -4343,6 +5860,7 @@
     return '';
   }
   function normalizePlannerItemRecord(item, i) {
+    item = Object.assign({}, item, plannerKnownMetadataOverride(item) || {});
     var rawType = safeString(item.type || 'other').trim().toLowerCase() || 'other';
     var formations = (Array.isArray(item.formations) ? item.formations : safeString(item.formations).split('\n')).map(function (x) { return safeString(x).trim(); }).filter(Boolean);
     var preliminaryVoices = plannerVoicesFromItem({ formations: formations, primaryVoice: item.primaryVoice, pairedVoices: item.pairedVoices, voiceCategory: item.voiceCategory });
@@ -4351,6 +5869,24 @@
     var voices = preliminaryVoices.length ? preliminaryVoices : plannerVoicesFromVoiceCategory(voiceCategory);
     var primaryVoice = plannerPrimaryVoiceFrom(item, category, voices);
     var pairedVoices = plannerPairedVoicesFrom(item, primaryVoice, voices);
+    var isMultiSinger = ['duet','trio','quartet','ensemble'].indexOf(category) >= 0 || pairedVoices.length > 0 || voices.length > 1;
+    if (isMultiSinger) {
+      formations = formations.filter(function (formation) {
+        var label = normalizeFormationLabel(formation);
+        if (!label) return false;
+        if (label === 'voice + piano' || label === 'voice(s) + piano') return false;
+        var formVoices = plannerVoicesFromFormationLabel(label);
+        if (!formVoices.length) return false;
+        return formVoices.length >= Math.max(2, voices.length || 2);
+      });
+      if (!formations.length && voices.length >= 2) {
+        var derivedFormation = plannerDerivedFormationFromVoices(voices, true);
+        if (derivedFormation) formations = [derivedFormation];
+      }
+      voiceCategory = plannerVoiceCategoryFrom(category, voices, '');
+      if (!primaryVoice && voices.length) primaryVoice = voices[0];
+      if (!pairedVoices.length && voices.length > 1) pairedVoices = voices.slice(1);
+    }
     var availabilityStatus = plannerAvailabilityStatus(item);
     var approximateDurationMin = Math.max(0, Number(item.approximateDurationMin) || Number(item.durationMin) || 0);
     var durationMin = Math.max(0, Number(item.durationMin) || approximateDurationMin || 0);
@@ -4435,7 +5971,10 @@
       offerOnly: offerOnly,
       excludeFromOffers: excludeFromOffers,
       sourceGroup: safeString(item.sourceGroup).trim(),
-      suggestionGroup: safeString(item.suggestionGroup).trim()
+      suggestionGroup: safeString(item.suggestionGroup).trim(),
+      discoveryIdea: item.discoveryIdea === true,
+      discoverySourceId: safeString(item.discoverySourceId).trim(),
+      discoveryImportedItemId: safeString(item.discoveryImportedItemId).trim()
     };
   }
   function plannerItemVoiceLabel(item) {
@@ -4662,6 +6201,11 @@
     var pieceVoices = plannerVoicesFromItem(piece);
     return pieceVoices.some(function (voice) { return formationVoices.indexOf(voice) >= 0; });
   }
+  function plannerPieceFormationEligibleForOffer(piece, bp) {
+    if (!piece) return false;
+    var familyTier = plannerOfferFamilyFitTier(piece, bp, bp && bp.family);
+    return plannerPieceStrictFormationMatch(piece, bp && bp.formation, { allowPianoSolo: familyTier > 0 });
+  }
   function plannerFamilySelectorPriority(piece, family, formation, bp) {
     if (!piece) return 0;
     var key = safeString(family || 'gala').trim().toLowerCase() || 'gala';
@@ -4728,6 +6272,7 @@
       if (flags.isArtSong || flags.isCanzone || flags.isTango) score += 3;
       if (flags.isPianoSolo && flags.isSupportivePiano) score += 10;
     }
+    score += plannerStyleFocusScore(piece, bp);
     return score;
   }
   function plannerBordersVarietyScore(piece, bp) {
@@ -4828,6 +6373,7 @@
         'nous_vivrons_a_paris': ['Tenor + Soprano + Piano'],
         'konstanze_konstanze': ['Tenor + Soprano + Piano'],
         'caro_elisir_sei_mio': ['Tenor + Soprano + Piano'],
+        'in_un_coupe': ['Tenor + Baritone + Piano'],
         'toi_vous': ['Tenor + Soprano + Piano'],
         'signor_ne_principe': ['Tenor + Soprano + Piano'],
         'vogliatemi_bene': ['Tenor + Soprano + Piano'],
@@ -4851,7 +6397,7 @@
         'nous_vivrons_a_paris': 'duet',
         'konstanze_konstanze': 'duet',
         'caro_elisir_sei_mio': 'duet',
-        'in_un_coupe': 'ensemble',
+        'in_un_coupe': 'duet',
         'fra_gli_amplessi': 'duet',
         'toi_vous': 'duet',
         'signor_ne_principe': 'duet',
@@ -4967,7 +6513,11 @@
     var type = sectionKey === 'opera' ? 'aria' : (sectionKey === 'tango' ? 'tango' : (sectionKey === 'popular' ? 'song' : 'lied'));
     type = safeString(overrides.typeOverrides[titleKey] || type).trim().toLowerCase() || 'other';
     var language = inferHistoricalLanguage(sectionKey, title, work, composer);
-    var formations = overrides.duetFormations[titleKey] || ['Tenor + Piano'];
+    var formations = overrides.duetFormations[titleKey] || (function () {
+      if (type === 'duet' || type === 'ensemble') return ['Voice(s) + Piano'];
+      if (type === 'piano-solo') return ['Piano Solo'];
+      return ['Tenor + Piano'];
+    })();
     var reviewNote = safeString(overrides.manualReview[titleKey]).trim();
     return {
       id: titleKey,
@@ -5199,9 +6749,11 @@
       family: family,
       targetDuration: target,
       formation: 'Tenor + Piano',
+      styleFocus: 'mixed',
       buildMode: 'free',
       outputLang: 'en',
       repertoireMode: 'suggested',
+      includeDiscoveryIdeas: false,
       galaOptions: safeBlueprintGalaOptions({}, target),
       headerImageMode: 'default',
       headerImageUrl: '',
@@ -5280,12 +6832,14 @@
       family: safeString(bp.family || seed.family).trim().toLowerCase() || seed.family,
       targetDuration: Math.max(0, Number(bp.targetDuration) || seed.targetDuration),
       formation: safeString(bp.formation || seed.formation),
+      styleFocus: normalizeProgramOfferStyleFocus(bp.styleFocus || seed.styleFocus),
       buildMode: safeString(bp.buildMode || seed.buildMode).trim().toLowerCase() === 'dramatic_arc' ? 'dramatic_arc' : 'free',
       outputLang: (function (v) {
         v = safeString(v || seed.outputLang || 'en').trim().toLowerCase();
         return LANGS.indexOf(v) >= 0 ? v : 'en';
       })(bp.outputLang),
       repertoireMode: normalizeProgramOfferRepertoireMode(bp.repertoireMode || seed.repertoireMode),
+      includeDiscoveryIdeas: bp.includeDiscoveryIdeas === true,
       galaOptions: safeBlueprintGalaOptions(bp.galaOptions || seed.galaOptions, Math.max(0, Number(bp.targetDuration) || seed.targetDuration)),
       headerImageMode: normalizeProgramOfferHeaderImageMode(bp.headerImageMode || seed.headerImageMode),
       headerImageUrl: safeString(bp.headerImageUrl || seed.headerImageUrl),
@@ -5958,6 +7512,7 @@
     for (var i = 0; i < items.length; i += 1) {
       if (safeString(items[i].id).trim() === needle) return items[i];
     }
+    if (isObject(state.programmeDiscoveryCandidates) && isObject(state.programmeDiscoveryCandidates[needle])) return state.programmeDiscoveryCandidates[needle];
     return null;
   }
   function ensureProgramBuilderDocs() {
@@ -5969,9 +7524,7 @@
     }
     var blueprintRaw = state.api.load('rg_program_blueprints');
     if (!isObject(blueprintRaw) || !isObject(blueprintRaw.blueprints)) {
-      var blueprintSeed = makeBlueprintDocSeed();
-      validateKeyValue('rg_program_blueprints', blueprintSeed);
-      state.api.save('rg_program_blueprints', clone(blueprintSeed));
+      blueprintRaw = null;
     }
     var historyRaw = state.api.load('rg_concert_history');
     if (!isObject(historyRaw) || !Array.isArray(historyRaw.concerts)) {
@@ -5979,6 +7532,914 @@
       validateKeyValue('rg_concert_history', historySeed);
       state.api.save('rg_concert_history', clone(historySeed));
     }
+  }
+  function ensureDiscoveryDoc() {
+    var raw = state.api.load('rg_repertoire_discovery');
+    if (!isObject(raw) || !Array.isArray(raw.records)) {
+      var seed = makeDiscoverySeed();
+      validateKeyValue('rg_repertoire_discovery', seed);
+      state.api.save('rg_repertoire_discovery', clone(seed));
+    }
+  }
+  function plannerDiscoveryDraftLimit(bp) {
+    if (!(bp && bp.includeDiscoveryIdeas === true)) return 0;
+    var target = Math.max(0, Number(bp && bp.targetDuration) || 30);
+    if (target >= 60) return 2;
+    return 1;
+  }
+  function plannerVirtualDiscoveryItem(discoveryItem) {
+    if (!discoveryItem) return null;
+    var id = 'discovery_idea__' + safeString(discoveryItem.id).trim();
+    if (isObject(state.programmeDiscoveryCandidates[id])) return state.programmeDiscoveryCandidates[id];
+    var raw = {
+      id: id,
+      title: discoveryItem.title,
+      composer: discoveryItem.composer,
+      work: discoveryItem.work,
+      type: plannerTypeFromDiscovery(discoveryItem),
+      category: plannerCategoryFromDiscovery(discoveryItem),
+      voiceCategory: safeString(discoveryItem.voiceCategory),
+      primaryVoice: safeString(discoveryItem.primaryVoice),
+      pairedVoices: clone(discoveryItem.pairedVoices || []),
+      language: discoveryItem.language,
+      approximateDurationMin: discoveryCurrentDuration(discoveryItem),
+      durationMin: discoveryCurrentDuration(discoveryItem),
+      formations: clone(discoveryItem.formations || []),
+      readiness: 'idea',
+      availabilityStatus: 'idea',
+      tags: programBuilderUniqueStrings((discoveryItem.tags || []).concat(discoveryItem.programmeFit || []).concat(['discovery_idea'])),
+      fitTags: programBuilderUniqueStrings((discoveryItem.programmeFit || []).concat(discoveryItem.profileFocus || []).concat(['discovery_idea'])),
+      dramaticRole: safeString(discoveryItem.dramaticRole),
+      audienceAppeal: safeString(discoveryItem.audienceAppeal),
+      notes: discoveryImportNotes(discoveryItem, ''),
+      publicNotes: '',
+      sortOrder: 0,
+      performanceStatus: '',
+      performedIn: [],
+      reviewStatus: 'manual_review',
+      offerOnly: false,
+      excludeFromOffers: false,
+      sourceGroup: 'Repertoire Discovery',
+      suggestionGroup: safeString(discoveryItem.source || 'Curated discovery source'),
+      discoveryIdea: true,
+      discoverySourceId: safeString(discoveryItem.id).trim(),
+      discoveryImportedItemId: safeString(discoveryItem.importedItemId).trim()
+    };
+    state.programmeDiscoveryCandidates[id] = normalizePlannerItemRecord(raw, (state.plannerDoc && state.plannerDoc.items || []).length);
+    return state.programmeDiscoveryCandidates[id];
+  }
+  function plannerDiscoveryCandidatesForOffer(bp) {
+    if (!(bp && bp.includeDiscoveryIdeas === true)) return [];
+    ensureDiscoveryDoc();
+    state.discoveryDoc = safeDiscoveryDoc(loadDoc('rg_repertoire_discovery', makeDiscoverySeed()));
+    return discoveryItemsMerged().map(plannerVirtualDiscoveryItem).filter(function (item) {
+      if (!item) return false;
+      if (!plannerPieceFormationEligibleForOffer(item, bp)) return false;
+      if (plannerOfferFamilyFitTier(item, bp, bp && bp.family) <= 0) return false;
+      return true;
+    });
+  }
+  function plannerDiscoverySourceRow(piece) {
+    if (!(piece && piece.discoveryIdea === true)) return null;
+    var sourceId = safeString(piece.discoverySourceId).trim();
+    if (!sourceId) return null;
+    return discoveryItemsMerged().find(function (row) {
+      return safeString(row && row.id).trim() === sourceId;
+    }) || null;
+  }
+  function plannerDiscoveryTextBlob(row) {
+    if (!row) return '';
+    return [
+      row.title,
+      row.composer,
+      row.work,
+      row.language,
+      row.type,
+      row.vocalCombination,
+      row.dramaticRole,
+      row.readinessIntent,
+      row.fitNote,
+      row.cautionNote,
+      row.source,
+      row.sourceNote,
+      Array.isArray(row.tags) ? row.tags.join(' ') : '',
+      Array.isArray(row.programmeFit) ? row.programmeFit.join(' ') : '',
+      Array.isArray(row.profileFocus) ? row.profileFocus.join(' ') : ''
+    ].join(' ').toLowerCase();
+  }
+  function plannerDiscoveryIdeaScore(piece, bp, opts) {
+    var row = plannerDiscoverySourceRow(piece);
+    if (!row || !bp) return 0;
+    opts = opts || {};
+    var score = 0;
+    var desiredRole = safeString(opts.desiredRole || opts.slotId).trim().toLowerCase();
+    var editorialRole = plannerPieceEditorialRole(piece);
+    var family = safeString(bp.family).trim().toLowerCase();
+    var outputLang = safeString(bp.outputLang || state.lang || 'en').trim().toLowerCase();
+    var pieceLang = safeString(row.language || piece.language).trim().toLowerCase();
+    var textBlob = plannerDiscoveryTextBlob(row);
+    var remaining = Math.max(0, (Number(bp.targetDuration) || 0) - (Number(bp.totalDuration) || 0));
+    var duration = Math.max(0, Number(discoveryCurrentDuration(row) || plannerEffectiveDuration(piece)) || 0);
+    var profile = Array.isArray(row.profileFocus) ? row.profileFocus.map(function (x) { return safeString(x).trim().toLowerCase(); }) : [];
+    var programmeFit = Array.isArray(row.programmeFit) ? row.programmeFit.map(function (x) { return safeString(x).trim().toLowerCase(); }) : [];
+    if (programmeFit.indexOf(family) >= 0) score += 30;
+    else if (textBlob.indexOf(family) >= 0) score += 10;
+    else score -= 20;
+    if (profile.indexOf('lyric_tenor') >= 0 || profile.indexOf('tenor') >= 0) score += 18;
+    else if (piece.includesTenor === true) score += 8;
+    if (outputLang && pieceLang) {
+      if (pieceLang === outputLang) score += 7;
+      else if (family === 'italian' && pieceLang === 'it') score += 10;
+      else if (family === 'tango' && pieceLang === 'es') score += 10;
+      else if (family === 'borders' && ['de','fr','en'].indexOf(pieceLang) >= 0) score += 6;
+    }
+    if (desiredRole) {
+      if (editorialRole === desiredRole) score += 22;
+      else if ((desiredRole === 'finale' || desiredRole === 'climax') && (editorialRole === 'finale' || editorialRole === 'climax' || piece.impactLevel === 'high')) score += 15;
+      else if ((desiredRole === 'contrast' || desiredRole === 'lyrical_center') && (editorialRole === 'contrast' || editorialRole === 'lyrical_center')) score += 14;
+      else if (desiredRole === 'support' && (editorialRole === 'support' || editorialRole === 'piano_support' || piece.vocalRestSupport === true || piece.interlude === true)) score += 18;
+      else if (desiredRole === 'opener' && (safeString(piece.audienceAppeal).trim().toLowerCase() === 'balanced' || safeString(piece.dramaticRole).trim().toLowerCase() === 'opener')) score += 10;
+      else score -= 6;
+    }
+    if (remaining > 0) {
+      var distance = Math.abs(remaining - duration);
+      score += Math.max(-10, 14 - (distance * 2));
+    }
+    if (piece.interlude === true || safeString(piece.dramaticRole).trim().toLowerCase() === 'interlude') {
+      if (opts.allowPianoSolo === true || safeString(desiredRole) === 'support') score += 10;
+      else score -= 8;
+    }
+    if (piece.encoreCandidate === true || safeString(piece.dramaticRole).trim().toLowerCase() === 'encore') {
+      if (desiredRole === 'finale' || desiredRole === 'encore') score += 10;
+    }
+    if (safeString(row.readinessIntent).trim().toLowerCase() === 'good_candidate') score += 8;
+    else if (safeString(row.readinessIntent).trim().toLowerCase() === 'worth_studying') score += 5;
+    else if (safeString(row.readinessIntent).trim().toLowerCase() === 'ideas_only') score -= 6;
+    if (/sacred|church/.test(textBlob) && (family === 'gala' || family === 'borders')) score += 4;
+    if (/verify key|verify cut|verify edition|approx/.test(textBlob)) score -= 4;
+    return score;
+  }
+  function discoveryFilterStateMatch(item, stateFilter) {
+    if (stateFilter === 'unreviewed') return !safeString(item.editorialState).trim();
+    if (stateFilter === 'all') return true;
+    return safeString(item.editorialState).trim().toLowerCase() === stateFilter;
+  }
+  function discoverySearchTokens() {
+    return programBuilderUniqueStrings(
+      safeString(state.discoverySearch).trim().toLowerCase().split(/\s+/)
+        .concat(safeString(state.discoveryComposerFilter).trim().toLowerCase().split(/\s+/))
+        .concat(safeString(state.discoveryWorkFilter).trim().toLowerCase().split(/\s+/))
+        .map(function (token) { return safeString(token).trim(); })
+        .filter(Boolean)
+    );
+  }
+  function discoveryScoreItem(item, opts) {
+    var options = opts || {};
+    var duration = discoveryCurrentDuration(item);
+    var score = 0;
+    var textBlob = [
+      item.title, item.composer, item.work, item.tags.join(' '), item.fitNote, item.source, item.sourceNote, item.cautionNote
+    ].join(' ').toLowerCase();
+    var profile = safeString(state.discoveryProfileFilter || 'all').trim().toLowerCase() || 'all';
+    var family = safeString(state.discoveryFamilyFilter || 'all').trim().toLowerCase() || 'all';
+    var language = safeString(state.discoveryLanguageFilter).trim().toLowerCase();
+    var composer = safeString(state.discoveryComposerFilter).trim().toLowerCase();
+    var work = safeString(state.discoveryWorkFilter).trim().toLowerCase();
+    var type = safeString(state.discoveryTypeFilter || 'all').trim().toLowerCase() || 'all';
+    var combination = safeString(state.discoveryCombinationFilter || 'all').trim().toLowerCase() || 'all';
+    var role = safeString(state.discoveryRoleFilter || 'all').trim().toLowerCase() || 'all';
+    var readiness = safeString(state.discoveryReadinessFilter || 'all').trim().toLowerCase() || 'all';
+    var minDuration = Math.max(0, Number(state.discoveryDurationMinFilter) || 0);
+    var maxDuration = Math.max(0, Number(state.discoveryDurationMaxFilter) || 0);
+    if (profile !== 'all') score += item.profileFocus.indexOf(profile) >= 0 ? 22 : (options.relaxed ? -6 : -50);
+    if (family !== 'all') score += item.programmeFit.indexOf(family) >= 0 ? 18 : (options.relaxed ? -5 : -40);
+    if (language) score += safeString(item.language).trim().toLowerCase().indexOf(language) >= 0 ? 14 : (options.relaxed ? -4 : -40);
+    if (composer) {
+      if (safeString(item.composer).trim().toLowerCase().indexOf(composer) >= 0) score += 34;
+      else if (textBlob.indexOf(composer) >= 0) score += 18;
+      else score += options.relaxed ? -8 : -60;
+    }
+    if (work) {
+      if (safeString(item.work).trim().toLowerCase().indexOf(work) >= 0) score += 26;
+      else if (textBlob.indexOf(work) >= 0) score += 12;
+      else score += options.relaxed ? -6 : -50;
+    }
+    if (type !== 'all') score += safeString(item.type).trim().toLowerCase() === type ? 16 : (options.relaxed ? -18 : -80);
+    if (combination !== 'all') score += safeString(item.vocalCombination).trim().toLowerCase() === combination ? 18 : (options.relaxed ? -18 : -80);
+    if (role !== 'all') score += safeString(item.dramaticRole).trim().toLowerCase() === role ? 12 : (options.relaxed ? -4 : -40);
+    if (readiness !== 'all') score += safeString(item.readinessIntent).trim().toLowerCase() === readiness ? 10 : (options.relaxed ? -3 : -25);
+    discoverySearchTokens().forEach(function (token) {
+      if (textBlob.indexOf(token) >= 0) score += 12;
+    });
+    if (minDuration > 0 || maxDuration > 0) {
+      if (minDuration > 0 && duration < minDuration) score -= options.relaxed ? Math.min(16, (minDuration - duration) * 3) : 80;
+      if (maxDuration > 0 && duration > maxDuration) score -= options.relaxed ? Math.min(16, (duration - maxDuration) * 3) : 80;
+      if ((minDuration > 0 && duration >= minDuration) || (maxDuration > 0 && duration <= maxDuration)) score += 8;
+    }
+    if (safeString(item.readinessIntent).trim().toLowerCase() === 'worth_studying') score += 6;
+    else if (safeString(item.readinessIntent).trim().toLowerCase() === 'good_candidate') score += 4;
+    if (item.importedItemId) score -= 3;
+    return score;
+  }
+  function discoveryFilteredItems() {
+    var items = discoveryItemsMerged();
+    var profile = safeString(state.discoveryProfileFilter || 'all').trim().toLowerCase() || 'all';
+    var family = safeString(state.discoveryFamilyFilter || 'all').trim().toLowerCase() || 'all';
+    var language = safeString(state.discoveryLanguageFilter).trim().toLowerCase();
+    var composer = safeString(state.discoveryComposerFilter).trim().toLowerCase();
+    var work = safeString(state.discoveryWorkFilter).trim().toLowerCase();
+    var type = safeString(state.discoveryTypeFilter || 'all').trim().toLowerCase() || 'all';
+    var combination = safeString(state.discoveryCombinationFilter || 'all').trim().toLowerCase() || 'all';
+    var role = safeString(state.discoveryRoleFilter || 'all').trim().toLowerCase() || 'all';
+    var readiness = safeString(state.discoveryReadinessFilter || 'all').trim().toLowerCase() || 'all';
+    var stateFilter = safeString(state.discoveryStateFilter || 'all').trim().toLowerCase() || 'all';
+    var minDuration = Math.max(0, Number(state.discoveryDurationMinFilter) || 0);
+    var maxDuration = Math.max(0, Number(state.discoveryDurationMaxFilter) || 0);
+    var exact = items.filter(function (item) {
+      var duration = discoveryCurrentDuration(item);
+      var textBlob = [
+        item.title, item.composer, item.work, item.tags.join(' '), item.fitNote, item.source, item.sourceNote, item.cautionNote
+      ].join(' ').toLowerCase();
+      var search = safeString(state.discoverySearch).trim().toLowerCase();
+      if (search && textBlob.indexOf(search) < 0) return false;
+      if (profile !== 'all' && item.profileFocus.indexOf(profile) < 0) return false;
+      if (family !== 'all' && item.programmeFit.indexOf(family) < 0) return false;
+      if (language && safeString(item.language).trim().toLowerCase().indexOf(language) < 0) return false;
+      if (composer && safeString(item.composer).trim().toLowerCase().indexOf(composer) < 0) return false;
+      if (work && safeString(item.work).trim().toLowerCase().indexOf(work) < 0) return false;
+      if (type !== 'all' && safeString(item.type).trim().toLowerCase() !== type) return false;
+      if (combination !== 'all' && safeString(item.vocalCombination).trim().toLowerCase() !== combination) return false;
+      if (role !== 'all' && safeString(item.dramaticRole).trim().toLowerCase() !== role && !(role === 'interlude' && safeString(item.dramaticRole).trim().toLowerCase() === 'interlude')) return false;
+      if (readiness !== 'all' && safeString(item.readinessIntent).trim().toLowerCase() !== readiness) return false;
+      if (!discoveryFilterStateMatch(item, stateFilter)) return false;
+      if (minDuration > 0 && duration < minDuration) return false;
+      if (maxDuration > 0 && duration > maxDuration) return false;
+      return true;
+    }).sort(function (a, b) {
+      return discoveryScoreItem(b, { relaxed: false }) - discoveryScoreItem(a, { relaxed: false }) || safeString(a.title).localeCompare(safeString(b.title));
+    });
+    if (exact.length) return { items: exact, mode: 'exact', exactCount: exact.length };
+    var relaxed = items.filter(function (item) {
+      if (!discoveryFilterStateMatch(item, stateFilter)) return false;
+      if (type !== 'all' && safeString(item.type).trim().toLowerCase() !== type) return false;
+      if (combination !== 'all' && safeString(item.vocalCombination).trim().toLowerCase() !== combination) return false;
+      return true;
+    }).map(function (item) {
+      return { item: item, score: discoveryScoreItem(item, { relaxed: true }) };
+    }).filter(function (row) {
+      return row.score > -20;
+    }).sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return safeString(a.item.title).localeCompare(safeString(b.item.title));
+    }).slice(0, 24).map(function (row) { return row.item; });
+    return { items: relaxed, mode: 'suggested', exactCount: 0 };
+  }
+  function renderDiscoverySummary(result) {
+    var payload = result || { items: [] };
+    var items = payload.items || [];
+    var box = $('discovery-state-summary');
+    var pill = $('discovery-results-pill');
+    var matchPill = $('discovery-match-pill');
+    var sourcePill = $('discovery-source-pill');
+    var allItems = discoveryItemsMerged();
+    var layers = discoverySourceLayers(allItems);
+    if (pill) pill.textContent = String((items || []).length) + (((items || []).length === 1) ? ' result' : ' results');
+    if (matchPill) matchPill.textContent = payload.mode === 'exact' ? 'Exact matches' : 'Suggested results';
+    if (sourcePill) sourcePill.textContent = String(layers.length) + ' curated source layers';
+    if (!box) return;
+    var counts = discoveryStateCounts(items || allItems);
+    box.innerHTML = [
+      '<span class="pill">' + escapeHtml(String(counts.total) + ' in view') + '</span>',
+      '<span class="pill">' + escapeHtml(String(allItems.length) + ' in source pool') + '</span>',
+      '<span class="pill info">' + escapeHtml(payload.mode === 'exact' ? 'Filters matched directly' : 'No exact match · showing nearby recommendations') + '</span>',
+      '<span class="pill info">' + escapeHtml(String(counts.unreviewed) + ' unreviewed') + '</span>',
+      '<span class="pill">' + escapeHtml(String(counts.bookmarked || 0) + ' bookmarked') + '</span>',
+      '<span class="pill">' + escapeHtml(String(counts.worth_studying || 0) + ' worth studying') + '</span>',
+      '<span class="pill ok">' + escapeHtml(String(counts.imported_to_repertoire_library || 0) + ' imported') + '</span>'
+    ].join('');
+  }
+  function renderDiscoveryTopRecommendations(result) {
+    var box = $('discovery-top-recommendations');
+    if (!box) return;
+    var payload = result || discoveryFilteredItems();
+    var items = (payload.items || []).slice(0, 6);
+    if (!items.length) {
+      box.innerHTML = '<div class="discovery-top-recommendations__empty">Top recommendations appear here once the current filters point to a plausible discovery lane.</div>';
+      return;
+    }
+    box.innerHTML = items.map(function (item) {
+      var meta = [item.composer, item.work, item.language, discoveryCurrentDuration(item) ? (String(discoveryCurrentDuration(item)) + ' min') : 'Approx. duration TBD'].filter(Boolean).join(' · ');
+      var badges = [];
+      if (item.vocalCombination) badges.push('<span class="item-badge">' + escapeHtml(discoveryCombinationLabel(item.vocalCombination) || item.vocalCombination) + '</span>');
+      if (item.dramaticRole) badges.push('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || item.dramaticRole) + '</span>');
+      if (item.styleFamilies && item.styleFamilies.length) badges.push('<span class="item-badge">' + escapeHtml(item.styleFamilies[0]) + '</span>');
+      return '<button type="button" class="discovery-top-card" data-discovery-top-select="' + escapeAttr(item.id) + '">' +
+        '<strong>' + escapeHtml(item.title || '(untitled)') + '</strong>' +
+        '<span class="discovery-top-card__meta">' + escapeHtml(meta) + '</span>' +
+        (badges.length ? '<div class="item-badges">' + badges.join('') + '</div>' : '') +
+        '<p class="discovery-top-card__fit">' + escapeHtml(item.fitNote || 'No fit note saved yet.') + '</p>' +
+        '<span class="discovery-top-card__source">' + escapeHtml(item.source || 'Curated source') + '</span>' +
+      '</button>';
+    }).join('');
+    box.querySelectorAll('[data-discovery-top-select]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.discoverySelectedId = btn.getAttribute('data-discovery-top-select');
+        renderDiscoveryWorkspace();
+      });
+    });
+  }
+  function renderDiscoveryResults() {
+    var box = $('discovery-results');
+    var moreWrap = $('discovery-load-more-wrap');
+    if (!box) return;
+    var result = discoveryFilteredItems();
+    var items = result.items || [];
+    renderDiscoverySummary(result);
+    renderDiscoveryTopRecommendations(result);
+    if (!items.length) {
+      box.innerHTML = '<div class="empty-state">No discovery items fit the current filters closely enough. Clear one or two filters to widen the recommendation pool.</div>';
+      if (moreWrap) moreWrap.hidden = true;
+      return;
+    }
+    var limit = Math.max(24, Number(state.discoveryResultLimit) || 24);
+    var visible = items.slice(0, limit);
+    box.innerHTML = visible.map(function (item) {
+      var active = safeString(state.discoverySelectedId).trim() === safeString(item.id).trim() ? 'discovery-card active' : 'discovery-card';
+      var meta = [item.composer, item.work, item.language, discoveryCurrentDuration(item) ? (String(discoveryCurrentDuration(item)) + ' min') : 'Approx. duration TBD'].filter(Boolean).join(' · ');
+      var badges = [];
+      badges.push('<span class="item-badge">' + escapeHtml(discoveryStateLabel(item.editorialState)) + '</span>');
+      if (item.type) badges.push('<span class="item-badge">' + escapeHtml(item.type.replace(/_/g, ' ')) + '</span>');
+      if (item.vocalCombination) badges.push('<span class="item-badge">' + escapeHtml(discoveryCombinationLabel(item.vocalCombination) || item.vocalCombination) + '</span>');
+      if (item.dramaticRole) badges.push('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || (item.dramaticRole === 'interlude' ? 'Interlude' : item.dramaticRole)) + '</span>');
+      if (item.styleFamilies && item.styleFamilies.length) badges.push('<span class="item-badge">' + escapeHtml(item.styleFamilies[0]) + '</span>');
+      if (item.importedItemId) badges.push('<span class="item-badge ok">Imported</span>');
+      return '<button type="button" class="' + active + '" data-discovery-select="' + escapeAttr(item.id) + '">' +
+        '<strong>' + escapeHtml(item.title || '(untitled)') + '</strong>' +
+        '<span class="discovery-card__meta">' + escapeHtml(meta) + '</span>' +
+        '<div class="item-badges">' + badges.join('') + '</div>' +
+        '<p class="discovery-card__fit">' + escapeHtml(item.fitNote || 'No fit note saved yet.') + '</p>' +
+        '<span class="discovery-card__source">' + escapeHtml(item.source || 'Curated source') + '</span>' +
+      '</button>';
+    }).join('');
+    if (moreWrap) {
+      moreWrap.hidden = visible.length >= items.length;
+      moreWrap.innerHTML = visible.length < items.length
+        ? '<button id="discovery-load-more" type="button">Show more results (' + escapeHtml(String(visible.length)) + ' / ' + escapeHtml(String(items.length)) + ')</button>'
+        : '';
+      if ($('discovery-load-more')) $('discovery-load-more').addEventListener('click', function () {
+        state.discoveryResultLimit = Math.max(24, Number(state.discoveryResultLimit) || 24) + 24;
+        renderDiscoveryResults();
+      });
+    }
+    box.querySelectorAll('[data-discovery-select]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.discoverySelectedId = btn.getAttribute('data-discovery-select');
+        renderDiscoveryWorkspace();
+      });
+    });
+    if (!state.discoverySelectedId || !items.some(function (item) { return safeString(item.id).trim() === safeString(state.discoverySelectedId).trim(); })) {
+      state.discoverySelectedId = safeString(items[0].id).trim();
+      renderDiscoveryResults();
+      return;
+    }
+  }
+  function renderDiscoveryDetail() {
+    var box = $('discovery-detail');
+    if (!box) return;
+    var item = discoveryItemsMerged().find(function (row) { return safeString(row.id).trim() === safeString(state.discoverySelectedId).trim(); }) || null;
+    if (!item) {
+      box.innerHTML = '<div class="empty-state">Select a discovery result to review fit, cautions, source details, and import options.</div>';
+      return;
+    }
+    var stateOptions = ['<option value="">Unreviewed</option>'].concat(REPERTOIRE_DISCOVERY_STATE_OPTIONS.map(function (option) {
+      var selected = option.value === safeString(item.editorialState).trim().toLowerCase() ? ' selected' : '';
+      return '<option value="' + escapeAttr(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+    })).join('');
+    var tags = (item.tags || []).slice();
+    var programmeFit = (item.programmeFit || []).map(function (tag) { return tag.replace(/_/g, ' '); });
+    var profileFocus = (item.profileFocus || []).map(discoveryProfileLabel).filter(Boolean);
+    var roleLabel = item.dramaticRole ? (PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || (item.dramaticRole === 'interlude' ? 'Interlude' : item.dramaticRole)) : '';
+    box.innerHTML = '<div class="discovery-detail__head">' +
+      '<div><h4>' + escapeHtml(item.title) + '</h4><p class="muted">' + escapeHtml([item.composer, item.work].filter(Boolean).join(' · ')) + '</p></div>' +
+      '<span class="pill">' + escapeHtml(discoveryStateLabel(item.editorialState)) + '</span>' +
+    '</div>' +
+    '<div class="grid two">' +
+      '<div class="discovery-detail__block"><strong>Why it may fit</strong><p class="muted">' + escapeHtml(item.fitNote || 'No fit note saved yet.') + '</p></div>' +
+      '<div class="discovery-detail__block"><strong>Caution</strong><p class="muted">' + escapeHtml(item.cautionNote || 'No caution note saved.') + '</p></div>' +
+    '</div>' +
+    '<div class="grid two">' +
+      '<div class="discovery-detail__block"><strong>Source</strong><p class="muted">' + escapeHtml(item.source || 'Curated source') + (item.sourceNote ? (' · ' + escapeHtml(item.sourceNote)) : '') + '</p></div>' +
+      '<div class="discovery-detail__block"><strong>Fit profile</strong><p class="muted">' + escapeHtml(profileFocus.concat(programmeFit).filter(Boolean).join(' · ') || 'General fit') + '</p></div>' +
+    '</div>' +
+    discoveryImportStatusPreviewHtml(item) +
+    '<div class="item-badges">' +
+      '<span class="item-badge">' + escapeHtml(item.language || '—') + '</span>' +
+      '<span class="item-badge">' + escapeHtml(item.type.replace(/_/g, ' ')) + '</span>' +
+      '<span class="item-badge">' + escapeHtml(discoveryCombinationLabel(item.vocalCombination) || item.vocalCombination || 'Combination TBD') + '</span>' +
+      (roleLabel ? ('<span class="item-badge">' + escapeHtml(roleLabel) + '</span>') : '') +
+      '<span class="item-badge">' + escapeHtml(discoveryReadinessLabel(item.readinessIntent)) + '</span>' +
+      '<span class="item-badge">' + escapeHtml((discoveryCurrentDuration(item) || 0) ? (String(discoveryCurrentDuration(item)) + ' min') : 'Approx. duration') + '</span>' +
+    '</div>' +
+    (tags.length ? ('<p class="muted">Tags: ' + escapeHtml(tags.join(' · ')) + '</p>') : '') +
+    '<label>Editorial state<select id="discovery-editorial-state">' + stateOptions + '</select></label>' +
+    '<label>Editorial notes<textarea id="discovery-editorial-notes" rows="5" placeholder="Why it fits, partner needs, repertoire questions, or next-step reminders.">' + escapeHtml(item.editorialNotes || '') + '</textarea></label>' +
+    '<div class="toolbar">' +
+      '<button id="discovery-save-note" type="button">Save review</button>' +
+      '<button id="discovery-import" type="button" class="button-primary">' + escapeHtml(item.importedItemId ? 'Open imported repertoire item' : 'Import into repertoire library') + '</button>' +
+      (item.importedItemId ? '<span class="pill ok">Imported</span>' : '<span class="pill info">Import stays review-only</span>') +
+    '</div>';
+    if ($('discovery-editorial-state')) $('discovery-editorial-state').addEventListener('change', function () {
+      var record = ensureDiscoveryRecord(item.id);
+      record.state = safeString($('discovery-editorial-state').value).trim().toLowerCase();
+      record.updatedAt = new Date().toISOString();
+      markDirty(true, 'Discovery review updated');
+      renderDiscoveryResults();
+    });
+    if ($('discovery-editorial-notes')) $('discovery-editorial-notes').addEventListener('input', function () {
+      var record = ensureDiscoveryRecord(item.id);
+      record.editorialNotes = safeString($('discovery-editorial-notes').value);
+      record.updatedAt = new Date().toISOString();
+      markDirty(true, 'Discovery review updated');
+    });
+    if ($('discovery-save-note')) $('discovery-save-note').addEventListener('click', saveDiscoveryReview);
+    if ($('discovery-import')) $('discovery-import').addEventListener('click', function () { importDiscoveryItem(state.discoverySelectedId); });
+  }
+  function renderDiscoveryWorkspace() {
+    renderDiscoveryResults();
+    renderDiscoveryDetail();
+  }
+  function loadDiscovery() {
+    ensureDiscoveryDoc();
+    state.discoveryDoc = safeDiscoveryDoc(loadDoc('rg_repertoire_discovery', makeDiscoverySeed()));
+    resetDiscoveryResultLimit();
+    if ($('discovery-search')) $('discovery-search').value = state.discoverySearch;
+    if ($('discovery-filter-profile')) $('discovery-filter-profile').value = state.discoveryProfileFilter;
+    if ($('discovery-filter-family')) $('discovery-filter-family').value = state.discoveryFamilyFilter;
+    if ($('discovery-filter-language')) $('discovery-filter-language').value = state.discoveryLanguageFilter;
+    if ($('discovery-filter-composer')) $('discovery-filter-composer').value = state.discoveryComposerFilter;
+    if ($('discovery-filter-work')) $('discovery-filter-work').value = state.discoveryWorkFilter;
+    if ($('discovery-filter-type')) $('discovery-filter-type').value = state.discoveryTypeFilter;
+    if ($('discovery-filter-combination')) $('discovery-filter-combination').value = state.discoveryCombinationFilter;
+    if ($('discovery-filter-role')) $('discovery-filter-role').value = state.discoveryRoleFilter;
+    if ($('discovery-filter-duration-min')) $('discovery-filter-duration-min').value = state.discoveryDurationMinFilter;
+    if ($('discovery-filter-duration-max')) $('discovery-filter-duration-max').value = state.discoveryDurationMaxFilter;
+    if ($('discovery-filter-readiness')) $('discovery-filter-readiness').value = state.discoveryReadinessFilter;
+    if ($('discovery-filter-state')) $('discovery-filter-state').value = state.discoveryStateFilter;
+    renderDiscoveryWorkspace();
+  }
+  function saveDiscoveryReview() {
+    var item = discoveryItemsMerged().find(function (row) { return safeString(row.id).trim() === safeString(state.discoverySelectedId).trim(); }) || null;
+    if (!item) return;
+    var record = ensureDiscoveryRecord(item.id);
+    record.state = safeString($('discovery-editorial-state') && $('discovery-editorial-state').value).trim().toLowerCase();
+    record.editorialNotes = safeString($('discovery-editorial-notes') && $('discovery-editorial-notes').value);
+    record.updatedAt = new Date().toISOString();
+    state.discoveryDoc = safeDiscoveryDoc(state.discoveryDoc);
+    saveDoc('rg_repertoire_discovery', state.discoveryDoc);
+    renderDiscoveryWorkspace();
+    markDirty(false, 'Discovery review saved');
+  }
+  function importDiscoveryItem(id) {
+    var item = discoveryItemsMerged().find(function (row) { return safeString(row.id).trim() === safeString(id).trim(); }) || null;
+    if (!item) return;
+    var record = ensureDiscoveryRecord(item.id);
+    if (record.importedItemId) {
+      var existingIndex = (state.plannerDoc.items || []).findIndex(function (row) { return safeString(row.id).trim() === safeString(record.importedItemId).trim(); });
+      if (existingIndex >= 0) {
+        openSection('programbuilder');
+        state.plannerIndex = existingIndex;
+        renderPlannerRepList();
+        setStatus('Imported repertoire item opened in the library editor.', 'ok');
+        return;
+      }
+    }
+    ensureProgramBuilderDocs();
+    state.plannerDoc = safePlannerDoc(loadDoc('rg_repertoire_planner', makePlannerSeed()));
+    var discoveryKey = [programBuilderNormalizeKey(item.title), programBuilderNormalizeKey(item.composer), programBuilderNormalizeKey(item.work)].join('|');
+    var existingIndexByKey = (state.plannerDoc.items || []).findIndex(function (row) {
+      var rowKey = [programBuilderNormalizeKey(row && row.title), programBuilderNormalizeKey(row && row.composer), programBuilderNormalizeKey(row && row.work)].join('|');
+      return rowKey === discoveryKey;
+    });
+    if (existingIndexByKey >= 0) {
+      var existing = state.plannerDoc.items[existingIndexByKey];
+      record.state = 'imported_to_repertoire_library';
+      record.importedItemId = safeString(existing && existing.id).trim();
+      record.importedAt = record.importedAt || new Date().toISOString();
+      record.updatedAt = new Date().toISOString();
+      state.discoveryDoc = safeDiscoveryDoc(state.discoveryDoc);
+      saveDoc('rg_repertoire_discovery', state.discoveryDoc);
+      renderDiscoveryWorkspace();
+      setStatus('That repertoire item already exists in the library, so Discovery linked to the existing record instead of importing a duplicate.', 'ok');
+      return;
+    }
+    var titleSeed = [item.composer, item.title].filter(Boolean).join(' ');
+    var raw = {
+      id: nextPlannerItemId(titleSeed || item.id),
+      title: item.title,
+      composer: item.composer,
+      work: item.work,
+      type: plannerTypeFromDiscovery(item),
+      category: plannerCategoryFromDiscovery(item),
+      voiceCategory: safeString(item.voiceCategory),
+      primaryVoice: safeString(item.primaryVoice),
+      pairedVoices: clone(item.pairedVoices || []),
+      language: item.language,
+      approximateDurationMin: discoveryCurrentDuration(item),
+      durationMin: discoveryCurrentDuration(item),
+      formations: clone(item.formations || []),
+      readiness: 'idea',
+      availabilityStatus: 'idea',
+      tags: programBuilderUniqueStrings((item.tags || []).concat(item.programmeFit || []).concat(['discovery_import','needs_preparation'])),
+      fitTags: programBuilderUniqueStrings((item.programmeFit || []).concat(item.profileFocus || []).concat(['discovery_import'])),
+      dramaticRole: safeString(item.dramaticRole),
+      audienceAppeal: safeString(item.audienceAppeal),
+      notes: discoveryImportNotes(item, record.editorialNotes),
+      publicNotes: '',
+      sortOrder: ((state.plannerDoc.items || []).length + 1) * 10,
+      performanceStatus: '',
+      performedIn: [],
+      reviewStatus: 'manual_review',
+      offerOnly: false,
+      excludeFromOffers: true,
+      sourceGroup: 'Repertoire Discovery',
+      suggestionGroup: item.source || 'Curated source',
+      practicalTags: ['discovery_import','manual_preparation']
+    };
+    var normalized = normalizePlannerItemRecord(raw, (state.plannerDoc.items || []).length);
+    state.plannerDoc.items.push(normalized);
+    record.state = 'imported_to_repertoire_library';
+    record.importedItemId = normalized.id;
+    record.importedAt = new Date().toISOString();
+    record.updatedAt = record.importedAt;
+    state.discoveryDoc = safeDiscoveryDoc(state.discoveryDoc);
+    saveDoc('rg_repertoire_planner', state.plannerDoc);
+    saveDoc('rg_repertoire_discovery', state.discoveryDoc);
+    renderDiscoveryWorkspace();
+    setStatus('Discovery item imported as idea / manual review and kept out of Programme Offers until you prepare it.', 'ok');
+    markDirty(false, 'Discovery item imported');
+  }
+  function ensureOutreachDoc() {
+    var raw = state.api.load('rg_outreach_tracker');
+    if (!isObject(raw) || !Array.isArray(raw.records)) return;
+  }
+  function outreachSummaryCounts(records) {
+    var all = records || [];
+    var counts = { total: all.length, active: 0, due: 0, dueThisWeek: 0, confirmed: 0, negotiating: 0, linked: 0, noLinkedOffer: 0 };
+    all.forEach(function (record) {
+      if (!outreachStatusClosed(record.status)) counts.active += 1;
+      if (outreachFollowupState(record).weight <= 2 && !outreachStatusClosed(record.status)) counts.due += 1;
+      if (outreachDueThisWeek(record)) counts.dueThisWeek += 1;
+      if (safeString(record.status).trim().toLowerCase() === 'confirmed') counts.confirmed += 1;
+      if (safeString(record.status).trim().toLowerCase() === 'negotiating') counts.negotiating += 1;
+      if (Array.isArray(record.linkedOfferIds) && record.linkedOfferIds.length) counts.linked += 1;
+      else if (!outreachStatusClosed(record.status)) counts.noLinkedOffer += 1;
+    });
+    return counts;
+  }
+  function renderOutreachSummary(records) {
+    var filtered = records || outreachFilteredRecords();
+    var visibleCounts = outreachSummaryCounts(filtered);
+    var allCounts = outreachSummaryCounts((state.outreachDoc && state.outreachDoc.records) || []);
+    var offers = outreachSavedOfferRows();
+    var current = outreachRecordById(state.outreachSelectedId) || null;
+    outreachSyncQuickFilterButtons();
+    if ($('outreach-results-pill')) $('outreach-results-pill').textContent = String(filtered.length) + (filtered.length === 1 ? ' record' : ' records');
+    if ($('outreach-summary')) {
+      $('outreach-summary').innerHTML = [
+        outreachSummaryTile('In view', visibleCounts.total, 'default', state.outreachViewMode === 'report' ? 'Compact report' : 'Overview cards'),
+        outreachSummaryTile('Active venues', allCounts.active, 'info', 'Still moving'),
+        outreachSummaryTile('Need follow-up this week', allCounts.dueThisWeek, allCounts.dueThisWeek ? 'warn' : 'ok', allCounts.due ? (String(allCounts.due) + ' urgent now') : 'Nothing urgent today'),
+        outreachSummaryTile('Negotiating', allCounts.negotiating, allCounts.negotiating ? 'gold' : 'default', 'Warm conversations'),
+        outreachSummaryTile('Confirmed', allCounts.confirmed, 'ok', 'Already secured'),
+        outreachSummaryTile('No linked offer yet', allCounts.noLinkedOffer, allCounts.noLinkedOffer ? 'warn' : 'ok', 'Worth pairing with a saved offer')
+      ].join('');
+    }
+    if ($('outreach-offer-summary')) {
+      var linkedCount = current ? (current.linkedOfferIds || []).length : 0;
+      $('outreach-offer-summary').innerHTML = [
+        '<span class="pill">' + escapeHtml(String(offers.length) + ' saved offers') + '</span>',
+        current ? ('<span class="pill info">' + escapeHtml(String(linkedCount) + ' linked here') + '</span>') : '<span class="pill info">Select a venue</span>'
+      ].join('');
+    }
+  }
+  function renderOutreachList() {
+    var box = $('outreach-list');
+    if (!box) return;
+    var records = outreachFilteredRecords();
+    renderOutreachSummary(records);
+    if (!records.length) {
+      box.innerHTML = '<div class="empty-state">No venues match the current filters. Clear the filters or add a new record.</div>';
+      return;
+    }
+    box.innerHTML = state.outreachViewMode === 'report' ? renderOutreachReport(records) : renderOutreachCards(records);
+    var selectableNodes = box.querySelectorAll('[data-outreach-select]');
+    selectableNodes.forEach(function (node) {
+      node.addEventListener('click', function () {
+        state.outreachSelectedId = node.getAttribute('data-outreach-select');
+        renderOutreachWorkspace();
+      });
+    });
+    box.querySelectorAll('[data-outreach-card-action]').forEach(function (node) {
+      node.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        var recordId = safeString(node.getAttribute('data-outreach-card-id')).trim();
+        var action = safeString(node.getAttribute('data-outreach-card-action')).trim().toLowerCase();
+        if (!recordId || !action) return;
+        var record = outreachRecordById(recordId);
+        if (!record) return;
+        var nowIso = new Date().toISOString();
+        if (action === 'contact-today') {
+          record.lastContactDate = outreachTodayIso();
+          if (!record.nextFollowUpDate) {
+            record.nextFollowUpDate = outreachLocalDatePlusDays(7);
+          }
+        } else if (action === 'followup-7') {
+          record.nextFollowUpDate = outreachLocalDatePlusDays(7);
+        } else if (action === 'mark-negotiating') {
+          record.status = 'negotiating';
+        } else {
+          return;
+        }
+        record.updatedAt = nowIso;
+        if (!record.createdAt) record.createdAt = nowIso;
+        markDirty(true, 'Outreach record updated');
+        scheduleOutreachAutosave();
+        renderOutreachWorkspace();
+      });
+    });
+    var allRecords = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records : [];
+    if (!state.outreachSelectedId || !allRecords.some(function (row) { return safeString(row.id).trim() === safeString(state.outreachSelectedId).trim(); })) {
+      state.outreachSelectedId = safeString(allRecords[0] && allRecords[0].id).trim();
+    }
+  }
+  function outreachRecordLocation(record) {
+    return [record.city, record.country].filter(Boolean).join(', ');
+  }
+  function renderOutreachEditor() {
+    var box = $('outreach-editor');
+    if (!box) return;
+    var record = outreachRecordById(state.outreachSelectedId) || null;
+    if (!record) {
+      box.innerHTML = '<div class="empty-state">Select a venue to review contact details, linked offers, and follow-up timing.</div>';
+      renderOutreachSummary();
+      return;
+    }
+    var offers = outreachSavedOfferRows();
+    var follow = outreachFollowupState(record);
+    var historyHtml = outreachHistoryListHtml(record);
+    var offerMarkup = offers.length ? offers.map(function (offer) {
+      var checked = (record.linkedOfferIds || []).indexOf(safeString(offer.id).trim()) >= 0 ? ' checked' : '';
+      var meta = [plannerFamilyLabelForLang(offer.family, offer.outputLang), (String(offer.targetDuration || 0) + ' min'), offer.formation].filter(Boolean).join(' · ');
+      return '<label class="outreach-offer-link"><span><input type="checkbox" data-outreach-offer="' + escapeAttr(offer.id) + '"' + checked + '> ' + escapeHtml(savedOfferDisplayLabel(offer)) + '</span><span class="outreach-offer-link__meta">' + escapeHtml(meta) + '</span></label>';
+    }).join('') : '<div class="empty-state">Save a Programme Offer first, then link it here when it matches a venue.</div>';
+    box.innerHTML = '<div class="outreach-editor__head">' +
+      '<div><h4>' + escapeHtml(record.venueName || 'Untitled venue') + '</h4><p class="muted">' + escapeHtml(outreachRecordLocation(record) || 'Add city and country to place the opportunity.') + '</p></div>' +
+      '<div class="item-badges"><span class="pill">' + escapeHtml(outreachStatusLabel(record.status)) + '</span><span class="pill info ' + escapeAttr(follow.className) + '">' + escapeHtml(follow.label) + '</span></div>' +
+    '</div>' +
+    '<div class="grid two">' +
+      '<div class="outreach-editor__block outreach-editor__block--venue">' +
+        '<strong>Venue</strong>' +
+        '<label>Venue name<input id="outreach-venue-name" value="' + escapeAttr(record.venueName) + '" placeholder="Concert hall, festival, church, embassy, salon"></label>' +
+        '<label>City<input id="outreach-city" value="' + escapeAttr(record.city) + '" placeholder="Berlin"></label>' +
+        '<label>Country<input id="outreach-country" value="' + escapeAttr(record.country) + '" placeholder="Germany"></label>' +
+        '<label>Venue type<input id="outreach-venue-type" value="' + escapeAttr(record.venueType) + '" placeholder="Opera house, church, festival, private series"></label>' +
+        '<label>Preferred outreach language<select id="outreach-language">' +
+          ['en','de','es','it','fr'].map(function (lang) { return '<option value="' + lang + '"' + (record.outreachLanguage === lang ? ' selected' : '') + '>' + outreachLanguageLabel(lang) + '</option>'; }).join('') +
+        '</select></label>' +
+      '</div>' +
+      '<div class="outreach-editor__block outreach-editor__block--contact">' +
+        '<strong>Contact and timing</strong>' +
+        '<label>Contact name<input id="outreach-contact-name" value="' + escapeAttr(record.contactName) + '" placeholder="Artistic director or presenter"></label>' +
+        '<label>Contact email<input id="outreach-contact-email" value="' + escapeAttr(record.contactEmail) + '" placeholder="name@venue.org"></label>' +
+        '<label>Status<select id="outreach-status">' +
+          OUTREACH_STATUS_OPTIONS.map(function (option) { return '<option value="' + option.value + '"' + (record.status === option.value ? ' selected' : '') + '>' + escapeHtml(option.label) + '</option>'; }).join('') +
+        '</select></label>' +
+        '<label>Last contact date<input id="outreach-last-contact-date" type="date" value="' + escapeAttr(record.lastContactDate) + '"></label>' +
+        '<label>Next follow-up date<input id="outreach-next-followup-date" type="date" value="' + escapeAttr(record.nextFollowUpDate) + '"></label>' +
+        '<div class="outreach-editor__actions outreach-editor__actions--contact-quick">' +
+          '<button id="outreach-last-contact-today" type="button">Mark contacted today</button>' +
+          '<button id="outreach-next-followup-7" type="button">Follow up in 7 days</button>' +
+          '<button id="outreach-next-followup-14" type="button">Follow up in 14 days</button>' +
+          '<button id="outreach-status-negotiating" type="button">Mark negotiating</button>' +
+          '<button id="outreach-status-confirmed" type="button">Mark accepted</button>' +
+          '<button id="outreach-status-declined" type="button">Mark rejected</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="outreach-editor__block outreach-editor__block--fit">' +
+      '<strong>Programme fit</strong>' +
+      '<label>Fit tags<input id="outreach-fit-tags" value="' + escapeAttr((record.fitTags || []).join(', ')) + '" placeholder="gala, recital, church, embassy, tango"></label>' +
+      '<label>Planned repertoire<textarea id="outreach-planned-repertoire" rows="4" placeholder="Specific repertoire currently planned for this venue/opportunity.">' + escapeHtml(record.plannedRepertoire || '') + '</textarea></label>' +
+      '<label>Notes<textarea id="outreach-notes" rows="6" placeholder="Why this venue may fit, local context, booking windows, collaborators, or next-step reminders.">' + escapeHtml(record.notes || '') + '</textarea></label>' +
+    '</div>' +
+    '<div class="outreach-editor__block outreach-editor__block--message">' +
+      '<strong>Outreach details</strong>' +
+      '<label class="outreach-message-label">Message sent<textarea id="outreach-message-sent" rows="4" placeholder="Copy of the message sent to this venue.">' + escapeHtml(record.messageSent || '') + '</textarea></label>' +
+      '<label>Cache proposed<input id="outreach-cache-proposed" value="' + escapeAttr(record.cacheProposed) + '" placeholder="e.g. 5000 EUR"></label>' +
+      '<label>Cache negotiated<input id="outreach-cache-negotiated" value="' + escapeAttr(record.cacheNegotiated) + '" placeholder="e.g. 4500 EUR"></label>' +
+    '</div>' +
+    '<div class="outreach-editor__block outreach-editor__block--history">' +
+      '<strong>Relationship history</strong>' +
+      '<p class="muted">Keep a light contact timeline so the outreach story stays visible: what was sent, how they replied, and where the conversation stands now.</p>' +
+      '<div class="outreach-editor__actions outreach-editor__actions--history-quick">' +
+        ['first_contact_sent','replied','follow_up_made','negotiation_note','confirmed','declined'].map(function (type) {
+          return '<button type="button" data-outreach-history-quick="' + escapeAttr(type) + '">' + escapeHtml(outreachHistoryQuickButtonLabel(type)) + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="grid two outreach-history-entry-grid">' +
+        '<label>Event type<select id="outreach-history-type">' +
+          OUTREACH_HISTORY_EVENT_OPTIONS.map(function (option) { return '<option value="' + option.value + '"' + (option.value === 'follow_up_made' ? ' selected' : '') + '>' + escapeHtml(option.label) + '</option>'; }).join('') +
+        '</select></label>' +
+        '<label>Date<input id="outreach-history-date" type="date" value="' + escapeAttr(outreachTodayIso()) + '"></label>' +
+      '</div>' +
+      '<label>Entry note<textarea id="outreach-history-note" rows="3" placeholder="Short context: who replied, what was discussed, timing, next step, or any useful nuance."></textarea></label>' +
+      '<div class="outreach-editor__actions outreach-editor__actions--history-add">' +
+        '<button id="outreach-history-add" type="button">Add history entry</button>' +
+      '</div>' +
+      historyHtml +
+    '</div>' +
+    '<div class="outreach-editor__block outreach-editor__block--offers">' +
+      '<strong>Linked Programme Offers</strong>' +
+      '<div class="outreach-offer-links">' + offerMarkup + '</div>' +
+    '</div>' +
+    '<div class="toolbar outreach-editor__footer">' +
+      '<button id="outreach-save-record" type="button" class="button-primary">Save record</button>' +
+      '<button id="outreach-new-from-current" type="button">Duplicate as new lead</button>' +
+    '</div>';
+    ['outreach-venue-name','outreach-city','outreach-country','outreach-venue-type','outreach-language','outreach-contact-name','outreach-contact-email','outreach-status','outreach-last-contact-date','outreach-next-followup-date','outreach-fit-tags','outreach-planned-repertoire','outreach-notes','outreach-message-sent','outreach-cache-proposed','outreach-cache-negotiated'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener(id === 'outreach-notes' || id === 'outreach-message-sent' || id.indexOf('cache') >= 0 || id.indexOf('name') >= 0 || id.indexOf('email') >= 0 || id.indexOf('phone') >= 0 || id.indexOf('city') >= 0 || id.indexOf('country') >= 0 || id.indexOf('type') >= 0 || id.indexOf('tags') >= 0 ? 'input' : 'change', persistOutreachEditor);
+      if (id !== 'outreach-notes' && (id.indexOf('name') >= 0 || id.indexOf('email') >= 0 || id.indexOf('phone') >= 0 || id.indexOf('city') >= 0 || id.indexOf('country') >= 0 || id.indexOf('type') >= 0 || id.indexOf('tags') >= 0)) {
+        el.addEventListener('change', persistOutreachEditor);
+      }
+    });
+    box.querySelectorAll('[data-outreach-offer]').forEach(function (el) {
+      el.addEventListener('change', persistOutreachEditor);
+    });
+    if ($('outreach-last-contact-today')) $('outreach-last-contact-today').addEventListener('click', function () {
+      if ($('outreach-last-contact-date')) $('outreach-last-contact-date').value = outreachTodayIso();
+      persistOutreachEditor();
+    });
+    if ($('outreach-next-followup-7')) $('outreach-next-followup-7').addEventListener('click', function () {
+      var today = outreachParseDate(outreachTodayIso());
+      if (!today) return;
+      today.setDate(today.getDate() + 7);
+      var value = today.toISOString().slice(0, 10);
+      if ($('outreach-next-followup-date')) $('outreach-next-followup-date').value = value;
+      persistOutreachEditor();
+    });
+    if ($('outreach-next-followup-14')) $('outreach-next-followup-14').addEventListener('click', function () {
+      var today = outreachParseDate(outreachTodayIso());
+      if (!today) return;
+      today.setDate(today.getDate() + 14);
+      var value = today.toISOString().slice(0, 10);
+      if ($('outreach-next-followup-date')) $('outreach-next-followup-date').value = value;
+      persistOutreachEditor();
+    });
+    if ($('outreach-status-negotiating')) $('outreach-status-negotiating').addEventListener('click', function () {
+      if ($('outreach-status')) $('outreach-status').value = 'negotiating';
+      persistOutreachEditor();
+    });
+    if ($('outreach-status-confirmed')) $('outreach-status-confirmed').addEventListener('click', function () {
+      if ($('outreach-status')) $('outreach-status').value = 'confirmed';
+      persistOutreachEditor();
+    });
+    if ($('outreach-status-declined')) $('outreach-status-declined').addEventListener('click', function () {
+      if ($('outreach-status')) $('outreach-status').value = 'declined';
+      persistOutreachEditor();
+    });
+    if ($('outreach-save-record')) $('outreach-save-record').addEventListener('click', saveOutreachRecord);
+    if ($('outreach-new-from-current')) $('outreach-new-from-current').addEventListener('click', function () { createOutreachRecord(record); });
+    if ($('outreach-history-add')) $('outreach-history-add').addEventListener('click', function () {
+      var activeRecord = outreachRecordById(state.outreachSelectedId);
+      if (!activeRecord) return;
+      var type = safeString($('outreach-history-type') && $('outreach-history-type').value || 'follow_up_made').trim().toLowerCase() || 'follow_up_made';
+      var date = outreachDateValue($('outreach-history-date') && $('outreach-history-date').value) || outreachTodayIso();
+      var note = safeString($('outreach-history-note') && $('outreach-history-note').value).trim();
+      var added = outreachAddHistoryEntry(activeRecord, type, date, note);
+      if (!added) return;
+      renderOutreachWorkspace();
+      markDirty(true, 'Outreach history updated');
+      scheduleOutreachAutosave();
+    });
+    box.querySelectorAll('[data-outreach-history-quick]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var activeRecord = outreachRecordById(state.outreachSelectedId);
+        if (!activeRecord) return;
+        var type = safeString(btn.getAttribute('data-outreach-history-quick')).trim().toLowerCase();
+        var added = outreachAddHistoryEntry(activeRecord, type, outreachTodayIso(), '');
+        if (!added) return;
+        renderOutreachWorkspace();
+        markDirty(true, 'Outreach history updated');
+        scheduleOutreachAutosave();
+      });
+    });
+    renderOutreachSummary();
+  }
+  function renderOutreachWorkspace() {
+    renderOutreachList();
+    renderOutreachEditor();
+  }
+  var outreachAutosaveTimer = 0;
+  function scheduleOutreachAutosave() {
+    if (outreachAutosaveTimer) {
+      clearTimeout(outreachAutosaveTimer);
+      outreachAutosaveTimer = 0;
+    }
+    outreachAutosaveTimer = setTimeout(function () {
+      outreachAutosaveTimer = 0;
+      state.outreachDoc = safeOutreachDoc(state.outreachDoc);
+      saveDoc('rg_outreach_tracker', state.outreachDoc);
+    }, 450);
+  }
+  function persistOutreachEditor() {
+    var record = outreachRecordById(state.outreachSelectedId);
+    if (!record) return;
+    record.venueName = safeString($('outreach-venue-name') && $('outreach-venue-name').value).trim();
+    record.city = safeString($('outreach-city') && $('outreach-city').value).trim();
+    record.country = safeString($('outreach-country') && $('outreach-country').value).trim();
+    record.venueType = safeString($('outreach-venue-type') && $('outreach-venue-type').value).trim();
+    record.contactName = safeString($('outreach-contact-name') && $('outreach-contact-name').value).trim();
+    record.contactEmail = safeString($('outreach-contact-email') && $('outreach-contact-email').value).trim();
+    record.contactPhone = safeString($('outreach-contact-phone') && $('outreach-contact-phone').value).trim();
+    record.outreachLanguage = safeString($('outreach-language') && $('outreach-language').value || 'en').trim().toLowerCase() || 'en';
+    record.status = safeString($('outreach-status') && $('outreach-status').value || 'idea').trim().toLowerCase() || 'idea';
+    record.lastContactDate = outreachDateValue($('outreach-last-contact-date') && $('outreach-last-contact-date').value);
+    record.nextFollowUpDate = outreachDateValue($('outreach-next-followup-date') && $('outreach-next-followup-date').value);
+    record.fitTags = programBuilderUniqueStrings(safeString($('outreach-fit-tags') && $('outreach-fit-tags').value).split(',').map(function (tag) {
+      return safeString(tag).trim().toLowerCase();
+    }).filter(Boolean));
+    record.plannedRepertoire = safeString($('outreach-planned-repertoire') && $('outreach-planned-repertoire').value);
+    record.notes = safeString($('outreach-notes') && $('outreach-notes').value);
+    record.messageSent = safeString($('outreach-message-sent') && $('outreach-message-sent').value);
+    record.cacheProposed = safeString($('outreach-cache-proposed') && $('outreach-cache-proposed').value);
+    record.cacheNegotiated = safeString($('outreach-cache-negotiated') && $('outreach-cache-negotiated').value);
+    record.linkedOfferIds = programBuilderUniqueStrings(Array.prototype.slice.call(document.querySelectorAll('[data-outreach-offer]:checked')).map(function (el) {
+      return safeString(el.getAttribute('data-outreach-offer')).trim();
+    }).filter(Boolean));
+    record.updatedAt = new Date().toISOString();
+    if (!record.createdAt) record.createdAt = record.updatedAt;
+    markDirty(true, 'Outreach record updated');
+    renderOutreachSummary();
+    scheduleOutreachAutosave();
+  }
+  function saveOutreachRecord() {
+    state.outreachDoc = safeOutreachDoc(state.outreachDoc);
+    saveDoc('rg_outreach_tracker', state.outreachDoc);
+    renderOutreachWorkspace();
+    markDirty(false, 'Outreach record saved');
+  }
+  function createOutreachRecord(seedRecord) {
+    state.outreachDoc = safeOutreachDoc(state.outreachDoc);
+    var seed = seedRecord || {};
+    var titleSeed = [seed.venueName || 'venue', seed.city || String((state.outreachDoc.records || []).length + 1)].join(' ');
+    var idBase = 'outreach_' + programBuilderSlug(titleSeed);
+    var id = idBase;
+    var counter = 2;
+    while (outreachRecordById(id)) {
+      id = idBase + '_' + String(counter);
+      counter += 1;
+    }
+    var now = new Date().toISOString();
+    var created = normalizeOutreachRecord({
+      id: id,
+      venueName: seedRecord ? safeString(seedRecord.venueName).trim() : '',
+      city: seedRecord ? safeString(seedRecord.city).trim() : '',
+      country: seedRecord ? safeString(seedRecord.country).trim() : '',
+      venueType: seedRecord ? safeString(seedRecord.venueType).trim() : '',
+      contactName: seedRecord ? safeString(seedRecord.contactName).trim() : '',
+      contactEmail: seedRecord ? safeString(seedRecord.contactEmail).trim() : '',
+      outreachLanguage: seedRecord ? safeString(seedRecord.outreachLanguage || 'en') : 'en',
+      fitTags: seedRecord ? clone(seedRecord.fitTags || []) : [],
+      notes: '',
+      status: 'idea',
+      lastContactDate: '',
+      nextFollowUpDate: '',
+      linkedOfferIds: seedRecord ? clone(seedRecord.linkedOfferIds || []) : [],
+      history: [{ type: 'created', eventDate: outreachTodayIso(), note: seedRecord ? 'Duplicated from an existing opportunity.' : 'Record created.' }],
+      createdAt: now,
+      updatedAt: now
+    }, (state.outreachDoc.records || []).length);
+    state.outreachDoc.records.unshift(created);
+    state.outreachSelectedId = created.id;
+    renderOutreachWorkspace();
+    markDirty(true, 'New outreach record ready');
+    scheduleOutreachAutosave();
+  }
+  function loadOutreach() {
+    ensureProgramBuilderDocs();
+    ensureOutreachDoc();
+    state.blueprintDoc = safeBlueprintsDoc(loadDoc('rg_program_blueprints', makeBlueprintDocSeed()));
+    state.outreachDoc = safeOutreachDoc(loadDoc('rg_outreach_tracker', makeOutreachSeed()));
+    if ($('outreach-search')) $('outreach-search').value = state.outreachSearch;
+    if ($('outreach-view-mode')) $('outreach-view-mode').value = safeString(state.outreachViewMode || 'cards') || 'cards';
+    if ($('outreach-filter-status')) $('outreach-filter-status').value = state.outreachStatusFilter;
+    if ($('outreach-filter-followup')) $('outreach-filter-followup').value = state.outreachFollowupFilter;
+    state.outreachQuickFilter = safeString(state.outreachQuickFilter || 'all').trim().toLowerCase() || 'all';
+    outreachSyncQuickFilterButtons();
+    renderOutreachWorkspace();
   }
   function programsDurationTolerance(target) {
     var duration = Math.max(0, Number(target) || 0);
@@ -6005,6 +8466,44 @@
     if (safeString(lang || 'en').trim().toLowerCase() === 'it') return value < duration ? ('Circa ' + String(delta) + ' min in meno') : ('Circa ' + String(delta) + ' min in più');
     if (safeString(lang || 'en').trim().toLowerCase() === 'fr') return value < duration ? ('Environ ' + String(delta) + ' min de moins') : ('Environ ' + String(delta) + ' min de plus');
     return value < duration ? ('About ' + String(delta) + ' min short') : ('About ' + String(delta) + ' min over');
+  }
+  function programBuilderDurationRangeText(target) {
+    var bands = programsDurationTolerance(target);
+    return 'Ideal window ' + String(bands.lower) + '–' + String(bands.upper) + ' min';
+  }
+  function programBuilderDurationGuidanceText(total, target, encoreTotal) {
+    var status = programsDurationState(total, target);
+    var delta = Math.abs(Number(status.delta) || 0);
+    if (!total) return 'Start with a quick draft, then refine the order once a few pieces are in.';
+    if (status.key === 'within range') {
+      if (encoreTotal > 0) return 'Main programme is in range. Keep encore options separate unless you want them visible in the sheet.';
+      return 'Main programme is in range. Focus next on pacing, contrast, and a strong ending.';
+    }
+    if (status.key === 'too short') return 'Add about ' + String(delta) + ' min to reach the target range.';
+    if (status.key === 'slightly over') return 'Slightly long. Trim about ' + String(delta) + ' min or move one item to encore.';
+    return 'Too long. Trim about ' + String(delta) + ' min so the main programme reads cleanly.';
+  }
+  function renderProgramBuilderDurationBoard(bp, lang, copy) {
+    var total = Math.max(0, Number(bp && bp.totalDuration) || 0);
+    var target = Math.max(0, Number(bp && bp.targetDuration) || 0);
+    var encoreTotal = Math.max(0, Number(bp && bp.encoreTotalDuration) || 0);
+    var status = programsDurationState(total, target);
+    var board = $('pb-duration-board');
+    if (board) board.className = 'pb-duration-board ' + status.className;
+    if ($('pb-duration-main-focus')) $('pb-duration-main-focus').textContent = String(total) + ' / ' + String(target) + ' ' + copy.durationMinutes;
+    if ($('pb-duration-guidance')) $('pb-duration-guidance').textContent = programBuilderDurationGuidanceText(total, target, encoreTotal);
+    if ($('pb-duration-range')) $('pb-duration-range').textContent = programBuilderDurationRangeText(target);
+    if ($('pb-duration-remaining')) {
+      $('pb-duration-remaining').textContent = encoreTotal > 0
+        ? ('Encore reserve: ' + String(encoreTotal) + ' ' + copy.durationMinutes)
+        : programsDurationProgressText(total, target, lang);
+    }
+    var fill = $('pb-duration-meter-fill');
+    if (fill) {
+      var ratio = target > 0 ? Math.min(1, total / target) : 0;
+      fill.style.width = String(Math.round(ratio * 100)) + '%';
+      fill.className = 'pb-duration-meter__fill ' + status.className;
+    }
   }
   function recomputeBlueprint(bp) {
     sortBlueprintItemsForMode(bp);
@@ -6077,6 +8576,7 @@
     renderConcertHistoryList();
     renderOutsideRepertoireSuggestions();
     renderProgramBuilderStatus();
+    syncProgramBuilderResponsiveUi(true);
   }
   function renderProgramBuilderStatus() {
     var pill = $('pb-status');
@@ -6144,6 +8644,7 @@
       var extraBadges = [];
       if (safeString(item.performanceStatus) === 'performed') extraBadges.push('<span class="item-badge ok">performed</span>');
       if (safeString(item.reviewStatus) === 'manual_review') extraBadges.push('<span class="item-badge warn">review</span>');
+      if (safeString(item.sourceGroup).trim() === 'Repertoire Discovery') extraBadges.push('<span class="item-badge warn">discovery import</span>');
       if (item.offerOnly === true) extraBadges.push('<span class="item-badge">offer only</span>');
       if (item.excludeFromOffers === true) extraBadges.push('<span class="item-badge">hidden from offers</span>');
       return '<div class="' + active + '" data-pb-rep-idx="' + idx + '"><div class="item-main"><strong>' + escapeHtml(item.title || '(untitled)') + '</strong><br><span class="muted">' + escapeHtml([item.composer, item.work].filter(Boolean).join(' · ')) + '</span><div class="item-badges"><span class="item-badge">' + escapeHtml(plannerItemVoiceLabel(item)) + '</span><span class="item-badge">' + escapeHtml(item.availabilityStatus || item.readiness) + '</span><span class="item-badge">' + escapeHtml(String(plannerEffectiveDuration(item) || 0) + ' min') + '</span>' + (item.dramaticRole ? ('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[item.dramaticRole] || item.dramaticRole) + '</span>') : '') + (item.energyLevel ? ('<span class="item-badge">' + escapeHtml(item.energyLevel) + '</span>') : '') + (item.sourceGroup ? ('<span class="item-badge">' + escapeHtml(item.sourceGroup) + '</span>') : '') + extraBadges.join('') + '</div></div></div>';
@@ -6277,31 +8778,162 @@
       .replace(/\s*\+\s*/g, ' + ')
       .trim();
   }
-  function pieceMatchesFormation(piece, formation) {
-    var target = normalizeFormationLabel(formation);
-    if (!target) return true;
-    var targetHasPiano = target.indexOf('piano') >= 0;
-    var targetHasTenor = target.indexOf('tenor') >= 0;
-    var targetHasSoprano = target.indexOf('soprano') >= 0;
-    var targetHasBaritone = target.indexOf('baritone') >= 0;
-    var pieceIsPianoSolo = safeString(piece && piece.category).trim().toLowerCase() === 'piano_solo';
-    if (pieceIsPianoSolo && targetHasPiano) return true;
-    var forms = Array.isArray(piece && piece.formations) ? piece.formations : [];
-    if (!forms.length) return true;
-    return forms.some(function (rawForm) {
-      var form = normalizeFormationLabel(rawForm);
-      if (!form) return false;
-      if (form === target) return true;
-      if (form.indexOf(target) >= 0 || target.indexOf(form) >= 0) return true;
-      if (targetHasPiano && (form === 'voice + piano' || form === 'voice(s) + piano')) return true;
-      if (targetHasTenor && form === 'tenor + piano') return true;
-      if (targetHasSoprano && form === 'soprano + piano') return true;
-      if (targetHasBaritone && form === 'baritone + piano') return true;
-      if (targetHasTenor && targetHasPiano && form === 'voice + piano') return true;
-      if (targetHasSoprano && targetHasPiano && form === 'voice + piano') return true;
-      if (targetHasBaritone && targetHasPiano && form === 'voice + piano') return true;
-      return false;
+  function plannerFormationProfile(formation) {
+    var label = normalizeFormationLabel(formation);
+    return {
+      label: label,
+      voices: plannerVoicesFromFormationLabel(label),
+      singerCount: plannerVoicesFromFormationLabel(label).length,
+      hasPiano: label.indexOf('piano') >= 0
+    };
+  }
+  function plannerPieceRequiredVoices(piece) {
+    if (!piece) return [];
+    var voices = plannerVoicesFromItem(piece);
+    if (voices.length) return voices;
+    var category = safeString(piece.category).trim().toLowerCase();
+    if (piece.includesTenor === true && ['aria', 'art_song', 'tango'].indexOf(category) >= 0) return ['tenor'];
+    return [];
+  }
+  function plannerPieceEditorialRole(piece) {
+    if (!piece) return '';
+    var flags = plannerPieceFlags(piece);
+    var dramaticRole = safeString(piece.dramaticRole).trim().toLowerCase();
+    if (flags.isPianoSolo) return 'piano_support';
+    if (dramaticRole === 'opener' || flags.galaRole === 'opener') return 'opener';
+    if (dramaticRole === 'finale' || flags.galaRole === 'finale') return 'finale';
+    if (dramaticRole === 'climax' || flags.galaRole === 'climax') return 'climax';
+    if (dramaticRole === 'encore' || flags.galaRole === 'encore') return 'encore';
+    if (dramaticRole === 'contrast' || flags.galaRole === 'contrast' || flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone') return 'contrast';
+    if (dramaticRole === 'lyrical_center' || flags.galaRole === 'lyrical_center' || flags.energyLevel === 'low' || flags.tempoProfile === 'slow') return 'lyrical_center';
+    if (flags.recoveryValue === 'partial' || flags.recoveryValue === 'strong' || flags.galaRole === 'vocal_rest_support') return 'support';
+    if (flags.impactLevel === 'high' || flags.audienceAppeal === 'crowd_pleaser') return 'climax';
+    return 'general';
+  }
+  function plannerPieceStyleFamilies(piece) {
+    if (!piece) return [];
+    var values = [];
+    var composer = safeString(piece.composer).trim().toLowerCase();
+    var work = safeString(piece.work).trim().toLowerCase();
+    var title = safeString(piece.title).trim().toLowerCase();
+    var tags = []
+      .concat(Array.isArray(piece.tags) ? piece.tags : [])
+      .concat(Array.isArray(piece.fitTags) ? piece.fitTags : [])
+      .concat(Array.isArray(piece.moodTags) ? piece.moodTags : [])
+      .map(function (x) { return safeString(x).trim().toLowerCase(); })
+      .filter(Boolean);
+    function add(key) {
+      key = normalizeProgramOfferStyleFocus(key);
+      if (key !== 'mixed' && values.indexOf(key) < 0) values.push(key);
+    }
+    if (tags.some(function (tag) { return /(baroque|handel|händel|vivaldi|purcell|monteverdi|scarlatti)/.test(tag); })) add('baroque');
+    if (tags.some(function (tag) { return /(classical|mozart|haydn|gluck|salieri|cimarosa|paisiello)/.test(tag); })) add('classical');
+    if (tags.some(function (tag) { return /(belcanto|rossini|donizetti|bellini)/.test(tag); })) add('belcanto');
+    if (tags.some(function (tag) { return /(romantic|verdi|gounod|massenet|bizet|offenbach|thomas|schubert|schumann|tchaikovsky|saint-saens|saint-saëns|tosti)/.test(tag); })) add('romantic');
+    if (tags.some(function (tag) { return /(verismo|puccini|mascagni|leoncavallo|giordano|cilea|cilèa|catalani)/.test(tag); })) add('verismo');
+    if (/(handel|händel|vivaldi|purcell|monteverdi|scarlatti)/.test(composer)) add('baroque');
+    if (/(mozart|haydn|gluck|salieri|cimarosa|paisiello)/.test(composer)) add('classical');
+    if (/(rossini|donizetti|bellini)/.test(composer)) add('belcanto');
+    if (/(puccini|mascagni|leoncavallo|giordano|cilea|cilèa|catalani)/.test(composer)) add('verismo');
+    if (/(verdi|gounod|massenet|bizet|offenbach|thomas|schubert|schumann|tchaikovsky|saint-saens|saint-saëns|tosti)/.test(composer)) add('romantic');
+    if (!values.length && /(baroque|classical|belcanto|romantic|verismo)/.test(work + ' ' + title)) {
+      if (/baroque/.test(work + ' ' + title)) add('baroque');
+      if (/classical/.test(work + ' ' + title)) add('classical');
+      if (/belcanto/.test(work + ' ' + title)) add('belcanto');
+      if (/romantic/.test(work + ' ' + title)) add('romantic');
+      if (/verismo/.test(work + ' ' + title)) add('verismo');
+    }
+    return values;
+  }
+  function plannerStyleFocusAdjacency(style) {
+    return ({
+      baroque: ['classical'],
+      classical: ['baroque','belcanto'],
+      belcanto: ['classical','romantic'],
+      romantic: ['belcanto','verismo'],
+      verismo: ['romantic']
+    })[normalizeProgramOfferStyleFocus(style)] || [];
+  }
+  function plannerPieceStyleFocusTier(piece, styleFocus) {
+    var focus = normalizeProgramOfferStyleFocus(styleFocus);
+    if (focus === 'mixed') return 0;
+    var styles = plannerPieceStyleFamilies(piece);
+    if (!styles.length) return 0;
+    if (styles.indexOf(focus) >= 0) return 2;
+    var adjacent = plannerStyleFocusAdjacency(focus);
+    if (styles.some(function (style) { return adjacent.indexOf(style) >= 0; })) return 1;
+    return -1;
+  }
+  function plannerDraftTargetPieceCount(bp) {
+    var target = Math.max(0, Number(bp && bp.targetDuration) || 30);
+    if (target <= 30) return 4;
+    if (target <= 45) return 6;
+    return 7;
+  }
+  function plannerStyleFocusPoolSummary(bp, pool) {
+    var focus = normalizeProgramOfferStyleFocus(bp && bp.styleFocus);
+    var summary = { focus: focus, direct: [], adjacent: [], unknown: [], mismatched: [] };
+    (Array.isArray(pool) ? pool : []).forEach(function (piece) {
+      var tier = plannerPieceStyleFocusTier(piece, focus);
+      if (tier >= 2) summary.direct.push(piece);
+      else if (tier === 1) summary.adjacent.push(piece);
+      else if (tier === 0) summary.unknown.push(piece);
+      else summary.mismatched.push(piece);
     });
+    return summary;
+  }
+  function plannerCandidatePoolForStyleFocus(bp, pool) {
+    var focus = normalizeProgramOfferStyleFocus(bp && bp.styleFocus);
+    var candidates = Array.isArray(pool) ? pool.slice() : [];
+    if (focus === 'mixed' || !candidates.length) return candidates;
+    var summary = plannerStyleFocusPoolSummary(bp, candidates);
+    var targetCount = plannerDraftTargetPieceCount(bp);
+    if (summary.direct.length >= Math.max(3, Math.min(targetCount, 5))) return summary.direct.slice();
+    if ((summary.direct.length + summary.adjacent.length) >= Math.max(4, targetCount - 1)) return summary.direct.concat(summary.adjacent);
+    if (summary.direct.length >= 2) return summary.direct.concat(summary.adjacent).concat(summary.unknown);
+    return candidates;
+  }
+  function plannerPieceStrictFormationMatch(piece, formation, opts) {
+    if (!piece) return false;
+    opts = opts || {};
+    var profile = plannerFormationProfile(formation);
+    if (!profile.label) return true;
+    var category = safeString(piece.category).trim().toLowerCase();
+    var requiredVoices = plannerPieceRequiredVoices(piece);
+    var forms = Array.isArray(piece && piece.formations) ? piece.formations.map(normalizeFormationLabel).filter(Boolean) : [];
+    var isPianoSolo = category === 'piano_solo';
+    var multiVoice = /^(duet|trio|quartet|ensemble)$/.test(category) || requiredVoices.length > 1;
+    if (isPianoSolo) return !!opts.allowPianoSolo && profile.hasPiano;
+    if (requiredVoices.length) {
+      if (!requiredVoices.every(function (voice) { return profile.voices.indexOf(voice) >= 0; })) return false;
+      if (multiVoice && profile.singerCount && requiredVoices.length > profile.singerCount) return false;
+    } else if (multiVoice) {
+      return false;
+    }
+    if (!forms.length) {
+      return requiredVoices.length ? true : !multiVoice;
+    }
+    return forms.some(function (form) {
+      if (form === profile.label) return true;
+      if ((form === 'voice + piano' || form === 'voice(s) + piano') && profile.hasPiano) {
+        if (!requiredVoices.length) return !multiVoice;
+        return requiredVoices.length === 1 && requiredVoices.every(function (voice) { return profile.voices.indexOf(voice) >= 0; });
+      }
+      var formProfile = plannerFormationProfile(form);
+      if (formProfile.hasPiano && !profile.hasPiano) return false;
+      if (formProfile.voices.length && !formProfile.voices.every(function (voice) { return profile.voices.indexOf(voice) >= 0; })) return false;
+      if (multiVoice && formProfile.singerCount && profile.singerCount && formProfile.singerCount > profile.singerCount) return false;
+      if (requiredVoices.length === 1 && formProfile.voices.length === 1) {
+        return formProfile.voices[0] === requiredVoices[0];
+      }
+      if (requiredVoices.length > 1 && formProfile.voices.length) {
+        return requiredVoices.every(function (voice) { return formProfile.voices.indexOf(voice) >= 0; });
+      }
+      return !!formProfile.label && (formProfile.voices.length > 0 || formProfile.hasPiano);
+    });
+  }
+  function pieceMatchesFormation(piece, formation) {
+    return plannerPieceStrictFormationMatch(piece, formation, { allowPianoSolo: plannerFormationProfile(formation).hasPiano });
   }
   function plannerReadinessRank(value) {
     var key = safeString(value).trim().toLowerCase();
@@ -6330,6 +8962,16 @@
     if (tier >= 2) return { className: 'ok', text: 'Good stylistic match for this programme family.' };
     if (tier >= 1) return { className: 'muted', text: 'Usable in this family, though not one of the strongest defaults.' };
     return { className: 'muted', text: 'Usable, but not one of the strongest tagged matches for this family.' };
+  }
+  function plannerStyleFocusScore(piece, bp, opts) {
+    var focus = normalizeProgramOfferStyleFocus(bp && bp.styleFocus);
+    if (!piece || focus === 'mixed') return 0;
+    var tier = plannerPieceStyleFocusTier(piece, focus);
+    var summary = plannerStyleFocusPoolSummary(bp, plannerDraftEligibleItems(bp));
+    var directStrong = summary.direct.length >= Math.max(3, Math.min(plannerDraftTargetPieceCount(bp), 5));
+    var tierScore = tier >= 2 ? (directStrong ? 42 : 28) : (tier === 1 ? 12 : (tier === -1 ? (directStrong ? -24 : -12) : 0));
+    if (opts && opts.desiredRole && (opts.desiredRole === 'contrast' || opts.desiredRole === 'support')) tierScore = Math.round(tierScore * 0.7);
+    return tierScore;
   }
   function plannerAssignedArcPieces(bp, excludeSlotId) {
     return ((bp && bp.items) || []).map(function (it) {
@@ -6495,18 +9137,20 @@
       var availability = safeString(item.availabilityStatus || '').trim().toLowerCase();
       var effectiveTags = (item.fitTags && item.fitTags.length ? item.fitTags : item.tags) || [];
       var familyTier = plannerOfferFamilyFitTier(item, bp, currentFamily);
+      var strictFormationMatch = plannerPieceFormationEligibleForOffer(item, bp);
       if (availability === 'outside_repertoire') return false;
       if (item.excludeFromOffers === true && safeString(item.category) !== 'piano_solo') return false;
       if (item.offerOnly === true) return false;
       if (filterCategory === 'all' && safeString(item.type) === 'role') return false;
-      if (!plannerOfferVoiceMatch(item, currentFormation, showWithoutTenor)) return false;
+      if (!strictFormationMatch) return false;
+      if (!showWithoutTenor && !plannerOfferVoiceMatch(item, currentFormation, showWithoutTenor) && safeString(item.category).trim().toLowerCase() !== 'piano_solo') return false;
       if (matchingOnly && familyTier <= 0) return false;
       if (filterStatus === 'performed' && availability !== 'performed' && safeString(item.performanceStatus) !== 'performed') return false;
       if (filterStatus !== 'all' && filterStatus !== 'performed' && availability !== filterStatus && safeString(item.readiness) !== filterStatus) return false;
       if (filterCategory !== 'all' && !plannerCategoryFilterMatches(item, filterCategory)) return false;
       if (filterLang && safeString(item.language).trim().toLowerCase().indexOf(filterLang) < 0) return false;
       if (filterTag && effectiveTags.join(' ').toLowerCase().indexOf(filterTag) < 0) return false;
-      if (formationOnly && !pieceMatchesFormation(item, currentFormation)) return false;
+      if (formationOnly && !strictFormationMatch) return false;
       if (!needle) return true;
       return [item.title, item.composer, item.work, plannerItemVoiceLabel(item), safeString(item.category), safeString(item.sourceGroup), effectiveTags.join(' '), item.notes, item.publicNotes].join(' ').toLowerCase().indexOf(needle) >= 0;
     });
@@ -6519,8 +9163,8 @@
         var slotB = plannerArcSlotScore(b, slotId, bp);
         if (slotA !== slotB) return slotB - slotA;
       }
-      var formA = pieceMatchesFormation(a, currentFormation) ? 1 : 0;
-      var formB = pieceMatchesFormation(b, currentFormation) ? 1 : 0;
+      var formA = plannerPieceFormationEligibleForOffer(a, bp) ? 1 : 0;
+      var formB = plannerPieceFormationEligibleForOffer(b, bp) ? 1 : 0;
       if (formA !== formB) return formB - formA;
       if (currentFamily === 'borders') {
         var varietyA = plannerBordersVarietyScore(a, bp);
@@ -6642,10 +9286,12 @@
     if (!list) return;
     var bp = currentBlueprint();
     recomputeBlueprint(bp);
+    syncProgramBuilderSelectionUi(bp);
     if ($('pb-selected-count')) $('pb-selected-count').textContent = bp.items.length + (bp.items.length === 1 ? ' piece selected' : ' pieces selected');
     if (!bp.items.length) {
       list.innerHTML = '<div class="empty-state">No repertoire selected yet. Add the pieces you want to include in this concrete programme offer.</div>';
       state.blueprintPieceIndex = -1;
+      if (isProgramBuilderCompactViewport() && $('pb-piece-editor-panel')) setProgramBuilderDisclosureOpen($('pb-piece-editor-panel'), false);
       renderBlueprintPieceEditor();
       return;
     }
@@ -6660,6 +9306,7 @@
       if (bp.buildMode === 'dramatic_arc' && safeString(it.slotId).trim()) badges.push('<span class="item-badge">' + escapeHtml(dramaticArcSlotLabel(it.slotId, bp.targetDuration) || it.slotId) + '</span>');
       if (piece) badges.push('<span class="item-badge">' + escapeHtml(plannerItemVoiceLabel(piece)) + '</span>');
       if (piece && piece.dramaticRole) badges.push('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[piece.dramaticRole] || piece.dramaticRole) + '</span>');
+      if (piece && piece.discoveryIdea === true) badges.push('<span class="item-badge warn">discovery idea</span>');
       if (safeString(piece && piece.performanceStatus) === 'performed') badges.push('<span class="item-badge ok">performed</span>');
       if (safeString(piece && piece.reviewStatus) === 'manual_review') badges.push('<span class="item-badge warn">review</span>');
       else if (compat && formationMatch) badges.push('<span class="item-badge ok">strong fit</span>');
@@ -6672,6 +9319,7 @@
         state.blueprintPieceIndex = Number(el.getAttribute('data-pb-piece-idx'));
         renderBlueprintPieces();
         renderBlueprintPieceEditor();
+        if (isProgramBuilderCompactViewport()) focusProgramBuilderSelection(true, false);
       });
     });
     if (state.blueprintPieceIndex < 0 || state.blueprintPieceIndex >= bp.items.length) {
@@ -6816,6 +9464,476 @@
     renderBlueprintBuilder();
     markDirty(true, 'Encore option added');
   }
+  function plannerDraftEligibleItems(bp) {
+    var items = (state.plannerDoc && Array.isArray(state.plannerDoc.items)) ? state.plannerDoc.items : [];
+    var baseItems = items.filter(function (item) {
+      var availability = safeString(item && item.availabilityStatus).trim().toLowerCase();
+      var category = safeString(item && item.category).trim().toLowerCase();
+      var familyTier = plannerOfferFamilyFitTier(item, bp, bp && bp.family);
+      if (!item) return false;
+      if (availability === 'outside_repertoire') return false;
+      if (item.offerOnly === true) return false;
+      if (item.excludeFromOffers === true && category !== 'piano_solo') return false;
+      if (!plannerPieceFormationEligibleForOffer(item, bp)) return false;
+      return familyTier > 0;
+    });
+    if (!(bp && bp.includeDiscoveryIdeas === true)) return baseItems;
+    return baseItems.concat(plannerDiscoveryCandidatesForOffer(bp));
+  }
+  function plannerDraftReliabilityScore(piece, bp) {
+    if (!piece) return 0;
+    var availability = safeString(piece.availabilityStatus).trim().toLowerCase();
+    var readiness = safeString(piece.readiness).trim().toLowerCase();
+    var mode = safeString(bp && bp.repertoireMode || 'suggested').trim().toLowerCase();
+    var score = 0;
+    if (availability === 'performed') score += 30;
+    else if (availability === 'ready') score += 22;
+    else if (availability === 'working') score += 8;
+    else if (availability === 'idea') score -= 10;
+    if (readiness === 'ready') score += 10;
+    else if (readiness === 'working') score += 2;
+    else if (readiness === 'idea') score -= 6;
+    if (mode === 'agreed') score += availability === 'performed' ? 12 : (availability === 'ready' ? 8 : -12);
+    else if (mode === 'possible') score += availability === 'idea' ? 6 : 0;
+    return score;
+  }
+  function plannerDraftSlotPlan(bp) {
+    var target = Math.max(0, Number(bp && bp.targetDuration) || 30);
+    var isGala = safeString(bp && bp.family).trim().toLowerCase() === 'gala';
+    if (target <= 30) {
+      return [
+        { role: 'opener', allowPianoSolo: false },
+        { role: isGala ? 'contrast' : 'lyrical_center', allowPianoSolo: false },
+        { role: 'lyrical_center', allowPianoSolo: false },
+        { role: 'finale', allowPianoSolo: false }
+      ];
+    }
+    if (target <= 45) {
+      return [
+        { role: 'opener', allowPianoSolo: false },
+        { role: 'lyrical_center', allowPianoSolo: false },
+        { role: 'contrast', allowPianoSolo: false },
+        { role: 'support', allowPianoSolo: isGala },
+        { role: 'climax', allowPianoSolo: false },
+        { role: 'finale', allowPianoSolo: false }
+      ];
+    }
+    return [
+      { role: 'opener', allowPianoSolo: false },
+      { role: 'lyrical_center', allowPianoSolo: false },
+      { role: 'contrast', allowPianoSolo: false },
+      { role: 'support', allowPianoSolo: isGala },
+      { role: 'lyrical_center', allowPianoSolo: false },
+      { role: 'contrast', allowPianoSolo: false },
+      { role: 'climax', allowPianoSolo: false },
+      { role: 'finale', allowPianoSolo: false }
+    ];
+  }
+  function plannerDraftSummary(bp) {
+    var summary = { breathingPoints: 0, hasContrast: false, heavyTenorRun: 0 };
+    var languages = {};
+    var textures = {};
+    var maxHeavyRun = 0;
+    var currentHeavyRun = 0;
+    ((bp && bp.items) || []).forEach(function (it) {
+      var piece = getPlannerItemById(it && it.pieceId);
+      if (!piece) return;
+      var flags = plannerPieceFlags(piece);
+      if (flags.language) languages[flags.language] = true;
+      if (flags.texture) textures[flags.texture] = true;
+      if (flags.recoveryValue === 'partial' || flags.recoveryValue === 'strong' || flags.galaRole === 'vocal_rest_support') summary.breathingPoints += 1;
+      if (piece.includesTenor === true && flags.texture === 'solo' && flags.vocalLoad === 'heavy') {
+        currentHeavyRun += 1;
+        maxHeavyRun = Math.max(maxHeavyRun, currentHeavyRun);
+      } else {
+        currentHeavyRun = 0;
+      }
+    });
+    summary.heavyTenorRun = maxHeavyRun;
+    summary.hasContrast = Object.keys(languages).length >= 2 || Object.keys(textures).length >= 2;
+    return summary;
+  }
+  function plannerDraftSequencePenalty(piece, bp) {
+    var items = (bp && bp.items) || [];
+    if (!items.length || !piece) return 0;
+    var prevPiece = getPlannerItemById(items[items.length - 1] && items[items.length - 1].pieceId);
+    if (!prevPiece) return 0;
+    var prevFlags = plannerPieceFlags(prevPiece);
+    var flags = plannerPieceFlags(piece);
+    var penalty = 0;
+    if (prevPiece.includesTenor === true && piece.includesTenor === true && prevFlags.texture === 'solo' && flags.texture === 'solo' && prevFlags.vocalLoad === 'heavy' && flags.vocalLoad === 'heavy') penalty += 140;
+    if (prevFlags.energyLevel === 'high' && flags.energyLevel === 'high') penalty += 14;
+    if (prevFlags.texture === flags.texture) penalty += 6;
+    if (prevFlags.styleBucket && flags.styleBucket && prevFlags.styleBucket === flags.styleBucket) penalty += 4;
+    if (prevFlags.language && flags.language && prevFlags.language === flags.language) penalty += 2;
+    if (safeString(prevPiece.composer).trim() && safeString(prevPiece.composer).trim() === safeString(piece.composer).trim()) penalty += 4;
+    return penalty;
+  }
+  function plannerDraftContrastBonus(piece, bp) {
+    if (!piece) return 0;
+    var flags = plannerPieceFlags(piece);
+    var summary = safeString(bp && bp.family).trim().toLowerCase() === 'gala' ? galaProgrammeState(bp) : plannerDraftSummary(bp);
+    var bonus = 0;
+    if (!summary.hasContrast) {
+      if (flags.texture !== 'solo') bonus += 8;
+      if (flags.styleBucket === 'operetta' || flags.styleBucket === 'canzone' || flags.isArtSong || flags.isTango) bonus += 8;
+      if (flags.language) bonus += 2;
+    }
+    if ((bp && bp.targetDuration) >= 45 && summary.breathingPoints < galaSupportTarget(bp.targetDuration)) {
+      if (flags.recoveryValue === 'partial' || flags.recoveryValue === 'strong' || flags.galaRole === 'vocal_rest_support') bonus += 12;
+    }
+    return bonus;
+  }
+  function plannerDraftDurationScore(piece, bp, opts) {
+    var duration = Math.max(0, Number(plannerEffectiveDuration(piece)) || 0);
+    var total = Math.max(0, Number(bp && bp.totalDuration) || 0);
+    var target = Math.max(0, Number(bp && bp.targetDuration) || 0);
+    var remaining = Math.max(0, target - total);
+    var bands = programsDurationTolerance(target);
+    var nextTotal = total + duration;
+    var score = Math.max(-28, 22 - (Math.abs(remaining - duration) * 3));
+    if (nextTotal > bands.upper) score -= (nextTotal - bands.upper) * 12;
+    if (remaining <= 8 && duration > remaining + 3) score -= 14;
+    if (opts && opts.slotId && duration > remaining + bands.slightOver) score -= 10;
+    return score;
+  }
+  function plannerDraftEditorialSlotBonus(piece, bp, opts) {
+    if (!piece) return 0;
+    opts = opts || {};
+    var flags = plannerPieceFlags(piece);
+    var editorialRole = plannerPieceEditorialRole(piece);
+    var desiredRole = safeString(opts.desiredRole).trim().toLowerCase();
+    var score = 0;
+    if (desiredRole) {
+      if (editorialRole === desiredRole) score += 24;
+      else if ((desiredRole === 'finale' || desiredRole === 'climax') && (editorialRole === 'climax' || editorialRole === 'finale')) score += 18;
+      else if ((desiredRole === 'contrast' || desiredRole === 'lyrical_center') && (editorialRole === 'contrast' || editorialRole === 'lyrical_center')) score += 14;
+      else if (desiredRole === 'support' && (editorialRole === 'support' || editorialRole === 'piano_support')) score += 18;
+      else if (desiredRole === 'support' && flags.recoveryValue === 'strong') score += 10;
+      else if (desiredRole === 'opener' && flags.audienceAppeal === 'balanced') score += 8;
+      else score -= 8;
+    }
+    if (opts.allowPianoSolo === false && flags.isPianoSolo) score -= 40;
+    if (opts.allowPianoSolo === true && flags.isPianoSolo) score += 8;
+    return score;
+  }
+  function plannerDraftRoleBonus(piece, bp, opts) {
+    if (!piece) return 0;
+    var flags = plannerPieceFlags(piece);
+    var score = 0;
+    var idx = Number(opts && opts.index) || 0;
+    var total = Math.max(0, Number(bp && bp.totalDuration) || 0);
+    var target = Math.max(0, Number(bp && bp.targetDuration) || 0);
+    var nearEnding = total >= Math.max(0, target - 12);
+    if (idx === 0) {
+      if (safeString(piece.dramaticRole) === 'opener' || flags.galaRole === 'opener') score += 18;
+      if (flags.audienceAppeal === 'crowd_pleaser' || flags.audienceAppeal === 'balanced') score += 6;
+    }
+    if (nearEnding) {
+      if (safeString(piece.dramaticRole) === 'finale' || flags.galaRole === 'finale') score += 16;
+      if (safeString(piece.dramaticRole) === 'climax' || flags.galaRole === 'climax') score += 12;
+      if (flags.impactLevel === 'high') score += 10;
+    }
+    if (opts && opts.slotId) score += plannerArcSlotScore(piece, opts.slotId, bp);
+    score += plannerDraftEditorialSlotBonus(piece, bp, opts);
+    return score;
+  }
+  function plannerSuggestedDraftScore(piece, bp, opts) {
+    if (!piece) return -9999;
+    var score = plannerFamilySelectorPriority(piece, bp && bp.family, bp && bp.formation, bp);
+    score += plannerDraftReliabilityScore(piece, bp);
+    score += plannerDraftDurationScore(piece, bp, opts);
+    score += plannerDraftContrastBonus(piece, bp);
+    score += plannerDraftRoleBonus(piece, bp, opts);
+    score -= plannerDraftSequencePenalty(piece, bp);
+    if (piece.discoveryIdea === true) {
+      score -= 24;
+      score += plannerDiscoveryIdeaScore(piece, bp, opts);
+    }
+    if (safeString(piece.reviewStatus).trim().toLowerCase() === 'manual_review') score -= 26;
+    return score;
+  }
+  function plannerDraftSessionKey(bp) {
+    return [
+      safeString(bp && bp.family).trim().toLowerCase(),
+      String(Math.max(0, Number(bp && bp.targetDuration) || 0)),
+      safeString(bp && bp.formation).trim().toLowerCase(),
+      safeString(bp && bp.outputLang).trim().toLowerCase(),
+      safeString(bp && bp.styleFocus || 'mixed').trim().toLowerCase(),
+      safeString(bp && bp.buildMode).trim().toLowerCase(),
+      safeString(bp && bp.repertoireMode || 'suggested').trim().toLowerCase(),
+      bp && bp.includeDiscoveryIdeas === true ? 'with_discovery' : 'internal_only'
+    ].join('|');
+  }
+  function plannerDraftHistoryRows(bp) {
+    var key = plannerDraftSessionKey(bp);
+    if (!isObject(state.programmeDraftHistory)) state.programmeDraftHistory = {};
+    if (!Array.isArray(state.programmeDraftHistory[key])) state.programmeDraftHistory[key] = [];
+    return state.programmeDraftHistory[key];
+  }
+  function plannerDraftSequenceSignature(bp) {
+    return ((bp && bp.items) || []).map(function (it) { return safeString(it && it.pieceId).trim(); }).filter(Boolean).join('|');
+  }
+  function plannerDraftRecentPenalty(piece, bp, opts) {
+    if (!piece) return 0;
+    var history = plannerDraftHistoryRows(bp).slice(-6);
+    var id = safeString(piece.id).trim();
+    var slotIndex = Number(opts && opts.index) || 0;
+    var penalty = 0;
+    history.forEach(function (row, historyIndex) {
+      var ids = Array.isArray(row && row.ids) ? row.ids : [];
+      var age = history.length - historyIndex;
+      var position = ids.indexOf(id);
+      if (position < 0) return;
+      penalty += Math.max(2, 10 - age);
+      if (position === slotIndex) penalty += Math.max(4, 14 - age);
+      if (position >= 0 && Math.abs(position - slotIndex) <= 1) penalty += Math.max(1, 6 - age);
+    });
+    return penalty;
+  }
+  function plannerDraftCandidateFrontier(candidates, bp, opts) {
+    if (!candidates.length) return [];
+    var scored = candidates.map(function (piece) {
+      return {
+        piece: piece,
+        score: plannerSuggestedDraftScore(piece, bp, opts) - plannerDraftRecentPenalty(piece, bp, opts)
+      };
+    }).sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return safeString(a.piece.title).localeCompare(safeString(b.piece.title));
+    });
+    var topScore = scored[0].score;
+    var frontier = scored.filter(function (row, idx) {
+      if (idx === 0) return true;
+      if (idx >= 6) return false;
+      return row.score >= topScore - 18;
+    });
+    return frontier.length ? frontier : scored.slice(0, 1);
+  }
+  function plannerDraftSelectFromFrontier(frontier, bp, opts) {
+    if (!frontier.length) return null;
+    var history = plannerDraftHistoryRows(bp);
+    var slotIndex = Number(opts && opts.index) || 0;
+    var variantSeed = history.length;
+    var choiceIndex = Math.abs((variantSeed * 3) + (slotIndex * 2)) % frontier.length;
+    return frontier[choiceIndex].piece || frontier[0].piece || null;
+  }
+  function plannerRememberDraft(bp) {
+    var history = plannerDraftHistoryRows(bp);
+    history.push({
+      ids: ((bp && bp.items) || []).map(function (it) { return safeString(it && it.pieceId).trim(); }).filter(Boolean),
+      signature: plannerDraftSequenceSignature(bp),
+      at: Date.now()
+    });
+    if (history.length > 12) history.splice(0, history.length - 12);
+  }
+  function plannerDraftRecentlyUsed(bp, signature) {
+    var history = plannerDraftHistoryRows(bp).slice(-6);
+    return history.some(function (row) { return safeString(row && row.signature).trim() === safeString(signature).trim(); });
+  }
+  function plannerPickSuggestedDraftPiece(bp, usedIds, opts) {
+    var candidates = plannerCandidatePoolForStyleFocus(bp, plannerDraftEligibleItems(bp)).filter(function (piece) {
+      var id = safeString(piece && piece.id).trim();
+      return id && !usedIds[id];
+    }).filter(function (piece) {
+      var discoveryCount = Number(opts && opts.discoveryCount) || 0;
+      var discoveryLimit = Number(opts && opts.discoveryLimit) || 0;
+      if (piece.discoveryIdea === true && discoveryCount >= discoveryLimit) return false;
+      return true;
+    });
+    var frontier = plannerDraftCandidateFrontier(candidates, bp, opts);
+    return plannerDraftSelectFromFrontier(frontier, bp, opts);
+  }
+  function applySuggestedDraftSlot(bp, piece, slotId) {
+    if (!piece) return;
+    bp.items.push({ pieceId: piece.id, customTitle: '', customDuration: 0, notes: '', slotId: safeString(slotId).trim(), position: bp.items.length });
+    recomputeBlueprint(bp);
+  }
+  function buildSuggestedDraftUsingArc(bp) {
+    var usedIds = {};
+    var discoveryCount = 0;
+    var discoveryLimit = plannerDiscoveryDraftLimit(bp);
+    var bands = programsDurationTolerance(bp.targetDuration);
+    dramaticArcSlotsForDuration(bp.targetDuration).forEach(function (slot) {
+      var candidate = plannerPickSuggestedDraftPiece(bp, usedIds, { slotId: slot.id, index: (bp.items || []).length, discoveryCount: discoveryCount, discoveryLimit: discoveryLimit });
+      var duration = Math.max(0, Number(candidate && plannerEffectiveDuration(candidate)) || 0);
+      if (!candidate) return;
+      if (slot.optional && (Number(bp.totalDuration) || 0) >= bands.lower && ((Number(bp.totalDuration) || 0) + duration) > bands.upper) return;
+      applySuggestedDraftSlot(bp, candidate, slot.id);
+      if (candidate.discoveryIdea === true) discoveryCount += 1;
+      usedIds[safeString(candidate.id).trim()] = true;
+    });
+    while ((Number(bp.totalDuration) || 0) < bands.lower) {
+      var filler = plannerPickSuggestedDraftPiece(bp, usedIds, { index: (bp.items || []).length, discoveryCount: discoveryCount, discoveryLimit: discoveryLimit });
+      if (!filler) break;
+      applySuggestedDraftSlot(bp, filler, '');
+      if (filler.discoveryIdea === true) discoveryCount += 1;
+      usedIds[safeString(filler.id).trim()] = true;
+      if ((Number(bp.totalDuration) || 0) > bands.upper) break;
+    }
+  }
+  function buildSuggestedDraftFree(bp) {
+    var usedIds = {};
+    var discoveryCount = 0;
+    var discoveryLimit = plannerDiscoveryDraftLimit(bp);
+    var bands = programsDurationTolerance(bp.targetDuration);
+    plannerDraftSlotPlan(bp).forEach(function (slot, slotIndex) {
+      if ((Number(bp.totalDuration) || 0) >= bands.upper) return;
+      var candidate = plannerPickSuggestedDraftPiece(bp, usedIds, {
+        index: (bp.items || []).length,
+        desiredRole: slot.role,
+        allowPianoSolo: slot.allowPianoSolo,
+        discoveryCount: discoveryCount,
+        discoveryLimit: discoveryLimit
+      });
+      var duration = Math.max(0, Number(candidate && plannerEffectiveDuration(candidate)) || 0);
+      if (!candidate) return;
+      if ((Number(bp.totalDuration) || 0) >= bands.lower && ((Number(bp.totalDuration) || 0) + duration) > bands.upper && slotIndex >= 2) return;
+      applySuggestedDraftSlot(bp, candidate, '');
+      if (candidate.discoveryIdea === true) discoveryCount += 1;
+      usedIds[safeString(candidate.id).trim()] = true;
+    });
+    var guard = 0;
+    while ((Number(bp.totalDuration) || 0) < bands.lower && guard < 12) {
+      guard += 1;
+      var filler = plannerPickSuggestedDraftPiece(bp, usedIds, {
+        index: (bp.items || []).length,
+        desiredRole: (Number(bp.totalDuration) || 0) >= Math.max(0, Number(bp.targetDuration) - 10) ? 'finale' : '',
+        discoveryCount: discoveryCount,
+        discoveryLimit: discoveryLimit
+      });
+      var fillerDuration = Math.max(0, Number(filler && plannerEffectiveDuration(filler)) || 0);
+      if (!filler) break;
+      if ((Number(bp.totalDuration) || 0) >= bands.lower && ((Number(bp.totalDuration) || 0) + fillerDuration) > bands.upper) break;
+      applySuggestedDraftSlot(bp, filler, '');
+      if (filler.discoveryIdea === true) discoveryCount += 1;
+      usedIds[safeString(filler.id).trim()] = true;
+      if ((Number(bp.totalDuration) || 0) >= bands.upper) break;
+    }
+    if ((bp.items || []).length >= 2) {
+      var lastPiece = getPlannerItemById((bp.items || [])[bp.items.length - 1] && bp.items[bp.items.length - 1].pieceId);
+      var penultimatePiece = getPlannerItemById((bp.items || [])[bp.items.length - 2] && bp.items[bp.items.length - 2].pieceId);
+      var lastRole = plannerPieceEditorialRole(lastPiece);
+      var prevRole = plannerPieceEditorialRole(penultimatePiece);
+      if ((lastRole !== 'finale' && lastRole !== 'climax') && (prevRole === 'finale' || prevRole === 'climax')) {
+        var swap = bp.items[bp.items.length - 1];
+        bp.items[bp.items.length - 1] = bp.items[bp.items.length - 2];
+        bp.items[bp.items.length - 2] = swap;
+        recomputeBlueprint(bp);
+      }
+    }
+  }
+  function generateSuggestedProgrammeDraft() {
+    var bp = currentBlueprint();
+    var oldItems = clone(bp.items || []);
+    var oldPieceIndex = state.blueprintPieceIndex;
+    if ((bp.items || []).length && !window.confirm('Replace the current selected repertoire with a suggested draft?\n\nEncore options will stay as they are.')) return;
+    var built = false;
+    var attempt = 0;
+    var originalHistory = clone(plannerDraftHistoryRows(bp));
+    while (!built && attempt < 4) {
+      state.programmeDraftHistory[plannerDraftSessionKey(bp)] = clone(originalHistory);
+      if (attempt > 0) {
+        state.programmeDraftHistory[plannerDraftSessionKey(bp)].push({
+          ids: [],
+          signature: 'variation_probe_' + String(attempt),
+          at: Date.now() + attempt
+        });
+      }
+      bp.items = [];
+      state.blueprintPieceIndex = -1;
+      recomputeBlueprint(bp);
+      if (safeString(bp.buildMode).trim().toLowerCase() === 'dramatic_arc') buildSuggestedDraftUsingArc(bp);
+      else buildSuggestedDraftFree(bp);
+      var signature = plannerDraftSequenceSignature(bp);
+      if ((bp.items || []).length && (!plannerDraftRecentlyUsed(bp, signature) || plannerDraftEligibleItems(bp).length <= Math.max(4, (bp.items || []).length + 1))) {
+        built = true;
+        break;
+      }
+      attempt += 1;
+    }
+    state.programmeDraftHistory[plannerDraftSessionKey(bp)] = clone(originalHistory);
+    if (!(bp.items || []).length) {
+      bp.items = oldItems;
+      state.blueprintPieceIndex = oldPieceIndex;
+      recomputeBlueprint(bp);
+      renderBlueprintBuilder();
+      setStatus('No usable draft could be built from the current setup.', 'warn');
+      return;
+    }
+    plannerRememberDraft(bp);
+    state.blueprintPieceIndex = 0;
+    renderBlueprintBuilder();
+    if (isProgramBuilderCompactViewport()) focusProgramBuilderSelection(false, true);
+    if ($('pb-smart-draft-note')) {
+      $('pb-smart-draft-note').textContent = bp.includeDiscoveryIdeas === true
+        ? 'Draft built from the current frame, style focus, and internal repertoire first. A small number of discovery ideas may appear and stay clearly marked for review.'
+        : 'Draft built from the current frame, style focus, and internal repertoire signals. Try another draft to explore a different valid route, then swap anything you want.';
+    }
+    setStatus('Draft built: ' + String((bp.items || []).length) + ' piece(s) · ' + String(bp.totalDuration || 0) + ' min.', 'ok');
+    markDirty(true, 'Suggested programme draft built');
+  }
+  function plannerSimilarAlternatives(bp, itemIndex) {
+    var entry = (bp && bp.items && bp.items[itemIndex]) || null;
+    var currentPiece = getPlannerItemById(entry && entry.pieceId);
+    if (!entry || !currentPiece) return [];
+    var currentFlags = plannerPieceFlags(currentPiece);
+    var currentDuration = Math.max(0, Number(entry.customDuration) || Number(plannerEffectiveDuration(currentPiece)) || 0);
+    var selectedIds = {};
+    (bp.items || []).forEach(function (it, idx) {
+      if (idx !== itemIndex) selectedIds[safeString(it && it.pieceId).trim()] = true;
+    });
+    return plannerCandidatePoolForStyleFocus(bp, plannerDraftEligibleItems(bp)).filter(function (piece) {
+      var id = safeString(piece && piece.id).trim();
+      return id && id !== safeString(entry.pieceId).trim() && !selectedIds[id];
+    }).map(function (piece) {
+      var flags = plannerPieceFlags(piece);
+      var duration = Math.max(0, Number(plannerEffectiveDuration(piece)) || 0);
+      var score = plannerFamilySelectorPriority(piece, bp.family, bp.formation, bp);
+      var role = plannerPieceEditorialRole(piece);
+      var currentRole = plannerPieceEditorialRole(currentPiece);
+      if (safeString(piece.voiceCategory) === safeString(currentPiece.voiceCategory)) score += 24;
+      if (safeString(piece.category) === safeString(currentPiece.category)) score += 16;
+      if (flags.texture === currentFlags.texture) score += 10;
+      if (flags.language && flags.language === currentFlags.language) score += 6;
+      if (safeString(piece.dramaticRole) === safeString(currentPiece.dramaticRole)) score += 8;
+      if (flags.galaRole === currentFlags.galaRole) score += 8;
+      if (flags.styleBucket && flags.styleBucket === currentFlags.styleBucket) score += 8;
+      if (flags.audienceAppeal && flags.audienceAppeal === currentFlags.audienceAppeal) score += 4;
+      score += plannerStyleFocusScore(piece, bp, { desiredRole: currentRole });
+      if (role && role === currentRole) score += 18;
+      else if ((role === 'finale' || role === 'climax') && (currentRole === 'finale' || currentRole === 'climax')) score += 12;
+      else if ((role === 'contrast' || role === 'lyrical_center') && (currentRole === 'contrast' || currentRole === 'lyrical_center')) score += 10;
+      score += plannerDraftReliabilityScore(piece, bp);
+      score += Math.max(-12, 14 - (Math.abs(currentDuration - duration) * 2));
+      if (safeString(entry.slotId).trim()) score += plannerArcSlotScore(piece, safeString(entry.slotId).trim(), bp);
+      if (piece.discoveryIdea === true && currentPiece.discoveryIdea !== true) score -= 18;
+      if (safeString(piece.reviewStatus).trim().toLowerCase() === 'manual_review' && safeString(currentPiece.reviewStatus).trim().toLowerCase() !== 'manual_review') score -= 20;
+      return { piece: piece, score: score };
+    }).sort(function (a, b) {
+      if (a.score !== b.score) return b.score - a.score;
+      return safeString(a.piece.title).localeCompare(safeString(b.piece.title));
+    }).slice(0, 4).map(function (row) { return row.piece; });
+  }
+  function replaceCurrentBlueprintPiece(pieceId) {
+    var bp = currentBlueprint();
+    var idx = state.blueprintPieceIndex;
+    var entry = (bp && bp.items && bp.items[idx]) || null;
+    var nextId = safeString(pieceId).trim();
+    if (!entry || !nextId) return;
+    var prevPiece = getPlannerItemById(entry.pieceId);
+    var nextPiece = getPlannerItemById(nextId);
+    if (!nextPiece || safeString(entry.pieceId).trim() === nextId) return;
+    entry.pieceId = nextId;
+    entry.customTitle = '';
+    entry.customDuration = 0;
+    entry.notes = '';
+    recomputeBlueprint(bp);
+    renderBlueprintBuilder();
+    if (isProgramBuilderCompactViewport()) focusProgramBuilderSelection(true, false);
+    setStatus('Replaced ' + safeString(prevPiece && prevPiece.title || 'piece') + ' with ' + safeString(nextPiece.title || 'new piece') + '.', 'ok');
+    markDirty(true, 'Programme repertoire replaced');
+  }
   function plannerAddPieceToCurrentOffer(pieceId) {
     pieceId = safeString(pieceId).trim();
     if (!pieceId) return;
@@ -6824,12 +9942,14 @@
     if (existingIndex >= 0) {
       state.blueprintPieceIndex = existingIndex;
       renderBlueprintBuilder();
+      if (isProgramBuilderCompactViewport()) focusProgramBuilderSelection(true, true);
       setStatus('Piece already included in this offer.', 'warn');
       return;
     }
     bp.items.push({ pieceId: pieceId, customTitle: '', customDuration: 0, notes: '', slotId: '', position: bp.items.length });
     state.blueprintPieceIndex = bp.items.length - 1;
     renderBlueprintBuilder();
+    if (isProgramBuilderCompactViewport()) focusProgramBuilderSelection(true, true);
     markDirty(true, 'Programme repertoire added');
   }
   function plannerAddPieceToEncore(pieceId, encoreIndex) {
@@ -6855,15 +9975,15 @@
     if (type === 'arc') {
       var bp = currentBlueprint();
       var slotLabel = dramaticArcSlotLabel(state.quickAddTargetSlotId, bp.targetDuration) || 'dramatic arc slot';
-      return 'This quick entry will be added directly to ' + slotLabel + '.';
+      return 'This quick entry will go straight into ' + slotLabel + '.';
     }
     if (type === 'encore') {
       var idx = Number.isFinite(Number(state.quickAddTargetEncoreIndex)) && Number(state.quickAddTargetEncoreIndex) >= 0
         ? ('Encore ' + String(Number(state.quickAddTargetEncoreIndex) + 1))
         : 'the encore options';
-      return 'This quick entry will be added directly to ' + idx + '.';
+      return 'This quick entry will go straight into ' + idx + '.';
     }
-    return 'This quick entry will be added to the main programme list.';
+    return 'This quick entry will go into the main programme list.';
   }
   function renderQuickAddContext() {
     if ($('pb-quick-add-context')) $('pb-quick-add-context').textContent = quickAddContextLabel();
@@ -6905,7 +10025,7 @@
     if ($('pb-quick-saveMode')) $('pb-quick-saveMode').value = 'offer_only';
     if ($('pb-quick-needsReview')) $('pb-quick-needsReview').checked = true;
     if ($('pb-quick-outside')) $('pb-quick-outside').checked = false;
-    if ($('pb-quick-add-state')) $('pb-quick-add-state').textContent = 'Quick-added pieces can still be refined later in the full Repertoire Library editor.';
+    if ($('pb-quick-add-state')) $('pb-quick-add-state').textContent = 'You can refine quick-added pieces later in the full Repertoire Library editor.';
     renderQuickAddContext();
   }
   function quickAddManualPiece() {
@@ -6991,7 +10111,7 @@
       return !selectedIds[safeString(item.id)];
     }).slice(0, 6);
     if (!suggestions.length) {
-      box.innerHTML = '<div class="pb-quick-picks__empty">' + (state.plannerOfferMatchingOnly !== false ? 'No quick picks fit this family cleanly right now. Relax the filters or switch to Show all repertoire if you want to browse more broadly.' : 'No quick picks available with the current filters. Relax the filters or use the full repertoire selector above.') + '</div>';
+      box.innerHTML = '<div class="pb-quick-picks__empty">' + (state.plannerOfferMatchingOnly !== false ? 'No quick picks fit this frame cleanly right now. Relax the filters or browse the whole library if you want more options.' : 'No quick picks are available with the current filters. Relax the filters or use the full selector above.') + '</div>';
       return;
     }
     box.innerHTML = suggestions.map(function (item) {
@@ -7039,19 +10159,19 @@
     }).filter(Boolean);
     var hints = [];
     if (!ordered.length) {
-      return [{ kind: 'warn', text: 'Start by assigning an opening and a finale so the programme has a clear shape.' }];
+      return [{ kind: 'warn', text: 'Start with an opening and an ending so the programme has a clear shape.' }];
     }
     var finaleSlot = slots.filter(function (slot) { return slot.id.indexOf('finale') >= 0 || slot.id.indexOf('resolution') >= 0; }).pop();
     var finaleEntry = finaleSlot ? ordered.find(function (row) { return row.slot.id === finaleSlot.id; }) : ordered[ordered.length - 1];
     if (!finaleEntry || ['finale','climax','encore'].indexOf(safeString(finaleEntry.piece.dramaticRole)) < 0 && safeString(finaleEntry.piece.impactLevel) !== 'high') {
-      hints.push({ kind: 'warn', text: 'The ending still feels soft. Consider a stronger finale or a piece with higher impact.' });
+      hints.push({ kind: 'warn', text: 'The ending still feels soft. Consider a stronger final piece.' });
     }
     for (var i = 0; i <= ordered.length - 3; i += 1) {
       var slowRun = ordered.slice(i, i + 3).every(function (row) {
         return safeString(row.piece.tempoProfile) === 'slow' || safeString(row.piece.energyLevel) === 'low';
       });
       if (slowRun) {
-        hints.push({ kind: 'warn', text: 'There are too many slow or inward pieces in a row around the middle of the arc.' });
+        hints.push({ kind: 'warn', text: 'Too many slow or inward pieces sit together in the middle of the arc.' });
         break;
       }
     }
@@ -7060,7 +10180,7 @@
         return safeString(row.piece.impactLevel) === 'high' || safeString(row.piece.energyLevel) === 'high';
       });
       if (highRun) {
-        hints.push({ kind: 'warn', text: 'High-impact items are clustering together. The programme may need more breathing room.' });
+        hints.push({ kind: 'warn', text: 'High-impact pieces are clustering together. The programme may need more breathing room.' });
         break;
       }
     }
@@ -7074,9 +10194,9 @@
       if (key) languages[key] = true;
     });
     if (ordered.length >= 4 && Object.keys(languages).length <= 1) {
-      hints.push({ kind: 'warn', text: 'Language colour is quite narrow. If desired, add a contrast point in another language or style.' });
+      hints.push({ kind: 'warn', text: 'The language palette is quite narrow. If you want, add a contrast point in another language or style.' });
     }
-    if (!hints.length) hints.push({ kind: 'ok', text: 'The dramatic arc reads coherently as a first recital draft.' });
+    if (!hints.length) hints.push({ kind: 'ok', text: 'The dramatic arc reads clearly as a first recital draft.' });
     return hints;
   }
   function programmeGalaHints(bp) {
@@ -7088,29 +10208,29 @@
     var hints = [];
     var options = galaOptionsForBlueprint(bp);
     var summary = galaProgrammeState(bp);
-    if (!ordered.length) return [{ kind: 'warn', text: 'Start with a clear opening piece, then shape the rest of the gala around pacing and a convincing ending.' }];
+    if (!ordered.length) return [{ kind: 'warn', text: 'Start with a clear opening piece, then shape the rest of the gala around pacing and a strong ending.' }];
     for (var i = 0; i <= ordered.length - 2; i += 1) {
       if (ordered[i].piece.includesTenor === true && ordered[i + 1].piece.includesTenor === true && ordered[i].flags.texture === 'solo' && ordered[i + 1].flags.texture === 'solo' && ordered[i].flags.vocalLoad === 'heavy' && ordered[i + 1].flags.vocalLoad === 'heavy') {
-        hints.push({ kind: 'warn', text: 'There are too many heavy tenor arias in a row. Consider adding a duet, ensemble, or lighter contrast point.' });
+        hints.push({ kind: 'warn', text: 'Heavy sequence: two demanding tenor solos are back to back. Insert a duet, ensemble, piano-led moment, or lighter contrast between them.' });
         break;
       }
     }
     if (!summary.hasContrast && ordered.length >= 3) {
-      hints.push({ kind: 'warn', text: 'The gala still lacks contrast. A duet, ensemble, operetta/canzone turn, or a supportive interlude could help the shape breathe.' });
+      hints.push({ kind: 'warn', text: 'Contrast is still thin. Add a different colour such as a duet, ensemble, operetta/canzone turn, or a breathing-point interlude.' });
     }
     if (!summary.lastIsStrongEnding) {
-      hints.push({ kind: 'warn', text: 'No strong ending is selected yet. Consider a clearer finale or a piece with more public impact.' });
+      hints.push({ kind: 'warn', text: 'The ending is not convincing yet. Save a clearer finale or stronger closing piece for the end.' });
     }
     if (bp.targetDuration >= 45 && summary.breathingPoints < galaSupportTarget(bp.targetDuration)) {
-      hints.push({ kind: 'warn', text: 'This gala could use a clearer breathing point. A duet, ensemble, or piano interlude may help vocal pacing.' });
+      hints.push({ kind: 'warn', text: 'Pacing needs more air. A duet, ensemble, or piano interlude would help the middle breathe.' });
     }
     if ((bp.encoreItems || []).length || plannerEncoreCandidatePool(bp).some(function (piece) { return piece.encoreCandidate === true || safeString(piece.galaRole).trim().toLowerCase() === 'encore'; })) {
       hints.push({ kind: 'ok', text: 'An encore candidate is available if you want to keep one in reserve.' });
     }
     if (options.preferVocalPacing) {
-      hints.push({ kind: 'ok', text: bp.targetDuration >= 60 ? 'Vocal pacing is active: aim for one or two breathing points before the final climb.' : 'Vocal pacing is active: leave at least one clear breathing point inside the gala arc.' });
+      hints.push({ kind: 'ok', text: bp.targetDuration >= 60 ? 'Vocal pacing is active: aim for one or two breathing points before the final climb.' : 'Vocal pacing is active: leave at least one clear breathing point in the gala arc.' });
     }
-    if (!hints.length) hints.push({ kind: 'ok', text: 'This Opera Gala reads as a convincing recital draft with a workable pacing shape.' });
+    if (!hints.length) hints.push({ kind: 'ok', text: 'This Opera Gala reads as a convincing draft with a workable pacing shape.' });
     return hints;
   }
   function renderGalaSetupOptions() {
@@ -7137,7 +10257,7 @@
     }
     var hints = programmeGalaHints(bp);
     box.hidden = !hints.length;
-    box.innerHTML = hints.map(function (hint) {
+    box.innerHTML = '<div class="pb-hint-cluster__head"><h4>Editorial checks</h4><p class="muted">Quick shaping notes for pacing, contrast, and finish.</p></div>' + hints.map(function (hint) {
       return '<div class="pb-arc-hint ' + escapeAttr(hint.kind || 'warn') + '">' + escapeHtml(hint.text) + '</div>';
     }).join('');
   }
@@ -7281,6 +10401,9 @@
     if ($('pb-duration')) $('pb-duration').value = String(bp.targetDuration);
     if ($('pb-blueprint-title')) $('pb-blueprint-title').value = resolveProgramOfferField(bp, 'title', lang);
     if ($('pb-blueprint-formation')) $('pb-blueprint-formation').value = safeString(bp.formation);
+    if ($('pb-style-focus')) $('pb-style-focus').value = normalizeProgramOfferStyleFocus(bp.styleFocus);
+    if ($('pb-include-discovery-ideas')) $('pb-include-discovery-ideas').checked = bp.includeDiscoveryIdeas === true;
+    if ($('pb-setup-summary')) $('pb-setup-summary').textContent = 'Current frame: ' + [plannerFamilyLabelForLang(bp.family, lang), String(bp.targetDuration) + ' ' + copy.durationMinutes, safeString(lang).toUpperCase(), safeString(bp.formation || 'Tenor + Piano'), plannerStyleFocusLabel(bp.styleFocus), bp.includeDiscoveryIdeas === true ? 'Discovery-assisted' : 'Internal only'].filter(Boolean).join(' · ');
     if ($('pb-build-mode')) $('pb-build-mode').value = safeString(bp.buildMode || 'free');
     if ($('pb-output-lang')) $('pb-output-lang').value = lang;
     if ($('pb-repertoire-mode')) $('pb-repertoire-mode').value = normalizeProgramOfferRepertoireMode(bp.repertoireMode || 'suggested');
@@ -7316,24 +10439,91 @@
       $('pb-duration-status').className = 'pill ' + status.className;
       $('pb-duration-status').textContent = plannerStatusLabel(status.key, lang);
     }
+    if ($('pb-smart-draft-note')) $('pb-smart-draft-note').textContent = bp.includeDiscoveryIdeas === true
+      ? 'Use the current frame to build a strong editable draft. Internal repertoire stays first, with only a small number of clearly marked discovery ideas if they fit well.'
+      : 'Use the current family, duration, formation, style focus, and repertoire metadata to assemble a strong editable first draft.';
+    renderProgramBuilderDurationBoard(bp, lang, copy);
     if ($('pb-selected-count')) $('pb-selected-count').textContent = (bp.items || []).length + (((bp.items || []).length === 1) ? ' piece selected' : ' pieces selected');
     renderQuickAddContext();
     renderProgramOfferSaveState();
   }
+  function renderBlueprintPieceAlternatives(bp, itemIndex) {
+    var wrap = $('pb-piece-alternatives');
+    var replaceBtn = $('pb-piece-replace');
+    var entry = (bp && bp.items && bp.items[itemIndex]) || null;
+    var piece = getPlannerItemById(entry && entry.pieceId);
+    var alternatives = piece ? plannerSimilarAlternatives(bp, itemIndex) : [];
+    if (replaceBtn) replaceBtn.disabled = !alternatives.length;
+    if (!wrap) return alternatives;
+    if (!entry || !piece) {
+      wrap.innerHTML = '<div class="pb-piece-alternatives__empty">Select a repertoire line to see quick replacements here.</div>';
+      return alternatives;
+    }
+    if (!alternatives.length) {
+      wrap.innerHTML = '<div class="pb-piece-alternatives__empty">No close replacements were found for this line inside the current programme frame.</div>';
+      return alternatives;
+    }
+    wrap.innerHTML = '<div class="pb-piece-alternatives__head"><strong>Replace with similar</strong><span class="muted">Swap this line without rebuilding the whole programme.</span></div>' + alternatives.map(function (candidate) {
+      var meta = [candidate.composer, candidate.work, plannerItemVoiceLabel(candidate)];
+      var language = safeString(candidate.language).trim().toUpperCase();
+      if (language) meta.push(language);
+      meta.push(String(plannerEffectiveDuration(candidate) || 0) + ' min');
+      var badges = [];
+      if (plannerOfferFamilyFitTier(candidate, bp, bp.family) >= 3) badges.push('<span class="item-badge ok">strong fit</span>');
+      if (candidate.discoveryIdea === true) badges.push('<span class="item-badge warn">discovery idea</span>');
+      if (safeString(candidate.performanceStatus).trim().toLowerCase() === 'performed') badges.push('<span class="item-badge ok">performed</span>');
+      if (safeString(candidate.reviewStatus).trim().toLowerCase() === 'manual_review') badges.push('<span class="item-badge warn">review</span>');
+      if (safeString(candidate.dramaticRole).trim()) badges.push('<span class="item-badge">' + escapeHtml(PROGRAM_BUILDER_DRAMATIC_ROLE_LABELS[candidate.dramaticRole] || candidate.dramaticRole) + '</span>');
+      return '<div class="pb-piece-alternatives__item">' +
+        '<div class="pb-piece-alternatives__body">' +
+          '<strong>' + escapeHtml(candidate.title || '(untitled piece)') + '</strong>' +
+          '<span class="pb-piece-alternatives__meta">' + escapeHtml(meta.filter(Boolean).join(' · ')) + '</span>' +
+          (badges.length ? '<div class="item-badges">' + badges.join('') + '</div>' : '') +
+        '</div>' +
+        '<button type="button" data-pb-replace-candidate="' + escapeAttr(candidate.id) + '">Use this</button>' +
+      '</div>';
+    }).join('');
+    wrap.querySelectorAll('[data-pb-replace-candidate]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        replaceCurrentBlueprintPiece(btn.getAttribute('data-pb-replace-candidate'));
+      });
+    });
+    return alternatives;
+  }
   function renderBlueprintPieceEditor() {
     var bp = currentBlueprint();
     var item = bp.items[state.blueprintPieceIndex] || {};
-    if ($('pb-piece-customTitle')) $('pb-piece-customTitle').value = safeString(item.customTitle);
-    if ($('pb-piece-customDuration')) $('pb-piece-customDuration').value = item.customDuration || '';
-    if ($('pb-piece-notes')) $('pb-piece-notes').value = safeString(item.notes);
     var piece = getPlannerItemById(item.pieceId);
+    var hasSelection = !!piece;
+    if ($('pb-piece-customTitle')) {
+      $('pb-piece-customTitle').value = safeString(item.customTitle);
+      $('pb-piece-customTitle').disabled = !hasSelection;
+    }
+    if ($('pb-piece-customDuration')) {
+      $('pb-piece-customDuration').value = item.customDuration || '';
+      $('pb-piece-customDuration').disabled = !hasSelection;
+    }
+    if ($('pb-piece-notes')) {
+      $('pb-piece-notes').value = safeString(item.notes);
+      $('pb-piece-notes').disabled = !hasSelection;
+    }
+    if ($('pb-piece-remove')) $('pb-piece-remove').disabled = !hasSelection;
+    if ($('pb-piece-up')) $('pb-piece-up').disabled = !hasSelection || state.blueprintPieceIndex <= 0;
+    if ($('pb-piece-down')) $('pb-piece-down').disabled = !hasSelection || state.blueprintPieceIndex >= ((bp.items || []).length - 1);
     var compat = $('pb-piece-compatibility');
     if (compat) {
+      if (!hasSelection) {
+        compat.className = 'muted';
+        compat.textContent = 'Fit note: Select a repertoire line to adjust it here.';
+        renderBlueprintPieceAlternatives(bp, state.blueprintPieceIndex);
+        return;
+      }
       var fit = plannerPieceFitSummary(piece, bp.family, bp.formation);
       compat.className = 'muted ' + fit.className;
       var slotText = (bp.buildMode === 'dramatic_arc' && safeString(item.slotId).trim()) ? (' Assigned to ' + (dramaticArcSlotLabel(item.slotId, bp.targetDuration) || item.slotId) + '.') : '';
       compat.textContent = 'Fit note: ' + fit.text + slotText;
     }
+    renderBlueprintPieceAlternatives(bp, state.blueprintPieceIndex);
   }
   function renderBlueprintFeeEstimate() {
     var bp = currentBlueprint();
@@ -7880,6 +11070,7 @@
     var nextBuildMode = safeString($('pb-build-mode').value || 'free').trim().toLowerCase() === 'dramatic_arc' ? 'dramatic_arc' : 'free';
     bp.family = nextFamily;
     bp.targetDuration = nextTarget;
+    bp.styleFocus = normalizeProgramOfferStyleFocus($('pb-style-focus') && $('pb-style-focus').value);
     bp.galaOptions = safeBlueprintGalaOptions(bp.galaOptions, nextTarget);
     if (bp.family === 'gala') {
       bp.galaOptions.preferVocalPacing = !!($('pb-gala-preferPacing') && $('pb-gala-preferPacing').checked);
@@ -7892,6 +11083,7 @@
     }
     bp.outputLang = nextLang;
     bp.repertoireMode = normalizeProgramOfferRepertoireMode($('pb-repertoire-mode') && $('pb-repertoire-mode').value);
+    bp.includeDiscoveryIdeas = !!($('pb-include-discovery-ideas') && $('pb-include-discovery-ideas').checked);
     if (LANGS.indexOf(bp.outputLang) < 0) bp.outputLang = 'en';
     bp.headerImageMode = normalizeProgramOfferHeaderImageMode($('pb-header-image-mode') && $('pb-header-image-mode').value);
     bp.headerImageUrl = safeString($('pb-header-image-url') && $('pb-header-image-url').value).trim();
@@ -7961,6 +11153,8 @@
     var box = $('perf-list');
     var filter = state.perfStatusFilter || 'all';
     var wfPerf = state.perfWorkflowFilter || 'all';
+    var revenueFilter = safeString(state.perfRevenueFilter || 'all').trim().toLowerCase();
+    if (revenueFilter !== 'all' && revenueFilter !== 'missing' && revenueFilter !== 'complete') revenueFilter = 'all';
     function perfListSortDate(row) {
       var s = normalizeSortDateForInput(row && row.e && row.e.sortDate);
       if (!s) return null;
@@ -7977,6 +11171,26 @@
       var fallback = [day, month].filter(Boolean).join(' ');
       return fallback || 'Date missing';
     }
+    function perfRevenueSummaryLine(e) {
+      var amountNum = Number(e && e.revenueAmount);
+      var hasAmount = Number.isFinite(amountNum) && amountNum > 0;
+      var currency = safeString(e && e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR';
+      var status = safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown';
+      var hasStatus = status === 'confirmed' || status === 'potential';
+      var statusLabel = hasStatus ? status : 'not set';
+      if (hasAmount && hasStatus) {
+        var amountLabel = amountNum.toLocaleString(undefined, { minimumFractionDigits: amountNum % 1 ? 2 : 0, maximumFractionDigits: 2 });
+        return currency + ' ' + amountLabel + ' · ' + statusLabel;
+      }
+      if (hasAmount && !hasStatus) {
+        var onlyAmount = amountNum.toLocaleString(undefined, { minimumFractionDigits: amountNum % 1 ? 2 : 0, maximumFractionDigits: 2 });
+        return currency + ' ' + onlyAmount + ' · status not set';
+      }
+      if (!hasAmount && hasStatus) {
+        return 'amount not set · ' + statusLabel;
+      }
+      return 'revenue not set';
+    }
     var rows = state.perfs.map(function (e, i) { return { e: e, i: i }; }).filter(function (row) {
       if (filter === 'all') return true;
       return safeString(row.e.status || 'upcoming') === filter;
@@ -7985,6 +11199,16 @@
       var b = workflowBucketPerf(row.e);
       if (wfPerf === 'ready') return perfReadyCheck(row.e).ok && safeString(row.e.status) !== 'hidden';
       return passesWorkflowFilter(b, wfPerf);
+    }).filter(function (row) {
+      if (revenueFilter === 'all') return true;
+      var amountNum = Number(row && row.e && row.e.revenueAmount);
+      var hasAmount = Number.isFinite(amountNum) && amountNum > 0;
+      var revStatus = safeString(row && row.e && row.e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown';
+      var hasStatus = revStatus === 'confirmed' || revStatus === 'potential';
+      var complete = hasAmount && hasStatus;
+      if (revenueFilter === 'complete') return complete;
+      if (revenueFilter === 'missing') return !complete;
+      return true;
     }).sort(function (a, b) {
       var da = perfListSortDate(a);
       var db = perfListSortDate(b);
@@ -8015,13 +11239,27 @@
       var e = row.e;
       var i = row.i;
       var t = perfListDateLabel(e) + ' · ' + (e.title || '(untitled)');
+      var revenueSummary = perfRevenueSummaryLine(e);
       var cls = i === state.perfIndex ? 'item active' : 'item';
+      var activeFlag = i === state.perfIndex ? '<span class="calendar-item-active">Active</span>' : '';
       var checked = state.perfSelected[i] ? ' checked' : '';
       var st = safeString(e.editorialStatus || '');
-      var badge = st ? badgesHtml([{ kind: 'warn', label: st }]) : '';
-      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main">' + t + badge + '</div></div></div>';
+      var badges = [];
+      if (st) badges.push({ kind: 'warn', label: st });
+      var revenueAmount = Number(e && e.revenueAmount);
+      var hasRevenueAmount = Number.isFinite(revenueAmount) && revenueAmount > 0;
+      var revenueStatus = safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase();
+      var hasRevenueStatus = revenueStatus === 'confirmed' || revenueStatus === 'potential';
+      if (!hasRevenueAmount && !hasRevenueStatus) {
+        badges.push({ kind: 'err', label: 'rev: missing amount + status' });
+      } else if (!hasRevenueAmount) {
+        badges.push({ kind: 'warn', label: 'rev: missing amount' });
+      } else if (!hasRevenueStatus) {
+        badges.push({ kind: 'warn', label: 'rev: missing status' });
+      }
+      var badge = badgesHtml(badges);
+      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main"><div class="calendar-item-line">' + t + activeFlag + '</div><div class="calendar-item-revenue">' + escapeHtml(revenueSummary) + '</div>' + badge + '</div></div></div>';
     }).join('');
-    box.scrollTop = 0;
     setSelectionCount('perf-selection-count', state.perfSelected);
     box.querySelectorAll('.row-select').forEach(function (el) {
       el.addEventListener('click', function (evt) { evt.stopPropagation(); });
@@ -8037,6 +11275,10 @@
         renderPerfEditor();
       });
     });
+    var activeRow = box.querySelector('.item.active');
+    if (activeRow && typeof activeRow.scrollIntoView === 'function') {
+      activeRow.scrollIntoView({ block: 'nearest' });
+    }
     if (state.perfIndex < 0 && state.perfs.length) {
       state.perfIndex = 0;
       renderPerfList();
@@ -8050,7 +11292,13 @@
       var loc = safeString(e[lk]).trim();
       return loc || safeString(e[base]);
     }
-    $('perf-title').value = safeString(e.title);
+    function localeFirstTitle() {
+      var lang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
+      if (lang === 'en') return safeString(e.title).trim() || safeString(e.title_en).trim();
+      var loc = safeString(e['title_' + lang]).trim();
+      return loc || safeString(e.title);
+    }
+    $('perf-title').value = localeFirstTitle();
     $('perf-detail').value = localeFirst('detail');
     $('perf-day').value = safeString(e.day);
     $('perf-month').value = safeString(e.month);
@@ -8058,32 +11306,24 @@
     $('perf-time').value = safeString(e.time);
     $('perf-venue').value = safeString(e.venue);
     $('perf-city').value = safeString(e.city);
+    $('perf-revenue-amount').value = safeString(e.revenueAmount);
+    setSelectWithCustomValue('perf-revenue-currency', safeString(e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR', 'EUR');
+    setSelectWithCustomValue('perf-revenue-status', safeString(e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown', 'unknown');
+    $('perf-revenue-notes').value = safeString(e.revenueNotes);
     $('perf-venuePhoto').value = safeString(e.venuePhoto);
-    var op = Number(e.venueOpacity);
-    if (!Number.isFinite(op)) op = 50;
-    if (op < 10) op = 10;
-    if (op > 100) op = 100;
-    var brightness = Number(e.venueBrightness);
-    if (!Number.isFinite(brightness)) brightness = 100;
-    if (brightness < 40) brightness = 40;
-    if (brightness > 140) brightness = 140;
-    var contrast = Number(e.venueContrast);
-    if (!Number.isFinite(contrast)) contrast = 100;
-    if (contrast < 40) contrast = 40;
-    if (contrast > 140) contrast = 140;
+    var op = normalizePerfVenueOpacity(e.venueOpacity);
     $('perf-venueOpacity').value = String(op);
-    $('perf-venueOpacityValue').value = String(op) + '%';
-    $('perf-venueBrightness').value = String(brightness);
-    $('perf-venueBrightnessValue').value = String(brightness) + '%';
-    $('perf-venueContrast').value = String(contrast);
-    $('perf-venueContrastValue').value = String(contrast) + '%';
     $('perf-venuePreview').src = safeString(e.venuePhoto);
     $('perf-venuePreview').style.opacity = String(op / 100);
-    $('perf-venuePreview').style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
+    $('perf-venuePreview').style.filter = 'none';
     setSelectWithCustomValue('perf-status', safeString(e.status), 'upcoming');
     setSelectWithCustomValue('perf-type', safeString(e.type), 'concert');
     setSelectWithCustomValue('perf-editorialStatus', safeString(e.editorialStatus || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft')), 'draft');
-    if ($('perf-modal-title')) $('perf-modal-title').value = safeString(e.title);
+    if ($('perf-privateBadge')) $('perf-privateBadge').value = e.hidePrivateBadge ? 'hide' : 'show';
+    if ($('perf-privateBadgeText')) $('perf-privateBadgeText').value = localeFirst('privateBadgeText');
+    if ($('perf-privateDetailLine')) $('perf-privateDetailLine').value = e.hidePrivateDetailLine ? 'hide' : 'show';
+    if ($('perf-privateDetailText')) $('perf-privateDetailText').value = localeFirst('privateDetailText');
+    if ($('perf-modal-title')) $('perf-modal-title').value = localeFirstTitle();
     if ($('perf-modal-type')) setSelectWithCustomValue('perf-modal-type', safeString(e.type), 'concert');
     if ($('perf-modal-venue')) $('perf-modal-venue').value = safeString(e.venue);
     if ($('perf-modal-city')) $('perf-modal-city').value = safeString(e.city);
@@ -8131,6 +11371,16 @@
     var s = safeString(raw).trim();
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
   }
+  function normalizePerfVenueOpacity(raw) {
+    var value = Number(raw);
+    if (!Number.isFinite(value)) return 50;
+    if (value <= 0) return 0;
+    if (value <= 10) return 10;
+    if (value <= 20) return 20;
+    if (value <= 30) return 30;
+    if (value <= 40) return 40;
+    return 50;
+  }
   function perfPreviewDateLabel() {
     var day = safeString($('perf-day').value).trim();
     var month = safeString($('perf-month').value).trim();
@@ -8146,25 +11396,14 @@
     var venue = safeString($('perf-venue').value).trim();
     var city = safeString($('perf-city').value).trim();
     var bg = safeString($('perf-venuePhoto').value).trim();
-    var op = parseInt($('perf-venueOpacity').value, 10);
-    if (!Number.isFinite(op)) op = 50;
-    if (op < 10) op = 10;
-    if (op > 100) op = 100;
-    var brightness = parseInt($('perf-venueBrightness').value, 10);
-    if (!Number.isFinite(brightness)) brightness = 100;
-    if (brightness < 40) brightness = 40;
-    if (brightness > 140) brightness = 140;
-    var contrast = parseInt($('perf-venueContrast').value, 10);
-    if (!Number.isFinite(contrast)) contrast = 100;
-    if (contrast < 40) contrast = 40;
-    if (contrast > 140) contrast = 140;
+    var op = normalizePerfVenueOpacity($('perf-venueOpacity').value);
     $('perf-preview-date').textContent = perfPreviewDateLabel();
     $('perf-preview-title').textContent = title || 'Event title';
     $('perf-preview-detail').textContent = detail || 'Event detail';
     $('perf-preview-venue').textContent = ((venue || 'Venue') + ' · ' + (city || 'City'));
     $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
     $('perf-cardPreviewBg').style.opacity = String(op / 100);
-    $('perf-cardPreviewBg').style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
+    $('perf-cardPreviewBg').style.filter = 'none';
   }
   function updatePerfPublicVisibilitySummary() {
     var box = $('perf-public-visibility');
@@ -8402,6 +11641,7 @@
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
+    var activeLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
     var activeId = document.activeElement && document.activeElement.id ? document.activeElement.id : '';
     function readVal(id) { return safeString($(id) && $(id).value).trim(); }
     function syncPairedValue(mainId, modalId) {
@@ -8416,49 +11656,48 @@
       if (!el || activeId === id) return;
       el.value = safeString(value);
     }
+    function persistLocaleBackedField(base, value) {
+      e[base + '_' + activeLang] = value;
+      if (activeLang === 'en' || safeString(e[base]).trim() === '') e[base] = value;
+    }
     var modalTitle = readVal('perf-modal-title');
     var cardTitle = safeString($('perf-title') && $('perf-title').value).trim();
     // Prevent input overwrite loop: when editing card title, it is the source of truth.
     // Allow modal-title edits to drive title only while that field is actively edited.
-    if (activeId === 'perf-modal-title') e.title = modalTitle || cardTitle;
-    else e.title = cardTitle || modalTitle;
-    e.detail = $('perf-detail').value;
+    var titleMerged = activeId === 'perf-modal-title' ? modalTitle || cardTitle : cardTitle || modalTitle;
+    persistLocaleBackedField('title', titleMerged);
+    persistLocaleBackedField('detail', safeString($('perf-detail').value));
     e.day = $('perf-day').value;
     e.month = $('perf-month').value;
     e.time = safeString($('perf-time').value).trim();
     e.venue = syncPairedValue('perf-venue', 'perf-modal-venue');
     e.city = syncPairedValue('perf-city', 'perf-modal-city');
+    var revenueAmount = Number($('perf-revenue-amount') && $('perf-revenue-amount').value);
+    e.revenueAmount = Number.isFinite(revenueAmount) && revenueAmount >= 0 ? revenueAmount : '';
+    e.revenueCurrency = safeString($('perf-revenue-currency') && $('perf-revenue-currency').value || 'EUR').trim().toUpperCase() || 'EUR';
+    e.revenueStatus = safeString($('perf-revenue-status') && $('perf-revenue-status').value || 'unknown').trim().toLowerCase() || 'unknown';
+    e.revenueNotes = safeString($('perf-revenue-notes') && $('perf-revenue-notes').value).trim();
     e.venuePhoto = safeString($('perf-venuePhoto').value).trim();
     var dateDisplay = normalizeSortDateForInput($('perf-dateDisplay').value);
     if (dateDisplay) $('perf-sortDate').value = dateDisplay;
-    var op = parseInt($('perf-venueOpacity').value, 10);
-    if (!Number.isFinite(op)) op = 50;
-    if (op < 10) op = 10;
-    if (op > 100) op = 100;
-    var brightness = parseInt($('perf-venueBrightness').value, 10);
-    if (!Number.isFinite(brightness)) brightness = 100;
-    if (brightness < 40) brightness = 40;
-    if (brightness > 140) brightness = 140;
-    var contrast = parseInt($('perf-venueContrast').value, 10);
-    if (!Number.isFinite(contrast)) contrast = 100;
-    if (contrast < 40) contrast = 40;
-    if (contrast > 140) contrast = 140;
+    var op = normalizePerfVenueOpacity($('perf-venueOpacity').value);
     e.venueOpacity = op;
-    e.venueBrightness = brightness;
-    e.venueContrast = contrast;
-    $('perf-venueOpacityValue').value = String(op) + '%';
-    $('perf-venueBrightnessValue').value = String(brightness) + '%';
-    $('perf-venueContrastValue').value = String(contrast) + '%';
+    e.venueBrightness = 100;
+    e.venueContrast = 100;
     $('perf-venuePreview').src = e.venuePhoto;
     $('perf-venuePreview').style.opacity = String(op / 100);
-    $('perf-venuePreview').style.filter = 'brightness(' + brightness + '%) contrast(' + contrast + '%)';
+    $('perf-venuePreview').style.filter = 'none';
     e.status = $('perf-status').value;
     e.type = syncPairedValue('perf-type', 'perf-modal-type');
     e.editorialStatus = safeString($('perf-editorialStatus').value || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft'));
-    e.extDesc = safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value).trim();
+    e.hidePrivateBadge = safeString($('perf-privateBadge') && $('perf-privateBadge').value).trim() === 'hide';
+    persistLocaleBackedField('privateBadgeText', safeString($('perf-privateBadgeText') && $('perf-privateBadgeText').value));
+    e.hidePrivateDetailLine = safeString($('perf-privateDetailLine') && $('perf-privateDetailLine').value).trim() === 'hide';
+    persistLocaleBackedField('privateDetailText', safeString($('perf-privateDetailText') && $('perf-privateDetailText').value));
+    persistLocaleBackedField('extDesc', safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value));
     e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
-    e.eventLink = safeString($('perf-modal-link') && $('perf-modal-link').value).trim();
-    e.eventLinkLabel = safeString($('perf-modal-link-label') && $('perf-modal-link-label').value).trim();
+    persistLocaleBackedField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
+    persistLocaleBackedField('eventLinkLabel', safeString($('perf-modal-link-label') && $('perf-modal-link-label').value));
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
     e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
     if ($('perf-modal-enabled')) {
@@ -8468,14 +11707,13 @@
       else delete e.modalEnabled;
     }
     e.flyerImg = safeString($('perf-modal-flyerImg') && $('perf-modal-flyerImg').value).trim();
-    // Keep locale-specific supporting fields in sync for active language.
-    e['detail_' + state.lang] = safeString(e.detail).trim();
-    e['extDesc_' + state.lang] = e.extDesc;
-    e['eventLink_' + state.lang] = e.eventLink;
-    e['eventLinkLabel_' + state.lang] = e.eventLinkLabel;
     e.sortDate = $('perf-sortDate').value;
-    writeIfInactive('perf-title', e.title);
-    writeIfInactive('perf-modal-title', e.title);
+    var titleDisplay =
+      activeLang === 'en'
+        ? safeString(e.title).trim() || safeString(e.title_en).trim()
+        : safeString(e['title_' + activeLang]).trim() || safeString(e.title).trim();
+    writeIfInactive('perf-title', titleDisplay);
+    writeIfInactive('perf-modal-title', titleDisplay);
     writeIfInactive('perf-venue', e.venue);
     writeIfInactive('perf-modal-venue', e.venue);
     writeIfInactive('perf-city', e.city);
@@ -8496,15 +11734,335 @@
     $('perf-intro').value = pickStoredOrFallback(stored, fallback, 'intro');
     if ($('perf-status-filter')) $('perf-status-filter').value = state.perfStatusFilter || 'all';
     if ($('perf-workflow-filter')) $('perf-workflow-filter').value = state.perfWorkflowFilter || 'all';
+    if ($('perf-revenue-filter')) $('perf-revenue-filter').value = state.perfRevenueFilter || 'all';
     state.perfs = loadDoc('rg_perfs', []);
+    state.perfs.forEach(function (e, idx) {
+      if (!e.id || safeString(e.id).trim() === '') {
+        e.id = 'perf-' + (idx + 1);
+      }
+    });
     state.perfIndex = -1;
     renderPerfList();
     updateCompletenessIndicators();
+    if (state.deepLinkPerfId) {
+      try { openCalendarEventById(state.deepLinkPerfId); } catch (eDeep) {}
+      state.deepLinkPerfId = '';
+    }
+  }
+  function incomeEventDateFromPerf(e) {
+    var sort = normalizeSortDateForInput(e && e.sortDate);
+    if (!sort) return null;
+    var dt = new Date(sort + 'T00:00:00');
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+  function incomeTotalsLabel(map) {
+    var keys = Object.keys(map || {}).sort();
+    if (!keys.length) return '—';
+    return keys.map(function (currency) {
+      var amount = Number(map[currency]) || 0;
+      return currency + ' ' + amount.toLocaleString(undefined, { minimumFractionDigits: amount % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    }).join(' · ');
+  }
+  function incomeScopeLabel(scope) {
+    if (scope === 'past') return 'past events';
+    if (scope === 'all') return 'all events';
+    return 'upcoming events';
+  }
+  function incomeMonthKey(dateObj) {
+    if (!dateObj) return 'undated';
+    return String(dateObj.getFullYear()) + '-' + String(dateObj.getMonth() + 1).padStart(2, '0');
+  }
+  function incomeMonthLabel(monthKey) {
+    if (monthKey === 'undated') return 'No date set';
+    var bits = safeString(monthKey).split('-');
+    var y = Number(bits[0]);
+    var m = Number(bits[1]);
+    if (!Number.isFinite(y) || !Number.isFinite(m)) return monthKey;
+    var d = new Date(y, Math.max(0, m - 1), 1);
+    if (isNaN(d.getTime())) return monthKey;
+    return d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+  }
+  function incomeLocalDateLabel(dateObj) {
+    if (!dateObj || isNaN(dateObj.getTime())) return 'Not set';
+    var y = dateObj.getFullYear();
+    var d = String(dateObj.getDate()).padStart(2, '0');
+    var m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    return d + '.' + m + '.' + String(y);
+  }
+  function incomeOpenCalendarEvent(perfId) {
+    if (!hasUnsavedChangesPrompt('Open linked calendar event?')) return;
+    if (!safeString(perfId).trim()) return;
+    state.section = 'calendar';
+    document.querySelectorAll('.section').forEach(function (el) { el.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function (el) { el.classList.remove('active'); });
+    if ($('section-calendar')) $('section-calendar').classList.add('active');
+    var navBtn = document.querySelector('.nav-item[data-section="calendar"]');
+    if (navBtn) navBtn.classList.add('active');
+    if ($('currentSectionLabel') && navBtn) $('currentSectionLabel').textContent = navBtn.textContent;
+    loadCalendar();
+    openCalendarEventById(perfId);
+    syncTopbarToolsDisclosure();
+    if (window.innerWidth <= 860 && $('sidebar')) $('sidebar').classList.remove('open');
+  }
+  function renderIncomeSection() {
+    var summaryBox = $('income-summary');
+    var tableBody = $('income-table-body');
+    var missingSummaryBox = $('income-missing-summary');
+    var outlookBox = $('income-month-outlook');
+    if (!summaryBox || !tableBody) return;
+    var scope = safeString(state.incomeEventScope || 'upcoming').trim().toLowerCase();
+    if (scope !== 'upcoming' && scope !== 'past' && scope !== 'all') scope = 'upcoming';
+    var statusFilter = safeString(state.incomeStatusFilter || 'all').trim().toLowerCase();
+    if (statusFilter !== 'all' && statusFilter !== 'confirmed' && statusFilter !== 'potential' && statusFilter !== 'unknown') statusFilter = 'all';
+    var completenessFilter = safeString(state.incomeCompletenessFilter || 'all').trim().toLowerCase();
+    if (completenessFilter !== 'all' && completenessFilter !== 'missing-amount' && completenessFilter !== 'missing-status' && completenessFilter !== 'missing-amount-or-status') completenessFilter = 'all';
+    var monthFilter = safeString(state.incomeMonthFilter || 'all').trim().toLowerCase() || 'all';
+    if ($('income-event-scope')) $('income-event-scope').value = scope;
+    if ($('income-status-filter')) $('income-status-filter').value = statusFilter;
+    if ($('income-completeness-filter')) $('income-completeness-filter').value = completenessFilter;
+    if ($('income-scope-note')) $('income-scope-note').textContent = 'Scope: ' + incomeScopeLabel(scope);
+    var all = Array.isArray(state.perfs) ? state.perfs : [];
+    var baseRows = all.map(function (e) {
+      var dt = incomeEventDateFromPerf(e);
+      return {
+        event: e,
+        date: dt,
+        amount: Number(e && e.revenueAmount),
+        currency: safeString(e && e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR',
+        revenueStatus: safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown',
+        notes: safeString(e && e.revenueNotes).trim()
+      };
+    }).filter(function (row) {
+      var perfStatus = safeString(row.event && row.event.status || '').trim().toLowerCase();
+      if (perfStatus === 'hidden') return false;
+      if (scope === 'upcoming' && perfStatus === 'past') return false;
+      if (scope === 'past' && perfStatus !== 'past') return false;
+      if (statusFilter !== 'all' && row.revenueStatus !== statusFilter) return false;
+      return row.date || (Number.isFinite(row.amount) && row.amount > 0) || row.revenueStatus !== 'unknown' || row.notes;
+    });
+    if (missingSummaryBox) {
+      var missingAmountCount = 0;
+      var missingStatusCount = 0;
+      var missingEitherCount = 0;
+      baseRows.forEach(function (row) {
+        var hasAmount = Number.isFinite(row.amount) && row.amount > 0;
+        var hasStatus = row.revenueStatus === 'confirmed' || row.revenueStatus === 'potential';
+        if (!hasAmount) missingAmountCount += 1;
+        if (!hasStatus) missingStatusCount += 1;
+        if (!hasAmount || !hasStatus) missingEitherCount += 1;
+      });
+      var missingCards = [
+        { key: 'missing-amount', label: 'Missing amount', count: missingAmountCount },
+        { key: 'missing-status', label: 'Missing status', count: missingStatusCount },
+        { key: 'missing-amount-or-status', label: 'Missing amount or status', count: missingEitherCount }
+      ];
+      missingSummaryBox.innerHTML = missingCards.map(function (card) {
+        var active = completenessFilter === card.key;
+        return '<button type="button" class="income-missing-card' + (active ? ' is-active' : '') + '" data-income-completeness-filter="' + escapeAttr(card.key) + '"><span>' + escapeHtml(card.label) + '</span><strong>' + escapeHtml(String(card.count)) + '</strong></button>';
+      }).join('');
+      missingSummaryBox.querySelectorAll('[data-income-completeness-filter]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var nextFilter = safeString(btn.getAttribute('data-income-completeness-filter') || 'all').trim().toLowerCase() || 'all';
+          var currentFilter = safeString(state.incomeCompletenessFilter || 'all').trim().toLowerCase() || 'all';
+          state.incomeCompletenessFilter = currentFilter === nextFilter ? 'all' : nextFilter;
+          renderIncomeSection();
+        });
+      });
+    }
+    var rows = baseRows.filter(function (row) {
+      var hasAmount = Number.isFinite(row.amount) && row.amount > 0;
+      var hasStatus = row.revenueStatus === 'confirmed' || row.revenueStatus === 'potential';
+      if (completenessFilter === 'missing-amount' && hasAmount) return false;
+      if (completenessFilter === 'missing-status' && hasStatus) return false;
+      if (completenessFilter === 'missing-amount-or-status' && hasAmount && hasStatus) return false;
+      return true;
+    }).sort(function (a, b) {
+      if (a.date && b.date) return a.date.getTime() - b.date.getTime();
+      if (a.date && !b.date) return -1;
+      if (!a.date && b.date) return 1;
+      return safeString(a.event && a.event.title).localeCompare(safeString(b.event && b.event.title));
+    });
+    var now = new Date();
+    var thisMonth = now.getMonth();
+    var thisYear = now.getFullYear();
+    if (outlookBox) {
+      var monthSlots = [];
+      var start = new Date(thisYear, thisMonth, 1);
+      var slotCount = 6;
+      for (var si = 0; si < slotCount; si += 1) {
+        monthSlots.push(new Date(start.getFullYear(), start.getMonth() + si, 1));
+      }
+      var monthTotals = {};
+      monthSlots.forEach(function (dt) {
+        var key = incomeMonthKey(dt);
+        monthTotals[key] = { date: dt, confirmed: {}, potential: {} };
+      });
+      rows.forEach(function (row) {
+        if (!row.date || !Number.isFinite(row.amount) || row.amount <= 0) return;
+        var mk = incomeMonthKey(row.date);
+        if (!monthTotals[mk]) return;
+        if (row.revenueStatus === 'confirmed') {
+          monthTotals[mk].confirmed[row.currency] = (Number(monthTotals[mk].confirmed[row.currency]) || 0) + row.amount;
+        } else if (row.revenueStatus === 'potential') {
+          monthTotals[mk].potential[row.currency] = (Number(monthTotals[mk].potential[row.currency]) || 0) + row.amount;
+        }
+      });
+      var monthKeys = monthSlots.map(function (dt) { return incomeMonthKey(dt); });
+      if (monthFilter !== 'all' && monthKeys.indexOf(monthFilter) < 0) {
+        monthFilter = 'all';
+        state.incomeMonthFilter = 'all';
+      }
+      var outlookCards = [
+        '<button type="button" class="income-outlook-card' + (monthFilter === 'all' ? ' is-active' : '') + '" data-income-month-filter="all">' +
+          '<span>All months</span>' +
+          '<strong>Show all</strong>' +
+          '<small>Clear month filter</small>' +
+        '</button>'
+      ];
+      outlookCards = outlookCards.concat(monthSlots.map(function (dt) {
+        var key = incomeMonthKey(dt);
+        var slot = monthTotals[key] || { confirmed: {}, potential: {} };
+        return '<button type="button" class="income-outlook-card' + (monthFilter === key ? ' is-active' : '') + '" data-income-month-filter="' + escapeAttr(key) + '">' +
+          '<span>' + escapeHtml(incomeMonthLabel(key)) + '</span>' +
+          '<strong>Confirmed: ' + escapeHtml(incomeTotalsLabel(slot.confirmed)) + '</strong>' +
+          '<small>Potential: ' + escapeHtml(incomeTotalsLabel(slot.potential)) + '</small>' +
+        '</button>';
+      }));
+      outlookBox.innerHTML = outlookCards.join('');
+      outlookBox.querySelectorAll('[data-income-month-filter]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.incomeMonthFilter = safeString(btn.getAttribute('data-income-month-filter') || 'all').trim().toLowerCase() || 'all';
+          renderIncomeSection();
+        });
+      });
+    }
+    var tableRows = rows;
+    if (monthFilter !== 'all') {
+      tableRows = rows.filter(function (row) {
+        return incomeMonthKey(row.date) === monthFilter;
+      });
+    }
+    if ($('income-record-count')) $('income-record-count').textContent = String(tableRows.length) + (tableRows.length === 1 ? ' event' : ' events');
+    var summaryRows = monthFilter === 'all' ? rows : tableRows;
+    var summaryYear = thisYear;
+    var summaryMonth = thisMonth;
+    if (monthFilter !== 'all') {
+      var monthBits = safeString(monthFilter).split('-');
+      var parsedYear = Number(monthBits[0]);
+      var parsedMonth = Number(monthBits[1]);
+      if (Number.isFinite(parsedYear) && Number.isFinite(parsedMonth)) {
+        summaryYear = parsedYear;
+        summaryMonth = Math.max(0, parsedMonth - 1);
+      }
+    }
+    function totalsFor(status, inMonth) {
+      var out = {};
+      summaryRows.forEach(function (row) {
+        if (!row.date || row.revenueStatus !== status) return;
+        if (row.date.getFullYear() !== summaryYear) return;
+        if (inMonth && row.date.getMonth() !== summaryMonth) return;
+        if (!Number.isFinite(row.amount) || row.amount <= 0) return;
+        out[row.currency] = (Number(out[row.currency]) || 0) + row.amount;
+      });
+      return out;
+    }
+    var confirmedMonth = totalsFor('confirmed', true);
+    var potentialMonth = totalsFor('potential', true);
+    var confirmedYear = totalsFor('confirmed', false);
+    var potentialYear = totalsFor('potential', false);
+    var currenciesInScope = {};
+    summaryRows.forEach(function (row) {
+      if (!row.currency) return;
+      currenciesInScope[row.currency] = true;
+    });
+    var currencyKeys = Object.keys(currenciesInScope).sort();
+    var currencyHint = currencyKeys.length ? ('Currencies in scope: ' + currencyKeys.join(', ')) : 'Currencies in scope: —';
+    var monthLabel = monthFilter === 'all' ? 'this month' : incomeMonthLabel(monthFilter);
+    var yearLabel = monthFilter === 'all' ? 'this year' : 'filtered view';
+    summaryBox.innerHTML = [
+      '<div class="income-summary-card income-summary-card--ok"><span>Confirmed ' + escapeHtml(monthLabel) + '</span><strong>' + escapeHtml(incomeTotalsLabel(confirmedMonth)) + '</strong><small>' + escapeHtml(currencyHint) + '</small></div>',
+      '<div class="income-summary-card income-summary-card--warn"><span>Potential ' + escapeHtml(monthLabel) + '</span><strong>' + escapeHtml(incomeTotalsLabel(potentialMonth)) + '</strong><small>' + escapeHtml(currencyHint) + '</small></div>',
+      '<div class="income-summary-card income-summary-card--ok"><span>Confirmed ' + escapeHtml(yearLabel) + '</span><strong>' + escapeHtml(incomeTotalsLabel(confirmedYear)) + '</strong><small>' + escapeHtml(currencyHint) + '</small></div>',
+      '<div class="income-summary-card income-summary-card--warn"><span>Potential ' + escapeHtml(yearLabel) + '</span><strong>' + escapeHtml(incomeTotalsLabel(potentialYear)) + '</strong><small>' + escapeHtml(currencyHint) + '</small></div>'
+    ].join('');
+    if (!tableRows.length) {
+      tableBody.innerHTML = '<tr><td colspan="9" class="muted">No revenue rows yet. Add revenue fields in Calendar events to populate this view.</td></tr>';
+      return;
+    }
+    var groups = [];
+    var groupMap = {};
+    tableRows.forEach(function (row) {
+      var key = incomeMonthKey(row.date);
+      if (!groupMap[key]) {
+        groupMap[key] = {
+          key: key,
+          label: incomeMonthLabel(key),
+          rows: [],
+          confirmed: {},
+          potential: {}
+        };
+        groups.push(groupMap[key]);
+      }
+      groupMap[key].rows.push(row);
+      if (Number.isFinite(row.amount) && row.amount > 0) {
+        if (row.revenueStatus === 'confirmed') {
+          groupMap[key].confirmed[row.currency] = (Number(groupMap[key].confirmed[row.currency]) || 0) + row.amount;
+        } else if (row.revenueStatus === 'potential') {
+          groupMap[key].potential[row.currency] = (Number(groupMap[key].potential[row.currency]) || 0) + row.amount;
+        }
+      }
+    });
+    var tableParts = [];
+    groups.forEach(function (group) {
+      tableParts.push('<tr class="income-month-row"><td colspan="9"><div class="income-month-row__line"><strong>' + escapeHtml(group.label) + '</strong><span class="income-month-row__count">' + escapeHtml(String(group.rows.length) + (group.rows.length === 1 ? ' event' : ' events')) + '</span></div></td></tr>');
+      group.rows.forEach(function (row) {
+      var e = row.event || {};
+      var dateLabel = incomeLocalDateLabel(row.date);
+      var amountLabel = Number.isFinite(row.amount) && row.amount > 0 ? row.amount.toLocaleString(undefined, { minimumFractionDigits: row.amount % 1 ? 2 : 0, maximumFractionDigits: 2 }) : 'Not set';
+      var statusClass = row.revenueStatus === 'confirmed' ? 'ok' : (row.revenueStatus === 'potential' ? 'warn' : 'info');
+      var statusLabel = row.revenueStatus === 'unknown' ? 'not set' : row.revenueStatus;
+      var eventTitle = safeString(e.title).trim() || '(untitled)';
+      var eventSub = [safeString(e.type).trim(), safeString(e.status).trim()].filter(Boolean).join(' · ');
+      var openId = safeString(e.id).trim();
+      var rowClass = row.revenueStatus === 'confirmed' ? 'income-row income-row--confirmed' : (row.revenueStatus === 'potential' ? 'income-row income-row--potential' : 'income-row income-row--unknown');
+      tableParts.push('<tr class="' + rowClass + '"' + (openId ? (' data-income-open-calendar-row="' + escapeAttr(openId) + '"') : '') + '>' +
+        '<td>' + escapeHtml(dateLabel) + '</td>' +
+        '<td><strong>' + escapeHtml(eventTitle) + '</strong>' + (eventSub ? '<div class="income-table__sub">' + escapeHtml(eventSub) + '</div>' : '') + '</td>' +
+        '<td>' + escapeHtml(safeString(e.venue).trim() || 'Not set') + '</td>' +
+        '<td>' + escapeHtml(safeString(e.city).trim() || 'Not set') + '</td>' +
+        '<td>' + escapeHtml(amountLabel) + '</td>' +
+        '<td>' + escapeHtml(row.currency || 'Not set') + '</td>' +
+        '<td><span class="pill ' + escapeAttr(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>' +
+        '<td>' + escapeHtml(row.notes || 'Not set') + '</td>' +
+        '<td>' + (openId ? ('<button type="button" class="income-open-calendar" data-income-open-calendar="' + escapeAttr(openId) + '">Open in Calendar</button>') : 'Not set') + '</td>' +
+      '</tr>');
+      });
+      tableParts.push('<tr class="income-month-subtotal"><td colspan="9"><div class="income-month-subtotal__line"><span><strong>Confirmed subtotal:</strong> ' + escapeHtml(incomeTotalsLabel(group.confirmed)) + '</span><span><strong>Potential subtotal:</strong> ' + escapeHtml(incomeTotalsLabel(group.potential)) + '</span></div></td></tr>');
+    });
+    tableBody.innerHTML = tableParts.join('');
+    tableBody.querySelectorAll('[data-income-open-calendar]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        incomeOpenCalendarEvent(btn.getAttribute('data-income-open-calendar'));
+      });
+    });
+    tableBody.querySelectorAll('[data-income-open-calendar-row]').forEach(function (rowEl) {
+      rowEl.addEventListener('click', function (evt) {
+        var button = evt.target && evt.target.closest ? evt.target.closest('[data-income-open-calendar]') : null;
+        if (button) return;
+        incomeOpenCalendarEvent(rowEl.getAttribute('data-income-open-calendar-row'));
+      });
+    });
+  }
+  function loadIncome() {
+    state.perfs = loadDoc('rg_perfs', []);
+    if (!Array.isArray(state.perfs)) state.perfs = [];
+    renderIncomeSection();
   }
   function savePerfHeader() { saveDoc('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) }); }
   function savePerfEvents() {
     state.perfs = state.perfs.filter(function (e) { return isObject(e); });
     saveDoc('rg_perfs', state.perfs);
+    if (state.section === 'income') renderIncomeSection();
     setPerfTxResult('Saved event list. Translation tool changes are now persisted.', 'ok');
   }
   function normalizePastPerfImportItem(raw, idx) {
@@ -11168,7 +14726,7 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', sortDate: '' });
+    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '' });
     state.perfIndex = state.perfs.length - 1;
     renderPerfList(); renderPerfEditor(); markDirty(true, 'Event template created');
   }
@@ -11467,9 +15025,9 @@
   function updateContactValidation() {
     var email = safeString($('contact-email') && $('contact-email').value).trim();
     var web = safeString($('contact-webUrl') && $('contact-webUrl').value).trim();
-    setValidationText('contact-email-validation', isValidEmail(email), email ? (isValidEmail(email) ? 'Email format looks valid.' : 'Invalid email format.') : 'Email is empty.');
-    if (!web) setValidationText('contact-web-validation', false, 'Website URL is missing.');
-    else setValidationText('contact-web-validation', isValidHttpUrl(web), isValidHttpUrl(web) ? 'Website URL looks valid.' : 'Website URL should start with http:// or https://');
+    setValidationText('contact-email-validation', isValidEmail(email), email ? (isValidEmail(email) ? 'Email looks valid.' : 'Enter a valid email address.') : 'Email is empty.');
+    if (!web) setValidationText('contact-web-validation', true, 'Website URL is optional. It is reused in Programme Sheets and offer emails, but not shown on the live contact page.');
+    else setValidationText('contact-web-validation', isValidHttpUrl(web), isValidHttpUrl(web) ? 'Website URL looks valid. It will be reused in Programme Sheets and offer emails.' : 'Website URL should start with http:// or https://');
   }
   function updatePdfValidation() {
     var langs = ['EN', 'DE', 'ES', 'IT', 'FR'];
@@ -11517,7 +15075,7 @@
     setPillStatus('programs-completeness', programMissing ? 'warn' : 'ok', programMissing ? (hasPrograms ? 'Missing header text' : 'No program cards') : 'Complete');
 
     var contactMissing = 0;
-    ['contact-title', 'contact-sub', 'contact-email', 'contact-phone'].forEach(function (id) {
+    ['contact-title', 'contact-sub', 'contact-email'].forEach(function (id) {
       if (isBlank($(id) && $(id).value)) contactMissing += 1;
     });
     setPillStatus('contact-completeness', contactMissing ? 'warn' : 'ok', contactMissing ? ('Missing fields: ' + contactMissing) : 'Complete');
@@ -11599,7 +15157,17 @@
     $('contact-preview-title').innerHTML = titleHtml || 'Contact title';
     $('contact-preview-sub').textContent = clipText($('contact-sub').value, 180) || 'Contact subtitle';
     $('contact-preview-emailBtn').textContent = clipText($('contact-emailBtn').value, 30) || 'Email button';
-    $('contact-preview-webBtn').textContent = clipText($('contact-webBtn').value, 30) || 'Website button';
+    if ($('contact-preview-webBtn')) {
+      $('contact-preview-webBtn').textContent = clipText($('contact-webBtn').value, 30) || 'Website button';
+      $('contact-preview-webBtn').style.display = 'none';
+    }
+    if ($('contact-preview-note')) {
+      var webUrl = safeString($('contact-webUrl') && $('contact-webUrl').value).trim();
+      var phone = safeString($('contact-phone') && $('contact-phone').value).trim();
+      $('contact-preview-note').textContent = webUrl || phone
+        ? 'This preview mirrors the live contact-page CTA area. Mobile phone and website details are saved, but they are currently reused only in Programme Sheets and offer emails.'
+        : 'This preview mirrors the live contact-page CTA area. Website and phone are not shown there right now.';
+    }
   }
   function badgesHtml(items) {
     if (!items || !items.length) return '';
@@ -11839,6 +15407,32 @@
       concertHistoryIndex: state.concertHistoryIndex,
       concertHistorySearch: state.concertHistorySearch
     };
+    if (s === 'discovery') return {
+      discoveryDoc: clone(state.discoveryDoc),
+      discoverySelectedId: state.discoverySelectedId,
+      discoverySearch: state.discoverySearch,
+      discoveryProfileFilter: state.discoveryProfileFilter,
+      discoveryFamilyFilter: state.discoveryFamilyFilter,
+      discoveryLanguageFilter: state.discoveryLanguageFilter,
+      discoveryComposerFilter: state.discoveryComposerFilter,
+      discoveryWorkFilter: state.discoveryWorkFilter,
+      discoveryTypeFilter: state.discoveryTypeFilter,
+      discoveryCombinationFilter: state.discoveryCombinationFilter,
+      discoveryRoleFilter: state.discoveryRoleFilter,
+      discoveryDurationMinFilter: state.discoveryDurationMinFilter,
+      discoveryDurationMaxFilter: state.discoveryDurationMaxFilter,
+      discoveryReadinessFilter: state.discoveryReadinessFilter,
+      discoveryStateFilter: state.discoveryStateFilter
+    };
+    if (s === 'outreach') return {
+      outreachDoc: clone(state.outreachDoc),
+      outreachSelectedId: state.outreachSelectedId,
+      outreachSearch: state.outreachSearch,
+      outreachViewMode: state.outreachViewMode,
+      outreachStatusFilter: state.outreachStatusFilter,
+      outreachFollowupFilter: state.outreachFollowupFilter,
+      outreachQuickFilter: state.outreachQuickFilter
+    };
     if (s === 'calendar') return { h2: $('perf-h2').value, intro: $('perf-intro').value, perfs: clone(state.perfs), perfIndex: state.perfIndex };
     if (s === 'media') return { vidData: clone(state.vidData), vidIndex: state.vidIndex, audioData: clone(state.audioData), audIndex: state.audIndex, photosData: clone(state.photosData), photoCaptions: clone(state.photoCaptions), photoType: state.photoType, photoIndex: state.photoIndex };
     if (s === 'press') return { press: clone(state.press), pressIndex: state.pressIndex, publicPdfs: clone(state.publicPdfs), epkBios: clone(state.epkBios), epkPhotos: clone(state.epkPhotos), epkPhotoIndex: state.epkPhotoIndex };
@@ -11920,6 +15514,50 @@
       renderPlannerRepList();
       renderBlueprintBuilder();
       renderConcertHistoryList();
+    } else if (s === 'discovery') {
+      state.discoveryDoc = safeDiscoveryDoc(d.discoveryDoc || {});
+      state.discoverySelectedId = safeString(d.discoverySelectedId);
+      state.discoverySearch = safeString(d.discoverySearch);
+      state.discoveryProfileFilter = safeString(d.discoveryProfileFilter || 'all') || 'all';
+      state.discoveryFamilyFilter = safeString(d.discoveryFamilyFilter || 'all') || 'all';
+      state.discoveryLanguageFilter = safeString(d.discoveryLanguageFilter);
+      state.discoveryComposerFilter = safeString(d.discoveryComposerFilter);
+      state.discoveryWorkFilter = safeString(d.discoveryWorkFilter);
+      state.discoveryTypeFilter = safeString(d.discoveryTypeFilter || 'all') || 'all';
+      state.discoveryCombinationFilter = safeString(d.discoveryCombinationFilter || 'all') || 'all';
+      state.discoveryRoleFilter = safeString(d.discoveryRoleFilter || 'all') || 'all';
+      state.discoveryDurationMinFilter = safeString(d.discoveryDurationMinFilter);
+      state.discoveryDurationMaxFilter = safeString(d.discoveryDurationMaxFilter);
+      state.discoveryReadinessFilter = safeString(d.discoveryReadinessFilter || 'all') || 'all';
+      state.discoveryStateFilter = safeString(d.discoveryStateFilter || 'all') || 'all';
+      resetDiscoveryResultLimit();
+      if ($('discovery-search')) $('discovery-search').value = state.discoverySearch;
+      if ($('discovery-filter-profile')) $('discovery-filter-profile').value = state.discoveryProfileFilter;
+      if ($('discovery-filter-family')) $('discovery-filter-family').value = state.discoveryFamilyFilter;
+      if ($('discovery-filter-language')) $('discovery-filter-language').value = state.discoveryLanguageFilter;
+      if ($('discovery-filter-composer')) $('discovery-filter-composer').value = state.discoveryComposerFilter;
+      if ($('discovery-filter-work')) $('discovery-filter-work').value = state.discoveryWorkFilter;
+      if ($('discovery-filter-type')) $('discovery-filter-type').value = state.discoveryTypeFilter;
+      if ($('discovery-filter-combination')) $('discovery-filter-combination').value = state.discoveryCombinationFilter;
+      if ($('discovery-filter-role')) $('discovery-filter-role').value = state.discoveryRoleFilter;
+      if ($('discovery-filter-duration-min')) $('discovery-filter-duration-min').value = state.discoveryDurationMinFilter;
+      if ($('discovery-filter-duration-max')) $('discovery-filter-duration-max').value = state.discoveryDurationMaxFilter;
+      if ($('discovery-filter-readiness')) $('discovery-filter-readiness').value = state.discoveryReadinessFilter;
+      if ($('discovery-filter-state')) $('discovery-filter-state').value = state.discoveryStateFilter;
+      renderDiscoveryWorkspace();
+    } else if (s === 'outreach') {
+      state.outreachDoc = safeOutreachDoc(d.outreachDoc || {});
+      state.outreachSelectedId = safeString(d.outreachSelectedId);
+      state.outreachSearch = safeString(d.outreachSearch);
+      state.outreachViewMode = safeString(d.outreachViewMode || 'cards') === 'report' ? 'report' : 'cards';
+      state.outreachStatusFilter = safeString(d.outreachStatusFilter || 'all') || 'all';
+      state.outreachFollowupFilter = safeString(d.outreachFollowupFilter || 'all') || 'all';
+      state.outreachQuickFilter = safeString(d.outreachQuickFilter || 'all') || 'all';
+      if ($('outreach-search')) $('outreach-search').value = state.outreachSearch;
+      if ($('outreach-view-mode')) $('outreach-view-mode').value = state.outreachViewMode;
+      if ($('outreach-filter-status')) $('outreach-filter-status').value = state.outreachStatusFilter;
+      if ($('outreach-filter-followup')) $('outreach-filter-followup').value = state.outreachFollowupFilter;
+      renderOutreachWorkspace();
     } else if (s === 'calendar') {
       state.perfs = Array.isArray(d.perfs) ? clone(d.perfs) : [];
       state.perfIndex = Number.isFinite(Number(d.perfIndex)) ? Number(d.perfIndex) : -1;
@@ -12037,7 +15675,7 @@
 
   function buildExportPayload() {
     var keys = [
-      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions','rg_repertoire_planner','rg_program_blueprints','rg_concert_history',
+      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions','rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
       'rg_editorial_en','rg_editorial_de','rg_editorial_es','rg_editorial_it','rg_editorial_fr',
       'hero_en','hero_de','hero_es','hero_it','hero_fr',
@@ -12083,6 +15721,10 @@
     $('menuBtn').addEventListener('click', function () { $('sidebar').classList.toggle('open'); });
     syncTopbarToolsDisclosure();
     window.addEventListener('resize', syncTopbarToolsDisclosure);
+    window.addEventListener('resize', function () {
+      if (state.section === 'programbuilder') syncProgramBuilderResponsiveUi(false);
+    });
+    bindProgramBuilderUiChrome();
     if ($('paperPreviewToggle')) $('paperPreviewToggle').addEventListener('change', function () {
       applyPaperPreviewMode(!!$('paperPreviewToggle').checked, true);
     });
@@ -12243,6 +15885,7 @@
     });
     if ($('pb-offer-filter-formation')) $('pb-offer-filter-formation').addEventListener('change', function () { state.plannerOfferFormationOnly = !!$('pb-offer-filter-formation').checked; renderBlueprintBuilder(); });
     if ($('pb-offer-filter-showWithoutTenor')) $('pb-offer-filter-showWithoutTenor').addEventListener('change', function () { state.plannerOfferShowWithoutTenor = !!$('pb-offer-filter-showWithoutTenor').checked; renderBlueprintBuilder(); });
+    if ($('pb-generate-draft')) $('pb-generate-draft').addEventListener('click', generateSuggestedProgrammeDraft);
     if ($('pb-add-piece')) $('pb-add-piece').addEventListener('click', function () {
       plannerAddPieceToCurrentOffer($('pb-add-piece-select').value);
     });
@@ -12266,6 +15909,14 @@
       state.blueprintPieceIndex = Math.max(0, state.blueprintPieceIndex - 1);
       renderBlueprintBuilder();
       markDirty(true, 'Programme repertoire removed');
+    });
+    if ($('pb-piece-replace')) $('pb-piece-replace').addEventListener('click', function () {
+      var alternatives = plannerSimilarAlternatives(currentBlueprint(), state.blueprintPieceIndex);
+      if (!alternatives.length) {
+        setStatus('No close replacement is available for this line with the current programme frame.', 'warn');
+        return;
+      }
+      replaceCurrentBlueprintPiece(alternatives[0].id);
     });
     if ($('pb-piece-up')) $('pb-piece-up').addEventListener('click', function () {
       var bp = currentBlueprint(); var i = state.blueprintPieceIndex; if (i <= 0) return;
@@ -12332,6 +15983,19 @@
     });
     $('savePerfHeaderBtn').addEventListener('click', savePerfHeader);
     $('savePerfEventsBtn').addEventListener('click', savePerfEvents);
+    if ($('income-refresh')) $('income-refresh').addEventListener('click', loadIncome);
+    if ($('income-event-scope')) $('income-event-scope').addEventListener('change', function () {
+      state.incomeEventScope = safeString($('income-event-scope').value || 'upcoming').trim().toLowerCase() || 'upcoming';
+      renderIncomeSection();
+    });
+    if ($('income-status-filter')) $('income-status-filter').addEventListener('change', function () {
+      state.incomeStatusFilter = safeString($('income-status-filter').value || 'all').trim().toLowerCase() || 'all';
+      renderIncomeSection();
+    });
+    if ($('income-completeness-filter')) $('income-completeness-filter').addEventListener('change', function () {
+      state.incomeCompletenessFilter = safeString($('income-completeness-filter').value || 'all').trim().toLowerCase() || 'all';
+      renderIncomeSection();
+    });
     if ($('perf-tx-copy-all-btn')) $('perf-tx-copy-all-btn').addEventListener('click', function () {
       var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
       var targets = LANGS.filter(function (L) { return L !== sourceLang; });
@@ -12430,6 +16094,58 @@
       if (!Number.isFinite(idx)) return;
       toggleSelected(state.pastPerfsSelected, idx, !!cb.checked);
     });
+    if ($('discovery-search')) $('discovery-search').addEventListener('input', function () { state.discoverySearch = $('discovery-search').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-profile')) $('discovery-filter-profile').addEventListener('change', function () { state.discoveryProfileFilter = $('discovery-filter-profile').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-family')) $('discovery-filter-family').addEventListener('change', function () { state.discoveryFamilyFilter = $('discovery-filter-family').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-language')) $('discovery-filter-language').addEventListener('input', function () { state.discoveryLanguageFilter = $('discovery-filter-language').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-composer')) $('discovery-filter-composer').addEventListener('input', function () { state.discoveryComposerFilter = $('discovery-filter-composer').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-work')) $('discovery-filter-work').addEventListener('input', function () { state.discoveryWorkFilter = $('discovery-filter-work').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-type')) $('discovery-filter-type').addEventListener('change', function () { state.discoveryTypeFilter = $('discovery-filter-type').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-combination')) $('discovery-filter-combination').addEventListener('change', function () { state.discoveryCombinationFilter = $('discovery-filter-combination').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-role')) $('discovery-filter-role').addEventListener('change', function () { state.discoveryRoleFilter = $('discovery-filter-role').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-duration-min')) $('discovery-filter-duration-min').addEventListener('input', function () { state.discoveryDurationMinFilter = $('discovery-filter-duration-min').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-duration-max')) $('discovery-filter-duration-max').addEventListener('input', function () { state.discoveryDurationMaxFilter = $('discovery-filter-duration-max').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-readiness')) $('discovery-filter-readiness').addEventListener('change', function () { state.discoveryReadinessFilter = $('discovery-filter-readiness').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-filter-state')) $('discovery-filter-state').addEventListener('change', function () { state.discoveryStateFilter = $('discovery-filter-state').value; resetDiscoveryResultLimit(); renderDiscoveryWorkspace(); });
+    if ($('discovery-clear-filters')) $('discovery-clear-filters').addEventListener('click', function () {
+      state.discoverySearch = '';
+      state.discoveryProfileFilter = 'all';
+      state.discoveryFamilyFilter = 'all';
+      state.discoveryLanguageFilter = '';
+      state.discoveryComposerFilter = '';
+      state.discoveryWorkFilter = '';
+      state.discoveryTypeFilter = 'all';
+      state.discoveryCombinationFilter = 'all';
+      state.discoveryRoleFilter = 'all';
+      state.discoveryDurationMinFilter = '';
+      state.discoveryDurationMaxFilter = '';
+      state.discoveryReadinessFilter = 'all';
+      state.discoveryStateFilter = 'all';
+      resetDiscoveryResultLimit();
+      loadDiscovery();
+    });
+    if ($('outreach-search')) $('outreach-search').addEventListener('input', function () { state.outreachSearch = $('outreach-search').value; renderOutreachWorkspace(); });
+    if ($('outreach-view-mode')) $('outreach-view-mode').addEventListener('change', function () { state.outreachViewMode = $('outreach-view-mode').value === 'report' ? 'report' : 'cards'; renderOutreachWorkspace(); });
+    if ($('outreach-filter-status')) $('outreach-filter-status').addEventListener('change', function () { state.outreachStatusFilter = $('outreach-filter-status').value; renderOutreachWorkspace(); });
+    if ($('outreach-filter-followup')) $('outreach-filter-followup').addEventListener('change', function () { state.outreachFollowupFilter = $('outreach-filter-followup').value; renderOutreachWorkspace(); });
+    if ($('outreach-quick-filters')) $('outreach-quick-filters').querySelectorAll('[data-outreach-quick-filter]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = safeString(btn.getAttribute('data-outreach-quick-filter') || 'all').trim().toLowerCase() || 'all';
+        var current = safeString(state.outreachQuickFilter || 'all').trim().toLowerCase() || 'all';
+        state.outreachQuickFilter = current === key ? 'all' : key;
+        renderOutreachWorkspace();
+      });
+    });
+    if ($('outreach-export-report')) $('outreach-export-report').addEventListener('click', exportOutreachReportPdf);
+    if ($('outreach-clear-filters')) $('outreach-clear-filters').addEventListener('click', function () {
+      state.outreachSearch = '';
+      state.outreachViewMode = 'cards';
+      state.outreachStatusFilter = 'all';
+      state.outreachFollowupFilter = 'all';
+      state.outreachQuickFilter = 'all';
+      loadOutreach();
+    });
+    if ($('outreach-new-record')) $('outreach-new-record').addEventListener('click', function () { createOutreachRecord(); });
     $('mediaTabVideos').addEventListener('click', function () { toggleMediaTab('videos'); });
     $('mediaTabPhotos').addEventListener('click', function () { toggleMediaTab('photos'); });
     $('mediaTabAudio').addEventListener('click', function () { toggleMediaTab('audio'); });
@@ -12576,11 +16292,17 @@
       state.perfWorkflowFilter = $('perf-workflow-filter').value;
       renderPerfList();
     });
+    if ($('perf-revenue-filter')) $('perf-revenue-filter').addEventListener('change', function () {
+      state.perfRevenueFilter = safeString($('perf-revenue-filter').value || 'all').trim().toLowerCase() || 'all';
+      renderPerfList();
+    });
     if ($('perf-reset-filters')) $('perf-reset-filters').addEventListener('click', function () {
       if ($('perf-status-filter')) $('perf-status-filter').value = 'all';
       if ($('perf-workflow-filter')) $('perf-workflow-filter').value = 'all';
+      if ($('perf-revenue-filter')) $('perf-revenue-filter').value = 'all';
       state.perfStatusFilter = 'all';
       state.perfWorkflowFilter = 'all';
+      state.perfRevenueFilter = 'all';
       renderPerfList();
     });
     if ($('perf-select-visible')) $('perf-select-visible').addEventListener('click', function () { selectVisibleInto(state.perfSelected, 'perf-list'); renderPerfList(); });
@@ -12590,6 +16312,15 @@
     if ($('perf-archive-current-btn')) $('perf-archive-current-btn').addEventListener('click', perfArchiveCurrentEvent);
     if ($('perf-open-internal-calendar')) $('perf-open-internal-calendar').addEventListener('click', function () {
       window.open('internal-calendar.html', '_blank', 'noopener');
+    });
+    document.querySelectorAll('[data-revenue-quick-status]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var status = safeString(btn.getAttribute('data-revenue-quick-status') || 'unknown').trim().toLowerCase() || 'unknown';
+        var statusEl = $('perf-revenue-status');
+        if (!statusEl) return;
+        statusEl.value = status;
+        statusEl.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     });
     if ($('copyPressBiosMissingFromEnBtn')) $('copyPressBiosMissingFromEnBtn').addEventListener('click', copyPressBiosMissingFromEn);
     if ($('comparePressBiosWithEnBtn')) $('comparePressBiosWithEnBtn').addEventListener('click', comparePressBiosWithEn);
@@ -12988,12 +16719,12 @@
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category','rep-editorialStatus'], persistRepEditor);
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
     bindInputsDirty(['pb-rep-id','pb-rep-title','pb-rep-composer','pb-rep-work','pb-rep-type','pb-rep-language','pb-rep-durationMin','pb-rep-approximateDurationMin','pb-rep-readiness','pb-rep-availabilityStatus','pb-rep-category','pb-rep-voiceCategory','pb-rep-primaryVoice','pb-rep-pairedVoices','pb-rep-includesTenor','pb-rep-formations','pb-rep-performanceStatus','pb-rep-reviewStatus','pb-rep-tags','pb-rep-fitTags','pb-rep-performedIn','pb-rep-offerOnly','pb-rep-excludeFromOffers','pb-rep-sourceGroup','pb-rep-suggestionGroup','pb-rep-dramaticRole','pb-rep-energyLevel','pb-rep-tempoProfile','pb-rep-impactLevel','pb-rep-audienceAppeal','pb-rep-galaRole','pb-rep-vocalLoad','pb-rep-texture','pb-rep-styleBucket','pb-rep-recoveryValue','pb-rep-bestDurationFit','pb-rep-moodTags','pb-rep-practicalTags','pb-rep-encoreCandidate','pb-rep-interlude','pb-rep-vocalRestSupport','pb-rep-goodBetweenBlocks','pb-rep-goodBeforeClimax','pb-rep-notes','pb-rep-publicNotes','pb-rep-sortOrder'], persistPlannerRepEditor);
-    bindInputsDirty(['pb-blueprint-formation','pb-blueprint-notes','pb-version-label','pb-build-mode','pb-repertoire-mode','pb-header-image-mode','pb-header-image-url','pb-contact-phone','pb-offer-useCase','pb-offer-status','pb-gala-preferPacing','pb-gala-allowPianoInterludes','pb-gala-includeContrast','pb-gala-buildArc'], persistBlueprintHeader);
+    bindInputsDirty(['pb-blueprint-formation','pb-style-focus','pb-include-discovery-ideas','pb-blueprint-notes','pb-version-label','pb-build-mode','pb-repertoire-mode','pb-header-image-mode','pb-header-image-url','pb-contact-phone','pb-offer-useCase','pb-offer-status','pb-gala-preferPacing','pb-gala-allowPianoInterludes','pb-gala-includeContrast','pb-gala-buildArc'], persistBlueprintHeader);
     bindInputsDirty(['pb-fee-eventType','pb-fee-durationMin','pb-fee-formation','pb-fee-numberOfArtists','pb-fee-includesPianist','pb-fee-rehearsalCount','pb-fee-rehearsalFeePerArtist','pb-fee-leadArtistFee','pb-fee-collaboratorFee','pb-fee-pianistFee','pb-fee-travelCost','pb-fee-hotelCost','pb-fee-localTransportCost','pb-fee-adminBuffer','pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride','pb-fee-benchmarkSourceVersion','pb-fee-benchmarkLastReviewed','pb-fee-notes'], persistBlueprintFeeEstimate);
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-venuePhoto','perf-venueOpacity','perf-venueBrightness','perf-venueContrast','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
@@ -13138,7 +16869,7 @@
     });
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
-    bindInputsDirty(['contact-title','contact-sub','contact-emailBtn','contact-webBtn'], updateContactMiniPreview);
+    bindInputsDirty(['contact-title','contact-sub','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl'], updateContactMiniPreview);
     bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
       updateContactValidation();
       updateContactMiniPreview();
@@ -13311,7 +17042,12 @@
       setStatus('Ready · ' + lang.toUpperCase(), 'ok');
       setupEvents();
       applyPaperPreviewMode(state.paperPreview, false);
-      refreshCurrentSection();
+      var deep = readAdminDeepLink();
+      if (deep.section) openSection(deep.section);
+      else refreshCurrentSection();
+      if ((deep.section || state.section) === 'calendar' && deep.perfId) {
+        try { openCalendarEventById(deep.perfId); } catch (ePick) {}
+      }
       primeUiPublicCopyFromStorage();
     } catch (e) {
       setStatus('Could not start admin', 'err');

@@ -179,7 +179,16 @@
     'perf.printDocTitle': 'Rolando Guy — Calendar',
     'perf.printTitle': 'Rolando Guy',
     'perf.moreInfoPrint': 'Details',
-    'perf.ticketsInfo': 'Tickets & Info'
+    'perf.ticketsInfo': 'Tickets & Info',
+    'perf.privateBadge': 'Invitation only',
+    'perf.privateDetail': 'Private event - not open to the public'
+  };
+  var PERF_PRIVATE_UI_TEXT = {
+    en: { badge: 'Invitation only', detail: 'Private event - not open to the public' },
+    de: { badge: 'Nur auf Einladung', detail: 'Private Veranstaltung - nicht öffentlich zugänglich' },
+    es: { badge: 'Solo por invitación', detail: 'Evento privado - no abierto al público' },
+    it: { badge: 'Solo su invito', detail: 'Evento privato - non aperto al pubblico' },
+    fr: { badge: 'Sur invitation', detail: 'Événement privé - non ouvert au public' }
   };
 
   function uiTable(lang) {
@@ -344,7 +353,7 @@
       var parsed = sortDate ? new Date(sortDate) : null;
       if (parsed && !isNaN(parsed.getTime())) {
         if (!day) day = String(parsed.getDate());
-        if (!month) month = parsed.toLocaleString('en', { month: 'short' }).toUpperCase();
+        if (!month) month = parsed.toLocaleString('en', { month: 'long' });
       }
     }
     return {
@@ -368,16 +377,40 @@
       extDesc: String(o.extDesc || '').trim(),
       modalImg: String(o.modalImg || '').trim(),
       modalImgHide: isTruthyFlag(o.modalImgHide),
+      hidePrivateBadge: isTruthyFlag(o.hidePrivateBadge),
+      hidePrivateDetailLine: isTruthyFlag(o.hidePrivateDetailLine),
       modalEnabled:
         (o.modalEnabled === true || o.modalEnabled === false)
           ? o.modalEnabled
           : (String(o.modalEnabled).trim() === 'true' ? true : (String(o.modalEnabled).trim() === 'false' ? false : null)),
       flyerImg: String(o.flyerImg || '').trim(),
+      privateBadgeText: o.privateBadgeText,
+      privateDetailText: o.privateDetailText,
       title_en: o.title_en,
       title_de: o.title_de,
       title_es: o.title_es,
       title_it: o.title_it,
       title_fr: o.title_fr,
+      venue_en: o.venue_en,
+      venue_de: o.venue_de,
+      venue_es: o.venue_es,
+      venue_it: o.venue_it,
+      venue_fr: o.venue_fr,
+      city_en: o.city_en,
+      city_de: o.city_de,
+      city_es: o.city_es,
+      city_it: o.city_it,
+      city_fr: o.city_fr,
+      time_en: o.time_en,
+      time_de: o.time_de,
+      time_es: o.time_es,
+      time_it: o.time_it,
+      time_fr: o.time_fr,
+      month_en: o.month_en,
+      month_de: o.month_de,
+      month_es: o.month_es,
+      month_it: o.month_it,
+      month_fr: o.month_fr,
       detail_en: o.detail_en,
       detail_de: o.detail_de,
       detail_es: o.detail_es,
@@ -388,6 +421,16 @@
       extDesc_es: o.extDesc_es,
       extDesc_it: o.extDesc_it,
       extDesc_fr: o.extDesc_fr,
+      privateBadgeText_en: o.privateBadgeText_en,
+      privateBadgeText_de: o.privateBadgeText_de,
+      privateBadgeText_es: o.privateBadgeText_es,
+      privateBadgeText_it: o.privateBadgeText_it,
+      privateBadgeText_fr: o.privateBadgeText_fr,
+      privateDetailText_en: o.privateDetailText_en,
+      privateDetailText_de: o.privateDetailText_de,
+      privateDetailText_es: o.privateDetailText_es,
+      privateDetailText_it: o.privateDetailText_it,
+      privateDetailText_fr: o.privateDetailText_fr,
       eventLink_en: o.eventLink_en,
       eventLink_de: o.eventLink_de,
       eventLink_es: o.eventLink_es,
@@ -621,27 +664,31 @@
   function translateMonth(monthStr) {
     if (!monthStr) return '';
     var mn = getPerfMerged().monthNames || {};
-    var result = monthStr;
-    [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-      'Spring',
-      'Summer',
-      'Autumn',
-      'Fall',
-      'Winter'
-    ].forEach(function (eng) {
-      if (mn[eng]) result = result.replace(new RegExp(eng, 'g'), mn[eng]);
+    var result = String(monthStr || '');
+    var aliases = {
+      January: ['January', 'Jan'],
+      February: ['February', 'Feb'],
+      March: ['March', 'Mar'],
+      April: ['April', 'Apr'],
+      May: ['May'],
+      June: ['June', 'Jun'],
+      July: ['July', 'Jul'],
+      August: ['August', 'Aug'],
+      September: ['September', 'Sep', 'Sept'],
+      October: ['October', 'Oct'],
+      November: ['November', 'Nov'],
+      December: ['December', 'Dec'],
+      Spring: ['Spring'],
+      Summer: ['Summer'],
+      Autumn: ['Autumn', 'Fall'],
+      Winter: ['Winter']
+    };
+    Object.keys(aliases).forEach(function (eng) {
+      var localized = mn[eng];
+      if (!localized) return;
+      aliases[eng].forEach(function (variant) {
+        result = result.replace(new RegExp('\\b' + variant + '\\b', 'gi'), localized);
+      });
     });
     return result;
   }
@@ -655,13 +702,279 @@
     return { month: s, year: '' };
   }
 
-  function perfLocaleField(p, base, lang) {
-    if (!p) return '';
-    var locKey = base + '_' + lang;
+  /* detail/extDesc + lang≠en: base_<lang> → base → base_en (aligns with legacy admin detail_<lang>||detail). Others: base_<lang> → base_en → base. */
+  function perfLocaleFieldResolve(p, base, lang) {
+    if (!p) return { value: '', source: '' };
+    var L = normalizeLangCode(lang) || 'en';
+    var locKey = base + '_' + L;
     var loc = p[locKey];
-    if (loc != null && String(loc).trim() !== '') return String(loc).trim();
+    if (loc != null && String(loc).trim() !== '') {
+      return {
+        value: perfNormalizeSupportingText(String(loc).trim(), base, L),
+        source: locKey
+      };
+    }
+    if (L !== 'en' && (base === 'detail' || base === 'extDesc')) {
+      var sharedDetail = p[base];
+      if (sharedDetail != null && String(sharedDetail).trim() !== '') {
+        return {
+          value: perfNormalizeSupportingText(String(sharedDetail).trim(), base, L),
+          source: base
+        };
+      }
+      var enKey = base + '_en';
+      var enLoc = p[enKey];
+      if (enLoc != null && String(enLoc).trim() !== '') {
+        return {
+          value: perfNormalizeSupportingText(String(enLoc).trim(), base, L),
+          source: enKey
+        };
+      }
+      return { value: '', source: '' };
+    }
+    var enKey2 = base + '_en';
+    var enLoc2 = p[enKey2];
+    if (L !== 'en' && enLoc2 != null && String(enLoc2).trim() !== '') {
+      return {
+        value: perfNormalizeSupportingText(String(enLoc2).trim(), base, L),
+        source: enKey2
+      };
+    }
     var g = p[base];
-    return g != null && String(g).trim() !== '' ? String(g).trim() : '';
+    if (g != null && String(g).trim() !== '') {
+      return {
+        value: perfNormalizeSupportingText(String(g).trim(), base, L),
+        source: base
+      };
+    }
+    return { value: '', source: '' };
+  }
+  function perfLocaleField(p, base, lang) {
+    return perfLocaleFieldResolve(p, base, lang).value;
+  }
+  var PERF_PLACEHOLDER_TRANSLATIONS = {
+    en: 'To be announced',
+    de: 'Wird noch angekündigt',
+    es: 'Por anunciar',
+    it: 'Da annunciare',
+    fr: 'À annoncer'
+  };
+  var PERF_PLACEHOLDER_PATTERNS = [
+    /^tba\.?$/i,
+    /^to be announced\.?$/i,
+    /^to be confirmed\.?$/i,
+    /^coming soon\.?$/i,
+    /^upcoming dates to be announced soon\.?$/i
+  ];
+  var PERF_SUPPORTING_TEXT_TRANSLATIONS = {
+    private_engagement: {
+      en: 'Private engagement',
+      de: 'Private Veranstaltung',
+      es: 'Evento privado',
+      it: 'Evento privato',
+      fr: 'Événement privé'
+    },
+    private_event: {
+      en: 'Private event',
+      de: 'Private Veranstaltung',
+      es: 'Evento privado',
+      it: 'Evento privato',
+      fr: 'Événement privé'
+    },
+    by_invitation_only: {
+      en: 'By invitation only',
+      de: 'Nur auf Einladung',
+      es: 'Solo por invitación',
+      it: 'Solo su invito',
+      fr: 'Sur invitation uniquement'
+    },
+    closed_event: {
+      en: 'Closed event',
+      de: 'Geschlossene Veranstaltung',
+      es: 'Evento cerrado',
+      it: 'Evento chiuso',
+      fr: 'Événement fermé'
+    }
+  };
+  function perfSupportingTextKey(raw) {
+    var s = String(raw || '')
+      .trim()
+      .toLowerCase()
+      .replace(/'/g, '')
+      .replace(/\u2019/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    if (!s) return '';
+    if (s === 'private_engagements') return 'private_engagement';
+    if (s === 'private_events') return 'private_event';
+    return s;
+  }
+  function perfNormalizeSupportingText(raw, base, lang) {
+    var text = String(raw || '').trim();
+    if (!text) return '';
+    if (!(base === 'detail' || base === 'extDesc')) return text;
+    var key = perfSupportingTextKey(text);
+    if (!key) return text;
+    var row = PERF_SUPPORTING_TEXT_TRANSLATIONS[key];
+    if (!row) return text;
+    return row[lang] || row.en || text;
+  }
+  function perfPrivateUiText(lang, key) {
+    var localeKey = key === 'badge' ? 'perf.privateBadge' : 'perf.privateDetail';
+    var table = PERF_PRIVATE_UI_TEXT[lang] || PERF_PRIVATE_UI_TEXT.en;
+    var fallback =
+      (table && table[key]) || (PERF_PRIVATE_UI_TEXT.en && PERF_PRIVATE_UI_TEXT.en[key]) || '';
+    return mpPick(lang, localeKey, fallback);
+  }
+  function perfIsPrivateDescriptorText(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return false;
+    var key = perfSupportingTextKey(s);
+    if (key && (key === 'private_event' || key === 'private_engagement' || key === 'by_invitation_only' || key === 'closed_event')) return true;
+    var low = s.toLowerCase();
+    return /private|invitation only|nur auf einladung|evento privado|evento privato|evenement prive|sur invitation/.test(low);
+  }
+  function perfIsPrivateEvent(p, lang) {
+    if (!p) return false;
+    if (isTruthyFlag(p.private)) return true;
+    var type = String(p.type || '').trim().toLowerCase();
+    if (type === 'houseconcert' || type === 'private' || type === 'private_event' || type === 'invitation_only') return true;
+    var detailCandidates = [
+      p['detail_' + lang],
+      p.detail,
+      p.detail_en,
+      p.extDesc,
+      p['extDesc_' + lang],
+      p.extDesc_en
+    ];
+    if (detailCandidates.some(perfIsPrivateDescriptorText)) return true;
+    var titleCandidates = [p.title, p.name, p['title_' + lang], p.title_en];
+    return titleCandidates.some(function (v) {
+      var key = perfSupportingTextKey(v);
+      return key === 'private_event' || key === 'private_engagement';
+    });
+  }
+  function perfPrivateDetailText(p, lang, fallbackDetail) {
+    if (p && isTruthyFlag(p.hidePrivateDetailLine)) return '';
+    var override = String(perfLocaleField(p, 'privateDetailText', lang) || '').trim();
+    if (override) return override;
+    var detail = String(fallbackDetail || '').trim();
+    if (!detail) return perfPrivateUiText(lang, 'detail');
+    return perfIsPrivateDescriptorText(detail) ? perfPrivateUiText(lang, 'detail') : detail;
+  }
+  var PERF_COUNTRY_NAME_TO_CODE = {
+    germany: 'DE',
+    deutschland: 'DE',
+    alemania: 'DE',
+    allemagne: 'DE',
+    germania: 'DE',
+    italy: 'IT',
+    italia: 'IT',
+    france: 'FR',
+    francia: 'FR',
+    frankreich: 'FR',
+    argentina: 'AR',
+    argentine: 'AR',
+    argentinien: 'AR',
+    spain: 'ES',
+    espana: 'ES',
+    españa: 'ES',
+    spanien: 'ES',
+    austria: 'AT',
+    österreich: 'AT',
+    suisse: 'CH',
+    switzerland: 'CH',
+    schweiz: 'CH'
+  };
+  function perfLocalizedPlaceholder(raw, lang) {
+    var text = String(raw || '').trim();
+    if (!text) return '';
+    var isPlaceholder = PERF_PLACEHOLDER_PATTERNS.some(function (rx) { return rx.test(text); });
+    return isPlaceholder ? (PERF_PLACEHOLDER_TRANSLATIONS[lang] || PERF_PLACEHOLDER_TRANSLATIONS.en) : text;
+  }
+  function perfLocalizedCountryToken(token, lang) {
+    var text = String(token || '').trim();
+    if (!text) return '';
+    var code = PERF_COUNTRY_NAME_TO_CODE[text.toLowerCase()];
+    if (!code) return text;
+    try {
+      var display = new Intl.DisplayNames([localeTagForMpLang(lang)], { type: 'region' });
+      return display.of(code) || text;
+    } catch (e) {
+      return text;
+    }
+  }
+  function perfLocalizedPlaceText(raw, lang) {
+    var text = perfLocalizedPlaceholder(raw, lang);
+    if (!text) return '';
+    return text
+      .split(',')
+      .map(function (part) { return perfLocalizedCountryToken(part, lang); })
+      .join(', ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function perfLocalizedField(p, base, lang, kind) {
+    var value = perfLocaleField(p, base, lang);
+    if (!value) return '';
+    if (kind === 'place') return perfLocalizedPlaceText(value, lang);
+    return perfLocalizedPlaceholder(value, lang);
+  }
+  function perfFormatTime(raw, lang) {
+    if (!raw) return '';
+    var cleanTime = String(raw).replace(/\s*(uhr|h)\s*$/i, '').trim();
+    var timeFmts = {
+      en: function (t) {
+        return t;
+      },
+      de: function (t) {
+        return t + ' Uhr';
+      },
+      es: function (t) {
+        return t + ' h';
+      },
+      it: function (t) {
+        return 'ore ' + t;
+      },
+      fr: function (t) {
+        return t.replace(':', 'h');
+      }
+    };
+    return (timeFmts[lang] || timeFmts.en)(cleanTime);
+  }
+  function perfDateParts(p, lang) {
+    var sort = String((p && p.sortDate) || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(sort)) {
+      var parsed = new Date(sort + 'T00:00:00');
+      if (!isNaN(parsed.getTime())) {
+        var year = parsed.getFullYear();
+        return {
+          day: String((p && p.day) || parsed.getDate()),
+          month: parsed.toLocaleString(localeTagForMpLang(lang), { month: 'long' }),
+          year: year > 2090 ? '' : String(year)
+        };
+      }
+    }
+    var translatedMonth = translateMonth(perfLocaleField(p, 'month', lang));
+    var parts = splitMonthLineAndYear(translatedMonth);
+    return {
+      day: String((p && p.day) || ''),
+      month: parts.month,
+      year: parts.year
+    };
+  }
+  function perfDateLine(p, lang) {
+    var parts = perfDateParts(p, lang);
+    var chunks = [];
+    var day = String(parts.day || '').trim();
+    var month = String(parts.month || '').trim();
+    var year = String(parts.year || '').trim();
+    if (day && day !== 'TBA') chunks.push(day);
+    if (month) chunks.push(month);
+    if (year) chunks.push(year);
+    if (!chunks.length) chunks.push(uiTable(lang)['perf.yearTba'] || 'TBA');
+    var timeText = perfFormatTime(perfLocaleField(p, 'time', lang), lang);
+    return timeText ? (chunks.join(' ') + ' · ' + timeText) : chunks.join(' ');
   }
   function resolveEventTitle(p, lang) {
     var title = p && p.title != null ? String(p.title).trim() : '';
@@ -669,8 +982,15 @@
     var localeTitle = p && p['title_' + lang] != null ? String(p['title_' + lang]).trim() : '';
     // Multilingual strategy: keep artistic/project title stable across locales.
     // Localized title fields are only fallback for legacy items missing canonical title.
-    var chosen = title || name || localeTitle || '';
-    var source = title ? 'title(canonical)' : (name ? 'name(legacy)' : (localeTitle ? 'title_' + lang + '(fallback)' : 'empty'));
+    var chosen;
+    var source;
+    if (perfIsPrivateEvent(p, lang) && localeTitle) {
+      chosen = localeTitle;
+      source = 'title_' + lang + '(private preferred)';
+    } else {
+      chosen = title || name || localeTitle || '';
+      source = title ? 'title(canonical)' : (name ? 'name(legacy)' : (localeTitle ? 'title_' + lang + '(fallback)' : 'empty'));
+    }
     if (!titleChoiceLogged) {
       titleChoiceLogged = true;
       console.log('[Calendar] Title field resolution sample', {
@@ -726,6 +1046,7 @@
     if (!Array.isArray(upcomingList) || !upcomingList.length) return;
     var items = [];
     upcomingList.forEach(function (p) {
+      var isPrivate = perfIsPrivateEvent(p, currentLang);
       var dateRaw = String(p.sortDate || '').trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) return;
       var title = resolveEventTitle(p, currentLang);
@@ -759,10 +1080,11 @@
         }
       };
       if (String(p.id || '').trim()) ev.identifier = String(p.id).trim();
-      var detail = perfLocaleField(p, 'detail', currentLang);
+      var detail = perfLocalizedField(p, 'detail', currentLang);
+      if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
       if (detail) ev.description = detail;
-      var venueName = String(p.venue || '').trim();
-      var city = String(p.city || '').trim();
+      var venueName = perfLocalizedField(p, 'venue', currentLang, 'place');
+      var city = perfLocalizedField(p, 'city', currentLang, 'place');
       if (venueName || city) {
         ev.location = {
           '@type': 'Place',
@@ -778,7 +1100,7 @@
       var venueImgAbs = toAbsolutePublicUrl(p.venuePhoto);
       ev.image = [venueImgAbs || 'https://rolandoguy.com/og-image.jpg'];
       var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
-      if (ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
+      if (!isPrivate && ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
         var offerParsed = parseOfferPrice(p.ticketPrice);
         ev.offers = {
           '@type': 'Offer',
@@ -868,6 +1190,7 @@
     function rowHtml(p, i, isPastSection) {
       var isArchive = sortDate(p) < today;
       var isEffectivePast = !!(isPastSection || isArchive || p.status === 'past');
+      var isPrivate = perfIsPrivateEvent(p, currentLang);
       var typeLabel = types[p.type] || p.type || types.concert;
       var badge =
         p.status === 'current' && !isPastSection
@@ -875,47 +1198,38 @@
           : isEffectivePast
             ? '<div class="perf-badge perf-badge-past">' + typeLabel + '</div>'
             : '<div class="perf-type">' + typeLabel + '</div>';
-      var timeHtml = (function () {
-        if (!p.time) return '';
-        var cleanTime = p.time.replace(/\s*(uhr|h)\s*$/i, '').trim();
-        var timeFmts = {
-          en: function (t) {
-            return t;
-          },
-          de: function (t) {
-            return t + ' Uhr';
-          },
-          es: function (t) {
-            return t + ' h';
-          },
-          it: function (t) {
-            return 'ore ' + t;
-          },
-          fr: function (t) {
-            return t.replace(':', 'h');
-          }
-        };
-        return (
-          '<div class="perf-time">' +
-          (timeFmts[currentLang] || timeFmts.en)(cleanTime) +
-          '</div>'
-        );
-      })();
-      var venueShort = compactVenueForCard(p.venue);
-      var venueCity = (venueShort || p.city)
-        ? '<a href="https://maps.google.com/?q=' +
-          encodeURIComponent(p.venue + (p.city ? ' ' + p.city : '')) +
-          '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">\ud83d\udccd </span>' +
-          venueShort +
-          (p.city ? ((venueShort ? ' · ' : '') + p.city) : '') +
-          ' <span class="perf-maps-hint">' +
-          mapsWord +
-          '</span></a>'
-        : '';
-      var detail = p['detail_' + currentLang] || p.detail || '';
+      var privateBadgeText = String(perfLocaleField(p, 'privateBadgeText', currentLang) || '').trim();
+      var privateBadge =
+        isPrivate && !isTruthyFlag(p.hidePrivateBadge)
+          ? '<div class="perf-badge perf-badge-private">' + (privateBadgeText || perfPrivateUiText(currentLang, 'badge')) + '</div>'
+          : '';
+      var localizedTime = perfFormatTime(perfLocaleField(p, 'time', currentLang), currentLang);
+      var timeHtml = localizedTime ? ('<div class="perf-time">' + localizedTime + '</div>') : '';
+      var venueText = perfLocalizedField(p, 'venue', currentLang, 'place');
+      var cityText = perfLocalizedField(p, 'city', currentLang, 'place');
+      var venueShort = compactVenueForCard(venueText);
+      var venueCity = '';
+      if (venueShort || cityText) {
+        var venueLine = venueShort + (cityText ? ((venueShort ? ' · ' : '') + cityText) : '');
+        if (isPrivate) {
+          venueCity = '<div class="perf-venue-link perf-venue-link--private"><span class="perf-venue-emoji">\ud83d\udccd </span>' + venueLine + '</div>';
+        } else {
+          venueCity =
+            '<a href="https://maps.google.com/?q=' +
+            encodeURIComponent((venueText || '') + (cityText ? ' ' + cityText : '')) +
+            '" target="_blank" rel="noopener" class="perf-venue-link"><span class="perf-venue-emoji">\ud83d\udccd </span>' +
+            venueLine +
+            ' <span class="perf-maps-hint">' +
+            mapsWord +
+            '</span></a>';
+        }
+      }
+      var detail = perfLocalizedField(p, 'detail', currentLang);
+      if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
       if (!supportingLocaleChoiceLogged) {
         supportingLocaleChoiceLogged = true;
-        var subtitleSource = String(p['detail_' + currentLang] || '').trim() ? ('detail_' + currentLang) : 'detail';
+        var detailResolve = perfLocaleFieldResolve(p, 'detail', currentLang);
+        var extResolve = perfLocaleFieldResolve(p, 'extDesc', currentLang);
         console.log('[Calendar] Supporting i18n resolution sample', {
           lang: currentLang,
           eventTitle: resolveEventTitle(p, currentLang),
@@ -923,13 +1237,13 @@
             base: p.detail || '',
             localized: p['detail_' + currentLang] || '',
             chosenCard: detail || '',
-            source: subtitleSource
+            source: detailResolve.source
           },
           extDesc: {
             base: p.extDesc || '',
             localized: p['extDesc_' + currentLang] || '',
             chosenModal: perfLocaleField(p, 'extDesc', currentLang) || '',
-            source: String(p['extDesc_' + currentLang] || '').trim() ? ('extDesc_' + currentLang) : 'extDesc'
+            source: extResolve.source
           },
           eventLinkLabel: {
             base: p.eventLinkLabel || '',
@@ -945,7 +1259,7 @@
           }
         });
       }
-      var printExt = perfLocaleField(p, 'extDesc', currentLang);
+      var printExt = perfLocalizedField(p, 'extDesc', currentLang);
       var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
       var hasExtra =
         !!printExt ||
@@ -953,10 +1267,11 @@
         (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
         (p.flyerImg && p.flyerImg.trim()) ||
         (p.modalImg && p.modalImg.trim());
-      var allowModalButton = p.modalEnabled === false ? false : hasExtra;
+      var allowModalButton = isPrivate ? false : (p.modalEnabled === false ? false : hasExtra);
       var moreRouteClass = allowModalButton ? ' perf-item--more' : ' perf-item--nomore';
       var pastClass = isEffectivePast ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
+      var privateClass = isPrivate ? ' perf-item--private' : '';
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
       var hasVenuePhoto = !!venuePhotoResolved;
       var photoClass = hasVenuePhoto ? ' perf-item-has-photo' : ' perf-item-no-photo';
@@ -966,6 +1281,7 @@
         (i > 0 ? ' rd' + ((i % 4) + 1) : '') +
         pastClass +
         archiveClass +
+        privateClass +
         photoClass +
         moreRouteClass +
         '" id="' +
@@ -998,12 +1314,12 @@
             .replace(/</g, '&lt;') +
           '&quot;)"></div>';
       }
-      var monthYearParts = splitMonthLineAndYear(translateMonth(p.month));
+      var monthYearParts = perfDateParts(p, currentLang);
       h +=
         '<div class="perf-date-box"><div class="perf-day">' +
-        escHtml(String(p.day != null ? p.day : '')) +
+        escHtml(String(monthYearParts.day != null ? monthYearParts.day : '')) +
         '</div><div class="perf-month">' +
-        escHtml(monthYearParts.month) +
+        escHtml(monthYearParts.month || '') +
         '</div><div class="perf-year">' +
         (monthYearParts.year ? escHtml(monthYearParts.year) : '\u00a0') +
         '</div>' +
@@ -1013,6 +1329,7 @@
       h += '<div class="perf-item-stack">';
       h +=
         badge +
+        privateBadge +
         '<div class="perf-info-title">' +
         listTitle +
         '</div>' +
@@ -1218,21 +1535,24 @@
           var yrShown = yr === 'TBA' ? tPrint['perf.yearTba'] || 'TBA' : yr;
           body += '<h2 class="year">' + esc(yrShown) + '</h2>';
           groups[yr].forEach(function (p) {
+            var isPrivate = perfIsPrivateEvent(p, lang);
             var typeLabel = types[p.type] || p.type || types.other || 'Event';
-            var monthStr = monthOut(p.month);
-            var yearStr = sortDate(p).getFullYear() > 2090 ? '' : ' ' + String(sortDate(p).getFullYear());
+            var parts = perfDateParts(p, lang);
+            var monthStr = parts.month || monthOut(p.month);
+            var yearStr = parts.year ? (' ' + parts.year) : '';
             var tbaWord = tPrint['perf.yearTba'] || 'TBA';
             var dateStr =
-              p.day && p.day !== 'TBA'
-                ? esc(p.day) + ' ' + esc(monthStr) + esc(yearStr)
+              parts.day && parts.day !== 'TBA'
+                ? esc(parts.day) + ' ' + esc(monthStr) + esc(yearStr)
                 : esc(monthStr + yearStr).trim() || esc(tbaWord);
-            var tStr = timeFmt(p.time);
+            var tStr = perfFormatTime(perfLocaleField(p, 'time', lang), lang);
             var when = tStr ? dateStr + ' · ' + esc(tStr) : dateStr;
             var title = resolveEventTitle(p, lang);
-            var detail = ((p['detail_' + lang] || p.detail) || '').trim();
+            var detail = perfLocalizedField(p, 'detail', lang);
+            if (isPrivate) detail = perfPrivateDetailText(p, lang, detail);
             var venueBits = [];
-            if ((p.venue || '').trim()) venueBits.push(String(p.venue).trim());
-            if ((p.city || '').trim()) venueBits.push(String(p.city).trim());
+            if (perfLocalizedField(p, 'venue', lang, 'place')) venueBits.push(perfLocalizedField(p, 'venue', lang, 'place'));
+            if (perfLocalizedField(p, 'city', lang, 'place')) venueBits.push(perfLocalizedField(p, 'city', lang, 'place'));
             var venueLine = venueBits.join(' · ');
             var moreInfo = perfLocaleField(p, 'eventLink', lang);
             body +=
@@ -1248,7 +1568,7 @@
               (title ? '<div class="title">' + esc(title) + '</div>' : '') +
               (detail ? '<div class="detail">' + esc(detail) + '</div>' : '') +
               (venueLine ? '<div class="venue">' + esc(venueLine) + '</div>' : '') +
-              (moreInfo
+              (!isPrivate && moreInfo
                 ? '<div class="more"><a href="' +
                   esc(moreInfo) +
                   '">' +
@@ -1347,17 +1667,17 @@
         other: 'Event'
       };
     var typeLabel = types[p.type] || p.type || '';
-    var detail = p['detail_' + currentLang] || p.detail || '';
+    var isPrivate = perfIsPrivateEvent(p, currentLang);
+    var detail = perfLocalizedField(p, 'detail', currentLang);
+    if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
     var modalTitle = resolveEventTitle(p, currentLang);
-    var venueCity = [p.venue, p.city].filter(Boolean).join(' · ');
-    var timeStr = p.time ? ' · ' + p.time : '';
+    var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
 
     document.getElementById('emType').textContent = typeLabel;
     document.getElementById('emTitle').textContent = modalTitle;
-    document.getElementById('emDate').textContent =
-      (p.day || '') + ' ' + (translateMonth(p.month) || '') + timeStr;
+    document.getElementById('emDate').textContent = perfDateLine(p, currentLang);
     document.getElementById('emVenue').textContent = venueCity;
-    var extBody = perfLocaleField(p, 'extDesc', currentLang);
+    var extBody = perfLocalizedField(p, 'extDesc', currentLang);
     // Modal body should be language-exclusive, not additive:
     // prefer localized extended text, then shared extended text, then short detail fallback.
     var modalBody = extBody || detail || '';
@@ -1387,7 +1707,7 @@
     extEl.style.display = 'none';
 
     var priceWrap = document.getElementById('emPrice');
-    if (p.ticketPrice && p.ticketPrice.trim()) {
+    if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
       document.getElementById('emPriceVal').textContent = p.ticketPrice;
       priceWrap.style.display = '';
     } else {
@@ -1396,7 +1716,7 @@
 
     var linkEl = document.getElementById('emEventLink');
     var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
-    if (ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
+    if (!isPrivate && ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
       linkEl.href = ticketUrl;
       var t = uiTable(currentLang);
       var legacyEnglish = 'Tickets & Info';
@@ -1411,8 +1731,8 @@
     }
     if (!modalLocaleChoiceLogged) {
       modalLocaleChoiceLogged = true;
-      var detailSource = String(p['detail_' + currentLang] || '').trim() ? ('detail_' + currentLang) : 'detail';
-      var extSource = String(p['extDesc_' + currentLang] || '').trim() ? ('extDesc_' + currentLang) : 'extDesc';
+      var modalDetailResolve = perfLocaleFieldResolve(p, 'detail', currentLang);
+      var modalExtResolve = perfLocaleFieldResolve(p, 'extDesc', currentLang);
       console.log('[Calendar] Modal i18n resolution sample', {
         lang: currentLang,
         eventTitle: modalTitle,
@@ -1420,13 +1740,13 @@
           base: p.detail || '',
           localized: p['detail_' + currentLang] || '',
           chosen: detail || '',
-          source: detailSource
+          source: modalDetailResolve.source
         },
         extDesc: {
           base: p.extDesc || '',
           localized: p['extDesc_' + currentLang] || '',
           chosen: modalBody || '',
-          source: extSource
+          source: modalExtResolve.source
         },
         eventLink: {
           base: p.eventLink || '',
@@ -1458,8 +1778,11 @@
 
     var mapsEl = document.getElementById('emMapsLink');
     var mapsTextEl = document.getElementById('emMapsText');
-    var destination = String((p.venue || '') + (p.city ? (' ' + p.city) : '')).trim();
+    var destination = String((perfLocalizedField(p, 'venue', currentLang, 'place') || '') + (perfLocalizedField(p, 'city', currentLang, 'place') ? (' ' + perfLocalizedField(p, 'city', currentLang, 'place')) : '')).trim();
     if (destination) {
+      if (isPrivate) {
+        mapsEl.style.display = 'none';
+      } else {
       mapsEl.href =
         'https://maps.google.com/?q=' +
         encodeURIComponent(destination);
@@ -1471,6 +1794,7 @@
       if (mapsTextEl) mapsTextEl.textContent = mapsLabel;
       else mapsEl.textContent = '\ud83d\udccd ' + mapsLabel;
       mapsEl.style.display = '';
+      }
     } else {
       mapsEl.style.display = 'none';
     }

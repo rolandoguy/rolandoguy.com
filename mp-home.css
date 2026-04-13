@@ -36,6 +36,118 @@ a.hero-scroll {
   color: inherit;
 }
 
+/* Home (public): hero and intro polish with current structure/content intact. */
+body[data-mp-page="index"] #hero .hero-subtitle {
+  max-width: 48ch;
+  margin-top: 18px;
+  font-size: clamp(0.88rem, 1.2vw, 0.96rem);
+  line-height: 1.76;
+  color: rgba(231, 234, 239, 0.82);
+  letter-spacing: 0.014em;
+  text-wrap: balance;
+}
+body[data-mp-page="index"] #hero .hero-cta {
+  margin-top: 30px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(212, 168, 67, 0.24);
+  gap: 12px;
+  align-items: stretch;
+}
+body[data-mp-page="index"] #hero .hero-cta .btn-primary,
+body[data-mp-page="index"] #hero .hero-cta .btn-secondary {
+  min-height: 42px;
+}
+body[data-mp-page="index"] #hero .hero-cta .btn-secondary {
+  background: rgba(15, 16, 22, 0.42);
+  border-color: rgba(212, 168, 67, 0.26);
+  color: rgba(236, 239, 244, 0.9);
+}
+body[data-mp-page="index"] #hero .hero-cta .btn-secondary:hover {
+  border-color: rgba(212, 168, 67, 0.5);
+  background: rgba(16, 18, 24, 0.6);
+}
+body[data-mp-page="index"] #intro .about-grid {
+  gap: 72px;
+  align-items: start;
+}
+body[data-mp-page="index"] #intro .about-text {
+  padding-top: 4px;
+}
+body[data-mp-page="index"] #intro .about-text h2 {
+  margin-bottom: 20px;
+  max-width: 20ch;
+  line-height: 1.08;
+}
+body[data-mp-page="index"] #intro .about-text p {
+  max-width: 66ch;
+  line-height: 1.86;
+  margin-bottom: 14px;
+}
+body[data-mp-page="index"] #intro .presenter-micro {
+  margin-top: 22px;
+  padding: 12px 14px 10px;
+  border: 1px solid rgba(212, 168, 67, 0.18);
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.07), rgba(212, 168, 67, 0.02));
+}
+body[data-mp-page="index"] #intro .presenter-micro-tag {
+  margin-bottom: 7px;
+  letter-spacing: 0.18em;
+}
+body[data-mp-page="index"] #intro .presenter-micro-list {
+  gap: 5px;
+}
+body[data-mp-page="index"] #intro .presenter-micro-list li {
+  font-size: 0.84rem;
+  line-height: 1.58;
+}
+body[data-mp-page="index"] #homeIntroCtas {
+  margin-top: 34px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(212, 168, 67, 0.2);
+  gap: 10px;
+}
+body[data-mp-page="index"] #homeIntroCtas .btn-primary,
+body[data-mp-page="index"] #homeIntroCtas .btn-secondary {
+  min-height: 41px;
+}
+
+@media (max-width: 700px) {
+  body[data-mp-page="index"] #hero .hero-subtitle {
+    margin-top: 14px;
+    font-size: 0.84rem;
+    line-height: 1.68;
+    max-width: 34ch;
+  }
+  body[data-mp-page="index"] #hero .hero-cta {
+    margin-top: 18px;
+    padding-top: 10px;
+    gap: 9px;
+  }
+  body[data-mp-page="index"] #intro .about-grid {
+    gap: 34px;
+  }
+  body[data-mp-page="index"] #intro .about-text h2 {
+    margin-bottom: 14px;
+    max-width: 24ch;
+  }
+  body[data-mp-page="index"] #intro .about-text p {
+    line-height: 1.76;
+    margin-bottom: 12px;
+  }
+  body[data-mp-page="index"] #intro .presenter-micro {
+    margin-top: 16px;
+    padding: 10px 11px 8px;
+  }
+  body[data-mp-page="index"] #intro .presenter-micro-list li {
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  body[data-mp-page="index"] #homeIntroCtas {
+    margin-top: 24px;
+    padding-top: 12px;
+  }
+}
+
 /*
  * MP home hero composition (face-first).
  * mp-hero.js sets inline backgroundPosition from hero-config — without !important,
@@ -474,10 +586,82 @@ html.mp-site .perf-item--archive .perf-venue-bg {
 .mp-page-bio .rep-header .section-tag {
   margin-bottom: 0.5rem;
 }
+body[data-mp-page="biography"] .mp-page-bio .rep-header {
+  margin-bottom: 1rem;
+}
+body[data-mp-page="biography"] .mp-page-bio #bioIntroLine {
+  display: none;
+}
+body[data-mp-page="biography"] .mp-page-bio .about-grid {
+  gap: 86px;
+  align-items: start;
+}
+body[data-mp-page="biography"] .mp-page-bio .about-photo-wrap {
+  align-self: start;
+}
+body[data-mp-page="biography"] .mp-page-bio .about-photo {
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.24);
+}
+body[data-mp-page="biography"] .mp-page-bio .about-photo-border {
+  top: 14px;
+  left: 14px;
+  right: -14px;
+  bottom: -14px;
+}
+body[data-mp-page="biography"] .mp-page-bio #bio-heading {
+  max-width: 21ch;
+  line-height: 1.08;
+  margin-bottom: 20px;
+}
+body[data-mp-page="biography"] .mp-page-bio #bioParagraphs {
+  display: grid;
+  gap: 12px;
+}
+body[data-mp-page="biography"] .mp-page-bio #bioParagraphs p {
+  margin: 0;
+  max-width: 68ch;
+  line-height: 1.84;
+  color: var(--text-dim);
+}
+body[data-mp-page="biography"] .mp-page-bio .section-sub {
+  margin: 18px 0 0;
+  max-width: 65ch;
+}
+body[data-mp-page="biography"] .mp-page-bio .presenter-micro {
+  margin-top: 18px;
+  padding: 12px 14px 10px;
+  border: 1px solid rgba(212, 168, 67, 0.16);
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.06), rgba(212, 168, 67, 0.015));
+}
+body[data-mp-page="biography"] .mp-page-bio .presenter-micro-tag {
+  margin-bottom: 7px;
+  letter-spacing: 0.18em;
+}
+body[data-mp-page="biography"] .mp-page-bio .presenter-micro-list {
+  gap: 5px;
+}
+body[data-mp-page="biography"] .mp-page-bio .presenter-micro-list li {
+  font-size: 0.84rem;
+  line-height: 1.58;
+}
 .mp-page-bio-continue {
   padding: 90px 0;
   background: var(--bg);
   border-top: 1px solid var(--border);
+}
+body[data-mp-page="biography"] .mp-page-bio-continue .mp-onward-note {
+  max-width: 38em;
+  margin-bottom: 1.4rem;
+  line-height: 1.8;
+}
+body[data-mp-page="biography"] .mp-page-bio-continue .mp-onward-ctas {
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(212, 168, 67, 0.16);
+}
+body[data-mp-page="biography"] .mp-page-bio-continue .mp-onward-ctas .btn-primary,
+body[data-mp-page="biography"] .mp-page-bio-continue .mp-onward-ctas .btn-secondary {
+  min-height: 41px;
 }
 /* Internal-page onward navigation: one consistent component across mp/*.html (except Home hero). */
 .mp-onward-band {
@@ -514,6 +698,26 @@ html.mp-site #performances .mp-onward-band {
   }
 }
 @media (max-width: 700px) {
+  body[data-mp-page="biography"] .mp-page-bio .about-grid {
+    gap: 36px;
+  }
+  body[data-mp-page="biography"] .mp-page-bio #bio-heading {
+    max-width: 24ch;
+    margin-bottom: 14px;
+  }
+  body[data-mp-page="biography"] .mp-page-bio #bioParagraphs {
+    gap: 10px;
+  }
+  body[data-mp-page="biography"] .mp-page-bio #bioParagraphs p {
+    line-height: 1.74;
+  }
+  body[data-mp-page="biography"] .mp-page-bio .presenter-micro {
+    margin-top: 14px;
+    padding: 10px 11px 8px;
+  }
+  body[data-mp-page="biography"] .mp-page-bio-continue .mp-onward-ctas {
+    padding-top: 8px;
+  }
   .mp-page-bio::before {
     content: none;
   }

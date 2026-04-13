@@ -575,6 +575,17 @@
     var s = safeString(v).trim().toLowerCase();
     return s === 'true' || s === '1' || s === 'yes' || s === 'on';
   }
+
+  function openAdminForEvent(e) {
+    if (!e || !e.id) return;
+    if (e.source !== 'current') return;
+    var url = 'admin-v2.html?section=calendar&perfId=' + encodeURIComponent(String(e.id));
+    var w = null;
+    try { w = window.open(url, 'admin-v2'); } catch (err) { w = null; }
+    if (!w) {
+      try { window.location.href = url; } catch (err2) {}
+    }
+  }
   function parseMaybeDate(raw) {
     var s = safeString(raw).trim();
     if (!s) return null;
@@ -1053,12 +1064,10 @@
   }
   function renderEventMarkup(e, copy) {
     var visibility = visibilityLabelFor(e);
-    var venueBits = [];
-    if (e.venue) venueBits.push(e.venue);
-    if (e.city) venueBits.push(e.city);
-    if (e.address) venueBits.push(e.address);
+    var venueBits = [e.venue, e.city].filter(Boolean);
     var venueLine = venueBits.join(' · ');
-    return '<article class="ic-event ic-event--' + (shouldShowPublic(e) ? 'public' : 'private') + '">' +
+    var adminAttrs = e.source === 'current' ? (' data-admin-perf-id="' + safeHtml(String(e.id)) + '"') : '';
+    return '<article class="ic-event ic-event--' + (shouldShowPublic(e) ? 'public' : 'private') + '"' + adminAttrs + '>' +
       '<div class="ic-event__date">' +
         '<strong>' + safeHtml(e.date ? new Intl.DateTimeFormat(localeForLang(state.lang), { day: 'numeric' }).format(e.date) : 'TBA') + '</strong>' +
         (e.date ? '<span class="ic-event__date-sub">' + safeHtml(new Intl.DateTimeFormat(localeForLang(state.lang), { month: 'short', year: 'numeric' }).format(e.date)) + '</span>' : '') +
@@ -1148,6 +1157,15 @@
           var key = btn.getAttribute('data-month-toggle');
           var current = !!state.collapsed[key];
           setCollapsed(key, !current);
+        });
+      });
+      monthsEl.querySelectorAll('.ic-event[data-admin-perf-id]').forEach(function (card) {
+        card.addEventListener('click', function () {
+          var id = card.getAttribute('data-admin-perf-id');
+          if (!id) return;
+          var match = (state.events || []).find(function (evt) { return evt && evt.source === 'current' && String(evt.id) === String(id); });
+          if (!match) return;
+          openAdminForEvent(match);
         });
       });
       monthsEl.querySelectorAll('.ic-month-chip').forEach(function (chip) {

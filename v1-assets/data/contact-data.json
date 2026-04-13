@@ -1,7 +1,7 @@
 {
   "contact": {
     "title": "Bookings &amp; <em>Artistic Enquiries</em>",
-    "sub": "For opera, concert, recital, tango, and curated programme enquiries, please get in touch directly. The contact channel is intended for presenters, artistic directors, theatres, festivals, and collaborating ensembles, and every enquiry receives a personal reply.",
+    "sub": "For booking enquiries, artistic projects, private concerts, and opera evenings, please use the contact form.\n\nAll enquiries will be answered as soon as possible.",
     "email": "rolandoguy@gmail.com",
     "emailBtn": "Send Email",
     "webBtn": "Official Website",
@@ -10,16 +10,16 @@
   "formspreeId": "xqedvoqw",
   "contactLocales": {
     "de": {
-      "sub": "Für Anfragen zu Oper, Konzert, Rezital, Tango und kuratierten Programmformaten schreiben Sie bitte direkt. Dieser Kanal richtet sich an Veranstalter, künstlerische Leitungen, Theater, Festivals und kooperierende Ensembles; jede Anfrage wird persönlich beantwortet."
+      "sub": "Für Buchungsanfragen, künstlerische Projekte, private Konzerte und Opernabende nutzen Sie bitte das Kontaktformular.\n\nAnfragen werden schnellstmöglich beantwortet."
     },
     "es": {
-      "sub": "Para consultas de ópera, concierto, recital, tango y formatos curados de programa, escriba directamente. Este canal está orientado a programadores, direcciones artísticas, teatros, festivales y ensambles colaboradores; cada consulta recibe respuesta personal."
+      "sub": "Para contrataciones, proyectos artísticos, conciertos privados y veladas de ópera, utilice por favor el formulario de contacto.\n\nLas consultas serán respondidas a la mayor brevedad posible."
     },
     "it": {
-      "sub": "Per richieste relative a opera, concerto, recital, tango e formati curati di programma, scriva direttamente. Questo canale è dedicato a organizzatori, direzioni artistiche, teatri, festival ed ensemble partner; ogni richiesta riceve risposta personale."
+      "sub": "Per richieste di ingaggio, progetti artistici, concerti privati e serate d'opera, si prega di utilizzare il modulo di contatto.\n\nLe richieste saranno evase nel più breve tempo possibile."
     },
     "fr": {
-      "sub": "Pour les demandes liées à l’opéra, au concert, au récital, au tango et aux formats de programme curatés, écrivez directement. Ce canal s’adresse aux programmateurs, directions artistiques, théâtres, festivals et ensembles partenaires ; chaque demande reçoit une réponse personnelle."
+      "sub": "Pour les demandes d'engagement, les projets artistiques, les concerts privés et les soirées d'opéra, veuillez utiliser le formulaire de contact.\n\nLes demandes seront traitées dans les plus brefs délais."
     }
   }
 }

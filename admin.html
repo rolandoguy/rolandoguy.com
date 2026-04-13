@@ -2567,13 +2567,31 @@ function admSetUnlocked(unlocked, user){
 async function admSignInGoogle(){
   if(!fauth){ alert('Authentication is unavailable (Firebase did not initialize).'); return; }
   const provider = new firebase.auth.GoogleAuthProvider();
+  const ua = String((navigator && navigator.userAgent) || '');
+  const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(ua) || (!!window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   try{
     console.info('[RG ADMIN] Sign-in start');
+    if(isMobile){
+      console.info('[RG ADMIN] Mobile detected, using redirect sign-in');
+      await fauth.signInWithRedirect(provider);
+      return;
+    }
     await fauth.signInWithPopup(provider);
     const u = fauth.currentUser;
     console.info('[RG ADMIN] Sign-in success', { email: u && u.email ? u.email : null, uid: u && u.uid ? u.uid : null });
   }catch(e){
     console.warn('Google sign-in failed:', e);
+    const code = e && e.code ? String(e.code) : '';
+    const popupFailure = code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request' || code === 'auth/operation-not-supported-in-this-environment';
+    if(popupFailure){
+      try{
+        console.info('[RG ADMIN] Popup sign-in unavailable, falling back to redirect', { code });
+        await fauth.signInWithRedirect(provider);
+        return;
+      }catch(redirectErr){
+        console.warn('Redirect sign-in fallback failed:', redirectErr);
+      }
+    }
     alert('Could not sign in with Google. Check that this domain is allowed in Firebase Authentication.');
   }
 }
@@ -2626,7 +2644,7 @@ function shouldHydrateLocalOverrideKey(localKey) {
     key === 'rg_rep_cards' || key === 'rg_perfs' || key === 'rg_past_perfs' || key === 'rg_vid' ||
     key === 'rg_vid_en' || key === 'rg_audio' || key === 'rg_photos' || key === 'rg_photo_captions' ||
     key === 'rg_press' || key === 'rg_press_meta' || key === 'rg_epk_bios' || key === 'rg_epk_photos' ||
-    key === 'rg_epk_cvs' || key === 'rg_public_pdfs' || key === 'rg_programs' ||
+    key === 'rg_epk_cvs' || key === 'rg_public_pdfs' || key === 'rg_programs' || key === 'rg_outreach_tracker' ||
     key === 'rg_repertoire_planner' || key === 'rg_program_blueprints' || key === 'rg_concert_history'
   ) return true;
   if (/^(hero_|bio_|rep_|perf_|contact_|rg_ui_|rg_programs_|rg_editorial_)/.test(key)) return true;

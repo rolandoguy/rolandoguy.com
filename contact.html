@@ -68,18 +68,7 @@
   <div class="section-inner">
     <p class="section-tag" data-num="09" id="contactSectionTag" data-i18n="nav.contact">Contact</p>
     <div class="contact-grid">
-      <div class="contact-left reveal">
-        <h2 id="contactTitle">Bookings &amp; <em>Artistic Enquiries</em></h2>
-        <p id="contactSub">For opera, concert, recital, tango, and curated programme enquiries, please get in touch directly. The contact channel is intended for presenters, artistic directors, theatres, festivals, and collaborating ensembles, and every enquiry receives a personal reply.</p>
-        <p class="section-sub" data-i18n="contact.materialsHint">For a faster booking conversation, include venue, city, preferred dates, programme format, and technical needs. Press kit files and media links can be shared in the same thread.</p>
-        <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
-          <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
-        </div>
-        <div class="contact-ctas">
-          <a id="contactEmailBtn" class="btn-secondary">Send Email</a>
-          <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none" data-i18n="contact.webBtn">Official Website</a>
-        </div>
-      </div>
+      <h2 id="contactTitle" class="reveal">Bookings &amp; <em>Artistic Enquiries</em></h2>
       <div class="contact-form reveal rd2">
         <div class="form-row">
           <div class="form-group"><label class="form-label" for="cf-name" data-i18n="form.name">Name</label><input type="text" id="cf-name" class="form-input" data-i18n-placeholder="form.namePh" placeholder="Your name" autocomplete="name"></div>
@@ -89,6 +78,16 @@
         <div class="form-group"><label class="form-label" for="cf-message" data-i18n="form.message">Message</label><textarea id="cf-message" class="form-input" rows="5" data-i18n-placeholder="form.messagePh" placeholder="Tell me about your project..."></textarea></div>
         <button type="button" class="form-submit" onclick="submitForm()"><span data-i18n="form.send">Send Message</span></button>
         <div class="form-success" id="formOk" data-i18n="form.success">Thank you! Your message has been sent.</div>
+      </div>
+      <div class="contact-left reveal">
+        <p id="contactSub">For opera, concert, recital, tango, and curated programme enquiries, please get in touch directly. The contact channel is intended for presenters, artistic directors, theatres, festivals, and collaborating ensembles, and every enquiry receives a personal reply.</p>
+        <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
+          <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
+        </div>
+        <div class="contact-ctas">
+          <a id="contactEmailBtn" class="btn-secondary">Send Email</a>
+          <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none" data-i18n="contact.webBtn">Official Website</a>
+        </div>
       </div>
     </div>
   </div>
@@ -126,7 +125,7 @@
     </div>
   </div>
 </footer>
-<script defer src="v1-assets/js/mp-shell.js"></script>
-<script defer src="v1-assets/js/mp-contact.js"></script>
+<script defer src="v1-assets/js/mp-shell.js?v=20260410h"></script>
+<script defer src="v1-assets/js/mp-contact.js?v=20260410h"></script>
 </body>
 </html>
