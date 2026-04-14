@@ -181,7 +181,9 @@
     'perf.moreInfoPrint': 'Details',
     'perf.ticketsInfo': 'Tickets & Info',
     'perf.privateBadge': 'Invitation only',
-    'perf.privateDetail': 'Private event - not open to the public'
+    'perf.privateEventType': 'Private event',
+    'perf.yearTba': 'TBA',
+    'ui.featured': 'Featured'
   };
   var PERF_PRIVATE_UI_TEXT = {
     en: { badge: 'Invitation only', detail: 'Private event - not open to the public' },
@@ -337,6 +339,23 @@
     var s = String(v == null ? '' : v).trim().toLowerCase();
     return s === 'true' || s === '1' || s === 'yes' || s === 'on';
   }
+  function normalizeFeaturedContexts(raw, defaults) {
+    var src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    var base = defaults && typeof defaults === 'object' && !Array.isArray(defaults) ? defaults : {};
+    return {
+      media: typeof src.media === 'boolean' ? src.media : !!base.media,
+      homepage: typeof src.homepage === 'boolean' ? src.homepage : !!base.homepage,
+      calendar: typeof src.calendar === 'boolean' ? src.calendar : !!base.calendar
+    };
+  }
+  function perfFeaturedVisual(item) {
+    if (item && typeof item.featured_visual === 'boolean') return item.featured_visual;
+    return !!(item && item.featured);
+  }
+  function perfFeaturedLayout(item) {
+    if (item && typeof item.featured_layout === 'boolean') return item.featured_layout;
+    return !!(item && item.featured);
+  }
   function normalizeRgPerfsItem(raw, idx) {
     var o = raw && typeof raw === 'object' ? raw : {};
     var title = String(o.title || o.name || '').trim();
@@ -356,6 +375,14 @@
         if (!month) month = parsed.toLocaleString('en', { month: 'long' });
       }
     }
+    var featuredVisual = typeof o.featured_visual === 'boolean' ? o.featured_visual : !!o.featured;
+    var featuredLayout = typeof o.featured_layout === 'boolean' ? o.featured_layout : !!o.featured;
+    var homepagePriority = Number(o.homepage_priority);
+    var featuredContexts = normalizeFeaturedContexts(o.featured_contexts, {
+      media: false,
+      homepage: featuredVisual,
+      calendar: featuredVisual
+    });
     return {
       id: o.id != null ? o.id : ('perf-' + (idx + 1)),
       title: title,
@@ -368,6 +395,11 @@
       sortDate: sortDate,
       status: status || 'upcoming',
       editorialStatus: editorialStatus,
+      featured_visual: featuredVisual,
+      featured_layout: featuredLayout,
+      featured: featuredVisual,
+      featured_contexts: featuredContexts,
+      homepage_priority: Number.isFinite(homepagePriority) && homepagePriority >= 0 ? Math.floor(homepagePriority) : null,
       type: String(o.type || 'concert').trim().toLowerCase() || 'concert',
       venuePhoto: String(o.venuePhoto || o.image || '').trim(),
       venueOpacity: o.venueOpacity,
@@ -1169,7 +1201,20 @@
       if (d >= today) upcoming.push(p);
     });
     upcoming.sort(function (a, b) {
-      return sortDate(a) - sortDate(b);
+      var ad = sortDate(a);
+      var bd = sortDate(b);
+      var diff = ad - bd;
+      if (diff) return diff;
+      var av = perfFeaturedVisual(a) ? 1 : 0;
+      var bv = perfFeaturedVisual(b) ? 1 : 0;
+      var al = perfFeaturedLayout(a) ? 1 : 0;
+      var bl = perfFeaturedLayout(b) ? 1 : 0;
+      var ap = av + al;
+      var bp = bv + bl;
+      if (ap !== bp) return bp - ap;
+      if (av !== bv) return bv - av;
+      if (al !== bl) return bl - al;
+      return 0;
     });
     updateUpcomingEventSchema(upcoming);
     var perfLang = getPerfMerged();
@@ -1191,13 +1236,20 @@
       var isArchive = sortDate(p) < today;
       var isEffectivePast = !!(isPastSection || isArchive || p.status === 'past');
       var isPrivate = perfIsPrivateEvent(p, currentLang);
+      var isFeaturedVisual = perfFeaturedVisual(p);
+      var isFeaturedLayout = perfFeaturedLayout(p);
       var typeLabel = types[p.type] || p.type || types.concert;
+      var featuredLabel = tPerf['ui.featured'] || 'Featured';
       var badge =
         p.status === 'current' && !isPastSection
           ? '<div class="perf-badge">' + typeLabel + '</div>'
           : isEffectivePast
             ? '<div class="perf-badge perf-badge-past">' + typeLabel + '</div>'
             : '<div class="perf-type">' + typeLabel + '</div>';
+      var featuredBadge =
+        isFeaturedVisual && !isEffectivePast
+          ? '<div class="perf-badge perf-badge-featured">' + featuredLabel + '</div>'
+          : '';
       var privateBadgeText = String(perfLocaleField(p, 'privateBadgeText', currentLang) || '').trim();
       var privateBadge =
         isPrivate && !isTruthyFlag(p.hidePrivateBadge)
@@ -1272,6 +1324,8 @@
       var pastClass = isEffectivePast ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var privateClass = isPrivate ? ' perf-item--private' : '';
+      var featuredVisualClass = isFeaturedVisual && !isEffectivePast ? ' perf-item-featured' : '';
+      var featuredLayoutClass = isFeaturedLayout && !isEffectivePast ? ' perf-item-featured-layout' : '';
       var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
       var hasVenuePhoto = !!venuePhotoResolved;
       var photoClass = hasVenuePhoto ? ' perf-item-has-photo' : ' perf-item-no-photo';
@@ -1282,6 +1336,8 @@
         pastClass +
         archiveClass +
         privateClass +
+        featuredVisualClass +
+        featuredLayoutClass +
         photoClass +
         moreRouteClass +
         '" id="' +
@@ -1328,6 +1384,7 @@
       var listTitle = resolveEventTitle(p, currentLang);
       h += '<div class="perf-item-stack">';
       h +=
+        featuredBadge +
         badge +
         privateBadge +
         '<div class="perf-info-title">' +
@@ -1855,6 +1912,24 @@
   window.openEventModal = openEventModal;
   window.closeEventModal = closeEventModal;
   window.printAgenda = printAgenda;
+  window.getMpCalendarHighlights = function () {
+    var perfs = getPublicPerfs().slice();
+    return perfs.filter(function (p) {
+      return perfFeaturedVisual(p) || perfFeaturedLayout(p);
+    }).map(function (p) {
+      return {
+        id: String(p.id || ''),
+        type: 'event',
+        featured_visual: perfFeaturedVisual(p),
+        featured_layout: perfFeaturedLayout(p),
+        homepage_priority: Number.isFinite(Number(p && p.homepage_priority)) && Number(p.homepage_priority) >= 0 ? Math.floor(Number(p.homepage_priority)) : null,
+        featured_contexts: normalizeFeaturedContexts(p.featured_contexts, { media: false, homepage: false, calendar: perfFeaturedVisual(p) }),
+        title: resolveEventTitle(p, currentLang),
+        sortDate: String(p.sortDate || ''),
+        status: String(p.status || '')
+      };
+    });
+  };
   document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('pastPerfCollapseBtn');
     if (btn) btn.addEventListener('click', togglePastPublicList);

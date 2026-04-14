@@ -16,6 +16,8 @@
   var MP_UI_PROMISES = {};
   var MP_EDITORIAL_OVERRIDES = {};
   var MP_EDITORIAL_PROMISES = {};
+  var MP_EDITORIAL_HIGHLIGHTS_CACHE = { loaded: false, videos: [], audios: [], events: [] };
+  var MP_EDITORIAL_HIGHLIGHTS_PROMISE = null;
   var MP_PRESS_NAV_STATE = { resolved: false, hasQuotes: false };
   var MP_PRESS_NAV_PROMISE = null;
   var MP_LANG_DEBUG = { detected: 'en', source: 'fallback', applied: 'en', persisted: 'no' };
@@ -316,6 +318,264 @@
   }
 
   window.pickMpLocaleString = pickLocaleString;
+  function normalizeFeaturedContexts(raw, defaults) {
+    var src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    var base = defaults && typeof defaults === 'object' && !Array.isArray(defaults) ? defaults : {};
+    return {
+      media: typeof src.media === 'boolean' ? src.media : !!base.media,
+      homepage: typeof src.homepage === 'boolean' ? src.homepage : !!base.homepage,
+      calendar: typeof src.calendar === 'boolean' ? src.calendar : !!base.calendar
+    };
+  }
+  function hasFeaturedVisual(item) {
+    if (item && typeof item.featured_visual === 'boolean') return item.featured_visual;
+    return !!(item && item.featured);
+  }
+  function hasFeaturedLayout(item) {
+    if (item && typeof item.featured_layout === 'boolean') return item.featured_layout;
+    return !!(item && item.featured);
+  }
+  function rankFeatured(item) {
+    return (hasFeaturedVisual(item) ? 1 : 0) + (hasFeaturedLayout(item) ? 1 : 0);
+  }
+  function homepagePriorityValue(item) {
+    var direct = Number(item && item.homepage_priority);
+    if (Number.isFinite(direct) && direct >= 0) return Math.floor(direct);
+    var payload = item && item.payload ? item.payload : null;
+    var nested = Number(payload && payload.homepage_priority);
+    if (Number.isFinite(nested) && nested >= 0) return Math.floor(nested);
+    return null;
+  }
+  function normalizeMediaHighlightsItems(raw, key) {
+    var src = raw && typeof raw === 'object' ? raw : {};
+    var arr = Array.isArray(src[key]) ? src[key] : [];
+    return arr.filter(function (item) {
+      return item && typeof item === 'object' && !Array.isArray(item);
+    }).map(function (item) {
+      var visual = hasFeaturedVisual(item);
+      var layout = hasFeaturedLayout(item);
+      return {
+        featured_visual: visual,
+        featured_layout: layout,
+        featured: visual,
+        homepage_priority: homepagePriorityValue(item),
+        hidden: !!item.hidden,
+        featured_contexts: normalizeFeaturedContexts(item.featured_contexts, {
+          media: visual,
+          homepage: visual,
+          calendar: false
+        }),
+        payload: item
+      };
+    });
+  }
+  function normalizeCalendarHighlightsItems(raw) {
+    var src = raw && typeof raw === 'object' ? raw : {};
+    var arr = Array.isArray(src.perfs) ? src.perfs : [];
+    return arr.filter(function (item) {
+      return item && typeof item === 'object' && !Array.isArray(item);
+    }).map(function (item) {
+      var visual = hasFeaturedVisual(item);
+      var layout = hasFeaturedLayout(item);
+      return {
+        featured_visual: visual,
+        featured_layout: layout,
+        featured: visual,
+        homepage_priority: homepagePriorityValue(item),
+        status: String(item.status || '').trim().toLowerCase(),
+        editorialStatus: String(item.editorialStatus || '').trim().toLowerCase(),
+        sortDate: String(item.sortDate || ''),
+        title: String(item.title || item.name || ''),
+        featured_contexts: normalizeFeaturedContexts(item.featured_contexts, {
+          media: false,
+          homepage: visual,
+          calendar: visual
+        }),
+        payload: item
+      };
+    });
+  }
+  function isPublicCalendarHighlight(item) {
+    var st = String(item && item.status || '').trim().toLowerCase();
+    var es = String(item && item.editorialStatus || '').trim().toLowerCase();
+    if (!String(item && item.title || '').trim()) return false;
+    if (st === 'hidden' || st === 'draft') return false;
+    if (es === 'hidden' || es === 'draft' || es === 'needs_translation' || es === 'needs translation') return false;
+    return true;
+  }
+  function ensureEditorialHighlightsCache() {
+    if (MP_EDITORIAL_HIGHLIGHTS_CACHE.loaded) return Promise.resolve(MP_EDITORIAL_HIGHLIGHTS_CACHE);
+    if (MP_EDITORIAL_HIGHLIGHTS_PROMISE) return MP_EDITORIAL_HIGHLIGHTS_PROMISE;
+    MP_EDITORIAL_HIGHLIGHTS_PROMISE = Promise.all([
+      fetchFirestoreDocJson('rg_vid'),
+      fetchFirestoreDocJson('rg_audio'),
+      fetchFirestoreDocJson('rg_perfs')
+    ]).then(function (vals) {
+      var vids = vals[0] && typeof vals[0] === 'object' ? vals[0] : readLegacyJson('rg_vid');
+      var aud = vals[1] && typeof vals[1] === 'object' ? vals[1] : readLegacyJson('rg_audio');
+      var cal = vals[2] && typeof vals[2] === 'object' ? vals[2] : readLegacyJson('rg_perfs');
+      MP_EDITORIAL_HIGHLIGHTS_CACHE.videos = normalizeMediaHighlightsItems(vids, 'videos').filter(function (item) {
+        return !item.hidden;
+      });
+      MP_EDITORIAL_HIGHLIGHTS_CACHE.audios = normalizeMediaHighlightsItems(aud, 'items').filter(function (item) {
+        return !item.hidden;
+      });
+      MP_EDITORIAL_HIGHLIGHTS_CACHE.events = normalizeCalendarHighlightsItems(cal).filter(isPublicCalendarHighlight);
+      MP_EDITORIAL_HIGHLIGHTS_CACHE.loaded = true;
+      try {
+        window.dispatchEvent(new CustomEvent('mp:highlightsready'));
+      } catch (e) {}
+      return MP_EDITORIAL_HIGHLIGHTS_CACHE;
+    }).catch(function () {
+      MP_EDITORIAL_HIGHLIGHTS_CACHE.loaded = true;
+      return MP_EDITORIAL_HIGHLIGHTS_CACHE;
+    }).finally(function () {
+      MP_EDITORIAL_HIGHLIGHTS_PROMISE = null;
+    });
+    return MP_EDITORIAL_HIGHLIGHTS_PROMISE;
+  }
+  window.getMpEditorialHighlights = function (opts) {
+    opts = opts || {};
+    var context = String(opts.context || 'homepage').trim().toLowerCase() || 'homepage';
+    var includeMedia = opts.includeMedia !== false;
+    var includeCalendar = opts.includeCalendar !== false;
+    var maxItems = Number(opts.maxItems);
+    if (!Number.isFinite(maxItems) || maxItems < 0) maxItems = 6;
+    var maxVideo = Number(opts.maxVideo);
+    var maxAudio = Number(opts.maxAudio);
+    if (!Number.isFinite(maxVideo) || maxVideo < 0) maxVideo = 2;
+    if (!Number.isFinite(maxAudio) || maxAudio < 0) maxAudio = 2;
+    var out = [];
+    var fallbackMedia = [];
+    var fallbackEvents = [];
+    if ((!window.getMpCuratedHighlights && includeMedia) || (!window.getMpCalendarHighlights && includeCalendar)) {
+      ensureEditorialHighlightsCache();
+    }
+    if (includeMedia && typeof window.getMpCuratedHighlights === 'function') {
+      var media = window.getMpCuratedHighlights({ context: context, maxVideo: maxVideo, maxAudio: maxAudio }) || {};
+      (Array.isArray(media.videos) ? media.videos : []).forEach(function (item) {
+        var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: true, homepage: true, calendar: false });
+        if (!ctx[context]) return;
+        out.push({
+          source: 'media',
+          kind: 'video',
+          featured_visual: hasFeaturedVisual(item),
+          featured_layout: hasFeaturedLayout(item),
+          homepage_priority: homepagePriorityValue(item),
+          featured_contexts: ctx,
+          payload: item && item.payload ? item.payload : item
+        });
+      });
+      (Array.isArray(media.audios) ? media.audios : []).forEach(function (item) {
+        var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: true, homepage: true, calendar: false });
+        if (!ctx[context]) return;
+        out.push({
+          source: 'media',
+          kind: 'audio',
+          featured_visual: hasFeaturedVisual(item),
+          featured_layout: hasFeaturedLayout(item),
+          homepage_priority: homepagePriorityValue(item),
+          featured_contexts: ctx,
+          payload: item && item.payload ? item.payload : item
+        });
+      });
+    }
+    if (includeMedia && typeof window.getMpCuratedHighlights !== 'function') {
+      function pickFallbackMedia(list, kind, max) {
+        return (Array.isArray(list) ? list : []).filter(function (item) {
+          var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: true, homepage: true, calendar: false });
+          if (!ctx[context]) return false;
+          return hasFeaturedVisual(item) || hasFeaturedLayout(item);
+        }).slice().sort(function (a, b) {
+          if (context === 'homepage') {
+            var ap = homepagePriorityValue(a);
+            var bp = homepagePriorityValue(b);
+            var ah = ap != null;
+            var bh = bp != null;
+            if (ah && bh && ap !== bp) return ap - bp;
+            if (ah !== bh) return ah ? -1 : 1;
+          }
+          var ar = rankFeatured(a);
+          var br = rankFeatured(b);
+          if (ar !== br) return br - ar;
+          return 0;
+        }).slice(0, max).forEach(function (item) {
+          var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: true, homepage: true, calendar: false });
+          fallbackMedia.push({
+            source: 'media',
+            kind: kind,
+            featured_visual: hasFeaturedVisual(item),
+            featured_layout: hasFeaturedLayout(item),
+            homepage_priority: homepagePriorityValue(item),
+            featured_contexts: ctx,
+            payload: item && item.payload ? item.payload : item
+          });
+        });
+      }
+      pickFallbackMedia(MP_EDITORIAL_HIGHLIGHTS_CACHE.videos, 'video', maxVideo);
+      pickFallbackMedia(MP_EDITORIAL_HIGHLIGHTS_CACHE.audios, 'audio', maxAudio);
+      out = out.concat(fallbackMedia);
+    }
+    if (includeCalendar && typeof window.getMpCalendarHighlights === 'function') {
+      var events = window.getMpCalendarHighlights() || [];
+      (Array.isArray(events) ? events : []).forEach(function (item) {
+        var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: false, homepage: false, calendar: true });
+        if (!ctx[context]) return;
+        out.push({
+          source: 'calendar',
+          kind: 'event',
+          featured_visual: hasFeaturedVisual(item),
+          featured_layout: hasFeaturedLayout(item),
+          homepage_priority: homepagePriorityValue(item),
+          featured_contexts: ctx,
+          payload: item
+        });
+      });
+    }
+    if (includeCalendar && typeof window.getMpCalendarHighlights !== 'function') {
+      fallbackEvents = (Array.isArray(MP_EDITORIAL_HIGHLIGHTS_CACHE.events) ? MP_EDITORIAL_HIGHLIGHTS_CACHE.events : []).filter(function (item) {
+        var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: false, homepage: false, calendar: true });
+        if (!ctx[context]) return false;
+        return hasFeaturedVisual(item) || hasFeaturedLayout(item);
+      }).map(function (item) {
+        var ctx = normalizeFeaturedContexts(item && item.featured_contexts, { media: false, homepage: false, calendar: true });
+        return {
+          source: 'calendar',
+          kind: 'event',
+          featured_visual: hasFeaturedVisual(item),
+          featured_layout: hasFeaturedLayout(item),
+          homepage_priority: homepagePriorityValue(item),
+          featured_contexts: ctx,
+          payload: item && item.payload ? item.payload : item
+        };
+      });
+      out = out.concat(fallbackEvents);
+    }
+    out.sort(function (a, b) {
+      if (context === 'homepage') {
+        var ap = homepagePriorityValue(a);
+        var bp = homepagePriorityValue(b);
+        var ah = ap != null;
+        var bh = bp != null;
+        if (ah && bh && ap !== bp) return ap - bp;
+        if (ah !== bh) return ah ? -1 : 1;
+      }
+      var ar = rankFeatured(a);
+      var br = rankFeatured(b);
+      if (ar !== br) return br - ar;
+      if (a.kind === 'event' && b.kind === 'event') {
+        var ad = String(a.payload && a.payload.sortDate || '');
+        var bd = String(b.payload && b.payload.sortDate || '');
+        if (ad && bd && ad !== bd) return ad < bd ? -1 : 1;
+      }
+      if (a.kind !== b.kind) {
+        var order = { video: 0, audio: 1, event: 2 };
+        return (order[a.kind] || 9) - (order[b.kind] || 9);
+      }
+      return 0;
+    });
+    return out.slice(0, maxItems);
+  };
 
   function applyChromeI18n(lang) {
     if (window.MP_LOCALE_TABLE) {

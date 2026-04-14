@@ -851,12 +851,14 @@
     mediaVidSelected: {},
     mediaAudSearch: '',
     mediaAudFilter: 'all',
+    mediaAudSelected: {},
     mediaPhotoSearch: '',
     mediaPhotoQuickFilter: 'all',
     pressSearch: '',
     pressVisibleFilter: 'all',
     pressSelected: {},
     perfStatusFilter: 'all',
+    perfHighlightFilter: 'all',
     incomeEventScope: 'upcoming',
     incomeStatusFilter: 'all',
     incomeCompletenessFilter: 'all',
@@ -11467,6 +11469,7 @@
   function renderPerfList() {
     var box = $('perf-list');
     var filter = state.perfStatusFilter || 'all';
+    var highlightFilter = safeString(state.perfHighlightFilter || 'all').trim().toLowerCase() || 'all';
     var wfPerf = state.perfWorkflowFilter || 'all';
     var revenueFilter = safeString(state.perfRevenueFilter || 'all').trim().toLowerCase();
     if (revenueFilter !== 'all' && revenueFilter !== 'missing' && revenueFilter !== 'complete') revenueFilter = 'all';
@@ -11509,6 +11512,15 @@
     var rows = state.perfs.map(function (e, i) { return { e: e, i: i }; }).filter(function (row) {
       if (filter === 'all') return true;
       return safeString(row.e.status || 'upcoming') === filter;
+    }).filter(function (row) {
+      if (highlightFilter === 'all') return true;
+      var visual = perfFeaturedVisual(row.e);
+      var layout = perfFeaturedLayout(row.e);
+      if (highlightFilter === 'featured_both') return visual && layout;
+      if (highlightFilter === 'featured_visual') return visual && !layout;
+      if (highlightFilter === 'featured_layout') return !visual && layout;
+      if (highlightFilter === 'normal') return !visual && !layout;
+      return true;
     }).filter(function (row) {
       if (wfPerf === 'all') return true;
       var b = workflowBucketPerf(row.e);
@@ -11572,8 +11584,11 @@
       } else if (!hasRevenueStatus) {
         badges.push({ kind: 'warn', label: 'rev: missing status' });
       }
+      if (perfFeaturedVisual(e) && perfFeaturedLayout(e)) badges.push({ kind: 'ok', label: 'featured visual+layout' });
+      else if (perfFeaturedVisual(e)) badges.push({ kind: 'ok', label: 'featured visual' });
+      else if (perfFeaturedLayout(e)) badges.push({ kind: 'ok', label: 'featured layout' });
       var badge = badgesHtml(badges);
-      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main"><div class="calendar-item-line">' + t + activeFlag + '</div><div class="calendar-item-revenue">' + escapeHtml(revenueSummary) + '</div>' + badge + '</div></div></div>';
+      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main"><div class="calendar-item-line">' + t + activeFlag + '</div><div class="calendar-item-revenue">' + escapeHtml(revenueSummary) + '</div><div class="calendar-item-revenue">highlight: ' + escapeHtml(perfHighlightStateLabel(e)) + '</div>' + badge + '</div></div></div>';
     }).join('');
     setSelectionCount('perf-selection-count', state.perfSelected);
     box.querySelectorAll('.row-select').forEach(function (el) {
@@ -11634,6 +11649,17 @@
     setSelectWithCustomValue('perf-status', safeString(e.status), 'upcoming');
     setSelectWithCustomValue('perf-type', safeString(e.type), 'concert');
     setSelectWithCustomValue('perf-editorialStatus', safeString(e.editorialStatus || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft')), 'draft');
+    if ($('perf-featured-visual')) $('perf-featured-visual').value = perfFeaturedVisual(e) ? 'true' : 'false';
+    if ($('perf-featured-layout')) $('perf-featured-layout').value = perfFeaturedLayout(e) ? 'true' : 'false';
+    if ($('perf-homepage-priority')) {
+      var perfHp = getHomepagePriority(e);
+      $('perf-homepage-priority').value = perfHp != null ? String(perfHp) : '';
+    }
+    setFeaturedContextSelectValues('perf', e.featured_contexts, {
+      media: false,
+      homepage: perfFeaturedVisual(e),
+      calendar: perfFeaturedVisual(e)
+    });
     if ($('perf-privateBadge')) $('perf-privateBadge').value = e.hidePrivateBadge ? 'hide' : 'show';
     if ($('perf-privateBadgeText')) $('perf-privateBadgeText').value = localeFirst('privateBadgeText');
     if ($('perf-privateDetailLine')) $('perf-privateDetailLine').value = e.hidePrivateDetailLine ? 'hide' : 'show';
@@ -11660,6 +11686,7 @@
     }
     $('perf-sortDate').value = safeString(e.sortDate);
     updatePerfCardPreview();
+    updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
     updatePerfTranslationWarnings();
     syncPerfTxPicker();
@@ -11719,6 +11746,22 @@
     $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
     $('perf-cardPreviewBg').style.opacity = String(op / 100);
     $('perf-cardPreviewBg').style.filter = 'none';
+  }
+  function updatePerfFeaturedStateHint() {
+    var box = $('perf-featured-state');
+    if (!box) return;
+    var visual = safeString($('perf-featured-visual') && $('perf-featured-visual').value).trim() === 'true';
+    var layout = safeString($('perf-featured-layout') && $('perf-featured-layout').value).trim() === 'true';
+    var ctxHome = safeString($('perf-featured-context-homepage') && $('perf-featured-context-homepage').value).trim() === 'true';
+    var ctxMedia = safeString($('perf-featured-context-media') && $('perf-featured-context-media').value).trim() === 'true';
+    var ctxCalendar = safeString($('perf-featured-context-calendar') && $('perf-featured-context-calendar').value).trim() === 'true';
+    var homepagePriority = parseHomepagePriority(safeString($('perf-homepage-priority') && $('perf-homepage-priority').value));
+    var ctx = [];
+    if (ctxHome) ctx.push('homepage');
+    if (ctxMedia) ctx.push('media');
+    if (ctxCalendar) ctx.push('calendar');
+    var stateLabel = visual && layout ? 'featured visual + layout' : visual ? 'featured visual' : layout ? 'featured layout' : 'normal';
+    box.textContent = 'Highlight state: ' + stateLabel + ' · contexts: ' + (ctx.length ? ctx.join(', ') : 'none') + ' · homepage priority: ' + (homepagePriority == null ? 'auto' : ('#' + homepagePriority));
   }
   function updatePerfPublicVisibilitySummary() {
     var box = $('perf-public-visibility');
@@ -12005,6 +12048,17 @@
     e.status = $('perf-status').value;
     e.type = syncPairedValue('perf-type', 'perf-modal-type');
     e.editorialStatus = safeString($('perf-editorialStatus').value || (safeString(e.status) === 'hidden' ? 'hidden' : 'draft'));
+    e.featured_visual = safeString($('perf-featured-visual') && $('perf-featured-visual').value).trim() === 'true';
+    e.featured_layout = safeString($('perf-featured-layout') && $('perf-featured-layout').value).trim() === 'true';
+    e.featured = e.featured_visual;
+    var perfHomepagePriority = parseHomepagePriority(safeString($('perf-homepage-priority') && $('perf-homepage-priority').value));
+    if (perfHomepagePriority == null) delete e.homepage_priority;
+    else e.homepage_priority = perfHomepagePriority;
+    e.featured_contexts = readFeaturedContextSelectValues('perf', normalizeFeaturedContexts(e.featured_contexts, {
+      media: false,
+      homepage: e.featured_visual,
+      calendar: e.featured_visual
+    }));
     e.hidePrivateBadge = safeString($('perf-privateBadge') && $('perf-privateBadge').value).trim() === 'hide';
     persistLocaleBackedField('privateBadgeText', safeString($('perf-privateBadgeText') && $('perf-privateBadgeText').value));
     e.hidePrivateDetailLine = safeString($('perf-privateDetailLine') && $('perf-privateDetailLine').value).trim() === 'hide';
@@ -12037,6 +12091,7 @@
     writeIfInactive('perf-modal-type', e.type || 'concert');
     state.perfs[state.perfIndex] = e;
     updatePerfCardPreview();
+    updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
     updatePerfTranslationWarnings();
     renderPerfList();
@@ -12048,9 +12103,10 @@
     $('perf-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
     $('perf-intro').value = pickStoredOrFallback(stored, fallback, 'intro');
     if ($('perf-status-filter')) $('perf-status-filter').value = state.perfStatusFilter || 'all';
+    if ($('perf-highlight-filter')) $('perf-highlight-filter').value = state.perfHighlightFilter || 'all';
     if ($('perf-workflow-filter')) $('perf-workflow-filter').value = state.perfWorkflowFilter || 'all';
     if ($('perf-revenue-filter')) $('perf-revenue-filter').value = state.perfRevenueFilter || 'all';
-    state.perfs = loadDoc('rg_perfs', []);
+    state.perfs = normalizePerfEventsList(loadDoc('rg_perfs', []));
     state.perfs.forEach(function (e, idx) {
       if (!e.id || safeString(e.id).trim() === '') {
         e.id = 'perf-' + (idx + 1);
@@ -12539,13 +12595,13 @@
     });
   }
   function loadIncome() {
-    state.perfs = loadDoc('rg_perfs', []);
+    state.perfs = normalizePerfEventsList(loadDoc('rg_perfs', []));
     if (!Array.isArray(state.perfs)) state.perfs = [];
     renderIncomeSection();
   }
   function savePerfHeader() { saveDoc('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) }); }
   function savePerfEvents() {
-    state.perfs = state.perfs.filter(function (e) { return isObject(e); });
+    state.perfs = normalizePerfEventsList(state.perfs);
     saveDoc('rg_perfs', state.perfs);
     if (state.section === 'income') renderIncomeSection();
     setPerfTxResult('Saved event list. Translation tool changes are now persisted.', 'ok');
@@ -12892,6 +12948,8 @@
       return 'opera_operetta';
     }
     d.videos = d.videos.filter(function (v) { return isObject(v); }).map(function (v) {
+      var featuredVisual = typeof v.featured_visual === 'boolean' ? v.featured_visual : !!v.featured;
+      var featuredLayout = typeof v.featured_layout === 'boolean' ? v.featured_layout : !!v.featured;
       return {
         id: safeString(v.id),
         tag: safeString(v.tag),
@@ -12901,7 +12959,15 @@
         repertoireCat: safeString(v.repertoireCat),
         hidden: !!v.hidden,
         group: normalizeVideoGroupValue(v.group || 'opera_operetta', v),
-        featured: !!v.featured,
+        featured_visual: featuredVisual,
+        featured_layout: featuredLayout,
+        featured: featuredVisual,
+        featured_contexts: normalizeFeaturedContexts(v.featured_contexts, {
+          media: featuredVisual,
+          homepage: featuredVisual,
+          calendar: false
+        }),
+        homepage_priority: getHomepagePriority(v),
         customThumb: safeString(v.customThumb),
         editorialStatus: safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft'))
       };
@@ -12913,6 +12979,13 @@
     if (!Array.isArray(d.items)) d.items = [];
     d.h2 = safeString(d.h2);
     d.sub = safeString(d.sub);
+    function firstNonBlank() {
+      for (var i = 0; i < arguments.length; i += 1) {
+        var v = safeString(arguments[i]).trim();
+        if (v) return v;
+      }
+      return '';
+    }
     function inferRepCat(row) {
       var raw = safeString(row && row.repertoireCat);
       if (raw) return raw;
@@ -12935,19 +13008,35 @@
       return 'opera_operetta';
     }
     d.items = d.items.filter(function (v) { return isObject(v); }).map(function (v) {
+      var subline = firstNonBlank(v.subline, v.sub, v.sub_en, v.sub_de, v.sub_es, v.sub_it, v.sub_fr);
+      var featuredVisual = typeof v.featured_visual === 'boolean' ? v.featured_visual : !!v.featured;
+      var featuredLayout = typeof v.featured_layout === 'boolean' ? v.featured_layout : !!v.featured;
       return {
         provider: safeString(v.provider || 'soundcloud'),
         embedUrl: safeString(v.embedUrl),
         externalUrl: safeString(v.externalUrl),
         coverImage: safeString(v.coverImage),
         title: safeString(v.title),
-        subline: safeString(v.subline != null ? v.subline : v.sub),
+        subline: subline,
+        sub_en: safeString(v.sub_en),
+        sub_de: safeString(v.sub_de),
+        sub_es: safeString(v.sub_es),
+        sub_it: safeString(v.sub_it),
+        sub_fr: safeString(v.sub_fr),
         tag: safeString(v.tag),
         composer: safeString(v.composer),
         repertoireCat: safeString(v.repertoireCat),
         hidden: !!v.hidden,
         group: normalizeAudioGroupValue(v.group || 'opera_operetta', v),
-        featured: !!v.featured,
+        featured_visual: featuredVisual,
+        featured_layout: featuredLayout,
+        featured: featuredVisual,
+        featured_contexts: normalizeFeaturedContexts(v.featured_contexts, {
+          media: featuredVisual,
+          homepage: featuredVisual,
+          calendar: false
+        }),
+        homepage_priority: getHomepagePriority(v),
         editorialStatus: safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft'))
       };
     });
@@ -13167,6 +13256,31 @@
     if (ta) ta.value = '';
     bulkUrlSubmitHandler = null;
   }
+  function normalizeFeaturedContexts(raw, defaults) {
+    var src = isObject(raw) ? raw : {};
+    var base = isObject(defaults) ? defaults : {};
+    return {
+      media: typeof src.media === 'boolean' ? src.media : !!base.media,
+      homepage: typeof src.homepage === 'boolean' ? src.homepage : !!base.homepage,
+      calendar: typeof src.calendar === 'boolean' ? src.calendar : !!base.calendar
+    };
+  }
+  function parseHomepagePriority(raw) {
+    var n = Number(raw);
+    if (!Number.isFinite(n) || n < 0) return null;
+    return Math.floor(n);
+  }
+  function getHomepagePriority(item) {
+    return parseHomepagePriority(item && item.homepage_priority);
+  }
+  function mediaFeaturedVisual(item) {
+    if (item && typeof item.featured_visual === 'boolean') return item.featured_visual;
+    return !!(item && item.featured);
+  }
+  function mediaFeaturedLayout(item) {
+    if (item && typeof item.featured_layout === 'boolean') return item.featured_layout;
+    return !!(item && item.featured);
+  }
   function mediaSummaryVideo(v) {
     var t = safeString(v.title) || '(untitled)';
     var g = safeString(v.group || 'opera_operetta')
@@ -13176,8 +13290,12 @@
       .replace('opera_lied', 'Opera · Operetta')
       .replace('gala_crossover', 'Recital · Lied');
     var flags = [];
-    if (v.featured) flags.push('featured');
+    if (mediaFeaturedVisual(v)) flags.push('featured-visual');
+    if (mediaFeaturedLayout(v)) flags.push('featured-layout');
+    var homepagePriority = getHomepagePriority(v);
+    if (homepagePriority != null) flags.push('homepage#' + homepagePriority);
     if (v.hidden) flags.push('hidden');
+    flags.push('state:' + (mediaFeaturedVisual(v) && mediaFeaturedLayout(v) ? 'both' : mediaFeaturedVisual(v) ? 'visual' : mediaFeaturedLayout(v) ? 'layout' : 'normal'));
     return t + ' · ' + g + (flags.length ? ' · ' + flags.join(', ') : '');
   }
   function mediaSummaryPhoto(entry, i) {
@@ -13199,9 +13317,48 @@
       .replace('tango', 'Tango');
     var provider = safeString(a.provider || 'soundcloud');
     var flags = [provider];
-    if (a.featured) flags.push('featured');
+    if (mediaFeaturedVisual(a)) flags.push('featured-visual');
+    if (mediaFeaturedLayout(a)) flags.push('featured-layout');
+    var homepagePriority = getHomepagePriority(a);
+    if (homepagePriority != null) flags.push('homepage#' + homepagePriority);
     if (a.hidden) flags.push('hidden');
+    flags.push('state:' + (mediaFeaturedVisual(a) && mediaFeaturedLayout(a) ? 'both' : mediaFeaturedVisual(a) ? 'visual' : mediaFeaturedLayout(a) ? 'layout' : 'normal'));
     return t + ' · ' + g + ' · ' + flags.join(', ');
+  }
+  function perfFeaturedVisual(item) {
+    if (item && typeof item.featured_visual === 'boolean') return item.featured_visual;
+    return !!(item && item.featured);
+  }
+  function perfFeaturedLayout(item) {
+    if (item && typeof item.featured_layout === 'boolean') return item.featured_layout;
+    return !!(item && item.featured);
+  }
+  function setFeaturedContextSelectValues(prefix, rawContexts, defaults) {
+    var contexts = normalizeFeaturedContexts(rawContexts, defaults);
+    var homepageEl = $(prefix + '-featured-context-homepage');
+    var mediaEl = $(prefix + '-featured-context-media');
+    var calendarEl = $(prefix + '-featured-context-calendar');
+    if (homepageEl) homepageEl.value = contexts.homepage ? 'true' : 'false';
+    if (mediaEl) mediaEl.value = contexts.media ? 'true' : 'false';
+    if (calendarEl) calendarEl.value = contexts.calendar ? 'true' : 'false';
+  }
+  function readFeaturedContextSelectValues(prefix, defaults) {
+    var homepageEl = $(prefix + '-featured-context-homepage');
+    var mediaEl = $(prefix + '-featured-context-media');
+    var calendarEl = $(prefix + '-featured-context-calendar');
+    return normalizeFeaturedContexts({
+      homepage: homepageEl ? homepageEl.value === 'true' : undefined,
+      media: mediaEl ? mediaEl.value === 'true' : undefined,
+      calendar: calendarEl ? calendarEl.value === 'true' : undefined
+    }, defaults);
+  }
+  function perfHighlightStateLabel(item) {
+    var visual = perfFeaturedVisual(item);
+    var layout = perfFeaturedLayout(item);
+    var base = visual && layout ? 'featured visual + layout' : visual ? 'featured visual' : layout ? 'featured layout' : 'normal';
+    var homepagePriority = getHomepagePriority(item);
+    if (homepagePriority != null) base += ' · homepage#' + homepagePriority;
+    return base;
   }
   function audioHasEmbed(a) {
     return isValidHttpUrl(safeString(a && a.embedUrl).trim());
@@ -13291,7 +13448,8 @@
       if (filter === 'all') return true;
       if (filter === 'visible') return !row.v.hidden;
       if (filter === 'hidden') return !!row.v.hidden;
-      if (filter === 'featured') return !!row.v.featured;
+      if (filter === 'featured') return mediaFeaturedVisual(row.v);
+      if (filter === 'featured_layout') return mediaFeaturedLayout(row.v);
       return true;
     }).filter(function (row) {
       var wf = state.mediaVidWorkflowFilter || 'all';
@@ -13350,7 +13508,19 @@
       .replace('gala_crossover', 'recital_lied');
     $('media-vid-repertoireCat').value = safeString(v.repertoireCat);
     $('media-vid-customThumb').value = safeString(v.customThumb);
-    $('media-vid-featured').value = v.featured ? 'true' : 'false';
+    var vidFeaturedVisualEl = $('media-vid-featured-visual') || $('media-vid-featured');
+    if (vidFeaturedVisualEl) vidFeaturedVisualEl.value = mediaFeaturedVisual(v) ? 'true' : 'false';
+    var vidFeaturedLayoutEl = $('media-vid-featured-layout');
+    if (vidFeaturedLayoutEl) vidFeaturedLayoutEl.value = mediaFeaturedLayout(v) ? 'true' : 'false';
+    if ($('media-vid-homepage-priority')) {
+      var vidHp = getHomepagePriority(v);
+      $('media-vid-homepage-priority').value = vidHp != null ? String(vidHp) : '';
+    }
+    setFeaturedContextSelectValues('media-vid', v.featured_contexts, {
+      media: mediaFeaturedVisual(v),
+      homepage: mediaFeaturedVisual(v),
+      calendar: false
+    });
     $('media-vid-hidden').value = v.hidden ? 'true' : 'false';
     setSelectWithCustomValue('media-vid-editorialStatus', safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft')), 'draft');
   }
@@ -13365,7 +13535,19 @@
     v.group = safeString($('media-vid-group').value || 'opera_operetta');
     v.repertoireCat = safeString($('media-vid-repertoireCat').value);
     v.customThumb = safeString($('media-vid-customThumb').value);
-    v.featured = $('media-vid-featured').value === 'true';
+    var vidFeaturedVisualEl = $('media-vid-featured-visual') || $('media-vid-featured');
+    var vidFeaturedLayoutEl = $('media-vid-featured-layout');
+    v.featured_visual = !!(vidFeaturedVisualEl && vidFeaturedVisualEl.value === 'true');
+    v.featured_layout = vidFeaturedLayoutEl ? vidFeaturedLayoutEl.value === 'true' : v.featured_visual;
+    v.featured = v.featured_visual;
+    var vidHomepagePriority = parseHomepagePriority(safeString($('media-vid-homepage-priority') && $('media-vid-homepage-priority').value));
+    if (vidHomepagePriority == null) delete v.homepage_priority;
+    else v.homepage_priority = vidHomepagePriority;
+    v.featured_contexts = readFeaturedContextSelectValues('media-vid', normalizeFeaturedContexts(v.featured_contexts, {
+      media: v.featured_visual,
+      homepage: v.featured_visual,
+      calendar: false
+    }));
     v.hidden = $('media-vid-hidden').value === 'true';
     v.editorialStatus = safeString($('media-vid-editorialStatus').value || (v.hidden ? 'hidden' : 'draft'));
     state.vidData.videos[state.vidIndex] = v;
@@ -13518,7 +13700,8 @@
       if (filter === 'all') return true;
       if (filter === 'visible') return !row.a.hidden;
       if (filter === 'hidden') return !!row.a.hidden;
-      if (filter === 'featured') return !!row.a.featured;
+      if (filter === 'featured') return mediaFeaturedVisual(row.a);
+      if (filter === 'featured_layout') return mediaFeaturedLayout(row.a);
       return true;
     }).filter(function (row) {
       var wf = state.mediaAudWorkflowFilter || 'all';
@@ -13530,6 +13713,7 @@
     if (!rows.length) {
       box.innerHTML = '<div class="empty-state">No hay audios. Crea uno con "+ New audio".</div>';
       state.audIndex = -1;
+      setSelectionCount('media-aud-selection-count', state.mediaAudSelected);
       renderMediaAudioEditor();
       return;
     }
@@ -13545,8 +13729,17 @@
       if (row.a.hidden) badges.push({ kind: 'err', label: 'hidden' });
       badges.push({ kind: 'warn', label: safeString(row.a.editorialStatus || (row.a.hidden ? 'hidden' : 'draft')) });
       if ((state.mediaAudWorkflowFilter || 'all') === 'ready' && !readiness.ok) badges.push({ kind: 'warn', label: 'not ready' });
-      return '<div class="' + cls + '" data-idx="' + row.i + '">' + mediaSummaryAudio(row.a) + badgesHtml(badges) + '</div>';
+      var checked = state.mediaAudSelected[row.i] ? ' checked' : '';
+      return '<div class="' + cls + '" data-idx="' + row.i + '"><div class="item-row"><input class="row-select" data-idx="' + row.i + '" type="checkbox"' + checked + '><div class="item-main">' + mediaSummaryAudio(row.a) + badgesHtml(badges) + '</div></div></div>';
     }).join('');
+    setSelectionCount('media-aud-selection-count', state.mediaAudSelected);
+    box.querySelectorAll('.row-select').forEach(function (el) {
+      el.addEventListener('click', function (evt) { evt.stopPropagation(); });
+      el.addEventListener('change', function () {
+        toggleSelected(state.mediaAudSelected, Number(el.getAttribute('data-idx')), !!el.checked);
+        setSelectionCount('media-aud-selection-count', state.mediaAudSelected);
+      });
+    });
     box.querySelectorAll('.item').forEach(function (el) {
       el.addEventListener('click', function () {
         state.audIndex = Number(el.getAttribute('data-idx'));
@@ -13569,11 +13762,28 @@
     $('media-aud-coverImage').value = safeString(a.coverImage);
     $('media-aud-title').value = safeString(a.title);
     $('media-aud-subline').value = safeString(a.subline);
+    $('media-aud-sub-en').value = safeString(a.sub_en);
+    $('media-aud-sub-de').value = safeString(a.sub_de);
+    $('media-aud-sub-es').value = safeString(a.sub_es);
+    $('media-aud-sub-it').value = safeString(a.sub_it);
+    $('media-aud-sub-fr').value = safeString(a.sub_fr);
     $('media-aud-tag').value = safeString(a.tag);
     $('media-aud-composer').value = safeString(a.composer);
     $('media-aud-group').value = safeString(a.group || 'opera_operetta');
     $('media-aud-repertoireCat').value = safeString(a.repertoireCat);
-    $('media-aud-featured').value = a.featured ? 'true' : 'false';
+    var audFeaturedVisualEl = $('media-aud-featured-visual') || $('media-aud-featured');
+    if (audFeaturedVisualEl) audFeaturedVisualEl.value = mediaFeaturedVisual(a) ? 'true' : 'false';
+    var audFeaturedLayoutEl = $('media-aud-featured-layout');
+    if (audFeaturedLayoutEl) audFeaturedLayoutEl.value = mediaFeaturedLayout(a) ? 'true' : 'false';
+    if ($('media-aud-homepage-priority')) {
+      var audHp = getHomepagePriority(a);
+      $('media-aud-homepage-priority').value = audHp != null ? String(audHp) : '';
+    }
+    setFeaturedContextSelectValues('media-aud', a.featured_contexts, {
+      media: mediaFeaturedVisual(a),
+      homepage: mediaFeaturedVisual(a),
+      calendar: false
+    });
     $('media-aud-hidden').value = a.hidden ? 'true' : 'false';
     setSelectWithCustomValue('media-aud-editorialStatus', safeString(a.editorialStatus || (a.hidden ? 'hidden' : 'draft')), 'draft');
   }
@@ -13586,11 +13796,28 @@
     a.coverImage = safeString($('media-aud-coverImage').value);
     a.title = safeString($('media-aud-title').value);
     a.subline = safeString($('media-aud-subline').value);
+    a.sub_en = safeString($('media-aud-sub-en').value);
+    a.sub_de = safeString($('media-aud-sub-de').value);
+    a.sub_es = safeString($('media-aud-sub-es').value);
+    a.sub_it = safeString($('media-aud-sub-it').value);
+    a.sub_fr = safeString($('media-aud-sub-fr').value);
     a.tag = safeString($('media-aud-tag').value);
     a.composer = safeString($('media-aud-composer').value);
     a.group = safeString($('media-aud-group').value || 'opera_operetta');
     a.repertoireCat = safeString($('media-aud-repertoireCat').value);
-    a.featured = $('media-aud-featured').value === 'true';
+    var audFeaturedVisualEl = $('media-aud-featured-visual') || $('media-aud-featured');
+    var audFeaturedLayoutEl = $('media-aud-featured-layout');
+    a.featured_visual = !!(audFeaturedVisualEl && audFeaturedVisualEl.value === 'true');
+    a.featured_layout = audFeaturedLayoutEl ? audFeaturedLayoutEl.value === 'true' : a.featured_visual;
+    a.featured = a.featured_visual;
+    var audHomepagePriority = parseHomepagePriority(safeString($('media-aud-homepage-priority') && $('media-aud-homepage-priority').value));
+    if (audHomepagePriority == null) delete a.homepage_priority;
+    else a.homepage_priority = audHomepagePriority;
+    a.featured_contexts = readFeaturedContextSelectValues('media-aud', normalizeFeaturedContexts(a.featured_contexts, {
+      media: a.featured_visual,
+      homepage: a.featured_visual,
+      calendar: false
+    }));
     a.hidden = $('media-aud-hidden').value === 'true';
     a.editorialStatus = safeString($('media-aud-editorialStatus').value || (a.hidden ? 'hidden' : 'draft'));
     state.audioData.items[state.audIndex] = a;
@@ -13664,7 +13891,7 @@
     var videoFeatured = 0;
     videos.forEach(function (v) {
       if (v.hidden) videoHidden += 1;
-      if (v.featured) videoFeatured += 1;
+      if (mediaFeaturedVisual(v)) videoFeatured += 1;
       if (normEditorial(v.editorialStatus) === 'published') videoPublished += 1;
     });
     var audioPublished = 0;
@@ -13672,7 +13899,7 @@
     var audioFeatured = 0;
     audio.forEach(function (a) {
       if (a.hidden) audioHidden += 1;
-      if (a.featured) audioFeatured += 1;
+      if (mediaFeaturedVisual(a)) audioFeatured += 1;
       if (normEditorial(a.editorialStatus) === 'published') audioPublished += 1;
     });
     return {
@@ -13704,7 +13931,7 @@
     if (!ctx.videos.length) {
       videosHtml = '<div class="empty">No video assets in the current media inventory.</div>';
     } else {
-      videosHtml = '<table><thead><tr><th>Title</th><th>Group</th><th>Composer / Tag</th><th>Featured</th><th>Hidden</th><th>Workflow</th><th>Source</th><th>Notes</th></tr></thead><tbody>' + ctx.videos.map(function (v) {
+      videosHtml = '<table><thead><tr><th>Title</th><th>Group</th><th>Composer / Tag</th><th>Featured visual</th><th>Featured layout</th><th>Hidden</th><th>Workflow</th><th>Source</th><th>Notes</th></tr></thead><tbody>' + ctx.videos.map(function (v) {
         var workflow = safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft')).trim() || 'draft';
         var source = safeString(v.id).trim() ? ('YouTube: ' + safeString(v.id).trim()) : 'Not set';
         var note = safeString(v.sub).trim();
@@ -13713,7 +13940,8 @@
           '<td>' + escapeHtml(safeString(v.title).trim() || '(untitled)') + '</td>' +
           '<td>' + escapeHtml(safeString(v.group).trim() || 'opera_operetta') + '</td>' +
           '<td>' + escapeHtml([safeString(v.composer).trim(), safeString(v.tag).trim()].filter(Boolean).join(' · ') || '—') + '</td>' +
-          '<td>' + escapeHtml(v.featured ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(mediaFeaturedVisual(v) ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(mediaFeaturedLayout(v) ? 'yes' : 'no') + '</td>' +
           '<td>' + escapeHtml(v.hidden ? 'yes' : 'no') + '</td>' +
           '<td>' + escapeHtml(workflow) + '</td>' +
           '<td>' + escapeHtml(source) + '</td>' +
@@ -13725,7 +13953,7 @@
     if (!ctx.audio.length) {
       audioHtml = '<div class="empty">No audio assets in the current media inventory.</div>';
     } else {
-      audioHtml = '<table><thead><tr><th>Title</th><th>Provider</th><th>Group</th><th>Featured</th><th>Hidden</th><th>Workflow</th><th>Source</th><th>Notes</th></tr></thead><tbody>' + ctx.audio.map(function (a) {
+      audioHtml = '<table><thead><tr><th>Title</th><th>Provider</th><th>Group</th><th>Featured visual</th><th>Featured layout</th><th>Hidden</th><th>Workflow</th><th>Source</th><th>Notes</th></tr></thead><tbody>' + ctx.audio.map(function (a) {
         var workflow = safeString(a.editorialStatus || (a.hidden ? 'hidden' : 'draft')).trim() || 'draft';
         var source = audioHasEmbed(a) ? shortUrl(a.embedUrl) : (audioHasExternalLink(a) ? shortUrl(a.externalUrl) : 'Not set');
         var note = [safeString(a.subline).trim(), safeString(a.tag).trim(), safeString(a.composer).trim()].filter(Boolean).join(' · ');
@@ -13734,7 +13962,8 @@
           '<td>' + escapeHtml(safeString(a.title).trim() || '(untitled)') + '</td>' +
           '<td>' + escapeHtml(safeString(a.provider).trim() || '—') + '</td>' +
           '<td>' + escapeHtml(safeString(a.group).trim() || 'opera_operetta') + '</td>' +
-          '<td>' + escapeHtml(a.featured ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(mediaFeaturedVisual(a) ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(mediaFeaturedLayout(a) ? 'yes' : 'no') + '</td>' +
           '<td>' + escapeHtml(a.hidden ? 'yes' : 'no') + '</td>' +
           '<td>' + escapeHtml(workflow) + '</td>' +
           '<td>' + escapeHtml(source) + '</td>' +
@@ -15451,9 +15680,28 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '' });
+    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '' });
     state.perfIndex = state.perfs.length - 1;
     renderPerfList(); renderPerfEditor(); markDirty(true, 'Event template created');
+  }
+  function normalizePerfEventsList(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(function (e) { return isObject(e); }).map(function (e) {
+      var featuredVisual = perfFeaturedVisual(e);
+      var featuredLayout = perfFeaturedLayout(e);
+      e.featured_visual = featuredVisual;
+      e.featured_layout = featuredLayout;
+      e.featured = featuredVisual;
+      var homepagePriority = getHomepagePriority(e);
+      if (homepagePriority == null) delete e.homepage_priority;
+      else e.homepage_priority = homepagePriority;
+      e.featured_contexts = normalizeFeaturedContexts(e.featured_contexts, {
+        media: false,
+        homepage: featuredVisual,
+        calendar: featuredVisual
+      });
+      return e;
+    });
   }
   function visibleIndicesFromList(listId) {
     var box = $(listId);
@@ -15501,6 +15749,37 @@
     renderPerfEditor();
     markDirty(true, 'Calendar bulk status updated for ' + ids.length + ' event(s)');
   }
+  function applyPerfHighlightBulk() {
+    var ids = selectedIndices(state.perfSelected);
+    var action = safeString($('perf-bulk-highlight') && $('perf-bulk-highlight').value).trim();
+    if (!ids.length) return alert('No events selected.');
+    if (!action) return alert('Choose a highlight action.');
+    if (!window.confirm('Apply highlight action to ' + ids.length + ' selected event(s)?')) return;
+    ids.forEach(function (i) {
+      var e = state.perfs[i];
+      if (!e) return;
+      if (action === 'featured_visual') {
+        e.featured_visual = true;
+        e.featured = true;
+      } else if (action === 'not_featured_visual') {
+        e.featured_visual = false;
+        e.featured = false;
+      } else if (action === 'featured_layout') {
+        e.featured_layout = true;
+      } else if (action === 'not_featured_layout') {
+        e.featured_layout = false;
+      }
+      e.featured_contexts = normalizeFeaturedContexts(e.featured_contexts, {
+        media: false,
+        homepage: perfFeaturedVisual(e),
+        calendar: perfFeaturedVisual(e)
+      });
+    });
+    clearSelected(state.perfSelected);
+    renderPerfList();
+    renderPerfEditor();
+    markDirty(true, 'Calendar highlight bulk applied');
+  }
   function applyMediaVidBulk() {
     var ids = selectedIndices(state.mediaVidSelected);
     var action = safeString($('media-vid-bulk-action').value).trim();
@@ -15512,8 +15791,17 @@
       if (!v) return;
       if (action === 'visible') v.hidden = false;
       else if (action === 'hidden') v.hidden = true;
-      else if (action === 'featured') v.featured = true;
-      else if (action === 'not_featured') v.featured = false;
+      else if (action === 'featured' || action === 'featured_visual') {
+        v.featured_visual = true;
+        v.featured = true;
+      } else if (action === 'not_featured' || action === 'not_featured_visual') {
+        v.featured_visual = false;
+        v.featured = false;
+      } else if (action === 'featured_layout') {
+        v.featured_layout = true;
+      } else if (action === 'not_featured_layout') {
+        v.featured_layout = false;
+      }
       else if (action === 'publish_video') {
         v.hidden = false;
         v.editorialStatus = 'published';
@@ -15530,6 +15818,33 @@
     renderMediaVideosList();
     renderMediaVideoEditor();
     markDirty(true, 'Media videos bulk action applied to ' + ids.length + ' item(s)');
+  }
+  function applyMediaAudBulk() {
+    var ids = selectedIndices(state.mediaAudSelected);
+    var action = safeString($('media-aud-bulk-action').value).trim();
+    if (!ids.length) return alert('No audios selected.');
+    if (!action) return alert('Choose a bulk action.');
+    if (!window.confirm('Apply "' + action + '" to ' + ids.length + ' selected audio item(s)?')) return;
+    ids.forEach(function (i) {
+      var a = state.audioData.items[i];
+      if (!a) return;
+      if (action === 'visible') a.hidden = false;
+      else if (action === 'hidden') a.hidden = true;
+      else if (action === 'featured_visual') {
+        a.featured_visual = true;
+        a.featured = true;
+      } else if (action === 'not_featured_visual') {
+        a.featured_visual = false;
+        a.featured = false;
+      } else if (action === 'featured_layout') {
+        a.featured_layout = true;
+      } else if (action === 'not_featured_layout') {
+        a.featured_layout = false;
+      }
+    });
+    renderMediaAudioList();
+    renderMediaAudioEditor();
+    markDirty(true, 'Media audio bulk action applied to ' + ids.length + ' item(s)');
   }
   function applyPressEditorialBulk() {
     var ids = selectedIndices(state.pressSelected);
@@ -16284,7 +16599,7 @@
       if ($('outreach-filter-followup')) $('outreach-filter-followup').value = state.outreachFollowupFilter;
       renderOutreachWorkspace();
     } else if (s === 'calendar') {
-      state.perfs = Array.isArray(d.perfs) ? clone(d.perfs) : [];
+      state.perfs = normalizePerfEventsList(Array.isArray(d.perfs) ? clone(d.perfs) : []);
       state.perfIndex = Number.isFinite(Number(d.perfIndex)) ? Number(d.perfIndex) : -1;
       $('perf-h2').value = safeString(d.h2); $('perf-intro').value = safeString(d.intro);
       renderPerfList(); renderPerfEditor();
@@ -17016,6 +17331,9 @@
     if ($('media-vid-select-visible')) $('media-vid-select-visible').addEventListener('click', function () { selectVisibleInto(state.mediaVidSelected, 'media-vid-list'); renderMediaVideosList(); });
     if ($('media-vid-clear-selection')) $('media-vid-clear-selection').addEventListener('click', function () { clearSelected(state.mediaVidSelected); renderMediaVideosList(); });
     if ($('media-vid-apply-bulk')) $('media-vid-apply-bulk').addEventListener('click', applyMediaVidBulk);
+    if ($('media-aud-select-visible')) $('media-aud-select-visible').addEventListener('click', function () { selectVisibleInto(state.mediaAudSelected, 'media-aud-list'); renderMediaAudioList(); });
+    if ($('media-aud-clear-selection')) $('media-aud-clear-selection').addEventListener('click', function () { clearSelected(state.mediaAudSelected); renderMediaAudioList(); });
+    if ($('media-aud-apply-bulk')) $('media-aud-apply-bulk').addEventListener('click', applyMediaAudBulk);
     if ($('media-aud-search')) $('media-aud-search').addEventListener('input', function () { state.mediaAudSearch = $('media-aud-search').value; renderMediaAudioList(); });
     if ($('media-aud-filter')) $('media-aud-filter').addEventListener('change', function () { state.mediaAudFilter = $('media-aud-filter').value; renderMediaAudioList(); });
     if ($('media-aud-workflow-filter')) $('media-aud-workflow-filter').addEventListener('change', function () {
@@ -17053,6 +17371,10 @@
     if ($('press-apply-editorial-bulk')) $('press-apply-editorial-bulk').addEventListener('click', applyPressEditorialBulk);
     if ($('press-hide-outdated-btn')) $('press-hide-outdated-btn').addEventListener('click', pressHideCurrentQuote);
     if ($('perf-status-filter')) $('perf-status-filter').addEventListener('change', function () { state.perfStatusFilter = $('perf-status-filter').value; renderPerfList(); });
+    if ($('perf-highlight-filter')) $('perf-highlight-filter').addEventListener('change', function () {
+      state.perfHighlightFilter = safeString($('perf-highlight-filter').value || 'all').trim().toLowerCase() || 'all';
+      renderPerfList();
+    });
     if ($('perf-workflow-filter')) $('perf-workflow-filter').addEventListener('change', function () {
       state.perfWorkflowFilter = $('perf-workflow-filter').value;
       renderPerfList();
@@ -17063,9 +17385,11 @@
     });
     if ($('perf-reset-filters')) $('perf-reset-filters').addEventListener('click', function () {
       if ($('perf-status-filter')) $('perf-status-filter').value = 'all';
+      if ($('perf-highlight-filter')) $('perf-highlight-filter').value = 'all';
       if ($('perf-workflow-filter')) $('perf-workflow-filter').value = 'all';
       if ($('perf-revenue-filter')) $('perf-revenue-filter').value = 'all';
       state.perfStatusFilter = 'all';
+      state.perfHighlightFilter = 'all';
       state.perfWorkflowFilter = 'all';
       state.perfRevenueFilter = 'all';
       renderPerfList();
@@ -17073,7 +17397,14 @@
     if ($('perf-select-visible')) $('perf-select-visible').addEventListener('click', function () { selectVisibleInto(state.perfSelected, 'perf-list'); renderPerfList(); });
     if ($('perf-clear-selection')) $('perf-clear-selection').addEventListener('click', function () { clearSelected(state.perfSelected); renderPerfList(); });
     if ($('perf-apply-bulk')) $('perf-apply-bulk').addEventListener('click', applyPerfBulk);
+    if ($('perf-apply-highlight-bulk')) $('perf-apply-highlight-bulk').addEventListener('click', applyPerfHighlightBulk);
     if ($('perf-apply-editorial-bulk')) $('perf-apply-editorial-bulk').addEventListener('click', applyPerfEditorialBulk);
+    if ($('perf-featured-visual')) $('perf-featured-visual').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
+    if ($('perf-featured-layout')) $('perf-featured-layout').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
+    if ($('perf-featured-context-homepage')) $('perf-featured-context-homepage').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
+    if ($('perf-featured-context-media')) $('perf-featured-context-media').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
+    if ($('perf-featured-context-calendar')) $('perf-featured-context-calendar').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
+    if ($('perf-homepage-priority')) $('perf-homepage-priority').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
     if ($('perf-archive-current-btn')) $('perf-archive-current-btn').addEventListener('click', perfArchiveCurrentEvent);
     if ($('perf-open-internal-calendar')) $('perf-open-internal-calendar').addEventListener('click', function () {
       window.open('internal-calendar.html', '_blank', 'noopener');
@@ -17180,7 +17511,7 @@
 
     $('perf-add').addEventListener('click', function () {
       clearSelected(state.perfSelected);
-      state.perfs.push({ title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', sortDate: '' });
+      state.perfs.push({ title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '' });
       state.perfIndex = state.perfs.length - 1; renderPerfList(); renderPerfEditor(); markDirty(true);
     });
     $('perf-dup').addEventListener('click', function () {
@@ -17349,7 +17680,7 @@
 
     $('media-vid-add').addEventListener('click', function () {
       clearSelected(state.mediaVidSelected);
-      state.vidData.videos.push({ id: '', tag: '', title: '', sub: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_operetta', featured: false, editorialStatus: 'draft', customThumb: '' });
+      state.vidData.videos.push({ id: '', tag: '', title: '', sub: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_operetta', featured_visual: false, featured_layout: false, featured: false, editorialStatus: 'draft', customThumb: '' });
       state.vidIndex = state.vidData.videos.length - 1;
       renderMediaVideosList(); renderMediaVideoEditor(); markDirty(true, 'Video creado');
     });
@@ -17383,39 +17714,42 @@
     if ($('media-vid-move-apply')) $('media-vid-move-apply').addEventListener('click', function () { applyMoveToPosition('media-vid', 'media-vid-move-pos'); });
     if ($('media-vid-revert-item')) $('media-vid-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('media-vid'); });
     $('media-aud-add').addEventListener('click', function () {
-      state.audioData.items.push({ provider: 'soundcloud', embedUrl: '', externalUrl: '', coverImage: '', title: '', subline: '', tag: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_operetta', featured: false, editorialStatus: 'draft' });
+      clearSelected(state.mediaAudSelected);
+      state.audioData.items.push({ provider: 'soundcloud', embedUrl: '', externalUrl: '', coverImage: '', title: '', subline: '', sub_en: '', sub_de: '', sub_es: '', sub_it: '', sub_fr: '', tag: '', composer: '', repertoireCat: '', hidden: false, group: 'opera_operetta', featured_visual: false, featured_layout: false, featured: false, editorialStatus: 'draft' });
       state.audIndex = state.audioData.items.length - 1;
       renderMediaAudioList(); renderMediaAudioEditor(); markDirty(true, 'Audio creado');
     });
     $('media-aud-dup').addEventListener('click', function () {
       if (state.audIndex < 0) return;
+      clearSelected(state.mediaAudSelected);
       state.audioData.items.splice(state.audIndex + 1, 0, clone(state.audioData.items[state.audIndex]));
       state.audIndex += 1;
       renderMediaAudioList(); renderMediaAudioEditor(); markDirty(true, 'Audio duplicado');
     });
     $('media-aud-del').addEventListener('click', function () {
       if (state.audIndex < 0) return;
-      if (!window.confirm('Delete the selected audio item?')) return;
+      if (!window.confirm('Delete the selected audio?')) return;
+      clearSelected(state.mediaAudSelected);
       state.audioData.items.splice(state.audIndex, 1);
       state.audIndex = Math.max(0, state.audIndex - 1);
       renderMediaAudioList(); renderMediaAudioEditor(); markDirty(true, 'Audio borrado');
     });
     $('media-aud-up').addEventListener('click', function () {
       var i = state.audIndex; if (i <= 0) return;
+      clearSelected(state.mediaAudSelected);
       var t = state.audioData.items[i - 1]; state.audioData.items[i - 1] = state.audioData.items[i]; state.audioData.items[i] = t;
-      state.audIndex = i - 1;
-      renderMediaAudioList(); markDirty(true, 'Audio order updated');
+      state.audIndex = i - 1; renderMediaAudioList(); markDirty(true, 'Audio order updated');
     });
     $('media-aud-down').addEventListener('click', function () {
       var i = state.audIndex; if (i < 0 || i >= state.audioData.items.length - 1) return;
+      clearSelected(state.mediaAudSelected);
       var t = state.audioData.items[i + 1]; state.audioData.items[i + 1] = state.audioData.items[i]; state.audioData.items[i] = t;
-      state.audIndex = i + 1;
-      renderMediaAudioList(); markDirty(true, 'Audio order updated');
+      state.audIndex = i + 1; renderMediaAudioList(); markDirty(true, 'Audio order updated');
     });
-
-    ['s', 't', 'b'].forEach(function (type) {
-      $('media-photo-filter-' + type).addEventListener('click', function () { setPhotoType(type); });
-    });
+    if ($('media-aud-prev-item')) $('media-aud-prev-item').addEventListener('click', function () { goPrevNext('media-aud', -1); });
+    if ($('media-aud-next-item')) $('media-aud-next-item').addEventListener('click', function () { goPrevNext('media-aud', 1); });
+    if ($('media-aud-move-apply')) $('media-aud-move-apply').addEventListener('click', function () { applyMoveToPosition('media-aud', 'media-aud-move-pos'); });
+    if ($('media-aud-revert-item')) $('media-aud-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('media-aud'); });
     $('media-photo-add-url').addEventListener('click', function () {
       var url = window.prompt('URL de imagen');
       if (!url) return;
@@ -17489,7 +17823,7 @@
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
@@ -17499,9 +17833,9 @@
     });
     bindInputsDirty(['epk-bio-b50','epk-bio-b150','epk-bio-b300p1','epk-bio-b300p2','epk-bio-b300p3','epk-bio-b300p4'], function () { persistEpkBiosFromUi(); markDirty(true, 'EPK bios editadas'); });
     bindInputsDirty(['epk-photo-url','epk-photo-caption','epk-photo-alt','epk-photo-photographer'], persistEpkPhotoEditor);
-    bindInputsDirty(['media-vid-id','media-vid-title','media-vid-sub','media-vid-tag','media-vid-composer','media-vid-group','media-vid-repertoireCat','media-vid-customThumb','media-vid-featured','media-vid-hidden','media-vid-editorialStatus'], persistMediaVideoEditor);
+    bindInputsDirty(['media-vid-id','media-vid-title','media-vid-sub','media-vid-tag','media-vid-composer','media-vid-group','media-vid-repertoireCat','media-vid-customThumb','media-vid-featured-visual','media-vid-featured-layout','media-vid-featured-context-homepage','media-vid-featured-context-media','media-vid-featured-context-calendar','media-vid-homepage-priority','media-vid-hidden','media-vid-editorialStatus'], persistMediaVideoEditor);
     bindInputsDirty(['media-vid-h2']);
-    bindInputsDirty(['media-aud-provider','media-aud-embedUrl','media-aud-externalUrl','media-aud-coverImage','media-aud-title','media-aud-subline','media-aud-tag','media-aud-composer','media-aud-group','media-aud-repertoireCat','media-aud-featured','media-aud-hidden','media-aud-editorialStatus'], persistMediaAudioEditor);
+    bindInputsDirty(['media-aud-provider','media-aud-embedUrl','media-aud-externalUrl','media-aud-coverImage','media-aud-title','media-aud-subline','media-aud-sub-en','media-aud-sub-de','media-aud-sub-es','media-aud-sub-it','media-aud-sub-fr','media-aud-tag','media-aud-composer','media-aud-group','media-aud-repertoireCat','media-aud-featured-visual','media-aud-featured-layout','media-aud-featured-context-homepage','media-aud-featured-context-media','media-aud-featured-context-calendar','media-aud-homepage-priority','media-aud-hidden','media-aud-editorialStatus'], persistMediaAudioEditor);
     bindInputsDirty(['media-aud-h2','media-aud-sub']);
     bindInputsDirty(['media-photo-url','media-photo-orientation','media-photo-focus','media-photo-caption','media-photo-alt','media-photo-photographer'], persistMediaPhotoEditor);
 

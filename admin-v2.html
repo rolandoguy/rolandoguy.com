@@ -439,6 +439,15 @@
                 <option value="hidden">Hidden</option>
               </select>
             </label>
+            <label>Highlight filter
+              <select id="perf-highlight-filter" title="Filter by highlight treatment">
+                <option value="all">All highlight states</option>
+                <option value="featured_both">Featured visual + layout</option>
+                <option value="featured_visual">Featured visual only</option>
+                <option value="featured_layout">Featured layout only</option>
+                <option value="normal">Normal</option>
+              </select>
+            </label>
             <label>Workflow filter
               <select id="perf-workflow-filter" title="Filter by editorial workflow">
                 <option value="all">All workflow</option>
@@ -487,8 +496,18 @@
                 <option value="unhide_event">Unhide (upcoming)</option>
               </select>
             </label>
+            <label>Bulk highlight
+              <select id="perf-bulk-highlight">
+                <option value="">Choose…</option>
+                <option value="featured_visual">Set featured visual</option>
+                <option value="not_featured_visual">Set not featured visual</option>
+                <option value="featured_layout">Set featured layout</option>
+                <option value="not_featured_layout">Set not featured layout</option>
+              </select>
+            </label>
             <button id="perf-apply-bulk" type="button">Apply status</button>
             <button id="perf-apply-editorial-bulk" type="button">Apply editorial</button>
+            <button id="perf-apply-highlight-bulk" type="button">Apply highlight</button>
             <button id="perf-add-template" type="button">New event from template</button>
           </div>
           <div class="split">
@@ -554,6 +573,48 @@
                     <option value="hidden">Hidden</option>
                   </select>
                   <small class="muted">Publishing controls whether the event is ready for public display.</small>
+                </label>
+                <label>Featured treatment
+                  <div class="grid two">
+                    <label>Featured visual
+                      <select id="perf-featured-visual">
+                        <option value="false">normal</option>
+                        <option value="true">featured visual</option>
+                      </select>
+                    </label>
+                    <label>Featured layout
+                      <select id="perf-featured-layout">
+                        <option value="false">normal</option>
+                        <option value="true">featured layout</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="grid three">
+                    <label>Highlight on Homepage
+                      <select id="perf-featured-context-homepage">
+                        <option value="false">no</option>
+                        <option value="true">yes</option>
+                      </select>
+                    </label>
+                    <label>Highlight on Media
+                      <select id="perf-featured-context-media">
+                        <option value="false">no</option>
+                        <option value="true">yes</option>
+                      </select>
+                    </label>
+                    <label>Highlight on Calendar
+                      <select id="perf-featured-context-calendar">
+                        <option value="false">no</option>
+                        <option value="true">yes</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label>Homepage highlight priority (optional)
+                    <input id="perf-homepage-priority" type="number" min="0" step="1" placeholder="e.g. 1">
+                    <small class="muted">Lower number appears first in homepage highlights. Used only when Homepage context is enabled.</small>
+                  </label>
+                  <small class="muted">Contexts control where this event can be used as an editorial highlight.</small>
+                  <small id="perf-featured-state" class="muted">Highlight state: normal</small>
                 </label>
                 <label>Private badge
                   <select id="perf-privateBadge">
@@ -2155,7 +2216,8 @@
                   <option value="all">All</option>
                   <option value="visible">Visible</option>
                   <option value="hidden">Hidden</option>
-                  <option value="featured">Featured</option>
+                  <option value="featured">Featured (visual)</option>
+                  <option value="featured_layout">Featured (layout)</option>
                 </select>
               </label>
             <label>Workflow filter
@@ -2186,8 +2248,10 @@
                   <option value="">Choose…</option>
                   <option value="visible">Set visible</option>
                   <option value="hidden">Set hidden</option>
-                  <option value="featured">Set featured</option>
-                  <option value="not_featured">Set not featured</option>
+                  <option value="featured_visual">Set featured visual</option>
+                  <option value="not_featured_visual">Set not featured visual</option>
+                  <option value="featured_layout">Set featured layout</option>
+                  <option value="not_featured_layout">Set not featured layout</option>
                   <option value="publish_video">Mark published + visible</option>
                   <option value="review_video">Mark reviewed</option>
                   <option value="draft_video">Mark draft</option>
@@ -2224,11 +2288,41 @@
                   </select>
                 </label>
                 <label>Custom thumb URL<input id="media-vid-customThumb"></label>
-                <label>Featured
-                  <select id="media-vid-featured">
+                <label>Featured visual
+                  <select id="media-vid-featured-visual">
                     <option value="false">false</option>
                     <option value="true">true</option>
                   </select>
+                </label>
+                <label>Featured layout (hero size)
+                  <select id="media-vid-featured-layout">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <div class="grid three">
+                  <label>Highlight on Homepage
+                    <select id="media-vid-featured-context-homepage">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                  <label>Highlight on Media
+                    <select id="media-vid-featured-context-media">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                  <label>Highlight on Calendar
+                    <select id="media-vid-featured-context-calendar">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Homepage highlight priority (optional)
+                  <input id="media-vid-homepage-priority" type="number" min="0" step="1" placeholder="e.g. 1">
+                  <small class="muted">Lower number appears first in homepage highlights. Used only when Homepage context is true.</small>
                 </label>
                 <label>Hidden
                   <select id="media-vid-hidden">
@@ -2331,7 +2425,8 @@
                   <option value="all">All</option>
                   <option value="visible">Visible</option>
                   <option value="hidden">Hidden</option>
-                  <option value="featured">Featured</option>
+                  <option value="featured">Featured (visual)</option>
+                  <option value="featured_layout">Featured (layout)</option>
                 </select>
               </label>
               <label>Workflow filter
@@ -2353,6 +2448,23 @@
               <button id="media-aud-up">↑</button>
               <button id="media-aud-down">↓</button>
             </div>
+            <div class="toolbar">
+              <span id="media-aud-selection-count" class="pill">Selected: 0</span>
+              <button id="media-aud-select-visible" type="button">Select all visible</button>
+              <button id="media-aud-clear-selection" type="button">Clear selection</button>
+              <label>Bulk action
+                <select id="media-aud-bulk-action">
+                  <option value="">Choose…</option>
+                  <option value="visible">Set visible</option>
+                  <option value="hidden">Set hidden</option>
+                  <option value="featured_visual">Set featured visual</option>
+                  <option value="not_featured_visual">Set not featured visual</option>
+                  <option value="featured_layout">Set featured layout</option>
+                  <option value="not_featured_layout">Set not featured layout</option>
+                </select>
+              </label>
+              <button id="media-aud-apply-bulk" type="button">Apply to selected</button>
+            </div>
             <div class="split">
               <div id="media-aud-list" class="item-list"></div>
               <div class="editor">
@@ -2369,6 +2481,11 @@
                 <label>Cover image URL (optional)<input id="media-aud-coverImage" placeholder="https://..."></label>
                 <label>Title<input id="media-aud-title"></label>
                 <label>Sub<input id="media-aud-subline"></label>
+                <label>Sub (EN)<input id="media-aud-sub-en"></label>
+                <label>Sub (DE)<input id="media-aud-sub-de"></label>
+                <label>Sub (ES)<input id="media-aud-sub-es"></label>
+                <label>Sub (IT)<input id="media-aud-sub-it"></label>
+                <label>Sub (FR)<input id="media-aud-sub-fr"></label>
                 <label>Tag<input id="media-aud-tag"></label>
                 <label>Composer<input id="media-aud-composer"></label>
                 <label>Public section
@@ -2390,11 +2507,41 @@
                     <option value="crossover">Crossover</option>
                   </select>
                 </label>
-                <label>Featured
-                  <select id="media-aud-featured">
+                <label>Featured visual
+                  <select id="media-aud-featured-visual">
                     <option value="false">false</option>
                     <option value="true">true</option>
                   </select>
+                </label>
+                <label>Featured layout (hero size)
+                  <select id="media-aud-featured-layout">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <div class="grid three">
+                  <label>Highlight on Homepage
+                    <select id="media-aud-featured-context-homepage">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                  <label>Highlight on Media
+                    <select id="media-aud-featured-context-media">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                  <label>Highlight on Calendar
+                    <select id="media-aud-featured-context-calendar">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Homepage highlight priority (optional)
+                  <input id="media-aud-homepage-priority" type="number" min="0" step="1" placeholder="e.g. 1">
+                  <small class="muted">Lower number appears first in homepage highlights. Used only when Homepage context is true.</small>
                 </label>
                 <label>Hidden
                   <select id="media-aud-hidden">
