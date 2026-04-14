@@ -39,6 +39,7 @@
     'vid.brand': 'Rolando Guy · Lyric Tenor',
     'vid.cat.opera_operetta': 'Opera · Operetta',
     'vid.cat.recital_lied': 'Recital · Lied',
+    'vid.cat.sacred_oratorio': 'Sacred / Oratorio',
     'vid.cat.tango': 'Tango',
     'vid.repCat.opera': 'Opera',
     'vid.repCat.operetta': 'Operetta',
@@ -369,6 +370,7 @@
 
   var VIDEO_REP_CATS = ['opera', 'operetta', 'lied', 'concert_sacred', 'tango', 'crossover'];
   var VIDEO_SECTION_KEYS = ['opera_operetta', 'recital_lied', 'tango'];
+  var AUDIO_SECTION_KEYS = ['opera_operetta', 'recital_lied', 'sacred_oratorio', 'tango'];
   function videoBlobLower(v) {
     return [v.tag, v.title, v.sub, v.subline, v.composer]
       .map(function (x) {
@@ -417,6 +419,7 @@
     if (VIDEO_SECTION_KEYS.indexOf(raw) !== -1) return raw;
     var rep = resolveVideoRepertoireCat(v);
     if (raw === 'tango') return 'tango';
+    if (raw === 'sacred_oratorio') return 'sacred_oratorio';
     if (raw === 'opera_lied') {
       if (rep === 'tango') return 'tango';
       if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
@@ -755,13 +758,23 @@
     h2El.innerHTML = formatSectionTitleIfAmpersand(String(h2 || ''));
     subEl.textContent = String(sub || '');
 
+    function normalizeAudioGroup(v) {
+      var raw = String(v && v.group ? v.group : '').trim();
+      if (AUDIO_SECTION_KEYS.indexOf(raw) !== -1) return raw;
+      var rep = resolveVideoRepertoireCat(v || {});
+      if (rep === 'tango') return 'tango';
+      if (rep === 'concert_sacred') return 'sacred_oratorio';
+      if (rep === 'lied' || rep === 'crossover') return 'recital_lied';
+      return 'opera_operetta';
+    }
+
     var items = Array.isArray(d.items) ? d.items.slice() : [];
     var normalised = items.map(function (a) {
       var o = {};
       for (var k in a) {
         if (Object.prototype.hasOwnProperty.call(a, k)) o[k] = a[k];
       }
-      o.group = normalizeVideoGroup(a);
+      o.group = normalizeAudioGroup(a);
       o.repertoireCat = resolveVideoRepertoireCat(a);
       return o;
     });
@@ -781,6 +794,34 @@
       var raw = String(url || '').trim();
       return /^https:\/\/[^\s]+$/i.test(raw);
     }
+    function toSoundCloudEmbedUrl(url) {
+      var raw = String(url || '').trim();
+      if (!raw) return '';
+      if (!/^https:\/\/[^\s]+$/i.test(raw)) return '';
+      if (/^https:\/\/w\.soundcloud\.com\/player\//i.test(raw)) {
+        return raw;
+      }
+      try {
+        var parsed = new URL(raw);
+        var host = String(parsed.hostname || '').toLowerCase();
+        if (host === 'soundcloud.com' || host === 'www.soundcloud.com') {
+          parsed.search = '';
+          parsed.hash = '';
+          raw = parsed.toString();
+        }
+      } catch (e) {}
+      if (/^https:\/\/(?:www\.)?soundcloud\.com\//i.test(raw) || /^https:\/\/on\.soundcloud\.com\//i.test(raw)) {
+        return 'https://w.soundcloud.com/player/?url=' + encodeURIComponent(raw) + '&auto_play=false&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&buying=false&download=false&sharing=false&color=%23d4a843';
+      }
+      return raw;
+    }
+    function resolveAudioEmbedUrl(a) {
+      var provider = String(a && a.provider != null ? a.provider : '').trim().toLowerCase();
+      var raw = String(a && a.embedUrl != null ? a.embedUrl : '').trim();
+      if (!raw) return '';
+      if (provider === 'soundcloud') return toSoundCloudEmbedUrl(raw);
+      return raw;
+    }
     function hasPublicAudioSource(a) {
       return isSafeEmbed(a && a.embedUrl) || hasExternalAudioLink(a && a.externalUrl);
     }
@@ -790,27 +831,35 @@
       var subline = escVideoHtml(a.subline || '');
       var composer = escVideoHtml(a.composer || '');
       var provider = providerLabel(a.provider);
-      var catKey = 'vid.repCat.' + String(a.repertoireCat || 'opera');
-      var catLabel = escVideoHtml(t[catKey] || String(a.repertoireCat || 'opera').replace(/_/g, ' '));
+      var groupKey = String(a.group || '').trim();
+      var repKey = String(a.repertoireCat || '').trim();
+      if (groupKey === 'sacred_oratorio' && (repKey === '' || repKey === 'opera')) repKey = 'concert_sacred';
+      if (!repKey) {
+        if (groupKey === 'sacred_oratorio') repKey = 'concert_sacred';
+        else if (groupKey === 'recital_lied') repKey = 'lied';
+        else if (groupKey === 'tango') repKey = 'tango';
+        else repKey = 'opera';
+      }
+      var catKey = 'vid.repCat.' + repKey;
+      var catLabel = escVideoHtml(t[catKey] || repKey.replace(/_/g, ' '));
+      if (groupKey === 'sacred_oratorio' && repKey === 'concert_sacred') catLabel = 'Sacred';
       var openText = escVideoHtml(effectiveUiText(currentLang, 'aud.openExternal') || 'Open listening link');
       var unavailableText = escVideoHtml(effectiveUiText(currentLang, 'aud.embedUnavailable') || 'Audio player unavailable');
       var linkOnlyText = escVideoHtml(effectiveUiText(currentLang, 'aud.linkOnly') || 'Listening link available below');
-      var embed = isSafeEmbed(a.embedUrl)
-        ? '<iframe src="' + escVideoAttr(a.embedUrl) + '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+      var embedUrl = resolveAudioEmbedUrl(a);
+      var isSoundCloud = String(a.provider || '').trim().toLowerCase() === 'soundcloud';
+      var embed = isSafeEmbed(embedUrl)
+        ? '<iframe src="' + escVideoAttr(embedUrl) + '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
         : '<div class="audio-embed-fallback' + (hasExternalAudioLink(a.externalUrl) ? ' audio-embed-linkonly' : '') + '">' + (hasExternalAudioLink(a.externalUrl) ? linkOnlyText : unavailableText) + '</div>';
       return (
         '<article class="audio-card' + (a.featured ? ' audio-card-featured' : '') + '">' +
-        '<div class="audio-card-head">' +
-        '<span class="audio-provider">' + escVideoHtml(provider) + '</span>' +
-        '<span class="audio-rep-pill">' + catLabel + '</span>' +
-        '</div>' +
         '<div class="audio-title-wrap">' +
-        (tag ? '<div class="audio-tagline">' + tag + '</div>' : '') +
         '<h3 class="audio-title">' + title + '</h3>' +
         (composer ? '<p class="audio-composer">' + composer + '</p>' : '') +
         (subline ? '<p class="audio-subline">' + subline + '</p>' : '') +
         '</div>' +
-        '<div class="audio-embed">' + embed + '</div>' +
+        '<div class="audio-embed' + (isSoundCloud ? ' audio-embed--soundcloud' : '') + '">' + embed + '</div>' +
+        (catLabel ? '<div class="audio-rep-pill">' + catLabel + '</div>' : '') +
         (a.externalUrl ? '<div class="audio-links"><a href="' + escVideoAttr(a.externalUrl) + '" target="_blank" rel="noopener" class="audio-open-link">' + openText + '</a></div>' : '') +
         '</article>'
       );
@@ -819,75 +868,28 @@
     var groups = [
       { key: 'opera_operetta', label: t['vid.cat.opera_operetta'] || 'Opera · Operetta' },
       { key: 'recital_lied', label: t['vid.cat.recital_lied'] || 'Recital · Lied' },
+      { key: 'sacred_oratorio', label: t['vid.cat.sacred_oratorio'] || 'Sacred / Oratorio' },
       { key: 'tango', label: t['vid.cat.tango'] || 'Tango' }
     ];
     var visibleGroups = [];
     var html = '';
     groups.forEach(function (gconf) {
       var vis = normalised.filter(function (a) {
-        return !a.hidden && normalizeVideoGroup(a) === gconf.key && hasPublicAudioSource(a);
+        return !a.hidden && a.group === gconf.key && hasPublicAudioSource(a);
       });
       if (!vis.length) return;
       visibleGroups.push(gconf);
-      html +=
-        '<div class="audio-category" id="audio-cat-' + gconf.key + '">' +
-        '<h3 class="audio-category-title" id="audio-cat-' + gconf.key + '-title">' + escVideoHtml(gconf.label) + '</h3>' +
-        '<div class="audio-card-grid">' + vis.map(mkAudioCard).join('') + '</div>' +
-        '</div>';
+      html += vis.map(mkAudioCard).join('');
     });
 
     section.hidden = !visibleGroups.length;
     section.setAttribute('data-has-items', visibleGroups.length ? 'true' : 'false');
     grid.innerHTML = html;
-    nav.classList.toggle('has-tabs', visibleGroups.length > 0);
-    nav.style.display = visibleGroups.length ? '' : 'none';
-    nav.style.setProperty('--audio-tab-count', String(Math.max(visibleGroups.length, 1)));
-    nav.innerHTML = visibleGroups.map(function (gconf, idx) {
-      return '<a href="#audio-cat-' + gconf.key + '-title" class="audio-tab' + (idx === 0 ? ' active' : '') + '" id="tab-audio-cat-' + gconf.key + '">' + escVideoHtml(gconf.label) + '</a>';
-    }).join('');
+    nav.style.display = 'none';
   }
 
   function bindAudioSectionObserver() {
-    var section = document.getElementById('audio');
-    if (!section || section.hidden) return;
-    var sections = VIDEO_SECTION_KEYS
-      .map(function (name) {
-        return {
-          name: name,
-          titleEl: document.getElementById('audio-cat-' + name + '-title')
-        };
-      })
-      .filter(function (entry) {
-        return !!entry.titleEl;
-      });
-    if (!sections.length) return;
-    function setActive(name) {
-      sections.forEach(function (entry) {
-        var tab = document.getElementById('tab-audio-cat-' + entry.name);
-        if (tab) tab.classList.toggle('active', entry.name === name);
-      });
-    }
-    sections.forEach(function (entry) {
-      var tab = document.getElementById('tab-audio-cat-' + entry.name);
-      if (!tab) return;
-      tab.addEventListener('click', function () { setActive(entry.name); });
-    });
-    if ('IntersectionObserver' in window) {
-      var observer = new IntersectionObserver(
-        function (entries) {
-          var visible = entries.filter(function (entry) { return entry.isIntersecting; }).sort(function (a, b) {
-            return b.intersectionRatio - a.intersectionRatio;
-          });
-          if (!visible.length) return;
-          var found = sections.find(function (entry) { return entry.titleEl === visible[0].target; });
-          if (found) setActive(found.name);
-        },
-        { rootMargin: '-18% 0px -68% 0px', threshold: [0.15, 0.35, 0.55, 0.75] }
-      );
-      sections.forEach(function (entry) { observer.observe(entry.titleEl); });
-      return;
-    }
-    setActive(sections[0].name);
+    return;
   }
 
   function toggleMore() {

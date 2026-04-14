@@ -286,7 +286,7 @@
   }
   function shouldSuppressBiographyAdminDoc(lang, doc) {
     var L = String(lang || 'en').toLowerCase();
-    if (L === 'de' || !doc || typeof doc !== 'object' || !MP_BIO || !MP_BIO.locales) return false;
+    if (L === 'de' || L === 'en' || !doc || typeof doc !== 'object' || !MP_BIO || !MP_BIO.locales) return false;
     var deLocale = MP_BIO.locales.de || MP_BIO.locales.en || null;
     var enLocale = MP_BIO.locales.en || null;
     if (!deLocale || !enLocale) return false;
@@ -294,7 +294,6 @@
     if (matchedLocale && matchedLocale !== L) return true;
     var deScore = bioLocaleSimilarityScore(doc, deLocale);
     var englishScore = bioLocaleSimilarityScore(doc, enLocale);
-    if (L === 'en') return deScore >= 4 && deScore > englishScore + 1;
     return englishScore >= 4 && englishScore > deScore + 1;
   }
 
@@ -549,9 +548,8 @@
       var deWrap = pair[1];
       var adminDoc = docWrap && docWrap.data && typeof docWrap.data === 'object' ? docWrap.data : {};
       var deDoc = deWrap && deWrap.data && typeof deWrap.data === 'object' ? deWrap.data : {};
-      var adminLocaleMatch = detectBiographyLocaleMatch(adminDoc);
       var adminDocForDisplay = adminDoc;
-      if ((lang === 'en' && adminLocaleMatch && adminLocaleMatch !== 'en') || shouldSuppressBiographyAdminDoc(lang, adminDoc)) {
+      if (shouldSuppressBiographyAdminDoc(lang, adminDoc)) {
         adminDocForDisplay = {};
       }
       var merged = mergeBioDisplay(canonical, bundle, adminDocForDisplay);

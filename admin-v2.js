@@ -959,8 +959,9 @@
   var PAPER_PREVIEW_STORAGE_KEY = 'rg_admin_v2_paper_preview';
   var DRAFT_RESTORE_NOTICE_STORAGE_KEY = 'adm2_draft_notice_v1';
   var MOBILE_NAV_PRIMARY_STORAGE_KEY = 'rg_admin_v2_mobile_nav_primary_v1';
-  var MOBILE_NAV_SECTION_ORDER = ['home', 'bio', 'rep', 'programs', 'programbuilder', 'discovery', 'outreach', 'calendar', 'income', 'pastperfs', 'media', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
-  var MOBILE_NAV_PRIMARY_DEFAULT = ['rep', 'programs', 'programbuilder', 'discovery', 'outreach', 'calendar', 'income'];
+  var NAV_ORDER_STORAGE_KEY = 'rg_admin_v2_nav_order_v2';
+  var MOBILE_NAV_SECTION_ORDER = ['rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'outreach', 'calendar', 'income', 'bio', 'home', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
+  var MOBILE_NAV_PRIMARY_DEFAULT = ['rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'outreach', 'calendar', 'income'];
 
   function $(id) { return document.getElementById(id); }
   function readMobileNavPrimarySections() {
@@ -997,6 +998,79 @@
       var checked = selected[sectionId] ? ' checked' : '';
       return '<label class="nav-mobile-config__item"><input type="checkbox" data-mobile-nav-section="' + escapeAttr(sectionId) + '"' + checked + '><span>' + escapeHtml(label) + '</span></label>';
     }).join('');
+  }
+  function readCustomNavOrder() {
+    try {
+      var raw = localStorage.getItem(NAV_ORDER_STORAGE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      var seen = {};
+      var cleaned = [];
+      parsed.forEach(function (id) {
+        var key = safeString(id).trim();
+        if (!key || seen[key]) return;
+        if (MOBILE_NAV_SECTION_ORDER.indexOf(key) < 0) return;
+        seen[key] = true;
+        cleaned.push(key);
+      });
+      if (!cleaned.length) return null;
+      MOBILE_NAV_SECTION_ORDER.forEach(function (id) {
+        if (cleaned.indexOf(id) < 0) cleaned.push(id);
+      });
+      return cleaned;
+    } catch (e) {
+      return null;
+    }
+  }
+  function writeCustomNavOrder(order) {
+    try {
+      if (!Array.isArray(order)) return;
+      localStorage.setItem(NAV_ORDER_STORAGE_KEY, JSON.stringify(order));
+    } catch (e) {}
+  }
+  function getEffectiveNavOrder() {
+    var custom = readCustomNavOrder();
+    return custom || MOBILE_NAV_SECTION_ORDER.slice();
+  }
+  function renderNavOrderControls() {
+    var box = $('nav-order-controls');
+    if (!box) return;
+    var order = getEffectiveNavOrder();
+    box.innerHTML = order.map(function (sectionId, idx) {
+      var btn = document.querySelector('.nav-item[data-section="' + sectionId + '"]');
+      var label = safeString(btn && btn.textContent).trim() || sectionId;
+      var upDisabled = idx === 0 ? ' disabled' : '';
+      var downDisabled = idx === order.length - 1 ? ' disabled' : '';
+      return '<div class="nav-order-item">' +
+        '<label>' + escapeHtml(label) + '</label>' +
+        '<button data-nav-up="' + escapeAttr(sectionId) + '"' + upDisabled + '>↑</button>' +
+        '<button data-nav-down="' + escapeAttr(sectionId) + '"' + downDisabled + '>↓</button>' +
+        '</div>';
+    }).join('');
+  }
+  function moveNavItemUp(sectionId) {
+    var order = getEffectiveNavOrder();
+    var idx = order.indexOf(sectionId);
+    if (idx <= 0) return;
+    order.splice(idx - 1, 0, order.splice(idx, 1)[0]);
+    writeCustomNavOrder(order);
+    renderNavOrderControls();
+    syncMobileNavMoreSections(false);
+  }
+  function moveNavItemDown(sectionId) {
+    var order = getEffectiveNavOrder();
+    var idx = order.indexOf(sectionId);
+    if (idx < 0 || idx >= order.length - 1) return;
+    order.splice(idx + 1, 0, order.splice(idx, 1)[0]);
+    writeCustomNavOrder(order);
+    renderNavOrderControls();
+    syncMobileNavMoreSections(false);
+  }
+  function resetNavOrder() {
+    localStorage.removeItem(NAV_ORDER_STORAGE_KEY);
+    renderNavOrderControls();
+    syncMobileNavMoreSections(false);
   }
   function readPaperPreviewPreference() {
     try {
@@ -2029,6 +2103,10 @@
     if (id === 'pb-step-selected' && $('pb-step-build')) $('pb-step-build').open = true;
     if (id === 'pb-step-output' && $('pb-output-shell')) $('pb-output-shell').open = true;
     if (id === 'pb-step-advanced' && $('pb-secondary-hub')) $('pb-secondary-hub').open = true;
+    if (id === 'pb-fee-estimate') {
+      if ($('pb-secondary-hub')) $('pb-secondary-hub').open = true;
+      if (target && target.tagName === 'DETAILS') target.open = true;
+    }
     window.setTimeout(function () {
       if (typeof target.scrollIntoView === 'function') target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 60);
@@ -2680,7 +2758,8 @@
     var selected = {};
     (state.mobileNavPrimarySections || []).forEach(function (id) { selected[id] = true; });
 
-    MOBILE_NAV_SECTION_ORDER.forEach(function (sectionId) {
+    var effectiveOrder = getEffectiveNavOrder();
+    effectiveOrder.forEach(function (sectionId) {
       var btn = document.querySelector('.nav-item[data-section="' + sectionId + '"]');
       if (!btn) return;
       if (!isMobile) {
@@ -2701,16 +2780,24 @@
     if (mobileConfig) mobileConfig.hidden = false;
     renderMobileNavConfigItems();
     if (forceCollapseOnMobile) more.open = false;
+    if (moreItems.querySelector('.nav-item.active')) more.open = true;
   }
 
   function openSection(id) {
     if (!hasUnsavedChangesPrompt('Leave this section?')) return;
-    state.section = id;
-    if (document.body) document.body.classList.toggle('programbuilder-section', id === 'programbuilder');
+    var targetId = safeString(id).trim();
+    var sectionId = targetId;
+    var pbJumpTarget = '';
+    if (targetId === 'programbuilder_fee') {
+      sectionId = 'programbuilder';
+      pbJumpTarget = 'pb-fee-estimate';
+    }
+    state.section = sectionId;
+    if (document.body) document.body.classList.toggle('programbuilder-section', sectionId === 'programbuilder');
     document.querySelectorAll('.section').forEach(function (el) { el.classList.remove('active'); });
     document.querySelectorAll('.nav-item').forEach(function (el) { el.classList.remove('active'); });
-    $('section-' + id).classList.add('active');
-    var navBtn = document.querySelector('.nav-item[data-section="' + id + '"]');
+    $('section-' + sectionId).classList.add('active');
+    var navBtn = document.querySelector('.nav-item[data-section="' + targetId + '"]') || document.querySelector('.nav-item[data-section="' + sectionId + '"]');
     if (navBtn) {
       navBtn.classList.add('active');
       var navMore = navBtn.closest('.nav-more');
@@ -2720,6 +2807,11 @@
     if (window.innerWidth <= 860) $('sidebar').classList.remove('open');
     syncTopbarToolsDisclosure();
     refreshCurrentSection();
+    if (pbJumpTarget) {
+      window.setTimeout(function () {
+        if (state.section === 'programbuilder') scrollProgramBuilderAnchor(pbJumpTarget);
+      }, 80);
+    }
   }
 
   function readAdminDeepLink() {
@@ -12520,8 +12612,9 @@
       var raw = safeString(v);
       var rep = inferRepCat(row);
       if (raw === 'tango' || rep === 'tango') return 'tango';
-      if (raw === 'opera_operetta' || raw === 'recital_lied') return raw;
-      if (rep === 'lied' || rep === 'concert_sacred' || rep === 'crossover') return 'recital_lied';
+      if (raw === 'opera_operetta' || raw === 'recital_lied' || raw === 'sacred_oratorio') return raw;
+      if (rep === 'concert_sacred') return 'sacred_oratorio';
+      if (rep === 'lied' || rep === 'crossover') return 'recital_lied';
       return 'opera_operetta';
     }
     d.items = d.items.filter(function (v) { return isObject(v); }).map(function (v) {
@@ -12785,6 +12878,7 @@
     var g = safeString(a.group || 'opera_operetta')
       .replace('opera_operetta', 'Opera · Operetta')
       .replace('recital_lied', 'Recital · Lied')
+      .replace('sacred_oratorio', 'Sacred / Oratorio')
       .replace('tango', 'Tango');
     var provider = safeString(a.provider || 'soundcloud');
     var flags = [provider];
@@ -12811,10 +12905,33 @@
     if (!isBlank(a.externalUrl) && !audioHasExternalLink(a)) issues.push('External URL looks invalid');
     return { ok: issues.length === 0, issues: issues };
   }
+  function resolveEffectiveAudioHeadingFields(audioData) {
+    var uiEn = loadDoc('rg_ui_en', null);
+    var enTable = null;
+    try {
+      if (state.api && typeof state.api.uiTable === 'function') {
+        enTable = state.api.uiTable('en') || null;
+      }
+    } catch (e) {
+      enTable = null;
+    }
+    var safeAudio = safeMediaAudio(audioData || {});
+    return {
+      h2:
+        safeString(safeAudio.h2).trim() ||
+        safeString(uiEn && uiEn['mp.audio.h2']).trim() ||
+        safeString(enTable && enTable['mp.audio.h2']).trim(),
+      sub:
+        safeString(safeAudio.sub).trim() ||
+        safeString(uiEn && uiEn['mp.audio.sub']).trim() ||
+        safeString(enTable && enTable['mp.audio.sub']).trim()
+    };
+  }
   function loadMedia() {
     state.vidData = mergeRgVidRead(loadDoc('rg_vid', { h2: '', videos: [] }), loadDoc('rg_vid_en', null));
     state.vidIndex = -1;
     state.audioData = safeMediaAudio(loadDoc('rg_audio', { h2: '', sub: '', items: [] }));
+    var effectiveAudio = resolveEffectiveAudioHeadingFields(state.audioData);
     state.audIndex = -1;
     state.photosData = safePhotos(loadDoc('rg_photos', { s: [], t: [], b: [] }));
     state.photoCaptions = loadDoc('rg_photo_captions', {});
@@ -12826,8 +12943,8 @@
     if ($('media-aud-filter')) $('media-aud-filter').value = state.mediaAudFilter || 'all';
     if ($('media-aud-workflow-filter')) $('media-aud-workflow-filter').value = state.mediaAudWorkflowFilter || 'all';
     $('media-vid-h2').value = state.vidData.h2;
-    if ($('media-aud-h2')) $('media-aud-h2').value = state.audioData.h2;
-    if ($('media-aud-sub')) $('media-aud-sub').value = state.audioData.sub;
+    if ($('media-aud-h2')) $('media-aud-h2').value = effectiveAudio.h2;
+    if ($('media-aud-sub')) $('media-aud-sub').value = effectiveAudio.sub;
     renderMediaVideosProvenance();
     renderMediaVideosList();
     renderMediaAudioList();
@@ -13168,6 +13285,11 @@
     state.audioData.sub = safeString($('media-aud-sub').value);
     state.audioData = safeMediaAudio(state.audioData);
     saveDoc('rg_audio', state.audioData);
+    var uiEn = loadDoc('rg_ui_en', null);
+    if (!isObject(uiEn)) uiEn = {};
+    uiEn['mp.audio.h2'] = state.audioData.h2;
+    uiEn['mp.audio.sub'] = state.audioData.sub;
+    saveDoc('rg_ui_en', uiEn);
   }
 
   function safePublicPdfs(raw) {
@@ -13579,6 +13701,7 @@
     d = normalizeUiLocaleDoc(d, state.lang);
     $('ui-json').value = JSON.stringify(d, null, 2);
     loadUiNavFieldsFromDoc(d);
+    renderNavOrderControls();
     updateCompletenessIndicators();
   }
   function loadUiNavFieldsFromDoc(d) {
@@ -15643,14 +15766,15 @@
       state.vidData = safeMediaVideos(d.vidData || {});
       state.vidIndex = Number.isFinite(Number(d.vidIndex)) ? Number(d.vidIndex) : -1;
       state.audioData = safeMediaAudio(d.audioData || {});
+      var effectiveAudio = resolveEffectiveAudioHeadingFields(state.audioData);
       state.audIndex = Number.isFinite(Number(d.audIndex)) ? Number(d.audIndex) : -1;
       state.photosData = safePhotos(d.photosData || {});
       state.photoCaptions = isObject(d.photoCaptions) ? clone(d.photoCaptions) : {};
       state.photoType = safeString(d.photoType || 's');
       state.photoIndex = Number.isFinite(Number(d.photoIndex)) ? Number(d.photoIndex) : -1;
       $('media-vid-h2').value = safeString(state.vidData.h2);
-      if ($('media-aud-h2')) $('media-aud-h2').value = safeString(state.audioData.h2);
-      if ($('media-aud-sub')) $('media-aud-sub').value = safeString(state.audioData.sub);
+      if ($('media-aud-h2')) $('media-aud-h2').value = effectiveAudio.h2;
+      if ($('media-aud-sub')) $('media-aud-sub').value = effectiveAudio.sub;
       renderMediaVideosList(); renderMediaVideoEditor(); renderMediaAudioList(); renderMediaAudioEditor(); renderMediaPhotosList(); renderMediaPhotoEditor();
     } else if (s === 'press') {
       state.press = Array.isArray(d.press) ? clone(d.press) : [];
@@ -16274,6 +16398,19 @@
     if ($('copyUiNavFromEnBtn')) $('copyUiNavFromEnBtn').addEventListener('click', function () { copyUiNavFromEn(false); });
     if ($('copyUiNavMissingFromEnBtn')) $('copyUiNavMissingFromEnBtn').addEventListener('click', function () { copyUiNavFromEn(true); });
     if ($('compareUiWithEnBtn')) $('compareUiWithEnBtn').addEventListener('click', compareUiWithEn);
+    if ($('resetNavOrderBtn')) $('resetNavOrderBtn').addEventListener('click', resetNavOrder);
+    document.addEventListener('click', function (e) {
+      var upBtn = e.target.closest('[data-nav-up]');
+      var downBtn = e.target.closest('[data-nav-down]');
+      if (upBtn) {
+        var sectionId = upBtn.getAttribute('data-nav-up');
+        if (sectionId) moveNavItemUp(sectionId);
+      }
+      if (downBtn) {
+        var sectionId = downBtn.getAttribute('data-nav-down');
+        if (sectionId) moveNavItemDown(sectionId);
+      }
+    });
     if ($('markUiNeedsTranslationBtn')) $('markUiNeedsTranslationBtn').addEventListener('click', function () { setSectionEditorialReview('ui', 'needs_translation'); });
     if ($('markUiReviewedBtn')) $('markUiReviewedBtn').addEventListener('click', function () { setSectionEditorialReview('ui', 'reviewed'); });
     if ($('markHomeTranslatedBtn')) $('markHomeTranslatedBtn').addEventListener('click', function () { setSectionEditorialReview('home', 'translated'); });

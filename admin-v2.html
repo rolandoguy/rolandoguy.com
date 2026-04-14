@@ -26,19 +26,20 @@
         <button data-section="rep" class="nav-item">Repertoire</button>
         <button data-section="programs" class="nav-item">Programs</button>
         <button data-section="programbuilder" class="nav-item">Programme Offers</button>
+        <button data-section="programbuilder_fee" class="nav-item">Fee Estimate</button>
         <button data-section="discovery" class="nav-item">Repertoire Discovery</button>
+        <button data-section="media" class="nav-item">Media</button>
+        <button data-section="pastperfs" class="nav-item">Past Events</button>
         <button data-section="outreach" class="nav-item">Venues / Outreach</button>
         <button data-section="calendar" class="nav-item">Calendar</button>
         <button data-section="income" class="nav-item">Income / Earnings</button>
+        <button data-section="bio" class="nav-item">Biography</button>
+        <button data-section="home" class="nav-item active">Home / Hero</button>
+        <button data-section="press" class="nav-item">Press / EPK</button>
+        <button data-section="contact" class="nav-item">Contact</button>
         <details class="nav-more" id="nav-more-sections">
           <summary class="nav-more__summary">More sections</summary>
           <div class="nav-more__items">
-            <button data-section="home" class="nav-item active">Home / Hero</button>
-            <button data-section="bio" class="nav-item">Biography</button>
-            <button data-section="pastperfs" class="nav-item">Past Events</button>
-            <button data-section="media" class="nav-item">Media</button>
-            <button data-section="press" class="nav-item">Press / EPK</button>
-            <button data-section="contact" class="nav-item">Contact</button>
             <button data-section="ui" class="nav-item">UI / Translations</button>
             <button data-section="publishing" class="nav-item">Publishing</button>
             <button data-section="translation" class="nav-item">Translation</button>
@@ -1405,7 +1406,7 @@
               <label>Private notes<textarea id="pb-blueprint-notes" rows="3" placeholder="Private notes for this concrete offer version."></textarea></label>
               </details>
 
-              <details class="editor-section pb-secondary-toggle">
+              <details id="pb-fee-estimate" class="editor-section pb-secondary-toggle">
               <summary>Fee Estimate</summary>
               <p class="muted">Internal quote helper only. Use this to separate real low-budget market reality, a fair professional quote, and a public-funded benchmark reference without exposing any pricing in the Programme Sheet PDF.</p>
               <div class="toolbar">
@@ -2371,6 +2372,7 @@
                   <select id="media-aud-group">
                     <option value="opera_operetta">Opera · Operetta</option>
                     <option value="recital_lied">Recital · Lied</option>
+                    <option value="sacred_oratorio">Sacred / Oratorio</option>
                     <option value="tango">Tango</option>
                   </select>
                 </label>
@@ -2741,6 +2743,14 @@
             </div>
           <div class="toolbar">
               <button id="saveUiNavBtn" type="button">Save UI (nav + structured copy)</button>
+            </div>
+            <h3 style="margin-top:18px">Sidebar navigation order</h3>
+            <p class="muted">Reorder the admin sidebar buttons. Changes apply to both desktop and mobile navigation.</p>
+            <div class="editor">
+              <div id="nav-order-controls" class="nav-order-controls"></div>
+              <div class="toolbar" style="margin-top:10px">
+                <button id="resetNavOrderBtn" type="button">Reset to default order</button>
+              </div>
             </div>
             <h3 style="margin-top:18px">Shared chrome effects</h3>
             <p class="muted">These controls are global for the site and are stored in the EN UI document.</p>
