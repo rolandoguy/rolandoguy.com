@@ -2,6 +2,9 @@
   'use strict';
 
   var HOMEPAGE_HIGHLIGHTS_MAX_ITEMS = 2;
+  var HOMEPAGE_VIDEO_ROTATION_POOL_MAX = 3;
+  var HOMEPAGE_VIDEO_ROTATION_STATE_KEY = 'mp_home_video_rotation_v1';
+  var HOMEPAGE_VIDEO_ROTATION_SEED_KEY = 'mp_home_video_rotation_seed_v1';
 
   function escHtml(v) {
     return String(v == null ? '' : v)
@@ -91,6 +94,106 @@
   function resolveVideoIdFromItem(item) {
     var payload = item && item.payload ? item.payload : {};
     return normalizeVideoId(payload.id || payload.youtubeId || payload.url || payload.link || '');
+  }
+
+  function homepagePriorityOf(item) {
+    var direct = Number(item && item.homepage_priority);
+    if (Number.isFinite(direct) && direct >= 0) return Math.floor(direct);
+    var payload = item && item.payload ? item.payload : {};
+    var nested = Number(payload.homepage_priority);
+    if (Number.isFinite(nested) && nested >= 0) return Math.floor(nested);
+    return null;
+  }
+
+  function isFeaturedVisual(item) {
+    var payload = item && item.payload ? item.payload : {};
+    return !!(item && item.featured_visual) || !!payload.featured_visual;
+  }
+
+  function isFeaturedLayout(item) {
+    var payload = item && item.payload ? item.payload : {};
+    return !!(item && item.featured_layout) || !!payload.featured_layout;
+  }
+
+  function videoStrengthKey(item) {
+    var hp = homepagePriorityOf(item);
+    var pv = hp == null ? 'x' : String(hp);
+    var fv = isFeaturedVisual(item) ? '1' : '0';
+    var fl = isFeaturedLayout(item) ? '1' : '0';
+    return pv + '|' + fv + '|' + fl;
+  }
+
+  function safeSessionStorage() {
+    try {
+      if (window && window.sessionStorage) return window.sessionStorage;
+    } catch (e) {}
+    return null;
+  }
+
+  function readSessionSeed() {
+    var storage = safeSessionStorage();
+    if (!storage) return '0';
+    var seed = String(storage.getItem(HOMEPAGE_VIDEO_ROTATION_SEED_KEY) || '').trim();
+    if (seed) return seed;
+    seed = String(Math.floor(Math.random() * 1000000000));
+    try {
+      storage.setItem(HOMEPAGE_VIDEO_ROTATION_SEED_KEY, seed);
+    } catch (e) {}
+    return seed;
+  }
+
+  function tinyHash(raw) {
+    var s = String(raw || '');
+    var h = 0;
+    for (var i = 0; i < s.length; i += 1) {
+      h = ((h << 5) - h) + s.charCodeAt(i);
+      h |= 0;
+    }
+    return Math.abs(h);
+  }
+
+  function pickStablePoolIndex(signature, size) {
+    if (!Number.isFinite(size) || size <= 1) return 0;
+    var storage = safeSessionStorage();
+    if (!storage) return tinyHash(signature) % size;
+
+    try {
+      var raw = String(storage.getItem(HOMEPAGE_VIDEO_ROTATION_STATE_KEY) || '').trim();
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.sig === signature) {
+          var idx = Number(parsed.idx);
+          if (Number.isFinite(idx) && idx >= 0 && idx < size) return Math.floor(idx);
+        }
+      }
+    } catch (e) {}
+
+    var seed = readSessionSeed();
+    var chosen = tinyHash(signature + '|' + seed) % size;
+    try {
+      storage.setItem(HOMEPAGE_VIDEO_ROTATION_STATE_KEY, JSON.stringify({ sig: signature, idx: chosen }));
+    } catch (e) {}
+    return chosen;
+  }
+
+  function selectHomepageVideo(items) {
+    var videos = (Array.isArray(items) ? items : []).filter(function (item) {
+      return item && item.kind === 'video' && !!resolveVideoIdFromItem(item);
+    });
+    if (!videos.length) return null;
+
+    var top = videos[0];
+    var topStrength = videoStrengthKey(top);
+    var pool = videos.filter(function (item) {
+      return videoStrengthKey(item) === topStrength;
+    }).slice(0, HOMEPAGE_VIDEO_ROTATION_POOL_MAX);
+
+    if (pool.length <= 1) return top;
+    var signature = pool.map(function (item) {
+      return resolveVideoIdFromItem(item);
+    }).join('|');
+    var idx = pickStablePoolIndex(signature, pool.length);
+    return pool[idx] || top;
   }
 
   function videoThumbSources(item, videoId) {
@@ -242,10 +345,9 @@
     }
 
     var paired = pickDirectPair(items);
-    var videoItem = null;
+    var videoItem = selectHomepageVideo(items);
     var audioItem = null;
     paired.forEach(function (item) {
-      if (!videoItem && item && item.kind === 'video') videoItem = item;
       if (!audioItem && item && item.kind === 'audio') audioItem = item;
     });
     if (!videoItem || !audioItem) {
