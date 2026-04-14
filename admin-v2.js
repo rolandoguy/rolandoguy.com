@@ -11151,6 +11151,153 @@
       setTimeout(triggerProgramOfferPrintDialog, 120);
     });
   }
+  function programOfferFeeStatusLabel(status) {
+    var key = safeString(status || '').trim().toLowerCase();
+    if (key === 'active') return 'Active';
+    if (key === 'draft') return 'Draft';
+    if (key === 'sent') return 'Sent';
+    if (key === 'won') return 'Won';
+    if (key === 'lost') return 'Lost';
+    if (key === 'archived') return 'Archived';
+    return key || 'Draft';
+  }
+  function buildProgramOfferFeeReportContext() {
+    state.blueprintDoc = safeBlueprintsDoc(state.blueprintDoc);
+    var bp = currentBlueprint();
+    recomputeBlueprint(bp);
+    var active = activeSavedOfferForMainActions();
+    var activeId = safeString(active && active.id).trim();
+    var fee = computeBlueprintFeeEstimate(bp);
+    var offers = Array.isArray(state.blueprintDoc.savedOffers) ? state.blueprintDoc.savedOffers : [];
+    var comparable = offers
+      .map(function (offer, idx) { return safeSavedOfferRecord(offer, idx); })
+      .filter(function (offer) {
+        if (safeString(offer.status).trim().toLowerCase() === 'archived') return false;
+        return safeString(offer.family).trim().toLowerCase() === safeString(bp.family).trim().toLowerCase() && Number(offer.targetDuration) === Number(bp.targetDuration);
+      })
+      .slice(0, 40)
+      .map(function (offer) {
+        var key = safeString(offer.family).trim().toLowerCase() + '_' + String(offer.targetDuration || 30);
+        var normalized = normalizeBlueprintRecord(offer, key);
+        var computed = computeBlueprintFeeEstimate(normalized);
+        return {
+          id: safeString(offer.id),
+          isActive: activeId && safeString(offer.id).trim() === activeId,
+          label: savedOfferDisplayLabel(offer),
+          type: savedProgrammeTypeLabel(offer.saveType),
+          status: programOfferFeeStatusLabel(offer.status),
+          lang: safeString(offer.outputLang).trim().toUpperCase() || 'EN',
+          duration: Number(offer.targetDuration) || Number(bp.targetDuration) || 0,
+          formation: safeString(offer.formation || normalized.formation).trim() || '—',
+          lowBudget: computed.lowBudget,
+          recommended: computed.recommended,
+          benchmark: computed.benchmark,
+          premium: computed.premium,
+          updatedAt: formatProgrammeOfferTimestamp(offer.updatedAt || offer.lastSavedAt || offer.createdAt)
+        };
+      });
+    return {
+      generatedAt: new Date(),
+      blueprint: bp,
+      fee: fee,
+      active: active,
+      comparable: comparable
+    };
+  }
+  function programOfferFeeReportHtml(ctx) {
+    var bp = ctx.blueprint || {};
+    var fee = ctx.fee || {};
+    var active = ctx.active || null;
+    var activeLabel = active ? savedOfferDisplayLabel(active) : 'Working draft';
+    var hasMeaningful = (Array.isArray(bp.items) && bp.items.length > 0) || !!active || !!ctx.comparable.length;
+    var tableHtml = '';
+    if (!ctx.comparable.length) {
+      tableHtml = '<div class="empty">No comparable saved offers for this family and duration yet. Save a Master Programme or Venue Offer to build comparisons.</div>';
+    } else {
+      tableHtml = '<table><thead><tr>' +
+        '<th>Offer</th><th>Type</th><th>Status</th><th>Lang</th><th>Duration</th><th>Formation</th><th>Low</th><th>Fair</th><th>Funded</th><th>Target</th><th>Updated</th>' +
+      '</tr></thead><tbody>' + ctx.comparable.map(function (row) {
+        return '<tr' + (row.isActive ? ' class="is-active"' : '') + '>' +
+          '<td><strong>' + escapeHtml(row.label || '(untitled)') + '</strong>' + (row.isActive ? ' <span class="tag">active</span>' : '') + '</td>' +
+          '<td>' + escapeHtml(row.type) + '</td>' +
+          '<td>' + escapeHtml(row.status) + '</td>' +
+          '<td>' + escapeHtml(row.lang) + '</td>' +
+          '<td>' + escapeHtml(String(row.duration) + ' min') + '</td>' +
+          '<td>' + escapeHtml(row.formation || '—') + '</td>' +
+          '<td>' + escapeHtml(formatEuroAmount(row.lowBudget)) + '</td>' +
+          '<td>' + escapeHtml(formatEuroAmount(row.recommended)) + '</td>' +
+          '<td>' + escapeHtml(formatEuroAmount(row.benchmark)) + '</td>' +
+          '<td>' + escapeHtml(formatEuroAmount(row.premium)) + '</td>' +
+          '<td>' + escapeHtml(row.updatedAt || '—') + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+    }
+    var emptyState = hasMeaningful ? '' : '<div class="empty">No meaningful Programme Offer / Fee Estimate data is available yet for this context.</div>';
+    return '<!doctype html><html><head><meta charset="utf-8"><title>Programme Offers / Fee Estimate Report</title>' +
+      '<style>' +
+      'body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:24px;color:#1c2430;background:#fff}' +
+      '.wrap{max-width:1160px;margin:0 auto}' +
+      'h1{font-size:22px;margin:0 0 8px}' +
+      '.meta{font-size:13px;color:#586273;margin:2px 0}' +
+      '.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 16px}' +
+      '.card{border:1px solid #d7dde8;border-radius:10px;padding:10px 12px}' +
+      '.card span{display:block;color:#5c677a;font-size:12px}' +
+      '.card strong{display:block;margin-top:4px;font-size:15px;color:#1c2430}' +
+      '.logic{border:1px solid #d7dde8;border-radius:10px;padding:10px 12px;margin:0 0 14px;font-size:12px;line-height:1.45;background:#f8fafe}' +
+      'table{width:100%;border-collapse:collapse;font-size:12px}' +
+      'th,td{border:1px solid #d7dde8;padding:7px 8px;vertical-align:top;text-align:left}' +
+      'th{background:#f4f7fb;font-weight:600}' +
+      'tr.is-active{background:#eef5ff}' +
+      '.tag{display:inline-block;border:1px solid #9bb6df;border-radius:999px;padding:1px 6px;font-size:10px;color:#2f4d77}' +
+      '.empty{border:1px dashed #c7cfdd;border-radius:10px;padding:14px;color:#5c677a;background:#f8fafe}' +
+      '@media print{body{padding:12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '</style></head><body><div class="wrap">' +
+      '<h1>Programme Offers / Fee Estimate Report</h1>' +
+      '<p class="meta"><strong>Reporting context:</strong> ' + escapeHtml(activeLabel) + ' · ' + escapeHtml(plannerFamilyLabelForLang(bp.family, bp.outputLang || state.lang || 'en')) + ' · ' + escapeHtml(String(bp.targetDuration || 0) + ' min') + ' · ' + escapeHtml(safeString(bp.outputLang || state.lang || 'en').toUpperCase()) + '</p>' +
+      '<p class="meta"><strong>Generated:</strong> ' + escapeHtml(ctx.generatedAt.toLocaleString()) + '</p>' +
+      '<div class="summary">' +
+        '<div class="card"><span>Compared offers</span><strong>' + escapeHtml(String(ctx.comparable.length)) + '</strong></div>' +
+        '<div class="card"><span>Low-budget reality</span><strong>' + escapeHtml(formatEuroAmount(fee.lowBudget || 0)) + '</strong></div>' +
+        '<div class="card"><span>Fair quote</span><strong>' + escapeHtml(formatEuroAmount(fee.recommended || 0)) + '</strong></div>' +
+        '<div class="card"><span>Funded / target quote</span><strong>' + escapeHtml(formatEuroAmount(fee.benchmark || 0)) + ' / ' + escapeHtml(formatEuroAmount(fee.premium || 0)) + '</strong></div>' +
+      '</div>' +
+      '<div class="logic"><strong>Active offer details</strong><br>' +
+        escapeHtml('Title: ' + (safeString(bp.title).trim() || defaultBlueprintTitle(bp.family, bp.targetDuration, bp.outputLang))) + '<br>' +
+        escapeHtml('Formation: ' + safeString((fee.fee && fee.fee.formation) || bp.formation || '—')) + '<br>' +
+        escapeHtml('Duration: ' + String((fee.fee && fee.fee.durationMin) || bp.targetDuration || 0) + ' min') + '<br>' +
+        escapeHtml('Preset: ' + safeString((fee.fee && fee.fee.preset) || '—')) + '<br>' +
+        escapeHtml('Event type: ' + safeString((fee.fee && fee.fee.eventType) || '—')) + '<br>' +
+        escapeHtml('Logic: ' + safeString(fee.adjustmentLine || fee.logicSummary || '—')) +
+      '</div>' +
+      emptyState +
+      tableHtml +
+      '</div></body></html>';
+  }
+  function exportProgramOfferFeeReportPdf() {
+    var ctx = buildProgramOfferFeeReportContext();
+    var popup = window.open('', '_blank', 'width=1320,height=920');
+    if (!popup) {
+      setStatus('Could not open Programme Offers fee report window. Check popup blocker and try again.', 'err');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(programOfferFeeReportHtml(ctx));
+    popup.document.close();
+    var printNow = function () {
+      try {
+        popup.focus();
+        popup.print();
+        setStatus('Programme Offers fee report ready. Use Save as PDF in the print dialog.', 'warn');
+      } catch (err) {
+        setStatus('Programme Offers fee report opened. Use Cmd+P to save it as PDF.', 'warn');
+      }
+    };
+    if (popup.document.readyState === 'complete') {
+      setTimeout(printNow, 120);
+    } else {
+      popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
+    }
+  }
   function renderBlueprintBuilder() {
     renderQuickAddManualDefaults(false);
     renderBlueprintPieceOptions();
@@ -11956,6 +12103,176 @@
     var d = String(dateObj.getDate()).padStart(2, '0');
     var m = String(dateObj.getMonth() + 1).padStart(2, '0');
     return d + '.' + m + '.' + String(y);
+  }
+  function incomeBuildFilteredRowsContext() {
+    var scope = safeString(state.incomeEventScope || 'upcoming').trim().toLowerCase();
+    if (scope !== 'upcoming' && scope !== 'past' && scope !== 'all') scope = 'upcoming';
+    var statusFilter = safeString(state.incomeStatusFilter || 'all').trim().toLowerCase();
+    if (statusFilter !== 'all' && statusFilter !== 'confirmed' && statusFilter !== 'potential' && statusFilter !== 'unknown') statusFilter = 'all';
+    var completenessFilter = safeString(state.incomeCompletenessFilter || 'all').trim().toLowerCase();
+    if (completenessFilter !== 'all' && completenessFilter !== 'missing-amount' && completenessFilter !== 'missing-status' && completenessFilter !== 'missing-amount-or-status') completenessFilter = 'all';
+    var monthFilter = safeString(state.incomeMonthFilter || 'all').trim().toLowerCase() || 'all';
+    var all = Array.isArray(state.perfs) ? state.perfs : [];
+    var baseRows = all.map(function (e) {
+      var dt = incomeEventDateFromPerf(e);
+      return {
+        event: e,
+        date: dt,
+        amount: Number(e && e.revenueAmount),
+        currency: safeString(e && e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR',
+        revenueStatus: safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown',
+        notes: safeString(e && e.revenueNotes).trim()
+      };
+    }).filter(function (row) {
+      var perfStatus = safeString(row.event && row.event.status || '').trim().toLowerCase();
+      if (perfStatus === 'hidden') return false;
+      if (scope === 'upcoming' && perfStatus === 'past') return false;
+      if (scope === 'past' && perfStatus !== 'past') return false;
+      if (statusFilter !== 'all' && row.revenueStatus !== statusFilter) return false;
+      return row.date || (Number.isFinite(row.amount) && row.amount > 0) || row.revenueStatus !== 'unknown' || row.notes;
+    });
+    var rows = baseRows.filter(function (row) {
+      var hasAmount = Number.isFinite(row.amount) && row.amount > 0;
+      var hasStatus = row.revenueStatus === 'confirmed' || row.revenueStatus === 'potential';
+      if (completenessFilter === 'missing-amount' && hasAmount) return false;
+      if (completenessFilter === 'missing-status' && hasStatus) return false;
+      if (completenessFilter === 'missing-amount-or-status' && hasAmount && hasStatus) return false;
+      return true;
+    }).sort(function (a, b) {
+      if (a.date && b.date) return a.date.getTime() - b.date.getTime();
+      if (a.date && !b.date) return -1;
+      if (!a.date && b.date) return 1;
+      return safeString(a.event && a.event.title).localeCompare(safeString(b.event && b.event.title));
+    });
+    var tableRows = rows;
+    if (monthFilter !== 'all') {
+      tableRows = rows.filter(function (row) {
+        return incomeMonthKey(row.date) === monthFilter;
+      });
+    }
+    return {
+      scope: scope,
+      statusFilter: statusFilter,
+      completenessFilter: completenessFilter,
+      monthFilter: monthFilter,
+      rows: rows,
+      tableRows: tableRows,
+      summaryRows: monthFilter === 'all' ? rows : tableRows
+    };
+  }
+  function incomeReportPeriodLabel(ctx) {
+    if (ctx.monthFilter !== 'all') return incomeMonthLabel(ctx.monthFilter);
+    var dated = ctx.tableRows.filter(function (row) { return row.date && !isNaN(row.date.getTime()); });
+    if (!dated.length) return 'Current filters (' + incomeScopeLabel(ctx.scope) + ')';
+    var minDate = dated[0].date;
+    var maxDate = dated[dated.length - 1].date;
+    var minLabel = incomeLocalDateLabel(minDate);
+    var maxLabel = incomeLocalDateLabel(maxDate);
+    return minLabel === maxLabel ? minLabel : (minLabel + ' - ' + maxLabel);
+  }
+  function incomeReportTotals(rows) {
+    var confirmed = {};
+    var pending = {};
+    var overall = {};
+    rows.forEach(function (row) {
+      if (!Number.isFinite(row.amount) || row.amount <= 0) return;
+      var currency = row.currency || 'EUR';
+      overall[currency] = (Number(overall[currency]) || 0) + row.amount;
+      if (row.revenueStatus === 'confirmed') confirmed[currency] = (Number(confirmed[currency]) || 0) + row.amount;
+      if (row.revenueStatus === 'potential') pending[currency] = (Number(pending[currency]) || 0) + row.amount;
+    });
+    return { confirmed: confirmed, pending: pending, overall: overall };
+  }
+  function incomeReportDocumentHtml(ctx) {
+    var totals = incomeReportTotals(ctx.tableRows);
+    var periodLabel = incomeReportPeriodLabel(ctx);
+    var statusMap = { confirmed: 'Confirmed', potential: 'Pending / Expected', unknown: 'Not set' };
+    var statusLabel = statusMap[ctx.statusFilter] || 'All statuses';
+    var completenessMap = {
+      all: 'All rows',
+      'missing-amount': 'Missing amount',
+      'missing-status': 'Missing status',
+      'missing-amount-or-status': 'Missing amount or status'
+    };
+    var tableHtml = '';
+    if (!ctx.tableRows.length) {
+      tableHtml = '<div class="empty">No income rows match the current filters.</div>';
+    } else {
+      tableHtml = '<table><thead><tr>' +
+        '<th>Date</th><th>Event / Project</th><th>Venue / Client</th><th>Status</th><th>Amount</th><th>Notes</th>' +
+      '</tr></thead><tbody>' + ctx.tableRows.map(function (row) {
+        var e = row.event || {};
+        var eventTitle = safeString(e.title).trim() || '(untitled)';
+        var venue = safeString(e.venue).trim() || safeString(e.city).trim() || 'Not set';
+        var status = statusMap[row.revenueStatus] || 'Not set';
+        var amountText = Number.isFinite(row.amount) && row.amount > 0
+          ? ((row.currency || 'EUR') + ' ' + row.amount.toLocaleString(undefined, { minimumFractionDigits: row.amount % 1 ? 2 : 0, maximumFractionDigits: 2 }))
+          : 'Not set';
+        var note = row.notes ? (row.notes.length > 140 ? row.notes.slice(0, 139).trim() + '…' : row.notes) : '—';
+        return '<tr>' +
+          '<td>' + escapeHtml(incomeLocalDateLabel(row.date)) + '</td>' +
+          '<td>' + escapeHtml(eventTitle) + '</td>' +
+          '<td>' + escapeHtml(venue) + '</td>' +
+          '<td>' + escapeHtml(status) + '</td>' +
+          '<td>' + escapeHtml(amountText) + '</td>' +
+          '<td>' + escapeHtml(note) + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+    }
+    return '<!doctype html><html><head><meta charset="utf-8"><title>Income / Earnings Report</title>' +
+      '<style>' +
+      'body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:24px;color:#1c2430;background:#fff}' +
+      '.wrap{max-width:1040px;margin:0 auto}' +
+      'h1{font-size:22px;margin:0 0 8px}' +
+      '.meta{color:#566173;font-size:13px;margin:2px 0}' +
+      '.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 16px}' +
+      '.card{border:1px solid #d7dde8;border-radius:10px;padding:10px 12px}' +
+      '.card span{display:block;color:#5c677a;font-size:12px}' +
+      '.card strong{display:block;margin-top:4px;font-size:15px;color:#1c2430}' +
+      'table{width:100%;border-collapse:collapse;font-size:12px}' +
+      'th,td{border:1px solid #d7dde8;padding:7px 8px;vertical-align:top;text-align:left}' +
+      'th{background:#f4f7fb;font-weight:600}' +
+      '.empty{border:1px dashed #c7cfdd;border-radius:10px;padding:16px;color:#5c677a;background:#f8fafe}' +
+      '@media print{body{padding:12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '</style></head><body><div class="wrap">' +
+      '<h1>Income / Earnings Report</h1>' +
+      '<p class="meta"><strong>Reporting period:</strong> ' + escapeHtml(periodLabel) + '</p>' +
+      '<p class="meta"><strong>Filter context:</strong> scope=' + escapeHtml(incomeScopeLabel(ctx.scope)) + ', status=' + escapeHtml(statusLabel) + ', completeness=' + escapeHtml(completenessMap[ctx.completenessFilter] || 'All rows') + ', month=' + escapeHtml(ctx.monthFilter === 'all' ? 'All months' : incomeMonthLabel(ctx.monthFilter)) + '</p>' +
+      '<div class="summary">' +
+        '<div class="card"><span>Total confirmed</span><strong>' + escapeHtml(incomeTotalsLabel(totals.confirmed)) + '</strong></div>' +
+        '<div class="card"><span>Total pending / expected</span><strong>' + escapeHtml(incomeTotalsLabel(totals.pending)) + '</strong></div>' +
+        '<div class="card"><span>Total overall</span><strong>' + escapeHtml(incomeTotalsLabel(totals.overall)) + '</strong></div>' +
+        '<div class="card"><span>Included entries</span><strong>' + escapeHtml(String(ctx.tableRows.length)) + '</strong></div>' +
+      '</div>' +
+      tableHtml +
+      '</div></body></html>';
+  }
+  function exportIncomeReportPdf() {
+    state.perfs = loadDoc('rg_perfs', []);
+    if (!Array.isArray(state.perfs)) state.perfs = [];
+    var ctx = incomeBuildFilteredRowsContext();
+    var popup = window.open('', '_blank', 'width=1280,height=900');
+    if (!popup) {
+      setStatus('Could not open Income report window. Check popup blocker and try again.', 'err');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(incomeReportDocumentHtml(ctx));
+    popup.document.close();
+    var printNow = function () {
+      try {
+        popup.focus();
+        popup.print();
+        setStatus('Income report ready. Use Save as PDF in the print dialog.', 'warn');
+      } catch (err) {
+        setStatus('Income report opened. Use Cmd+P to save it as PDF.', 'warn');
+      }
+    };
+    if (popup.document.readyState === 'complete') {
+      setTimeout(printNow, 120);
+    } else {
+      popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
+    }
   }
   function incomeOpenCalendarEvent(perfId) {
     if (!hasUnsavedChangesPrompt('Open linked calendar event?')) return;
@@ -13290,6 +13607,215 @@
     uiEn['mp.audio.h2'] = state.audioData.h2;
     uiEn['mp.audio.sub'] = state.audioData.sub;
     saveDoc('rg_ui_en', uiEn);
+  }
+  function mediaReportFiltersLabel() {
+    var parts = [];
+    var tab = safeString(state.mediaTab || 'videos').trim().toLowerCase();
+    parts.push('tab=' + tab);
+    if (tab === 'videos') {
+      parts.push('visibility=' + safeString(state.mediaVidFilter || 'all'));
+      parts.push('workflow=' + safeString(state.mediaVidWorkflowFilter || 'all'));
+      if (safeString(state.mediaVidSearch).trim()) parts.push('search="' + safeString(state.mediaVidSearch).trim() + '"');
+    } else if (tab === 'audio') {
+      parts.push('visibility=' + safeString(state.mediaAudFilter || 'all'));
+      parts.push('workflow=' + safeString(state.mediaAudWorkflowFilter || 'all'));
+      if (safeString(state.mediaAudSearch).trim()) parts.push('search="' + safeString(state.mediaAudSearch).trim() + '"');
+    } else if (tab === 'photos') {
+      parts.push('quick=' + safeString(state.mediaPhotoQuickFilter || 'all'));
+      if (safeString(state.mediaPhotoSearch).trim()) parts.push('search="' + safeString(state.mediaPhotoSearch).trim() + '"');
+    }
+    return parts.join(' · ');
+  }
+  function buildMediaAssetsReportContext() {
+    var videosData = safeMediaVideos(state.vidData || loadDoc('rg_vid', { h2: '', videos: [] }));
+    var audioData = safeMediaAudio(state.audioData || loadDoc('rg_audio', { h2: '', sub: '', items: [] }));
+    var photosData = safePhotos(state.photosData || loadDoc('rg_photos', { s: [], t: [], b: [] }));
+    var captions = isObject(state.photoCaptions) ? state.photoCaptions : loadDoc('rg_photo_captions', {});
+    if (!isObject(captions)) captions = {};
+    var videos = Array.isArray(videosData.videos) ? videosData.videos.slice() : [];
+    var audio = Array.isArray(audioData.items) ? audioData.items.slice() : [];
+    var photos = [];
+    ['s', 't', 'b'].forEach(function (type) {
+      var label = type === 's' ? 'Studio' : (type === 't' ? 'Stage' : 'Backstage');
+      var arr = Array.isArray(photosData[type]) ? photosData[type] : [];
+      arr.forEach(function (raw, idx) {
+        var entry = isObject(raw)
+          ? { url: safeString(raw.url).trim(), orientation: safeString(raw.orientation).trim(), focus: safeString(raw.focus != null ? raw.focus : raw.objectPosition).trim() }
+          : { url: safeString(raw).trim(), orientation: '', focus: '' };
+        var capRaw = captions[type + '_' + idx];
+        var cap = typeof capRaw === 'string' ? { caption: safeString(capRaw), alt: '', photographer: '' } : (isObject(capRaw) ? {
+          caption: safeString(capRaw.caption),
+          alt: safeString(capRaw.alt),
+          photographer: safeString(capRaw.photographer)
+        } : { caption: '', alt: '', photographer: '' });
+        photos.push({
+          section: label,
+          url: entry.url,
+          orientation: entry.orientation,
+          focus: entry.focus,
+          caption: cap.caption,
+          alt: cap.alt,
+          photographer: cap.photographer
+        });
+      });
+    });
+    var videoPublished = 0;
+    var videoHidden = 0;
+    var videoFeatured = 0;
+    videos.forEach(function (v) {
+      if (v.hidden) videoHidden += 1;
+      if (v.featured) videoFeatured += 1;
+      if (normEditorial(v.editorialStatus) === 'published') videoPublished += 1;
+    });
+    var audioPublished = 0;
+    var audioHidden = 0;
+    var audioFeatured = 0;
+    audio.forEach(function (a) {
+      if (a.hidden) audioHidden += 1;
+      if (a.featured) audioFeatured += 1;
+      if (normEditorial(a.editorialStatus) === 'published') audioPublished += 1;
+    });
+    return {
+      generatedAt: new Date(),
+      filtersLabel: mediaReportFiltersLabel(),
+      videos: videos,
+      audio: audio,
+      photos: photos,
+      summary: {
+        totalVideos: videos.length,
+        totalAudio: audio.length,
+        totalPhotos: photos.length,
+        videoPublished: videoPublished,
+        videoHidden: videoHidden,
+        videoFeatured: videoFeatured,
+        audioPublished: audioPublished,
+        audioHidden: audioHidden,
+        audioFeatured: audioFeatured
+      }
+    };
+  }
+  function mediaAssetsReportHtml(ctx) {
+    function shortUrl(url) {
+      var v = safeString(url).trim();
+      if (v.length <= 72) return v || '—';
+      return v.slice(0, 69) + '...';
+    }
+    var videosHtml = '';
+    if (!ctx.videos.length) {
+      videosHtml = '<div class="empty">No video assets in the current media inventory.</div>';
+    } else {
+      videosHtml = '<table><thead><tr><th>Title</th><th>Group</th><th>Composer / Tag</th><th>Featured</th><th>Hidden</th><th>Workflow</th><th>Source</th><th>Notes</th></tr></thead><tbody>' + ctx.videos.map(function (v) {
+        var workflow = safeString(v.editorialStatus || (v.hidden ? 'hidden' : 'draft')).trim() || 'draft';
+        var source = safeString(v.id).trim() ? ('YouTube: ' + safeString(v.id).trim()) : 'Not set';
+        var note = safeString(v.sub).trim();
+        if (note.length > 120) note = note.slice(0, 117).trim() + '...';
+        return '<tr>' +
+          '<td>' + escapeHtml(safeString(v.title).trim() || '(untitled)') + '</td>' +
+          '<td>' + escapeHtml(safeString(v.group).trim() || 'opera_operetta') + '</td>' +
+          '<td>' + escapeHtml([safeString(v.composer).trim(), safeString(v.tag).trim()].filter(Boolean).join(' · ') || '—') + '</td>' +
+          '<td>' + escapeHtml(v.featured ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(v.hidden ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(workflow) + '</td>' +
+          '<td>' + escapeHtml(source) + '</td>' +
+          '<td>' + escapeHtml(note || '—') + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+    }
+    var audioHtml = '';
+    if (!ctx.audio.length) {
+      audioHtml = '<div class="empty">No audio assets in the current media inventory.</div>';
+    } else {
+      audioHtml = '<table><thead><tr><th>Title</th><th>Provider</th><th>Group</th><th>Featured</th><th>Hidden</th><th>Workflow</th><th>Source</th><th>Notes</th></tr></thead><tbody>' + ctx.audio.map(function (a) {
+        var workflow = safeString(a.editorialStatus || (a.hidden ? 'hidden' : 'draft')).trim() || 'draft';
+        var source = audioHasEmbed(a) ? shortUrl(a.embedUrl) : (audioHasExternalLink(a) ? shortUrl(a.externalUrl) : 'Not set');
+        var note = [safeString(a.subline).trim(), safeString(a.tag).trim(), safeString(a.composer).trim()].filter(Boolean).join(' · ');
+        if (note.length > 120) note = note.slice(0, 117).trim() + '...';
+        return '<tr>' +
+          '<td>' + escapeHtml(safeString(a.title).trim() || '(untitled)') + '</td>' +
+          '<td>' + escapeHtml(safeString(a.provider).trim() || '—') + '</td>' +
+          '<td>' + escapeHtml(safeString(a.group).trim() || 'opera_operetta') + '</td>' +
+          '<td>' + escapeHtml(a.featured ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(a.hidden ? 'yes' : 'no') + '</td>' +
+          '<td>' + escapeHtml(workflow) + '</td>' +
+          '<td>' + escapeHtml(source) + '</td>' +
+          '<td>' + escapeHtml(note || '—') + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+    }
+    var photosHtml = '';
+    if (!ctx.photos.length) {
+      photosHtml = '<div class="empty">No photo assets in the current media inventory.</div>';
+    } else {
+      photosHtml = '<table><thead><tr><th>Section</th><th>Caption</th><th>Orientation</th><th>Focus</th><th>Photographer</th><th>Alt</th></tr></thead><tbody>' + ctx.photos.map(function (p) {
+        return '<tr>' +
+          '<td>' + escapeHtml(p.section || '—') + '</td>' +
+          '<td>' + escapeHtml(safeString(p.caption).trim() || '—') + '</td>' +
+          '<td>' + escapeHtml(safeString(p.orientation).trim() || '—') + '</td>' +
+          '<td>' + escapeHtml(safeString(p.focus).trim() || '—') + '</td>' +
+          '<td>' + escapeHtml(safeString(p.photographer).trim() || '—') + '</td>' +
+          '<td>' + escapeHtml(safeString(p.alt).trim() || '—') + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+    }
+    return '<!doctype html><html><head><meta charset="utf-8"><title>Media / Assets Report</title>' +
+      '<style>' +
+      'body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;padding:24px;color:#1c2430;background:#fff}' +
+      '.wrap{max-width:1180px;margin:0 auto}' +
+      'h1{font-size:22px;margin:0 0 8px}' +
+      'h2{font-size:16px;margin:18px 0 8px}' +
+      '.meta{font-size:13px;color:#586273;margin:2px 0}' +
+      '.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 16px}' +
+      '.card{border:1px solid #d7dde8;border-radius:10px;padding:10px 12px}' +
+      '.card span{display:block;color:#5c677a;font-size:12px}' +
+      '.card strong{display:block;margin-top:4px;font-size:15px;color:#1c2430}' +
+      'table{width:100%;border-collapse:collapse;font-size:12px}' +
+      'th,td{border:1px solid #d7dde8;padding:7px 8px;vertical-align:top;text-align:left}' +
+      'th{background:#f4f7fb;font-weight:600}' +
+      '.empty{border:1px dashed #c7cfdd;border-radius:10px;padding:14px;color:#5c677a;background:#f8fafe}' +
+      '@media print{body{padding:12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '</style></head><body><div class="wrap">' +
+      '<h1>Media / Assets Report</h1>' +
+      '<p class="meta"><strong>Generated:</strong> ' + escapeHtml(ctx.generatedAt.toLocaleString()) + '</p>' +
+      '<p class="meta"><strong>Context:</strong> ' + escapeHtml(ctx.filtersLabel || 'tab=videos') + '</p>' +
+      '<div class="summary">' +
+        '<div class="card"><span>Total videos</span><strong>' + escapeHtml(String(ctx.summary.totalVideos)) + '</strong></div>' +
+        '<div class="card"><span>Total audio items</span><strong>' + escapeHtml(String(ctx.summary.totalAudio)) + '</strong></div>' +
+        '<div class="card"><span>Total photos</span><strong>' + escapeHtml(String(ctx.summary.totalPhotos)) + '</strong></div>' +
+        '<div class="card"><span>Video/Audios published</span><strong>' + escapeHtml(String(ctx.summary.videoPublished)) + ' / ' + escapeHtml(String(ctx.summary.audioPublished)) + '</strong></div>' +
+      '</div>' +
+      '<div class="summary">' +
+        '<div class="card"><span>Videos featured/hidden</span><strong>' + escapeHtml(String(ctx.summary.videoFeatured)) + ' / ' + escapeHtml(String(ctx.summary.videoHidden)) + '</strong></div>' +
+        '<div class="card"><span>Audio featured/hidden</span><strong>' + escapeHtml(String(ctx.summary.audioFeatured)) + ' / ' + escapeHtml(String(ctx.summary.audioHidden)) + '</strong></div>' +
+      '</div>' +
+      '<h2>Videos</h2>' + videosHtml +
+      '<h2>Audio</h2>' + audioHtml +
+      '<h2>Photos</h2>' + photosHtml +
+      '</div></body></html>';
+  }
+  function exportMediaAssetsReportPdf() {
+    var ctx = buildMediaAssetsReportContext();
+    var popup = window.open('', '_blank', 'width=1340,height=920');
+    if (!popup) {
+      setStatus('Could not open Media report window. Check popup blocker and try again.', 'err');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(mediaAssetsReportHtml(ctx));
+    popup.document.close();
+    var printNow = function () {
+      try {
+        popup.focus();
+        popup.print();
+        setStatus('Media report ready. Use Save as PDF in the print dialog.', 'warn');
+      } catch (err) {
+        setStatus('Media report opened. Use Cmd+P to save it as PDF.', 'warn');
+      }
+    };
+    if (popup.document.readyState === 'complete') {
+      setTimeout(printNow, 120);
+    } else {
+      popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
+    }
   }
 
   function safePublicPdfs(raw) {
@@ -16160,6 +16686,7 @@
       renderBlueprintBuilder(); markDirty(true, 'Programme order updated');
     });
     if ($('pb-export-pdf')) $('pb-export-pdf').addEventListener('click', exportProgramOfferPdf);
+    if ($('pb-export-fee-report-pdf')) $('pb-export-fee-report-pdf').addEventListener('click', exportProgramOfferFeeReportPdf);
     if ($('pb-print-now')) $('pb-print-now').addEventListener('click', function () {
       setProgramOfferExportHint('Programme Sheet ready. Use File > Print or press Cmd+P if Safari does not open the dialog.', 'warn');
       triggerProgramOfferPrintDialog();
@@ -16207,6 +16734,7 @@
     $('savePerfHeaderBtn').addEventListener('click', savePerfHeader);
     $('savePerfEventsBtn').addEventListener('click', savePerfEvents);
     if ($('income-refresh')) $('income-refresh').addEventListener('click', loadIncome);
+    if ($('income-export-pdf')) $('income-export-pdf').addEventListener('click', exportIncomeReportPdf);
     if ($('income-event-scope')) $('income-event-scope').addEventListener('change', function () {
       state.incomeEventScope = safeString($('income-event-scope').value || 'upcoming').trim().toLowerCase() || 'upcoming';
       renderIncomeSection();
@@ -16372,6 +16900,7 @@
     $('mediaTabVideos').addEventListener('click', function () { toggleMediaTab('videos'); });
     $('mediaTabPhotos').addEventListener('click', function () { toggleMediaTab('photos'); });
     $('mediaTabAudio').addEventListener('click', function () { toggleMediaTab('audio'); });
+    if ($('media-export-pdf')) $('media-export-pdf').addEventListener('click', exportMediaAssetsReportPdf);
     $('media-vid-save').addEventListener('click', saveMediaVideos);
     $('media-photo-save').addEventListener('click', saveMediaPhotos);
     $('media-aud-save').addEventListener('click', saveMediaAudio);
