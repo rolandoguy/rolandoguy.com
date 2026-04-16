@@ -3,6 +3,7 @@
 var fs = require('fs');
 var https = require('https');
 var path = require('path');
+var filter = require('./lib/public-field-filter');
 
 var root = path.join(__dirname, '..');
 
@@ -301,6 +302,31 @@ async function main() {
   if (shouldCheckLiveUiOverrides()) {
     await checkLiveUiOverrideParity(locales);
   }
+
+  // Security validation: check public JSON files for internal field leakage
+  var publicJsonFiles = [
+    'v1-assets/data/biography-data.json',
+    'v1-assets/data/calendar-data.json',
+    'v1-assets/data/contact-data.json',
+    'v1-assets/data/media-data.json',
+    'v1-assets/data/press-data.json',
+    'v1-assets/data/repertoire-data.json',
+    'v1-assets/data/programs-data.json'
+  ];
+
+  publicJsonFiles.forEach(function (relPath) {
+    if (!exists(relPath)) return;
+    try {
+      var raw = read(relPath);
+      var payload = JSON.parse(raw);
+      var violations = filter.detectInternalFields(payload, relPath);
+      if (violations.length > 0) {
+        failures.push('SECURITY: ' + relPath + ' contains internal fields: ' + violations.join(', '));
+      }
+    } catch (err) {
+      failures.push('SECURITY: failed to validate ' + relPath + ': ' + err.message);
+    }
+  });
 
   if (failures.length) {
     console.error('[public-smoke] FAIL');

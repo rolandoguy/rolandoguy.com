@@ -23,6 +23,7 @@ var path = require('path');
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'media-data.json');
 var mediaDefaultsPath = path.join(root, 'v1-assets', 'build', 'media-defaults.json');
+var filter = require('./lib/public-field-filter');
 
 function readJson(p) {
   if (!fs.existsSync(p)) {
@@ -32,20 +33,9 @@ function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
-function stripAdminNote(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
-  var out = {};
-  for (var k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = obj[k];
-  }
-  return out;
-}
-
 function normalizeVideos(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw.map(stripAdminNote);
+  return raw.map(filter.filterMediaVideo);
 }
 
 function validVideo(v) {
@@ -74,7 +64,7 @@ function normalizePhotoEntry(entry) {
   if (entry == null) return '';
   if (typeof entry === 'string') return normalizePhotoUrl(entry);
   if (typeof entry === 'object' && !Array.isArray(entry)) {
-    var o = stripAdminNote(entry);
+    var o = filter.filterMediaPhoto(entry);
     if (typeof o.url !== 'string') return '';
     var nu = normalizePhotoUrl(o.url);
     if (!String(nu).trim()) return '';
@@ -104,7 +94,7 @@ function normalizePhotosBlock(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return { s: [], t: [], b: [] };
   }
-  var o = stripAdminNote(raw);
+  var o = filter.filterMediaChrome(raw);
   return {
     s: normalizePhotoList(o.s),
     t: normalizePhotoList(o.t),
@@ -127,10 +117,11 @@ function normalizeCaptions(raw) {
       continue;
     }
     if (!v || typeof v !== 'object') continue;
+    var filtered = filter.filterMediaCaption(v);
     out[k] = {
-      caption: v.caption != null ? String(v.caption) : '',
-      alt: v.alt != null ? String(v.alt) : '',
-      photographer: v.photographer != null ? String(v.photographer) : ''
+      caption: filtered.caption != null ? String(filtered.caption) : '',
+      alt: filtered.alt != null ? String(filtered.alt) : '',
+      photographer: filtered.photographer != null ? String(filtered.photographer) : ''
     };
   }
   return out;
@@ -247,6 +238,14 @@ var output = {
     captions: captions
   })
 };
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'media-data.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log(

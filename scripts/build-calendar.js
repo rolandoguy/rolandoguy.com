@@ -19,6 +19,7 @@ var path = require('path');
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'calendar-data.json');
 var perfDefaultsPath = path.join(root, 'v1-assets', 'build', 'calendar-perf-defaults-en.json');
+var filter = require('./lib/public-field-filter');
 
 var PREFERRED_ARRAY_KEYS = ['perfs', 'items', 'value', 'data'];
 
@@ -34,23 +35,12 @@ function deepClone(o) {
   return JSON.parse(JSON.stringify(o));
 }
 
-function stripAdminNote(row) {
-  if (!row || typeof row !== 'object' || Array.isArray(row)) return row;
-  var out = {};
-  for (var k in row) {
-    if (!Object.prototype.hasOwnProperty.call(row, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = row[k];
-  }
-  return out;
-}
-
 function normalizePerfs(raw) {
-  if (Array.isArray(raw)) return raw.map(stripAdminNote);
+  if (Array.isArray(raw)) return raw.map(filter.filterCalendarEvent);
   if (raw && typeof raw === 'object') {
     for (var i = 0; i < PREFERRED_ARRAY_KEYS.length; i++) {
       var key = PREFERRED_ARRAY_KEYS[i];
-      if (Array.isArray(raw[key])) return raw[key].map(stripAdminNote);
+      if (Array.isArray(raw[key])) return raw[key].map(filter.filterCalendarEvent);
     }
   }
   return [];
@@ -145,6 +135,14 @@ var output = {
   perfs: perfs
 };
 output.perfLocales = perfLocales;
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'calendar-data.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile, '(' + perfs.length + ' events)');

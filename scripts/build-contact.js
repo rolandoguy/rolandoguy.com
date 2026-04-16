@@ -21,6 +21,7 @@ var path = require('path');
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'contact-data.json');
 var contactDefaultsPath = path.join(root, 'v1-assets', 'build', 'contact-defaults.json');
+var filter = require('./lib/public-field-filter');
 
 function readJson(p) {
   if (!fs.existsSync(p)) {
@@ -28,17 +29,6 @@ function readJson(p) {
     process.exit(1);
   }
   return JSON.parse(fs.readFileSync(p, 'utf8'));
-}
-
-function stripAdminNote(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
-  var out = {};
-  for (var k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = obj[k];
-  }
-  return out;
 }
 
 function pickFormspreeId(data, defaults) {
@@ -76,7 +66,7 @@ if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
   process.exit(1);
 }
 
-var src = stripAdminNote(raw);
+var src = filter.filterContact(raw);
 
 var title = src.title != null ? String(src.title).trim() : '';
 var sub = src.sub != null ? String(src.sub).trim() : '';
@@ -133,7 +123,7 @@ var contactLocales = {};
   var key = 'contact_' + lang;
   var raw = data[key];
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return;
-  var sx = stripAdminNote(raw);
+  var sx = filter.filterContactLocale(raw);
   var o = {};
   if (sx.title != null && String(sx.title).trim()) o.title = String(sx.title).trim();
   if (sx.sub != null && String(sx.sub).trim()) o.sub = String(sx.sub).trim();
@@ -142,6 +132,14 @@ var contactLocales = {};
   if (Object.keys(o).length) contactLocales[lang] = o;
 });
 if (Object.keys(contactLocales).length) output.contactLocales = contactLocales;
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'contact-data.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile);

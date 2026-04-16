@@ -22,6 +22,7 @@ var path = require('path');
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'press-data.json');
 var pressDefaultsPath = path.join(root, 'v1-assets', 'build', 'press-defaults.json');
+var filter = require('./lib/public-field-filter');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
 var PDF_LANGS = ['EN', 'DE', 'ES', 'IT', 'FR'];
@@ -38,20 +39,9 @@ function deepClone(o) {
   return JSON.parse(JSON.stringify(o));
 }
 
-function stripAdminNote(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
-  var out = {};
-  for (var k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = obj[k];
-  }
-  return out;
-}
-
 function normalizePress(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw.map(stripAdminNote);
+  return raw.map(filter.filterPressItem);
 }
 
 function validPressItem(p) {
@@ -143,7 +133,7 @@ function mergePublicPdfs(base, raw) {
 
 function normalizeEpkPhotos(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw.map(stripAdminNote).filter(function (ph) {
+  return raw.map(filter.filterEpkPhoto).filter(function (ph) {
     return ph && typeof ph === 'object' && ph.url && String(ph.url).trim();
   });
 }
@@ -202,6 +192,14 @@ var output = {
   epkPhotos: epkPhotos,
   publicPdfs: publicPdfs
 };
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'press-data.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile, '(' + press.length + ' press items, ' + epkPhotos.length + ' photos)');

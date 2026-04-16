@@ -38,6 +38,10 @@
   --color-outreach-surface:rgba(236,64,122,.12);
   --color-outreach-border:rgba(236,64,122,.55);
   --color-outreach-border-subtle:rgba(236,64,122,.22);
+  --color-contacts:#c2185b;
+  --color-contacts-surface:rgba(194,24,91,.12);
+  --color-contacts-border:rgba(194,24,91,.55);
+  --color-contacts-border-subtle:rgba(194,24,91,.22);
   --color-calendar:#ec407a;
   --color-calendar-surface:rgba(236,64,122,.12);
   --color-calendar-border:rgba(236,64,122,.55);
@@ -111,6 +115,8 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .nav-item[data-section="pastperfs"].active{background:linear-gradient(180deg,var(--color-pastperfs-surface) 0%,rgba(79,195,247,.08) 100%);border-color:var(--color-pastperfs);color:var(--color-pastperfs);box-shadow:0 0 0 1px rgba(79,195,247,.15)}
 .nav-item[data-section="outreach"]{background:var(--color-outreach-surface);border-color:transparent}
 .nav-item[data-section="outreach"].active{background:linear-gradient(180deg,var(--color-outreach-surface) 0%,rgba(236,64,122,.08) 100%);border-color:var(--color-outreach);color:var(--color-outreach);box-shadow:0 0 0 1px rgba(236,64,122,.15)}
+.nav-item[data-section="contacts"]{background:var(--color-contacts-surface);border-color:transparent}
+.nav-item[data-section="contacts"].active{background:linear-gradient(180deg,var(--color-contacts-surface) 0%,rgba(194,24,91,.08) 100%);border-color:var(--color-contacts);color:var(--color-contacts);box-shadow:0 0 0 1px rgba(194,24,91,.15)}
 .nav-item[data-section="calendar"]{background:var(--color-calendar-surface);border-color:transparent}
 .nav-item[data-section="calendar"].active{background:linear-gradient(180deg,var(--color-calendar-surface) 0%,rgba(236,64,122,.08) 100%);border-color:var(--color-calendar);color:var(--color-calendar);box-shadow:0 0 0 1px rgba(236,64,122,.15)}
 .nav-item[data-section="income"]{background:var(--color-income-surface);border-color:transparent}
@@ -218,6 +224,7 @@ button.danger:hover{background:#3a2128;border-color:#9e4b5e}
 #section-programbuilder.active{border-color:var(--color-programbuilder-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-programbuilder-surface) 100%)}
 #section-discovery.active{border-color:var(--color-discovery-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-discovery-surface) 100%)}
 #section-outreach.active{border-color:var(--color-outreach-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-outreach-surface) 100%)}
+#section-contacts.active{border-color:var(--color-contacts-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-contacts-surface) 100%)}
 #section-calendar.active{border-color:var(--color-calendar-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-calendar-surface) 100%)}
 #section-income.active{border-color:var(--color-income-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-income-surface) 100%)}
 #section-media.active{border-color:var(--color-media-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-media-surface) 100%)}
@@ -408,6 +415,8 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 .outreach-card{width:100%;text-align:left;display:grid;gap:10px;padding:14px;border:1px solid var(--border);border-radius:14px;background:#0f141c}
 .outreach-card.active{border-color:var(--gold);background:rgba(212,168,67,.08);box-shadow:0 0 0 1px rgba(212,168,67,.06)}
 #section-outreach.active .outreach-card.active{border-color:var(--color-outreach-border);background:linear-gradient(180deg,var(--color-outreach-surface) 0%,rgba(236,64,122,.04) 100%);box-shadow:0 0 0 1px rgba(236,64,122,.2)}
+.item-card.active{border-color:var(--gold);background:rgba(212,168,67,.08);box-shadow:0 0 0 1px rgba(212,168,67,.06)}
+#section-contacts.active .item-card.active{border-color:var(--color-contacts-border);background:linear-gradient(180deg,var(--color-contacts-surface) 0%,rgba(194,24,91,.04) 100%);box-shadow:0 0 0 1px rgba(194,24,91,.2)}
 .outreach-card__active-flag{display:none}
 .outreach-card__head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .outreach-card__identity{min-width:0;display:grid;gap:4px}
@@ -1172,11 +1181,14 @@ body.programme-print-active{overflow:hidden}
   #section-calendar > .toolbar:not(.section-save-bar) label,
   #section-income > .toolbar label{flex:0 0 190px;min-width:190px}
   #section-outreach .toolbar label,
-  #section-calendar .toolbar label{min-width:0;flex:1 1 100%}
+  #section-calendar .toolbar label,
+  #section-contacts .toolbar label{min-width:0;flex:1 1 100%}
   #section-outreach .toolbar button,
   #section-calendar .toolbar button,
+  #section-contacts .toolbar button,
   #section-outreach .toolbar .pill,
-  #section-calendar .toolbar .pill{flex:1 1 calc(50% - 8px);min-width:0;text-align:center;justify-content:center}
+  #section-calendar .toolbar .pill,
+  #section-contacts .toolbar .pill{flex:1 1 calc(50% - 8px);min-width:0;text-align:center;justify-content:center}
   #section-outreach .outreach-quick-filters{flex-wrap:nowrap;overflow:auto}
   #section-outreach .outreach-quick-filters button{flex:0 0 auto;min-width:164px;min-height:38px}
   #section-outreach .toolbar .pill,

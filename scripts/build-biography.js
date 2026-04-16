@@ -20,6 +20,7 @@ var path = require('path');
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'biography-data.json');
 var defaultsPath = path.join(root, 'v1-assets', 'build', 'biography-defaults.json');
+var filter = require('./lib/public-field-filter');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
 
@@ -44,17 +45,6 @@ function nonEmptyStr(v) {
   return v != null && String(v).trim() !== '';
 }
 
-function stripAdminNote(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
-  var out = {};
-  for (var k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = obj[k];
-  }
-  return out;
-}
-
 /** @returns {string[]|null} four segments, or null */
 function splitBioFour(p1, p2, lang) {
   var m = SPLIT_MARKERS[lang];
@@ -76,7 +66,7 @@ function splitBioFour(p1, p2, lang) {
 function mergeBioLayer(base, rawExport) {
   var o = Object.assign({}, base);
   if (!rawExport || typeof rawExport !== 'object') return o;
-  var ex = stripAdminNote(rawExport);
+  var ex = filter.filterBiography(rawExport);
   ['h2', 'p1', 'p2'].forEach(function (k) {
     if (nonEmptyStr(ex[k])) o[k] = String(ex[k]).trim();
   });
@@ -181,6 +171,14 @@ var output = {
   portraitImage: portraitImage,
   locales: outLocales
 };
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'biography-data.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile);

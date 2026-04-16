@@ -57,7 +57,7 @@ var mediaData = readJson('v1-assets/data/media-data.json');
 
 // index.html
 var indexHtml = readText('index.html');
-indexHtml = replaceById(indexHtml, 'heroEyebrow', ensureOneLine(enLocale['hero.eyebrow'] || 'Lyric Tenor · Opera · Concert · Recital'));
+indexHtml = replaceById(indexHtml, 'heroEyebrow', ensureOneLine(enLocale['hero.eyebrow'] || 'Lyric Tenor · Opera · Recital · Concert'));
 indexHtml = replaceById(indexHtml, 'heroName', ensureOneLine(enLocale['hero.nameHtml'] || 'Rolando<br><em>Guy</em>'));
 indexHtml = replaceById(indexHtml, 'heroSubtitle', ensureOneLine(enLocale['hero.subtitle'] || 'Argentine-Italian tenor based in Berlin'));
 indexHtml = replaceById(indexHtml, 'heroCta1', escapeHtml(ensureOneLine(enLocale['hero.cta1'] || 'Watch & Listen')));

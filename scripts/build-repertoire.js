@@ -18,6 +18,7 @@ var path = require('path');
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'repertoire-data.json');
 var repDefaultsPath = path.join(root, 'v1-assets', 'build', 'repertoire-rep-defaults-en.json');
+var filter = require('./lib/public-field-filter');
 
 var PREFERRED_ARRAY_KEYS = ['cards', 'items', 'value', 'data'];
 
@@ -29,23 +30,12 @@ function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
-function stripAdminNote(card) {
-  if (!card || typeof card !== 'object' || Array.isArray(card)) return card;
-  var o = {};
-  for (var k in card) {
-    if (!Object.prototype.hasOwnProperty.call(card, k)) continue;
-    if (k === 'adminNote') continue;
-    o[k] = card[k];
-  }
-  return o;
-}
-
 function normalizeCards(raw) {
-  if (Array.isArray(raw)) return raw.map(stripAdminNote);
+  if (Array.isArray(raw)) return raw.map(filter.filterRepertoireCard);
   if (raw && typeof raw === 'object') {
     for (var i = 0; i < PREFERRED_ARRAY_KEYS.length; i++) {
       var key = PREFERRED_ARRAY_KEYS[i];
-      if (Array.isArray(raw[key])) return raw[key].map(stripAdminNote);
+      if (Array.isArray(raw[key])) return raw[key].map(filter.filterRepertoireCard);
     }
   }
   return [];
@@ -111,6 +101,14 @@ var output = {
   cards: cards
 };
 if (Object.keys(repLocales).length) output.repLocales = repLocales;
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'repertoire-data.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile, '(' + cards.length + ' cards)');

@@ -289,25 +289,81 @@
   var ADMIN_ALLOWLIST_EMAILS = ['rolandoguy@gmail.com'];
   var AUTH_REDIRECT_PENDING_KEY = 'adm2_redirect_pending';
   var AUTH_REDIRECT_PENDING_TS_KEY = 'adm2_redirect_pending_ts';
+  var AUTH_REDIRECT_ORIGIN_KEY = 'adm2_redirect_origin';
+  var AUTH_REDIRECT_HOST_KEY = 'adm2_redirect_host';
+  var AUTH_REDIRECT_HREF_KEY = 'adm2_redirect_href';
   var AUTH_SAFARI_RESTORE_FAILED_KEY = 'adm2_safari_restore_failed';
   var AUTH_REDIRECT_GRACE_MS = 8000;
   var AUTH_REDIRECT_PENDING_TTL_MS = 15 * 60 * 1000;
+  var AUTH_INIT_SETTLING_MS = 3000;
+  var AUTH_STATE_IDLE = 'idle';
+  var AUTH_STATE_INITIALIZING = 'initializing-auth';
+  var AUTH_STATE_WAITING = 'waiting-auth-state';
+  var AUTH_STATE_POPUP_STARTING = 'popup-starting';
+  var AUTH_STATE_POPUP_ACTIVE = 'popup-active';
+  var AUTH_STATE_REDIRECT_STARTING = 'redirect-starting';
+  var AUTH_STATE_REDIRECT_PROCESSING = 'redirect-return-processing';
+  var AUTH_STATE_SETTLING = 'settling-auth-state';
+  var AUTH_STATE_AUTHENTICATED = 'authenticated';
+  var AUTH_STATE_UNAUTHORIZED = 'unauthorized';
+  var AUTH_STATE_SIGNED_OUT = 'signed-out';
+  var AUTH_STATE_ERROR = 'auth-error';
   var firebaseAuth = null;
   var authDebugState = {
     browserClass: 'non-safari',
+    isMobileSafari: 'no',
+    isLocalDevHost: 'no',
     authMode: 'popup',
+    requestedAuthMode: 'none',
+    actualAuthMode: 'none',
     redirectProcessed: 'no',
+    redirectResultProcessed: 'no',
+    redirectResultUser: 'no',
+    firebaseCurrentUser: 'no',
     persistenceSet: 'no',
     persistenceType: 'unknown',
     redirectPending: 'no',
     authState: 'pending',
+    authMachineState: AUTH_STATE_IDLE,
+    authRequestInFlight: 'no',
+    authBootstrapInProgress: 'no',
+    signInAttemptId: '0',
+    authObserverFired: 'no',
+    allowlistEvaluated: 'no',
+    allowlistResult: 'pending',
+    bootstrapSettled: 'no',
+    finalGateDecision: 'pending',
+    authErrorCode: '',
+    currentOrigin: '',
+    currentHost: '',
+    currentHref: '',
+    firebaseAuthDomain: '',
+    redirectStartOrigin: '',
+    redirectStartHost: '',
+    redirectReturnOrigin: '',
+    redirectReturnHost: '',
+    originMatch: 'unknown',
+    hostMatch: 'unknown',
     currentUserPresent: 'no',
+    authInitComplete: 'no',
     email: '—',
     allowlist: 'no',
     gate: 'locked',
-    failure: ''
   };
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history|rg_repertoire_discovery|rg_outreach_tracker)$/;
+  var authRequestInFlight = false;
+  var authBootstrapInProgress = false;
+  var signInAttemptId = 0;
+  var authButtonsBound = false;
+  var authMachineState = AUTH_STATE_IDLE;
+  var authObserverUnsubscribe = null;
+  var authObserverLatestUser = null;
+  var authObserverFirstEventPromise = null;
+  var authObserverFirstEventResolve = null;
+  var authObserverFirstEventReject = null;
+  var authObserverFirstEventSettled = false;
+  var redirectResultPromise = null;
+  var redirectResultProcessed = false;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history|rg_repertoire_discovery|rg_outreach_tracker|rg_admin_contacts_followups)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var mediaPhotoDragIndex = -1;
   var bulkUrlSubmitHandler = null;
@@ -953,8 +1009,6 @@
     outreachStatusFilter: 'all',
     outreachFollowupFilter: 'all',
     outreachQuickFilter: 'all',
-    legacySaveHooksInstalled: false,
-    pendingLegacySaves: {},
     paperPreview: true,
     pastPerfsSelected: {}
   };
@@ -962,8 +1016,8 @@
   var DRAFT_RESTORE_NOTICE_STORAGE_KEY = 'adm2_draft_notice_v1';
   var MOBILE_NAV_PRIMARY_STORAGE_KEY = 'rg_admin_v2_mobile_nav_primary_v1';
   var NAV_ORDER_STORAGE_KEY = 'rg_admin_v2_nav_order_v2';
-  var MOBILE_NAV_SECTION_ORDER = ['rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'outreach', 'calendar', 'income', 'bio', 'home', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
-  var MOBILE_NAV_PRIMARY_DEFAULT = ['rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'outreach', 'calendar', 'income'];
+  var MOBILE_NAV_SECTION_ORDER = ['rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'outreach', 'contacts', 'calendar', 'income', 'bio', 'home', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
+  var MOBILE_NAV_PRIMARY_DEFAULT = ['rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'outreach', 'contacts', 'calendar', 'income'];
 
   function $(id) { return document.getElementById(id); }
   function readMobileNavPrimarySections() {
@@ -1097,17 +1151,24 @@
     var excluded = /(CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Chromium|Android)/i.test(ua);
     return isWebKit && isSafari && !excluded;
   }
-  function shouldUseRedirectAuth() {
-    // Legacy admin uses popup as canonical flow.
-    // Keep redirect only as fallback when popup is blocked.
+  function isMobileSafariBrowser() {
+    if (!isSafariBrowser()) return false;
+    var ua = String((window.navigator && window.navigator.userAgent) || '');
+    return /(iPhone|iPad|iPod)/i.test(ua);
+  }
+  function isLocalDevHost() {
+    var host = safeString(window.location && window.location.hostname).trim().toLowerCase();
+    if (!host) return false;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+    if (/^192\.168\./.test(host)) return true;
+    if (/^10\./.test(host)) return true;
+    if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) return true;
     return false;
   }
-  function buildLegacySignInUrl() {
-    var returnTo = 'admin-v2.html';
-    try {
-      returnTo = window.location.pathname.split('/').pop() || 'admin-v2.html';
-    } catch (e) {}
-    return 'admin.html?return=' + encodeURIComponent(returnTo);
+  function shouldUseRedirectAuth() {
+    if (isMobileSafariBrowser()) return true;
+    if (isLocalDevHost()) return false;
+    return isSafariBrowser();
   }
   function setAuthError(message, err) {
     var code = safeString(err && err.code).trim();
@@ -1115,7 +1176,10 @@
     var full = safeString(message);
     if (code) full += ' [' + code + ']';
     if (msg) full += ' ' + msg;
-    setAuthDebug({ failure: code || msg || 'unknown-error' });
+    setAuthMachineState(AUTH_STATE_ERROR, {
+      authErrorCode: code || 'unknown-error',
+      failure: code || msg || 'unknown-error'
+    });
     setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, full);
   }
   function getRedirectPending() {
@@ -1141,6 +1205,34 @@
     } catch (e) {}
     setAuthDebug({ redirectPending: getRedirectPending() ? 'yes' : 'no' });
   }
+  function setRedirectStartTelemetry() {
+    try {
+      var origin = safeString(window.location && window.location.origin);
+      var host = safeString(window.location && window.location.hostname);
+      var href = safeString(window.location && window.location.href);
+      localStorage.setItem(AUTH_REDIRECT_ORIGIN_KEY, origin);
+      localStorage.setItem(AUTH_REDIRECT_HOST_KEY, host);
+      localStorage.setItem(AUTH_REDIRECT_HREF_KEY, href);
+      setAuthDebug({
+        redirectStartOrigin: origin,
+        redirectStartHost: host,
+        currentOrigin: origin,
+        currentHost: host,
+        currentHref: href
+      });
+    } catch (e) {}
+  }
+  function getRedirectStartTelemetry() {
+    try {
+      return {
+        origin: safeString(localStorage.getItem(AUTH_REDIRECT_ORIGIN_KEY)),
+        host: safeString(localStorage.getItem(AUTH_REDIRECT_HOST_KEY)),
+        href: safeString(localStorage.getItem(AUTH_REDIRECT_HREF_KEY))
+      };
+    } catch (e) {
+      return { origin: '', host: '', href: '' };
+    }
+  }
   function markSafariRestoreFailed(flag) {
     try {
       if (flag) localStorage.setItem(AUTH_SAFARI_RESTORE_FAILED_KEY, '1');
@@ -1154,6 +1246,13 @@
       return false;
     }
   }
+  function isAuthDebugMode() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('debugAuth') === '1') return true;
+    } catch (e) {}
+    return false;
+  }
   function refreshAuthRuntimeDebug(user) {
     setAuthDebug({
       redirectPending: getRedirectPending() ? 'yes' : 'no',
@@ -1161,6 +1260,11 @@
     });
   }
   function renderAuthDebug() {
+    if (!isAuthDebugMode()) {
+      var el = $('adm2AuthDebug');
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      return;
+    }
     var card = document.querySelector('.auth-card');
     if (!card) return;
     var el = $('adm2AuthDebug');
@@ -1177,11 +1281,40 @@
     }
     el.textContent =
       'AUTH debug: browserClass=' + safeString(authDebugState.browserClass) +
+      ' isMobileSafari=' + safeString(authDebugState.isMobileSafari) +
+      ' isLocalDevHost=' + safeString(authDebugState.isLocalDevHost) +
+      ' state=' + safeString(authDebugState.authMachineState) +
       ' authMode=' + safeString(authDebugState.authMode) +
+      ' requestedAuthMode=' + safeString(authDebugState.requestedAuthMode) +
+      ' actualAuthMode=' + safeString(authDebugState.actualAuthMode) +
+      ' authRequestInFlight=' + safeString(authDebugState.authRequestInFlight) +
+      ' authBootstrapInProgress=' + safeString(authDebugState.authBootstrapInProgress) +
+      ' signInAttemptId=' + safeString(authDebugState.signInAttemptId) +
       ' persistenceType=' + safeString(authDebugState.persistenceType) +
+      ' redirectPending=' + safeString(authDebugState.redirectPending) +
       ' redirectProcessed=' + safeString(authDebugState.redirectProcessed) +
+      ' redirectResultProcessed=' + safeString(authDebugState.redirectResultProcessed) +
+      ' redirectResultUser=' + safeString(authDebugState.redirectResultUser) +
+      ' firebaseCurrentUser=' + safeString(authDebugState.firebaseCurrentUser) +
+      ' authObserverFired=' + safeString(authDebugState.authObserverFired) +
+      ' allowlistEvaluated=' + safeString(authDebugState.allowlistEvaluated) +
+      ' allowlistResult=' + safeString(authDebugState.allowlistResult) +
+      ' bootstrapSettled=' + safeString(authDebugState.bootstrapSettled) +
+      ' finalGateDecision=' + safeString(authDebugState.finalGateDecision) +
+      ' authErrorCode=' + safeString(authDebugState.authErrorCode) +
+      ' currentOrigin=' + safeString(authDebugState.currentOrigin) +
+      ' currentHost=' + safeString(authDebugState.currentHost) +
+      ' currentHref=' + safeString(authDebugState.currentHref) +
+      ' firebaseAuthDomain=' + safeString(authDebugState.firebaseAuthDomain) +
+      ' redirectStartOrigin=' + safeString(authDebugState.redirectStartOrigin) +
+      ' redirectStartHost=' + safeString(authDebugState.redirectStartHost) +
+      ' redirectReturnOrigin=' + safeString(authDebugState.redirectReturnOrigin) +
+      ' redirectReturnHost=' + safeString(authDebugState.redirectReturnHost) +
+      ' originMatch=' + safeString(authDebugState.originMatch) +
+      ' hostMatch=' + safeString(authDebugState.hostMatch) +
       ' authState=' + safeString(authDebugState.authState) +
       ' currentUserPresent=' + safeString(authDebugState.currentUserPresent) +
+      ' authInitComplete=' + safeString(authDebugState.authInitComplete) +
       ' allowlist=' + safeString(authDebugState.allowlist) +
       ' gate=' + safeString(authDebugState.gate) +
       (authDebugState.failure ? ' reason=' + safeString(authDebugState.failure) : '');
@@ -1194,6 +1327,22 @@
     }
     renderAuthDebug();
   }
+  function setAuthMachineState(nextState, patch) {
+    authMachineState = safeString(nextState || AUTH_STATE_IDLE);
+    var base = {
+      authMachineState: authMachineState,
+      authRequestInFlight: authRequestInFlight ? 'yes' : 'no',
+      authBootstrapInProgress: authBootstrapInProgress ? 'yes' : 'no',
+      signInAttemptId: String(signInAttemptId || 0),
+      isMobileSafari: isMobileSafariBrowser() ? 'yes' : 'no',
+      isLocalDevHost: isLocalDevHost() ? 'yes' : 'no',
+      firebaseCurrentUser: (firebaseAuth && firebaseAuth.currentUser) ? 'yes' : 'no'
+    };
+    if (patch && typeof patch === 'object') {
+      Object.keys(patch).forEach(function (k) { base[k] = patch[k]; });
+    }
+    setAuthDebug(base);
+  }
   function isAdminUser(user) {
     if (!user) return false;
     var email = safeString(user.email).toLowerCase();
@@ -1205,6 +1354,7 @@
     if (gate) gate.style.display = unlocked ? 'none' : '';
     if (app) app.style.display = unlocked ? 'flex' : 'none';
     if ($('adm2UserEmail')) $('adm2UserEmail').textContent = user && user.email ? user.email : '—';
+    if ($('adm2UserEmailWrap')) $('adm2UserEmailWrap').style.display = isAuthDebugMode() ? '' : 'none';
     if ($('adm2SignInBtn')) $('adm2SignInBtn').style.display = user ? 'none' : '';
     if ($('adm2SignOutBtn')) $('adm2SignOutBtn').style.display = user ? '' : 'none';
     if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').style.display = unlocked && user ? '' : 'none';
@@ -1246,14 +1396,14 @@
   }
   function initAuth() {
     if (typeof firebase === 'undefined') {
-      setAuthError('Authentication is unavailable (Firebase failed to load).');
+      setAuthError('Authentication service unavailable. Please refresh the page.');
       return Promise.resolve(false);
     }
     try {
       if (!firebase.apps || !firebase.apps.length) {
         firebase.initializeApp({
           apiKey: "AIzaSyCW9fCKrUcmFxc91KmgXhQF4kRYCiZH9Y0",
-          authDomain: "rolandoguy-57d63.firebaseapp.com",
+          authDomain: "auth.rolandoguy.com",
           projectId: "rolandoguy-57d63",
           storageBucket: "rolandoguy-57d63.firebasestorage.app",
           messagingSenderId: "276077748266",
@@ -1263,74 +1413,303 @@
       firebaseAuth = firebase.auth();
       return setBestAuthPersistence();
     } catch (e) {
-      setAuthError('Authentication is unavailable (Firebase init failed).', e);
+      setAuthError('Authentication service unavailable. Please refresh the page.');
       return Promise.resolve(false);
     }
   }
-  function signInGoogle() {
-    setAuthDebug({ authMode: 'legacy-gateway', failure: '' });
-    setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, 'Opening legacy admin sign-in…');
-    window.location.href = buildLegacySignInUrl();
-    return false;
+  function cleanupAuthObserver() {
+    if (authObserverUnsubscribe && typeof authObserverUnsubscribe === 'function') {
+      authObserverUnsubscribe();
+    }
+    authObserverUnsubscribe = null;
   }
-  function handleRedirectResult() {
-    if (!firebaseAuth || typeof firebaseAuth.getRedirectResult !== 'function') {
-      setAuthDebug({ redirectProcessed: 'no', failure: 'redirect-api-unavailable' });
-      return Promise.resolve();
-    }
-    if (!getRedirectPending()) {
-      setAuthDebug({ redirectProcessed: 'n/a' });
-      return Promise.resolve();
-    }
-    setAuthDebug({ authMode: 'redirect', redirectProcessed: 'no', authState: 'pending', failure: '' });
-    return firebaseAuth.getRedirectResult().then(function (res) {
-      setAuthDebug({ redirectProcessed: 'yes', authState: res && res.user ? 'signed-in' : 'signed-out' });
-      refreshAuthRuntimeDebug((res && res.user) || (firebaseAuth ? firebaseAuth.currentUser : null));
-      if (res && res.user) {
-        setRedirectPending(false);
-        setAuthGate(false, res.user, 'Redirect sign-in completed. Verifying access…');
+  function installAuthObserver() {
+    if (!firebaseAuth) return Promise.reject(new Error('Firebase auth unavailable.'));
+    cleanupAuthObserver();
+    authObserverLatestUser = firebaseAuth.currentUser || null;
+    authObserverFirstEventSettled = false;
+    authObserverFirstEventPromise = new Promise(function (resolve, reject) {
+      authObserverFirstEventResolve = resolve;
+      authObserverFirstEventReject = reject;
+    });
+    authObserverUnsubscribe = firebaseAuth.onAuthStateChanged(function (user) {
+      authObserverLatestUser = user || null;
+      refreshAuthRuntimeDebug(user || null);
+      setAuthMachineState(authMachineState, {
+        authState: user ? 'signed-in' : 'signed-out',
+        email: user && user.email ? user.email : '—',
+        authObserverFired: 'yes',
+        firebaseCurrentUser: (firebaseAuth && firebaseAuth.currentUser) ? 'yes' : 'no'
+      });
+      if (!authObserverFirstEventSettled && authObserverFirstEventResolve) {
+        authObserverFirstEventSettled = true;
+        authObserverFirstEventResolve(user || null);
       }
-    }).catch(function (err) {
-      setAuthError('Redirect sign-in failed on return.', err);
+    }, function (err) {
+      var code = safeString(err && err.code).trim();
+      setAuthMachineState(AUTH_STATE_ERROR, {
+        authObserverFired: 'yes',
+        authErrorCode: code || 'auth-state-listener-failed',
+        failure: code || 'auth-state-listener-failed'
+      });
+      if (!authObserverFirstEventSettled && authObserverFirstEventReject) {
+        authObserverFirstEventSettled = true;
+        authObserverFirstEventReject(err || new Error('Auth state listener failed.'));
+      }
+    });
+    return Promise.resolve({
+      firstEvent: authObserverFirstEventPromise
     });
   }
-  function signOut() {
-    if (!firebaseAuth) return;
-    setRedirectPending(false);
-    firebaseAuth.signOut().catch(function (err) {
-      setAuthError('Sign out failed.', err);
+  function processRedirectResult() {
+    if (!firebaseAuth || typeof firebaseAuth.getRedirectResult !== 'function') {
+      setAuthMachineState(authMachineState, {
+        redirectProcessed: 'no',
+        redirectResultProcessed: 'no',
+        failure: 'redirect-api-unavailable'
+      });
+      return Promise.resolve(null);
+    }
+    if (redirectResultPromise) return redirectResultPromise;
+    setAuthMachineState(AUTH_STATE_REDIRECT_PROCESSING, {
+      authMode: 'redirect',
+      actualAuthMode: 'redirect',
+      redirectProcessed: 'pending',
+      redirectResultProcessed: 'no',
+      authState: 'pending',
+      failure: ''
     });
-    return false;
-  }
-  function awaitAuthorizedUser() {
-    return new Promise(function (resolve, reject) {
-      if (!firebaseAuth) return reject(new Error('Firebase auth unavailable.'));
-      firebaseAuth.onAuthStateChanged(function (user) {
-        var ok = isAdminUser(user);
-        refreshAuthRuntimeDebug(user);
-        setAuthDebug({
-          authState: user ? 'signed-in' : 'signed-out',
-          email: user && user.email ? user.email : '—',
-          allowlist: ok ? 'yes' : 'no'
-        });
-        if (!user) {
-          setAuthGate(false, null, 'Login is handled via legacy admin. Use "Sign in via legacy admin".');
-          return;
-        }
+    redirectResultPromise = firebaseAuth.getRedirectResult().then(function (res) {
+      var user = res && res.user ? res.user : null;
+      if (user) {
+        authObserverLatestUser = user;
         setRedirectPending(false);
-        if (!ok) {
-          setAuthDebug({ failure: 'allowlist-denied' });
-          setAuthGate(false, user, 'This account is not authorized for this admin panel.');
-          return;
-        }
-        setAuthDebug({ failure: '' });
-        setAuthGate(true, user, 'Signed in.');
-        resolve(user);
-      }, function () {
-        setAuthDebug({ failure: 'auth-state-listener-failed' });
-        reject(new Error('Auth state listener failed.'));
+      }
+      redirectResultProcessed = true;
+      setAuthMachineState(AUTH_STATE_REDIRECT_PROCESSING, {
+        redirectProcessed: 'yes',
+        redirectResultProcessed: 'yes',
+        redirectResultUser: user ? 'yes' : 'no',
+        firebaseCurrentUser: (firebaseAuth && firebaseAuth.currentUser) ? 'yes' : 'no',
+        failure: ''
+      });
+      return user;
+    }).catch(function (err) {
+      var code = safeString(err && err.code).trim();
+      redirectResultProcessed = true;
+      setAuthMachineState(AUTH_STATE_ERROR, {
+        redirectProcessed: 'yes',
+        redirectResultProcessed: 'yes',
+        authErrorCode: code || 'redirect-result-error',
+        failure: code || 'redirect-result-error'
+      });
+      return null;
+    });
+    return redirectResultPromise;
+  }
+  function waitForAuthSettleWindow() {
+    var safari = isSafariBrowser();
+    var settlingMs = safari ? AUTH_INIT_SETTLING_MS : 500;
+    setAuthMachineState(AUTH_STATE_SETTLING, {
+      settlingMs: String(settlingMs),
+      authInitComplete: 'pending',
+      bootstrapSettled: 'no'
+    });
+    var minWindow = new Promise(function (resolve) {
+      setTimeout(resolve, settlingMs);
+    });
+    var observerOrTimeout = Promise.race([
+      (authObserverFirstEventPromise || Promise.resolve(null)).catch(function () { return null; }),
+      new Promise(function (resolve) {
+        setTimeout(function () { resolve(null); }, settlingMs + AUTH_REDIRECT_GRACE_MS);
+      })
+    ]);
+    return Promise.all([minWindow, observerOrTimeout]).then(function () {
+      setAuthMachineState(AUTH_STATE_SETTLING, {
+        authInitComplete: 'yes',
+        bootstrapSettled: 'yes',
+        authObserverFired: authObserverFirstEventSettled ? 'yes' : 'no'
       });
     });
+  }
+  function finalizeBootstrapAndGate(context) {
+    var redirectPromise = context && context.redirectPromise ? context.redirectPromise : Promise.resolve(null);
+    var settlePromise = context && context.settlePromise ? context.settlePromise : Promise.resolve();
+    return Promise.all([
+      redirectPromise.catch(function () { return null; }),
+      settlePromise
+    ]).then(function () {
+      var user = authObserverLatestUser || (firebaseAuth ? firebaseAuth.currentUser : null) || null;
+      var allow = isAdminUser(user);
+      setAuthMachineState(authMachineState, {
+        allowlistEvaluated: 'yes',
+        allowlistResult: user ? (allow ? 'authorized' : 'unauthorized') : 'no-user'
+      });
+      if (user && allow) {
+        setAuthMachineState(AUTH_STATE_AUTHENTICATED, { finalGateDecision: 'unlocked' });
+        setAuthGate(true, user, 'Signed in.');
+        return user;
+      }
+      if (user && !allow) {
+        setAuthMachineState(AUTH_STATE_UNAUTHORIZED, { finalGateDecision: 'locked-unauthorized' });
+        setAuthGate(false, user, 'This account is not authorized for this admin panel.');
+        return null;
+      }
+      setAuthMachineState(AUTH_STATE_SIGNED_OUT, { finalGateDecision: 'locked-signed-out' });
+      setAuthGate(false, null, 'Sign in to access the admin panel.');
+      return null;
+    }).finally(function () {
+      cleanupAuthObserver();
+      authBootstrapInProgress = false;
+      authRequestInFlight = false;
+      setAuthMachineState(authMachineState);
+    });
+  }
+  function startRedirectSignIn(provider, attemptId, reason) {
+    if (!firebaseAuth || typeof firebaseAuth.signInWithRedirect !== 'function') {
+      var err = new Error('Redirect sign-in API unavailable.');
+      err.code = 'auth/redirect-unavailable';
+      return Promise.reject(err);
+    }
+    setRedirectStartTelemetry();
+    setRedirectPending(true);
+    setAuthMachineState(AUTH_STATE_REDIRECT_STARTING, {
+      requestedAuthMode: 'redirect',
+      actualAuthMode: 'redirect',
+      authMode: 'redirect',
+      signInAttemptId: String(attemptId || signInAttemptId),
+      failure: '',
+      reason: safeString(reason || 'direct')
+    });
+    return firebaseAuth.signInWithRedirect(provider).catch(function (err) {
+      authRequestInFlight = false;
+      setAuthMachineState(AUTH_STATE_ERROR, {
+        authErrorCode: safeString(err && err.code) || 'redirect-start-failed'
+      });
+      throw err;
+    });
+  }
+  function startPopupSignIn(provider, attemptId) {
+    if (!firebaseAuth || typeof firebaseAuth.signInWithPopup !== 'function') {
+      var err = new Error('Popup sign-in API unavailable.');
+      err.code = 'auth/popup-unavailable';
+      return Promise.reject(err);
+    }
+    setAuthMachineState(AUTH_STATE_POPUP_ACTIVE, {
+      requestedAuthMode: 'popup',
+      actualAuthMode: 'popup',
+      authMode: 'popup',
+      signInAttemptId: String(attemptId || signInAttemptId),
+      failure: ''
+    });
+    return firebaseAuth.signInWithPopup(provider).then(function (res) {
+      authRequestInFlight = false;
+      var user = (res && res.user) || (firebaseAuth ? firebaseAuth.currentUser : null) || null;
+      authObserverLatestUser = user;
+      var allow = isAdminUser(user);
+      if (user && allow) {
+        setAuthMachineState(AUTH_STATE_AUTHENTICATED, {
+          allowlistEvaluated: 'yes',
+          allowlistResult: 'authorized',
+          finalGateDecision: 'unlocked'
+        });
+        setAuthGate(true, user, 'Signed in.');
+        return user;
+      }
+      if (user && !allow) {
+        setAuthMachineState(AUTH_STATE_UNAUTHORIZED, {
+          allowlistEvaluated: 'yes',
+          allowlistResult: 'unauthorized',
+          finalGateDecision: 'locked-unauthorized'
+        });
+        setAuthGate(false, user, 'This account is not authorized for this admin panel.');
+        return null;
+      }
+      setAuthMachineState(AUTH_STATE_SIGNED_OUT, {
+        allowlistEvaluated: 'yes',
+        allowlistResult: 'no-user',
+        finalGateDecision: 'locked-signed-out'
+      });
+      setAuthGate(false, null, 'Sign in to access the admin panel.');
+      return null;
+    }).catch(function (err) {
+      var code = safeString(err && err.code).trim();
+      if (code === 'auth/popup-blocked' && typeof firebaseAuth.signInWithRedirect === 'function') {
+        return startRedirectSignIn(provider, attemptId, 'popup-blocked-fallback');
+      }
+      authRequestInFlight = false;
+      setAuthMachineState(AUTH_STATE_ERROR, {
+        authErrorCode: code || 'popup-sign-in-failed',
+        failure: code || 'popup-sign-in-failed'
+      });
+      throw err;
+    });
+  }
+  function signInGoogle() {
+    if (!firebaseAuth || !firebase.auth || typeof firebase.auth.GoogleAuthProvider !== 'function') {
+      setAuthError('Sign-in unavailable. Please refresh the page.');
+      return false;
+    }
+    if (authBootstrapInProgress) {
+      setAuthMachineState(authMachineState, { failure: 'bootstrap-in-progress' });
+      return false;
+    }
+    if (authRequestInFlight) {
+      setAuthMachineState(authMachineState, { failure: 'auth-request-in-flight' });
+      return false;
+    }
+    signInAttemptId += 1;
+    authRequestInFlight = true;
+    var preferredMode = shouldUseRedirectAuth() ? 'redirect' : 'popup';
+    var provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    setAuthGate(false, firebaseAuth ? firebaseAuth.currentUser : null, 'Checking access…');
+    setAuthMachineState(preferredMode === 'redirect' ? AUTH_STATE_REDIRECT_STARTING : AUTH_STATE_POPUP_STARTING, {
+      requestedAuthMode: preferredMode,
+      actualAuthMode: 'pending',
+      authMode: preferredMode,
+      signInAttemptId: String(signInAttemptId),
+      authErrorCode: '',
+      failure: ''
+    });
+    var attemptPromise = preferredMode === 'redirect'
+      ? startRedirectSignIn(provider, signInAttemptId, 'primary')
+      : startPopupSignIn(provider, signInAttemptId);
+    attemptPromise.catch(function (err) {
+      setAuthError('Sign-in failed. Please try again.', err);
+    });
+    return false;
+  }
+  function signOut() {
+    if (!firebaseAuth) return false;
+    if (authRequestInFlight) {
+      setAuthMachineState(authMachineState, { failure: 'sign-out-blocked-auth-request-in-flight' });
+      return false;
+    }
+    authRequestInFlight = true;
+    setAuthMachineState(AUTH_STATE_WAITING, { requestedAuthMode: 'none', actualAuthMode: 'none', failure: '' });
+    setRedirectPending(false);
+    firebaseAuth.signOut().then(function () {
+      authRequestInFlight = false;
+      authObserverLatestUser = null;
+      setAuthMachineState(AUTH_STATE_SIGNED_OUT, {
+        allowlistEvaluated: 'yes',
+        allowlistResult: 'no-user',
+        finalGateDecision: 'locked-signed-out'
+      });
+      setAuthGate(false, null, 'Signed out.');
+    }).catch(function (err) {
+      authRequestInFlight = false;
+      setAuthError('Sign-out failed. Please try again.', err);
+    });
+    return false;
+  }
+  function bindAuthButtonsOnce() {
+    if (authButtonsBound) return;
+    if ($('adm2SignInBtn')) $('adm2SignInBtn').addEventListener('click', signInGoogle);
+    if ($('adm2SignOutBtn')) $('adm2SignOutBtn').addEventListener('click', signOut);
+    if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').addEventListener('click', signOut);
+    authButtonsBound = true;
   }
   function clone(v) { return JSON.parse(JSON.stringify(v)); }
   function setStatus(text, kind) {
@@ -1574,67 +1953,6 @@
     d = persistPublicRgUiCopyFields(d);
     return normalizeUiLocaleDoc(d, state.lang);
   }
-  function getLegacyBiographyBridgeFallback(langOpt) {
-    var L = normalizeLangCode(langOpt || state.lang) || 'en';
-    var out = {};
-    try {
-      if (typeof state.api.admEffectiveSectionField === 'function') {
-        ['h2', 'p1', 'p2', 'quote', 'cite'].forEach(function (k) {
-          var v = safeString(state.api.admEffectiveSectionField('bio', k)).trim();
-          if (v) out[k] = v;
-        });
-      }
-      if (typeof state.api.uiTable === 'function') {
-        var t = state.api.uiTable(L);
-        if (isObject(t)) {
-          var introLine = safeString(t['home.intro.proof']).trim();
-          var continueTag = safeString(t['home.presenter.tag']).trim();
-          var continueSub = safeString(t['home.presenter.style']).trim();
-          var ctaRep = safeString(t['nav.rep']).trim();
-          var ctaMedia = safeString(t['nav.media']).trim();
-          var ctaContact = safeString(t['nav.book'] || t['nav.contact']).trim();
-          var ctaPrograms = safeString(t['home.intro.ctaPress']).trim();
-          if (introLine) out.introLine = introLine;
-          if (continueTag) out.continueSectionTag = continueTag;
-          if (continueSub) out.continueSub = continueSub;
-          if (ctaRep) out.ctaRepertoire = ctaRep;
-          if (ctaMedia) out.ctaMedia = ctaMedia;
-          if (ctaContact) out.ctaContact = ctaContact;
-          if (ctaPrograms) out.ctaHomeIntro = ctaPrograms;
-        }
-      }
-    } catch (e) {}
-    return out;
-  }
-  function getLegacySection(section, langOpt) {
-    var L = normalizeLangCode(langOpt || state.lang) || 'en';
-    if (section === 'bio') {
-      var merged = {};
-      try {
-        var pool = state.api && state.api.LANG_CONTENT;
-        var baseEn = pool && isObject(pool.en) && isObject(pool.en.bio) ? pool.en.bio : null;
-        var byLang = pool && isObject(pool[L]) && isObject(pool[L].bio) ? pool[L].bio : null;
-        if (isObject(baseEn)) merged = Object.assign(merged, baseEn);
-        if (isObject(byLang)) merged = Object.assign(merged, byLang);
-      } catch (e) {}
-      try {
-        if (typeof state.api.get === 'function') {
-          var d = state.api.get(section);
-          if (isObject(d) && hasBiographyMeaningfulContent(d)) merged = Object.assign(merged, d);
-        }
-      } catch (e) {}
-      merged = Object.assign(merged, getLegacyBiographyBridgeFallback(L));
-      if (Object.keys(merged).length) return merged;
-      return {};
-    }
-    try {
-      if (typeof state.api.get === 'function') {
-        var sec = state.api.get(section);
-        if (isObject(sec)) return sec;
-      }
-    } catch (e) {}
-    return {};
-  }
   function hasUnsavedChangesPrompt(nextAction) {
     if (!state.dirty) return true;
     return window.confirm(nextAction + '\n\nYou have unsaved changes. Continue anyway?');
@@ -1821,56 +2139,8 @@
     el.classList.toggle('err', !ok);
   }
 
-  function waitForLegacyApi() {
-    var frame = $('legacyBridge');
-    return new Promise(function (resolve, reject) {
-      var tries = 0;
-      var done = false;
-      function finish(err, api) {
-        if (done) return;
-        done = true;
-        if (err) reject(err);
-        else resolve(api);
-      }
-      function check() {
-        if (done) return;
-        tries++;
-        var w = frame && frame.contentWindow;
-        if (w && typeof w.load === 'function' && typeof w.save === 'function') {
-          if (typeof w.setLang !== 'function') {
-            return finish(new Error('Legacy admin is missing setLang(). Reload admin.html and try again.'));
-          }
-          return finish(null, w);
-        }
-        if (tries > 220) return finish(new Error('Timed out waiting for legacy admin (admin.html).'));
-        setTimeout(check, 50);
-      }
-      frame.addEventListener('load', check, { once: true });
-      check();
-    });
-  }
-
-  function pendingLegacySaveList(key) {
-    var k = safeString(key);
-    if (!k) return [];
-    if (!state.pendingLegacySaves[k]) state.pendingLegacySaves[k] = [];
-    return state.pendingLegacySaves[k];
-  }
-
-  function settleLegacySave(key, ok, err) {
-    var k = safeString(key);
-    if (!k || !state.pendingLegacySaves[k] || !state.pendingLegacySaves[k].length) return;
-    var pending = state.pendingLegacySaves[k].slice();
-    delete state.pendingLegacySaves[k];
-    pending.forEach(function (entry) {
-      try { clearTimeout(entry.timer); } catch (e) {}
-      if (ok) entry.resolve({ key: k });
-      else entry.reject(err || new Error('Save failed for ' + k));
-    });
-  }
-
-  function installLegacySaveHooks(api) {
-    if (!api || state.legacySaveHooksInstalled) return;
+  function installSaveHooks(api) {
+    if (!api) return;
     var origStart = typeof api.rgSaveStart === 'function' ? api.rgSaveStart : null;
     var origOk = typeof api.rgSaveOk === 'function' ? api.rgSaveOk : null;
     var origFailed = typeof api.rgSaveFailed === 'function' ? api.rgSaveFailed : null;
@@ -1881,29 +2151,10 @@
     };
     api.rgSaveOk = function (key) {
       if (origOk) origOk.apply(api, arguments);
-      settleLegacySave(key, true, null);
     };
     api.rgSaveFailed = function (key, err) {
       if (origFailed) origFailed.apply(api, arguments);
-      settleLegacySave(key, false, err || new Error('Save failed for ' + key));
     };
-    state.legacySaveHooksInstalled = true;
-  }
-
-  function waitForLegacySaveResult(key) {
-    if (!state.api || !state.legacySaveHooksInstalled) {
-      return Promise.resolve({ key: safeString(key), mode: 'optimistic' });
-    }
-    return new Promise(function (resolve, reject) {
-      var entry = {
-        resolve: resolve,
-        reject: reject,
-        timer: setTimeout(function () {
-          reject(new Error('Timed out waiting for cloud save: ' + safeString(key)));
-        }, 12000)
-      };
-      pendingLegacySaveList(key).push(entry);
-    });
   }
 
   function validateKeyValue(key, val) {
@@ -2003,7 +2254,7 @@
     if (k === 'rg_program_blueprints') return 'Programme Offers · saved offers';
     if (k === 'rg_concert_history') return 'Programme Offers · concert history archive';
     if (k === 'rg_repertoire_discovery') return 'Repertoire Discovery';
-    if (k === 'rg_outreach_tracker') return 'Venues / Outreach';
+    if (k === 'rg_outreach_tracker') return 'Venues / Opportunities';
     if (k === 'rg_vid') return 'Media · videos';
     if (k === 'rg_vid_en') return 'Media · videos (legacy key · read-only merge)';
     if (k === 'rg_audio') return 'Media · audio';
@@ -2191,24 +2442,12 @@
     if (!snapshot || !hasOwn(snapshot, key) || snapshot[key] == null) return clone(fallback);
     return clone(snapshot[key]);
   }
-  /** Same resolution order as the Programs editor: rg_programs_<lang>, then legacy getPrograms(), then EN rg_programs. Use snapshot for rg_* reads in Site Health; pass null to read live storage (editor). */
+  /** Resolution order for Programs: rg_programs_<lang> only. */
   function resolveProgramsDocForLang(lang, snapshot) {
     var byLang = snapshot
       ? getSiteHealthDoc(snapshot, 'rg_programs_' + lang, null)
       : loadDoc('rg_programs_' + lang, null);
     if (isObject(byLang) && Array.isArray(byLang.programs)) return safeProgramsDoc(byLang);
-    try {
-      if (typeof state.api.getPrograms === 'function') {
-        var effective = state.api.getPrograms();
-        if (isObject(effective) && Array.isArray(effective.programs)) return safeProgramsDoc(effective);
-      }
-    } catch (e) {}
-    if (lang === 'en') {
-      var legacy = snapshot
-        ? getSiteHealthDoc(snapshot, 'rg_programs', null)
-        : loadDoc('rg_programs', null);
-      if (isObject(legacy) && Array.isArray(legacy.programs)) return safeProgramsDoc(legacy);
-    }
     return safeProgramsDoc({ title: '', subtitle: '', intro: '', closingNote: '', programs: [] });
   }
   function getProgramsForHealth(snapshot, lang) {
@@ -2421,7 +2660,7 @@
     if (perfMissingCritical) issues.push({ severity: 'critical', section: 'Calendar', text: perfMissingCritical + ' upcoming event' + (perfMissingCritical === 1 ? ' is' : 's are') + ' missing a public date, time, or venue. Visitors would see incomplete listing details.', action: { section: 'calendar' } });
     if (perfPastMissing) issues.push({ severity: 'recommended', section: 'Calendar', text: perfPastMissing + ' past event' + (perfPastMissing === 1 ? ' is' : 's are') + ' missing some archived details. The live calendar still works, but the archive could be tidier.', action: { section: 'calendar' } });
     if (perfHidden) issues.push({ severity: 'structural', section: 'Calendar', text: perfHidden + ' calendar event' + (perfHidden === 1 ? ' is' : 's are') + ' intentionally hidden from the public site.', action: { section: 'calendar' } });
-    var vid = mergeRgVidRead(getSiteHealthDoc(snapshot, 'rg_vid', {}), getSiteHealthDoc(snapshot, 'rg_vid_en', null));
+    var vid = safeMediaVideos(getSiteHealthDoc(snapshot, 'rg_vid', { h2: '', videos: [] }));
     var videos = Array.isArray(vid.videos) ? vid.videos : [];
     var vidsMissing = videos.filter(function (v) { return isBlank(v && v.id) || isBlank(v && v.title); }).length;
     var vidsHidden = videos.filter(function (v) { return !!(v && v.hidden); }).length;
@@ -2642,6 +2881,7 @@
     if (scope === 'programbuilder') return key === 'rg_repertoire_planner' || key === 'rg_program_blueprints' || key === 'rg_concert_history';
     if (scope === 'discovery') return key === 'rg_repertoire_discovery';
     if (scope === 'outreach') return key === 'rg_outreach_tracker';
+    if (scope === 'contacts') return key === 'rg_admin_contacts_followups';
     if (scope === 'calendar') return /^perf_/.test(key) || key === 'rg_perfs' || key === 'rg_past_perfs';
     if (scope === 'media') return key === 'rg_vid' || key === 'rg_audio' || key === 'rg_photos' || key === 'rg_photo_captions';
     if (scope === 'press') return !!PRESS_IMPORT_KEYS[key];
@@ -2677,26 +2917,26 @@
     validateKeyValue(key, val);
     var label = humanStorageKeyLine(key);
     var payload = clone(val);
-    var pending = waitForLegacySaveResult(key);
+    var saveResult;
     try {
-      state.api.save(key, payload);
+      saveResult = state.api.save(key, payload);
     } catch (err) {
-      settleLegacySave(key, false, err);
       setStatus('Save failed · ' + label, 'err');
       pushActivitySummary('Save failed', [label, safeString(err && err.message ? err.message : err)]);
       return Promise.resolve(false);
     }
-    return pending.then(function () {
-      markDirty(false, 'Saved: ' + label);
-      pushActivitySummary('Saved', [label, 'Saved and synced to the cloud.']);
-      return true;
+    return Promise.resolve(saveResult).then(function (ok) {
+      if (ok === false) {
+        setStatus('Save failed · ' + label, 'err');
+        pushActivitySummary('Save failed', [label, 'Could not sync to Firestore.']);
+        return false;
+      }
+        markDirty(false, 'Saved: ' + label);
+        pushActivitySummary('Saved', [label, 'Saved and synced to the cloud.']);
+        return true;
     }).catch(function (err) {
-      markDirty(true, 'Unsaved changes');
-      setStatus('Cloud save failed · ' + label, 'err');
-      pushActivitySummary('Save failed', [
-        label,
-        safeString(err && err.message ? err.message : 'The edit was not confirmed in the cloud.')
-      ]);
+      setStatus('Save failed · ' + label, 'err');
+      pushActivitySummary('Save failed', [label, safeString(err && err.message ? err.message : err)]);
       return false;
     });
   }
@@ -2748,6 +2988,100 @@
         try { return JSON.parse(raw); } catch (e) { return null; }
       })
       .catch(function () { return null; });
+  }
+  function firestoreRgDocUrl(key) {
+    return 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/' + encodeURIComponent(key);
+  }
+  function parseFirestoreRgDocJson(doc) {
+    var raw = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+    if (!raw || typeof raw !== 'string') return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+  function encodeFirestoreRgDocBody(payload) {
+    return JSON.stringify({
+      fields: {
+        value: {
+          stringValue: JSON.stringify(payload)
+        }
+      }
+    });
+  }
+  function fetchFirestoreRgSnapshot() {
+    return getAuthIdToken().then(function (token) {
+      if (!token) return {};
+      var out = {};
+      var base = 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg?pageSize=500';
+      function walk(url) {
+        return fetch(url, {
+          cache: 'no-store',
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function (r) {
+          if (!r.ok) return null;
+          return r.json();
+        }).then(function (json) {
+          if (!json) return;
+          var docs = Array.isArray(json.documents) ? json.documents : [];
+          docs.forEach(function (doc) {
+            var name = safeString(doc && doc.name);
+            var key = safeString(name.split('/').pop()).trim();
+            if (!key) return;
+            var parsed = parseFirestoreRgDocJson(doc);
+            if (parsed != null) out[key] = parsed;
+          });
+          var tokenNext = safeString(json && json.nextPageToken).trim();
+          if (tokenNext) {
+            return walk(base + '&pageToken=' + encodeURIComponent(tokenNext));
+          }
+        }).catch(function () {});
+      }
+      return walk(base).then(function () { return out; });
+    });
+  }
+  function createFirestoreDataApi(initialLang) {
+    return fetchFirestoreRgSnapshot().then(function (snapshot) {
+      var cache = isObject(snapshot) ? clone(snapshot) : {};
+      var api = {
+        currentLang: normalizeLangCode(initialLang || 'en'),
+        load: function (key) {
+          var k = safeString(key).trim();
+          if (!k) return null;
+          if (!hasOwn(cache, k)) return null;
+          return clone(cache[k]);
+        },
+        save: function (key, payload) {
+          var k = safeString(key).trim();
+          if (!k) return Promise.resolve(false);
+          var data = clone(payload);
+          cache[k] = data;
+          return getAuthIdToken().then(function (token) {
+            if (!token) return false;
+            return fetch(firestoreRgDocUrl(k), {
+              method: 'PATCH',
+              cache: 'no-store',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              body: encodeFirestoreRgDocBody(data)
+            }).then(function (r) {
+              return !!r.ok;
+            }).catch(function () {
+              return false;
+            });
+          });
+        },
+        setLang: function (lang) {
+          api.currentLang = normalizeLangCode(lang || api.currentLang || 'en');
+        },
+        uiTable: function (lang) {
+          return api.load('rg_ui_' + normalizeLangCode(lang || api.currentLang || 'en')) || {};
+        },
+        getSnapshot: function () {
+          return clone(cache);
+        }
+      };
+      return api;
+    });
   }
 
   function syncMobileNavMoreSections(forceCollapseOnMobile) {
@@ -2854,6 +3188,7 @@
     else if (state.section === 'pastperfs') loadPastPerfsSection();
     else if (state.section === 'press') loadPress();
     else if (state.section === 'contact') loadContact();
+    else if (state.section === 'contacts') loadContacts();
     else if (state.section === 'ui') loadUiJson();
     else if (state.section === 'translation') {
       wireTranslationWorkspaceActions();
@@ -2869,7 +3204,7 @@
   function loadHome() {
     var nonce = ++state.homeLoadNonce;
     var stored = loadDoc('hero_' + state.lang, null);
-    var fallback = getLegacySection('hero');
+    var fallback = {};
     var uiStored = loadDoc('rg_ui_' + state.lang, null);
     var uiFallback = {};
     try {
@@ -3253,8 +3588,7 @@
   }
   function getBiographyRuntimeFallbackDoc(lang) {
     var fallback = getBiographyFallbackDoc(lang);
-    var legacy = getLegacySection('bio', lang);
-    return mergeBiographySourceDoc(fallback, legacy);
+    return mergeBiographySourceDoc(fallback, {});
   }
   function getBiographySourceDoc(lang) {
     var L = normalizeLangCode(lang) || 'en';
@@ -3333,23 +3667,6 @@
     var englishBundle = safeString(getBiographyBundleDoc('en').ctaHomeIntro).trim().toLowerCase();
     var localizedBundle = safeString(getBiographyBundleDoc(lang || state.lang).ctaHomeIntro).trim().toLowerCase();
     if ((lang || state.lang) !== 'en' && englishBundle && lower === englishBundle && localizedBundle && localizedBundle !== englishBundle) return '';
-    var navHome = '';
-    try {
-      if (typeof state.api.uiTable === 'function') {
-        var table = state.api.uiTable(lang || state.lang);
-        if (isObject(table)) navHome = safeString(table['nav.home']).trim().toLowerCase();
-        if (isObject(table)) {
-          var localizedPrograms = safeString(table['home.intro.ctaPress']).trim().toLowerCase();
-          var englishPrograms = '';
-          try {
-            var enTable = state.api.uiTable('en');
-            if (isObject(enTable)) englishPrograms = safeString(enTable['home.intro.ctaPress']).trim().toLowerCase();
-          } catch (ee) {}
-          if ((lang || state.lang) !== 'en' && englishPrograms && lower === englishPrograms && localizedPrograms && localizedPrograms !== englishPrograms) return '';
-        }
-      }
-    } catch (e) {}
-    if (navHome && lower === navHome) return '';
     return raw;
   }
   function bioDebug(stage, payload) {
@@ -3419,10 +3736,9 @@
     var storedDisplay = isObject(storedSafe) ? Object.assign({}, storedSafe) : {};
     if (isObject(storedDisplay)) storedDisplay.ctaHomeIntro = normalizeLegacyBioProgramsCta(storedDisplay.ctaHomeIntro, state.lang);
     var storedDe = getBiographySourceDoc('de');
-    var legacyFallback = getLegacySection('bio', state.lang);
     var bioFallback = getBiographyRuntimeFallbackDoc(state.lang);
     var bioFallbackLabel = state.lang === 'de'
-      ? 'DE source (bundle/legacy)'
+      ? 'DE source (bundle)'
       : 'DE source + localized fallback';
     bioDebug('load:start', {
       lang: state.lang,
@@ -3431,7 +3747,6 @@
       safeStoredKeys: isObject(storedSafe) ? Object.keys(storedSafe).length : 0,
       canonicalKeys: isObject(storedDe) ? Object.keys(storedDe).length : 0,
       fallbackKeys: isObject(bioFallback) ? Object.keys(bioFallback).length : 0,
-      legacyFallbackKeys: isObject(legacyFallback) ? Object.keys(legacyFallback).length : 0,
       bundleFailed: !!state.bioBundleFailed,
       liveLoaded: !!state.bioBundleLiveLoaded,
       draftPresent: !!readCurrentLocalDraftSnapshot()
@@ -3472,7 +3787,7 @@
         return;
       }
       var liveFallbackLabel = state.lang === 'de'
-        ? 'DE source (bundle/legacy)'
+        ? 'DE source (bundle)'
         : 'DE source + localized fallback';
       bioDebug('load:apply-live', {
         lang: state.lang,
@@ -3650,7 +3965,7 @@
   }
   function loadRep() {
     var stored = loadDoc('rep_' + state.lang, null);
-    var fallback = getLegacySection('rep');
+    var fallback = {};
     $('rep-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
     $('rep-intro').value = pickStoredOrFallback(stored, fallback, 'intro');
     if ($('rep-cat-filter')) $('rep-cat-filter').value = $('rep-cat-filter').value || 'all';
@@ -3705,20 +4020,6 @@
     if (isObject(byLang) && Array.isArray(byLang.programs)) {
       return 'Public Programs are currently using the saved ' + L.toUpperCase() + ' programs document.';
     }
-    if (L === 'en') {
-      var legacyEn = loadDoc('rg_programs', null);
-      if (isObject(legacyEn) && Array.isArray(legacyEn.programs) && legacyEn.programs.length) {
-        return 'Public Programs are currently falling back to the legacy EN programs document because no canonical EN programs document is saved yet.';
-      }
-    }
-    try {
-      if (state.api && typeof state.api.getPrograms === 'function') {
-        var effective = state.api.getPrograms();
-        if (isObject(effective) && Array.isArray(effective.programs) && effective.programs.length) {
-          return 'Public Programs are currently showing fallback content for ' + L.toUpperCase() + '. Save this language to make its canonical source explicit.';
-        }
-      }
-    } catch (e) {}
     return 'No saved Programs list is currently available for ' + L.toUpperCase() + '.';
   }
   function renderProgramsProvenance() {
@@ -3816,12 +4117,6 @@
     if ($('programs-workflow-filter')) $('programs-workflow-filter').value = state.programsWorkflowFilter || 'all';
     var edStored = loadDoc('rg_editorial_' + state.lang, null);
     var edFallback = {};
-    try {
-      if (typeof state.api.getEditorial === 'function') {
-        var legacyEd = state.api.getEditorial();
-        if (isObject(legacyEd)) edFallback = legacyEd;
-      }
-    } catch (e) {}
     $('programs-title').value = safeString(state.programsDoc.title);
     $('programs-subtitle').value = safeString(state.programsDoc.subtitle);
     $('programs-intro').value = safeString(state.programsDoc.intro);
@@ -4351,10 +4646,6 @@
     var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
     var byLang = loadDoc('rg_programs_' + L, null);
     if (isObject(byLang) && Array.isArray(byLang.programs) && byLang.programs.length) return safeProgramsDoc(byLang);
-    if (L === 'en') {
-      var legacy = loadDoc('rg_programs', null);
-      if (isObject(legacy) && Array.isArray(legacy.programs) && legacy.programs.length) return safeProgramsDoc(legacy);
-    }
     return null;
   }
   function publicProgramDefaultForFamily(lang, family) {
@@ -4946,6 +5237,7 @@
   function normalizeOutreachRecord(raw, idx) {
     var row = isObject(raw) ? clone(raw) : {};
     var status = safeString(row.status || 'idea').trim().toLowerCase();
+    var priority = safeString(row.priority || 'medium').trim().toLowerCase() || 'medium';
     var fitTags = programBuilderUniqueStrings((Array.isArray(row.fitTags) ? row.fitTags : safeString(row.fitTags).split(',')).map(function (tag) {
       return safeString(tag).trim().toLowerCase();
     }).filter(Boolean));
@@ -4983,21 +5275,15 @@
       city: city,
       country: safeString(row.country).trim(),
       venueType: safeString(row.venueType).trim(),
-      contactName: safeString(row.contactName).trim(),
-      contactEmail: safeString(row.contactEmail).trim(),
       outreachLanguage: (function (value) {
         value = safeString(value || 'en').trim().toLowerCase();
         return ['en', 'de', 'es', 'it', 'fr'].indexOf(value) >= 0 ? value : 'en';
       })(row.outreachLanguage),
+      priority: ['high', 'medium', 'low'].indexOf(priority) >= 0 ? priority : 'medium',
       fitTags: fitTags,
       plannedRepertoire: safeString(row.plannedRepertoire || row.repertoirePlan || ''),
       notes: safeString(row.notes),
-      messageSent: safeString(row.messageSent || row.message || row.lastMessage || ''),
-      cacheProposed: safeString(row.cacheProposed || row.feeProposed || ''),
-      cacheNegotiated: safeString(row.cacheNegotiated || row.feeNegotiated || ''),
       status: OUTREACH_STATUS_OPTIONS.some(function (option) { return option.value === status; }) ? status : 'idea',
-      lastContactDate: outreachDateValue(row.lastContactDate),
-      nextFollowUpDate: outreachDateValue(row.nextFollowUpDate),
       linkedOfferIds: linkedOfferIds,
       history: history,
       createdAt: createdAt,
@@ -5006,6 +5292,95 @@
   }
   function makeOutreachSeed() {
     return { meta: { version: 1 }, records: [] };
+  }
+  function makeContactsSeed() {
+    return { meta: { version: 1, dataMigrationVersion: 0 }, records: [] };
+  }
+  function applyContactsDataMigration() {
+    var changed = false;
+    var migrationVersion = (state.contactsDoc && state.contactsDoc.meta && Number(state.contactsDoc.meta.dataMigrationVersion)) || 0;
+    if (migrationVersion < 1) {
+      var existingIds = (state.contactsDoc.records || []).map(function (r) { return safeString(r.id).trim(); });
+      var now = new Date().toISOString();
+      var konzerthausVenueId = '';
+      if (state.outreachDoc && Array.isArray(state.outreachDoc.records)) {
+        var konzerthausVenue = state.outreachDoc.records.find(function (v) {
+          var name = safeString(v.venueName || '').toLowerCase();
+          return name.indexOf('konzerthaus') >= 0 || name.indexOf('akkordeonorchester') >= 0;
+        });
+        if (konzerthausVenue) {
+          konzerthausVenueId = safeString(konzerthausVenue.id).trim();
+        }
+      }
+      var record1 = {
+        id: 'contact_irma_la_douce_ricarda',
+        venue_id: '',
+        contact_name: 'Ricarda',
+        person_name: 'Ricarda',
+        email: '',
+        phone: '',
+        organization: 'Occasional Trio / Irma la Douce project',
+        country: 'Germany',
+        language: 'de',
+        type: 'booking',
+        project_type: 'opera',
+        role: 'project contact',
+        subject: 'Irma la Douce / La cabine téléphonique',
+        status: 'in_discussion',
+        priority: 'high',
+        date: '2026-04-16',
+        last_contact: '2026-04-16',
+        next_follow_up: '2026-04-23',
+        message_sent: '',
+        fee_offered: '1125 EUR',
+        fee_accepted: '',
+        deadline_materials: '',
+        source: 'email',
+        notes: 'Meeting proposal for Irma la Douce on Friday 16.4 in Kreuzberg with Ricarda and Simon-Mary (Occasional Trio). Tenor role possibility in La cabine téléphonique (28 min chamber opera, French language). Fee offered: 1125 EUR for 2 performances plus rehearsals on 4 and 11 December 2026. Rolando interested and responded positively.',
+        createdAt: now,
+        updatedAt: now
+      };
+      var record2 = {
+        id: 'contact_konzerthaus_detlev_klatt',
+        venue_id: konzerthausVenueId,
+        contact_name: 'Detlev Klatt',
+        person_name: 'Detlev Klatt',
+        email: '',
+        phone: '',
+        organization: 'Akkordeonorchester ASN-Berlin / Konzerthaus',
+        country: 'Germany',
+        language: 'de',
+        type: 'booking',
+        project_type: 'concert',
+        role: 'organizer',
+        subject: 'Konzerthaus Berlin concert with Akkordeonorchester ASN-Berlin',
+        status: 'confirmed',
+        priority: 'high',
+        date: '',
+        last_contact: '',
+        next_follow_up: '',
+        message_sent: '',
+        fee_offered: '400 EUR',
+        fee_accepted: '400 EUR',
+        deadline_materials: '',
+        source: 'email',
+        notes: 'Conditions approved for 400 EUR. Question whether Ave Maria should be sung in B major or G major. Rehearsal together expected soon.',
+        createdAt: now,
+        updatedAt: now
+      };
+      if (existingIds.indexOf(record1.id) < 0) {
+        state.contactsDoc.records.push(record1);
+        changed = true;
+      }
+      if (existingIds.indexOf(record2.id) < 0) {
+        state.contactsDoc.records.push(record2);
+        changed = true;
+      }
+      if (changed) {
+        state.contactsDoc.meta.dataMigrationVersion = 1;
+      }
+    }
+    return changed;
   }
   function safeOutreachDoc(raw) {
     var doc = isObject(raw) ? clone(raw) : {};
@@ -5048,71 +5423,36 @@
   }
   function outreachFollowupState(record) {
     var status = safeString(record && record.status).trim().toLowerCase();
-    var nextDate = outreachDateValue(record && record.nextFollowUpDate);
     if (outreachStatusClosed(status)) {
       return { weight: 5, className: 'outreach-followup--calm', label: outreachStatusLabel(status) };
     }
-    if (!nextDate) {
-      return { weight: 2, className: 'outreach-followup--missing', label: 'Set next follow-up' };
-    }
-    var days = outreachDaysUntil(nextDate);
-    if (days == null) return { weight: 4, className: 'outreach-followup--calm', label: outreachFormatDate(nextDate) };
-    if (days < 0) return { weight: 0, className: 'outreach-followup--overdue', label: 'Overdue since ' + outreachFormatDate(nextDate) };
-    if (days === 0) return { weight: 1, className: 'outreach-followup--today', label: 'Follow up today' };
-    if (days <= 14) return { weight: 3, className: 'outreach-followup--upcoming', label: 'Follow up by ' + outreachFormatDate(nextDate) };
-    return { weight: 4, className: 'outreach-followup--calm', label: 'Next follow-up ' + outreachFormatDate(nextDate) };
+    return { weight: 4, className: 'outreach-followup--calm', label: outreachStatusLabel(status) };
   }
   function outreachFilteredRecords() {
     var records = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records.slice() : [];
     var search = safeString(state.outreachSearch).trim().toLowerCase();
     var statusFilter = safeString(state.outreachStatusFilter || 'all').trim().toLowerCase() || 'all';
-    var followupFilter = safeString(state.outreachFollowupFilter || 'all').trim().toLowerCase() || 'all';
     var quickFilter = safeString(state.outreachQuickFilter || 'all').trim().toLowerCase() || 'all';
     return records.filter(function (record) {
-      var follow = outreachFollowupState(record);
       var hay = [
-        record.venueName, record.city, record.country, record.venueType, record.contactName, record.contactEmail, record.notes, (record.fitTags || []).join(' ')
+        record.venueName, record.city, record.country, record.venueType, record.notes, (record.fitTags || []).join(' ')
       ].join(' ').toLowerCase();
       if (search && hay.indexOf(search) < 0) return false;
       if (statusFilter !== 'all' && safeString(record.status).trim().toLowerCase() !== statusFilter) return false;
-      if (followupFilter === 'overdue' && !(follow.weight === 0)) return false;
-      if (followupFilter === 'today' && !(follow.weight === 1)) return false;
-      if (followupFilter === 'missing' && !(follow.weight === 2)) return false;
-      if (followupFilter === 'upcoming' && !(follow.weight === 3)) return false;
-      if (followupFilter === 'active' && outreachStatusClosed(record.status)) return false;
-      if (followupFilter === 'closed' && !outreachStatusClosed(record.status)) return false;
-      if (quickFilter === 'missing-message' && !!safeString(record.messageSent).trim()) return false;
       if (quickFilter === 'missing-repertoire' && !!safeString(record.plannedRepertoire).trim()) return false;
       if (quickFilter === 'no-linked-offer' && outreachLinkedOfferCount(record) > 0) return false;
       return true;
     }).sort(function (a, b) {
-      function outreachUrgencySortRank(record) {
-        var follow = outreachFollowupState(record);
-        if (follow.weight === 0) return 0;
-        if (follow.weight === 1) return 1;
-        if (follow.weight === 3) return 2;
-        if (follow.weight === 2) return 3;
-        return 4;
-      }
-      var rankA = outreachUrgencySortRank(a);
-      var rankB = outreachUrgencySortRank(b);
-      if (rankA !== rankB) return rankA - rankB;
-      var dateA = outreachDateValue(a.nextFollowUpDate);
-      var dateB = outreachDateValue(b.nextFollowUpDate);
-      if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB);
-      if (dateA && !dateB) return -1;
-      if (!dateA && dateB) return 1;
-      var lastA = outreachDateValue(a.lastContactDate);
-      var lastB = outreachDateValue(b.lastContactDate);
-      if (lastA && lastB && lastA !== lastB) return lastA.localeCompare(lastB);
-      if (lastA && !lastB) return -1;
-      if (!lastA && lastB) return 1;
+      var priorityOrder = { high: 0, medium: 1, low: 2 };
+      var pA = priorityOrder[safeString(a.priority).trim().toLowerCase()] || 1;
+      var pB = priorityOrder[safeString(b.priority).trim().toLowerCase()] || 1;
+      if (pA !== pB) return pA - pB;
       return safeString(a.venueName).localeCompare(safeString(b.venueName));
     });
   }
   function outreachContactSummary(record) {
-    var bits = [record.contactName, record.contactEmail, record.contactPhone].filter(Boolean);
-    return bits.length ? bits.join(' · ') : 'Add contact details';
+    var count = contactsLinkedToVenueCount(record.id);
+    return count ? count + ' contact' + (count === 1 ? '' : 's') + ' linked' : 'No contacts linked';
   }
   function outreachStatusOpen(value) {
     return !outreachStatusClosed(value);
@@ -5268,43 +5608,31 @@
     return Math.round((today.getTime() - date.getTime()) / 86400000);
   }
   function outreachRecentContactContext(record) {
-    var last = outreachDateValue(record && record.lastContactDate);
-    if (!last) return 'No recent contact logged';
-    var daysSince = outreachDaysSince(last);
-    if (daysSince == null) return 'Last contact ' + outreachFormatDate(last);
-    if (daysSince <= 0) return 'Last contact today';
-    if (daysSince === 1) return 'Last contact yesterday';
-    if (daysSince <= 7) return 'Last contact ' + String(daysSince) + ' days ago';
-    if (daysSince <= 30) return 'Last contact this month';
-    return 'Last contact ' + outreachFormatDate(last);
+    var count = contactsLinkedToVenueCount(record.id);
+    if (count > 0) return count + ' contact' + (count === 1 ? '' : 's') + ' linked';
+    return 'No contacts linked';
   }
   function outreachUrgencySummary(record) {
-    var follow = outreachFollowupState(record);
-    var nextDate = outreachDateValue(record && record.nextFollowUpDate);
-    var days = nextDate ? outreachDaysUntil(nextDate) : null;
-    if (follow.weight === 0) return { className: 'outreach-urgency--overdue', label: 'Urgent: overdue' };
-    if (follow.weight === 1) return { className: 'outreach-urgency--today', label: 'Urgent: today' };
-    if (follow.weight === 2) return { className: 'outreach-urgency--missing', label: 'Set follow-up date' };
-    if (follow.weight === 3) {
-      if (days != null && days <= 7) return { className: 'outreach-urgency--soon', label: 'Due this week' };
-      return { className: 'outreach-urgency--soon', label: 'Due soon' };
-    }
-    return { className: 'outreach-urgency--calm', label: 'No urgent action' };
+    var status = safeString(record && record.status).trim().toLowerCase();
+    var priority = safeString(record && record.priority).trim().toLowerCase();
+    if (outreachStatusClosed(status)) return { className: 'outreach-urgency--calm', label: 'Closed' };
+    if (priority === 'high') return { className: 'outreach-urgency--high', label: 'High priority' };
+    if (priority === 'medium') return { className: 'outreach-urgency--medium', label: 'Medium priority' };
+    return { className: 'outreach-urgency--calm', label: 'Low priority' };
   }
   function outreachOfferBadge(record) {
     var count = outreachLinkedOfferCount(record);
     return '<span class="item-badge">' + escapeHtml(count ? (String(count) + ' linked offer' + (count === 1 ? '' : 's')) : 'No linked offer yet') + '</span>';
   }
   function outreachSnapshotSignals(record) {
-    var messageSent = safeString(record && record.messageSent).trim();
-    var hasMessage = !!messageSent;
     var planned = safeString(record && record.plannedRepertoire).trim();
     var hasPlanned = !!planned;
     var linkedCount = outreachLinkedOfferCount(record);
+    var contactsCount = contactsLinkedToVenueCount(record.id);
     return [
-      '<span class="item-badge outreach-signal ' + (hasMessage ? 'outreach-signal--ok' : 'outreach-signal--warn') + '">' + escapeHtml(hasMessage ? 'Message sent' : 'No message yet') + '</span>',
       '<span class="item-badge outreach-signal ' + (hasPlanned ? 'outreach-signal--ok' : 'outreach-signal--warn') + '">' + escapeHtml(hasPlanned ? 'Repertoire planned' : 'No repertoire') + '</span>',
-      '<span class="item-badge outreach-signal ' + (linkedCount ? 'outreach-signal--ok' : 'outreach-signal--calm') + '">' + escapeHtml(linkedCount ? (String(linkedCount) + ' offer' + (linkedCount === 1 ? '' : 's') + ' linked') : 'No offer linked') + '</span>'
+      '<span class="item-badge outreach-signal ' + (linkedCount ? 'outreach-signal--ok' : 'outreach-signal--calm') + '">' + escapeHtml(linkedCount ? (String(linkedCount) + ' offer' + (linkedCount === 1 ? '' : 's') + ' linked') : 'No offer linked') + '</span>',
+      '<span class="item-badge outreach-signal ' + (contactsCount ? 'outreach-signal--ok' : 'outreach-signal--warn') + '">' + escapeHtml(contactsCount ? (String(contactsCount) + ' contact' + (contactsCount === 1 ? '' : 's') + ' linked') : 'No contacts linked') + '</span>'
     ].join('');
   }
   function outreachStatusFilterLabel(value) {
@@ -5459,7 +5787,7 @@
       '</style></head><body>' +
       '<div class="report">' +
         '<div class="report__head">' +
-          '<div><h1>Venues / Outreach report</h1><p>Filtered outreach review with current status, follow-up pressure, and Programme Offer linkage.</p></div>' +
+          '<div><h1>Venues / Opportunities report</h1><p>Strategic venue and opportunity review with current status, priority, and Programme Offer linkage.</p></div>' +
           '<div class="report__meta">Generated ' + escapeHtml(outreachPrintTimestamp()) + '<br>Rolando Guy admin-v2</div>' +
         '</div>' +
         '<div class="summary">' +
@@ -5551,6 +5879,254 @@
       popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
     }
   }
+  function contactsLinkedVenueName(venueId) {
+    if (!venueId) return '—';
+    var venues = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records : [];
+    var venue = venues.find(function (v) { return safeString(v.id).trim() === safeString(venueId).trim(); });
+    if (!venue) return '—';
+    return [venue.venueName, venue.city, venue.country].filter(Boolean).join(', ') || '—';
+  }
+  function contactsPrintTimestamp() {
+    try {
+      return new Date().toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (err) {
+      return new Date().toISOString();
+    }
+  }
+  function contactsListReportDocumentHtml(records) {
+    return '<!doctype html><html><head><meta charset="utf-8">' +
+      '<title>Contacts / Follow-ups report</title>' +
+      '<style>' +
+        '@page{size:A4 landscape;margin:10mm;}' +
+        'html,body{margin:0;padding:0;background:#fff;color:#121722;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+        'body{padding:0;}' +
+        '.report{display:grid;gap:12px;}' +
+        '.report__head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #d7deea;padding-bottom:10px;}' +
+        '.report__head h1{margin:0;font-size:20px;line-height:1.15;color:#121722;}' +
+        '.report__head p{margin:4px 0 0;font-size:11px;line-height:1.5;color:#516075;max-width:70ch;}' +
+        '.report__meta{text-align:right;font-size:10px;line-height:1.5;color:#516075;white-space:nowrap;}' +
+        '.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}' +
+        '.summary__tile{border:1px solid #d7deea;border-radius:10px;padding:8px 10px;background:#f7f9fc;display:grid;gap:4px;}' +
+        '.summary__tile span{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#607086;}' +
+        '.summary__tile strong{font-size:18px;line-height:1;color:#121722;}' +
+        '.summary__tile small{font-size:10px;line-height:1.4;color:#607086;}' +
+        'table{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed;}' +
+        'thead th{padding:7px 8px;border:1px solid #d7deea;background:#eef3fa;color:#364359;font-size:9px;letter-spacing:.12em;text-transform:uppercase;text-align:left;}' +
+        'tbody td{padding:7px 8px;border:1px solid #d7deea;vertical-align:top;color:#162031;line-height:1.4;word-break:normal;overflow-wrap:break-word;}' +
+        'tbody tr:nth-child(even){background:#fafbfd;}' +
+        '.col-name strong{word-break:normal;overflow-wrap:normal;hyphens:none;}' +
+        '.col-email{font-size:10px;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;}' +
+        '.status{display:inline-block;padding:2px 7px;border-radius:999px;border:1px solid #d7deea;font-size:9px;line-height:1.3;background:#fff;}' +
+        '.status--confirmed{background:#e8f8ee;border-color:#b9e2c8;}' +
+        '.status--declined,.status--archived{background:#f4f5f7;border-color:#d9dce1;}' +
+        '.status--negotiating,.status--in_discussion{background:#fff4da;border-color:#ecd18b;}' +
+        '.muted{color:#607086;}' +
+      '</style></head><body>' +
+      '<div class="report">' +
+        '<div class="report__head">' +
+          '<div><h1>Contacts / Follow-ups report</h1><p>Operational CRM layer showing current filtered contacts with status, priority, and follow-up tracking.</p></div>' +
+          '<div class="report__meta">Generated ' + escapeHtml(contactsPrintTimestamp()) + '<br>Rolando Guy admin-v2 (internal)</div>' +
+        '</div>' +
+        '<div class="summary">' +
+          '<div class="summary__tile"><span>Total contacts</span><strong>' + escapeHtml(String(records.length)) + '</strong><small>In current view</small></div>' +
+          '<div class="summary__tile"><span>High priority</span><strong>' + escapeHtml(String(records.filter(function (r) { return r.priority === 'high'; }).length)) + '</strong><small>Urgent attention</small></div>' +
+          '<div class="summary__tile"><span>Overdue follow-up</span><strong>' + escapeHtml(String(records.filter(function (r) { return contactsFollowupState(r).weight === 0; }).length)) + '</strong><small>Past due</small></div>' +
+        '</div>' +
+        '<div class="report-table"><table>' +
+          '<thead><tr>' +
+            '<th class="col-name" style="width:18%">Contact</th>' +
+            '<th style="width:12%">Organization</th>' +
+            '<th style="width:10%">Status</th>' +
+            '<th style="width:8%">Priority</th>' +
+            '<th style="width:15%">Linked venue</th>' +
+            '<th class="col-email" style="width:17%">Email</th>' +
+            '<th style="width:10%">Last contact</th>' +
+            '<th style="width:10%">Next follow-up</th>' +
+          '</tr></thead>' +
+          '<tbody>' + records.map(function (record) {
+            var name = safeString(record.contact_name || record.person_name || '(unnamed)').trim();
+            var org = safeString(record.organization).trim();
+            var status = safeString(record.status).trim();
+            var priority = safeString(record.priority).trim();
+            var venue = contactsLinkedVenueName(record.venue_id);
+            var email = safeString(record.email).trim();
+            var lastContact = safeString(record.last_contact).trim();
+            var nextFollowUp = safeString(record.next_follow_up).trim();
+            var followupState = contactsFollowupState(record);
+            return '<tr>' +
+              '<td class="col-name"><strong>' + escapeHtml(name) + '</strong></td>' +
+              '<td>' + escapeHtml(org || '—') + '</td>' +
+              '<td><span class="status status--' + escapeAttr(status.replace(/_/g, '-')) + '">' + escapeHtml(status || '—') + '</span></td>' +
+              '<td>' + escapeHtml(priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : '—') + '</td>' +
+              '<td>' + escapeHtml(venue) + '</td>' +
+              '<td class="col-email">' + escapeHtml(email || '—') + '</td>' +
+              '<td>' + escapeHtml(lastContact || '—') + '</td>' +
+              '<td>' + escapeHtml(nextFollowUp || followupState.label) + '</td>' +
+            '</tr>';
+          }).join('') + '</tbody></table></div>' +
+      '</div></body></html>';
+  }
+  function exportContactsListPdf() {
+    var records = contactsFilteredRecords();
+    if (!records.length) {
+      setStatus('No contacts match the current filters.', 'warn');
+      return;
+    }
+    var popup = window.open('', '_blank', 'width=1480,height=960');
+    if (!popup) {
+      setStatus('Could not open the contacts report window. Check the popup blocker and try again.', 'err');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(contactsListReportDocumentHtml(records));
+    popup.document.close();
+    var printNow = function () {
+      try {
+        popup.focus();
+        popup.print();
+        setStatus('Contacts report ready. Use Save as PDF in the print dialog.', 'warn');
+      } catch (err) {
+        setStatus('Contacts report opened. Use Cmd+P to save it as PDF.', 'warn');
+      }
+    };
+    if (popup.document.readyState === 'complete') {
+      setTimeout(printNow, 120);
+    } else {
+      popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
+    }
+  }
+  function contactsRecordReportDocumentHtml(record) {
+    if (!record) return '';
+    var name = safeString(record.contact_name || record.person_name || '(unnamed)').trim();
+    var org = safeString(record.organization).trim();
+    var person = safeString(record.person_name).trim();
+    var email = safeString(record.email).trim();
+    var phone = safeString(record.phone).trim();
+    var country = safeString(record.country).trim();
+    var language = safeString(record.language).trim();
+    var type = safeString(record.type).trim();
+    var projectType = safeString(record.project_type).trim();
+    var role = safeString(record.role).trim();
+    var subject = safeString(record.subject).trim();
+    var status = safeString(record.status).trim();
+    var priority = safeString(record.priority).trim();
+    var date = safeString(record.date).trim();
+    var lastContact = safeString(record.last_contact).trim();
+    var nextFollowUp = safeString(record.next_follow_up).trim();
+    var messageSent = safeString(record.message_sent).trim();
+    var feeOffered = safeString(record.fee_offered).trim();
+    var feeAccepted = safeString(record.fee_accepted).trim();
+    var deadlineMaterials = safeString(record.deadline_materials).trim();
+    var source = safeString(record.source).trim();
+    var notes = safeString(record.notes).trim();
+    var venue = contactsLinkedVenueName(record.venue_id);
+    var followupState = contactsFollowupState(record);
+    return '<!doctype html><html><head><meta charset="utf-8">' +
+      '<title>Contact record: ' + escapeAttr(name) + '</title>' +
+      '<style>' +
+        '@page{size:A4;margin:15mm;}' +
+        'html,body{margin:0;padding:0;background:#fff;color:#121722;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+        'body{padding:0;}' +
+        '.report{max-width:700px;margin:0 auto;display:grid;gap:16px;}' +
+        '.report__head{border-bottom:2px solid #d7deea;padding-bottom:12px;}' +
+        '.report__head h1{margin:0 0 4px;font-size:22px;line-height:1.15;color:#121722;}' +
+        '.report__head p{margin:0;font-size:11px;line-height:1.5;color:#516075;}' +
+        '.report__meta{text-align:right;font-size:10px;line-height:1.5;color:#516075;white-space:nowrap;margin-bottom:8px;}' +
+        '.section{border:1px solid #d7deea;border-radius:10px;background:#fbfcfe;padding:12px;}' +
+        '.section h2{margin:0 0 10px;font-size:13px;line-height:1.3;color:#121722;}' +
+        '.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0;}' +
+        '.grid.full{grid-template-columns:1fr;}' +
+        '.grid div{min-width:0;}' +
+        '.grid dt{margin:0 0 2px;font-size:9px;line-height:1.25;letter-spacing:.1em;text-transform:uppercase;color:#607086;}' +
+        '.grid dd{margin:0;font-size:11px;line-height:1.35;color:#162031;word-break:normal;overflow-wrap:break-word;}' +
+        '.grid dd.email{overflow-wrap:anywhere;word-break:break-word;}' +
+        '.grid dd.note{white-space:pre-wrap;line-height:1.5;}' +
+        '.status{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid #d7deea;font-size:10px;line-height:1.3;background:#fff;}' +
+        '.status--confirmed{background:#e8f8ee;border-color:#b9e2c8;}' +
+        '.status--declined,.status--archived{background:#f4f5f7;border-color:#d9dce1;}' +
+        '.status--negotiating,.status--in_discussion{background:#fff4da;border-color:#ecd18b;}' +
+        '.badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;background:#eef3fa;color:#364359;}' +
+        '@media (max-width:600px){.grid{grid-template-columns:1fr;}}' +
+      '</style></head><body>' +
+      '<div class="report">' +
+        '<div class="report__meta">Generated ' + escapeHtml(contactsPrintTimestamp()) + '<br>Rolando Guy admin-v2 (internal)</div>' +
+        '<div class="report__head">' +
+          '<h1>' + escapeHtml(name) + '</h1>' +
+          '<p>' + escapeHtml(org || '') + (org && person ? ' · ' : '') + escapeHtml(person || '') + '</p>' +
+        '</div>' +
+        '<div class="section">' +
+          '<h2>Contact details</h2>' +
+          '<dl class="grid">' +
+            '<div><dt>Email</dt><dd class="email">' + escapeHtml(email || '—') + '</dd></div>' +
+            '<div><dt>Phone</dt><dd>' + escapeHtml(phone || '—') + '</dd></div>' +
+            '<div><dt>Organization</dt><dd>' + escapeHtml(org || '—') + '</dd></div>' +
+            '<div><dt>Person</dt><dd>' + escapeHtml(person || '—') + '</dd></div>' +
+            '<div><dt>Country</dt><dd>' + escapeHtml(country || '—') + '</dd></div>' +
+            '<div><dt>Language</dt><dd>' + escapeHtml(language || '—') + '</dd></div>' +
+            '<div><dt>Type</dt><dd>' + escapeHtml(type || '—') + '</dd></div>' +
+            '<div><dt>Project type</dt><dd>' + escapeHtml(projectType || '—') + '</dd></div>' +
+            '<div><dt>Role</dt><dd>' + escapeHtml(role || '—') + '</dd></div>' +
+            '<div><dt>Source</dt><dd>' + escapeHtml(source || '—') + '</dd></div>' +
+          '</dl>' +
+        '</div>' +
+        '<div class="section">' +
+          '<h2>Status & priority</h2>' +
+          '<dl class="grid">' +
+            '<div><dt>Status</dt><dd><span class="status status--' + escapeAttr(status.replace(/_/g, '-')) + '">' + escapeHtml(status || '—') + '</span></dd></div>' +
+            '<div><dt>Priority</dt><dd>' + escapeHtml(priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : '—') + '</dd></div>' +
+            '<div><dt>Date</dt><dd>' + escapeHtml(date || '—') + '</dd></div>' +
+            '<div><dt>Last contact</dt><dd>' + escapeHtml(lastContact || '—') + '</dd></div>' +
+            '<div><dt>Next follow-up</dt><dd>' + escapeHtml(nextFollowUp || followupState.label) + '</dd></div>' +
+            '<div><dt>Linked venue</dt><dd>' + escapeHtml(venue) + '</dd></div>' +
+          '</dl>' +
+        '</div>' +
+        (subject || messageSent ? '<div class="section"><h2>Communication</h2><dl class="grid full">' +
+          (subject ? '<div><dt>Subject</dt><dd>' + escapeHtml(subject) + '</dd></div>' : '') +
+          (messageSent ? '<div><dt>Message sent</dt><dd class="note">' + escapeHtml(messageSent) + '</dd></div>' : '') +
+        '</dl></div>' : '') +
+        (feeOffered || feeAccepted || deadlineMaterials ? '<div class="section"><h2>Fees & deadlines</h2><dl class="grid">' +
+          '<div><dt>Fee offered</dt><dd>' + escapeHtml(feeOffered || '—') + '</dd></div>' +
+          '<div><dt>Fee accepted</dt><dd>' + escapeHtml(feeAccepted || '—') + '</dd></div>' +
+          '<div><dt>Deadline materials</dt><dd>' + escapeHtml(deadlineMaterials || '—') + '</dd></div>' +
+        '</dl></div>' : '') +
+        (notes ? '<div class="section"><h2>Notes</h2><dl class="grid full"><div><dt></dt><dd class="note">' + escapeHtml(notes) + '</dd></div></dl></div>' : '') +
+      '</div></body></html>';
+  }
+  function exportContactsRecordPdf() {
+    var record = contactsRecordById(state.contactsSelectedId);
+    if (!record) {
+      setStatus('No contact selected. Select a contact to export.', 'warn');
+      return;
+    }
+    var popup = window.open('', '_blank', 'width=900,height=1000');
+    if (!popup) {
+      setStatus('Could not open the contact record window. Check the popup blocker and try again.', 'err');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(contactsRecordReportDocumentHtml(record));
+    popup.document.close();
+    var printNow = function () {
+      try {
+        popup.focus();
+        popup.print();
+        setStatus('Contact record ready. Use Save as PDF in the print dialog.', 'warn');
+      } catch (err) {
+        setStatus('Contact record opened. Use Cmd+P to save it as PDF.', 'warn');
+      }
+    };
+    if (popup.document.readyState === 'complete') {
+      setTimeout(printNow, 120);
+    } else {
+      popup.addEventListener('load', function () { setTimeout(printNow, 120); }, { once: true });
+    }
+  }
   function renderOutreachCards(records) {
     return records.map(function (record) {
       var isActive = safeString(state.outreachSelectedId).trim() === safeString(record.id).trim();
@@ -5563,14 +6139,8 @@
       var plannedRepertoire = safeString(record.plannedRepertoire).trim();
       var plannedPreview = plannedRepertoire ? (plannedRepertoire.length > 120 ? (plannedRepertoire.slice(0, 119).trim() + '…') : plannedRepertoire) : '';
       var fitTags = outreachFitPreview(record, 3);
-      var urgency = outreachUrgencySummary(record);
-      var recentContact = outreachRecentContactContext(record);
       var snapshotSignals = outreachSnapshotSignals(record);
-      var quickActions = (!isActive || outreachStatusClosed(record.status)) ? '' : '<div class="outreach-card__actions">' +
-        '<span class="outreach-card__action" data-outreach-card-id="' + escapeAttr(record.id) + '" data-outreach-card-action="contact-today">Mark contacted today</span>' +
-        '<span class="outreach-card__action" data-outreach-card-id="' + escapeAttr(record.id) + '" data-outreach-card-action="followup-7">Follow up in 7 days</span>' +
-        '<span class="outreach-card__action" data-outreach-card-id="' + escapeAttr(record.id) + '" data-outreach-card-action="mark-negotiating">Mark negotiating</span>' +
-      '</div>';
+      var priorityBadge = '<span class="item-badge outreach-priority--' + escapeAttr(safeString(record.priority).trim().toLowerCase()) + '">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span>';
       return '<button type="button" class="' + active + '" data-outreach-select="' + escapeAttr(record.id) + '">' +
         '<div class="outreach-card__head">' +
           '<div class="outreach-card__identity">' +
@@ -5579,19 +6149,12 @@
           '</div>' +
           activeFlag +
           outreachStatusBadge(record) +
+          priorityBadge +
         '</div>' +
-        '<div class="outreach-card__decision">' +
-          '<span class="pill outreach-card__urgency ' + escapeAttr(urgency.className) + '">' + escapeHtml(urgency.label) + '</span>' +
-          '<span class="outreach-card__recent">' + escapeHtml(recentContact) + '</span>' +
-        '</div>' +
-        quickActions +
         '<div class="outreach-card__signals">' + snapshotSignals + '</div>' +
         '<div class="outreach-card__grid">' +
           '<div><span class="outreach-card__label">Venue type</span><div class="outreach-card__value">' + escapeHtml(venueType) + '</div></div>' +
-          '<div><span class="outreach-card__label">Contact</span><div class="outreach-card__value">' + escapeHtml(contact) + '</div></div>' +
-          '<div><span class="outreach-card__label">Last contact</span><div class="outreach-card__value">' + escapeHtml(outreachDateShortLabel(record.lastContactDate, 'Not logged yet')) + '</div></div>' +
-          '<div><span class="outreach-card__label">Next follow-up</span><div class="outreach-card__value">' + outreachFollowupBadge(record) + '</div></div>' +
-          (record.cacheProposed || record.cacheNegotiated ? '<div><span class="outreach-card__label">Cache</span><div class="outreach-card__value">' + escapeHtml([record.cacheProposed, record.cacheNegotiated].filter(Boolean).join(' / ') || '—') + '</div></div>' : '') +
+          '<div><span class="outreach-card__label">Linked contacts</span><div class="outreach-card__value">' + escapeHtml(contact) + '</div></div>' +
         '</div>' +
         '<div class="outreach-card__footer">' +
           '<div class="item-badges">' +
@@ -5610,9 +6173,8 @@
         '<th>Venue</th>' +
         '<th>Location</th>' +
         '<th>Status</th>' +
-        '<th>Contact</th>' +
-        '<th>Last contact</th>' +
-        '<th>Next follow-up</th>' +
+        '<th>Priority</th>' +
+        '<th>Linked contacts</th>' +
         '<th>Offers</th>' +
         '<th>Fit / note</th>' +
       '</tr></thead><tbody>' +
@@ -5624,10 +6186,9 @@
         return '<tr data-outreach-select="' + escapeAttr(record.id) + '"' + active + '>' +
           '<td><strong>' + escapeHtml(record.venueName || '(untitled venue)') + '</strong><div class="outreach-report__sub">' + escapeHtml(record.venueType || 'Type not set') + '</div></td>' +
           '<td>' + escapeHtml(outreachRecordLocation(record) || 'Add location') + '</td>' +
-          '<td><div class="outreach-report__badges">' + outreachStatusBadge(record) + outreachFollowupBadge(record) + '</div></td>' +
+          '<td>' + outreachStatusBadge(record) + '</td>' +
+          '<td><span class="item-badge outreach-priority--' + escapeAttr(safeString(record.priority).trim().toLowerCase()) + '">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span></td>' +
           '<td>' + escapeHtml(outreachContactSummary(record)) + '</td>' +
-          '<td>' + escapeHtml(outreachDateShortLabel(record.lastContactDate, 'Not logged')) + '</td>' +
-          '<td>' + escapeHtml(outreachDateShortLabel(record.nextFollowUpDate, 'Not set')) + '</td>' +
           '<td>' + escapeHtml(String(outreachLinkedOfferCount(record))) + '</td>' +
           '<td>' + escapeHtml(fitCell || 'No fit note yet') + '</td>' +
         '</tr>';
@@ -8298,7 +8859,7 @@
     var records = outreachFilteredRecords();
     renderOutreachSummary(records);
     if (!records.length) {
-      box.innerHTML = '<div class="empty-state">No venues match the current filters. Clear the filters or add a new record.</div>';
+      box.innerHTML = '<div class="empty-state">No opportunities match the current filters. Clear the filters or add a new opportunity.</div>';
       return;
     }
     box.innerHTML = state.outreachViewMode === 'report' ? renderOutreachReport(records) : renderOutreachCards(records);
@@ -8319,15 +8880,12 @@
         var record = outreachRecordById(recordId);
         if (!record) return;
         var nowIso = new Date().toISOString();
-        if (action === 'contact-today') {
-          record.lastContactDate = outreachTodayIso();
-          if (!record.nextFollowUpDate) {
-            record.nextFollowUpDate = outreachLocalDatePlusDays(7);
-          }
-        } else if (action === 'followup-7') {
-          record.nextFollowUpDate = outreachLocalDatePlusDays(7);
-        } else if (action === 'mark-negotiating') {
+        if (action === 'mark-negotiating') {
           record.status = 'negotiating';
+        } else if (action === 'mark-confirmed') {
+          record.status = 'confirmed';
+        } else if (action === 'mark-declined') {
+          record.status = 'declined';
         } else {
           return;
         }
@@ -8346,26 +8904,43 @@
   function outreachRecordLocation(record) {
     return [record.city, record.country].filter(Boolean).join(', ');
   }
+  function contactsLinkedToVenueCount(venueId) {
+    if (!venueId) return 0;
+    var records = (state.contactsDoc && Array.isArray(state.contactsDoc.records)) ? state.contactsDoc.records : [];
+    return records.filter(function (rec) { return rec.venue_id === venueId; }).length;
+  }
+  function renderContactsVenueOptions() {
+    var selectEl = $('contacts-venue_id');
+    if (!selectEl) return;
+    var venues = (state.outreachDoc && Array.isArray(state.outreachDoc.records)) ? state.outreachDoc.records : [];
+    var currentVal = safeString(selectEl.value).trim();
+    var options = '<option value="">(no venue)</option>' +
+      venues.map(function (v) {
+        var label = [v.venueName, v.city, v.country].filter(Boolean).join(', ');
+        var selected = v.id === currentVal ? ' selected' : '';
+        return '<option value="' + escapeAttr(v.id) + '"' + selected + '>' + escapeHtml(label || '(unnamed venue)') + '</option>';
+      }).join('');
+    selectEl.innerHTML = options;
+  }
   function renderOutreachEditor() {
     var box = $('outreach-editor');
     if (!box) return;
     var record = outreachRecordById(state.outreachSelectedId) || null;
     if (!record) {
-      box.innerHTML = '<div class="empty-state">Select a venue to review contact details, linked offers, and follow-up timing.</div>';
+      box.innerHTML = '<div class="empty-state">Select a venue to review strategic details and linked programme offers. Contact and follow-up tracking is now in Contacts / Follow-ups.</div>';
       renderOutreachSummary();
       return;
     }
     var offers = outreachSavedOfferRows();
-    var follow = outreachFollowupState(record);
-    var historyHtml = outreachHistoryListHtml(record);
     var offerMarkup = offers.length ? offers.map(function (offer) {
       var checked = (record.linkedOfferIds || []).indexOf(safeString(offer.id).trim()) >= 0 ? ' checked' : '';
       var meta = [plannerFamilyLabelForLang(offer.family, offer.outputLang), (String(offer.targetDuration || 0) + ' min'), offer.formation].filter(Boolean).join(' · ');
       return '<label class="outreach-offer-link"><span><input type="checkbox" data-outreach-offer="' + escapeAttr(offer.id) + '"' + checked + '> ' + escapeHtml(savedOfferDisplayLabel(offer)) + '</span><span class="outreach-offer-link__meta">' + escapeHtml(meta) + '</span></label>';
     }).join('') : '<div class="empty-state">Save a Programme Offer first, then link it here when it matches a venue.</div>';
+    var linkedContactsCount = contactsLinkedToVenueCount(record.id);
     box.innerHTML = '<div class="outreach-editor__head">' +
       '<div><h4>' + escapeHtml(record.venueName || 'Untitled venue') + '</h4><p class="muted">' + escapeHtml(outreachRecordLocation(record) || 'Add city and country to place the opportunity.') + '</p></div>' +
-      '<div class="item-badges"><span class="pill">' + escapeHtml(outreachStatusLabel(record.status)) + '</span><span class="pill info ' + escapeAttr(follow.className) + '">' + escapeHtml(follow.label) + '</span></div>' +
+      '<div class="item-badges"><span class="pill">' + escapeHtml(outreachStatusLabel(record.status)) + '</span><span class="pill">' + escapeHtml(record.priority || 'medium') + ' priority</span>' + (linkedContactsCount > 0 ? '<span class="pill info">' + linkedContactsCount + ' contact(s) linked</span>' : '') + '</div>' +
     '</div>' +
     '<div class="grid two">' +
       '<div class="outreach-editor__block outreach-editor__block--venue">' +
@@ -8378,56 +8953,22 @@
           ['en','de','es','it','fr'].map(function (lang) { return '<option value="' + lang + '"' + (record.outreachLanguage === lang ? ' selected' : '') + '>' + outreachLanguageLabel(lang) + '</option>'; }).join('') +
         '</select></label>' +
       '</div>' +
-      '<div class="outreach-editor__block outreach-editor__block--contact">' +
-        '<strong>Contact and timing</strong>' +
-        '<label>Contact name<input id="outreach-contact-name" value="' + escapeAttr(record.contactName) + '" placeholder="Artistic director or presenter"></label>' +
-        '<label>Contact email<input id="outreach-contact-email" value="' + escapeAttr(record.contactEmail) + '" placeholder="name@venue.org"></label>' +
-        '<label>Status<select id="outreach-status">' +
+      '<div class="outreach-editor__block outreach-editor__block--status">' +
+        '<strong>Status and priority</strong>' +
+        '<label>Venue status<select id="outreach-status">' +
           OUTREACH_STATUS_OPTIONS.map(function (option) { return '<option value="' + option.value + '"' + (record.status === option.value ? ' selected' : '') + '>' + escapeHtml(option.label) + '</option>'; }).join('') +
         '</select></label>' +
-        '<label>Last contact date<input id="outreach-last-contact-date" type="date" value="' + escapeAttr(record.lastContactDate) + '"></label>' +
-        '<label>Next follow-up date<input id="outreach-next-followup-date" type="date" value="' + escapeAttr(record.nextFollowUpDate) + '"></label>' +
-        '<div class="outreach-editor__actions outreach-editor__actions--contact-quick">' +
-          '<button id="outreach-last-contact-today" type="button">Mark contacted today</button>' +
-          '<button id="outreach-next-followup-7" type="button">Follow up in 7 days</button>' +
-          '<button id="outreach-next-followup-14" type="button">Follow up in 14 days</button>' +
-          '<button id="outreach-status-negotiating" type="button">Mark negotiating</button>' +
-          '<button id="outreach-status-confirmed" type="button">Mark accepted</button>' +
-          '<button id="outreach-status-declined" type="button">Mark rejected</button>' +
-        '</div>' +
+        '<label>Outreach priority<select id="outreach-priority">' +
+          ['high','medium','low'].map(function (p) { return '<option value="' + p + '"' + (record.priority === p ? ' selected' : '') + '>' + p.charAt(0).toUpperCase() + p.slice(1) + '</option>'; }).join('') +
+        '</select></label>' +
+        (linkedContactsCount > 0 ? '<p class="muted"><a href="#" id="outreach-go-to-contacts">View ' + linkedContactsCount + ' linked contact(s) in Contacts / Follow-ups</a></p>' : '<p class="muted">Link contacts in Contacts / Follow-ups to track specific people and negotiations for this venue.</p>') +
       '</div>' +
     '</div>' +
     '<div class="outreach-editor__block outreach-editor__block--fit">' +
       '<strong>Programme fit</strong>' +
       '<label>Fit tags<input id="outreach-fit-tags" value="' + escapeAttr((record.fitTags || []).join(', ')) + '" placeholder="gala, recital, church, embassy, tango"></label>' +
       '<label>Planned repertoire<textarea id="outreach-planned-repertoire" rows="4" placeholder="Specific repertoire currently planned for this venue/opportunity.">' + escapeHtml(record.plannedRepertoire || '') + '</textarea></label>' +
-      '<label>Notes<textarea id="outreach-notes" rows="6" placeholder="Why this venue may fit, local context, booking windows, collaborators, or next-step reminders.">' + escapeHtml(record.notes || '') + '</textarea></label>' +
-    '</div>' +
-    '<div class="outreach-editor__block outreach-editor__block--message">' +
-      '<strong>Outreach details</strong>' +
-      '<label class="outreach-message-label">Message sent<textarea id="outreach-message-sent" rows="4" placeholder="Copy of the message sent to this venue.">' + escapeHtml(record.messageSent || '') + '</textarea></label>' +
-      '<label>Cache proposed<input id="outreach-cache-proposed" value="' + escapeAttr(record.cacheProposed) + '" placeholder="e.g. 5000 EUR"></label>' +
-      '<label>Cache negotiated<input id="outreach-cache-negotiated" value="' + escapeAttr(record.cacheNegotiated) + '" placeholder="e.g. 4500 EUR"></label>' +
-    '</div>' +
-    '<div class="outreach-editor__block outreach-editor__block--history">' +
-      '<strong>Relationship history</strong>' +
-      '<p class="muted">Keep a light contact timeline so the outreach story stays visible: what was sent, how they replied, and where the conversation stands now.</p>' +
-      '<div class="outreach-editor__actions outreach-editor__actions--history-quick">' +
-        ['first_contact_sent','replied','follow_up_made','negotiation_note','confirmed','declined'].map(function (type) {
-          return '<button type="button" data-outreach-history-quick="' + escapeAttr(type) + '">' + escapeHtml(outreachHistoryQuickButtonLabel(type)) + '</button>';
-        }).join('') +
-      '</div>' +
-      '<div class="grid two outreach-history-entry-grid">' +
-        '<label>Event type<select id="outreach-history-type">' +
-          OUTREACH_HISTORY_EVENT_OPTIONS.map(function (option) { return '<option value="' + option.value + '"' + (option.value === 'follow_up_made' ? ' selected' : '') + '>' + escapeHtml(option.label) + '</option>'; }).join('') +
-        '</select></label>' +
-        '<label>Date<input id="outreach-history-date" type="date" value="' + escapeAttr(outreachTodayIso()) + '"></label>' +
-      '</div>' +
-      '<label>Entry note<textarea id="outreach-history-note" rows="3" placeholder="Short context: who replied, what was discussed, timing, next step, or any useful nuance."></textarea></label>' +
-      '<div class="outreach-editor__actions outreach-editor__actions--history-add">' +
-        '<button id="outreach-history-add" type="button">Add history entry</button>' +
-      '</div>' +
-      historyHtml +
+      '<label>Strategic notes<textarea id="outreach-notes" rows="6" placeholder="Why this venue may fit, local context, booking windows, collaborators, or next-step reminders.">' + escapeHtml(record.notes || '') + '</textarea></label>' +
     '</div>' +
     '<div class="outreach-editor__block outreach-editor__block--offers">' +
       '<strong>Linked Programme Offers</strong>' +
@@ -8437,16 +8978,21 @@
       '<button id="outreach-save-record" type="button" class="button-primary">Save record</button>' +
       '<button id="outreach-new-from-current" type="button">Duplicate as new lead</button>' +
     '</div>';
-    ['outreach-venue-name','outreach-city','outreach-country','outreach-venue-type','outreach-language','outreach-contact-name','outreach-contact-email','outreach-status','outreach-last-contact-date','outreach-next-followup-date','outreach-fit-tags','outreach-planned-repertoire','outreach-notes','outreach-message-sent','outreach-cache-proposed','outreach-cache-negotiated'].forEach(function (id) {
+    ['outreach-venue-name','outreach-city','outreach-country','outreach-venue-type','outreach-language','outreach-priority','outreach-status','outreach-fit-tags','outreach-planned-repertoire','outreach-notes'].forEach(function (id) {
       var el = $(id);
       if (!el) return;
-      el.addEventListener(id === 'outreach-notes' || id === 'outreach-message-sent' || id.indexOf('cache') >= 0 || id.indexOf('name') >= 0 || id.indexOf('email') >= 0 || id.indexOf('phone') >= 0 || id.indexOf('city') >= 0 || id.indexOf('country') >= 0 || id.indexOf('type') >= 0 || id.indexOf('tags') >= 0 ? 'input' : 'change', persistOutreachEditor);
-      if (id !== 'outreach-notes' && (id.indexOf('name') >= 0 || id.indexOf('email') >= 0 || id.indexOf('phone') >= 0 || id.indexOf('city') >= 0 || id.indexOf('country') >= 0 || id.indexOf('type') >= 0 || id.indexOf('tags') >= 0)) {
+      el.addEventListener(id === 'outreach-notes' || id.indexOf('name') >= 0 || id.indexOf('city') >= 0 || id.indexOf('country') >= 0 || id.indexOf('type') >= 0 || id.indexOf('tags') >= 0 ? 'input' : 'change', persistOutreachEditor);
+      if (id !== 'outreach-notes' && (id.indexOf('name') >= 0 || id.indexOf('city') >= 0 || id.indexOf('country') >= 0 || id.indexOf('type') >= 0 || id.indexOf('tags') >= 0)) {
         el.addEventListener('change', persistOutreachEditor);
       }
     });
     box.querySelectorAll('[data-outreach-offer]').forEach(function (el) {
       el.addEventListener('change', persistOutreachEditor);
+    });
+    if ($('outreach-go-to-contacts')) $('outreach-go-to-contacts').addEventListener('click', function (evt) {
+      evt.preventDefault();
+      state.contactsVenueFilter = record.id;
+      openSection('contacts');
     });
     if ($('outreach-last-contact-today')) $('outreach-last-contact-today').addEventListener('click', function () {
       if ($('outreach-last-contact-date')) $('outreach-last-contact-date').value = outreachTodayIso();
@@ -8482,30 +9028,6 @@
     });
     if ($('outreach-save-record')) $('outreach-save-record').addEventListener('click', saveOutreachRecord);
     if ($('outreach-new-from-current')) $('outreach-new-from-current').addEventListener('click', function () { createOutreachRecord(record); });
-    if ($('outreach-history-add')) $('outreach-history-add').addEventListener('click', function () {
-      var activeRecord = outreachRecordById(state.outreachSelectedId);
-      if (!activeRecord) return;
-      var type = safeString($('outreach-history-type') && $('outreach-history-type').value || 'follow_up_made').trim().toLowerCase() || 'follow_up_made';
-      var date = outreachDateValue($('outreach-history-date') && $('outreach-history-date').value) || outreachTodayIso();
-      var note = safeString($('outreach-history-note') && $('outreach-history-note').value).trim();
-      var added = outreachAddHistoryEntry(activeRecord, type, date, note);
-      if (!added) return;
-      renderOutreachWorkspace();
-      markDirty(true, 'Outreach history updated');
-      scheduleOutreachAutosave();
-    });
-    box.querySelectorAll('[data-outreach-history-quick]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var activeRecord = outreachRecordById(state.outreachSelectedId);
-        if (!activeRecord) return;
-        var type = safeString(btn.getAttribute('data-outreach-history-quick')).trim().toLowerCase();
-        var added = outreachAddHistoryEntry(activeRecord, type, outreachTodayIso(), '');
-        if (!added) return;
-        renderOutreachWorkspace();
-        markDirty(true, 'Outreach history updated');
-        scheduleOutreachAutosave();
-      });
-    });
     renderOutreachSummary();
   }
   function renderOutreachWorkspace() {
@@ -8531,21 +9053,14 @@
     record.city = safeString($('outreach-city') && $('outreach-city').value).trim();
     record.country = safeString($('outreach-country') && $('outreach-country').value).trim();
     record.venueType = safeString($('outreach-venue-type') && $('outreach-venue-type').value).trim();
-    record.contactName = safeString($('outreach-contact-name') && $('outreach-contact-name').value).trim();
-    record.contactEmail = safeString($('outreach-contact-email') && $('outreach-contact-email').value).trim();
-    record.contactPhone = safeString($('outreach-contact-phone') && $('outreach-contact-phone').value).trim();
     record.outreachLanguage = safeString($('outreach-language') && $('outreach-language').value || 'en').trim().toLowerCase() || 'en';
+    record.priority = safeString($('outreach-priority') && $('outreach-priority').value || 'medium').trim().toLowerCase() || 'medium';
     record.status = safeString($('outreach-status') && $('outreach-status').value || 'idea').trim().toLowerCase() || 'idea';
-    record.lastContactDate = outreachDateValue($('outreach-last-contact-date') && $('outreach-last-contact-date').value);
-    record.nextFollowUpDate = outreachDateValue($('outreach-next-followup-date') && $('outreach-next-followup-date').value);
     record.fitTags = programBuilderUniqueStrings(safeString($('outreach-fit-tags') && $('outreach-fit-tags').value).split(',').map(function (tag) {
       return safeString(tag).trim().toLowerCase();
     }).filter(Boolean));
     record.plannedRepertoire = safeString($('outreach-planned-repertoire') && $('outreach-planned-repertoire').value);
     record.notes = safeString($('outreach-notes') && $('outreach-notes').value);
-    record.messageSent = safeString($('outreach-message-sent') && $('outreach-message-sent').value);
-    record.cacheProposed = safeString($('outreach-cache-proposed') && $('outreach-cache-proposed').value);
-    record.cacheNegotiated = safeString($('outreach-cache-negotiated') && $('outreach-cache-negotiated').value);
     record.linkedOfferIds = programBuilderUniqueStrings(Array.prototype.slice.call(document.querySelectorAll('[data-outreach-offer]:checked')).map(function (el) {
       return safeString(el.getAttribute('data-outreach-offer')).trim();
     }).filter(Boolean));
@@ -8579,16 +9094,13 @@
       city: seedRecord ? safeString(seedRecord.city).trim() : '',
       country: seedRecord ? safeString(seedRecord.country).trim() : '',
       venueType: seedRecord ? safeString(seedRecord.venueType).trim() : '',
-      contactName: seedRecord ? safeString(seedRecord.contactName).trim() : '',
-      contactEmail: seedRecord ? safeString(seedRecord.contactEmail).trim() : '',
       outreachLanguage: seedRecord ? safeString(seedRecord.outreachLanguage || 'en') : 'en',
+      priority: seedRecord ? safeString(seedRecord.priority || 'medium') : 'medium',
       fitTags: seedRecord ? clone(seedRecord.fitTags || []) : [],
       notes: '',
       status: 'idea',
-      lastContactDate: '',
-      nextFollowUpDate: '',
       linkedOfferIds: seedRecord ? clone(seedRecord.linkedOfferIds || []) : [],
-      history: [{ type: 'created', eventDate: outreachTodayIso(), note: seedRecord ? 'Duplicated from an existing opportunity.' : 'Record created.' }],
+      history: [{ type: 'created', eventDate: outreachTodayIso(), note: seedRecord ? 'Duplicated from an existing opportunity.' : 'Record created.', createdAt: now }],
       createdAt: now,
       updatedAt: now
     }, (state.outreachDoc.records || []).length);
@@ -10820,7 +11332,7 @@
     var key = safeString(lang || 'en').trim().toLowerCase() || 'en';
     var stored = loadDoc('contact_' + key, null);
     var fallbackStored = key !== 'en' ? loadDoc('contact_en', null) : null;
-    var fallback = getLegacySection('contact');
+    var fallback = {};
     var email = safeString((stored && stored.email) || (fallbackStored && fallbackStored.email) || (fallback && fallback.email)).trim();
     var phone = safeString((stored && stored.phone) || (fallbackStored && fallbackStored.phone) || (fallback && fallback.phone)).trim();
     var webUrl = safeString((stored && stored.webUrl) || (fallbackStored && fallbackStored.webUrl) || '').trim();
@@ -10834,8 +11346,7 @@
     var docs = [
       loadDoc('bio_' + key, null),
       key !== 'de' ? loadDoc('bio_de', null) : null,
-      key !== 'en' ? loadDoc('bio_en', null) : null,
-      getLegacySection('bio', key)
+      key !== 'en' ? loadDoc('bio_en', null) : null
     ];
     for (var i = 0; i < docs.length; i += 1) {
       var src = safeString(docs[i] && docs[i].portraitImage).trim();
@@ -11584,11 +12095,27 @@
       } else if (!hasRevenueStatus) {
         badges.push({ kind: 'warn', label: 'rev: missing status' });
       }
+      var paymentStatus = safeString(e && e.paymentStatus || 'pending').trim().toLowerCase();
+      var actualReceivedAmount = Number(e && e.actualReceivedAmount);
+      var hasActualReceived = Number.isFinite(actualReceivedAmount) && actualReceivedAmount > 0;
+      var paymentStatusBadge = '';
+      if (paymentStatus === 'paid') {
+        paymentStatusBadge = '<span class="pill pill--ok">paid</span>';
+      } else if (paymentStatus === 'partial') {
+        paymentStatusBadge = '<span class="pill pill--warn">partial</span>';
+      } else if (paymentStatus === 'unpaid') {
+        paymentStatusBadge = '<span class="pill pill--err">unpaid</span>';
+      } else if (paymentStatus === 'not_applicable') {
+        paymentStatusBadge = '<span class="pill pill--muted">n/a</span>';
+      } else {
+        paymentStatusBadge = '<span class="pill pill--muted">pending</span>';
+      }
+      var actualReceivedLine = hasActualReceived ? (' · received: ' + escapeHtml(actualReceivedAmount + (e.actualReceivedCurrency || e.revenueCurrency || ''))) : '';
       if (perfFeaturedVisual(e) && perfFeaturedLayout(e)) badges.push({ kind: 'ok', label: 'featured visual+layout' });
       else if (perfFeaturedVisual(e)) badges.push({ kind: 'ok', label: 'featured visual' });
       else if (perfFeaturedLayout(e)) badges.push({ kind: 'ok', label: 'featured layout' });
       var badge = badgesHtml(badges);
-      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main"><div class="calendar-item-line">' + t + activeFlag + '</div><div class="calendar-item-revenue">' + escapeHtml(revenueSummary) + '</div><div class="calendar-item-revenue">highlight: ' + escapeHtml(perfHighlightStateLabel(e)) + '</div>' + badge + '</div></div></div>';
+      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main"><div class="calendar-item-line">' + t + activeFlag + '</div><div class="calendar-item-revenue">' + escapeHtml(revenueSummary) + paymentStatusBadge + actualReceivedLine + '</div><div class="calendar-item-revenue">highlight: ' + escapeHtml(perfHighlightStateLabel(e)) + '</div>' + badge + '</div></div></div>';
     }).join('');
     setSelectionCount('perf-selection-count', state.perfSelected);
     box.querySelectorAll('.row-select').forEach(function (el) {
@@ -11640,6 +12167,10 @@
     setSelectWithCustomValue('perf-revenue-currency', safeString(e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR', 'EUR');
     setSelectWithCustomValue('perf-revenue-status', safeString(e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown', 'unknown');
     $('perf-revenue-notes').value = safeString(e.revenueNotes);
+    setSelectWithCustomValue('perf-payment-status', safeString(e.paymentStatus || 'pending').trim().toLowerCase() || 'pending', 'pending');
+    setSelectWithCustomValue('perf-payment-model', safeString(e.paymentModel || 'fixed_fee').trim().toLowerCase() || 'fixed_fee', 'fixed_fee');
+    $('perf-actual-received-amount').value = safeString(e.actualReceivedAmount);
+    setSelectWithCustomValue('perf-actual-received-currency', safeString(e.actualReceivedCurrency || '').trim().toUpperCase() || '', '');
     $('perf-venuePhoto').value = safeString(e.venuePhoto);
     var op = normalizePerfVenueOpacity(e.venueOpacity);
     $('perf-venueOpacity').value = String(op);
@@ -12035,6 +12566,11 @@
     e.revenueCurrency = safeString($('perf-revenue-currency') && $('perf-revenue-currency').value || 'EUR').trim().toUpperCase() || 'EUR';
     e.revenueStatus = safeString($('perf-revenue-status') && $('perf-revenue-status').value || 'unknown').trim().toLowerCase() || 'unknown';
     e.revenueNotes = safeString($('perf-revenue-notes') && $('perf-revenue-notes').value).trim();
+    e.paymentStatus = safeString($('perf-payment-status') && $('perf-payment-status').value || 'pending').trim().toLowerCase() || 'pending';
+    e.paymentModel = safeString($('perf-payment-model') && $('perf-payment-model').value || 'fixed_fee').trim().toLowerCase() || 'fixed_fee';
+    var actualReceivedAmount = Number($('perf-actual-received-amount') && $('perf-actual-received-amount').value);
+    e.actualReceivedAmount = Number.isFinite(actualReceivedAmount) && actualReceivedAmount >= 0 ? actualReceivedAmount : '';
+    e.actualReceivedCurrency = safeString($('perf-actual-received-currency') && $('perf-actual-received-currency').value || '').trim().toUpperCase() || '';
     e.venuePhoto = safeString($('perf-venuePhoto').value).trim();
     var dateDisplay = normalizeSortDateForInput($('perf-dateDisplay').value);
     if (dateDisplay) $('perf-sortDate').value = dateDisplay;
@@ -12099,7 +12635,7 @@
   }
   function loadCalendar() {
     var stored = loadDoc('perf_' + state.lang, null);
-    var fallback = getLegacySection('perf');
+    var fallback = {};
     $('perf-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
     $('perf-intro').value = pickStoredOrFallback(stored, fallback, 'intro');
     if ($('perf-status-filter')) $('perf-status-filter').value = state.perfStatusFilter || 'all';
@@ -12357,10 +12893,13 @@
     if (statusFilter !== 'all' && statusFilter !== 'confirmed' && statusFilter !== 'potential' && statusFilter !== 'unknown') statusFilter = 'all';
     var completenessFilter = safeString(state.incomeCompletenessFilter || 'all').trim().toLowerCase();
     if (completenessFilter !== 'all' && completenessFilter !== 'missing-amount' && completenessFilter !== 'missing-status' && completenessFilter !== 'missing-amount-or-status') completenessFilter = 'all';
+    var paymentFilter = safeString(state.incomePaymentFilter || 'all').trim().toLowerCase();
+    if (paymentFilter !== 'all' && paymentFilter !== 'paid' && paymentFilter !== 'unpaid' && paymentFilter !== 'partial' && paymentFilter !== 'pending' && paymentFilter !== 'donation_based') paymentFilter = 'all';
     var monthFilter = safeString(state.incomeMonthFilter || 'all').trim().toLowerCase() || 'all';
     if ($('income-event-scope')) $('income-event-scope').value = scope;
     if ($('income-status-filter')) $('income-status-filter').value = statusFilter;
     if ($('income-completeness-filter')) $('income-completeness-filter').value = completenessFilter;
+    if ($('income-payment-filter')) $('income-payment-filter').value = paymentFilter;
     if ($('income-scope-note')) $('income-scope-note').textContent = 'Scope: ' + incomeScopeLabel(scope);
     var all = Array.isArray(state.perfs) ? state.perfs : [];
     var baseRows = all.map(function (e) {
@@ -12371,7 +12910,11 @@
         amount: Number(e && e.revenueAmount),
         currency: safeString(e && e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR',
         revenueStatus: safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase() || 'unknown',
-        notes: safeString(e && e.revenueNotes).trim()
+        notes: safeString(e && e.revenueNotes).trim(),
+        paymentStatus: safeString(e && e.paymentStatus || 'pending').trim().toLowerCase() || 'pending',
+        actualReceivedAmount: Number(e && e.actualReceivedAmount),
+        actualReceivedCurrency: safeString(e && e.actualReceivedCurrency || '').trim().toUpperCase() || '',
+        paymentModel: safeString(e && e.paymentModel || 'fixed_fee').trim().toLowerCase() || 'fixed_fee'
       };
     }).filter(function (row) {
       var perfStatus = safeString(row.event && row.event.status || '').trim().toLowerCase();
@@ -12379,6 +12922,11 @@
       if (scope === 'upcoming' && perfStatus === 'past') return false;
       if (scope === 'past' && perfStatus !== 'past') return false;
       if (statusFilter !== 'all' && row.revenueStatus !== statusFilter) return false;
+      if (paymentFilter === 'donation_based') {
+        if (row.paymentModel !== 'donation_based') return false;
+      } else if (paymentFilter !== 'all' && row.paymentStatus !== paymentFilter) {
+        return false;
+      }
       return row.date || (Number.isFinite(row.amount) && row.amount > 0) || row.revenueStatus !== 'unknown' || row.notes;
     });
     if (missingSummaryBox) {
@@ -12566,19 +13114,37 @@
       var eventSub = [safeString(e.type).trim(), safeString(e.status).trim()].filter(Boolean).join(' · ');
       var openId = safeString(e.id).trim();
       var rowClass = row.revenueStatus === 'confirmed' ? 'income-row income-row--confirmed' : (row.revenueStatus === 'potential' ? 'income-row income-row--potential' : 'income-row income-row--unknown');
+      var actualAmountLabel = Number.isFinite(row.actualReceivedAmount) && row.actualReceivedAmount > 0 ? row.actualReceivedAmount.toLocaleString(undefined, { minimumFractionDigits: row.actualReceivedAmount % 1 ? 2 : 0, maximumFractionDigits: 2 }) : 'Not set';
+      var actualCurrency = row.actualReceivedCurrency || row.currency || '';
+      var actualLabel = actualAmountLabel + (actualCurrency ? ' ' + escapeHtml(actualCurrency) : '');
+      var paymentStatusBadge = '';
+      if (row.paymentStatus === 'paid') {
+        paymentStatusBadge = '<span class="pill pill--ok">paid</span>';
+      } else if (row.paymentStatus === 'partial') {
+        paymentStatusBadge = '<span class="pill pill--warn">partial</span>';
+      } else if (row.paymentStatus === 'unpaid') {
+        paymentStatusBadge = '<span class="pill pill--err">unpaid</span>';
+      } else if (row.paymentStatus === 'not_applicable') {
+        paymentStatusBadge = '<span class="pill pill--muted">n/a</span>';
+      } else {
+        paymentStatusBadge = '<span class="pill pill--muted">pending</span>';
+      }
+      var paymentModelLabel = row.paymentModel === 'donation_based' ? '<span class="pill pill--info">donation</span>' : (row.paymentModel === 'revenue_share' ? '<span class="pill pill--warn">share</span>' : (row.paymentModel === 'unknown' ? '<span class="pill pill--muted">unknown</span>' : ''));
       tableParts.push('<tr class="' + rowClass + '"' + (openId ? (' data-income-open-calendar-row="' + escapeAttr(openId) + '"') : '') + '>' +
         '<td>' + escapeHtml(dateLabel) + '</td>' +
         '<td><strong>' + escapeHtml(eventTitle) + '</strong>' + (eventSub ? '<div class="income-table__sub">' + escapeHtml(eventSub) + '</div>' : '') + '</td>' +
         '<td>' + escapeHtml(safeString(e.venue).trim() || 'Not set') + '</td>' +
         '<td>' + escapeHtml(safeString(e.city).trim() || 'Not set') + '</td>' +
-        '<td>' + escapeHtml(amountLabel) + '</td>' +
-        '<td>' + escapeHtml(row.currency || 'Not set') + '</td>' +
+        '<td>' + escapeHtml(amountLabel) + (row.currency ? ' ' + escapeHtml(row.currency) : '') + '</td>' +
+        '<td>' + (actualAmountLabel !== 'Not set' ? actualLabel : 'Not set') + '</td>' +
         '<td><span class="pill ' + escapeAttr(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>' +
+        '<td>' + paymentStatusBadge + '</td>' +
+        '<td>' + paymentModelLabel + '</td>' +
         '<td>' + escapeHtml(row.notes || 'Not set') + '</td>' +
         '<td>' + (openId ? ('<button type="button" class="income-open-calendar" data-income-open-calendar="' + escapeAttr(openId) + '">Open in Calendar</button>') : 'Not set') + '</td>' +
       '</tr>');
       });
-      tableParts.push('<tr class="income-month-subtotal"><td colspan="9"><div class="income-month-subtotal__line"><span><strong>Confirmed subtotal:</strong> ' + escapeHtml(incomeTotalsLabel(group.confirmed)) + '</span><span><strong>Potential subtotal:</strong> ' + escapeHtml(incomeTotalsLabel(group.potential)) + '</span></div></td></tr>');
+      tableParts.push('<tr class="income-month-subtotal"><td colspan="11"><div class="income-month-subtotal__line"><span><strong>Confirmed subtotal:</strong> ' + escapeHtml(incomeTotalsLabel(group.confirmed)) + '</span><span><strong>Potential subtotal:</strong> ' + escapeHtml(incomeTotalsLabel(group.potential)) + '</span></div></td></tr>');
     });
     tableBody.innerHTML = tableParts.join('');
     tableBody.querySelectorAll('[data-income-open-calendar]').forEach(function (btn) {
@@ -13042,22 +13608,10 @@
     });
     return d;
   }
-  /** Canonical media videos live in rg_vid. If that doc is empty, merge from legacy rg_vid_en (Firestore/import quirk) so admin and exports stay aligned; saves still go to rg_vid only. */
-  function mergeRgVidRead(primaryRaw, legacyEnRaw) {
-    var primary = safeMediaVideos(primaryRaw || { h2: '', videos: [] });
-    if (primary.videos && primary.videos.length) return primary;
-    var leg = safeMediaVideos(legacyEnRaw || { h2: '', videos: [] });
-    if (leg.videos && leg.videos.length) return leg;
-    return primary;
-  }
   function describeMediaVideosProvenance() {
     var canonical = safeMediaVideos(loadDoc('rg_vid', { h2: '', videos: [] }));
     if (canonical.videos && canonical.videos.length) {
       return 'Public videos are currently using the canonical saved video list.';
-    }
-    var legacy = safeMediaVideos(loadDoc('rg_vid_en', null));
-    if (legacy.videos && legacy.videos.length) {
-      return 'Public videos are currently falling back to the legacy EN video list because the canonical saved video list is empty.';
     }
     return 'No saved public video list is currently available.';
   }
@@ -13402,7 +13956,7 @@
     };
   }
   function loadMedia() {
-    state.vidData = mergeRgVidRead(loadDoc('rg_vid', { h2: '', videos: [] }), loadDoc('rg_vid_en', null));
+    state.vidData = safeMediaVideos(loadDoc('rg_vid', { h2: '', videos: [] }));
     state.vidIndex = -1;
     state.audioData = safeMediaAudio(loadDoc('rg_audio', { h2: '', sub: '', items: [] }));
     var effectiveAudio = resolveEffectiveAudioHeadingFields(state.audioData);
@@ -14318,11 +14872,6 @@
   }
   function loadPress() {
     var pressBase = loadDoc('rg_press', null);
-    if (!Array.isArray(pressBase)) {
-      try {
-        if (typeof state.api.getPress === 'function') pressBase = state.api.getPress();
-      } catch (e) {}
-    }
     if (!Array.isArray(pressBase)) pressBase = [];
     state.press = pressBase.map(function (p) {
       var item = isObject(p) ? clone(p) : {};
@@ -14335,11 +14884,6 @@
     if ($('press-workflow-filter')) $('press-workflow-filter').value = state.pressWorkflowFilter || 'all';
     renderPressList();
     var meta = loadDoc('rg_press_meta', null);
-    if (!isObject(meta)) {
-      try {
-        if (typeof state.api.getPressMeta === 'function') meta = state.api.getPressMeta();
-      } catch (e) {}
-    }
     if (!isObject(meta)) meta = {};
     $('press-translatedNote').value = safeString(meta[state.lang] && meta[state.lang].translatedNote);
     $('press-showReviewsSection').value = meta.showReviewsSection === false ? 'false' : 'true';
@@ -14411,7 +14955,7 @@
 
   function loadContact() {
     var stored = loadDoc('contact_' + state.lang, null);
-    var fallback = getLegacySection('contact');
+    var fallback = {};
     var webBtnRaw = pickStoredOrFallback(stored, fallback, 'webBtn');
     var webUrlRaw = pickStoredOrFallback(stored, fallback, 'webUrl');
     var inferredWebUrl = safeString(webUrlRaw).trim();
@@ -14439,6 +14983,351 @@
       webBtn: safeString($('contact-webBtn').value),
       webUrl: safeString($('contact-webUrl') && $('contact-webUrl').value).trim()
     });
+  }
+
+  function safeContactsDoc(raw) {
+    var doc = isObject(raw) ? clone(raw) : {};
+    doc.meta = isObject(doc.meta) ? doc.meta : {};
+    doc.meta.version = Math.max(1, Number(doc.meta.version) || 1);
+    if (!Array.isArray(doc.records)) doc.records = [];
+    doc.records = doc.records.filter(isObject).map(function (row, idx) {
+      return {
+        id: safeString(row.id || ('contact_' + (idx + 1))).trim(),
+        venue_id: safeString(row.venue_id || row.linked_venue || '').trim(),
+        contact_name: safeString(row.contact_name).trim(),
+        person_name: safeString(row.person_name).trim(),
+        email: safeString(row.email).trim(),
+        phone: safeString(row.phone || row.contact_phone || '').trim(),
+        organization: safeString(row.organization).trim(),
+        country: safeString(row.country).trim(),
+        language: safeString(row.language).trim(),
+        type: safeString(row.type || 'booking').trim().toLowerCase() || 'booking',
+        project_type: safeString(row.project_type).trim(),
+        role: safeString(row.role).trim(),
+        subject: safeString(row.subject).trim(),
+        status: safeString(row.status || 'new').trim().toLowerCase() || 'new',
+        priority: safeString(row.priority || 'medium').trim().toLowerCase() || 'medium',
+        date: safeString(row.date).trim(),
+        last_contact: safeString(row.last_contact).trim(),
+        next_follow_up: safeString(row.next_follow_up).trim(),
+        message_sent: safeString(row.message_sent || '').trim(),
+        fee_offered: safeString(row.fee_offered).trim(),
+        fee_accepted: safeString(row.fee_accepted).trim(),
+        deadline_materials: safeString(row.deadline_materials).trim(),
+        source: safeString(row.source).trim(),
+        notes: safeString(row.notes).trim(),
+        createdAt: safeString(row.createdAt).trim(),
+        updatedAt: safeString(row.updatedAt).trim()
+      };
+    }).filter(function (row) { return !!row.id; });
+    return doc;
+  }
+  function contactsRecordById(id) {
+    id = safeString(id).trim();
+    if (!id) return null;
+    var records = (state.contactsDoc && Array.isArray(state.contactsDoc.records)) ? state.contactsDoc.records : [];
+    return records.find(function (row) { return safeString(row.id).trim() === id; }) || null;
+  }
+  function ensureContactsRecord(id) {
+    state.contactsDoc = safeContactsDoc(state.contactsDoc);
+    var existing = contactsRecordById(id);
+    if (existing) return existing;
+    var now = new Date().toISOString();
+    var record = {
+      id: id,
+      venue_id: '',
+      contact_name: '',
+      person_name: '',
+      email: '',
+      phone: '',
+      organization: '',
+      country: '',
+      language: '',
+      type: 'booking',
+      project_type: '',
+      role: '',
+      subject: '',
+      status: 'new',
+      priority: 'medium',
+      date: '',
+      last_contact: '',
+      next_follow_up: '',
+      message_sent: '',
+      fee_offered: '',
+      fee_accepted: '',
+      deadline_materials: '',
+      source: '',
+      notes: '',
+      createdAt: now,
+      updatedAt: now
+    };
+    state.contactsDoc.records.push(record);
+    return record;
+  }
+  function contactsStatusLabel(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return ({
+      new: 'New',
+      contacted: 'Contacted',
+      in_discussion: 'In discussion',
+      confirmed: 'Confirmed',
+      declined: 'Declined',
+      no_response: 'No response',
+      archived: 'Archived'
+    })[key] || 'New';
+  }
+  function contactsStatusClass(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return ({
+      new: 'contacts-status--new',
+      contacted: 'contacts-status--contacted',
+      in_discussion: 'contacts-status--discussion',
+      confirmed: 'contacts-status--confirmed',
+      declined: 'contacts-status--declined',
+      no_response: 'contacts-status--no-response',
+      archived: 'contacts-status--archived'
+    })[key] || 'contacts-status--new';
+  }
+  function contactsPriorityClass(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return ({
+      high: 'contacts-priority--high',
+      medium: 'contacts-priority--medium',
+      low: 'contacts-priority--low'
+    })[key] || 'contacts-priority--medium';
+  }
+  function contactsFollowupState(record) {
+    var nextDate = safeString(record && record.next_follow_up).trim();
+    if (!nextDate || !/^\d{4}-\d{2}-\d{2}$/.test(nextDate)) {
+      return { weight: 2, className: 'contacts-followup--missing', label: 'No follow-up set' };
+    }
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var followDate = new Date(nextDate + 'T00:00:00');
+    if (isNaN(followDate.getTime())) return { weight: 2, className: 'contacts-followup--missing', label: 'Invalid date' };
+    var diffDays = Math.ceil((followDate - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { weight: 0, className: 'contacts-followup--overdue', label: 'Overdue by ' + Math.abs(diffDays) + ' days' };
+    if (diffDays === 0) return { weight: 1, className: 'contacts-followup--today', label: 'Due today' };
+    if (diffDays <= 7) return { weight: 3, className: 'contacts-followup--upcoming', label: 'Due in ' + diffDays + ' days' };
+    return { weight: 4, className: 'contacts-followup--calm', label: nextDate };
+  }
+  function contactsFilteredRecords() {
+    var records = (state.contactsDoc && Array.isArray(state.contactsDoc.records)) ? state.contactsDoc.records.slice() : [];
+    var statusFilter = safeString(state.contactsStatusFilter || 'all').trim().toLowerCase() || 'all';
+    var typeFilter = safeString(state.contactsTypeFilter || 'all').trim().toLowerCase() || 'all';
+    var priorityFilter = safeString(state.contactsPriorityFilter || 'all').trim().toLowerCase() || 'all';
+    var followupFilter = safeString(state.contactsFollowupFilter || 'all').trim().toLowerCase() || 'all';
+    var venueFilter = safeString(state.contactsVenueFilter || 'all').trim() || 'all';
+    return records.filter(function (record) {
+      if (statusFilter !== 'all' && safeString(record.status).trim().toLowerCase() !== statusFilter) return false;
+      if (typeFilter !== 'all' && safeString(record.type).trim().toLowerCase() !== typeFilter) return false;
+      if (priorityFilter !== 'all' && safeString(record.priority).trim().toLowerCase() !== priorityFilter) return false;
+      if (followupFilter !== 'all') {
+        var follow = contactsFollowupState(record);
+        if (followupFilter === 'overdue' && follow.weight !== 0) return false;
+        if (followupFilter === 'today' && follow.weight !== 1) return false;
+        if (followupFilter === 'week' && !(follow.weight === 1 || follow.weight === 3)) return false;
+        if (followupFilter === 'none' && follow.weight !== 2) return false;
+      }
+      if (venueFilter !== 'all' && safeString(record.venue_id).trim() !== venueFilter) return false;
+      return true;
+    }).sort(function (a, b) {
+      var sortKey = safeString(state.contactsSort || 'newest').trim().toLowerCase() || 'newest';
+      if (sortKey === 'newest') {
+        var timeA = new Date(safeString(a.updatedAt || a.createdAt) || 0).getTime() || 0;
+        var timeB = new Date(safeString(b.updatedAt || b.createdAt) || 0).getTime() || 0;
+        return timeB - timeA;
+      }
+      if (sortKey === 'oldest') {
+        var timeA = new Date(safeString(a.updatedAt || a.createdAt) || 0).getTime() || 0;
+        var timeB = new Date(safeString(b.updatedAt || b.createdAt) || 0).getTime() || 0;
+        return timeA - timeB;
+      }
+      if (sortKey === 'next_follow_up') {
+        var dateA = safeString(a.next_follow_up).trim();
+        var dateB = safeString(b.next_follow_up).trim();
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateA.localeCompare(dateB);
+      }
+      if (sortKey === 'priority') {
+        var priorityOrder = { high: 0, medium: 1, low: 2 };
+        var pA = priorityOrder[safeString(a.priority).trim().toLowerCase()] || 1;
+        var pB = priorityOrder[safeString(b.priority).trim().toLowerCase()] || 1;
+        if (pA !== pB) return pA - pB;
+        return new Date(safeString(a.updatedAt || a.createdAt) || 0).getTime() - new Date(safeString(b.updatedAt || b.createdAt) || 0).getTime();
+      }
+      if (sortKey === 'name') {
+        var nameA = safeString(a.contact_name || a.person_name || '').trim().toLowerCase();
+        var nameB = safeString(b.contact_name || b.person_name || '').trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      return 0;
+    });
+  }
+  function renderContactsList() {
+    var box = $('contacts-list');
+    var countEl = $('contacts-count');
+    if (!box) return;
+    var records = contactsFilteredRecords();
+    if (countEl) countEl.textContent = records.length + ' contact' + (records.length === 1 ? '' : 's');
+    if (!records.length) {
+      box.innerHTML = '<div class="empty-state">No contacts match the current filters. Adjust filters or add a new contact.</div>';
+      return;
+    }
+    box.innerHTML = records.map(function (record) {
+      var isActive = safeString(state.contactsSelectedId).trim() === safeString(record.id).trim();
+      var activeClass = isActive ? 'item-card active' : 'item-card';
+      var name = safeString(record.contact_name || record.person_name || '(unnamed)').trim();
+      var org = safeString(record.organization).trim();
+      var follow = contactsFollowupState(record);
+      var statusBadge = '<span class="item-badge ' + escapeAttr(contactsStatusClass(record.status)) + '">' + escapeHtml(contactsStatusLabel(record.status)) + '</span>';
+      var priorityBadge = '<span class="item-badge ' + escapeAttr(contactsPriorityClass(record.priority)) + '">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span>';
+      var followupBadge = '<span class="item-badge ' + escapeAttr(follow.className) + '">' + escapeHtml(follow.label) + '</span>';
+      var venueBadge = '';
+      if (record.venue_id) {
+        var venue = outreachRecordById(record.venue_id);
+        if (venue) {
+          venueBadge = '<span class="item-badge">' + escapeHtml(venue.venueName || 'Unknown venue') + '</span>';
+        }
+      }
+      var meta = [org, safeString(record.type).trim(), safeString(record.email).trim()].filter(Boolean).join(' · ');
+      return '<button type="button" class="' + activeClass + '" data-contacts-select="' + escapeAttr(record.id) + '">' +
+        '<div class="item-card__head">' +
+          '<strong>' + escapeHtml(name) + '</strong>' +
+          '<div class="item-badges">' + statusBadge + priorityBadge + followupBadge + venueBadge + '</div>' +
+        '</div>' +
+        (meta ? '<div class="item-card__meta">' + escapeHtml(meta) + '</div>' : '') +
+        (record.subject ? '<p class="item-card__note">' + escapeHtml(record.subject) + '</p>' : '') +
+      '</button>';
+    }).join('');
+    box.querySelectorAll('[data-contacts-select]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.contactsSelectedId = btn.getAttribute('data-contacts-select');
+        renderContactsList();
+        renderContactsEditor();
+      });
+    });
+  }
+  function renderContactsEditor() {
+    var titleEl = $('contacts-editor-title');
+    if (!titleEl) return;
+    var record = contactsRecordById(state.contactsSelectedId);
+    if (!record) {
+      titleEl.textContent = 'New contact';
+      clearContactsForm();
+      return;
+    }
+    titleEl.textContent = 'Edit contact';
+    renderContactsVenueOptions();
+    $('contacts-venue_id').value = safeString(record.venue_id);
+    $('contacts-contact_name').value = safeString(record.contact_name);
+    $('contacts-person_name').value = safeString(record.person_name);
+    $('contacts-email').value = safeString(record.email);
+    $('contacts-phone').value = safeString(record.phone);
+    $('contacts-organization').value = safeString(record.organization);
+    $('contacts-country').value = safeString(record.country);
+    $('contacts-language').value = safeString(record.language);
+    $('contacts-type').value = safeString(record.type);
+    $('contacts-project_type').value = safeString(record.project_type);
+    $('contacts-role').value = safeString(record.role);
+    $('contacts-subject').value = safeString(record.subject);
+    $('contacts-status').value = safeString(record.status);
+    $('contacts-priority').value = safeString(record.priority);
+    $('contacts-date').value = safeString(record.date);
+    $('contacts-last_contact').value = safeString(record.last_contact);
+    $('contacts-next_follow_up').value = safeString(record.next_follow_up);
+    $('contacts-message_sent').value = safeString(record.message_sent);
+    $('contacts-fee_offered').value = safeString(record.fee_offered);
+    $('contacts-fee_accepted').value = safeString(record.fee_accepted);
+    $('contacts-deadline_materials').value = safeString(record.deadline_materials);
+    $('contacts-source').value = safeString(record.source);
+    $('contacts-notes').value = safeString(record.notes);
+  }
+  function clearContactsForm() {
+    $('contacts-venue_id').value = '';
+    $('contacts-contact_name').value = '';
+    $('contacts-person_name').value = '';
+    $('contacts-email').value = '';
+    $('contacts-phone').value = '';
+    $('contacts-organization').value = '';
+    $('contacts-country').value = '';
+    $('contacts-language').value = '';
+    $('contacts-type').value = 'booking';
+    $('contacts-project_type').value = '';
+    $('contacts-role').value = '';
+    $('contacts-subject').value = '';
+    $('contacts-status').value = 'new';
+    $('contacts-priority').value = 'medium';
+    $('contacts-date').value = '';
+    $('contacts-last_contact').value = '';
+    $('contacts-next_follow_up').value = '';
+    $('contacts-message_sent').value = '';
+    $('contacts-fee_offered').value = '';
+    $('contacts-fee_accepted').value = '';
+    $('contacts-deadline_materials').value = '';
+    $('contacts-source').value = '';
+    $('contacts-notes').value = '';
+    renderContactsVenueOptions();
+  }
+  function saveContactsRecord() {
+    var id = safeString(state.contactsSelectedId).trim();
+    var isNew = !id;
+    if (isNew) {
+      id = 'contact_' + Date.now();
+    }
+    var record = ensureContactsRecord(id);
+    record.venue_id = safeString($('contacts-venue_id').value).trim();
+    record.contact_name = safeString($('contacts-contact_name').value).trim();
+    record.person_name = safeString($('contacts-person_name').value).trim();
+    record.email = safeString($('contacts-email').value).trim();
+    record.phone = safeString($('contacts-phone').value).trim();
+    record.organization = safeString($('contacts-organization').value).trim();
+    record.country = safeString($('contacts-country').value).trim();
+    record.language = safeString($('contacts-language').value).trim();
+    record.type = safeString($('contacts-type').value).trim().toLowerCase() || 'booking';
+    record.project_type = safeString($('contacts-project_type').value).trim();
+    record.role = safeString($('contacts-role').value).trim();
+    record.subject = safeString($('contacts-subject').value).trim();
+    record.status = safeString($('contacts-status').value).trim().toLowerCase() || 'new';
+    record.priority = safeString($('contacts-priority').value).trim().toLowerCase() || 'medium';
+    record.date = safeString($('contacts-date').value).trim();
+    record.last_contact = safeString($('contacts-last_contact').value).trim();
+    record.next_follow_up = safeString($('contacts-next_follow_up').value).trim();
+    record.message_sent = safeString($('contacts-message_sent').value).trim();
+    record.fee_offered = safeString($('contacts-fee_offered').value).trim();
+    record.fee_accepted = safeString($('contacts-fee_accepted').value).trim();
+    record.deadline_materials = safeString($('contacts-deadline_materials').value).trim();
+    record.source = safeString($('contacts-source').value).trim();
+    record.notes = safeString($('contacts-notes').value).trim();
+    record.updatedAt = new Date().toISOString();
+    if (isNew) record.createdAt = record.updatedAt;
+    state.contactsDoc = safeContactsDoc(state.contactsDoc);
+    saveDoc('rg_admin_contacts_followups', state.contactsDoc);
+    state.contactsSelectedId = id;
+    renderContactsList();
+    renderContactsEditor();
+    setStatus(isNew ? 'Contact created' : 'Contact saved', 'ok');
+  }
+  function loadContacts() {
+    state.contactsDoc = safeContactsDoc(loadDoc('rg_admin_contacts_followups', makeContactsSeed()));
+    if (applyContactsDataMigration()) {
+      saveDoc('rg_admin_contacts_followups', state.contactsDoc);
+    }
+    state.contactsSelectedId = '';
+    state.contactsStatusFilter = 'all';
+    state.contactsTypeFilter = 'all';
+    state.contactsPriorityFilter = 'all';
+    state.contactsFollowupFilter = 'all';
+    state.contactsSort = 'newest';
+    if ($('contacts-status-filter')) $('contacts-status-filter').value = state.contactsStatusFilter;
+    if ($('contacts-type-filter')) $('contacts-type-filter').value = state.contactsTypeFilter;
+    if ($('contacts-priority-filter')) $('contacts-priority-filter').value = state.contactsPriorityFilter;
+    if ($('contacts-followup-filter')) $('contacts-followup-filter').value = state.contactsFollowupFilter;
+    if ($('contacts-sort')) $('contacts-sort').value = state.contactsSort;
+    renderContactsList();
+    renderContactsEditor();
   }
 
   function loadUiJson() {
@@ -15456,7 +16345,7 @@
     if (!Array.isArray(press)) press = [];
     var perfs = loadDoc('rg_perfs', []);
     if (!Array.isArray(perfs)) perfs = [];
-    var vidData = mergeRgVidRead(loadDoc('rg_vid', {}), loadDoc('rg_vid_en', null));
+    var vidData = safeMediaVideos(loadDoc('rg_vid', { h2: '', videos: [] }));
     var rep = loadDoc('rg_rep_cards', []);
     if (!Array.isArray(rep)) rep = [];
 
@@ -15680,7 +16569,7 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '' });
+    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee' });
     state.perfIndex = state.perfs.length - 1;
     renderPerfList(); renderPerfEditor(); markDirty(true, 'Event template created');
   }
@@ -15999,7 +16888,7 @@
       if (Array.isArray(progSaved.programs) && progSaved.programs[state.programsIndex]) state.programsDoc.programs[state.programsIndex] = clone(progSaved.programs[state.programsIndex]);
       renderProgramsList(); renderProgramsEditor(); markDirty(true, 'Reverted current program item');
     } else if (section === 'media-vid' && state.vidIndex >= 0) {
-      var vidSaved = mergeRgVidRead(getStoredDocRaw('rg_vid', {}), getStoredDocRaw('rg_vid_en', null));
+      var vidSaved = safeMediaVideos(getStoredDocRaw('rg_vid', { h2: '', videos: [] }));
       if (Array.isArray(vidSaved.videos) && vidSaved.videos[state.vidIndex]) state.vidData.videos[state.vidIndex] = clone(vidSaved.videos[state.vidIndex]);
       renderMediaVideosList(); renderMediaVideoEditor(); markDirty(true, 'Reverted current video');
     } else if (section === 'press' && state.pressIndex >= 0) {
@@ -16716,7 +17605,7 @@
 
   function buildExportPayload() {
     var keys = [
-      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions','rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker',
+      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions','rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker','rg_admin_contacts_followups',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
       'rg_editorial_en','rg_editorial_de','rg_editorial_es','rg_editorial_it','rg_editorial_fr',
       'hero_en','hero_de','hero_es','hero_it','hero_fr',
@@ -16726,12 +17615,25 @@
       'contact_en','contact_de','contact_es','contact_it','contact_fr',
       'rg_ui_en','rg_ui_de','rg_ui_es','rg_ui_it','rg_ui_fr'
     ];
+    var scope = getImportScopeValue();
+    if (scope === 'contacts') {
+      keys = ['rg_admin_contacts_followups'];
+    } else if (scope && scope !== 'all') {
+      keys = filterImportKeys(keys, scope);
+    }
     var data = {};
     keys.forEach(function (k) {
-      var v = state.api.load(k);
+      var v;
+      if (k === 'rg_admin_contacts_followups') {
+        v = state.contactsDoc;
+      } else if (k === 'rg_outreach_tracker') {
+        v = state.outreachDoc;
+      } else {
+        v = state.api.load(k);
+      }
       if (v != null) data[k] = v;
     });
-    return { exportedAt: new Date().toISOString(), origin: 'admin-v2', keys: Object.keys(data), data: data };
+    return { exportedAt: new Date().toISOString(), origin: 'admin-v2', keys: keys, data: data };
   }
 
   function downloadJson(filename, obj) {
@@ -17060,6 +17962,10 @@
     });
     if ($('income-completeness-filter')) $('income-completeness-filter').addEventListener('change', function () {
       state.incomeCompletenessFilter = safeString($('income-completeness-filter').value || 'all').trim().toLowerCase() || 'all';
+      renderIncomeSection();
+    });
+    if ($('income-payment-filter')) $('income-payment-filter').addEventListener('change', function () {
+      state.incomePaymentFilter = safeString($('income-payment-filter').value || 'all').trim().toLowerCase() || 'all';
       renderIncomeSection();
     });
     if ($('perf-tx-copy-all-btn')) $('perf-tx-copy-all-btn').addEventListener('click', function () {
@@ -18002,7 +18908,6 @@
       maybeRestoreDraftForCurrentSection(true);
     });
     if ($('focusModeBtn')) $('focusModeBtn').addEventListener('click', toggleFocusMode);
-    $('openLegacyBtn').addEventListener('click', function () { window.open('admin.html', '_blank', 'noopener'); });
     $('openPressPdfsToolBtn').addEventListener('click', function () {
       touchCloseoutStep('pdfs');
       openSection('press');
@@ -18068,7 +18973,15 @@
           }
           keys.forEach(function (k) {
             validateKeyValue(k, data[k]);
-            state.api.save(k, clone(data[k]));
+            if (k === 'rg_admin_contacts_followups') {
+              state.contactsDoc = safeContactsDoc(clone(data[k]));
+              saveDoc('rg_admin_contacts_followups', state.contactsDoc);
+            } else if (k === 'rg_outreach_tracker') {
+              state.outreachDoc = safeOutreachDoc(clone(data[k]));
+              saveDoc('rg_outreach_tracker', state.outreachDoc);
+            } else {
+              state.api.save(k, clone(data[k]));
+            }
           });
           refreshCurrentSection();
           markDirty(false, 'Import saved');
@@ -18098,6 +19011,90 @@
 
     wireCloseoutChecklist();
 
+    if ($('contacts-status-filter')) $('contacts-status-filter').addEventListener('change', function () { state.contactsStatusFilter = $('contacts-status-filter').value; renderContactsList(); });
+    if ($('contacts-type-filter')) $('contacts-type-filter').addEventListener('change', function () { state.contactsTypeFilter = $('contacts-type-filter').value; renderContactsList(); });
+    if ($('contacts-priority-filter')) $('contacts-priority-filter').addEventListener('change', function () { state.contactsPriorityFilter = $('contacts-priority-filter').value; renderContactsList(); });
+    if ($('contacts-followup-filter')) $('contacts-followup-filter').addEventListener('change', function () { state.contactsFollowupFilter = $('contacts-followup-filter').value; renderContactsList(); });
+    if ($('contacts-sort')) $('contacts-sort').addEventListener('change', function () { state.contactsSort = $('contacts-sort').value; renderContactsList(); });
+    if ($('contacts-clear-filters')) $('contacts-clear-filters').addEventListener('click', function () {
+      state.contactsStatusFilter = 'all';
+      state.contactsTypeFilter = 'all';
+      state.contactsPriorityFilter = 'all';
+      state.contactsFollowupFilter = 'all';
+      state.contactsSort = 'newest';
+      if ($('contacts-status-filter')) $('contacts-status-filter').value = 'all';
+      if ($('contacts-type-filter')) $('contacts-type-filter').value = 'all';
+      if ($('contacts-priority-filter')) $('contacts-priority-filter').value = 'all';
+      if ($('contacts-followup-filter')) $('contacts-followup-filter').value = 'all';
+      if ($('contacts-sort')) $('contacts-sort').value = 'newest';
+      renderContactsList();
+    });
+    if ($('contacts-list')) $('contacts-list').addEventListener('click', function (evt) {
+      var item = evt.target && evt.target.closest ? evt.target.closest('[data-contacts-idx]') : null;
+      if (!item) return;
+      var idx = Number(item.getAttribute('data-contacts-idx'));
+      if (!Number.isFinite(idx)) return;
+      state.contactsSelectedId = state.contactsDoc.records[idx] && state.contactsDoc.records[idx].id || '';
+      renderContactsList();
+      renderContactsEditor();
+    });
+    if ($('contacts-add')) $('contacts-add').addEventListener('click', function () {
+      state.contactsSelectedId = '';
+      clearContactsForm();
+      renderContactsList();
+      renderContactsEditor();
+    });
+    if ($('contacts-new-record')) $('contacts-new-record').addEventListener('click', function () {
+      state.contactsSelectedId = '';
+      clearContactsForm();
+      renderContactsList();
+      renderContactsEditor();
+    });
+    if ($('contacts-export-pdf')) $('contacts-export-pdf').addEventListener('click', exportContactsListPdf);
+    if ($('contacts-save')) $('contacts-save').addEventListener('click', saveContactsRecord);
+    if ($('contacts-export-record-pdf')) $('contacts-export-record-pdf').addEventListener('click', exportContactsRecordPdf);
+    if ($('contacts-cancel')) $('contacts-cancel').addEventListener('click', function () {
+      state.contactsSelectedId = '';
+      clearContactsForm();
+      renderContactsList();
+      renderContactsEditor();
+    });
+    if ($('contacts-quick-contacted')) $('contacts-quick-contacted').addEventListener('click', function () {
+      if (!state.contactsSelectedId) return;
+      var rec = contactsRecordById(state.contactsSelectedId);
+      if (!rec) return;
+      rec.lastContacted = new Date().toISOString().split('T')[0];
+      renderContactsList();
+      renderContactsEditor();
+      saveContactsRecord();
+    });
+    if ($('contacts-quick-email')) $('contacts-quick-email').addEventListener('click', function () {
+      if (!state.contactsSelectedId) return;
+      var rec = contactsRecordById(state.contactsSelectedId);
+      if (!rec || !rec.email) return;
+      window.location.href = 'mailto:' + safeString(rec.email);
+    });
+    if ($('contacts-quick-call')) $('contacts-quick-call').addEventListener('click', function () {
+      if (!state.contactsSelectedId) return;
+      var rec = contactsRecordById(state.contactsSelectedId);
+      if (!rec || !rec.phone) return;
+      window.location.href = 'tel:' + safeString(rec.phone);
+    });
+    if ($('contacts-quick-meeting')) $('contacts-quick-meeting').addEventListener('click', function () {
+      if (!state.contactsSelectedId) return;
+      var rec = contactsRecordById(state.contactsSelectedId);
+      if (!rec) return;
+      var today = new Date().toISOString().split('T')[0];
+      rec.followupDate = today;
+      rec.followupNotes = 'Meeting scheduled for ' + today;
+      renderContactsList();
+      renderContactsEditor();
+      saveContactsRecord();
+    });
+    bindInputsDirty(['contacts-venue_id','contacts-contact_name','contacts-person_name','contacts-email','contacts-phone','contacts-organization','contacts-country','contacts-language','contacts-type','contacts-project_type','contacts-role','contacts-subject','contacts-status','contacts-priority','contacts-date','contacts-last_contact','contacts-next_follow_up','contacts-message_sent','contacts-fee_offered','contacts-fee_accepted','contacts-deadline_materials','contacts-source','contacts-notes'], function () {
+      markDirty(true);
+    });
+
     window.addEventListener('beforeunload', function (evt) {
       if (!state.dirty) return;
       evt.preventDefault();
@@ -18110,27 +19107,86 @@
       window.adm2SignInGoogle = signInGoogle;
       window.adm2SignOut = signOut;
       var safari = isSafariBrowser();
+      var mobileSafari = isMobileSafariBrowser();
+      var localDevHost = isLocalDevHost();
+      var redirectPending = getRedirectPending();
+      var currentOrigin = safeString(window.location && window.location.origin);
+      var currentHost = safeString(window.location && window.location.hostname);
+      var currentHref = safeString(window.location && window.location.href);
+      var redirectStart = getRedirectStartTelemetry();
+      var settlingMs = safari ? AUTH_INIT_SETTLING_MS : 500;
       setAuthDebug({
         browserClass: safari ? 'safari' : 'non-safari',
-        authMode: 'legacy-gateway',
-        redirectProcessed: getRedirectPending() ? 'pending' : 'n/a',
+        isMobileSafari: mobileSafari ? 'yes' : 'no',
+        isLocalDevHost: localDevHost ? 'yes' : 'no',
+        authMode: 'firebase-direct',
+        requestedAuthMode: 'none',
+        actualAuthMode: 'none',
+        redirectProcessed: redirectPending ? 'pending' : 'n/a',
+        redirectResultProcessed: 'no',
+        redirectResultUser: 'no',
+        firebaseCurrentUser: 'no',
         persistenceSet: 'no',
         persistenceType: 'pending',
-        redirectPending: getRedirectPending() ? 'yes' : 'no',
+        redirectPending: redirectPending ? 'yes' : 'no',
         authState: 'pending',
+        authMachineState: AUTH_STATE_IDLE,
+        authRequestInFlight: 'no',
+        authBootstrapInProgress: 'pending',
+        signInAttemptId: String(signInAttemptId),
+        authObserverFired: 'no',
+        allowlistEvaluated: 'no',
+        allowlistResult: 'pending',
+        bootstrapSettled: 'no',
+        finalGateDecision: 'pending',
+        authErrorCode: '',
+        currentOrigin: currentOrigin,
+        currentHost: currentHost,
+        currentHref: currentHref,
+        firebaseAuthDomain: '',
+        redirectStartOrigin: safeString(redirectStart.origin),
+        redirectStartHost: safeString(redirectStart.host),
+        redirectReturnOrigin: currentOrigin,
+        redirectReturnHost: currentHost,
+        originMatch: (redirectStart.origin && currentOrigin) ? (redirectStart.origin === currentOrigin ? 'yes' : 'no') : 'unknown',
+        hostMatch: (redirectStart.host && currentHost) ? (redirectStart.host === currentHost ? 'yes' : 'no') : 'unknown',
         currentUserPresent: 'no',
+        authInitComplete: 'pending',
+        settlingMs: String(settlingMs),
         failure: ''
       });
       setAuthGate(false, null, 'Checking authentication status…');
+      bindAuthButtonsOnce();
+      authBootstrapInProgress = true;
+      authRequestInFlight = false;
+      redirectResultPromise = null;
+      redirectResultProcessed = false;
+      setAuthMachineState(AUTH_STATE_INITIALIZING, {
+        bootstrapSettled: 'no',
+        allowlistEvaluated: 'no',
+        allowlistResult: 'pending',
+        finalGateDecision: 'pending',
+        redirectResultProcessed: 'no',
+        redirectResultUser: 'no'
+      });
       await initAuth();
-      await handleRedirectResult();
-      if ($('adm2SignInBtn')) $('adm2SignInBtn').addEventListener('click', signInGoogle);
-      if ($('adm2SignOutBtn')) $('adm2SignOutBtn').addEventListener('click', signOut);
-      if ($('adm2TopSignOutBtn')) $('adm2TopSignOutBtn').addEventListener('click', signOut);
-      await awaitAuthorizedUser();
-      setStatus('Connecting to data bridge…', 'warn');
-      state.api = await waitForLegacyApi();
-      installLegacySaveHooks(state.api);
+      setAuthDebug({
+        firebaseAuthDomain: safeString(firebaseAuth && firebaseAuth.app && firebaseAuth.app.options && firebaseAuth.app.options.authDomain),
+        redirectReturnOrigin: safeString(window.location && window.location.origin),
+        redirectReturnHost: safeString(window.location && window.location.hostname),
+        originMatch: (redirectStart.origin && safeString(window.location && window.location.origin)) ? (redirectStart.origin === safeString(window.location && window.location.origin) ? 'yes' : 'no') : 'unknown',
+        hostMatch: (redirectStart.host && safeString(window.location && window.location.hostname)) ? (redirectStart.host === safeString(window.location && window.location.hostname) ? 'yes' : 'no') : 'unknown'
+      });
+      await installAuthObserver();
+      setAuthMachineState(AUTH_STATE_WAITING, { authState: 'pending' });
+      var redirectPromise = processRedirectResult();
+      var settlePromise = waitForAuthSettleWindow();
+      await finalizeBootstrapAndGate({
+        redirectPromise: redirectPromise,
+        settlePromise: settlePromise
+      });
+      setStatus('Connecting to Firestore…', 'warn');
+      state.api = await createFirestoreDataApi(state.lang || 'en');
       var lang = (state.api.currentLang && LANGS.indexOf(state.api.currentLang) >= 0) ? state.api.currentLang : 'en';
       state.lang = lang;
       state.paperPreview = readPaperPreviewPreference();
@@ -18150,7 +19206,7 @@
       primeUiPublicCopyFromStorage();
     } catch (e) {
       setStatus('Could not start admin', 'err');
-      setAuthError('Admin could not finish starting: ' + e.message, e);
+      setAuthError('Admin could not start. Please refresh the page.');
     }
   }
 
