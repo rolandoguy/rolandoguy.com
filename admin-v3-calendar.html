@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin v3 - Calendar</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { margin-top: 0; }
+    
+    /* Shared navigation */
+    .admin-v3-nav { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; }
+    .admin-v3-nav-section { margin-bottom: 10px; }
+    .admin-v3-nav-section:last-child { margin-bottom: 0; }
+    .admin-v3-nav-link { color: #007bff; text-decoration: none; margin-right: 15px; font-size: 14px; display: inline-block; margin-bottom: 5px; }
+    .admin-v3-nav-link:hover { text-decoration: underline; }
+    .admin-v3-nav-link.active { color: #333; font-weight: bold; }
+    .admin-v3-nav-link.admin-v3-nav-disabled { color: #999; cursor: default; }
+    .admin-v3-nav-upcoming { padding-top: 10px; border-top: 1px solid #eee; }
+    .admin-v3-sign-out { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; font-size: 13px; background: #6c757d; color: white; }
+    .admin-v3-sign-out:hover { background: #5a6268; }
+    
+    /* Print styles */
+    @media print {
+      body { background: white; color: black; }
+      .auth-gate, #navContainer, #signOutContainer, .status, .filter-bar, .calendar-actions, .form, #createBtn, #refreshBtn { display: none !important; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      h1 { margin-bottom: 10px; }
+      .calendar-item { page-break-inside: avoid; border: 1px solid #ccc; margin-bottom: 10px; }
+      .calendar-item a { text-decoration: none; color: black; }
+      .calendar-item a[href]:after { content: " (" attr(href) ")"; font-size: 10px; color: #666; }
+      .calendar-actions { display: none; }
+    }
+    
+    .print-header {
+      display: none;
+    }
+    
+    @media print {
+      .print-header {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+      .print-header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .print-header .date {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+    
+    .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .status.error { background: #fee; color: #c00; }
+    .status.ok { background: #efe; color: #080; }
+    .status.loading { background: #ffd; color: #660; }
+    .toolbar { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button.primary { background: #007bff; color: white; }
+    button.danger { background: #dc3545; color: white; }
+    button.secondary { background: #6c757d; color: white; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .calendar-list { list-style: none; padding: 0; margin: 0; }
+    .calendar-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .calendar-item:last-child { border-bottom: none; }
+    .calendar-info { flex: 1; min-width: 200px; }
+    .calendar-title { font-weight: bold; margin-bottom: 5px; }
+    .calendar-meta { font-size: 12px; color: #666; }
+    .calendar-actions { display: flex; gap: 5px; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px; }
+    .badge.tentative { background: #fef3c7; color: #92400e; }
+    .badge.confirmed { background: #dcfce7; color: #166534; }
+    .badge.cancelled { background: #fee2e2; color: #991b1b; }
+    .badge.completed { background: #e0e7ff; color: #3730a3; }
+    .empty-state { text-align: center; padding: 40px; color: #666; }
+    .form { display: none; padding: 20px; background: #f9f9f9; border-radius: 4px; margin: 20px 0; }
+    .form.visible { display: block; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group input[type="date"], .form-group input[type="time"] { min-height: 44px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .filter-bar { display: flex; gap: 15px; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; gap: 5px; align-items: center; }
+    .filter-group label { font-size: 13px; font-weight: bold; }
+    .filter-group select { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+    @media (max-width: 600px) {
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group { flex-direction: column; align-items: stretch; }
+      .filter-group select { width: 100%; }
+      #clearFiltersBtn { width: 100%; margin-left: 0 !important; }
+    }
+    .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; }
+    .checkbox-group label { display: flex; align-items: center; font-weight: normal; }
+    .checkbox-group input { width: auto; margin-right: 5px; }
+    .auth-gate { text-align: center; padding: 40px; }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .toolbar { flex-direction: column; }
+      .toolbar button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="print-header">
+      <h1>Admin v3 - Calendar</h1>
+      <div class="date" id="printDate"></div>
+    </div>
+    <h1>Admin v3 - Calendar</h1>
+    
+    <div id="authGate" class="auth-gate">
+      <p>Checking authentication...</p>
+    </div>
+
+    <div id="app" style="display:none">
+      <div id="navContainer"></div>
+      <div id="status" class="status" style="display:none"></div>
+
+      <div class="toolbar">
+        <button id="refreshBtn" class="secondary">Refresh</button>
+        <button id="createBtn" class="primary">New Event</button>
+        <button id="exportPdfBtn" class="secondary">Export PDF</button>
+        <span id="signOutContainer" style="margin-left: auto;"></span>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="filterStatus">Status:</label>
+          <select id="filterStatus">
+            <option value="">All</option>
+            <option value="tentative">Tentative</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterEventType">Type:</label>
+          <select id="filterEventType">
+            <option value="">All</option>
+            <option value="concert">Concert</option>
+            <option value="recital">Recital</option>
+            <option value="teaching">Teaching</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <button id="clearFiltersBtn" class="secondary" style="margin-left: 10px;">Clear Filters</button>
+      </div>
+
+      <div id="listView">
+        <ul id="calendarList" class="calendar-list"></ul>
+      </div>
+
+      <div id="formView" class="form">
+        <h2 id="formTitle">Edit Event</h2>
+        <form id="calendarForm">
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" required>
+          </div>
+          <div class="form-group">
+            <label for="event_type">Event Type</label>
+            <select id="event_type" name="event_type">
+              <option value="">Select...</option>
+              <option value="concert">Concert</option>
+              <option value="recital">Recital</option>
+              <option value="teaching">Teaching</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="">Select...</option>
+              <option value="tentative">Tentative</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="start_date">Start Date *</label>
+            <input type="date" id="start_date" name="start_date" required>
+          </div>
+          <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date">
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="all_day" name="all_day"> All day</label>
+            </div>
+          </div>
+          <div class="form-group" id="timeFields">
+            <div style="display: flex; gap: 10px;">
+              <div style="flex: 1;">
+                <label for="start_time">Start Time</label>
+                <input type="time" id="start_time" name="start_time">
+              </div>
+              <div style="flex: 1;">
+                <label for="end_time">End Time</label>
+                <input type="time" id="end_time" name="end_time">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="timezone">Timezone</label>
+            <input type="text" id="timezone" name="timezone" placeholder="e.g., Europe/Berlin">
+          </div>
+          <div class="form-group">
+            <label for="expected_income">Expected Income</label>
+            <input type="number" id="expected_income" name="expected_income" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="currency">Currency</label>
+            <select id="currency" name="currency">
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="CHF">CHF</option>
+              <option value="ARS">ARS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="linked_case_id">Linked Case</label>
+            <select id="linked_case_id" name="linked_case_id">
+              <option value="">None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="venue_id">Linked Venue</label>
+            <select id="venue_id" name="venue_id">
+              <option value="">None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Visibility</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="public_visibility" name="public_visibility"> Public visibility</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="program">Program</label>
+            <textarea id="program" name="program"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="notes_internal">Internal Notes</label>
+            <textarea id="notes_internal" name="notes_internal"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="notes_public">Public Notes</label>
+            <textarea id="notes_public" name="notes_public"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="cancelBtn" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-v3-auth.js"></script>
+  <script src="admin-v3-schemas.js"></script>
+  <script src="admin-v3-factories.js"></script>
+  <script src="admin-v3-helpers.js"></script>
+  <script src="admin-v3-store-interface.js"></script>
+  <script src="admin-v3-nav.js"></script>
+  <script src="admin-v3-ui-helpers.js"></script>
+  <script>
+    var store = null;
+    var currentEventId = null;
+    var isCreating = false;
+    var allEvents = [];
+    var filters = { status: '', event_type: '' };
+    var FILTER_STORAGE_KEY = 'admin_v3_calendar_filters';
+
+    function setStatus(text, type) {
+      var el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + (type || '');
+      el.style.display = 'block';
+    }
+
+    function clearStatus() {
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function showAuthGate(show) {
+      document.getElementById('authGate').style.display = show ? 'block' : 'none';
+      document.getElementById('app').style.display = show ? 'none' : 'block';
+    }
+
+    function showForm(show) {
+      document.getElementById('formView').className = show ? 'form visible' : 'form';
+      document.getElementById('listView').style.display = show ? 'none' : 'block';
+    }
+
+    function loadCalendar() {
+      setStatus('Loading calendar...', 'loading');
+      return store.calendar.getAll().then(function (events) {
+        allEvents = events || [];
+        clearStatus();
+        loadFilters();
+        handleQueryParams();
+        applyFilters();
+        return events;
+      }).catch(function (err) {
+        setStatus('Error loading calendar: ' + err.message, 'error');
+        return [];
+      });
+    }
+
+    function applyFilters() {
+      var filtered = allEvents;
+      
+      if (filters.status) {
+        filtered = filtered.filter(function (e) { return e.status === filters.status; });
+      }
+      
+      if (filters.event_type) {
+        filtered = filtered.filter(function (e) { return e.event_type === filters.event_type; });
+      }
+      
+      renderCalendarList(filtered);
+      saveFilters();
+    }
+    
+    function saveFilters() {
+      try {
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+      } catch (e) {
+        // localStorage not available, ignore
+      }
+    }
+    
+    function loadFilters() {
+      try {
+        var saved = localStorage.getItem(FILTER_STORAGE_KEY);
+        if (saved) {
+          filters = JSON.parse(saved);
+          document.getElementById('filterStatus').value = filters.status || '';
+          document.getElementById('filterEventType').value = filters.event_type || '';
+        }
+      } catch (e) {
+        // localStorage not available or corrupt, ignore
+      }
+    }
+    
+    function handleQueryParams() {
+      var params = new URLSearchParams(window.location.search);
+      
+      if (params.get('new') === '1') {
+        openCreateForm();
+      }
+    }
+
+    function renderCalendarList(events) {
+      var listEl = document.getElementById('calendarList');
+      if (!events || events.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">No calendar events found. Click "New Event" to create one.</li>';
+        return;
+      }
+
+      // Sort by start date
+      events.sort(function (a, b) {
+        return new Date(a.start_date) - new Date(b.start_date);
+      });
+
+      // Load related entities for labels
+      var casesPromise = store.cases.getAll().catch(function () { return []; });
+      var venuesPromise = store.venues.getAll().catch(function () { return []; });
+
+      Promise.all([casesPromise, venuesPromise]).then(function (results) {
+        var allCases = results[0] || [];
+        var allVenues = results[1] || [];
+        
+        var casesById = {};
+        allCases.forEach(function (c) { casesById[c.id] = c; });
+        
+        var venuesById = {};
+        allVenues.forEach(function (v) { venuesById[v.id] = v; });
+
+        listEl.innerHTML = events.map(function (e) {
+          var dateStr = formatDate(e.start_date);
+          var timeStr = e.all_day ? 'All day' : (e.start_time || '');
+          
+          var linkedCaseLabel = '';
+          if (e.linked_case_id && casesById[e.linked_case_id]) {
+            linkedCaseLabel = '<span> · <a href="admin-v3-cases.html" class="admin-v3-nav-link">Case: ' + escapeHtml(casesById[e.linked_case_id].title || '(Untitled)') + '</a></span>';
+          }
+          
+          var linkedVenueLabel = '';
+          if (e.venue_id && venuesById[e.venue_id]) {
+            linkedVenueLabel = '<span> · <a href="admin-v3-venues.html" class="admin-v3-nav-link">Venue: ' + escapeHtml(venuesById[e.venue_id].name || '(Untitled)') + '</a></span>';
+          }
+          
+          return '<li class="calendar-item" data-id="' + escapeHtml(e.id) + '">' +
+            '<div class="calendar-info">' +
+            '<div class="calendar-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
+            '<div class="calendar-meta">' +
+            (e.status ? '<span class="badge ' + escapeHtml(e.status) + '">' + escapeHtml(e.status) + '</span>' : '') +
+            (e.event_type ? '<span>' + escapeHtml(e.event_type) + '</span>' : '') +
+            (dateStr ? '<span> · ' + escapeHtml(dateStr) + '</span>' : '') +
+            (timeStr ? '<span> · ' + escapeHtml(timeStr) + '</span>' : '') +
+            (e.timezone ? '<span> · ' + escapeHtml(e.timezone) + '</span>' : '') +
+            (e.expected_income ? '<span> · ' + escapeHtml(e.expected_income) + ' ' + escapeHtml(e.currency || 'EUR') + '</span>' : '') +
+            linkedCaseLabel +
+            linkedVenueLabel +
+            '</div>' +
+            '</div>' +
+            '<div class="calendar-actions">' +
+            '<button class="secondary" data-action="edit" data-id="' + escapeHtml(e.id) + '">Edit</button>' +
+            '<button class="danger" data-action="delete" data-id="' + escapeHtml(e.id) + '">Delete</button>' +
+            '</div>' +
+            '</li>';
+        }).join('');
+
+        // Attach action handlers
+        window.adminV3UIHelpers.attachActionHandlers(listEl, {
+          edit: openEditForm,
+          delete: deleteEvent
+        });
+      }).catch(function (err) {
+        console.error('Error loading related entities:', err);
+        // Fallback to simple rendering without labels
+        listEl.innerHTML = events.map(function (e) {
+          var dateStr = formatDate(e.start_date);
+          var timeStr = e.all_day ? 'All day' : (e.start_time || '');
+          
+          return '<li class="calendar-item" data-id="' + escapeHtml(e.id) + '">' +
+            '<div class="calendar-info">' +
+            '<div class="calendar-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
+            '<div class="calendar-meta">' +
+            (e.status ? '<span class="badge ' + escapeHtml(e.status) + '">' + escapeHtml(e.status) + '</span>' : '') +
+            (e.event_type ? '<span>' + escapeHtml(e.event_type) + '</span>' : '') +
+            (dateStr ? '<span> · ' + escapeHtml(dateStr) + '</span>' : '') +
+            (timeStr ? '<span> · ' + escapeHtml(timeStr) + '</span>' : '') +
+            (e.timezone ? '<span> · ' + escapeHtml(e.timezone) + '</span>' : '') +
+            (e.expected_income ? '<span> · ' + escapeHtml(e.expected_income) + ' ' + escapeHtml(e.currency || 'EUR') + '</span>' : '') +
+            (e.linked_case_id ? '<span> · Case linked</span>' : '') +
+            (e.venue_id ? '<span> · Venue linked</span>' : '') +
+            '</div>' +
+            '</div>' +
+            '<div class="calendar-actions">' +
+            '<button class="secondary" data-action="edit" data-id="' + escapeHtml(e.id) + '">Edit</button>' +
+            '<button class="danger" data-action="delete" data-id="' + escapeHtml(e.id) + '">Delete</button>' +
+            '</div>' +
+            '</li>';
+        }).join('');
+
+        // Attach action handlers
+        window.adminV3UIHelpers.attachActionHandlers(listEl, {
+          edit: openEditForm,
+          delete: deleteEvent
+        });
+      });
+    }
+
+    function openCreateForm() {
+      isCreating = true;
+      currentEventId = null;
+      document.getElementById('formTitle').textContent = 'New Event';
+      document.getElementById('calendarForm').reset();
+      document.getElementById('timeFields').style.display = 'block';
+      populateLinkingDropdowns();
+      showForm(true);
+    }
+
+    function openEditForm(id) {
+      isCreating = false;
+      currentEventId = id;
+      document.getElementById('formTitle').textContent = 'Edit Event';
+      
+      setStatus('Loading event...', 'loading');
+      store.calendar.getById(id).then(function (e) {
+        if (!e) {
+          setStatus('Event not found', 'error');
+          return;
+        }
+        clearStatus();
+        
+        document.getElementById('title').value = e.title || '';
+        document.getElementById('event_type').value = e.event_type || '';
+        document.getElementById('status').value = e.status || '';
+        document.getElementById('start_date').value = e.start_date ? e.start_date.slice(0, 10) : '';
+        document.getElementById('end_date').value = e.end_date ? e.end_date.slice(0, 10) : '';
+        document.getElementById('all_day').checked = e.all_day || false;
+        document.getElementById('start_time').value = e.start_time || '';
+        document.getElementById('end_time').value = e.end_time || '';
+        document.getElementById('timezone').value = e.timezone || '';
+        document.getElementById('expected_income').value = e.expected_income || '';
+        document.getElementById('currency').value = e.currency || 'EUR';
+        document.getElementById('public_visibility').checked = e.public_visibility || false;
+        document.getElementById('program').value = e.program || '';
+        document.getElementById('notes_internal').value = e.notes_internal || '';
+        document.getElementById('notes_public').value = e.notes_public || '';
+        
+        updateTimeFields();
+        populateLinkingDropdowns();
+        document.getElementById('linked_case_id').value = e.linked_case_id || '';
+        document.getElementById('venue_id').value = e.venue_id || '';
+        showForm(true);
+      }).catch(function (err) {
+        setStatus('Error loading event: ' + err.message, 'error');
+      });
+    }
+
+    function updateTimeFields() {
+      var allDay = document.getElementById('all_day').checked;
+      document.getElementById('timeFields').style.display = allDay ? 'none' : 'block';
+    }
+
+    function populateLinkingDropdowns() {
+      // Populate Cases dropdown
+      store.cases.getAll().then(function (cases) {
+        var select = document.getElementById('linked_case_id');
+        var currentValue = select.value;
+        select.innerHTML = '<option value="">None</option>';
+        if (cases && cases.length > 0) {
+          cases.forEach(function (c) {
+            select.innerHTML += '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.title || '(Untitled)') + '</option>';
+          });
+        }
+        select.value = currentValue;
+      }).catch(function (err) {
+        console.error('Error loading cases for dropdown:', err);
+      });
+
+      // Populate Venues dropdown
+      store.venues.getAll().then(function (venues) {
+        var select = document.getElementById('venue_id');
+        var currentValue = select.value;
+        select.innerHTML = '<option value="">None</option>';
+        if (venues && venues.length > 0) {
+          venues.forEach(function (v) {
+            select.innerHTML += '<option value="' + escapeHtml(v.id) + '">' + escapeHtml(v.name || '(Untitled)') + '</option>';
+          });
+        }
+        select.value = currentValue;
+      }).catch(function (err) {
+        console.error('Error loading venues for dropdown:', err);
+      });
+    }
+
+    function saveEvent(e) {
+      e.preventDefault();
+      
+      var formData = new FormData(e.target);
+      var eventData = {
+        title: formData.get('title'),
+        event_type: formData.get('event_type'),
+        status: formData.get('status'),
+        start_date: formData.get('start_date') ? new Date(formData.get('start_date')).toISOString() : null,
+        end_date: formData.get('end_date') ? new Date(formData.get('end_date')).toISOString() : null,
+        all_day: document.getElementById('all_day').checked,
+        start_time: formData.get('start_time'),
+        end_time: formData.get('end_time'),
+        timezone: formData.get('timezone'),
+        expected_income: Number(formData.get('expected_income')) || 0,
+        currency: formData.get('currency') || 'EUR',
+        public_visibility: document.getElementById('public_visibility').checked,
+        linked_case_id: formData.get('linked_case_id'),
+        venue_id: formData.get('venue_id'),
+        program: formData.get('program'),
+        notes_internal: formData.get('notes_internal'),
+        notes_public: formData.get('notes_public')
+      };
+
+      if (isCreating) {
+        var newEvent = window.adminV3Factories.createCalendarEvent(eventData);
+        setStatus('Creating event...', 'loading');
+        store.calendar.insert(newEvent).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadCalendar();
+        }).catch(function (err) {
+          setStatus('Error creating event: ' + err.message, 'error');
+        });
+      } else {
+        eventData.id = currentEventId;
+        eventData.updated_at = new Date().toISOString();
+        setStatus('Updating event...', 'loading');
+        store.calendar.update(currentEventId, eventData).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadCalendar();
+        }).catch(function (err) {
+          setStatus('Error updating event: ' + err.message, 'error');
+        });
+      }
+    }
+
+    function deleteEvent(id) {
+      if (!confirm('Delete this event?')) return;
+      
+      setStatus('Deleting event...', 'loading');
+      store.calendar.delete(id).then(function (success) {
+        clearStatus();
+        loadCalendar();
+      }).catch(function (err) {
+        setStatus('Error deleting event: ' + err.message, 'error');
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function init() {
+      // Set print date
+      document.getElementById('printDate').textContent = formatDate(new Date());
+      
+      // Export PDF button
+      document.getElementById('exportPdfBtn').addEventListener('click', function () {
+        window.print();
+      });
+      
+      // Initialize auth
+      window.adminV3Auth.init().then(function (initialized) {
+        if (!initialized) {
+          document.getElementById('authGate').innerHTML = '<p>Auth initialization failed. Please refresh.</p>';
+          return;
+        }
+
+        // Wait for auth state resolution
+        return window.adminV3Auth.ensureAuthResolved();
+      }).then(function (resolved) {
+        if (!resolved) {
+          document.getElementById('authGate').innerHTML = '<p>Auth state resolution failed. Please refresh.</p>';
+          return;
+        }
+
+        // Check auth
+        return window.adminV3Auth.checkAuth();
+      }).then(function (result) {
+        if (!result.authenticated) {
+          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('retryAuthBtn').addEventListener('click', function () {
+            window.location.reload();
+          });
+          return;
+        }
+
+        showAuthGate(false);
+
+        // Initialize shared navigation
+        if (window.adminV3Nav) {
+          window.adminV3Nav.renderNav('navContainer', 'calendar');
+          window.adminV3Nav.renderSignOut('signOutContainer', function () {
+            window.adminV3Auth.signOut().then(function () {
+              window.location.href = 'admin-v2.html';
+            });
+          });
+        }
+
+        // Initialize store
+        try {
+          store = window.adminV3StoreInterface.createFirestoreStore();
+          loadCalendar();
+        } catch (err) {
+          setStatus('Error initializing store: ' + err.message, 'error');
+        }
+      }).catch(function (err) {
+        document.getElementById('authGate').innerHTML = '<p>Error: ' + err.message + '</p>';
+      });
+
+      // Event listeners
+      document.getElementById('refreshBtn').addEventListener('click', loadCalendar);
+      document.getElementById('createBtn').addEventListener('click', openCreateForm);
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        showForm(false);
+      });
+      document.getElementById('calendarForm').addEventListener('submit', saveEvent);
+      document.getElementById('all_day').addEventListener('change', updateTimeFields);
+      document.getElementById('filterStatus').addEventListener('change', function (e) {
+        filters.status = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('filterEventType').addEventListener('change', function (e) {
+        filters.event_type = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('clearFiltersBtn').addEventListener('click', function () {
+        filters = { status: '', event_type: '' };
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterEventType').value = '';
+        saveFilters();
+        applyFilters();
+      });
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

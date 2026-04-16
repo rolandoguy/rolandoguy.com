@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workbench - Admin v3</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .auth-gate {
+      text-align: center;
+      padding: 40px;
+      background: white;
+      border-radius: 8px;
+      max-width: 400px;
+      margin: 50px auto;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 14px;
+      display: none;
+    }
+    .status.loading { background: #fff3cd; color: #856404; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.success { background: #d4edda; color: #155724; }
+    
+    .workbench-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .workbench-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .workbench-section h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 18px;
+      color: #333;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 10px;
+    }
+    
+    .stats-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    
+    .stat-card {
+      flex: 1;
+      min-width: 120px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+    }
+    
+    /* Print styles */
+    @media print {
+      body { background: white; color: black; }
+      .auth-gate, #navContainer, #signOutContainer, .status { display: none !important; }
+      .workbench-section { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+      .workbench-section a { text-decoration: none; color: black; }
+      .workbench-section a[href]:after { content: " (" attr(href) ")"; font-size: 10px; color: #666; }
+      .compact-list a { display: none; }
+    }
+    
+    .print-header {
+      display: none;
+    }
+    
+    @media print {
+      .print-header {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+      .print-header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .print-header .date {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+    
+    .compact-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .compact-list li {
+      padding: 10px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .compact-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .compact-list .item-title {
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .compact-list .item-meta {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .compact-list .item-link {
+      color: #007bff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    
+    .compact-list .item-link:hover {
+      text-decoration: underline;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-style: italic;
+    }
+    
+    .loading-state {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    
+    /* Shared navigation */
+    .admin-v3-nav {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+    }
+    .admin-v3-nav-section {
+      margin-bottom: 10px;
+    }
+    .admin-v3-nav-section:last-child {
+      margin-bottom: 0;
+    }
+    .admin-v3-nav-link {
+      color: #007bff;
+      text-decoration: none;
+      margin-right: 15px;
+      font-size: 14px;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+    .admin-v3-nav-link:hover {
+      text-decoration: underline;
+    }
+    .admin-v3-nav-link.active {
+      color: #333;
+      font-weight: bold;
+    }
+    .admin-v3-nav-link.admin-v3-nav-disabled {
+      color: #999;
+      cursor: default;
+    }
+    .admin-v3-nav-divider {
+      color: #ddd;
+      margin-right: 15px;
+    }
+    
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .workbench-section {
+        padding: 15px;
+      }
+      .stats-row {
+        flex-direction: column;
+      }
+      .stat-card {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="authGate" class="auth-gate">
+    <h2>Admin v3 Workbench</h2>
+    <p>Loading authentication...</p>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="print-header">
+      <h1>Admin v3 - Workbench</h1>
+      <div class="date" id="printDate"></div>
+    </div>
+    <div id="navContainer"></div>
+    <div id="status" class="status" style="display:none"></div>
+    <div id="signOutContainer"></div>
+    
+    <div style="margin-bottom: 10px;">
+      <button id="exportPdfBtn" class="secondary">Export PDF</button>
+    </div>
+
+    <div class="workbench-container">
+      <div class="workbench-section">
+        <h2>Cases Overview <a href="admin-v3-cases.html?new=1" style="font-size: 12px; font-weight: normal; margin-left: 10px;">New Case</a> <a href="admin-v3-cases.html?filter=high_priority" style="font-size: 12px; font-weight: normal; margin-left: 10px;">High Priority</a></h2>
+        <div id="casesStats" class="loading-state">Loading...</div>
+      </div>
+
+      <div class="workbench-section">
+        <h2>Upcoming Calendar <a href="admin-v3-calendar.html?new=1" style="font-size: 12px; font-weight: normal; margin-left: 10px;">New Event</a></h2>
+        <div id="upcomingCalendar" class="loading-state">Loading...</div>
+      </div>
+
+      <div class="workbench-section">
+        <h2>Income Snapshot <a href="admin-v3-income.html?new=1" style="font-size: 12px; font-weight: normal; margin-left: 10px;">New Income</a> <a href="admin-v3-income.html?filter=unpaid" style="font-size: 12px; font-weight: normal; margin-left: 10px;">Unpaid</a></h2>
+        <div id="incomeSnapshot" class="loading-state">Loading...</div>
+      </div>
+
+      <div class="workbench-section">
+        <h2>Follow-ups Due</h2>
+        <div id="followupsDue" class="loading-state">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="admin-v3-auth.js"></script>
+  <script src="admin-v3-schemas.js"></script>
+  <script src="admin-v3-factories.js"></script>
+  <script src="admin-v3-helpers.js"></script>
+  <script src="admin-v3-store-interface.js"></script>
+  <script src="admin-v3-nav.js"></script>
+  <script>
+    var store = null;
+
+    function setStatus(text, type) {
+      var el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + (type || '');
+      el.style.display = 'block';
+    }
+
+    function clearStatus() {
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderCasesStats(cases) {
+      var el = document.getElementById('casesStats');
+      if (!cases || cases.length === 0) {
+        el.innerHTML = '<div class="empty-state">No cases found</div>';
+        return;
+      }
+
+      var statusCounts = {};
+      cases.forEach(function (c) {
+        var status = c.status || 'unknown';
+        if (!statusCounts[status]) statusCounts[status] = 0;
+        statusCounts[status]++;
+      });
+
+      var highPriority = cases.filter(function (c) {
+        return c.priority === 'high' && c.status !== 'archived' && c.status !== 'lost' && c.status !== 'declined';
+      }).slice(0, 5);
+
+      var html = '<div class="stats-row">';
+      
+      var statusOrder = ['lead', 'qualified', 'negotiating', 'confirmed', 'declined', 'lost', 'archived'];
+      statusOrder.forEach(function (status) {
+        if (statusCounts[status]) {
+          html += '<div class="stat-card">' +
+            '<div class="stat-value">' + statusCounts[status] + '</div>' +
+            '<div class="stat-label">' + escapeHtml(status.charAt(0).toUpperCase() + status.slice(1)) + '</div>' +
+            '</div>';
+        }
+      });
+      
+      html += '</div>';
+
+      if (highPriority.length > 0) {
+        html += '<h3 style="font-size: 14px; margin: 15px 0 10px;">High Priority Cases</h3>';
+        html += '<ul class="compact-list">';
+        highPriority.forEach(function (c) {
+          html += '<li>' +
+            '<span class="item-title">' + escapeHtml(c.title || '(Untitled)') + '</span>' +
+            '<span class="item-meta">' + escapeHtml(c.status || '') + '</span>' +
+            '</li>';
+        });
+        html += '</ul>';
+      }
+
+      el.innerHTML = html;
+    }
+
+    function renderUpcomingCalendar(events) {
+      var el = document.getElementById('upcomingCalendar');
+      if (!events || events.length === 0) {
+        el.innerHTML = '<div class="empty-state">No upcoming events</div>';
+        return;
+      }
+
+      var now = new Date();
+      var upcoming = events
+        .filter(function (e) {
+          if (!e.start_date) return false;
+          var eventDate = new Date(e.start_date);
+          return eventDate >= now && e.status !== 'cancelled';
+        })
+        .sort(function (a, b) {
+          return new Date(a.start_date) - new Date(b.start_date);
+        })
+        .slice(0, 5);
+
+      if (upcoming.length === 0) {
+        el.innerHTML = '<div class="empty-state">No upcoming events</div>';
+        return;
+      }
+
+      var html = '<ul class="compact-list">';
+      upcoming.forEach(function (e) {
+        var dateStr = formatDate(e.start_date);
+        html += '<li>' +
+          '<div>' +
+            '<div class="item-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
+            '<div class="item-meta">' + escapeHtml(dateStr) + ' · ' + escapeHtml(e.event_type || '') + '</div>' +
+          '</div>' +
+          '<a href="admin-v3-calendar.html" class="item-link">View</a>' +
+          '</li>';
+      });
+      html += '</ul>';
+
+      el.innerHTML = html;
+    }
+
+    function renderIncomeSnapshot(income) {
+      var el = document.getElementById('incomeSnapshot');
+      if (!income || income.length === 0) {
+        el.innerHTML = '<div class="empty-state">No income entries</div>';
+        return;
+      }
+
+      var paid = income.filter(function (e) { return e.paid_date && e.paid_date.length > 0; });
+      var unpaid = income.filter(function (e) { return !e.paid_date || e.paid_date.length === 0; });
+
+      var totalExpected = 0;
+      var totalPaid = 0;
+      income.forEach(function (e) {
+        if (e.amount) {
+          var amount = parseFloat(e.amount) || 0;
+          totalExpected += amount;
+          if (e.paid_date && e.paid_date.length > 0) {
+            totalPaid += amount;
+          }
+        }
+      });
+
+      var recentPaid = paid
+        .sort(function (a, b) {
+          return new Date(b.paid_date) - new Date(a.paid_date);
+        })
+        .slice(0, 3);
+
+      var html = '<div class="stats-row">';
+      html += '<div class="stat-card">' +
+        '<div class="stat-value">' + unpaid.length + '</div>' +
+        '<div class="stat-label">Unpaid</div>' +
+        '</div>';
+      html += '<div class="stat-card">' +
+        '<div class="stat-value">' + paid.length + '</div>' +
+        '<div class="stat-label">Paid</div>' +
+        '</div>';
+      html += '<div class="stat-card">' +
+        '<div class="stat-value">' + (totalExpected > 0 ? totalExpected.toFixed(0) : '0') + '</div>' +
+        '<div class="stat-label">Total Expected</div>' +
+        '</div>';
+      html += '</div>';
+
+      if (recentPaid.length > 0) {
+        html += '<h3 style="font-size: 14px; margin: 15px 0 10px;">Recent Paid</h3>';
+        html += '<ul class="compact-list">';
+        recentPaid.forEach(function (e) {
+          var dateStr = formatDate(e.paid_date);
+          var amount = e.amount ? parseFloat(e.amount).toFixed(0) : '0';
+          html += '<li>' +
+            '<div>' +
+              '<div class="item-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
+              '<div class="item-meta">' + escapeHtml(dateStr) + ' · ' + escapeHtml(amount) + ' ' + escapeHtml(e.currency || 'EUR') + '</div>' +
+            '</div>' +
+            '<a href="admin-v3-income.html" class="item-link">View</a>' +
+            '</li>';
+        });
+        html += '</ul>';
+      }
+
+      el.innerHTML = html;
+    }
+
+    function renderFollowupsDue(cases, contacts) {
+      var el = document.getElementById('followupsDue');
+      if (!cases && !contacts) {
+        el.innerHTML = '<div class="empty-state">No data</div>';
+        return;
+      }
+
+      var now = new Date();
+      var followups = [];
+
+      // Add cases with follow-up dates
+      if (cases) {
+        cases.forEach(function (c) {
+          if (c.next_followup_date && c.next_followup_date.length > 0) {
+            followups.push({
+              type: 'case',
+              title: c.title || '(Untitled)',
+              date: c.next_followup_date,
+              next_action: c.next_action,
+              id: c.id
+            });
+          }
+        });
+      }
+
+      // Add contacts with follow-up dates
+      if (contacts) {
+        contacts.forEach(function (c) {
+          if (c.next_followup_date && c.next_followup_date.length > 0) {
+            followups.push({
+              type: 'contact',
+              title: c.full_name || c.person_name || '(Untitled)',
+              date: c.next_followup_date,
+              id: c.id
+            });
+          }
+        });
+      }
+
+      if (followups.length === 0) {
+        el.innerHTML = '<div class="empty-state">No follow-ups due</div>';
+        return;
+      }
+
+      // Sort by date ascending
+      followups.sort(function (a, b) {
+        return new Date(a.date) - new Date(b.date);
+      });
+
+      // Show up to 10 items
+      followups = followups.slice(0, 10);
+
+      var html = '<ul class="compact-list">';
+      followups.sort(function (a, b) {
+        return new Date(a.date) - new Date(b.date);
+      }).forEach(function (f) {
+        var dateStr = formatDate(f.date);
+        var overdueStyle = f.isOverdue ? 'color: #dc3545; font-weight: bold;' : '';
+        var overdueLabel = f.isOverdue ? ' (overdue)' : '';
+        html += '<li>' +
+          '<div>' +
+            '<div class="item-title">' + escapeHtml(f.title) + ' <span style="font-size: 12px; color: #666;">(' + escapeHtml(f.type) + ')</span></div>' +
+            '<div class="item-meta"><span style="' + overdueStyle + '">' + escapeHtml(dateStr) + overdueLabel + '</span></div>' +
+          '</div>' +
+        '</li>';
+      });
+      html += '</ul>';
+
+      el.innerHTML = html;
+    }
+
+    function loadWorkbenchData() {
+      setStatus('Loading workbench data...', 'loading');
+      
+      Promise.all([
+        store.cases.getAll().catch(function () { return []; }),
+        store.calendar.getAll().catch(function () { return []; }),
+        store.income.getAll().catch(function () { return []; }),
+        store.contacts.getAll().catch(function () { return []; })
+      ]).then(function (results) {
+        var cases = results[0] || [];
+        var calendar = results[1] || [];
+        var income = results[2] || [];
+        var contacts = results[3] || [];
+
+        clearStatus();
+        renderCasesStats(cases);
+        renderUpcomingCalendar(calendar);
+        renderIncomeSnapshot(income);
+        renderFollowupsDue(cases, contacts);
+      }).catch(function (err) {
+        setStatus('Error loading workbench data: ' + err.message, 'error');
+      });
+    }
+
+    function init() {
+      // Set print date
+      document.getElementById('printDate').textContent = formatDate(new Date());
+      
+      // Export PDF button
+      document.getElementById('exportPdfBtn').addEventListener('click', function () {
+        window.print();
+      });
+      
+      // Initialize auth
+      window.adminV3Auth.init().then(function (initialized) {
+        if (!initialized) {
+          document.getElementById('authGate').innerHTML = '<p>Auth initialization failed. Please refresh.</p>';
+          return;
+        }
+
+        // Wait for auth state resolution
+        return window.adminV3Auth.ensureAuthResolved();
+      }).then(function (resolved) {
+        if (!resolved) {
+          document.getElementById('authGate').innerHTML = '<p>Auth state resolution failed. Please refresh.</p>';
+          return;
+        }
+
+        // Check auth
+        return window.adminV3Auth.checkAuth();
+      }).then(function (result) {
+        if (!result.authenticated) {
+          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('retryAuthBtn').addEventListener('click', function () {
+            window.location.reload();
+          });
+          return;
+        }
+
+        document.getElementById('authGate').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+
+        store = window.adminV3StoreInterface.createFirestoreStore();
+        
+        // Initialize shared navigation
+        window.adminV3Nav.renderNav('navContainer', 'workbench');
+        window.adminV3Nav.renderSignOut('signOutContainer', function () {
+          window.adminV3Auth.signOut().then(function () {
+            window.location.href = 'admin-v2.html';
+          });
+        });
+
+        loadWorkbenchData();
+      }).catch(function (err) {
+        document.getElementById('authGate').innerHTML = '<p>Error: ' + err.message + '</p>';
+      });
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin v3 - Contacts</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { margin-top: 0; }
+    .nav-link { margin-bottom: 20px; }
+    .nav-link a { color: #007bff; text-decoration: none; }
+    .nav-link a:hover { text-decoration: underline; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .status.error { background: #fee; color: #c00; }
+    .status.ok { background: #efe; color: #080; }
+    .status.loading { background: #ffd; color: #660; }
+    .toolbar { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button.primary { background: #007bff; color: white; }
+    button.danger { background: #dc3545; color: white; }
+    button.secondary { background: #6c757d; color: white; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .contact-list { list-style: none; padding: 0; margin: 0; }
+    .contact-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .contact-item:last-child { border-bottom: none; }
+    .contact-info { flex: 1; min-width: 200px; }
+    .contact-name { font-weight: bold; margin-bottom: 5px; }
+    .contact-meta { font-size: 12px; color: #666; }
+    .contact-actions { display: flex; gap: 5px; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px; }
+    .badge.active { background: #dcfce7; color: #166534; }
+    .badge.inactive { background: #f1f5f9; color: #475569; }
+    .badge.archived { background: #f1f5f9; color: #475569; }
+    .badge.strong { background: #dbeafe; color: #1e40af; }
+    .badge.medium { background: #fef3c7; color: #92400e; }
+    .badge.weak { background: #fee2e2; color: #991b1b; }
+    .badge.new { background: #e0e7ff; color: #3730a3; }
+    .badge.hot { background: #fef2f2; color: #991b1b; }
+    .badge.warm { background: #fef9c3; color: #854d0e; }
+    .badge.cold { background: #f1f5f9; color: #475569; }
+    .empty-state { text-align: center; padding: 40px; color: #666; }
+    .form { display: none; padding: 20px; background: #f9f9f9; border-radius: 4px; margin: 20px 0; }
+    .form.visible { display: block; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group input[type="date"] { min-height: 44px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .filter-bar { display: flex; gap: 15px; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; gap: 5px; align-items: center; }
+    .filter-group label { font-size: 13px; font-weight: bold; }
+    .filter-group select { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+    @media (max-width: 600px) {
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group { flex-direction: column; align-items: stretch; }
+      .filter-group select { width: 100%; }
+      #clearFiltersBtn { width: 100%; margin-left: 0 !important; }
+    }
+    .auth-gate { text-align: center; padding: 40px; }
+    
+    /* Shared navigation */
+    .admin-v3-nav { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; }
+    .admin-v3-nav-section { margin-bottom: 10px; }
+    .admin-v3-nav-section:last-child { margin-bottom: 0; }
+    .admin-v3-nav-link { color: #007bff; text-decoration: none; margin-right: 15px; font-size: 14px; display: inline-block; margin-bottom: 5px; }
+    .admin-v3-nav-link:hover { text-decoration: underline; }
+    .admin-v3-nav-link.active { color: #333; font-weight: bold; }
+    .admin-v3-nav-link.admin-v3-nav-disabled { color: #999; cursor: default; }
+    .admin-v3-nav-upcoming { padding-top: 10px; border-top: 1px solid #eee; }
+    .admin-v3-sign-out { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; font-size: 13px; background: #6c757d; color: white; }
+    .admin-v3-sign-out:hover { background: #5a6268; }
+    
+    /* Print styles */
+    @media print {
+      body { background: white; color: black; }
+      .auth-gate, #navContainer, #signOutContainer, .status, .filter-bar, .contact-actions, .form, #createBtn, #refreshBtn { display: none !important; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      h1 { margin-bottom: 10px; }
+      .contact-item { page-break-inside: avoid; border: 1px solid #ccc; margin-bottom: 10px; }
+      .contact-item a { text-decoration: none; color: black; }
+      .contact-item a[href]:after { content: " (" attr(href) ")"; font-size: 10px; color: #666; }
+      .contact-actions { display: none; }
+    }
+    
+    .print-header {
+      display: none;
+    }
+    
+    @media print {
+      .print-header {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+      .print-header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .print-header .date {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="print-header">
+      <h1>Admin v3 - Contacts</h1>
+      <div class="date" id="printDate"></div>
+    </div>
+    <h1>Admin v3 - Contacts</h1>
+    
+    <div id="authGate" class="auth-gate">
+      <p>Checking authentication...</p>
+    </div>
+
+    <div id="app" style="display:none">
+      <div id="navContainer"></div>
+      <div id="status" class="status" style="display:none"></div>
+
+      <div class="toolbar">
+        <button id="createBtn" class="primary">New Contact</button>
+        <button id="refreshBtn" class="secondary">Refresh</button>
+        <button id="exportPdfBtn" class="secondary">Export PDF</button>
+        <span id="signOutContainer" style="margin-left: auto;"></span>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="filterStatus">Status:</label>
+          <select id="filterStatus">
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterFollowup">Follow-up:</label>
+          <select id="filterFollowup">
+            <option value="">All</option>
+            <option value="due">Due</option>
+          </select>
+        </div>
+        <button id="clearFiltersBtn" class="secondary" style="margin-left: 10px;">Clear Filters</button>
+      </div>
+
+      <div id="listView">
+        <ul id="contactList" class="contact-list"></ul>
+      </div>
+
+      <div id="formView" class="form">
+        <h2 id="formTitle">Edit Contact</h2>
+        <form id="contactForm">
+          <div class="form-group">
+            <label for="full_name">Full Name *</label>
+            <input type="text" id="full_name" name="full_name" required>
+          </div>
+          <div class="form-group">
+            <label for="role">Role</label>
+            <input type="text" id="role" name="role">
+          </div>
+          <div class="form-group">
+            <label for="organization">Organization</label>
+            <input type="text" id="organization" name="organization">
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email">
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone">
+          </div>
+          <div class="form-group">
+            <label for="whatsapp">WhatsApp</label>
+            <input type="tel" id="whatsapp" name="whatsapp">
+          </div>
+          <div class="form-group">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city">
+          </div>
+          <div class="form-group">
+            <label for="country">Country</label>
+            <input type="text" id="country" name="country">
+          </div>
+          <div class="form-group">
+            <label for="preferred_language">Preferred Language</label>
+            <select id="preferred_language" name="preferred_language">
+              <option value="en">English</option>
+              <option value="de">German</option>
+              <option value="es">Spanish</option>
+              <option value="it">Italian</option>
+              <option value="fr">French</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="contact_status">Status</label>
+            <select id="contact_status" name="contact_status">
+              <option value="">Select...</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="relationship_strength">Relationship Strength</label>
+            <select id="relationship_strength" name="relationship_strength">
+              <option value="">Select...</option>
+              <option value="strong">Strong</option>
+              <option value="medium">Medium</option>
+              <option value="weak">Weak</option>
+              <option value="new">New</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="warmth_level">Warmth Level</label>
+            <select id="warmth_level" name="warmth_level">
+              <option value="">Select...</option>
+              <option value="hot">Hot</option>
+              <option value="warm">Warm</option>
+              <option value="cold">Cold</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="last_contact_at">Last Contact Date</label>
+            <input type="date" id="last_contact_at" name="last_contact_at">
+          </div>
+          <div class="form-group">
+            <label for="next_followup_date">Next Follow-up Date</label>
+            <input type="date" id="next_followup_date" name="next_followup_date">
+          </div>
+          <div class="form-group">
+            <label for="notes_internal">Internal Notes</label>
+            <textarea id="notes_internal" name="notes_internal"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="cancelBtn" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-v3-auth.js"></script>
+  <script src="admin-v3-schemas.js"></script>
+  <script src="admin-v3-factories.js"></script>
+  <script src="admin-v3-helpers.js"></script>
+  <script src="admin-v3-store-interface.js"></script>
+  <script src="admin-v3-nav.js"></script>
+  <script src="admin-v3-ui-helpers.js"></script>
+  <script>
+    var store = null;
+    var currentContactId = null;
+    var isCreating = false;
+    var allContacts = [];
+    var filters = { status: '', followup: '' };
+    var FILTER_STORAGE_KEY = 'admin_v3_contacts_filters';
+
+    function setStatus(text, type) {
+      var el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + (type || '');
+      el.style.display = 'block';
+    }
+
+    function clearStatus() {
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function showAuthGate(show) {
+      document.getElementById('authGate').style.display = show ? 'block' : 'none';
+      document.getElementById('app').style.display = show ? 'none' : 'block';
+    }
+
+    function showForm(show) {
+      document.getElementById('formView').className = show ? 'form visible' : 'form';
+      document.getElementById('listView').style.display = show ? 'none' : 'block';
+    }
+
+    function loadContacts() {
+      setStatus('Loading contacts...', 'loading');
+      return store.contacts.getAll().then(function (contacts) {
+        allContacts = contacts || [];
+        clearStatus();
+        loadFilters();
+        applyFilters();
+        return contacts;
+      }).catch(function (err) {
+        setStatus('Error loading contacts: ' + err.message, 'error');
+        return [];
+      });
+    }
+
+    function applyFilters() {
+      var filtered = allContacts;
+      
+      if (filters.status) {
+        filtered = filtered.filter(function (c) { return c.contact_status === filters.status; });
+      }
+      
+      if (filters.followup === 'due') {
+        var now = new Date();
+        filtered = filtered.filter(function (c) {
+          if (!c.next_followup_date) return false;
+          var followupDate = new Date(c.next_followup_date);
+          return followupDate <= now;
+        });
+      }
+      
+      renderContactList(filtered);
+      saveFilters();
+    }
+    
+    function saveFilters() {
+      try {
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+      } catch (e) {
+        // localStorage not available, ignore
+      }
+    }
+    
+    function loadFilters() {
+      try {
+        var saved = localStorage.getItem(FILTER_STORAGE_KEY);
+        if (saved) {
+          filters = JSON.parse(saved);
+          document.getElementById('filterStatus').value = filters.status || '';
+          document.getElementById('filterFollowup').value = filters.followup || '';
+        }
+      } catch (e) {
+        // localStorage not available or corrupt, ignore
+      }
+    }
+
+    function renderContactList(contacts) {
+      var listEl = document.getElementById('contactList');
+      if (!contacts || contacts.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">No contacts found. Click "New Contact" to create one.</li>';
+        return;
+      }
+
+      listEl.innerHTML = contacts.map(function (c) {
+        // Follow-up info
+        var followupInfo = '';
+        if (c.next_followup_date) {
+          var now = new Date();
+          var followupDate = new Date(c.next_followup_date);
+          var dateStr = formatDate(c.next_followup_date);
+          var isOverdue = followupDate < now;
+          var overdueStyle = isOverdue ? 'color: #dc3545; font-weight: bold;' : '';
+          followupInfo = '<span style="' + overdueStyle + '"> · Follow-up: ' + escapeHtml(dateStr) + (isOverdue ? ' (overdue)' : '') + '</span>';
+        }
+        
+        return '<li class="contact-item" data-id="' + escapeHtml(c.id) + '">' +
+          '<div class="contact-info">' +
+          '<div class="contact-name">' + escapeHtml(c.full_name || '(Untitled)') + '</div>' +
+          '<div class="contact-meta">' +
+          (c.contact_status ? '<span class="badge ' + escapeHtml(c.contact_status) + '">' + escapeHtml(c.contact_status) + '</span>' : '') +
+          (c.relationship_strength ? '<span class="badge ' + escapeHtml(c.relationship_strength) + '">' + escapeHtml(c.relationship_strength) + '</span>' : '') +
+          (c.warmth_level ? '<span class="badge ' + escapeHtml(c.warmth_level) + '">' + escapeHtml(c.warmth_level) + '</span>' : '') +
+          (c.role ? '<span>' + escapeHtml(c.role) + '</span>' : '') +
+          (c.organization ? '<span> · ' + escapeHtml(c.organization) + '</span>' : '') +
+          (c.email ? '<span> · ' + escapeHtml(c.email) + '</span>' : '') +
+          (c.city ? '<span> · ' + escapeHtml(c.city) + '</span>' : '') +
+          followupInfo +
+          '</div>' +
+          '</div>' +
+          '<div class="contact-actions">' +
+          '<button class="secondary" data-action="edit" data-id="' + escapeHtml(c.id) + '">Edit</button>' +
+          '<button class="danger" data-action="delete" data-id="' + escapeHtml(c.id) + '">Delete</button>' +
+          '</div>' +
+          '</li>';
+      }).join('');
+
+      // Attach action handlers
+      window.adminV3UIHelpers.attachActionHandlers(listEl, {
+        edit: openEditForm,
+        delete: deleteContact
+      });
+    }
+
+    function openCreateForm() {
+      isCreating = true;
+      currentContactId = null;
+      document.getElementById('formTitle').textContent = 'New Contact';
+      document.getElementById('contactForm').reset();
+      showForm(true);
+    }
+
+    function openEditForm(id) {
+      isCreating = false;
+      currentContactId = id;
+      document.getElementById('formTitle').textContent = 'Edit Contact';
+      
+      setStatus('Loading contact...', 'loading');
+      store.contacts.getById(id).then(function (c) {
+        if (!c) {
+          setStatus('Contact not found', 'error');
+          return;
+        }
+        clearStatus();
+        
+        document.getElementById('full_name').value = c.full_name || '';
+        document.getElementById('role').value = c.role || '';
+        document.getElementById('organization').value = c.organization || '';
+        document.getElementById('email').value = c.email || '';
+        document.getElementById('phone').value = c.phone || '';
+        document.getElementById('whatsapp').value = c.whatsapp || '';
+        document.getElementById('city').value = c.city || '';
+        document.getElementById('country').value = c.country || '';
+        document.getElementById('preferred_language').value = c.preferred_language || 'en';
+        document.getElementById('contact_status').value = c.contact_status || '';
+        document.getElementById('relationship_strength').value = c.relationship_strength || '';
+        document.getElementById('warmth_level').value = c.warmth_level || '';
+        document.getElementById('last_contact_at').value = c.last_contact_at ? c.last_contact_at.slice(0, 10) : '';
+        document.getElementById('next_followup_date').value = c.next_followup_date ? c.next_followup_date.slice(0, 10) : '';
+        document.getElementById('notes_internal').value = c.notes_internal || '';
+        
+        showForm(true);
+      }).catch(function (err) {
+        setStatus('Error loading contact: ' + err.message, 'error');
+      });
+    }
+
+    function saveContact(e) {
+      e.preventDefault();
+      
+      var formData = new FormData(e.target);
+      var contactData = {
+        full_name: formData.get('full_name'),
+        role: formData.get('role'),
+        organization: formData.get('organization'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        whatsapp: formData.get('whatsapp'),
+        city: formData.get('city'),
+        country: formData.get('country'),
+        preferred_language: formData.get('preferred_language'),
+        contact_status: formData.get('contact_status'),
+        relationship_strength: formData.get('relationship_strength'),
+        warmth_level: formData.get('warmth_level'),
+        last_contact_at: formData.get('last_contact_at') ? new Date(formData.get('last_contact_at')).toISOString() : null,
+        next_followup_date: formData.get('next_followup_date') ? new Date(formData.get('next_followup_date')).toISOString() : null,
+        notes_internal: formData.get('notes_internal')
+      };
+
+      if (isCreating) {
+        var newContact = window.adminV3Factories.createContact(contactData);
+        setStatus('Creating contact...', 'loading');
+        store.contacts.insert(newContact).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadContacts();
+        }).catch(function (err) {
+          setStatus('Error creating contact: ' + err.message, 'error');
+        });
+      } else {
+        contactData.id = currentContactId;
+        contactData.updated_at = new Date().toISOString();
+        setStatus('Updating contact...', 'loading');
+        store.contacts.update(currentContactId, contactData).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadContacts();
+        }).catch(function (err) {
+          setStatus('Error updating contact: ' + err.message, 'error');
+        });
+      }
+    }
+
+    function deleteContact(id) {
+      if (!confirm('Delete this contact?')) return;
+      
+      setStatus('Deleting contact...', 'loading');
+      store.contacts.delete(id).then(function (success) {
+        clearStatus();
+        loadContacts();
+      }).catch(function (err) {
+        setStatus('Error deleting contact: ' + err.message, 'error');
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function init() {
+      // Set print date
+      document.getElementById('printDate').textContent = formatDate(new Date());
+      
+      // Export PDF button
+      document.getElementById('exportPdfBtn').addEventListener('click', function () {
+        window.print();
+      });
+      
+      // Initialize auth
+      window.adminV3Auth.init().then(function (initialized) {
+        if (!initialized) {
+          document.getElementById('authGate').innerHTML = '<p>Auth initialization failed. Please refresh.</p>';
+          return;
+        }
+
+        // Wait for auth state resolution
+        return window.adminV3Auth.ensureAuthResolved();
+      }).then(function (resolved) {
+        if (!resolved) {
+          document.getElementById('authGate').innerHTML = '<p>Auth state resolution failed. Please refresh.</p>';
+          return;
+        }
+
+        // Check auth
+        return window.adminV3Auth.checkAuth();
+      }).then(function (result) {
+        if (!result.authenticated) {
+          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('retryAuthBtn').addEventListener('click', function () {
+            window.location.reload();
+          });
+          return;
+        }
+
+        showAuthGate(false);
+
+        // Initialize shared navigation
+        if (window.adminV3Nav) {
+          window.adminV3Nav.renderNav('navContainer', 'contacts');
+          window.adminV3Nav.renderSignOut('signOutContainer', function () {
+            window.adminV3Auth.signOut().then(function () {
+              window.location.href = 'admin-v2.html';
+            });
+          });
+        }
+
+        // Initialize store
+        try {
+          store = window.adminV3StoreInterface.createFirestoreStore();
+          loadContacts();
+        } catch (err) {
+          setStatus('Error initializing store: ' + err.message, 'error');
+        }
+      }).catch(function (err) {
+        document.getElementById('authGate').innerHTML = '<p>Error: ' + err.message + '</p>';
+      });
+
+      // Event listeners
+      document.getElementById('refreshBtn').addEventListener('click', loadContacts);
+      document.getElementById('createBtn').addEventListener('click', openCreateForm);
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        showForm(false);
+      });
+      document.getElementById('filterStatus').addEventListener('change', function (e) {
+        filters.status = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('filterFollowup').addEventListener('change', function (e) {
+        filters.followup = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('clearFiltersBtn').addEventListener('click', function () {
+        filters = { status: '', followup: '' };
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterFollowup').value = '';
+        saveFilters();
+        applyFilters();
+      });
+      document.getElementById('contactForm').addEventListener('submit', saveContact);
+      document.getElementById('signOutBtn').addEventListener('click', function () {
+        window.adminV3Auth.signOut().then(function () {
+          window.location.href = 'admin-v2.html';
+        });
+      });
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

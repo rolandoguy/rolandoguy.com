@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin v3 - Income</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { margin-top: 0; }
+    
+    /* Shared navigation */
+    .admin-v3-nav { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; }
+    .admin-v3-nav-section { margin-bottom: 10px; }
+    .admin-v3-nav-section:last-child { margin-bottom: 0; }
+    .admin-v3-nav-link { color: #007bff; text-decoration: none; margin-right: 15px; font-size: 14px; display: inline-block; margin-bottom: 5px; }
+    .admin-v3-nav-link:hover { text-decoration: underline; }
+    .admin-v3-nav-link.active { color: #333; font-weight: bold; }
+    .admin-v3-nav-link.admin-v3-nav-disabled { color: #999; cursor: default; }
+    .admin-v3-nav-upcoming { padding-top: 10px; border-top: 1px solid #eee; }
+    .admin-v3-sign-out { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; font-size: 13px; background: #6c757d; color: white; }
+    .admin-v3-sign-out:hover { background: #5a6268; }
+    
+    /* Print styles */
+    @media print {
+      body { background: white; color: black; }
+      .auth-gate, #navContainer, #signOutContainer, .status, .filter-bar, .income-actions, .form, #createBtn, #refreshBtn { display: none !important; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      h1 { margin-bottom: 10px; }
+      .income-item { page-break-inside: avoid; border: 1px solid #ccc; margin-bottom: 10px; }
+      .income-item a { text-decoration: none; color: black; }
+      .income-item a[href]:after { content: " (" attr(href) ")"; font-size: 10px; color: #666; }
+      .income-actions { display: none; }
+    }
+    
+    .print-header {
+      display: none;
+    }
+    
+    @media print {
+      .print-header {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+      .print-header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .print-header .date {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+    
+    .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .status.error { background: #fee; color: #c00; }
+    .status.ok { background: #efe; color: #080; }
+    .status.loading { background: #ffd; color: #660; }
+    .toolbar { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button.primary { background: #007bff; color: white; }
+    button.danger { background: #dc3545; color: white; }
+    button.secondary { background: #6c757d; color: white; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .income-list { list-style: none; padding: 0; margin: 0; }
+    .income-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .income-item:last-child { border-bottom: none; }
+    .income-info { flex: 1; min-width: 200px; }
+    .income-title { font-weight: bold; margin-bottom: 5px; }
+    .income-meta { font-size: 12px; color: #666; }
+    .income-actions { display: flex; gap: 5px; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px; }
+    .badge.expected { background: #fef3c7; color: #92400e; }
+    .badge.invoiced { background: #dbeafe; color: #1e40af; }
+    .badge.partial { background: #e0e7ff; color: #3730a3; }
+    .badge.paid { background: #dcfce7; color: #166534; }
+    .amount { font-weight: bold; color: #166534; }
+    .empty-state { text-align: center; padding: 40px; color: #666; }
+    .form { display: none; padding: 20px; background: #f9f9f9; border-radius: 4px; margin: 20px 0; }
+    .form.visible { display: block; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group input[type="date"] { min-height: 44px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .filter-bar { display: flex; gap: 15px; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; gap: 5px; align-items: center; }
+    .filter-group label { font-size: 13px; font-weight: bold; }
+    .filter-group select { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+    @media (max-width: 600px) {
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group { flex-direction: column; align-items: stretch; }
+      .filter-group select { width: 100%; }
+      #clearFiltersBtn { width: 100%; margin-left: 0 !important; }
+    }
+    .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; }
+    .checkbox-group label { display: flex; align-items: center; font-weight: normal; }
+    .checkbox-group input { width: auto; margin-right: 5px; }
+    .auth-gate { text-align: center; padding: 40px; }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .toolbar { flex-direction: column; }
+      .toolbar button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="print-header">
+      <h1>Admin v3 - Income</h1>
+      <div class="date" id="printDate"></div>
+    </div>
+    <h1>Admin v3 - Income</h1>
+    
+    <div id="authGate" class="auth-gate">
+      <p>Checking authentication...</p>
+    </div>
+
+    <div id="app" style="display:none">
+      <div id="navContainer"></div>
+      <div id="status" class="status" style="display:none"></div>
+
+      <div class="toolbar">
+        <button id="refreshBtn" class="secondary">Refresh</button>
+        <button id="createBtn" class="primary">New Income Entry</button>
+        <button id="exportPdfBtn" class="secondary">Export PDF</button>
+        <span id="signOutContainer" style="margin-left: auto;"></span>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="filterStatus">Status:</label>
+          <select id="filterStatus">
+            <option value="">All</option>
+            <option value="expected">Expected</option>
+            <option value="invoiced">Invoiced</option>
+            <option value="partial">Partial</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterPaid">Payment:</label>
+          <select id="filterPaid">
+            <option value="">All</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+          </select>
+        </div>
+        <button id="clearFiltersBtn" class="secondary" style="margin-left: 10px;">Clear Filters</button>
+      </div>
+
+      <div id="listView">
+        <ul id="incomeList" class="income-list"></ul>
+      </div>
+
+      <div id="formView" class="form">
+        <h2 id="formTitle">Edit Income Entry</h2>
+        <form id="incomeForm">
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" required>
+          </div>
+          <div class="form-group">
+            <label for="income_type">Income Type</label>
+            <select id="income_type" name="income_type">
+              <option value="">Select...</option>
+              <option value="performance_fee">Performance Fee</option>
+              <option value="teaching_fee">Teaching Fee</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="">Select...</option>
+              <option value="expected">Expected</option>
+              <option value="invoiced">Invoiced</option>
+              <option value="partial">Partial</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="amount">Amount *</label>
+            <input type="number" id="amount" name="amount" min="0" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label for="currency">Currency *</label>
+            <select id="currency" name="currency" required>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="CHF">CHF</option>
+              <option value="ARS">ARS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="gross_or_net">Gross or Net</label>
+            <select id="gross_or_net" name="gross_or_net">
+              <option value="">Select...</option>
+              <option value="gross">Gross</option>
+              <option value="net">Net</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="invoice_number">Invoice Number</label>
+            <input type="text" id="invoice_number" name="invoice_number">
+          </div>
+          <div class="form-group">
+            <label for="invoice_date">Invoice Date</label>
+            <input type="date" id="invoice_date" name="invoice_date">
+          </div>
+          <div class="form-group">
+            <label for="due_date">Due Date</label>
+            <input type="date" id="due_date" name="due_date">
+          </div>
+          <div class="form-group">
+            <label for="paid_date">Paid Date</label>
+            <input type="date" id="paid_date" name="paid_date">
+          </div>
+          <div class="form-group">
+            <label for="payment_method">Payment Method</label>
+            <select id="payment_method" name="payment_method">
+              <option value="">Select...</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="cash">Cash</option>
+              <option value="check">Check</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Reimbursements</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="travel_reimbursed" name="travel_reimbursed"> Travel reimbursed</label>
+              <label><input type="checkbox" id="hotel_covered" name="hotel_covered"> Hotel covered</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cash_component">Cash Component</label>
+            <input type="number" id="cash_component" name="cash_component" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="bank_transfer_reference">Bank Transfer Reference</label>
+            <input type="text" id="bank_transfer_reference" name="bank_transfer_reference">
+          </div>
+          <div class="form-group">
+            <label for="linked_calendar_id">Linked Calendar Entry</label>
+            <select id="linked_calendar_id" name="linked_calendar_id">
+              <option value="">None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="linked_case_id">Linked Case</label>
+            <select id="linked_case_id" name="linked_case_id">
+              <option value="">None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="tax_notes">Tax Notes</label>
+            <textarea id="tax_notes" name="tax_notes"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="notes_internal">Internal Notes</label>
+            <textarea id="notes_internal" name="notes_internal"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="cancelBtn" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-v3-auth.js"></script>
+  <script src="admin-v3-schemas.js"></script>
+  <script src="admin-v3-factories.js"></script>
+  <script src="admin-v3-helpers.js"></script>
+  <script src="admin-v3-store-interface.js"></script>
+  <script src="admin-v3-nav.js"></script>
+  <script src="admin-v3-ui-helpers.js"></script>
+  <script>
+    var store = null;
+    var currentIncomeId = null;
+    var isCreating = false;
+    var allIncome = [];
+    var filters = { status: '', paid: '' };
+    var FILTER_STORAGE_KEY = 'admin_v3_income_filters';
+
+    function setStatus(text, type) {
+      var el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + (type || '');
+      el.style.display = 'block';
+    }
+
+    function clearStatus() {
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function showAuthGate(show) {
+      document.getElementById('authGate').style.display = show ? 'block' : 'none';
+      document.getElementById('app').style.display = show ? 'none' : 'block';
+    }
+
+    function showForm(show) {
+      document.getElementById('formView').className = show ? 'form visible' : 'form';
+      document.getElementById('listView').style.display = show ? 'none' : 'block';
+    }
+
+    function loadIncome() {
+      setStatus('Loading income entries...', 'loading');
+      return store.income.getAll().then(function (entries) {
+        allIncome = entries || [];
+        clearStatus();
+        loadFilters();
+        handleQueryParams();
+        applyFilters();
+        return entries;
+      }).catch(function (err) {
+        setStatus('Error loading income entries: ' + err.message, 'error');
+        return [];
+      });
+    }
+
+    function applyFilters() {
+      var filtered = allIncome;
+      
+      if (filters.status) {
+        filtered = filtered.filter(function (e) { return e.status === filters.status; });
+      }
+      
+      if (filters.paid === 'paid') {
+        filtered = filtered.filter(function (e) { return e.paid_date && e.paid_date.length > 0; });
+      }
+      
+      if (filters.paid === 'unpaid') {
+        filtered = filtered.filter(function (e) { return !e.paid_date || e.paid_date.length === 0; });
+      }
+      
+      renderIncomeList(filtered);
+      saveFilters();
+    }
+    
+    function saveFilters() {
+      try {
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+      } catch (e) {
+        // localStorage not available, ignore
+      }
+    }
+    
+    function loadFilters() {
+      try {
+        var saved = localStorage.getItem(FILTER_STORAGE_KEY);
+        if (saved) {
+          filters = JSON.parse(saved);
+          document.getElementById('filterStatus').value = filters.status || '';
+          document.getElementById('filterPaid').value = filters.paid || '';
+        }
+      } catch (e) {
+        // localStorage not available or corrupt, ignore
+      }
+    }
+    
+    function handleQueryParams() {
+      var params = new URLSearchParams(window.location.search);
+      
+      if (params.get('new') === '1') {
+        openCreateForm();
+      }
+      
+      if (params.get('filter') === 'unpaid') {
+        filters.paid = 'unpaid';
+        document.getElementById('filterPaid').value = 'unpaid';
+      }
+    }
+
+    function renderIncomeList(entries) {
+      var listEl = document.getElementById('incomeList');
+      if (!entries || entries.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">No income entries found. Click "New Income Entry" to create one.</li>';
+        return;
+      }
+
+      // Sort by paid date (unpaid first, then by date)
+      entries.sort(function (a, b) {
+        var aPaid = a.paid_date ? new Date(a.paid_date) : null;
+        var bPaid = b.paid_date ? new Date(b.paid_date) : null;
+        if (!aPaid && !bPaid) return 0;
+        if (!aPaid) return -1;
+        if (!bPaid) return 1;
+        return bPaid - aPaid;
+      });
+
+      // Load related entities for labels
+      var casesPromise = store.cases.getAll().catch(function () { return []; });
+      var calendarPromise = store.calendar.getAll().catch(function () { return []; });
+
+      Promise.all([casesPromise, calendarPromise]).then(function (results) {
+        var allCases = results[0] || [];
+        var allCalendar = results[1] || [];
+        
+        var casesById = {};
+        allCases.forEach(function (c) { casesById[c.id] = c; });
+        
+        var calendarById = {};
+        allCalendar.forEach(function (e) { calendarById[e.id] = e; });
+
+        listEl.innerHTML = entries.map(function (e) {
+          var dateStr = formatDate(e.paid_date) || formatDate(e.invoice_date);
+          
+          var linkedCalendarLabel = '';
+          if (e.linked_calendar_id && calendarById[e.linked_calendar_id]) {
+            var calDate = formatDate(calendarById[e.linked_calendar_id].start_date);
+            linkedCalendarLabel = '<span> · <a href="admin-v3-calendar.html" class="admin-v3-nav-link">Calendar: ' + escapeHtml(calendarById[e.linked_calendar_id].title || '(Untitled)') + (calDate ? ' (' + escapeHtml(calDate) + ')' : '') + '</a></span>';
+          }
+          
+          var linkedCaseLabel = '';
+          if (e.linked_case_id && casesById[e.linked_case_id]) {
+            linkedCaseLabel = '<span> · <a href="admin-v3-cases.html" class="admin-v3-nav-link">Case: ' + escapeHtml(casesById[e.linked_case_id].title || '(Untitled)') + '</a></span>';
+          }
+          
+          return '<li class="income-item" data-id="' + escapeHtml(e.id) + '">' +
+            '<div class="income-info">' +
+            '<div class="income-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
+            '<div class="income-meta">' +
+            (e.status ? '<span class="badge ' + escapeHtml(e.status) + '">' + escapeHtml(e.status) + '</span>' : '') +
+            (e.income_type ? '<span>' + escapeHtml(e.income_type) + '</span>' : '') +
+            (e.amount ? '<span class="amount">' + escapeHtml(e.amount) + ' ' + escapeHtml(e.currency || 'EUR') + '</span>' : '') +
+            (e.gross_or_net ? '<span> (' + escapeHtml(e.gross_or_net) + ')</span>' : '') +
+            (dateStr ? '<span> · ' + escapeHtml(dateStr) + '</span>' : '') +
+            (e.invoice_number ? '<span> · Invoice: ' + escapeHtml(e.invoice_number) + '</span>' : '') +
+            linkedCalendarLabel +
+            linkedCaseLabel +
+            '</div>' +
+            '</div>' +
+            '<div class="income-actions">' +
+            '<button class="secondary" data-action="edit" data-id="' + escapeHtml(e.id) + '">Edit</button>' +
+            '<button class="danger" data-action="delete" data-id="' + escapeHtml(e.id) + '">Delete</button>' +
+            '</div>' +
+            '</li>';
+        }).join('');
+
+        // Attach action handlers
+        window.adminV3UIHelpers.attachActionHandlers(listEl, {
+          edit: openEditForm,
+          delete: deleteIncome
+        });
+      }).catch(function (err) {
+        console.error('Error loading related entities:', err);
+        // Fallback to simple rendering without labels
+        listEl.innerHTML = entries.map(function (e) {
+          var dateStr = formatDate(e.paid_date) || formatDate(e.invoice_date);
+          
+          return '<li class="income-item" data-id="' + escapeHtml(e.id) + '">' +
+            '<div class="income-info">' +
+            '<div class="income-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
+            '<div class="income-meta">' +
+            (e.status ? '<span class="badge ' + escapeHtml(e.status) + '">' + escapeHtml(e.status) + '</span>' : '') +
+            (e.income_type ? '<span>' + escapeHtml(e.income_type) + '</span>' : '') +
+            (e.amount ? '<span class="amount">' + escapeHtml(e.amount) + ' ' + escapeHtml(e.currency || 'EUR') + '</span>' : '') +
+            (e.gross_or_net ? '<span> (' + escapeHtml(e.gross_or_net) + ')</span>' : '') +
+            (dateStr ? '<span> · ' + escapeHtml(dateStr) + '</span>' : '') +
+            (e.invoice_number ? '<span> · Invoice: ' + escapeHtml(e.invoice_number) + '</span>' : '') +
+            (e.linked_calendar_id ? '<span> · Calendar linked</span>' : '') +
+            (e.linked_case_id ? '<span> · Case linked</span>' : '') +
+            '</div>' +
+            '</div>' +
+            '<div class="income-actions">' +
+            '<button class="secondary" data-action="edit" data-id="' + escapeHtml(e.id) + '">Edit</button>' +
+            '<button class="danger" data-action="delete" data-id="' + escapeHtml(e.id) + '">Delete</button>' +
+            '</div>' +
+            '</li>';
+        }).join('');
+
+        // Attach action handlers
+        window.adminV3UIHelpers.attachActionHandlers(listEl, {
+          edit: openEditForm,
+          delete: deleteIncome
+        });
+      });
+    }
+
+    function openCreateForm() {
+      isCreating = true;
+      currentIncomeId = null;
+      document.getElementById('formTitle').textContent = 'New Income Entry';
+      document.getElementById('incomeForm').reset();
+      populateLinkingDropdowns();
+      showForm(true);
+    }
+
+    function openEditForm(id) {
+      isCreating = false;
+      currentIncomeId = id;
+      document.getElementById('formTitle').textContent = 'Edit Income Entry';
+      
+      setStatus('Loading income entry...', 'loading');
+      store.income.getById(id).then(function (e) {
+        if (!e) {
+          setStatus('Income entry not found', 'error');
+          return;
+        }
+        clearStatus();
+        
+        document.getElementById('title').value = e.title || '';
+        document.getElementById('income_type').value = e.income_type || '';
+        document.getElementById('status').value = e.status || '';
+        document.getElementById('amount').value = e.amount || '';
+        document.getElementById('currency').value = e.currency || 'EUR';
+        document.getElementById('gross_or_net').value = e.gross_or_net || '';
+        document.getElementById('invoice_number').value = e.invoice_number || '';
+        document.getElementById('invoice_date').value = e.invoice_date ? e.invoice_date.slice(0, 10) : '';
+        document.getElementById('due_date').value = e.due_date ? e.due_date.slice(0, 10) : '';
+        document.getElementById('paid_date').value = e.paid_date ? e.paid_date.slice(0, 10) : '';
+        document.getElementById('payment_method').value = e.payment_method || '';
+        document.getElementById('travel_reimbursed').checked = e.travel_reimbursed || false;
+        document.getElementById('hotel_covered').checked = e.hotel_covered || false;
+        document.getElementById('cash_component').value = e.cash_component || '';
+        document.getElementById('bank_transfer_reference').value = e.bank_transfer_reference || '';
+        document.getElementById('tax_notes').value = e.tax_notes || '';
+        document.getElementById('notes_internal').value = e.notes_internal || '';
+        
+        populateLinkingDropdowns();
+        document.getElementById('linked_calendar_id').value = e.linked_calendar_id || '';
+        document.getElementById('linked_case_id').value = e.linked_case_id || '';
+        showForm(true);
+      }).catch(function (err) {
+        setStatus('Error loading income entry: ' + err.message, 'error');
+      });
+    }
+
+    function saveIncome(e) {
+      e.preventDefault();
+      
+      var formData = new FormData(e.target);
+      var incomeData = {
+        title: formData.get('title'),
+        income_type: formData.get('income_type'),
+        status: formData.get('status'),
+        amount: Number(formData.get('amount')),
+        currency: formData.get('currency'),
+        gross_or_net: formData.get('gross_or_net'),
+        invoice_number: formData.get('invoice_number'),
+        invoice_date: formData.get('invoice_date') ? new Date(formData.get('invoice_date')).toISOString() : null,
+        due_date: formData.get('due_date') ? new Date(formData.get('due_date')).toISOString() : null,
+        paid_date: formData.get('paid_date') ? new Date(formData.get('paid_date')).toISOString() : null,
+        payment_method: formData.get('payment_method'),
+        travel_reimbursed: document.getElementById('travel_reimbursed').checked,
+        hotel_covered: document.getElementById('hotel_covered').checked,
+        cash_component: Number(formData.get('cash_component')) || 0,
+        bank_transfer_reference: formData.get('bank_transfer_reference'),
+        linked_calendar_id: formData.get('linked_calendar_id'),
+        linked_case_id: formData.get('linked_case_id'),
+        tax_notes: formData.get('tax_notes'),
+        notes_internal: formData.get('notes_internal')
+      };
+
+      if (isCreating) {
+        var newIncome = window.adminV3Factories.createIncome(incomeData);
+        setStatus('Creating income entry...', 'loading');
+        store.income.insert(newIncome).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadIncome();
+        }).catch(function (err) {
+          setStatus('Error creating income entry: ' + err.message, 'error');
+        });
+      } else {
+        incomeData.id = currentIncomeId;
+        incomeData.updated_at = new Date().toISOString();
+        setStatus('Updating income entry...', 'loading');
+        store.income.update(currentIncomeId, incomeData).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadIncome();
+        }).catch(function (err) {
+          setStatus('Error updating income entry: ' + err.message, 'error');
+        });
+      }
+    }
+
+    function deleteIncome(id) {
+      if (!confirm('Delete this income entry?')) return;
+      
+      setStatus('Deleting income entry...', 'loading');
+      store.income.delete(id).then(function (success) {
+        clearStatus();
+        loadIncome();
+      }).catch(function (err) {
+        setStatus('Error deleting income entry: ' + err.message, 'error');
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function populateLinkingDropdowns() {
+      // Populate Calendar dropdown
+      store.calendar.getAll().then(function (events) {
+        var select = document.getElementById('linked_calendar_id');
+        var currentValue = select.value;
+        select.innerHTML = '<option value="">None</option>';
+        if (events && events.length > 0) {
+          events.forEach(function (e) {
+            var dateStr = e.start_date ? e.start_date.slice(0, 10) : '';
+            select.innerHTML += '<option value="' + escapeHtml(e.id) + '">' + escapeHtml(e.title || '(Untitled)') + (dateStr ? ' (' + escapeHtml(dateStr) + ')' : '') + '</option>';
+          });
+        }
+        select.value = currentValue;
+      }).catch(function (err) {
+        console.error('Error loading calendar entries for dropdown:', err);
+      });
+
+      // Populate Cases dropdown
+      store.cases.getAll().then(function (cases) {
+        var select = document.getElementById('linked_case_id');
+        var currentValue = select.value;
+        select.innerHTML = '<option value="">None</option>';
+        if (cases && cases.length > 0) {
+          cases.forEach(function (c) {
+            select.innerHTML += '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.title || '(Untitled)') + '</option>';
+          });
+        }
+        select.value = currentValue;
+      }).catch(function (err) {
+        console.error('Error loading cases for dropdown:', err);
+      });
+    }
+
+    function init() {
+      // Set print date
+      document.getElementById('printDate').textContent = formatDate(new Date());
+      
+      // Export PDF button
+      document.getElementById('exportPdfBtn').addEventListener('click', function () {
+        window.print();
+      });
+      
+      // Initialize auth
+      window.adminV3Auth.init().then(function (initialized) {
+        if (!initialized) {
+          document.getElementById('authGate').innerHTML = '<p>Auth initialization failed. Please refresh.</p>';
+          return;
+        }
+
+        // Wait for auth state resolution
+        return window.adminV3Auth.ensureAuthResolved();
+      }).then(function (resolved) {
+        if (!resolved) {
+          document.getElementById('authGate').innerHTML = '<p>Auth state resolution failed. Please refresh.</p>';
+          return;
+        }
+
+        // Check auth
+        return window.adminV3Auth.checkAuth();
+      }).then(function (result) {
+        if (!result.authenticated) {
+          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('retryAuthBtn').addEventListener('click', function () {
+            window.location.reload();
+          });
+          return;
+        }
+
+        showAuthGate(false);
+
+        // Initialize shared navigation
+        if (window.adminV3Nav) {
+          window.adminV3Nav.renderNav('navContainer', 'income');
+          window.adminV3Nav.renderSignOut('signOutContainer', function () {
+            window.adminV3Auth.signOut().then(function () {
+              window.location.href = 'admin-v2.html';
+            });
+          });
+        }
+
+        // Initialize store
+        try {
+          store = window.adminV3StoreInterface.createFirestoreStore();
+          loadIncome();
+        } catch (err) {
+          setStatus('Error initializing store: ' + err.message, 'error');
+        }
+      }).catch(function (err) {
+        document.getElementById('authGate').innerHTML = '<p>Error: ' + err.message + '</p>';
+      });
+
+      // Event listeners
+      document.getElementById('refreshBtn').addEventListener('click', loadIncome);
+      document.getElementById('createBtn').addEventListener('click', openCreateForm);
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        showForm(false);
+      });
+      document.getElementById('filterStatus').addEventListener('change', function (e) {
+        filters.status = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('filterPaid').addEventListener('change', function (e) {
+        filters.paid = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('clearFiltersBtn').addEventListener('click', function () {
+        filters = { status: '', paid: '' };
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterPaid').value = '';
+        saveFilters();
+        applyFilters();
+      });
+      document.getElementById('incomeForm').addEventListener('submit', saveIncome);
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

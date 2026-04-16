@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin v3 - Cases</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { margin-top: 0; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .status.error { background: #fee; color: #c00; }
+    .status.ok { background: #efe; color: #080; }
+    .status.loading { background: #ffd; color: #660; }
+    .toolbar { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button.primary { background: #007bff; color: white; }
+    button.danger { background: #dc3545; color: white; }
+    button.secondary { background: #6c757d; color: white; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .case-list { list-style: none; padding: 0; margin: 0; }
+    .case-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .case-item:last-child { border-bottom: none; }
+    .case-info { flex: 1; min-width: 200px; }
+    .case-title { font-weight: bold; margin-bottom: 5px; }
+    .case-meta { font-size: 12px; color: #666; }
+    .case-actions { display: flex; gap: 5px; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px; }
+    .badge.lead { background: #dbeafe; color: #1e40af; }
+    .badge.qualified { background: #fef3c7; color: #92400e; }
+    .badge.negotiating { background: #e0e7ff; color: #3730a3; }
+    .badge.confirmed { background: #dcfce7; color: #166534; }
+    .badge.declined { background: #fee2e2; color: #991b1b; }
+    .badge.lost { background: #f1f5f9; color: #475569; }
+    .badge.archived { background: #f1f5f9; color: #475569; }
+    .empty-state { text-align: center; padding: 40px; color: #666; }
+    .form { display: none; padding: 20px; background: #f9f9f9; border-radius: 4px; margin: 20px 0; }
+    .form.visible { display: block; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .filter-bar { display: flex; gap: 15px; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; gap: 5px; align-items: center; }
+    .filter-group label { font-size: 13px; font-weight: bold; }
+    .filter-group select { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+    @media (max-width: 600px) {
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group { flex-direction: column; align-items: stretch; }
+      .filter-group select { width: 100%; }
+      #clearFiltersBtn { width: 100%; margin-left: 0 !important; }
+    }
+    .auth-gate { text-align: center; padding: 40px; }
+    
+    /* Shared navigation */
+    .admin-v3-nav { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; }
+    .admin-v3-nav-section { margin-bottom: 10px; }
+    .admin-v3-nav-section:last-child { margin-bottom: 0; }
+    .admin-v3-nav-link { color: #007bff; text-decoration: none; margin-right: 15px; font-size: 14px; display: inline-block; margin-bottom: 5px; }
+    .admin-v3-nav-link:hover { text-decoration: underline; }
+    .admin-v3-nav-link.active { color: #333; font-weight: bold; }
+    .admin-v3-nav-link.admin-v3-nav-disabled { color: #999; cursor: default; }
+    .admin-v3-nav-upcoming { padding-top: 10px; border-top: 1px solid #eee; }
+    .admin-v3-sign-out { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; font-size: 13px; background: #6c757d; color: white; }
+    .admin-v3-sign-out:hover { background: #5a6268; }
+    
+    /* Print styles */
+    @media print {
+      body { background: white; color: black; }
+      .auth-gate, #navContainer, #signOutContainer, .status, .filter-bar, .case-actions, .form, #createBtn, #refreshBtn { display: none !important; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      h1 { margin-bottom: 10px; }
+      .case-item { page-break-inside: avoid; border: 1px solid #ccc; margin-bottom: 10px; }
+      .case-item a { text-decoration: none; color: black; }
+      .case-item a[href]:after { content: " (" attr(href) ")"; font-size: 10px; color: #666; }
+      .case-actions { display: none; }
+    }
+    
+    .print-header {
+      display: none;
+    }
+    
+    @media print {
+      .print-header {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+      .print-header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .print-header .date {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="print-header">
+      <h1>Admin v3 - Cases</h1>
+      <div class="date" id="printDate"></div>
+    </div>
+    <h1>Admin v3 - Cases</h1>
+    
+    <div id="authGate" class="auth-gate">
+      <p>Checking authentication...</p>
+    </div>
+
+    <div id="app" style="display:none">
+      <div id="navContainer"></div>
+      <div id="status" class="status" style="display:none"></div>
+
+      <div class="toolbar">
+        <button id="createBtn" class="primary">New Case</button>
+        <button id="refreshBtn" class="secondary">Refresh</button>
+        <button id="exportPdfBtn" class="secondary">Export PDF</button>
+        <span id="signOutContainer" style="margin-left: auto;"></span>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="filterStatus">Status:</label>
+          <select id="filterStatus">
+            <option value="">All</option>
+            <option value="lead">Lead</option>
+            <option value="qualified">Qualified</option>
+            <option value="negotiating">Negotiating</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="declined">Declined</option>
+            <option value="lost">Lost</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterPriority">Priority:</label>
+          <select id="filterPriority">
+            <option value="">All</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <button id="clearFiltersBtn" class="secondary" style="margin-left: 10px;">Clear Filters</button>
+      </div>
+
+      <div id="listView">
+        <ul id="caseList" class="case-list"></ul>
+      </div>
+
+      <div id="formView" class="form">
+        <h2 id="formTitle">Edit Case</h2>
+        <form id="caseForm">
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" required>
+          </div>
+          <div class="form-group">
+            <label for="opportunity_type">Type</label>
+            <select id="opportunity_type" name="opportunity_type">
+              <option value="">Select...</option>
+              <option value="concert">Concert</option>
+              <option value="recital">Recital</option>
+              <option value="gala">Gala</option>
+              <option value="teaching">Teaching</option>
+              <option value="masterclass">Masterclass</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="">Select...</option>
+              <option value="lead">Lead</option>
+              <option value="qualified">Qualified</option>
+              <option value="negotiating">Negotiating</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="declined">Declined</option>
+              <option value="lost">Lost</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority">
+              <option value="">Select...</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="estimated_fee">Estimated Fee</label>
+            <input type="number" id="estimated_fee" name="estimated_fee" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="estimated_currency">Currency</label>
+            <select id="estimated_currency" name="estimated_currency">
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="CHF">CHF</option>
+              <option value="ARS">ARS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="linked_venue_id">Linked Venue</label>
+            <select id="linked_venue_id" name="linked_venue_id">
+              <option value="">None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="notes_internal">Internal Notes</label>
+            <textarea id="notes_internal" name="notes_internal"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="cancelBtn" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-v3-auth.js"></script>
+  <script src="admin-v3-schemas.js"></script>
+  <script src="admin-v3-factories.js"></script>
+  <script src="admin-v3-helpers.js"></script>
+  <script src="admin-v3-store-interface.js"></script>
+  <script src="admin-v3-nav.js"></script>
+  <script src="admin-v3-ui-helpers.js"></script>
+  <script>
+    var store = null;
+    var currentCaseId = null;
+    var isCreating = false;
+    var allCases = [];
+    var filters = { status: '', priority: '' };
+    var FILTER_STORAGE_KEY = 'admin_v3_cases_filters';
+
+    function setStatus(text, type) {
+      var el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + (type || '');
+      el.style.display = 'block';
+    }
+
+    function clearStatus() {
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function showAuthGate(show) {
+      document.getElementById('authGate').style.display = show ? 'block' : 'none';
+      document.getElementById('app').style.display = show ? 'none' : 'block';
+    }
+
+    function showForm(show) {
+      document.getElementById('formView').className = show ? 'form visible' : 'form';
+      document.getElementById('listView').style.display = show ? 'none' : 'block';
+    }
+
+    function loadCases() {
+      setStatus('Loading cases...', 'loading');
+      return store.cases.getAll().then(function (cases) {
+        allCases = cases || [];
+        clearStatus();
+        loadFilters();
+        handleQueryParams();
+        applyFilters();
+        return cases;
+      }).catch(function (err) {
+        setStatus('Error loading cases: ' + err.message, 'error');
+        return [];
+      });
+    }
+
+    function applyFilters() {
+      var filtered = allCases;
+      
+      if (filters.status) {
+        filtered = filtered.filter(function (c) { return c.status === filters.status; });
+      }
+      
+      if (filters.priority) {
+        filtered = filtered.filter(function (c) { return c.priority === filters.priority; });
+      }
+      
+      renderCaseList(filtered);
+      saveFilters();
+    }
+    
+    function saveFilters() {
+      try {
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+      } catch (e) {
+        // localStorage not available, ignore
+      }
+    }
+    
+    function loadFilters() {
+      try {
+        var saved = localStorage.getItem(FILTER_STORAGE_KEY);
+        if (saved) {
+          filters = JSON.parse(saved);
+          document.getElementById('filterStatus').value = filters.status || '';
+          document.getElementById('filterPriority').value = filters.priority || '';
+        }
+      } catch (e) {
+        // localStorage not available or corrupt, ignore
+      }
+    }
+    
+    function handleQueryParams() {
+      var params = new URLSearchParams(window.location.search);
+      
+      if (params.get('new') === '1') {
+        openCreateForm();
+      }
+      
+      if (params.get('filter') === 'high_priority') {
+        filters.priority = 'high';
+        document.getElementById('filterPriority').value = 'high';
+      }
+    }
+
+    function renderCaseList(cases) {
+      var listEl = document.getElementById('caseList');
+      if (!cases || cases.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">No cases found. Click "New Case" to create one.</li>';
+        return;
+      }
+
+      // Load related entities for labels and counts
+      var venuesPromise = store.venues.getAll().catch(function () { return []; });
+      var calendarPromise = store.calendar.getAll().catch(function () { return []; });
+      var incomePromise = store.income.getAll().catch(function () { return []; });
+
+      Promise.all([venuesPromise, calendarPromise, incomePromise]).then(function (results) {
+        var allVenues = results[0] || [];
+        var allCalendar = results[1] || [];
+        var allIncome = results[2] || [];
+        
+        var venuesById = {};
+        allVenues.forEach(function (v) { venuesById[v.id] = v; });
+        
+        var calendarByCaseId = {};
+        allCalendar.forEach(function (e) {
+          if (e.linked_case_id) {
+            if (!calendarByCaseId[e.linked_case_id]) calendarByCaseId[e.linked_case_id] = 0;
+            calendarByCaseId[e.linked_case_id]++;
+          }
+        });
+        
+        var incomeByCaseId = {};
+        allIncome.forEach(function (e) {
+          if (e.linked_case_id) {
+            if (!incomeByCaseId[e.linked_case_id]) incomeByCaseId[e.linked_case_id] = 0;
+            incomeByCaseId[e.linked_case_id]++;
+          }
+        });
+
+        listEl.innerHTML = cases.map(function (c) {
+          var linkedVenueLabel = '';
+          if (c.linked_venue_id && venuesById[c.linked_venue_id]) {
+            linkedVenueLabel = '<span> · <a href="admin-v3-venues.html" class="admin-v3-nav-link">Venue: ' + escapeHtml(venuesById[c.linked_venue_id].name || '(Untitled)') + '</a></span>';
+          }
+          
+          var calendarCount = calendarByCaseId[c.id] || 0;
+          var incomeCount = incomeByCaseId[c.id] || 0;
+          
+          var linkedCounts = '';
+          if (calendarCount > 0 || incomeCount > 0) {
+            var countParts = [];
+            if (calendarCount > 0) countParts.push('<a href="admin-v3-calendar.html" class="admin-v3-nav-link">' + calendarCount + ' calendar</a>');
+            if (incomeCount > 0) countParts.push('<a href="admin-v3-income.html" class="admin-v3-nav-link">' + incomeCount + ' income</a>');
+            linkedCounts = '<span> · [' + countParts.join(', ') + ']</span>';
+          }
+          
+          // Follow-up info
+          var followupInfo = '';
+          if (c.next_followup_date) {
+            var now = new Date();
+            var followupDate = new Date(c.next_followup_date);
+            var isOverdue = followupDate < now;
+            var dateStr = formatDate(c.next_followup_date);
+            var overdueStyle = isOverdue ? 'color: #dc3545; font-weight: bold;' : '';
+            followupInfo = '<span style="' + overdueStyle + '"> · Follow-up: ' + escapeHtml(dateStr) + (isOverdue ? ' (overdue)' : '') + '</span>';
+          }
+          if (c.next_action) {
+            followupInfo += '<span> · ' + escapeHtml(c.next_action) + '</span>';
+          }
+          
+          return '<li class="case-item" data-id="' + escapeHtml(c.id) + '">' +
+            '<div class="case-info">' +
+            '<div class="case-title">' + escapeHtml(c.title || '(Untitled)') + '</div>' +
+            '<div class="case-meta">' +
+            (c.status ? '<span class="badge ' + escapeHtml(c.status) + '">' + escapeHtml(c.status) + '</span>' : '') +
+            (c.priority ? '<span class="badge">' + escapeHtml(c.priority) + '</span>' : '') +
+            (c.opportunity_type ? '<span>' + escapeHtml(c.opportunity_type) + '</span>' : '') +
+            (c.estimated_fee ? '<span> · ' + escapeHtml(c.estimated_fee) + ' ' + escapeHtml(c.estimated_currency || 'EUR') + '</span>' : '') +
+            linkedVenueLabel +
+            linkedCounts +
+            followupInfo +
+            '</div>' +
+            '</div>' +
+            '<div class="case-actions">' +
+            '<button class="secondary" data-action="edit" data-id="' + escapeHtml(c.id) + '">Edit</button>' +
+            '<button class="danger" data-action="delete" data-id="' + escapeHtml(c.id) + '">Delete</button>' +
+            '</div>' +
+            '</li>';
+        }).join('');
+
+        // Attach action handlers
+        window.adminV3UIHelpers.attachActionHandlers(listEl, {
+          edit: openEditForm,
+          delete: deleteCase
+        });
+      }).catch(function (err) {
+        console.error('Error loading related entities:', err);
+        // Fallback to simple rendering without labels
+        listEl.innerHTML = cases.map(function (c) {
+          return '<li class="case-item" data-id="' + escapeHtml(c.id) + '">' +
+            '<div class="case-info">' +
+            '<div class="case-title">' + escapeHtml(c.title || '(Untitled)') + '</div>' +
+            '<div class="case-meta">' +
+            (c.status ? '<span class="badge ' + escapeHtml(c.status) + '">' + escapeHtml(c.status) + '</span>' : '') +
+            (c.priority ? '<span class="badge">' + escapeHtml(c.priority) + '</span>' : '') +
+            (c.opportunity_type ? '<span>' + escapeHtml(c.opportunity_type) + '</span>' : '') +
+            (c.estimated_fee ? '<span> · ' + escapeHtml(c.estimated_fee) + ' ' + escapeHtml(c.estimated_currency || 'EUR') + '</span>' : '') +
+            (c.linked_venue_id ? '<span> · Venue linked</span>' : '') +
+            '</div>' +
+            '</div>' +
+            '<div class="case-actions">' +
+            '<button class="secondary" data-action="edit" data-id="' + escapeHtml(c.id) + '">Edit</button>' +
+            '<button class="danger" data-action="delete" data-id="' + escapeHtml(c.id) + '">Delete</button>' +
+            '</div>' +
+            '</li>';
+        }).join('');
+
+        // Attach action handlers
+        window.adminV3UIHelpers.attachActionHandlers(listEl, {
+          edit: openEditForm,
+          delete: deleteCase
+        });
+      });
+    }
+
+    function openCreateForm() {
+      isCreating = true;
+      currentCaseId = null;
+      document.getElementById('formTitle').textContent = 'New Case';
+      document.getElementById('caseForm').reset();
+      populateLinkingDropdowns();
+      showForm(true);
+    }
+
+    function openEditForm(id) {
+      isCreating = false;
+      currentCaseId = id;
+      document.getElementById('formTitle').textContent = 'Edit Case';
+      
+      setStatus('Loading case...', 'loading');
+      store.cases.getById(id).then(function (c) {
+        if (!c) {
+          setStatus('Case not found', 'error');
+          return;
+        }
+        clearStatus();
+        
+        document.getElementById('title').value = c.title || '';
+        document.getElementById('opportunity_type').value = c.opportunity_type || '';
+        document.getElementById('status').value = c.status || '';
+        document.getElementById('priority').value = c.priority || '';
+        document.getElementById('estimated_fee').value = c.estimated_fee || '';
+        document.getElementById('estimated_currency').value = c.estimated_currency || 'EUR';
+        document.getElementById('description').value = c.description || '';
+        document.getElementById('notes_internal').value = c.notes_internal || '';
+        
+        populateLinkingDropdowns();
+        document.getElementById('linked_venue_id').value = c.linked_venue_id || '';
+        showForm(true);
+      }).catch(function (err) {
+        setStatus('Error loading case: ' + err.message, 'error');
+      });
+    }
+
+    function saveCase(e) {
+      e.preventDefault();
+      
+      var formData = new FormData(e.target);
+      var caseData = {
+        title: formData.get('title'),
+        opportunity_type: formData.get('opportunity_type'),
+        status: formData.get('status'),
+        priority: formData.get('priority'),
+        estimated_fee: Number(formData.get('estimated_fee')) || 0,
+        estimated_currency: formData.get('estimated_currency') || 'EUR',
+        linked_venue_id: formData.get('linked_venue_id'),
+        description: formData.get('description'),
+        notes_internal: formData.get('notes_internal')
+      };
+
+      if (isCreating) {
+        var newCase = window.adminV3Factories.createCase(caseData);
+        setStatus('Creating case...', 'loading');
+        store.cases.insert(newCase).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadCases();
+        }).catch(function (err) {
+          setStatus('Error creating case: ' + err.message, 'error');
+        });
+      } else {
+        caseData.id = currentCaseId;
+        caseData.updated_at = new Date().toISOString();
+        setStatus('Updating case...', 'loading');
+        store.cases.update(currentCaseId, caseData).then(function (saved) {
+          clearStatus();
+          showForm(false);
+          loadCases();
+        }).catch(function (err) {
+          setStatus('Error updating case: ' + err.message, 'error');
+        });
+      }
+    }
+
+    function deleteCase(id) {
+      if (!confirm('Delete this case?')) return;
+      
+      setStatus('Deleting case...', 'loading');
+      store.cases.delete(id).then(function (success) {
+        clearStatus();
+        loadCases();
+      }).catch(function (err) {
+        setStatus('Error deleting case: ' + err.message, 'error');
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function populateLinkingDropdowns() {
+      // Populate Venues dropdown
+      store.venues.getAll().then(function (venues) {
+        var select = document.getElementById('linked_venue_id');
+        var currentValue = select.value;
+        select.innerHTML = '<option value="">None</option>';
+        if (venues && venues.length > 0) {
+          venues.forEach(function (v) {
+            select.innerHTML += '<option value="' + escapeHtml(v.id) + '">' + escapeHtml(v.name || '(Untitled)') + '</option>';
+          });
+        }
+        select.value = currentValue;
+      }).catch(function (err) {
+        console.error('Error loading venues for dropdown:', err);
+      });
+    }
+
+    function init() {
+      // Set print date
+      document.getElementById('printDate').textContent = formatDate(new Date());
+      
+      // Export PDF button
+      document.getElementById('exportPdfBtn').addEventListener('click', function () {
+        window.print();
+      });
+      
+      // Initialize auth
+      window.adminV3Auth.init().then(function (initialized) {
+        if (!initialized) {
+          document.getElementById('authGate').innerHTML = '<p>Auth initialization failed. Please refresh.</p>';
+          return;
+        }
+
+        // Wait for auth state resolution
+        return window.adminV3Auth.ensureAuthResolved();
+      }).then(function (resolved) {
+        if (!resolved) {
+          document.getElementById('authGate').innerHTML = '<p>Auth state resolution failed. Please refresh.</p>';
+          return;
+        }
+
+        // Check auth
+        return window.adminV3Auth.checkAuth();
+      }).then(function (result) {
+        if (!result.authenticated) {
+          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('retryAuthBtn').addEventListener('click', function () {
+            window.location.reload();
+          });
+          return;
+        }
+
+        showAuthGate(false);
+
+        // Initialize shared navigation
+        if (window.adminV3Nav) {
+          window.adminV3Nav.renderNav('navContainer', 'cases');
+          window.adminV3Nav.renderSignOut('signOutContainer', function () {
+            window.adminV3Auth.signOut().then(function () {
+              window.location.href = 'admin-v2.html';
+            });
+          });
+        }
+
+        // Initialize store
+        try {
+          store = window.adminV3StoreInterface.createFirestoreStore();
+          loadCases();
+        } catch (err) {
+          setStatus('Error initializing store: ' + err.message, 'error');
+        }
+      }).catch(function (err) {
+        document.getElementById('authGate').innerHTML = '<p>Error: ' + err.message + '</p>';
+      });
+
+      // Event listeners
+      document.getElementById('refreshBtn').addEventListener('click', loadCases);
+      document.getElementById('createBtn').addEventListener('click', openCreateForm);
+      document.getElementById('cancelBtn').addEventListener('click', function () {
+        showForm(false);
+      });
+      document.getElementById('filterStatus').addEventListener('change', function (e) {
+        filters.status = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('filterPriority').addEventListener('change', function (e) {
+        filters.priority = e.target.value;
+        applyFilters();
+      });
+      document.getElementById('clearFiltersBtn').addEventListener('click', function () {
+        filters = { status: '', priority: '' };
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterPriority').value = '';
+        saveFilters();
+        applyFilters();
+      });
+      document.getElementById('caseForm').addEventListener('submit', saveCase);
+      document.getElementById('signOutBtn').addEventListener('click', function () {
+        window.adminV3Auth.signOut().then(function () {
+          window.location.href = 'admin-v2.html';
+        });
+      });
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
