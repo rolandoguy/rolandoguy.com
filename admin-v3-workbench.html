@@ -562,7 +562,7 @@
         return window.adminV3Auth.checkAuth();
       }).then(function (result) {
         if (!result.authenticated) {
-          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('authGate').innerHTML = window.adminV3Auth.renderAccessDeniedHtml(result);
           document.getElementById('retryAuthBtn').addEventListener('click', function () {
             window.location.reload();
           });

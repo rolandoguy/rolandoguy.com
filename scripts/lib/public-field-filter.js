@@ -186,7 +186,16 @@ var INTERNAL_FIELD_BLACKLIST = [
   'statusInternal',
   'publication_contact',
   'contact_override',
-  'homepage_priority' // Only if used for internal ranking; can be public if needed for homepage highlights
+  'homepage_priority', // Only if used for internal ranking; can be public if needed for homepage highlights
+  // Revenue and payment fields (internal financial data from rg_perfs)
+  'revenueAmount',
+  'revenueCurrency',
+  'revenueStatus',
+  'revenueNotes',
+  'paymentStatus',
+  'paymentModel',
+  'actualReceivedAmount',
+  'actualReceivedCurrency'
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

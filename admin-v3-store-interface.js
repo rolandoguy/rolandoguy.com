@@ -76,6 +76,32 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+function getCalendarHelpers() {
+  if (typeof window !== 'undefined' && window.adminV3Helpers) {
+    return window.adminV3Helpers;
+  }
+  if (typeof module !== 'undefined' && module.exports) {
+    try {
+      return require('./admin-v3-helpers');
+    } catch (err) {
+      console.warn('[admin-v3-store] Could not load admin-v3-helpers:', err);
+    }
+  }
+  return null;
+}
+
+function normalizeRecord(collection, record) {
+  if (!record || typeof record !== 'object') return record;
+  if (collection !== 'calendar') return record;
+
+  var helpers = getCalendarHelpers();
+  if (helpers && typeof helpers.normalizeCalendarEvent === 'function') {
+    return helpers.normalizeCalendarEvent(record);
+  }
+
+  return clone(record);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH TOKEN FETCH
 // ─────────────────────────────────────────────────────────────────────────────
@@ -155,8 +181,9 @@ function createEntityStore(collection) {
             if (parsed && Array.isArray(parsed.records)) {
               // Return the records array (each record is an entity instance)
               return parsed.records.map(function (record) {
-                cache[record.id] = record;
-                return record;
+                var normalizedRecord = normalizeRecord(collection, record);
+                cache[normalizedRecord.id] = normalizedRecord;
+                return normalizedRecord;
               });
             }
             return null;
@@ -204,7 +231,7 @@ function createEntityStore(collection) {
           if (index < 0) {
             return null;
           }
-          var record = parsed.records[index];
+          var record = normalizeRecord(collection, parsed.records[index]);
           setCache(collection, id, record);
           return record;
         });
@@ -212,6 +239,8 @@ function createEntityStore(collection) {
     },
 
     insert: function (doc) {
+      doc = normalizeRecord(collection, doc);
+
       if (!doc || !doc.id) {
         return Promise.reject(new Error('Document must have id'));
       }
@@ -299,6 +328,7 @@ function createEntityStore(collection) {
         return Promise.reject(new Error('Document id and doc required'));
       }
 
+      doc = normalizeRecord(collection, doc);
       doc.id = id; // Ensure id is set
       var expectedDocKey = STORE_CONFIG.entityPrefix + collection;
       var url = getEntityDocUrl(collection);

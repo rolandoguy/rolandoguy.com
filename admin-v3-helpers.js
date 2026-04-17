@@ -34,21 +34,34 @@ function validateEntity(entity, schema, requiredFields, enums) {
   Object.keys(schema).forEach(function (field) {
     var expectedType = schema[field];
     var value = entity[field];
+    var allowedTypes = String(expectedType).split('|');
     
     if (value === null || value === undefined || value === '') {
+      if (value === null && allowedTypes.indexOf('null') >= 0) {
+        return;
+      }
       return; // Skip empty values
     }
     
-    if (expectedType === 'number' && typeof value !== 'number') {
-      errors.push(field + ' must be a number');
+    var unsupportedTypes = allowedTypes.filter(function (type) {
+      return ['string', 'number', 'boolean', 'array', 'null'].indexOf(type) === -1;
+    });
+    if (unsupportedTypes.length) {
+      errors.push(field + ' has unsupported schema type(s): ' + unsupportedTypes.join(', '));
+      return;
     }
-    
-    if (expectedType === 'boolean' && typeof value !== 'boolean') {
-      errors.push(field + ' must be a boolean');
-    }
-    
-    if (expectedType === 'array' && !Array.isArray(value)) {
-      errors.push(field + ' must be an array');
+
+    var matchesType = allowedTypes.some(function (type) {
+      if (type === 'number') return typeof value === 'number';
+      if (type === 'boolean') return typeof value === 'boolean';
+      if (type === 'array') return Array.isArray(value);
+      if (type === 'string') return typeof value === 'string';
+      if (type === 'null') return value === null;
+      return false;
+    });
+
+    if (!matchesType) {
+      errors.push(field + ' must be one of: ' + allowedTypes.join(', '));
     }
   });
   
@@ -84,8 +97,48 @@ function validateIncome(entity, enums) {
 // DATE FORMATTING HELPER
 // ─────────────────────────────────────────────────────────────────────────────
 
+function normalizeDateOnlyString(value) {
+  if (!value) return '';
+  var trimmed = String(value).trim();
+  if (!trimmed) return '';
+
+  var match = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
+
+  var date = new Date(trimmed);
+  if (isNaN(date.getTime())) return trimmed;
+
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizePaymentModel(value) {
+  if (!value) return '';
+  return value === 'fee_performance' ? 'fee_per_performance' : String(value);
+}
+
+function normalizeCalendarEvent(event) {
+  if (!event || typeof event !== 'object') return event;
+
+  var normalized = clone(event);
+  normalized.payment_model = normalizePaymentModel(normalized.payment_model);
+  normalized.confirmed_on = normalizeDateOnlyString(normalized.confirmed_on);
+  normalized.follow_up_due = normalizeDateOnlyString(normalized.follow_up_due);
+  if (!Array.isArray(normalized.artists)) normalized.artists = [];
+  if (!Array.isArray(normalized.pending_items)) normalized.pending_items = [];
+  normalized.all_day = Boolean(normalized.all_day);
+
+  return normalized;
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '';
+
+  var normalized = normalizeDateOnlyString(dateStr);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    var parts = normalized.split('-');
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
+  }
+
   var date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr; // Return original if invalid
   
@@ -180,6 +233,10 @@ if (typeof window !== 'undefined') {
     validateVenue: validateVenue,
     validateCalendarEvent: validateCalendarEvent,
     validateIncome: validateIncome,
+    formatDate: formatDate,
+    normalizeDateOnlyString: normalizeDateOnlyString,
+    normalizePaymentModel: normalizePaymentModel,
+    normalizeCalendarEvent: normalizeCalendarEvent,
     getCasesByVenue: getCasesByVenue,
     getCasesByContact: getCasesByContact,
     getContactsByVenue: getContactsByVenue,
@@ -201,6 +258,10 @@ if (typeof module !== 'undefined' && module.exports) {
     validateVenue: validateVenue,
     validateCalendarEvent: validateCalendarEvent,
     validateIncome: validateIncome,
+    formatDate: formatDate,
+    normalizeDateOnlyString: normalizeDateOnlyString,
+    normalizePaymentModel: normalizePaymentModel,
+    normalizeCalendarEvent: normalizeCalendarEvent,
     getCasesByVenue: getCasesByVenue,
     getCasesByContact: getCasesByContact,
     getContactsByVenue: getContactsByVenue,

@@ -146,22 +146,39 @@ var VENUES_ENUMS = {
 var CALENDAR_SCHEMA = {
   id: 'string',                    // Stable UUID
   title: 'string',
-  event_type: 'string',           // concert, recital, teaching, other
+  event_type: 'string',           // concert, recital, teaching, other, engagement
   start_date: 'string',           // ISO date string
   end_date: 'string',             // ISO date string
   start_time: 'string',           // HH:MM format
   end_time: 'string',             // HH:MM format
   all_day: 'boolean',
   timezone: 'string',
+  venue: 'string',                // Venue name fallback when no linked venue exists
   venue_id: 'string',             // Reference to Venues entity
+  city: 'string',
   linked_case_id: 'string',       // Reference to Cases entity
   status: 'string',               // tentative, confirmed, cancelled, completed
-  expected_income: 'number',
+  expected_income: 'number|null', // Optional amount; null when unknown
   currency: 'string',             // EUR, USD, GBP, CHF, ARS
-  public_visibility: 'boolean',
+  public_visibility: 'string',    // public, internal_only
+  public_calendar_readiness: 'string', // ready, pending_practical_details, not_ready
+  confirmed_on: 'string',         // YYYY-MM-DD date-only string
+  series: 'string',               // Series name (e.g., "Musik der Welt im Spiegelsaal")
+  project: 'string',              // Project name (e.g., "Tango Tenors")
+  format: 'string',               // Format (e.g., "duo recital", "solo", "ensemble")
+  artists: 'array',               // Array of artist names
+  audience_estimate: 'number',    // Expected audience size
+  fee_status: 'string',           // pending_confirmation, confirmed, invoiced, paid
+  payment_model: 'string',        // fee_per_performance, split_ticket, guarantee_plus, not_yet_defined
+  pending_items: 'array',         // Array of pending items (e.g., ["schedule", "duration"])
+  next_action: 'string',          // Next action item
+  follow_up_due: 'string',        // YYYY-MM-DD date-only string
   program: 'string',
   notes_internal: 'string',
   notes_public: 'string',
+  source_system: 'string',        // e.g. admin_v2
+  source_id: 'string',            // Original source record id
+  migrated_at: 'string',          // ISO datetime string
   created_at: 'string',           // ISO date string
   updated_at: 'string'            // ISO date string
 };
@@ -169,9 +186,13 @@ var CALENDAR_SCHEMA = {
 var CALENDAR_REQUIRED_FIELDS = ['id', 'title', 'start_date'];
 
 var CALENDAR_ENUMS = {
-  event_type: ['concert', 'recital', 'teaching', 'other'],
+  event_type: ['concert', 'recital', 'teaching', 'other', 'engagement'],
   status: ['tentative', 'confirmed', 'cancelled', 'completed'],
-  currency: ['EUR', 'USD', 'GBP', 'CHF', 'ARS']
+  currency: ['EUR', 'USD', 'GBP', 'CHF', 'ARS'],
+  public_visibility: ['public', 'internal_only'],
+  public_calendar_readiness: ['ready', 'pending_practical_details', 'not_ready'],
+  fee_status: ['pending_confirmation', 'confirmed', 'invoiced', 'paid'],
+  payment_model: ['fee_per_performance', 'split_ticket', 'guarantee_plus', 'not_yet_defined']
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -199,6 +220,9 @@ var INCOME_SCHEMA = {
   bank_transfer_reference: 'string',
   tax_notes: 'string',
   notes_internal: 'string',
+  source_system: 'string',        // e.g. admin_v2
+  source_id: 'string',            // Original source record id
+  migrated_at: 'string',          // ISO datetime string
   created_at: 'string',           // ISO date string
   updated_at: 'string'            // ISO date string
 };

@@ -23,26 +23,36 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">Admin v2.0</div>
       <nav class="nav" id="nav">
-        <button data-section="rep" class="nav-item">Repertoire</button>
-        <button data-section="programs" class="nav-item">Programs</button>
-        <button data-section="programbuilder" class="nav-item">Programme Offers</button>
-        <button data-section="programbuilder_fee" class="nav-item">Fee Estimate</button>
-        <button data-section="discovery" class="nav-item">Repertoire Discovery</button>
-        <button data-section="media" class="nav-item">Media</button>
-        <button data-section="pastperfs" class="nav-item">Past Events</button>
-        <button data-section="outreach" class="nav-item">Venues / Opportunities</button>
-        <button data-section="calendar" class="nav-item">Calendar</button>
-        <button data-section="income" class="nav-item">Income / Earnings</button>
-        <button data-section="bio" class="nav-item">Biography</button>
-        <button data-section="home" class="nav-item active">Home / Hero</button>
-        <button data-section="press" class="nav-item">Press / EPK</button>
-        <button data-section="contact" class="nav-item">Contact</button>
-        <button data-section="contacts" class="nav-item">Contacts / Follow-ups</button>
+        <div class="nav-group" data-nav-group="workflow">
+          <div class="nav-group-label">Workflow / Internal</div>
+          <div class="nav-group-items" id="nav-group-workflow-items">
+            <button data-section="cases" class="nav-item">Cases</button>
+            <button data-section="contacts" class="nav-item">Contacts / Follow-ups</button>
+            <button data-section="outreach" class="nav-item">Venues / Opportunities</button>
+            <button data-section="calendar" class="nav-item">Calendar</button>
+            <button data-section="income" class="nav-item">Income / Earnings</button>
+          </div>
+        </div>
+        <div class="nav-group" data-nav-group="public">
+          <div class="nav-group-label nav-group-label--spaced">Public / Editorial</div>
+          <div class="nav-group-items" id="nav-group-public-items">
+            <button data-section="rep" class="nav-item">Repertoire</button>
+            <button data-section="programs" class="nav-item">Programs</button>
+            <button data-section="programbuilder" class="nav-item">Programme Offers</button>
+            <button data-section="discovery" class="nav-item">Repertoire Discovery</button>
+            <button data-section="media" class="nav-item">Media</button>
+            <button data-section="pastperfs" class="nav-item">Past Events</button>
+            <button data-section="bio" class="nav-item">Biography</button>
+            <button data-section="home" class="nav-item active">Home / Hero</button>
+            <button data-section="press" class="nav-item">Press / EPK</button>
+            <button data-section="contact" class="nav-item">Contact</button>
+            <button data-section="ui" class="nav-item">UI / Translations</button>
+            <button data-section="publishing" class="nav-item">Publishing</button>
+          </div>
+        </div>
         <details class="nav-more" id="nav-more-sections">
           <summary class="nav-more__summary">More sections</summary>
           <div class="nav-more__items">
-            <button data-section="ui" class="nav-item">UI / Translations</button>
-            <button data-section="publishing" class="nav-item">Publishing</button>
             <button data-section="translation" class="nav-item">Translation</button>
             <button data-section="sitehealth" class="nav-item">Dashboard / Site health</button>
             <button data-section="tools" class="nav-item">System / Tools</button>
@@ -76,10 +86,6 @@
             <span id="saveState" class="pill">Loading…</span>
             <button id="openPublicBtn">View live site</button>
             <button id="adm2TopSignOutBtn" type="button" style="display:none">Sign out</button>
-            <label class="toggle-chip" id="paperPreviewToggleWrap">
-              <input id="paperPreviewToggle" type="checkbox" checked>
-              <span>Paper Preview</span>
-            </label>
           </div>
           <details class="actions-more" id="topbarMoreTools" open>
             <summary>More tools</summary>
@@ -124,6 +130,82 @@
       <div id="draftRestoreBanner" class="draft-restore-banner" hidden></div>
 
       <main class="content">
+        <section id="section-cases" class="section">
+          <h2>Cases</h2>
+          <p class="muted">Internal-only opportunity tracker for the next concrete step. Keep one working title, a linked contact and venue, the next follow-up, expected fee context, and concise notes. This stays simple on purpose and never feeds public content.</p>
+          <div class="toolbar">
+            <button id="cases-new-record" type="button" class="button-primary">New case</button>
+            <button id="cases-export-pdf" type="button">Export PDF</button>
+            <span id="cases-count" class="pill">0 cases</span>
+            <label>Status filter
+              <select id="cases-status-filter">
+                <option value="all">All statuses</option>
+                <option value="open">Open</option>
+                <option value="waiting">Waiting</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label>Priority filter
+              <select id="cases-priority-filter">
+                <option value="all">All priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+            <button type="button" data-open-section="programbuilder_fee">Open Fee Estimate</button>
+            <button type="button" data-open-section="contacts">Open Contacts</button>
+            <button type="button" data-open-section="outreach">Open Venues</button>
+          </div>
+          <div class="split">
+            <div id="cases-list" class="item-list"></div>
+            <div class="editor">
+              <h3 id="cases-editor-title">New case</h3>
+              <label>Title<input id="cases-title"></label>
+              <label>Status
+                <select id="cases-status">
+                  <option value="open">Open</option>
+                  <option value="waiting">Waiting</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </label>
+              <label>Priority
+                <select id="cases-priority">
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </label>
+              <label>Linked contact
+                <select id="cases-linked_contact_id">
+                  <option value="">(no linked contact)</option>
+                </select>
+              </label>
+              <label>Linked venue
+                <select id="cases-linked_venue_id">
+                  <option value="">(no linked venue)</option>
+                </select>
+              </label>
+              <label>Next follow-up date
+                <input id="cases-next_followup_date" type="date">
+                <span class="cases-followup-actions">
+                  <button id="cases-followup-plus7" type="button">+7d</button>
+                  <button id="cases-followup-plus14" type="button">+14d</button>
+                </span>
+              </label>
+              <label>Next action<input id="cases-next_action" placeholder="Send follow-up email / confirm date / share offer"></label>
+              <label>Estimated fee<input id="cases-estimated_fee" placeholder="e.g. 1200 EUR"></label>
+              <label>Internal notes<textarea id="cases-notes_internal" rows="8"></textarea></label>
+              <div class="toolbar">
+                <button id="cases-save" type="button" class="button-primary">Save case</button>
+                <button id="cases-delete" type="button" class="danger">Delete selected</button>
+                <button id="cases-cancel" type="button">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </section>
         <section id="section-home" class="section active">
           <h2>Home / Hero</h2>
           <div class="toolbar">
@@ -1453,6 +1535,10 @@
               <summary>Offer wording, saved version &amp; private notes</summary>
               <p class="muted">Use this section only when you want to adjust the title, public framing, or save a named internal version.</p>
               <div class="toolbar">
+                <label class="toggle-chip pb-paper-preview-toggle" id="paperPreviewToggleWrap">
+                  <input id="paperPreviewToggle" type="checkbox" checked>
+                  <span>Paper Preview</span>
+                </label>
                 <span id="pb-status" class="pill info">Checking…</span>
                 <span id="pb-blueprint-key" class="pill">Saved offer</span>
               </div>

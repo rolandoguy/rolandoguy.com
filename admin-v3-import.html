@@ -137,6 +137,123 @@
     .status.loading { background: #fff3cd; color: #856404; }
     .status.error { background: #f8d7da; color: #721c24; }
     .status.success { background: #d4edda; color: #155724; }
+    .summary-note,
+    .result-note,
+    .calendar-action-note {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 4px;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      font-size: 13px;
+      display: none;
+    }
+    .calendar-steps {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .calendar-step {
+      flex: 1;
+      min-width: 180px;
+      background: #f8f9fa;
+      border: 1px solid #d8dee6;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .calendar-step__label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #6c757d;
+      margin-bottom: 4px;
+    }
+    .calendar-step__title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    .calendar-step.is-active {
+      border-color: #007bff;
+      background: #eaf3ff;
+    }
+    .calendar-step.is-complete {
+      border-color: #28a745;
+      background: #e9f7ef;
+    }
+    .calendar-step.is-locked {
+      border-style: dashed;
+    }
+    .result-note.is-loading,
+    .calendar-action-note.is-loading {
+      background: #fff3cd;
+      border-color: #ffe69c;
+      color: #856404;
+    }
+    .result-note.is-success,
+    .calendar-action-note.is-success {
+      background: #d4edda;
+      border-color: #b7dfbf;
+      color: #155724;
+    }
+    .result-note.is-error,
+    .calendar-action-note.is-error {
+      background: #f8d7da;
+      border-color: #f1b9bf;
+      color: #721c24;
+    }
+    .calendar-action-note.is-info {
+      background: #eaf3ff;
+      border-color: #c8dcf5;
+      color: #0b4f8a;
+    }
+    .preview-item__meta {
+      color: #666;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .preview-item__action {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-right: 6px;
+    }
+    .preview-item__action.create {
+      background: #d4edda;
+      color: #155724;
+    }
+    .preview-item__action.update {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .preview-item__action.skip {
+      background: #e2e3e5;
+      color: #495057;
+    }
+    @media (max-width: 700px) {
+      body {
+        padding: 12px;
+      }
+      .container {
+        padding: 18px;
+      }
+      .stats {
+        flex-direction: column;
+        gap: 10px;
+      }
+      button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -200,6 +317,22 @@
     <!-- Calendar Section -->
     <div class="section">
       <h2>Calendar (from rg_perfs)</h2>
+      <div class="calendar-steps" id="calendarSteps">
+        <div class="calendar-step is-active" id="calendarStepScan">
+          <span class="calendar-step__label">Step 1</span>
+          <div class="calendar-step__title">Scan Source</div>
+        </div>
+        <div class="calendar-step is-locked" id="calendarStepPreview">
+          <span class="calendar-step__label">Step 2</span>
+          <div class="calendar-step__title">Preview Import Plan</div>
+        </div>
+        <div class="calendar-step is-locked" id="calendarStepImport">
+          <span class="calendar-step__label">Step 3</span>
+          <div class="calendar-step__title">Run Import</div>
+        </div>
+      </div>
+      <div id="calendarActionNote" class="calendar-action-note"></div>
+      <div id="calendarResult" class="result-note"></div>
       <div class="stats">
         <div class="stat">
           <div class="stat-value" id="calendarSourceCount">-</div>
@@ -217,7 +350,31 @@
       <button id="calendarScanBtn" class="secondary">Scan Source</button>
       <button id="calendarPreviewBtn" class="secondary" disabled>Preview</button>
       <button id="calendarImportBtn" class="primary" disabled>Import</button>
+      <div id="calendarSummary" class="summary-note"></div>
       <div id="calendarPreview" class="preview-list" style="display:none;"></div>
+    </div>
+
+    <!-- Income Section -->
+    <div class="section">
+      <h2>Income (from rg_perfs, real financial data only)</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="incomeSourceCount">-</div>
+          <div class="stat-label">Source Records</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="incomeDuplicateCount">-</div>
+          <div class="stat-label">Duplicates</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="incomeNewCount">-</div>
+          <div class="stat-label">New to Import</div>
+        </div>
+      </div>
+      <button id="incomeScanBtn" class="secondary">Scan Source</button>
+      <button id="incomePreviewBtn" class="secondary" disabled>Preview</button>
+      <button id="incomeImportBtn" class="primary" disabled>Import</button>
+      <div id="incomePreview" class="preview-list" style="display:none;"></div>
     </div>
 
     <!-- Import Log -->
@@ -245,7 +402,17 @@
     var scanResults = {
       venues: null,
       contacts: null,
-      calendar: null
+      calendar: null,
+      income: null
+    };
+    var CALENDAR_SOURCE_SYSTEM = 'admin_v2';
+    var CALENDAR_SOURCE_DOC_KEY = 'rg_perfs';
+    var CALENDAR_TARGET_DOC_KEY = 'admin_v3_calendar';
+    var calendarUiState = {
+      scanned: false,
+      previewed: false,
+      importing: false,
+      completed: false
     };
 
     function setStatus(text, type) {
@@ -276,6 +443,352 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function safeString(value) {
+      if (value === null || value === undefined) return '';
+      return String(value);
+    }
+
+
+    function setCalendarActionNote(html, tone) {
+      var el = document.getElementById('calendarActionNote');
+      el.className = 'calendar-action-note' + (tone ? ' is-' + tone : '');
+      el.innerHTML = html || '';
+      el.style.display = html ? 'block' : 'none';
+    }
+
+    function setCalendarResultNote(html, tone) {
+      var el = document.getElementById('calendarResult');
+      el.className = 'result-note' + (tone ? ' is-' + tone : '');
+      el.innerHTML = html || '';
+      el.style.display = html ? 'block' : 'none';
+    }
+
+    function setCalendarStepState(id, state) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'calendar-step' + (state ? ' ' + state : '');
+    }
+
+    function updateCalendarWorkflowState() {
+      setCalendarStepState('calendarStepScan', calendarUiState.scanned ? 'is-complete' : 'is-active');
+      setCalendarStepState('calendarStepPreview', calendarUiState.previewed ? 'is-complete' : (calendarUiState.scanned ? 'is-active' : 'is-locked'));
+      setCalendarStepState('calendarStepImport', calendarUiState.importing ? 'is-active' : (calendarUiState.completed ? 'is-complete' : (calendarUiState.previewed ? 'is-active' : 'is-locked')));
+    }
+
+    function normalizeTextToken(value) {
+      return safeString(value)
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function normalizeDateOnly(value) {
+      var raw = safeString(value).trim();
+      if (!raw) return '';
+      var isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (isoMatch) return isValidDateParts(isoMatch[1], isoMatch[2], isoMatch[3]) ? (isoMatch[1] + '-' + isoMatch[2] + '-' + isoMatch[3]) : '';
+      var slashIsoMatch = raw.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+      if (slashIsoMatch) return isValidDateParts(slashIsoMatch[1], slashIsoMatch[2], slashIsoMatch[3]) ? (slashIsoMatch[1] + '-' + slashIsoMatch[2] + '-' + slashIsoMatch[3]) : '';
+      var dottedMatch = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+      if (dottedMatch) return buildDateOnlyString(dottedMatch[3], dottedMatch[2], dottedMatch[1]);
+      var slashDayMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (slashDayMatch) return buildDateOnlyString(slashDayMatch[3], slashDayMatch[2], slashDayMatch[1]);
+      return '';
+    }
+
+    function parseAdminV2Time(raw) {
+      var text = safeString(raw).trim();
+      if (!text) {
+        return {
+          all_day: true,
+          start_time: '',
+          end_time: '',
+          has_usable_time: false,
+          has_explicit_all_day: false,
+          needs_schedule: false
+        };
+      }
+      var explicitAllDay = /^(all day|all-day|ganzt(ä|a)gig|ganzer tag|tagesveranstaltung)$/i.test(text);
+      if (explicitAllDay) {
+        return {
+          all_day: true,
+          start_time: '',
+          end_time: '',
+          has_usable_time: false,
+          has_explicit_all_day: true,
+          needs_schedule: false
+        };
+      }
+      var compact = text
+        .replace(/\bUhr\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      var range = compact.split(/\s*(?:-|–|—|to)\s*/i).filter(Boolean);
+      if (range.length >= 2) {
+        var parsedStart = normalizeSingleAdminV2Time(range[0]);
+        var parsedEnd = normalizeSingleAdminV2Time(range[1]);
+        var hasUsableRangeTime = !!(parsedStart || parsedEnd);
+        return {
+          all_day: !hasUsableRangeTime,
+          start_time: parsedStart,
+          end_time: parsedEnd,
+          has_usable_time: hasUsableRangeTime,
+          has_explicit_all_day: false,
+          needs_schedule: !hasUsableRangeTime
+        };
+      }
+      var parsedSingle = normalizeSingleAdminV2Time(compact);
+      return {
+        all_day: !parsedSingle,
+        start_time: parsedSingle,
+        end_time: '',
+        has_usable_time: !!parsedSingle,
+        has_explicit_all_day: false,
+        needs_schedule: !parsedSingle
+      };
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function isLeapYear(year) {
+      var y = Number(year);
+      return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+    }
+
+    function isValidDateParts(year, month, day) {
+      var y = Number(year);
+      var m = Number(month);
+      var d = Number(day);
+      if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+      if (y < 1900 || y > 2100) return false;
+      if (m < 1 || m > 12) return false;
+      var maxDays = [31, isLeapYear(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+      return d >= 1 && d <= maxDays;
+    }
+
+    function buildDateOnlyString(year, month, day) {
+      var y = String(year);
+      var m = pad2(month);
+      var d = pad2(day);
+      return isValidDateParts(y, m, d) ? (y + '-' + m + '-' + d) : '';
+    }
+
+    function normalizeSingleAdminV2Time(raw) {
+      var text = safeString(raw)
+        .trim()
+        .toLowerCase()
+        .replace(/\buhr\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) return '';
+
+      var ampmMatch = text.match(/^(\d{1,2})(?:[:.]?(\d{2}))?\s*([ap])\.?m?\.?$/i);
+      if (ampmMatch) {
+        var ampmHour = Number(ampmMatch[1]);
+        var ampmMinute = Number(ampmMatch[2] || '00');
+        var suffix = ampmMatch[3].toLowerCase();
+        if (ampmHour < 1 || ampmHour > 12 || ampmMinute < 0 || ampmMinute > 59) return '';
+        if (suffix === 'p' && ampmHour !== 12) ampmHour += 12;
+        if (suffix === 'a' && ampmHour === 12) ampmHour = 0;
+        return pad2(ampmHour) + ':' + pad2(ampmMinute);
+      }
+
+      var colonMatch = text.match(/^(\d{1,2})[:.](\d{2})$/);
+      if (colonMatch) {
+        var colonHour = Number(colonMatch[1]);
+        var colonMinute = Number(colonMatch[2]);
+        if (colonHour < 0 || colonHour > 23 || colonMinute < 0 || colonMinute > 59) return '';
+        return pad2(colonHour) + ':' + pad2(colonMinute);
+      }
+
+      var hourOnlyMatch = text.match(/^(\d{1,2})\s*h$/);
+      if (hourOnlyMatch) {
+        var hourOnly = Number(hourOnlyMatch[1]);
+        if (hourOnly < 0 || hourOnly > 23) return '';
+        return pad2(hourOnly) + ':00';
+      }
+
+      var plainHourMatch = text.match(/^(\d{1,2})$/);
+      if (plainHourMatch) {
+        var plainHour = Number(plainHourMatch[1]);
+        if (plainHour < 0 || plainHour > 23) return '';
+        return pad2(plainHour) + ':00';
+      }
+
+      return '';
+    }
+
+    function parseOptionalAmount(value) {
+      if (value === null || value === undefined) return { hasValue: false, value: null };
+      if (typeof value === 'number') {
+        return Number.isFinite(value) && value >= 0
+          ? { hasValue: true, value: value }
+          : { hasValue: false, value: null };
+      }
+      var raw = safeString(value).trim();
+      if (!raw) return { hasValue: false, value: null };
+      var normalized = raw.replace(',', '.');
+      var parsed = Number(normalized);
+      return Number.isFinite(parsed) && parsed >= 0
+        ? { hasValue: true, value: parsed }
+        : { hasValue: false, value: null };
+    }
+
+    function mapCalendarStatusFromAdminV2(sourceRecord) {
+      var status = normalizeTextToken(sourceRecord && sourceRecord.status);
+      if (status === 'cancelled' || status === 'canceled') return 'cancelled';
+      if (status === 'past' || status === 'completed') return 'completed';
+      if (status === 'confirmed') return 'confirmed';
+      return 'tentative';
+    }
+
+    function mapCalendarEventTypeFromAdminV2(sourceRecord) {
+      var type = normalizeTextToken(sourceRecord && sourceRecord.type);
+      if (type === 'recital') return 'recital';
+      if (type === 'teaching' || type === 'lesson' || type === 'masterclass') return 'teaching';
+      if (type === 'engagement') return 'engagement';
+      if (!type || type === 'concert' || type === 'opera' || type === 'operetta' || type === 'gala') return 'concert';
+      return 'other';
+    }
+
+    function isAdminV2HiddenEvent(sourceRecord) {
+      var status = normalizeTextToken(sourceRecord && sourceRecord.status);
+      var editorial = normalizeTextToken(sourceRecord && sourceRecord.editorialStatus);
+      return status === 'hidden' || status === 'draft' || editorial === 'hidden';
+    }
+
+    function isAdminV2PublicReady(sourceRecord) {
+      if (isAdminV2HiddenEvent(sourceRecord)) return false;
+      var editorial = normalizeTextToken(sourceRecord && sourceRecord.editorialStatus);
+      if (!editorial) return true;
+      return editorial === 'published' || editorial === 'public' || editorial === 'live' || editorial === 'ready' || editorial === 'reviewed' || editorial === 'translated';
+    }
+
+    function mapPublicVisibilityFromAdminV2(sourceRecord) {
+      return isAdminV2HiddenEvent(sourceRecord) ? 'internal_only' : 'public';
+    }
+
+    function mapPublicCalendarReadinessFromAdminV2(sourceRecord, mappedRecord) {
+      if (isAdminV2HiddenEvent(sourceRecord)) return 'not_ready';
+      if (isAdminV2PublicReady(sourceRecord) && mappedRecord.start_date && mappedRecord.venue) {
+        return 'ready';
+      }
+      return 'pending_practical_details';
+    }
+
+    function mapFeeStatusFromAdminV2(sourceRecord) {
+      var paymentStatus = normalizeTextToken(sourceRecord && sourceRecord.paymentStatus);
+      var revenueStatus = normalizeTextToken(sourceRecord && sourceRecord.revenueStatus);
+      var actualReceived = parseOptionalAmount(sourceRecord && sourceRecord.actualReceivedAmount);
+      var hasInvoiceSignal = !!normalizeTextToken(sourceRecord && (sourceRecord.invoiceDate || sourceRecord.invoice_date)) || paymentStatus === 'partial';
+      if (paymentStatus === 'paid') return 'paid';
+      if (paymentStatus === 'partial') return 'invoiced';
+      if (paymentStatus === 'unpaid' && hasInvoiceSignal) return 'invoiced';
+      if (actualReceived.hasValue && actualReceived.value > 0) return 'invoiced';
+      if (revenueStatus === 'confirmed') return 'confirmed';
+      return 'pending_confirmation';
+    }
+
+    function mapPaymentModelFromAdminV2(sourceRecord) {
+      var paymentModel = normalizeTextToken(sourceRecord && sourceRecord.paymentModel);
+      if (paymentModel === 'fixed fee' || paymentModel === 'fixed_fee') return 'fee_per_performance';
+      if (paymentModel === 'revenue share' || paymentModel === 'revenue_share') return 'split_ticket';
+      return 'not_yet_defined';
+    }
+
+    function buildCalendarPendingItemsFromAdminV2(sourceRecord, timeInfo) {
+      var items = [];
+      var expectedIncome = parseOptionalAmount(sourceRecord && sourceRecord.revenueAmount);
+      if (!normalizeDateOnly(sourceRecord && sourceRecord.sortDate)) items.push('date');
+      if (!safeString(sourceRecord && sourceRecord.venue).trim()) items.push('venue');
+      if (!safeString(sourceRecord && sourceRecord.city).trim()) items.push('city');
+      if (timeInfo && timeInfo.needs_schedule) items.push('schedule');
+      if (!expectedIncome.hasValue) items.push('expected_income');
+      if (normalizeTextToken(sourceRecord && sourceRecord.revenueStatus) !== 'confirmed') items.push('fee_confirmation');
+      return items;
+    }
+
+    function buildImportedInternalNotes(sourceRecord) {
+      var lines = [];
+      if (safeString(sourceRecord && sourceRecord.revenueNotes).trim()) {
+        lines.push('Revenue notes: ' + safeString(sourceRecord.revenueNotes).trim());
+      }
+      if (safeString(sourceRecord && sourceRecord.paymentStatus).trim() || safeString(sourceRecord && sourceRecord.paymentModel).trim()) {
+        lines.push('Admin v2 payment: status=' + (safeString(sourceRecord.paymentStatus).trim() || 'pending') + ', model=' + (safeString(sourceRecord.paymentModel).trim() || 'fixed_fee'));
+      }
+      if (Number(sourceRecord && sourceRecord.actualReceivedAmount) > 0) {
+        lines.push('Actual received: ' + String(sourceRecord.actualReceivedAmount) + ' ' + (safeString(sourceRecord.actualReceivedCurrency).trim() || safeString(sourceRecord.revenueCurrency).trim() || 'EUR'));
+      }
+      if (safeString(sourceRecord && sourceRecord.editorialStatus).trim()) {
+        lines.push('Admin v2 editorialStatus: ' + safeString(sourceRecord.editorialStatus).trim());
+      }
+      if (safeString(sourceRecord && sourceRecord.privateBadgeText).trim()) {
+        lines.push('Private badge text: ' + safeString(sourceRecord.privateBadgeText).trim());
+      }
+      if (safeString(sourceRecord && sourceRecord.privateDetailText).trim()) {
+        lines.push('Private detail text: ' + safeString(sourceRecord.privateDetailText).trim());
+      }
+      if (!lines.length) return '';
+      return '[Admin v2 import]\n' + lines.join('\n');
+    }
+
+    function stripImportedInternalNotes(text) {
+      var raw = safeString(text);
+      var marker = '[Admin v2 import]';
+      var idx = raw.indexOf(marker);
+      if (idx < 0) return raw.trim();
+      return raw.slice(0, idx).trim();
+    }
+
+    function buildVenueLookupKey(name, city) {
+      return normalizeTextToken(name) + '||' + normalizeTextToken(city);
+    }
+
+    function findMatchingVenueId(name, city, existingVenues) {
+      if (!Array.isArray(existingVenues) || !name) return '';
+      var exactKey = buildVenueLookupKey(name, city);
+      var fallbackMatches = [];
+      for (var i = 0; i < existingVenues.length; i++) {
+        var venue = existingVenues[i];
+        if (buildVenueLookupKey(venue && venue.name, venue && venue.city) === exactKey) {
+          return venue.id || '';
+        }
+        if (normalizeTextToken(venue && venue.name) === normalizeTextToken(name)) {
+          fallbackMatches.push(venue);
+        }
+      }
+      return fallbackMatches.length === 1 ? (fallbackMatches[0].id || '') : '';
+    }
+
+    function calendarDuplicateKey(record) {
+      return [
+        normalizeTextToken(record && record.title),
+        normalizeDateOnly(record && record.start_date),
+        normalizeTextToken(record && record.venue),
+        normalizeTextToken(record && record.city)
+      ].join('||');
+    }
+
+    function previewExpectedIncomeLabel(record, diagnostics) {
+      if (diagnostics && diagnostics.expected_income_known) {
+        return String(record.expected_income) + ' ' + (record.currency || 'EUR');
+      }
+      return 'unknown';
+    }
+
+    function previewParsedTimeLabel(record, diagnostics) {
+      if (diagnostics && diagnostics.has_explicit_all_day) return 'all-day';
+      if (record.start_time && record.end_time) return record.start_time + '-' + record.end_time;
+      if (record.start_time) return record.start_time;
+      if (diagnostics && diagnostics.needs_schedule) return 'unparsed';
+      if (diagnostics && diagnostics.is_all_day) return 'all-day';
+      return 'none';
     }
 
     // Firestore REST helpers for reading admin-v2 source data
@@ -422,31 +935,289 @@
       };
     }
 
-    // Mapper: rg_perfs -> Calendar (internal fields only)
-    function mapCalendarEventFromAdminV2(sourceRecord) {
+    // Mapper: rg_perfs -> Calendar (internal admin-v3 migration)
+    function mapCalendarEventFromAdminV2(sourceRecord, existingVenues) {
       var now = new Date().toISOString();
+      var sourceId = safeString(sourceRecord && sourceRecord.id).trim();
+      var startDate = normalizeDateOnly(sourceRecord && (sourceRecord.sortDate || sourceRecord.date));
+      var timeInfo = parseAdminV2Time(sourceRecord && sourceRecord.time);
+      var venueName = safeString(sourceRecord && sourceRecord.venue).trim();
+      var city = safeString(sourceRecord && sourceRecord.city).trim();
+      var expectedIncome = parseOptionalAmount(sourceRecord && sourceRecord.revenueAmount);
+      var venueId = findMatchingVenueId(venueName, city, existingVenues);
+      var internalNotes = buildImportedInternalNotes(sourceRecord);
+      var pendingItems = buildCalendarPendingItemsFromAdminV2(sourceRecord, timeInfo);
+      var mapped = window.adminV3Factories.createCalendarEvent({
+        title: safeString(sourceRecord && sourceRecord.title).trim() || venueName || 'Untitled',
+        event_type: mapCalendarEventTypeFromAdminV2(sourceRecord),
+        start_date: startDate,
+        end_date: startDate,
+        start_time: timeInfo.start_time,
+        end_time: timeInfo.end_time,
+        all_day: timeInfo.all_day,
+        timezone: 'Europe/Berlin',
+        venue: venueName,
+        venue_id: venueId,
+        city: city,
+        status: mapCalendarStatusFromAdminV2(sourceRecord),
+        program: safeString(sourceRecord && sourceRecord.detail).trim(),
+        notes_public: safeString(sourceRecord && sourceRecord.extDesc).trim() || safeString(sourceRecord && sourceRecord.detail).trim(),
+        notes_internal: internalNotes,
+        expected_income: expectedIncome.value,
+        currency: safeString(sourceRecord && sourceRecord.revenueCurrency).trim().toUpperCase() || 'EUR',
+        public_visibility: mapPublicVisibilityFromAdminV2(sourceRecord),
+        public_calendar_readiness: 'not_ready',
+        project: '',
+        format: '',
+        artists: [],
+        audience_estimate: 0,
+        fee_status: mapFeeStatusFromAdminV2(sourceRecord),
+        payment_model: mapPaymentModelFromAdminV2(sourceRecord),
+        pending_items: pendingItems,
+        next_action: pendingItems.length ? 'review_imported_event' : '',
+        follow_up_due: '',
+        source_system: CALENDAR_SOURCE_SYSTEM,
+        source_id: sourceId,
+        migrated_at: now,
+        created_at: now,
+        updated_at: now
+      });
+      mapped.public_calendar_readiness = mapPublicCalendarReadinessFromAdminV2(sourceRecord, mapped);
       return {
-        id: sourceRecord.id || '',
-        title: sourceRecord.title || sourceRecord.venue || 'Untitled',
-        event_type: 'concert',
-        start_date: sourceRecord.sortDate || sourceRecord.date || '',
-        end_date: sourceRecord.endDate || '',
-        status: mapCalendarStatus(sourceRecord.status),
-        notes_internal: sourceRecord.notes || '',
-        created_at: sourceRecord.createdAt || now,
-        updated_at: sourceRecord.updatedAt || now
+        sourceId: sourceId,
+        sourceRecord: sourceRecord,
+        mapped: mapped,
+        diagnostics: {
+          parsed_date: startDate,
+          parsed_start_time: timeInfo.start_time,
+          parsed_end_time: timeInfo.end_time,
+          is_all_day: timeInfo.all_day,
+          has_explicit_all_day: timeInfo.has_explicit_all_day,
+          needs_schedule: timeInfo.needs_schedule,
+          venue_match: venueId ? ('matched:' + venueId) : 'unmatched',
+          expected_income_known: expectedIncome.hasValue
+        }
       };
     }
 
-    function mapCalendarStatus(status) {
-      var statusMap = {
-        'upcoming': 'tentative',
-        'confirmed': 'confirmed',
-        'cancelled': 'cancelled',
-        'past': 'past',
-        'hidden': 'cancelled'
+
+    function hasRelevantIncomeData(sourceRecord) {
+      return !!(
+        parseOptionalAmount(sourceRecord && sourceRecord.revenueAmount).hasValue ||
+        parseOptionalAmount(sourceRecord && sourceRecord.actualReceivedAmount).hasValue ||
+        safeString(sourceRecord && sourceRecord.revenueStatus).trim() ||
+        safeString(sourceRecord && sourceRecord.revenueNotes).trim() ||
+        safeString(sourceRecord && sourceRecord.paymentStatus).trim() ||
+        safeString(sourceRecord && sourceRecord.paymentModel).trim()
+      );
+    }
+
+    function buildIncomeInternalNotes(sourceRecord) {
+      var parts = [];
+      if (safeString(sourceRecord && sourceRecord.revenueNotes).trim()) {
+        parts.push('Revenue notes: ' + safeString(sourceRecord.revenueNotes).trim());
+      }
+      if (safeString(sourceRecord && sourceRecord.paymentStatus).trim()) {
+        parts.push('Payment status: ' + safeString(sourceRecord.paymentStatus).trim());
+      }
+      if (safeString(sourceRecord && sourceRecord.paymentModel).trim()) {
+        parts.push('Payment model: ' + safeString(sourceRecord.paymentModel).trim());
+      }
+      var actualReceived = parseOptionalAmount(sourceRecord && sourceRecord.actualReceivedAmount);
+      if (actualReceived.hasValue) {
+        parts.push('Actual received: ' + String(actualReceived.value) + ' ' + (safeString(sourceRecord && sourceRecord.actualReceivedCurrency).trim().toUpperCase() || safeString(sourceRecord && sourceRecord.revenueCurrency).trim().toUpperCase() || 'EUR'));
+      }
+      return parts.join('\n');
+    }
+
+    function mapIncomeStatusFromAdminV2(sourceRecord) {
+      var paymentStatus = normalizeTextToken(sourceRecord && sourceRecord.paymentStatus);
+      var revenueStatus = normalizeTextToken(sourceRecord && sourceRecord.revenueStatus);
+      if (paymentStatus === 'paid' || paymentStatus === 'received' || paymentStatus === 'complete') return 'paid';
+      if (paymentStatus === 'partial') return 'partial';
+      if (paymentStatus === 'invoiced' || paymentStatus === 'sent' || paymentStatus === 'unpaid') return 'invoiced';
+      if (revenueStatus === 'confirmed' || revenueStatus === 'potential') return 'expected';
+      return 'expected';
+    }
+
+    function buildIncomeRecordFromAdminV2(sourceRecord, linkedCalendarId) {
+      var now = new Date().toISOString();
+      var amountInfo = parseOptionalAmount(sourceRecord && sourceRecord.revenueAmount);
+      var actualInfo = parseOptionalAmount(sourceRecord && sourceRecord.actualReceivedAmount);
+      var sourceId = safeString(sourceRecord && sourceRecord.id).trim();
+      var amount = amountInfo.hasValue ? amountInfo.value : (actualInfo.hasValue ? actualInfo.value : 0);
+      var currency = safeString(sourceRecord && sourceRecord.revenueCurrency).trim().toUpperCase() || safeString(sourceRecord && sourceRecord.actualReceivedCurrency).trim().toUpperCase() || 'EUR';
+      var mapped = window.adminV3Factories.createIncome({
+        title: safeString(sourceRecord && sourceRecord.title).trim() || safeString(sourceRecord && sourceRecord.venue).trim() || 'Untitled',
+        income_type: mapCalendarEventTypeFromAdminV2(sourceRecord) === 'teaching' ? 'teaching_fee' : 'performance_fee',
+        amount: amount,
+        currency: currency,
+        status: mapIncomeStatusFromAdminV2(sourceRecord),
+        linked_calendar_id: linkedCalendarId || '',
+        notes_internal: buildIncomeInternalNotes(sourceRecord),
+        source_system: CALENDAR_SOURCE_SYSTEM,
+        source_id: sourceId,
+        migrated_at: now,
+        created_at: now,
+        updated_at: now
+      });
+      return {
+        sourceId: sourceId,
+        mapped: mapped,
+        diagnostics: {
+          amount_known: amountInfo.hasValue,
+          actual_known: actualInfo.hasValue
+        }
       };
-      return statusMap[status] || 'tentative';
+    }
+
+    function buildIncomeImportPlan(sourceRecord, linkedCalendarId, existingIncome) {
+      if (!hasRelevantIncomeData(sourceRecord)) {
+        return {
+          action: 'skip',
+          reason: 'no admin-v2 money fields to migrate',
+          existing: null,
+          mapped: null,
+          sourceId: safeString(sourceRecord && sourceRecord.id).trim(),
+          diagnostics: { amount_known: false, actual_known: false }
+        };
+      }
+
+      var incomeBySourceId = {};
+      var incomeByCalendarId = {};
+      var duplicateCalendarIncomeIds = {};
+      (existingIncome || []).forEach(function (record) {
+        var sourceId = safeString(record && record.source_id).trim();
+        if (sourceId) incomeBySourceId[sourceId] = record;
+        var linkedId = safeString(record && record.linked_calendar_id).trim();
+        if (linkedId) {
+          if (!incomeByCalendarId[linkedId]) incomeByCalendarId[linkedId] = record;
+          else duplicateCalendarIncomeIds[linkedId] = true;
+        }
+      });
+
+      var built = buildIncomeRecordFromAdminV2(sourceRecord, linkedCalendarId);
+      var existingMatch = built.sourceId && incomeBySourceId[built.sourceId] ? incomeBySourceId[built.sourceId] : null;
+      var linkedMatch = !existingMatch && linkedCalendarId && !duplicateCalendarIncomeIds[linkedCalendarId] ? incomeByCalendarId[linkedCalendarId] : null;
+      if (existingMatch) {
+        built.mapped.id = existingMatch.id;
+        built.mapped.created_at = existingMatch.created_at || built.mapped.created_at;
+        return {
+          action: 'update',
+          reason: 'existing income with matching source_id',
+          existing: existingMatch,
+          mapped: built.mapped,
+          sourceId: built.sourceId,
+          diagnostics: built.diagnostics
+        };
+      }
+      if (linkedMatch) {
+        built.mapped.id = linkedMatch.id;
+        built.mapped.created_at = linkedMatch.created_at || built.mapped.created_at;
+        return {
+          action: 'update',
+          reason: 'existing income with matching linked_calendar_id',
+          existing: linkedMatch,
+          mapped: built.mapped,
+          sourceId: built.sourceId,
+          diagnostics: built.diagnostics
+        };
+      }
+      if (linkedCalendarId && duplicateCalendarIncomeIds[linkedCalendarId]) {
+        return {
+          action: 'skip',
+          reason: 'multiple existing income records already linked to calendar event',
+          existing: null,
+          mapped: built.mapped,
+          sourceId: built.sourceId,
+          diagnostics: built.diagnostics
+        };
+      }
+      return {
+        action: 'create',
+        reason: 'new income record from admin-v2 event money fields',
+        existing: null,
+        mapped: built.mapped,
+        sourceId: built.sourceId,
+        diagnostics: built.diagnostics
+      };
+    }
+
+    // Mapper: rg_perfs -> Income (only real financial data, not expected money)
+    function mapIncomeEntryFromAdminV2(sourceRecord) {
+      var now = new Date().toISOString();
+      
+      // Only map if there's actual payment/invoice data
+      // Skip if only expected money exists
+      var hasRealFinancialData = false;
+      
+      // Check for actual paid amount
+      if (sourceRecord.paid_amount !== undefined && sourceRecord.paid_amount !== null && sourceRecord.paid_amount !== 0) {
+        hasRealFinancialData = true;
+      }
+      
+      // Check for payment status
+      if (sourceRecord.payment_status) {
+        hasRealFinancialData = true;
+      }
+      
+      // Check for invoice date
+      if (sourceRecord.invoice_date) {
+        hasRealFinancialData = true;
+      }
+      
+      // Check for paid date
+      if (sourceRecord.paid_date) {
+        hasRealFinancialData = true;
+      }
+      
+      // If no real financial data, return null to skip this record
+      if (!hasRealFinancialData) {
+        return null;
+      }
+      
+      var mapped = {
+        id: sourceRecord.id || '',
+        title: sourceRecord.title || sourceRecord.venue || 'Untitled',
+        income_type: 'performance_fee',
+        status: mapIncomeStatus(sourceRecord.payment_status),
+        amount: Number(sourceRecord.paid_amount) || 0,
+        currency: sourceRecord.currency || 'EUR',
+        created_at: sourceRecord.createdAt || now,
+        updated_at: sourceRecord.updatedAt || now
+      };
+      
+      // Map invoice date if present
+      if (sourceRecord.invoice_date) {
+        mapped.invoice_date = sourceRecord.invoice_date;
+      }
+      
+      // Map paid date if present
+      if (sourceRecord.paid_date) {
+        mapped.paid_date = sourceRecord.paid_date;
+      }
+      
+      // Do not auto-link to calendar event - source ids may not match admin-v3 calendar ids
+      // User can manually link after import if needed
+      
+      return mapped;
+    }
+    
+    function mapIncomeStatus(paymentStatus) {
+      if (!paymentStatus) return 'expected';
+      
+      var statusMap = {
+        'paid': 'paid',
+        'received': 'paid',
+        'complete': 'paid',
+        'partial': 'partial',
+        'invoiced': 'invoiced',
+        'sent': 'invoiced',
+        'expected': 'expected'
+      };
+      
+      var lowerStatus = String(paymentStatus).toLowerCase();
+      return statusMap[lowerStatus] || 'expected';
     }
 
     // Scan source data
@@ -529,42 +1300,250 @@
     }
 
     function scanCalendar() {
-      log('Scanning rg_perfs for Calendar...', 'info');
+      log('Scanning ' + CALENDAR_SOURCE_DOC_KEY + ' for Calendar migration...', 'info');
+      Promise.all([
+        loadAdminV2Data(CALENDAR_SOURCE_DOC_KEY),
+        store.calendar.getAll(),
+        store.venues.getAll().catch(function () { return []; }),
+        store.income.getAll().catch(function () { return []; })
+      ]).then(function (results) {
+        var sourceData = results[0];
+        var existingCalendar = Array.isArray(results[1]) ? results[1] : [];
+        var existingVenues = Array.isArray(results[2]) ? results[2] : [];
+        var existingIncome = Array.isArray(results[3]) ? results[3] : [];
+        if (!sourceData) {
+          log('No ' + CALENDAR_SOURCE_DOC_KEY + ' data found', 'warning');
+          resetCalendarSummary();
+          return;
+        }
+        if (!Array.isArray(sourceData)) {
+          log('Invalid ' + CALENDAR_SOURCE_DOC_KEY + ' format: expected array, got ' + (typeof sourceData), 'warning');
+          resetCalendarSummary();
+          return;
+        }
+
+        scanResults.calendar = buildCalendarImportPlan(sourceData, existingCalendar, existingVenues, existingIncome);
+        updateCalendarSummary(scanResults.calendar.summary);
+        document.getElementById('calendarPreviewBtn').disabled = scanResults.calendar.items.length === 0;
+        document.getElementById('calendarImportBtn').disabled = true;
+        document.getElementById('calendarPreview').style.display = 'none';
+        calendarUiState.scanned = true;
+        calendarUiState.previewed = false;
+        calendarUiState.importing = false;
+        calendarUiState.completed = false;
+        updateCalendarWorkflowState();
+        setCalendarResultNote('', '');
+        if (scanResults.calendar.items.length === 0) {
+          setCalendarActionNote('Scan complete. No import actions are currently available for Calendar.', 'info');
+        } else {
+          setCalendarActionNote(
+            '<strong>Scan complete.</strong> This step only builds the import plan. Nothing has been written to Firestore yet.<br>' +
+            'Open <strong>Preview Import Plan</strong> next to review the records and unlock <strong>Run Import</strong>.',
+            'loading'
+          );
+        }
+        log(
+          'Calendar scan complete: ' +
+          scanResults.calendar.summary.createCount + ' create, ' +
+          scanResults.calendar.summary.updateCount + ' update, ' +
+          scanResults.calendar.summary.skipCount + ' skip',
+          'info'
+        );
+      }).catch(function (err) {
+        log('Error scanning calendar: ' + err.message, 'error');
+        resetCalendarSummary();
+        setCalendarResultNote('<strong>Calendar scan failed.</strong> ' + escapeHtml(err.message), 'error');
+      });
+    }
+
+    function scanIncome() {
+      log('Scanning rg_perfs for Income (real financial data only)...', 'info');
       loadAdminV2Data('rg_perfs').then(function (sourceData) {
         if (!sourceData) {
           log('No rg_perfs data found', 'warning');
-          document.getElementById('calendarSourceCount').textContent = '0';
-          document.getElementById('calendarDuplicateCount').textContent = '0';
-          document.getElementById('calendarNewCount').textContent = '0';
+          document.getElementById('incomeSourceCount').textContent = '0';
+          document.getElementById('incomeDuplicateCount').textContent = '0';
+          document.getElementById('incomeNewCount').textContent = '0';
           return;
         }
         if (!Array.isArray(sourceData)) {
           log('Invalid rg_perfs format: expected array, got ' + (typeof sourceData), 'warning');
-          document.getElementById('calendarSourceCount').textContent = '0';
-          document.getElementById('calendarDuplicateCount').textContent = '0';
-          document.getElementById('calendarNewCount').textContent = '0';
+          document.getElementById('incomeSourceCount').textContent = '0';
+          document.getElementById('incomeDuplicateCount').textContent = '0';
+          document.getElementById('incomeNewCount').textContent = '0';
           return;
         }
 
-        var mapped = sourceData.map(mapCalendarEventFromAdminV2);
-        scanResults.calendar = mapped;
-        document.getElementById('calendarSourceCount').textContent = mapped.length;
+        // Map and filter out records with no real financial data
+        var mapped = sourceData
+          .map(mapIncomeEntryFromAdminV2)
+          .filter(function (item) { return item !== null; });
+        
+        scanResults.income = mapped;
+        document.getElementById('incomeSourceCount').textContent = mapped.length;
         
         // Check duplicates
-        return checkCalendarDuplicates(mapped);
+        return checkIncomeDuplicates(mapped);
       }).then(function (duplicateCount) {
         if (typeof duplicateCount === 'number') {
-          document.getElementById('calendarDuplicateCount').textContent = duplicateCount;
-          document.getElementById('calendarNewCount').textContent = scanResults.calendar.length - duplicateCount;
-          document.getElementById('calendarPreviewBtn').disabled = scanResults.calendar.length === 0;
-          log('Found ' + scanResults.calendar.length + ' calendar events, ' + duplicateCount + ' duplicates', 'info');
+          document.getElementById('incomeDuplicateCount').textContent = duplicateCount;
+          document.getElementById('incomeNewCount').textContent = scanResults.income.length - duplicateCount;
+          document.getElementById('incomePreviewBtn').disabled = scanResults.income.length === 0;
+          log('Found ' + scanResults.income.length + ' mappable income records, ' + duplicateCount + ' duplicates', 'info');
+          log('Skipped records with only expected money (kept in Calendar)', 'info');
         }
       }).catch(function (err) {
-        log('Error scanning calendar: ' + err.message, 'error');
-        document.getElementById('calendarSourceCount').textContent = '0';
-        document.getElementById('calendarDuplicateCount').textContent = '0';
-        document.getElementById('calendarNewCount').textContent = '0';
+        log('Error scanning income: ' + err.message, 'error');
+        document.getElementById('incomeSourceCount').textContent = '0';
+        document.getElementById('incomeDuplicateCount').textContent = '0';
+        document.getElementById('incomeNewCount').textContent = '0';
       });
+    }
+
+    function resetCalendarSummary() {
+      document.getElementById('calendarSourceCount').textContent = '0';
+      document.getElementById('calendarDuplicateCount').textContent = '0';
+      document.getElementById('calendarNewCount').textContent = '0';
+      document.getElementById('calendarPreviewBtn').disabled = true;
+      document.getElementById('calendarImportBtn').disabled = true;
+      document.getElementById('calendarSummary').style.display = 'none';
+      calendarUiState.scanned = false;
+      calendarUiState.previewed = false;
+      calendarUiState.importing = false;
+      calendarUiState.completed = false;
+      updateCalendarWorkflowState();
+      setCalendarActionNote('Step 1: Scan the live <code>' + escapeHtml(CALENDAR_SOURCE_DOC_KEY) + '</code> source. Import stays locked until the preview is reviewed.', 'info');
+    }
+
+    function updateCalendarSummary(summary) {
+      var safeSummary = summary || {
+        sourceCount: 0,
+        createCount: 0,
+        updateCount: 0,
+        skipCount: 0
+      };
+      document.getElementById('calendarSourceCount').textContent = safeSummary.sourceCount;
+      document.getElementById('calendarDuplicateCount').textContent = safeSummary.updateCount + safeSummary.skipCount;
+      document.getElementById('calendarNewCount').textContent = safeSummary.createCount;
+      var summaryEl = document.getElementById('calendarSummary');
+      summaryEl.style.display = 'block';
+      summaryEl.innerHTML =
+        '<strong>Source:</strong> Firestore <code>' + escapeHtml(CALENDAR_SOURCE_DOC_KEY) + '</code> ' +
+        '<strong>→ Target:</strong> Firestore <code>' + escapeHtml(CALENDAR_TARGET_DOC_KEY) + '</code><br>' +
+        'Calendar plan: ' + safeSummary.createCount + ' create, ' + safeSummary.updateCount + ' update, ' + safeSummary.skipCount + ' skip.<br>' +
+        'Income plan: ' + (safeSummary.incomeCreateCount || 0) + ' create, ' + (safeSummary.incomeUpdateCount || 0) + ' update, ' + (safeSummary.incomeSkipCount || 0) + ' skip.';
+    }
+
+    function buildCalendarImportPlan(sourceRecords, existingCalendar, existingVenues, existingIncome) {
+      var existingBySourceId = {};
+      var existingById = {};
+      var existingByCompositeKey = {};
+      (existingCalendar || []).forEach(function (record) {
+        var sourceId = safeString(record && record.source_id).trim();
+        if (sourceId) existingBySourceId[sourceId] = record;
+        var existingId = safeString(record && record.id).trim();
+        if (existingId) existingById[existingId] = record;
+        var key = calendarDuplicateKey(record);
+        if (key && !existingByCompositeKey[key]) existingByCompositeKey[key] = record;
+      });
+
+      var items = (sourceRecords || []).map(function (sourceRecord) {
+        var planned = mapCalendarEventFromAdminV2(sourceRecord, existingVenues);
+        var sourceId = planned.sourceId;
+        var existingMatch = (sourceId && existingBySourceId[sourceId]) || (sourceId && existingById[sourceId]) || null;
+        var compositeKey = calendarDuplicateKey(planned.mapped);
+        var probableDuplicate = !existingMatch && compositeKey ? existingByCompositeKey[compositeKey] : null;
+        var action = 'create';
+        var reason = 'new admin-v2 source record';
+
+        if (existingMatch) {
+          action = 'update';
+          reason = existingMatch.source_id ? 'existing admin-v3 record with matching source_id' : 'legacy admin-v3 record with matching id';
+        } else if (probableDuplicate) {
+          action = 'skip';
+          reason = 'probable duplicate by title + date + venue + city';
+        }
+
+        var trustedCalendarMatch = action === 'create' || action === 'update';
+        var targetCalendarId = action === 'create' ? planned.mapped.id : safeString((existingMatch || probableDuplicate) && (existingMatch || probableDuplicate).id).trim();
+        var incomePlan = trustedCalendarMatch
+          ? buildIncomeImportPlan(sourceRecord, targetCalendarId, existingIncome || [])
+          : {
+              action: 'skip',
+              reason: 'calendar target skipped due to low-confidence duplicate match',
+              existing: null,
+              mapped: null,
+              sourceId: sourceId,
+              diagnostics: { amount_known: false, actual_known: false }
+            };
+
+        return {
+          source: sourceRecord,
+          sourceId: sourceId,
+          sourceRecord: sourceRecord,
+          mapped: planned.mapped,
+          diagnostics: planned.diagnostics,
+          action: action,
+          reason: reason,
+          existing: existingMatch || probableDuplicate || null,
+          trustedCalendarMatch: trustedCalendarMatch,
+          income: incomePlan
+        };
+      });
+
+      var summary = {
+        sourceCount: items.length,
+        createCount: items.filter(function (item) { return item.action === 'create'; }).length,
+        updateCount: items.filter(function (item) { return item.action === 'update'; }).length,
+        skipCount: items.filter(function (item) { return item.action === 'skip'; }).length,
+        incomeCreateCount: items.filter(function (item) { return item.income && item.income.action === 'create'; }).length,
+        incomeUpdateCount: items.filter(function (item) { return item.income && item.income.action === 'update'; }).length,
+        incomeSkipCount: items.filter(function (item) { return !item.income || item.income.action === 'skip'; }).length
+      };
+
+      return {
+        sourceDocKey: CALENDAR_SOURCE_DOC_KEY,
+        targetDocKey: CALENDAR_TARGET_DOC_KEY,
+        items: items,
+        summary: summary
+      };
+    }
+
+    function mergeCalendarImport(existingRecord, mappedRecord) {
+      var now = new Date().toISOString();
+      var merged = Object.assign({}, existingRecord || {});
+      var importManagedFields = [
+        'title', 'event_type', 'start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'timezone',
+        'venue', 'venue_id', 'city', 'status', 'program', 'notes_public', 'expected_income', 'currency',
+        'public_visibility', 'public_calendar_readiness', 'fee_status', 'payment_model',
+        'source_system', 'source_id', 'migrated_at'
+      ];
+      importManagedFields.forEach(function (field) {
+        merged[field] = mappedRecord[field];
+      });
+      if (Array.isArray(mappedRecord.pending_items) && mappedRecord.pending_items.length) {
+        merged.pending_items = mappedRecord.pending_items.slice();
+      } else if (!Array.isArray(merged.pending_items)) {
+        merged.pending_items = [];
+      }
+      if (safeString(mappedRecord.next_action).trim()) {
+        merged.next_action = mappedRecord.next_action;
+      } else if (!merged.next_action) {
+        merged.next_action = '';
+      }
+      if (!merged.project) merged.project = safeString(mappedRecord.project).trim();
+      if (!merged.format) merged.format = safeString(mappedRecord.format).trim();
+      if (!Array.isArray(merged.artists)) merged.artists = [];
+      if (typeof merged.audience_estimate !== 'number') merged.audience_estimate = 0;
+      if (!merged.follow_up_due) merged.follow_up_due = safeString(mappedRecord.follow_up_due).trim();
+
+      var manualNotes = stripImportedInternalNotes(existingRecord && existingRecord.notes_internal);
+      var importedNotes = safeString(mappedRecord.notes_internal).trim();
+      merged.notes_internal = [manualNotes, importedNotes].filter(Boolean).join('\n\n');
+      merged.id = existingRecord.id;
+      merged.created_at = existingRecord.created_at || mappedRecord.created_at || now;
+      merged.updated_at = now;
+      return merged;
     }
 
     // Check duplicates
@@ -574,6 +1553,17 @@
         var duplicateCount = 0;
         mapped.forEach(function (v) {
           if (v.id && existingIds.has(v.id)) duplicateCount++;
+        });
+        return duplicateCount;
+      });
+    }
+
+    function checkIncomeDuplicates(mapped) {
+      return store.income.getAll().then(function (existing) {
+        var existingIds = new Set((existing || []).map(function (i) { return i.id; }));
+        var duplicateCount = 0;
+        mapped.forEach(function (i) {
+          if (i.id && existingIds.has(i.id)) duplicateCount++;
         });
         return duplicateCount;
       });
@@ -641,22 +1631,63 @@
     }
 
     function showCalendarPreview() {
-      if (!scanResults.calendar) return;
+      if (!scanResults.calendar || !scanResults.calendar.items || scanResults.calendar.items.length === 0) {
+        log('No calendar records to preview', 'warning');
+        return;
+      }
       var previewEl = document.getElementById('calendarPreview');
-      previewEl.style.display = 'block';
-      previewEl.innerHTML = scanResults.calendar.slice(0, 5).map(function (e) {
+      previewEl.innerHTML = scanResults.calendar.items.slice(0, 25).map(function (item) {
+        var e = item.mapped;
+        var extra = [
+          'source=' + escapeHtml(item.sourceId || (item.sourceRecord && item.sourceRecord.id) || e.source_id || '(missing)'),
+          'date=' + escapeHtml(item.diagnostics && item.diagnostics.parsed_date ? item.diagnostics.parsed_date : 'invalid'),
+          'time=' + escapeHtml(previewParsedTimeLabel(e, item.diagnostics)),
+          'venue_match=' + escapeHtml(item.diagnostics && item.diagnostics.venue_match ? item.diagnostics.venue_match : 'unmatched'),
+          'expected=' + escapeHtml(previewExpectedIncomeLabel(e, item.diagnostics)),
+          'fee=' + escapeHtml(e.fee_status || 'pending_confirmation'),
+          'payment=' + escapeHtml(e.payment_model || 'not_yet_defined'),
+          'visibility=' + escapeHtml(e.public_visibility || 'public'),
+          'readiness=' + escapeHtml(e.public_calendar_readiness || 'not_ready'),
+          'pending=' + escapeHtml(Array.isArray(e.pending_items) && e.pending_items.length ? e.pending_items.join(',') : 'none'),
+          'calendar=' + escapeHtml(item.action || 'create'),
+          'income=' + escapeHtml(item.income && item.income.action ? item.income.action : 'skip')
+        ];
         return '<div class="preview-item">' +
-          '<strong>' + escapeHtml(e.title || '(Untitled)') + '</strong><br>' +
-          'ID: ' + escapeHtml(e.id) + '<br>' +
-          'Date: ' + escapeHtml(e.start_date) + '<br>' +
-          'Status: ' + escapeHtml(e.status) +
+          '<strong><span class="preview-item__action ' + escapeHtml(item.action) + '">' + escapeHtml(item.action) + '</span>' + escapeHtml(e.title || 'Untitled') + '</strong><br>' +
+          '<small>' + escapeHtml(e.start_date || 'No date') + (e.venue ? ' · ' + escapeHtml(e.venue) : '') + (e.city ? ' · ' + escapeHtml(e.city) : '') + '</small>' +
+          '<div class="preview-item__meta">' + escapeHtml(item.reason) + ' · ' + extra.join(' · ') + '</div>' +
           '</div>';
       }).join('');
-      if (scanResults.calendar.length > 5) {
-        previewEl.innerHTML += '<div class="preview-item">... and ' + (scanResults.calendar.length - 5) + ' more</div>';
+      if (scanResults.calendar.items.length > 25) {
+        previewEl.innerHTML += '<div class="preview-item">... and ' + (scanResults.calendar.items.length - 25) + ' more</div>';
       }
+      previewEl.style.display = 'block';
       document.getElementById('calendarImportBtn').disabled = false;
-      log('Preview shown for Calendar', 'info');
+      calendarUiState.previewed = true;
+      calendarUiState.completed = false;
+      updateCalendarWorkflowState();
+      setCalendarActionNote(
+        '<strong>Preview reviewed.</strong> <strong>Run Import</strong> is now unlocked. Records are still not written until you click Import.',
+        'success'
+      );
+      log('Calendar preview loaded (' + scanResults.calendar.items.length + ' records)', 'info');
+    }
+
+    function showIncomePreview() {
+      if (!scanResults.income || scanResults.income.length === 0) {
+        log('No income records to preview', 'warning');
+        return;
+      }
+      var previewEl = document.getElementById('incomePreview');
+      previewEl.innerHTML = scanResults.income.map(function (i) {
+        return '<div style="padding: 8px; border-bottom: 1px solid #eee;">' +
+          '<strong>' + escapeHtml(i.title || 'Untitled') + '</strong><br>' +
+          '<small>' + escapeHtml(i.status || 'pending') + ' · ' + escapeHtml(i.amount || 0) + ' ' + escapeHtml(i.currency || 'EUR') + '</small>' +
+          '</div>';
+      }).join('');
+      previewEl.style.display = 'block';
+      document.getElementById('incomeImportBtn').disabled = false;
+      log('Income preview loaded (' + scanResults.income.length + ' records)', 'info');
     }
 
     // Import
@@ -727,35 +1758,169 @@
     }
 
     function importCalendar() {
-      if (!scanResults.calendar) return;
+      if (!scanResults.calendar || !scanResults.calendar.items) {
+        log('No calendar data to import - scan first', 'error');
+        setCalendarResultNote('<strong>Calendar import is locked.</strong> Start with Step 1: Scan Source.', 'error');
+        return;
+      }
+      if (!calendarUiState.previewed) {
+        log('Calendar import blocked until preview is reviewed', 'warning');
+        setCalendarResultNote('<strong>Import is locked.</strong> Review <strong>Preview Import Plan</strong> first to unlock Run Import.', 'error');
+        return;
+      }
       log('Starting Calendar import...', 'info');
-      
-      return store.calendar.getAll().then(function (existing) {
-        var existingIds = new Set((existing || []).map(function (e) { return e.id; }));
-        var toImport = scanResults.calendar.filter(function (e) {
-          return e.id && !existingIds.has(e.id);
-        });
-        
-        if (toImport.length === 0) {
-          log('No new calendar events to import', 'warning');
-          return;
-        }
+      calendarUiState.importing = true;
+      calendarUiState.completed = false;
+      updateCalendarWorkflowState();
+      document.getElementById('calendarScanBtn').disabled = true;
+      document.getElementById('calendarPreviewBtn').disabled = true;
+      document.getElementById('calendarImportBtn').disabled = true;
+      setCalendarResultNote('<strong>Import running...</strong> Please do not leave or reload this page until the calendar import finishes.', 'loading');
+      setCalendarActionNote('Writing calendar changes to <code>' + escapeHtml(CALENDAR_TARGET_DOC_KEY) + '</code>. Keep this page open until the summary appears below.', 'loading');
 
-        var imported = 0;
-        var errors = 0;
-        
-        return Promise.all(toImport.map(function (event) {
-          return store.calendar.insert(event).then(function () {
+      var result = {
+        created: 0,
+        updated: 0,
+        skipped: scanResults.calendar.items.filter(function (item) { return item.action === 'skip'; }).length,
+        errors: 0,
+        incomeCreated: 0,
+        incomeUpdated: 0,
+        incomeSkipped: scanResults.calendar.items.filter(function (item) { return !item.income || item.income.action === 'skip'; }).length,
+        incomeErrors: 0
+      };
+
+      if (!scanResults.calendar.items.length) {
+        log('No calendar changes to apply after duplicate detection', 'warning');
+        return;
+      }
+
+      function upsertIncomeForItem(item, linkedCalendarId) {
+        if (!item.income || item.income.action === 'skip' || !item.income.mapped) {
+          return Promise.resolve();
+        }
+        var incomeDoc = Object.assign({}, item.income.mapped, {
+          linked_calendar_id: linkedCalendarId || item.income.mapped.linked_calendar_id || ''
+        });
+        if (item.income.action === 'update' && item.income.existing && item.income.existing.id) {
+          return store.income.update(item.income.existing.id, incomeDoc).then(function () {
+            result.incomeUpdated += 1;
+            log('Updated income record: ' + escapeHtml(incomeDoc.title), 'success');
+          }).catch(function (err) {
+            result.incomeErrors += 1;
+            log('Error updating income record: ' + escapeHtml(incomeDoc.title) + ' - ' + err.message, 'error');
+          });
+        }
+        return store.income.insert(incomeDoc).then(function () {
+          result.incomeCreated += 1;
+          log('Created income record: ' + escapeHtml(incomeDoc.title), 'success');
+        }).catch(function (err) {
+          result.incomeErrors += 1;
+          log('Error creating income record: ' + escapeHtml(incomeDoc.title) + ' - ' + err.message, 'error');
+        });
+      }
+
+      return Promise.all(
+        scanResults.calendar.items.map(function (item) {
+          if (item.action === 'create') {
+            return store.calendar.insert(item.mapped).then(function (createdRecord) {
+              result.created += 1;
+              log('Created calendar event: ' + escapeHtml(item.mapped.title), 'success');
+              return upsertIncomeForItem(item, createdRecord && createdRecord.id ? createdRecord.id : item.mapped.id);
+            }).catch(function (err) {
+              result.errors += 1;
+              log('Error creating calendar event: ' + escapeHtml(item.mapped.title) + ' - ' + err.message, 'error');
+            });
+          }
+          if (item.action === 'update') {
+            var merged = mergeCalendarImport(item.existing, item.mapped);
+            return store.calendar.update(item.existing.id, merged).then(function (updatedRecord) {
+              result.updated += 1;
+              log('Updated calendar event: ' + escapeHtml(merged.title), 'success');
+              return upsertIncomeForItem(item, updatedRecord && updatedRecord.id ? updatedRecord.id : item.existing.id);
+            }).catch(function (err) {
+              result.errors += 1;
+              log('Error updating calendar event: ' + escapeHtml(item.mapped.title) + ' - ' + err.message, 'error');
+            });
+          }
+          if (!item.trustedCalendarMatch) {
+            return Promise.resolve();
+          }
+          return upsertIncomeForItem(item, item.existing && item.existing.id ? item.existing.id : '');
+        })
+      ).then(function () {
+        calendarUiState.importing = false;
+        calendarUiState.completed = true;
+        updateCalendarWorkflowState();
+        document.getElementById('calendarScanBtn').disabled = false;
+        document.getElementById('calendarPreviewBtn').disabled = false;
+        document.getElementById('calendarImportBtn').disabled = true;
+        setCalendarResultNote(
+          '<strong>Import result:</strong> ' +
+          'Calendar ' + result.created + ' created, ' + result.updated + ' updated, ' + result.skipped + ' skipped, ' + result.errors + ' errors.<br>' +
+          'Income ' + result.incomeCreated + ' created, ' + result.incomeUpdated + ' updated, ' + result.incomeSkipped + ' skipped, ' + result.incomeErrors + ' errors.',
+          (result.errors || result.incomeErrors) ? 'error' : 'success'
+        );
+        if (result.errors || result.incomeErrors) {
+          setCalendarActionNote('<strong>Some calendar writes failed.</strong> Review the summary above and the import log below before leaving this page.', 'error');
+        } else {
+          setCalendarActionNote('<strong>Calendar import finished.</strong> The summary above is persistent for this session. Re-scan if you want to verify the live target state.', 'success');
+        }
+        log(
+          'Calendar import complete: ' +
+          result.created + ' created, ' +
+          result.updated + ' updated, ' +
+          result.skipped + ' skipped, ' +
+          result.errors + ' calendar errors, ' + result.incomeErrors + ' income errors',
+          (result.errors || result.incomeErrors) ? 'error' : 'success'
+        );
+      }).catch(function (err) {
+        calendarUiState.importing = false;
+        updateCalendarWorkflowState();
+        document.getElementById('calendarScanBtn').disabled = false;
+        document.getElementById('calendarPreviewBtn').disabled = false;
+        document.getElementById('calendarImportBtn').disabled = false;
+        setCalendarResultNote('<strong>Calendar import failed.</strong> ' + escapeHtml(err.message), 'error');
+        setCalendarActionNote('No further writes will happen until you retry the import. Review the log below for details.', 'error');
+        log('Calendar import failed: ' + err.message, 'error');
+      });
+    }
+
+    function importIncome() {
+      if (!scanResults.income || scanResults.income.length === 0) {
+        log('No income records to import', 'warning');
+        return;
+      }
+      log('Importing ' + scanResults.income.length + ' income records...', 'info');
+      
+      var imported = 0;
+      var skipped = 0;
+      
+      var errors = 0;
+      var promises = scanResults.income.map(function (i) {
+        return store.income.getById(i.id).then(function (existing) {
+          if (existing) {
+            skipped++;
+            return null;
+          }
+          return store.income.insert(i).then(function () {
             imported++;
-            log('Imported calendar event: ' + escapeHtml(event.title), 'success');
+            log('Imported income record: ' + escapeHtml(i.title || 'Untitled'), 'success');
           }).catch(function (err) {
             errors++;
-            log('Error importing calendar event: ' + escapeHtml(event.title) + ' - ' + err.message, 'error');
+            log('Error importing income record: ' + escapeHtml(i.title || 'Untitled') + ' - ' + err.message, 'error');
           });
-        })).then(function () {
-          log('Calendar import complete: ' + imported + ' imported, ' + errors + ' errors', imported > 0 ? 'success' : 'error');
-          document.getElementById('calendarImportBtn').disabled = true;
+        }).catch(function (err) {
+          errors++;
+          log('Error checking income record: ' + escapeHtml(i.title || 'Untitled') + ' - ' + err.message, 'error');
         });
+      });
+      
+      Promise.all(promises).then(function () {
+        log('Income import complete: ' + imported + ' imported, ' + skipped + ' skipped (duplicates), ' + errors + ' errors', imported > 0 ? 'success' : (errors > 0 ? 'error' : 'info'));
+        document.getElementById('incomeImportBtn').disabled = true;
+        scanResults.income = null;
+      }).catch(function (err) {
+        log('Error importing income: ' + err.message, 'error');
       });
     }
 
@@ -780,7 +1945,7 @@
         return window.adminV3Auth.checkAuth();
       }).then(function (result) {
         if (!result.authenticated) {
-          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('authGate').innerHTML = window.adminV3Auth.renderAccessDeniedHtml(result);
           document.getElementById('retryAuthBtn').addEventListener('click', function () {
             window.location.reload();
           });
@@ -807,6 +1972,11 @@
         document.getElementById('calendarPreviewBtn').addEventListener('click', showCalendarPreview);
         document.getElementById('calendarImportBtn').addEventListener('click', importCalendar);
 
+        document.getElementById('incomeScanBtn').addEventListener('click', scanIncome);
+        document.getElementById('incomePreviewBtn').addEventListener('click', showIncomePreview);
+        document.getElementById('incomeImportBtn').addEventListener('click', importIncome);
+
+        resetCalendarSummary();
         log('Import tool ready. Click Scan Source to begin.', 'info');
       }).catch(function (err) {
         setStatus('Error: ' + err.message, 'error');

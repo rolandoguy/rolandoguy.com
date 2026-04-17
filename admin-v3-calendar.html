@@ -80,6 +80,8 @@
     .badge.confirmed { background: #dcfce7; color: #166534; }
     .badge.cancelled { background: #fee2e2; color: #991b1b; }
     .badge.completed { background: #e0e7ff; color: #3730a3; }
+    .badge.internal { background: #e0e7ff; color: #3730a3; }
+    .business-meta { font-size: 11px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
     .empty-state { text-align: center; padding: 40px; color: #666; }
     .form { display: none; padding: 20px; background: #f9f9f9; border-radius: 4px; margin: 20px 0; }
     .form.visible { display: block; }
@@ -175,6 +177,7 @@
               <option value="concert">Concert</option>
               <option value="recital">Recital</option>
               <option value="teaching">Teaching</option>
+              <option value="engagement">Engagement</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -245,10 +248,73 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Visibility</label>
-            <div class="checkbox-group">
-              <label><input type="checkbox" id="public_visibility" name="public_visibility"> Public visibility</label>
-            </div>
+            <label for="public_visibility">Visibility</label>
+            <select id="public_visibility" name="public_visibility">
+              <option value="public">Public</option>
+              <option value="internal_only">Internal only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="public_calendar_readiness">Calendar Readiness</label>
+            <select id="public_calendar_readiness" name="public_calendar_readiness">
+              <option value="not_ready">Not ready</option>
+              <option value="pending_practical_details">Pending practical details</option>
+              <option value="ready">Ready</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="confirmed_on">Confirmed On</label>
+            <input type="date" id="confirmed_on" name="confirmed_on">
+          </div>
+          <div class="form-group">
+            <label for="series">Series</label>
+            <input type="text" id="series" name="series">
+          </div>
+          <div class="form-group">
+            <label for="project">Project</label>
+            <input type="text" id="project" name="project">
+          </div>
+          <div class="form-group">
+            <label for="format">Format</label>
+            <input type="text" id="format" name="format" placeholder="e.g., duo recital, solo, ensemble">
+          </div>
+          <div class="form-group">
+            <label for="artists">Artists (comma-separated)</label>
+            <input type="text" id="artists" name="artists" placeholder="e.g., Rolando Guy, Gaston Efficace">
+          </div>
+          <div class="form-group">
+            <label for="audience_estimate">Audience Estimate</label>
+            <input type="number" id="audience_estimate" name="audience_estimate" min="0">
+          </div>
+          <div class="form-group">
+            <label for="fee_status">Fee Status</label>
+            <select id="fee_status" name="fee_status">
+              <option value="pending_confirmation">Pending confirmation</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="invoiced">Invoiced</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="payment_model">Payment Model</label>
+            <select id="payment_model" name="payment_model">
+              <option value="not_yet_defined">Not yet defined</option>
+              <option value="fee_per_performance">Fee per performance</option>
+              <option value="split_ticket">Split ticket</option>
+              <option value="guarantee_plus">Guarantee plus</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="pending_items">Pending Items (comma-separated)</label>
+            <input type="text" id="pending_items" name="pending_items" placeholder="e.g., schedule, duration, technical_setup">
+          </div>
+          <div class="form-group">
+            <label for="next_action">Next Action</label>
+            <input type="text" id="next_action" name="next_action">
+          </div>
+          <div class="form-group">
+            <label for="follow_up_due">Follow-up Due</label>
+            <input type="date" id="follow_up_due" name="follow_up_due">
           </div>
           <div class="form-group">
             <label for="program">Program</label>
@@ -285,6 +351,41 @@
     var allEvents = [];
     var filters = { status: '', event_type: '' };
     var FILTER_STORAGE_KEY = 'admin_v3_calendar_filters';
+    var helpers = window.adminV3Helpers || {};
+
+    function normalizeDateOnly(value) {
+      if (helpers.normalizeDateOnlyString) {
+        return helpers.normalizeDateOnlyString(value);
+      }
+      return value ? String(value).slice(0, 10) : '';
+    }
+
+    function normalizePaymentModel(value) {
+      if (helpers.normalizePaymentModel) {
+        return helpers.normalizePaymentModel(value);
+      }
+      return value === 'fee_performance' ? 'fee_per_performance' : value;
+    }
+
+    function normalizeCalendarEventRecord(event) {
+      if (helpers.normalizeCalendarEvent) {
+        return helpers.normalizeCalendarEvent(event);
+      }
+      var normalized = Object.assign({}, event || {});
+      normalized.payment_model = normalizePaymentModel(normalized.payment_model);
+      normalized.confirmed_on = normalizeDateOnly(normalized.confirmed_on);
+      normalized.follow_up_due = normalizeDateOnly(normalized.follow_up_due);
+      normalized.artists = Array.isArray(normalized.artists) ? normalized.artists : [];
+      normalized.pending_items = Array.isArray(normalized.pending_items) ? normalized.pending_items : [];
+      normalized.all_day = Boolean(normalized.all_day);
+      return normalized;
+    }
+
+    function splitCommaSeparatedList(value) {
+      return value
+        ? value.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+        : [];
+    }
 
     function setStatus(text, type) {
       var el = document.getElementById('status');
@@ -310,7 +411,7 @@
     function loadCalendar() {
       setStatus('Loading calendar...', 'loading');
       return store.calendar.getAll().then(function (events) {
-        allEvents = events || [];
+        allEvents = (events || []).map(normalizeCalendarEventRecord);
         clearStatus();
         loadFilters();
         handleQueryParams();
@@ -405,11 +506,32 @@
           if (e.venue_id && venuesById[e.venue_id]) {
             linkedVenueLabel = '<span> · <a href="admin-v3-venues.html" class="admin-v3-nav-link">Venue: ' + escapeHtml(venuesById[e.venue_id].name || '(Untitled)') + '</a></span>';
           }
+
+          // Internal-only indicator
+          var internalBadge = '';
+          if (e.public_visibility === 'internal_only') {
+            internalBadge = '<span class="badge internal">INTERNAL</span>';
+          }
+
+          // Mobile-optimized compact card for business/internal fields
+          var businessMeta = '';
+          if (e.public_visibility === 'internal_only' || e.project || e.series || (Array.isArray(e.artists) && e.artists.length > 0) || (typeof e.audience_estimate === 'number' && e.audience_estimate > 0) || e.fee_status || e.next_action || e.follow_up_due) {
+            businessMeta = '<div class="business-meta">';
+            if (e.project) businessMeta += '<div><strong>Project:</strong> ' + escapeHtml(e.project) + '</div>';
+            if (e.series) businessMeta += '<div><strong>Series:</strong> ' + escapeHtml(e.series) + '</div>';
+            if (Array.isArray(e.artists) && e.artists.length > 0) businessMeta += '<div><strong>Artists:</strong> ' + escapeHtml(e.artists.join(', ')) + '</div>';
+            if (typeof e.audience_estimate === 'number' && e.audience_estimate > 0) businessMeta += '<div><strong>Audience:</strong> ' + escapeHtml(e.audience_estimate) + '</div>';
+            if (e.fee_status) businessMeta += '<div><strong>Fee Status:</strong> ' + escapeHtml(e.fee_status) + '</div>';
+            if (e.next_action) businessMeta += '<div><strong>Next Action:</strong> ' + escapeHtml(e.next_action) + '</div>';
+            if (e.follow_up_due) businessMeta += '<div><strong>Follow-up:</strong> ' + escapeHtml(formatDate(e.follow_up_due)) + '</div>';
+            businessMeta += '</div>';
+          }
           
           return '<li class="calendar-item" data-id="' + escapeHtml(e.id) + '">' +
             '<div class="calendar-info">' +
             '<div class="calendar-title">' + escapeHtml(e.title || '(Untitled)') + '</div>' +
             '<div class="calendar-meta">' +
+            internalBadge +
             (e.status ? '<span class="badge ' + escapeHtml(e.status) + '">' + escapeHtml(e.status) + '</span>' : '') +
             (e.event_type ? '<span>' + escapeHtml(e.event_type) + '</span>' : '') +
             (dateStr ? '<span> · ' + escapeHtml(dateStr) + '</span>' : '') +
@@ -419,6 +541,7 @@
             linkedCaseLabel +
             linkedVenueLabel +
             '</div>' +
+            businessMeta +
             '</div>' +
             '<div class="calendar-actions">' +
             '<button class="secondary" data-action="edit" data-id="' + escapeHtml(e.id) + '">Edit</button>' +
@@ -485,6 +608,7 @@
       
       setStatus('Loading event...', 'loading');
       store.calendar.getById(id).then(function (e) {
+        e = normalizeCalendarEventRecord(e);
         if (!e) {
           setStatus('Event not found', 'error');
           return;
@@ -502,7 +626,19 @@
         document.getElementById('timezone').value = e.timezone || '';
         document.getElementById('expected_income').value = e.expected_income || '';
         document.getElementById('currency').value = e.currency || 'EUR';
-        document.getElementById('public_visibility').checked = e.public_visibility || false;
+        document.getElementById('public_visibility').value = e.public_visibility || 'public';
+        document.getElementById('public_calendar_readiness').value = e.public_calendar_readiness || 'not_ready';
+        document.getElementById('confirmed_on').value = normalizeDateOnly(e.confirmed_on);
+        document.getElementById('series').value = e.series || '';
+        document.getElementById('project').value = e.project || '';
+        document.getElementById('format').value = e.format || '';
+        document.getElementById('artists').value = Array.isArray(e.artists) ? e.artists.join(', ') : '';
+        document.getElementById('audience_estimate').value = e.audience_estimate || '';
+        document.getElementById('fee_status').value = e.fee_status || 'pending_confirmation';
+        document.getElementById('payment_model').value = normalizePaymentModel(e.payment_model) || 'not_yet_defined';
+        document.getElementById('pending_items').value = Array.isArray(e.pending_items) ? e.pending_items.join(', ') : '';
+        document.getElementById('next_action').value = e.next_action || '';
+        document.getElementById('follow_up_due').value = normalizeDateOnly(e.follow_up_due);
         document.getElementById('program').value = e.program || '';
         document.getElementById('notes_internal').value = e.notes_internal || '';
         document.getElementById('notes_public').value = e.notes_public || '';
@@ -562,21 +698,35 @@
         title: formData.get('title'),
         event_type: formData.get('event_type'),
         status: formData.get('status'),
-        start_date: formData.get('start_date') ? new Date(formData.get('start_date')).toISOString() : null,
-        end_date: formData.get('end_date') ? new Date(formData.get('end_date')).toISOString() : null,
+        start_date: normalizeDateOnly(formData.get('start_date')),
+        end_date: normalizeDateOnly(formData.get('end_date')),
         all_day: document.getElementById('all_day').checked,
-        start_time: formData.get('start_time'),
-        end_time: formData.get('end_time'),
+        start_time: document.getElementById('all_day').checked ? '' : formData.get('start_time'),
+        end_time: document.getElementById('all_day').checked ? '' : formData.get('end_time'),
         timezone: formData.get('timezone'),
         expected_income: Number(formData.get('expected_income')) || 0,
         currency: formData.get('currency') || 'EUR',
-        public_visibility: document.getElementById('public_visibility').checked,
+        public_visibility: formData.get('public_visibility') || 'public',
+        public_calendar_readiness: formData.get('public_calendar_readiness') || 'not_ready',
+        confirmed_on: normalizeDateOnly(formData.get('confirmed_on')),
+        series: formData.get('series'),
+        project: formData.get('project'),
+        format: formData.get('format'),
+        artists: splitCommaSeparatedList(formData.get('artists')),
+        audience_estimate: Number(formData.get('audience_estimate')) || 0,
+        fee_status: formData.get('fee_status') || 'pending_confirmation',
+        payment_model: normalizePaymentModel(formData.get('payment_model')) || 'not_yet_defined',
+        pending_items: splitCommaSeparatedList(formData.get('pending_items')),
+        next_action: formData.get('next_action'),
+        follow_up_due: normalizeDateOnly(formData.get('follow_up_due')),
         linked_case_id: formData.get('linked_case_id'),
         venue_id: formData.get('venue_id'),
         program: formData.get('program'),
         notes_internal: formData.get('notes_internal'),
         notes_public: formData.get('notes_public')
       };
+
+      eventData = normalizeCalendarEventRecord(eventData);
 
       if (isCreating) {
         var newEvent = window.adminV3Factories.createCalendarEvent(eventData);
@@ -652,7 +802,7 @@
         return window.adminV3Auth.checkAuth();
       }).then(function (result) {
         if (!result.authenticated) {
-          document.getElementById('authGate').innerHTML = '<p>Access denied. No user session found.</p><p>Please <a href="admin-v2.html" target="_blank">sign in via Admin v2</a>, then return here.</p><p><button id="retryAuthBtn">Retry</button></p>';
+          document.getElementById('authGate').innerHTML = window.adminV3Auth.renderAccessDeniedHtml(result);
           document.getElementById('retryAuthBtn').addEventListener('click', function () {
             window.location.reload();
           });
