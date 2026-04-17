@@ -1385,22 +1385,14 @@
       return Promise.resolve(false);
     }
     var P = firebase.auth.Auth.Persistence;
-    // Safari ITP blocks third-party cookies
-    // Desktop Safari: prefer SESSION for popup auth
-    // Mobile Safari (iPhone): prefer LOCAL for redirect auth (SESSION may fail after redirect)
+    // Safari redirect flows are more reliable when auth can survive a full-page return.
     var isSafari = isSafariBrowser();
     var isMobileSafari = isMobileSafariBrowser();
     var candidates;
-    if (isMobileSafari) {
+    if (isSafari || isMobileSafari) {
       candidates = [
         { id: P.LOCAL, label: 'local' },
         { id: P.SESSION, label: 'session' },
-        { id: P.NONE, label: 'none' }
-      ];
-    } else if (isSafari) {
-      candidates = [
-        { id: P.SESSION, label: 'session' },
-        { id: P.LOCAL, label: 'local' },
         { id: P.NONE, label: 'none' }
       ];
     } else {
@@ -1524,11 +1516,12 @@
       return Promise.resolve(null);
     }
     if (redirectResultPromise) return redirectResultPromise;
-    // On mobile Safari (iPhone), always attempt to process redirect result
-    // even if redirect pending flag is lost, since ITP may clear storage across redirects
+    // Safari can lose our pending marker across the redirect round-trip.
+    // When Safari uses redirect auth, process the redirect result anyway.
+    var safari = isSafariBrowser();
     var mobileSafari = isMobileSafariBrowser();
     var redirectPending = getRedirectPending();
-    if (!mobileSafari && !redirectPending) {
+    if (!safari && !redirectPending) {
       setAuthMachineState(authMachineState, {
         redirectProcessed: 'no',
         redirectResultProcessed: 'no',
@@ -1683,6 +1676,10 @@
       var currentUserAfterPopup = firebaseAuth ? firebaseAuth.currentUser : null;
       var user = (res && res.user) || currentUserAfterPopup || null;
       authObserverLatestUser = user;
+      if (!user && isSafariBrowser() && !isMobileSafariBrowser() && isLocalDevHost() && typeof firebaseAuth.signInWithRedirect === 'function') {
+        authRequestInFlight = true;
+        return startRedirectSignIn(provider, attemptId, 'popup-no-user-fallback');
+      }
       var allow = isAdminUser(user);
       setAuthMachineState(user && allow ? AUTH_STATE_AUTHENTICATED : (user ? AUTH_STATE_UNAUTHORIZED : AUTH_STATE_SIGNED_OUT), {
         popupRequested: 'yes',
