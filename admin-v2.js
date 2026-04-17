@@ -1181,9 +1181,7 @@
     return false;
   }
   function shouldUseRedirectAuth() {
-    if (isMobileSafariBrowser()) return false;
-    if (isLocalDevHost()) return false;
-    return isSafariBrowser();
+    return false;
   }
   function setAuthError(message, err) {
     setAuthDebug({ failure: message });
@@ -1676,7 +1674,7 @@
       var currentUserAfterPopup = firebaseAuth ? firebaseAuth.currentUser : null;
       var user = (res && res.user) || currentUserAfterPopup || null;
       authObserverLatestUser = user;
-      if (!user && isSafariBrowser() && !isMobileSafariBrowser() && isLocalDevHost() && typeof firebaseAuth.signInWithRedirect === 'function') {
+      if (!user && isSafariBrowser() && !isMobileSafariBrowser() && typeof firebaseAuth.signInWithRedirect === 'function') {
         authRequestInFlight = true;
         return startRedirectSignIn(provider, attemptId, 'popup-no-user-fallback');
       }
