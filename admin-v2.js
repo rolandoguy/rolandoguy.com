@@ -5690,48 +5690,56 @@
     var date = new Date(value + 'T00:00:00');
     return Number.isNaN(date.getTime()) ? null : date;
   }
-  function formatVisibleDate(raw) {
-    var date = null;
-    if (raw instanceof Date) {
-      date = Number.isNaN(raw.getTime()) ? null : new Date(raw.getTime());
-    } else if (typeof raw === 'number') {
-      date = new Date(raw);
-      if (Number.isNaN(date.getTime())) date = null;
-    } else {
-      var value = safeString(raw).trim();
-      if (!value) return '';
-      date = outreachParseDate(value);
-      if (!date) {
-        var dateTime = new Date(value);
-        if (!Number.isNaN(dateTime.getTime())) date = dateTime;
-      }
-      if (!date) return value;
+  function formatVisibleDateParts(raw) {
+    var tag = Object.prototype.toString.call(raw);
+    if (tag === '[object Date]') {
+      if (Number.isNaN(raw.getTime())) return null;
+      return {
+        year: String(raw.getFullYear()),
+        month: String(raw.getMonth() + 1).padStart(2, '0'),
+        day: String(raw.getDate()).padStart(2, '0'),
+        hours: String(raw.getHours()).padStart(2, '0'),
+        minutes: String(raw.getMinutes()).padStart(2, '0')
+      };
     }
-    var day = String(date.getDate()).padStart(2, '0');
-    var month = String(date.getMonth() + 1).padStart(2, '0');
-    var year = String(date.getFullYear());
-    return day + '.' + month + '.' + year;
+    if (typeof raw === 'number' && isFinite(raw)) {
+      return formatVisibleDateParts(new Date(raw));
+    }
+    var value = safeString(raw).trim();
+    if (!value) return null;
+    var isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+    if (isoMatch) {
+      return {
+        year: isoMatch[1],
+        month: isoMatch[2],
+        day: isoMatch[3],
+        hours: isoMatch[4] || '',
+        minutes: isoMatch[5] || ''
+      };
+    }
+    var deMatch = value.match(/^(\d{2})\.(\d{2})\.(\d{4})(?:[,\s]+(\d{2}):(\d{2}))?/);
+    if (deMatch) {
+      return {
+        year: deMatch[3],
+        month: deMatch[2],
+        day: deMatch[1],
+        hours: deMatch[4] || '',
+        minutes: deMatch[5] || ''
+      };
+    }
+    return null;
+  }
+  function formatVisibleDate(raw) {
+    var parts = formatVisibleDateParts(raw);
+    if (!parts) return safeString(raw).trim();
+    return parts.day + '.' + parts.month + '.' + parts.year;
   }
   function formatVisibleDateTime(raw) {
-    var date = null;
-    if (raw instanceof Date) {
-      date = Number.isNaN(raw.getTime()) ? null : new Date(raw.getTime());
-    } else if (typeof raw === 'number') {
-      date = new Date(raw);
-    } else {
-      var value = safeString(raw).trim();
-      if (!value) return '';
-      date = new Date(value);
-      if (Number.isNaN(date.getTime())) {
-        var dateOnly = outreachParseDate(value);
-        if (dateOnly) return formatVisibleDate(dateOnly);
-        return value;
-      }
-    }
-    if (!date || Number.isNaN(date.getTime())) return '';
-    var hours = String(date.getHours()).padStart(2, '0');
-    var minutes = String(date.getMinutes()).padStart(2, '0');
-    return formatVisibleDate(date) + ', ' + hours + ':' + minutes;
+    var parts = formatVisibleDateParts(raw);
+    if (!parts) return safeString(raw).trim();
+    var text = parts.day + '.' + parts.month + '.' + parts.year;
+    if (parts.hours && parts.minutes) text += ', ' + parts.hours + ':' + parts.minutes;
+    return text;
   }
   function outreachDaysUntil(raw) {
     var date = outreachParseDate(raw);
