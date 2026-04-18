@@ -26,6 +26,8 @@ var mediaDefaultsPath = path.join(root, 'v1-assets', 'build', 'media-defaults.js
 var filter = require('./lib/public-field-filter');
 var exportLoader = require('./lib/load-admin-export');
 
+var enTable = null;
+
 function readJson(p) {
   if (!fs.existsSync(p)) {
     console.error('build-media: missing file', p);
@@ -34,9 +36,37 @@ function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
+function safeString(v) {
+  return typeof v === 'string' ? v : (v == null ? '' : String(v));
+}
+
 function normalizeVideos(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map(filter.filterMediaVideo);
+}
+
+function safeMediaAudio(audio) {
+  if (!audio || typeof audio !== 'object') return { h2: '', sub: '', items: [] };
+  return {
+    h2: String(audio.h2 || '').trim(),
+    sub: String(audio.sub || '').trim(),
+    items: Array.isArray(audio.items) ? audio.items.map(filter.filterMediaAudioItem) : []
+  };
+}
+
+function resolveEffectiveAudioHeadingFields(audioData) {
+  var uiEn = data.rg_ui_en && typeof data.rg_ui_en === 'object' ? data.rg_ui_en : null;
+  var safeAudio = safeMediaAudio(audioData || {});
+  return {
+    h2:
+      safeString(safeAudio.h2).trim() ||
+      safeString(uiEn && uiEn['mp.audio.h2']).trim() ||
+      safeString(enTable && enTable['mp.audio.h2']).trim(),
+    sub:
+      safeString(safeAudio.sub).trim() ||
+      safeString(uiEn && uiEn['mp.audio.sub']).trim() ||
+      safeString(enTable && enTable['mp.audio.sub']).trim()
+  };
 }
 
 function validVideo(v) {
@@ -222,6 +252,13 @@ var validVideos = videos.filter(function(v, idx) {
   return validVideo(v);
 });
 
+var rawAudio = data.rg_audio;
+if (!rawAudio || typeof rawAudio !== 'object' || Array.isArray(rawAudio)) {
+  rawAudio = { h2: '', sub: '', items: [] };
+}
+var audioData = safeMediaAudio(rawAudio);
+var effectiveAudio = resolveEffectiveAudioHeadingFields(audioData);
+
 if (data.rg_photos == null || typeof data.rg_photos !== 'object' || Array.isArray(data.rg_photos)) {
   console.error('build-media: data.rg_photos missing or invalid');
   process.exit(1);
@@ -245,6 +282,15 @@ if (!totalPhotoCount(photosBlock)) {
 
 var defaults = readJson(mediaDefaultsPath);
 var uiEn = data.rg_ui_en && typeof data.rg_ui_en === 'object' ? data.rg_ui_en : null;
+try {
+  if (typeof uiEn === 'function') {
+    enTable = uiEn('en') || null;
+  } else if (uiEn && typeof uiEn === 'object') {
+    enTable = uiEn;
+  }
+} catch (e) {
+  enTable = null;
+}
 
 var vidH2 =
   (typeof rawVid.h2 === 'string' && rawVid.h2.trim() ? String(rawVid.h2).trim() : '') ||
@@ -272,6 +318,7 @@ var output = {
     h2: vidH2,
     videos: validVideos
   },
+  audio: effectiveAudio,
   photos: Object.assign({}, chrome, {
     s: photosBlock.s,
     t: photosBlock.t,
@@ -293,6 +340,7 @@ console.log(
   'Wrote',
   outFile,
   '(' + validVideos.length + ' valid videos (skipped ' + (videos.length - validVideos.length) + ' incomplete hidden/draft),',
+  (output.audio && output.audio.items ? output.audio.items.length : 0) + ' audio,',
   photosBlock.s.length +
     '+' +
     photosBlock.t.length +

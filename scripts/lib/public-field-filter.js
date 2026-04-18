@@ -33,6 +33,17 @@ var PUBLIC_MEDIA_VIDEO_FIELDS = [
   'customThumb'
 ];
 
+var PUBLIC_MEDIA_AUDIO_ITEM_FIELDS = [
+  'title',
+  'subline',
+  'composer',
+  'provider',
+  'embedUrl',
+  'externalUrl',
+  'hidden',
+  'featured'
+];
+
 var PUBLIC_MEDIA_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer', 'orientation', 'focus'];
 
 var PUBLIC_MEDIA_CHROME_FIELDS = ['h2', 'sub', 'studioTab', 'stageTab', 'backstageTab', 'backstageEmpty'];
@@ -279,7 +290,11 @@ function filterCombined(obj, whitelist) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function filterMediaVideo(video) {
-  return filterCombined(video, PUBLIC_MEDIA_VIDEO_FIELDS);
+  return filterByWhitelist(video, PUBLIC_MEDIA_VIDEO_FIELDS);
+}
+
+function filterMediaAudioItem(audioItem) {
+  return filterByWhitelist(audioItem, PUBLIC_MEDIA_AUDIO_ITEM_FIELDS);
 }
 
 function filterMediaPhoto(photo) {
@@ -432,6 +447,7 @@ function validatePublicPayload(payload, payloadName) {
 module.exports = {
   // Whitelist constants (for reference/testing)
   PUBLIC_MEDIA_VIDEO_FIELDS: PUBLIC_MEDIA_VIDEO_FIELDS,
+  PUBLIC_MEDIA_AUDIO_ITEM_FIELDS: PUBLIC_MEDIA_AUDIO_ITEM_FIELDS,
   PUBLIC_MEDIA_PHOTO_FIELDS: PUBLIC_MEDIA_PHOTO_FIELDS,
   PUBLIC_CALENDAR_EVENT_FIELDS: PUBLIC_CALENDAR_EVENT_FIELDS,
   PUBLIC_BIOGRAPHY_FIELDS: PUBLIC_BIOGRAPHY_FIELDS,
@@ -443,6 +459,7 @@ module.exports = {
   
   // Filter functions
   filterMediaVideo: filterMediaVideo,
+  filterMediaAudioItem: filterMediaAudioItem,
   filterMediaPhoto: filterMediaPhoto,
   filterMediaChrome: filterMediaChrome,
   filterMediaCaption: filterMediaCaption,
