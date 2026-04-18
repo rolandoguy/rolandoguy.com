@@ -6,6 +6,13 @@
  * Purpose:
  * - Ensure generated public data, checks, and prerender always run together for deploy.
  * - Fail fast when admin export path is missing, so stale generated data is not deployed by accident.
+ * - Refresh bundled fallback data and rebuild-canonical sections from a current admin export.
+ *
+ * Current public architecture:
+ * - Hero, Biography, Contact copy, Calendar, Press/Dossier, Repertoire, and Programs
+ *   can read explicit public-safe live Firestore mirrors first.
+ * - Bundled v1-assets/data/*.json files remain fallback for those sections and the
+ *   canonical public source only for intentionally rebuild-based sections.
  *
  * Usage:
  *   node scripts/build-public-safe.js --export path/to/rg_admin_export.json
@@ -85,8 +92,8 @@ var relOrAbs = path.isAbsolute(exportPath) ? absExport : exportPath;
 console.log('[build-public] Starting canonical public-site rebuild');
 console.log('[build-public] Export source:', absExport);
 console.log('[build-public] Steps:', BUILD_STEPS.map(function (step) { return step.script; }).join(', '));
-console.log('[build-public] Note: admin changes do not reach the public site until you export, rebuild, and deploy.');
-console.log('[build-public] Note: bundled v1-assets/data/*.json files are the public website source of truth.');
+console.log('[build-public] Note: rebuild refreshes bundled fallback data and rebuild-canonical sections from the current admin export.');
+console.log('[build-public] Note: several editorial sections are now live-first via explicit public-safe Firestore mirrors; bundled JSON remains fallback there.');
 
 BUILD_STEPS.forEach(function (step, idx) {
   var args = ['run', step.script];
@@ -94,5 +101,5 @@ BUILD_STEPS.forEach(function (step, idx) {
   run('npm', args, 'Step ' + (idx + 1) + '/' + BUILD_STEPS.length + ' · ' + step.label);
 });
 console.log('\n[build-public] Done. Public data regenerated, smoke-checked, and prerendered.');
-console.log('[build-public] Reminder: public changes go live only after deploy.');
+console.log('[build-public] Reminder: deploy is still required for bundled fallback updates, prerendered HTML, rules, and cache-busting changes.');
 console.log('[build-public] Ready for deploy.');

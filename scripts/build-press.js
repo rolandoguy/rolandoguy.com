@@ -40,6 +40,16 @@ function deepClone(o) {
   return JSON.parse(JSON.stringify(o));
 }
 
+function asVisibleFlag(raw, fallback) {
+  if (typeof raw === 'boolean') return raw;
+  if (raw == null) return fallback;
+  var s = String(raw).trim().toLowerCase();
+  if (!s) return fallback;
+  if (s === 'true' || s === '1' || s === 'yes' || s === 'y' || s === 'on') return true;
+  if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === 'off') return false;
+  return fallback;
+}
+
 function normalizePress(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map(filter.filterPressItem);
@@ -94,7 +104,7 @@ function mergePressMeta(base, raw) {
   var out = deepClone(base);
   if (!raw || typeof raw !== 'object') return out;
   if (Object.prototype.hasOwnProperty.call(raw, 'showReviewsSection')) {
-    out.showReviewsSection = raw.showReviewsSection !== false;
+    out.showReviewsSection = asVisibleFlag(raw.showReviewsSection, true);
   }
   LANGS.forEach(function (l) {
     if (raw[l] && typeof raw[l] === 'object' && raw[l].translatedNote != null) {

@@ -139,7 +139,7 @@ var PUBLIC_BIOGRAPHY_FIELDS = ['portraitImage', 'introLine', 'h2', 'paragraphs',
 // CONTACT FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'emailBtn', 'webBtn', 'quote', 'formspreeId'];
+var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'emailBtn', 'webBtn', 'quote'];
 
 var PUBLIC_CONTACT_LOCALE_FIELDS = ['title', 'sub', 'emailBtn', 'quote'];
 

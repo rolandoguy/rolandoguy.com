@@ -3,8 +3,10 @@ service cloud.firestore {
   match /databases/{database}/documents {
     /*
      * Public multipage site:
-     * - Do not allow anonymous Firestore reads.
-     * - Public-safe website data is shipped from bundled JSON, not live Firestore.
+     * - Allow anonymous reads only for explicit public-safe mirror docs.
+     * - Several editorial sections are live-first via public_* mirrors.
+     * - Bundled JSON remains fallback for those sections and primary only for
+     *   intentionally rebuild-canonical areas such as Media.
      *
      * Internal/admin data:
      * - Admin v2 and admin v3 read/write docs under /rg/{docId}.
@@ -19,7 +21,16 @@ service cloud.firestore {
     function isPublicWebsiteDoc(docId) {
       return docId.matches('^public_(hero|bio|contact|perf)_(en|de|es|it|fr)$')
         || docId == 'public_rg_perfs'
-        || docId == 'public_rg_past_perfs';
+        || docId == 'public_rg_past_perfs'
+        || docId == 'public_rg_press'
+        || docId == 'public_rg_press_meta'
+        || docId == 'public_rg_epk_bios'
+        || docId == 'public_rg_epk_photos'
+        || docId == 'public_rg_public_pdfs'
+        || docId.matches('^public_rep_(en|de|es|it|fr)$')
+        || docId == 'public_rg_rep_cards'
+        || docId.matches('^public_rg_programs_(en|de|es|it|fr)$')
+        || docId.matches('^public_rg_editorial_(en|de|es|it|fr)$');
     }
 
     match /rg/{docId} {

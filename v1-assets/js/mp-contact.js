@@ -1,6 +1,8 @@
 /**
  * Public-safe contact section for mp/contact.html.
  * This runtime consumes bundled public JSON plus explicit public-safe Firestore docs.
+ * Contact copy may come from live public docs, while Formspree configuration remains
+ * bundle-owned until there is an explicit public-safe live config path for it.
  * Internal/admin drafts and legacy fallback payloads must never reach this page.
  */
 (function () {
@@ -252,6 +254,7 @@
   }
 
   function getFormspreeId() {
+    // Canonical source: bundled contact-data.json. Live public contact docs are copy-only.
     if (MP_CONTACT && MP_CONTACT.formspreeId && String(MP_CONTACT.formspreeId).trim()) {
       return String(MP_CONTACT.formspreeId).trim();
     }
