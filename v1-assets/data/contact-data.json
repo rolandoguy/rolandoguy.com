@@ -10,16 +10,24 @@
   "formspreeId": "xqedvoqw",
   "contactLocales": {
     "de": {
-      "sub": "Für Buchungsanfragen, künstlerische Projekte, private Konzerte und Opernabende nutzen Sie bitte das Kontaktformular.\n\nAnfragen werden schnellstmöglich beantwortet."
+      "title": "Buchungen &amp; <em>Anfragen</em>",
+      "sub": "Für Buchungsanfragen, künstlerische Projekte, private Konzerte und Opernabende nutzen Sie bitte das Kontaktformular.\n\nAnfragen werden schnellstmöglich beantwortet.",
+      "emailBtn": "E-Mail senden"
     },
     "es": {
-      "sub": "Para contrataciones, proyectos artísticos, conciertos privados y veladas de ópera, utilice por favor el formulario de contacto.\n\nLas consultas serán respondidas a la mayor brevedad posible."
+      "title": "<span class=\"title-amp-stack\"><span class=\"title-line1\">Contrataciones</span><span class=\"title-line2\"><span class=\"title-amp\">&amp;</span> <em>Consultas artísticas</em></span></span>",
+      "sub": "Para contrataciones, proyectos artísticos, conciertos privados y veladas de ópera, utilice por favor el formulario de contacto.\n\nLas consultas serán respondidas a la mayor brevedad posible.",
+      "emailBtn": "Enviar Email"
     },
     "it": {
-      "sub": "Per richieste di ingaggio, progetti artistici, concerti privati e serate d'opera, si prega di utilizzare il modulo di contatto.\n\nLe richieste saranno evase nel più breve tempo possibile."
+      "title": "<span class=\"title-amp-stack\"><span class=\"title-line1\">Prenotazioni</span><span class=\"title-line2\"><span class=\"title-amp\">&amp;</span> <em>richieste artistiche</em></span></span>",
+      "sub": "Per richieste di ingaggio, progetti artistici, concerti privati e serate d’opera, si prega di utilizzare il modulo di contatto.\n\nLe richieste saranno evase nel più breve tempo possibile.",
+      "emailBtn": "Invia Email"
     },
     "fr": {
-      "sub": "Pour les demandes d'engagement, les projets artistiques, les concerts privés et les soirées d'opéra, veuillez utiliser le formulaire de contact.\n\nLes demandes seront traitées dans les plus brefs délais."
+      "title": "<span class=\"title-amp-stack\"><span class=\"title-line1\">Réservations</span><span class=\"title-line2\"><span class=\"title-amp\">&amp;</span> <em>demandes artistiques</em></span></span>",
+      "sub": "Pour les demandes d’engagement, les projets artistiques, les concerts privés et les soirées d’opéra, veuillez utiliser le formulaire de contact.\n\nLes demandes seront traitées dans les plus brefs délais.",
+      "emailBtn": "Envoyer un Email"
     }
   }
 }

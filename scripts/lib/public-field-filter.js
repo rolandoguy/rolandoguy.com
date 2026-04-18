@@ -33,7 +33,7 @@ var PUBLIC_MEDIA_VIDEO_FIELDS = [
   'customThumb'
 ];
 
-var PUBLIC_MEDIA_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer'];
+var PUBLIC_MEDIA_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer', 'orientation', 'focus'];
 
 var PUBLIC_MEDIA_CHROME_FIELDS = ['h2', 'sub', 'studioTab', 'stageTab', 'backstageTab', 'backstageEmpty'];
 

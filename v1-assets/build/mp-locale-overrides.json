@@ -5,28 +5,56 @@
       "nav.epk": "Presse & Materialien",
       "hero.scroll": "Künstlerprofil",
       "mp.pressCoverage": "Pressestimmen",
-      "mp.presenterMaterials": "Material für Veranstalter"
+      "mp.presenterMaterials": "Material für Veranstalter",
+      "reviewsIntro": "Ausgewählte Pressestimmen zu jüngeren Produktionen und Auftritten.",
+      "mp.audio.h2": "Ausgewähltes <em>Audio</em><br>&amp; Hören",
+      "mp.audio.sub": "Ausgewählte eingebettete Aufnahmen und Hörbeispiele.",
+      "chrome.logoHalo.enabled": "true",
+      "chrome.logoHalo.intensity": "barely",
+      "chrome.featherHalo.enabled": "true",
+      "chrome.featherHalo.intensity": "lush"
     },
     "es": {
       "nav.home": "Inicio",
       "nav.epk": "Prensa y materiales",
       "hero.scroll": "Perfil artístico",
       "mp.pressCoverage": "En la prensa",
-      "mp.presenterMaterials": "Materiales para organizadores"
+      "mp.presenterMaterials": "Materiales para organizadores",
+      "reviewsIntro": "Selección de reseñas sobre producciones y actuaciones recientes.",
+      "mp.audio.h2": "<em>Audio</em><br>&amp; escucha seleccionados",
+      "mp.audio.sub": "Grabaciones integradas y fragmentos de escucha seleccionados.",
+      "chrome.logoHalo.enabled": "true",
+      "chrome.logoHalo.intensity": "barely",
+      "chrome.featherHalo.enabled": "true",
+      "chrome.featherHalo.intensity": "lush"
     },
     "it": {
       "nav.home": "Home",
       "nav.epk": "Stampa e materiali",
       "hero.scroll": "Profilo artistico",
       "mp.pressCoverage": "Rassegna stampa",
-      "mp.presenterMaterials": "Materiali per gli organizzatori"
+      "mp.presenterMaterials": "Materiali per gli organizzatori",
+      "reviewsIntro": "Una selezione di citazioni stampa su produzioni e prove recenti.",
+      "mp.audio.h2": "<em>Audio</em><br>&amp; ascolto selezionati",
+      "mp.audio.sub": "Registrazioni incorporate ed estratti audio selezionati.",
+      "chrome.logoHalo.enabled": "true",
+      "chrome.logoHalo.intensity": "barely",
+      "chrome.featherHalo.enabled": "true",
+      "chrome.featherHalo.intensity": "lush"
     },
     "fr": {
       "nav.home": "Accueil",
       "nav.epk": "Presse & ressources",
       "hero.scroll": "Profil d’artiste",
       "mp.pressCoverage": "Revue de presse",
-      "mp.presenterMaterials": "Matériel pour les organisateurs"
+      "mp.presenterMaterials": "Matériel pour les organisateurs",
+      "reviewsIntro": "Un choix de retours presse sur des productions et récitals récents.",
+      "mp.audio.h2": "<em>Audio</em><br>&amp; écoute sélectionnés",
+      "mp.audio.sub": "Extraits audio et enregistrements intégrés sélectionnés.",
+      "chrome.logoHalo.enabled": "true",
+      "chrome.logoHalo.intensity": "barely",
+      "chrome.featherHalo.enabled": "true",
+      "chrome.featherHalo.intensity": "lush"
     }
   }
 }

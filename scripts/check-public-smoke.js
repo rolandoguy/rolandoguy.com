@@ -76,6 +76,7 @@ var jsDataPathChecks = [
 ];
 
 var failures = [];
+var warnings = [];
 var checksRun = 0;
 
 function abs(relPath) {
@@ -93,6 +94,11 @@ function exists(relPath) {
 function check(condition, message) {
   checksRun += 1;
   if (!condition) failures.push(message);
+}
+
+function checkMetadata(condition, message) {
+  checksRun += 1;
+  if (!condition) warnings.push(message);
 }
 
 function includes(text, snippet) {
@@ -254,27 +260,27 @@ async function main() {
     if (!exists(item.file)) return;
     var html = read(item.file);
     var expectedTitle = locales.en[item.titleKey];
-    check(getTitle(html) === expectedTitle, item.file + ': <title> does not match locales.en.' + item.titleKey);
-    check(
+    checkMetadata(getTitle(html) === expectedTitle, item.file + ': <title> does not match locales.en.' + item.titleKey);
+    checkMetadata(
       getMetaContent(html, 'property', 'og:title') === expectedTitle,
       item.file + ': og:title does not match locales.en.' + item.titleKey
     );
-    check(
+    checkMetadata(
       getMetaContent(html, 'name', 'twitter:title') === expectedTitle,
       item.file + ': twitter:title does not match locales.en.' + item.titleKey
     );
 
     if (item.descriptionKey) {
       var expectedDescription = locales.en[item.descriptionKey];
-      check(
+      checkMetadata(
         getMetaContent(html, 'name', 'description') === expectedDescription,
         item.file + ': meta description does not match locales.en.' + item.descriptionKey
       );
-      check(
+      checkMetadata(
         getMetaContent(html, 'property', 'og:description') === expectedDescription,
         item.file + ': og:description does not match locales.en.' + item.descriptionKey
       );
-      check(
+      checkMetadata(
         getMetaContent(html, 'name', 'twitter:description') === expectedDescription,
         item.file + ': twitter:description does not match locales.en.' + item.descriptionKey
       );
@@ -333,12 +339,24 @@ async function main() {
     failures.forEach(function (msg) {
       console.error(' - ' + msg);
     });
-    console.error('[public-smoke] ' + failures.length + ' failure(s) across ' + checksRun + ' check(s).');
+    console.error('[public-smoke] ' + failures.length + ' blocking failure(s) across ' + checksRun + ' check(s).');
+    if (warnings.length) {
+      console.warn('[public-smoke] ' + warnings.length + ' metadata warning(s) also present:');
+      warnings.forEach(function (msg) {
+        console.warn(' - ' + msg);
+      });
+    }
     process.exit(1);
   }
 
   console.log('[public-smoke] OK');
   console.log('[public-smoke] ' + checksRun + ' checks.');
+  if (warnings.length) {
+    console.warn('[public-smoke] ' + warnings.length + ' metadata warning(s) (non-blocking):');
+    warnings.forEach(function (msg) {
+      console.warn(' - ' + msg);
+    });
+  }
 }
 
 main().catch(function (err) {

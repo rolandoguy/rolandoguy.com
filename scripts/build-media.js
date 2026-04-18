@@ -41,6 +41,8 @@ function normalizeVideos(raw) {
 
 function validVideo(v) {
   if (!v || typeof v !== 'object') return false;
+  // Hidden/draft videos are allowed to be incomplete - they won't be shown publicly
+  if (v.hidden === true || v.hidden === 'true') return true;
   var id = String(v.id || '').trim();
   if (!id) return false;
   if (!String(v.title || '').trim()) return false;
@@ -95,11 +97,16 @@ function normalizePhotosBlock(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return { s: [], t: [], b: [] };
   }
-  var o = filter.filterMediaChrome(raw);
+  // Extract photo arrays directly before filtering chrome metadata
+  // (filterMediaChrome only allows h2, sub, studioTab, stageTab, backstageTab, backstageEmpty)
+  var sArr = Array.isArray(raw.s) ? raw.s : [];
+  var tArr = Array.isArray(raw.t) ? raw.t : [];
+  var bArr = Array.isArray(raw.b) ? raw.b : [];
+  var chrome = filter.filterMediaChrome(raw);
   return {
-    s: normalizePhotoList(o.s),
-    t: normalizePhotoList(o.t),
-    b: normalizePhotoList(o.b || [])
+    s: normalizePhotoList(sArr),
+    t: normalizePhotoList(tArr),
+    b: normalizePhotoList(bArr)
   };
 }
 
@@ -181,23 +188,56 @@ if (!videos.length) {
   console.error('build-media: data.rg_vid.videos is empty or not an array — refusing to write');
   process.exit(1);
 }
+var invalidVideos = [];
 for (var j = 0; j < videos.length; j++) {
   if (!validVideo(videos[j])) {
-    console.error(
-      'build-media: invalid video at index',
+    var v = videos[j];
+    var isHidden = v && (v.hidden === true || v.hidden === 'true');
+    console.warn(
+      'build-media: skipping incomplete video at index',
       j,
-      '(need non-empty id, title, and tag)'
+      '(id:',
+      String(v && v.id || '(missing)').slice(0, 30),
+      ', title:',
+      String(v && v.title || '(missing)').slice(0, 30),
+      ', hidden:',
+      isHidden,
+      ')'
     );
-    process.exit(1);
+    if (!isHidden) {
+      invalidVideos.push({ index: j, video: v });
+    }
   }
 }
+if (invalidVideos.length > 0) {
+  console.error(
+    'build-media:',
+    invalidVideos.length,
+    'non-hidden video(s) are invalid (need non-empty id, title, and tag). First invalid at index:',
+    invalidVideos[0].index
+  );
+  process.exit(1);
+}
+var validVideos = videos.filter(function(v, idx) {
+  return validVideo(v);
+});
 
 if (data.rg_photos == null || typeof data.rg_photos !== 'object' || Array.isArray(data.rg_photos)) {
   console.error('build-media: data.rg_photos missing or invalid');
   process.exit(1);
 }
 
+console.log('build-media: rg_photos shape:', JSON.stringify({
+  s: Array.isArray(data.rg_photos.s) ? data.rg_photos.s.length : 'not array',
+  t: Array.isArray(data.rg_photos.t) ? data.rg_photos.t.length : 'not array',
+  b: Array.isArray(data.rg_photos.b) ? data.rg_photos.b.length : 'not array',
+  sSample: data.rg_photos.s && data.rg_photos.s[0] ? typeof data.rg_photos.s[0] : 'none',
+  tSample: data.rg_photos.t && data.rg_photos.t[0] ? typeof data.rg_photos.t[0] : 'none',
+  bSample: data.rg_photos.b && data.rg_photos.b[0] ? typeof data.rg_photos.b[0] : 'none'
+}));
+
 var photosBlock = normalizePhotosBlock(data.rg_photos);
+console.log('build-media: after normalization - s:', photosBlock.s.length, 't:', photosBlock.t.length, 'b:', photosBlock.b.length);
 if (!totalPhotoCount(photosBlock)) {
   console.error('build-media: no photo URLs in rg_photos (s/t/b) — refusing to write');
   process.exit(1);
@@ -230,7 +270,7 @@ var captions = normalizeCaptions(data.rg_photo_captions || null);
 var output = {
   vid: {
     h2: vidH2,
-    videos: videos
+    videos: validVideos
   },
   photos: Object.assign({}, chrome, {
     s: photosBlock.s,
@@ -252,7 +292,7 @@ fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log(
   'Wrote',
   outFile,
-  '(' + videos.length + ' videos,',
+  '(' + validVideos.length + ' valid videos (skipped ' + (videos.length - validVideos.length) + ' incomplete hidden/draft),',
   photosBlock.s.length +
     '+' +
     photosBlock.t.length +

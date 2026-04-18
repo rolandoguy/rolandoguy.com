@@ -18781,6 +18781,10 @@
         v = state.contactsDoc;
       } else if (k === 'rg_outreach_tracker') {
         v = state.outreachDoc;
+      } else if (k === 'rg_photos') {
+        v = safePhotos(state.photosData || loadDoc('rg_photos', { s: [], t: [], b: [] }));
+      } else if (k === 'rg_photo_captions') {
+        v = isObject(state.photoCaptions) ? state.photoCaptions : loadDoc('rg_photo_captions', {});
       } else {
         v = state.api.load(k);
       }
@@ -19886,6 +19890,9 @@
       state.photoIndex = i + 1;
       renderMediaPhotosList(); renderMediaPhotoEditor(); markDirty(true, 'Photo order updated');
     });
+    if ($('media-photo-filter-s')) $('media-photo-filter-s').addEventListener('click', function () { setPhotoType('s'); });
+    if ($('media-photo-filter-t')) $('media-photo-filter-t').addEventListener('click', function () { setPhotoType('t'); });
+    if ($('media-photo-filter-b')) $('media-photo-filter-b').addEventListener('click', function () { setPhotoType('b'); });
 
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category','rep-editorialStatus'], persistRepEditor);
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
