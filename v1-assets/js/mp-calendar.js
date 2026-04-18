@@ -808,6 +808,57 @@
     if (/placeholder|example\.com\/?\.\.\.|todo|coming[-_\s]?soon/i.test(url)) return false;
     return true;
   }
+  function calendarModalEventSnapshot(p, lang) {
+    if (!p || typeof p !== 'object') return {};
+    return {
+      id: p.id,
+      idType: typeof p.id,
+      title: resolveEventTitle(p, lang),
+      type: p.type || '',
+      status: p.status || '',
+      modalEnabled: p.modalEnabled,
+      private: perfIsPrivateEvent(p, lang),
+      detail: perfLocaleField(p, 'detail', lang) || '',
+      extDesc: perfLocaleField(p, 'extDesc', lang) || '',
+      eventLink: perfLocaleField(p, 'eventLink', lang) || '',
+      eventLinkLabel: perfLocaleField(p, 'eventLinkLabel', lang) || '',
+      modalImg: String(p.modalImg || '').trim(),
+      flyerImg: String(p.flyerImg || '').trim(),
+      venue: perfLocalizedField(p, 'venue', lang, 'place') || '',
+      city: perfLocalizedField(p, 'city', lang, 'place') || '',
+      ticketPrice: String(p.ticketPrice || '').trim(),
+      sortDate: String(p.sortDate || '').trim(),
+      time: perfLocaleField(p, 'time', lang) || ''
+    };
+  }
+  function calendarModalDebug(label, payload) {
+    try {
+      console.log('[Calendar modal]', label, payload || {});
+    } catch (e) {}
+  }
+  function calendarModalOptionalStep(label, snapshot, fn) {
+    try {
+      return fn();
+    } catch (err) {
+      calendarModalDebug(label + ' failed', {
+        error: err && err.message ? err.message : String(err || 'unknown'),
+        snapshot: snapshot || {}
+      });
+      return null;
+    }
+  }
+  function setModalText(id, value) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    el.textContent = value == null ? '' : String(value);
+    return el;
+  }
+  function setModalHtml(id, value) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    el.innerHTML = value == null ? '' : String(value);
+    return el;
+  }
   var PERF_PLACEHOLDER_TRANSLATIONS = {
     en: 'To be announced',
     de: 'Wird noch angekündigt',
@@ -1632,7 +1683,7 @@
       var moreInfoLabel = resolvePerfCtaLabel(p, currentLang);
       if (allowModalButton)
         h +=
-          '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal(' +
+          '<button class="perf-more-btn no-print" onclick="debugOpenEventModal(event,' +
           JSON.stringify(p.id) +
           ')">' +
           moreInfoLabel +
@@ -1923,6 +1974,15 @@
     });
   }
 
+  function debugOpenEventModal(evt, perfId) {
+    if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
+    calendarModalDebug('button click', {
+      perfId: perfId,
+      perfIdType: typeof perfId
+    });
+    return openEventModal(perfId);
+  }
+
   function openEventModal(perfId) {
     resolveActiveLang('openEventModal');
     lastEventModalFocus = document.activeElement;
@@ -1934,7 +1994,15 @@
         break;
       }
     }
-    if (!p) return;
+    if (!p) {
+      calendarModalDebug('open abort: event not found', {
+        perfId: perfId,
+        perfIdType: typeof perfId
+      });
+      return;
+    }
+    var snapshot = calendarModalEventSnapshot(p, currentLang);
+    calendarModalDebug('open start', snapshot);
     var perfLang = getPerfMerged();
     var types =
       perfLang.eventTypes || {
@@ -1952,66 +2020,74 @@
     var typeLabel = isPrivate ? ((uiTable(currentLang)['perf.privateEventType']) || 'Private event') : (types[p.type] || p.type || '');
     var modalTitle = resolveEventTitle(p, currentLang);
     var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
-
-    document.getElementById('emType').textContent = typeLabel;
-    document.getElementById('emTitle').textContent = modalTitle;
-    document.getElementById('emDate').textContent = perfDateLine(p, currentLang);
-    document.getElementById('emVenue').textContent = venueCity;
-    // Modal body should be language-exclusive, not additive:
-    // prefer localized extended text, then shared extended text, then short detail fallback.
     var modalBody = perfModalBodyText(p, currentLang, isPrivate);
-    var escapedBody = modalBody.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var escapedBody = String(modalBody || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
-    document.getElementById('emDetail').innerHTML = bodyWithBreaks;
     var modalFallbackImg =
       p.modalImg && p.modalImg.trim()
         ? p.modalImg
         : p.venuePhoto && p.venuePhoto.trim()
           ? p.venuePhoto
           : '';
-    var editorialActive = renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, modalFallbackImg);
-    document.getElementById('emType').style.display = editorialActive ? 'none' : '';
-    document.getElementById('emTitle').style.display = editorialActive ? 'none' : '';
-    document.getElementById('emDate').style.display = editorialActive ? 'none' : '';
-    document.getElementById('emVenue').style.display = editorialActive ? 'none' : '';
-    document.getElementById('emDetail').style.display = editorialActive ? 'none' : '';
-
-    var imgEl = document.getElementById('emVenueImg');
+    var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
     var hideModalHero = isTruthyFlag(p.modalImgHide);
-    if (editorialActive || hideModalHero) {
-      imgEl.style.display = 'none';
-    } else {
-      var modalSrc = modalFallbackImg;
-      if (modalSrc) {
-        imgEl.style.backgroundImage = 'url(' + modalSrc + ')';
+    var editorialActive = false;
+
+    setModalText('emType', typeLabel);
+    setModalText('emTitle', modalTitle);
+    setModalText('emDate', perfDateLine(p, currentLang));
+    setModalText('emVenue', venueCity);
+    setModalHtml('emDetail', bodyWithBreaks);
+
+    calendarModalOptionalStep('renderEditorialMoreInfo', snapshot, function () {
+      editorialActive = !!renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, modalFallbackImg);
+    });
+    calendarModalOptionalStep('toggle core fields', snapshot, function () {
+      ['emType', 'emTitle', 'emDate', 'emVenue', 'emDetail'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = editorialActive ? 'none' : '';
+      });
+    });
+    calendarModalOptionalStep('hero image', snapshot, function () {
+      var imgEl = document.getElementById('emVenueImg');
+      if (!imgEl) return;
+      if (editorialActive || hideModalHero) {
+        imgEl.style.display = 'none';
+        return;
+      }
+      if (modalFallbackImg) {
+        imgEl.style.backgroundImage = 'url(' + modalFallbackImg + ')';
         imgEl.style.display = '';
       } else {
         imgEl.style.display = 'none';
       }
-    }
-
-    var extEl = document.getElementById('emExtDesc');
-    // Keep second paragraph hidden to avoid mixed-language duplicate body blocks.
-    extEl.style.display = 'none';
-
-    var priceWrap = document.getElementById('emPrice');
-    if (!editorialActive && !isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
-      document.getElementById('emPriceVal').textContent = p.ticketPrice;
-      priceWrap.style.display = '';
-    } else {
-      priceWrap.style.display = 'none';
-    }
-
-    var linkEl = document.getElementById('emEventLink');
-    var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
-    if (!isPrivate && isValidPerfCtaUrl(ticketUrl)) {
-      linkEl.href = ticketUrl;
-      linkEl.textContent = resolvePerfCtaLabel(p, currentLang);
-      linkEl.style.display = '';
-    } else {
-      linkEl.removeAttribute('href');
-      linkEl.style.display = 'none';
-    }
+    });
+    calendarModalOptionalStep('ext desc block', snapshot, function () {
+      var extEl = document.getElementById('emExtDesc');
+      if (extEl) extEl.style.display = 'none';
+    });
+    calendarModalOptionalStep('price block', snapshot, function () {
+      var priceWrap = document.getElementById('emPrice');
+      if (!priceWrap) return;
+      if (!editorialActive && !isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
+        setModalText('emPriceVal', p.ticketPrice);
+        priceWrap.style.display = '';
+      } else {
+        priceWrap.style.display = 'none';
+      }
+    });
+    calendarModalOptionalStep('cta link', snapshot, function () {
+      var linkEl = document.getElementById('emEventLink');
+      if (!linkEl) return;
+      if (!isPrivate && isValidPerfCtaUrl(ticketUrl)) {
+        linkEl.href = ticketUrl;
+        linkEl.textContent = resolvePerfCtaLabel(p, currentLang);
+        linkEl.style.display = '';
+      } else {
+        linkEl.removeAttribute('href');
+        linkEl.style.display = 'none';
+      }
+    });
     if (!modalLocaleChoiceLogged) {
       modalLocaleChoiceLogged = true;
       var modalDetailResolve = perfLocaleFieldResolve(p, 'detail', currentLang);
@@ -2040,52 +2116,55 @@
         eventLinkLabel: {
           base: p.eventLinkLabel || '',
           localized: p['eventLinkLabel_' + currentLang] || '',
-          chosen: linkEl && linkEl.style.display !== 'none' ? (linkEl.textContent || '') : '',
+          chosen: perfLocaleField(p, 'eventLinkLabel', currentLang) || '',
           source: String(p['eventLinkLabel_' + currentLang] || '').trim() ? ('eventLinkLabel_' + currentLang) : 'eventLinkLabel'
         }
       });
     }
-
-    var flyerEl = document.getElementById('emFlyerImg');
-    if (!editorialActive && p.flyerImg && p.flyerImg.trim()) {
-      flyerEl.src = p.flyerImg;
-      var tFly = uiTable(currentLang);
-      var flyTail = String(tFly['perf.flyerAltTail'] || '').trim();
-      flyerEl.alt = flyTail ? modalTitle + ' — ' + flyTail : modalTitle;
-      // When hero image is intentionally hidden, let flyer lead as main visual in content.
-      flyerEl.style.maxWidth = hideModalHero ? '100%' : '480px';
-      flyerEl.style.display = '';
-    } else {
-      flyerEl.style.display = 'none';
-    }
-
-    var mapsEl = document.getElementById('emMapsLink');
-    var mapsTextEl = document.getElementById('emMapsText');
-    var destination = String((perfLocalizedField(p, 'venue', currentLang, 'place') || '') + (perfLocalizedField(p, 'city', currentLang, 'place') ? (' ' + perfLocalizedField(p, 'city', currentLang, 'place')) : '')).trim();
-    if (destination) {
-      if (isPrivate) {
-        mapsEl.style.display = 'none';
+    calendarModalOptionalStep('flyer', snapshot, function () {
+      var flyerEl = document.getElementById('emFlyerImg');
+      if (!flyerEl) return;
+      if (!editorialActive && p.flyerImg && p.flyerImg.trim()) {
+        flyerEl.src = p.flyerImg;
+        var tFly = uiTable(currentLang);
+        var flyTail = String(tFly['perf.flyerAltTail'] || '').trim();
+        flyerEl.alt = flyTail ? modalTitle + ' — ' + flyTail : modalTitle;
+        flyerEl.style.maxWidth = hideModalHero ? '100%' : '480px';
+        flyerEl.style.display = '';
       } else {
-      mapsEl.href =
-        'https://maps.google.com/?q=' +
-        encodeURIComponent(destination);
-      var t2 = uiTable(currentLang);
-      var mapsLabel =
-        t2['perf.maps'] ||
-        ({ en: 'Maps', de: 'Karten', es: 'Mapas', it: 'Mappa', fr: 'Cartes' }[currentLang] ||
-          'Maps');
-      if (mapsTextEl) mapsTextEl.textContent = mapsLabel;
-      else mapsEl.textContent = '\ud83d\udccd ' + mapsLabel;
-      mapsEl.style.display = '';
+        flyerEl.removeAttribute('src');
+        flyerEl.style.display = 'none';
       }
-    } else {
-      mapsEl.style.display = 'none';
-    }
+    });
+    calendarModalOptionalStep('maps link', snapshot, function () {
+      var mapsEl = document.getElementById('emMapsLink');
+      if (!mapsEl) return;
+      var mapsTextEl = document.getElementById('emMapsText');
+      var destination = String((perfLocalizedField(p, 'venue', currentLang, 'place') || '') + (perfLocalizedField(p, 'city', currentLang, 'place') ? (' ' + perfLocalizedField(p, 'city', currentLang, 'place')) : '')).trim();
+      if (destination && !isPrivate) {
+        mapsEl.href = 'https://maps.google.com/?q=' + encodeURIComponent(destination);
+        var t2 = uiTable(currentLang);
+        var mapsLabel =
+          t2['perf.maps'] ||
+          ({ en: 'Maps', de: 'Karten', es: 'Mapas', it: 'Mappa', fr: 'Cartes' }[currentLang] || 'Maps');
+        if (mapsTextEl) mapsTextEl.textContent = mapsLabel;
+        else mapsEl.textContent = '\ud83d\udccd ' + mapsLabel;
+        mapsEl.style.display = '';
+      } else {
+        mapsEl.removeAttribute('href');
+        mapsEl.style.display = 'none';
+      }
+    });
 
     var modal = document.getElementById('eventModal');
+    if (!modal) {
+      calendarModalDebug('open abort: missing modal shell', snapshot);
+      return;
+    }
     modal.style.display = '';
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    calendarModalDebug('open complete', snapshot);
     setTimeout(function () {
       var closeBtn = document.getElementById('eventModalClose');
       if (closeBtn) closeBtn.focus();
@@ -2135,6 +2214,7 @@
   });
 
   window.togglePastPerfs = function () {};
+  window.debugOpenEventModal = debugOpenEventModal;
   window.openEventModal = openEventModal;
   window.closeEventModal = closeEventModal;
   window.printAgenda = printAgenda;
