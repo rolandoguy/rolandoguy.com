@@ -64,6 +64,10 @@
       }
     ]
   },
+  "audio": {
+    "h2": "Selected <em>Audio</em><br>&amp; Listening",
+    "sub": "Selected embedded recordings and listening excerpts."
+  },
   "photos": {
     "h2": "Portraits, Stage &amp; <em>Backstage</em>",
     "sub": "Selected portrait, stage and backstage photography. Click any image to view full size.",
