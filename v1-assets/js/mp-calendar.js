@@ -800,6 +800,14 @@
     if (hasPrice || isSalesLike) return t['perf.ticketsInfo'] || 'Tickets & Info';
     return t['perf.moreInfo'] || 'More info';
   }
+  function isValidPerfCtaUrl(raw) {
+    var url = String(raw || '').trim();
+    if (!url) return false;
+    if (!/^https?:\/\//i.test(url)) return false;
+    if (/^https?:\/\/\.{3,}(?:\/.*)?$/i.test(url)) return false;
+    if (/placeholder|example\.com\/?\.\.\.|todo|coming[-_\s]?soon/i.test(url)) return false;
+    return true;
+  }
   var PERF_PLACEHOLDER_TRANSLATIONS = {
     en: 'To be announced',
     de: 'Wird noch angekündigt',
@@ -1525,7 +1533,7 @@
       var hasExtra =
         !!modalBodyPreview ||
         (p.ticketPrice && p.ticketPrice.trim()) ||
-        (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
+        isValidPerfCtaUrl(linkForModal) ||
         (p.flyerImg && p.flyerImg.trim()) ||
         (p.modalImg && p.modalImg.trim()) ||
         moreInfoUsesEditorialTemplate(p);
@@ -1625,7 +1633,7 @@
       if (allowModalButton)
         h +=
           '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal(' +
-          p.id +
+          JSON.stringify(p.id) +
           ')">' +
           moreInfoLabel +
           '</button>';
@@ -1996,11 +2004,12 @@
 
     var linkEl = document.getElementById('emEventLink');
     var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
-    if (!isPrivate && ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
+    if (!isPrivate && isValidPerfCtaUrl(ticketUrl)) {
       linkEl.href = ticketUrl;
       linkEl.textContent = resolvePerfCtaLabel(p, currentLang);
       linkEl.style.display = '';
     } else {
+      linkEl.removeAttribute('href');
       linkEl.style.display = 'none';
     }
     if (!modalLocaleChoiceLogged) {
@@ -2013,7 +2022,7 @@
         detail: {
           base: p.detail || '',
           localized: p['detail_' + currentLang] || '',
-          chosen: detail || '',
+          chosen: modalDetailResolve.value || '',
           source: modalDetailResolve.source
         },
         extDesc: {
