@@ -3,7 +3,8 @@
  * Admin v3 - Shared Navigation
  *
  * Purpose: Render shared navigation header for admin-v3 pages.
- * This is a minimal component to reduce duplicated page chrome.
+ * This is a minimal component to reduce duplicated page chrome and keep
+ * the internal-only status of admin-v3 visible.
  */
 
 var adminV3Nav = (function () {
@@ -31,6 +32,10 @@ var adminV3Nav = (function () {
     html += '</div>';
 
     html += '</nav>';
+    html += '<div style="margin:12px 0 0; padding:12px 14px; border:1px solid #f3d4a3; background:#fff7e8; color:#5f4300; border-radius:8px; font-size:13px; line-height:1.45;">';
+    html += '<strong>Admin v3 is internal-only operational tooling.</strong> It does not publish to the public website. ';
+    html += 'Public-facing editorial changes still belong in admin-v2 and the explicit public-safe mirror flow.';
+    html += '</div>';
     container.innerHTML = html;
   }
 
