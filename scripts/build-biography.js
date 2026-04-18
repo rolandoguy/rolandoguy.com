@@ -21,6 +21,7 @@ var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'biography-data.json');
 var defaultsPath = path.join(root, 'v1-assets', 'build', 'biography-defaults.json');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
 var BIO_SOURCE_FIELDS = [
@@ -165,10 +166,10 @@ var exportPath = process.argv[2];
 var exportData = null;
 if (exportPath) {
   var abs = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-  var payload = readJson(abs);
-  exportData = payload && payload.data ? payload.data : null;
+  var payload = exportLoader.loadAdminExportSource(abs, 'build-biography');
+  exportData = payload && payload.source ? payload.source : null;
   if (!exportData) {
-    console.error('build-biography: export missing top-level data object');
+    console.error('build-biography: export missing usable source payload');
     process.exit(1);
   }
 }

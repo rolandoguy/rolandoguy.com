@@ -18,6 +18,7 @@
 var fs = require('fs');
 var path = require('path');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'hero-config.json');
@@ -53,10 +54,10 @@ if (!exportPath) {
 }
 
 var absExport = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-var payload = readJson(absExport);
-var data = payload && payload.data ? payload.data : null;
+var payload = exportLoader.loadAdminExportSource(absExport, 'build-hero-config');
+var data = payload && payload.source ? payload.source : null;
 if (!data || typeof data !== 'object') {
-  console.error('build-hero-config: export missing data object');
+  console.error('build-hero-config: export missing usable source payload');
   process.exit(1);
 }
 

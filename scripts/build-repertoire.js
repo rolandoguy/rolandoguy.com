@@ -19,6 +19,7 @@ var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'repertoire-data.json');
 var repDefaultsPath = path.join(root, 'v1-assets', 'build', 'repertoire-rep-defaults-en.json');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 var PREFERRED_ARRAY_KEYS = ['cards', 'items', 'value', 'data'];
 
@@ -60,10 +61,10 @@ if (!exportPath) {
 }
 
 var absExport = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-var payload = readJson(absExport);
-var data = payload && payload.data ? payload.data : null;
+var payload = exportLoader.loadAdminExportSource(absExport, 'build-repertoire');
+var data = payload && payload.source ? payload.source : null;
 if (!data || typeof data !== 'object') {
-  console.error('build-repertoire: export missing data object');
+  console.error('build-repertoire: export missing usable source payload');
   process.exit(1);
 }
 

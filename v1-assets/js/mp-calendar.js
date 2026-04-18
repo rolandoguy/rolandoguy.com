@@ -1,8 +1,8 @@
 /**
  * Public-safe calendar runtime for mp/calendar.html.
  *
- * This module only reads the bundled public payload from
- * /v1-assets/data/calendar-data.json.
+ * This module reads the bundled public payload from /v1-assets/data/calendar-data.json
+ * and may layer in explicit public-safe live Firestore docs only.
  *
  * Do not reintroduce Firestore/localStorage admin fallbacks here. Internal/admin
  * event records must be sanitized at build-time before they ever reach public JS.
@@ -14,6 +14,8 @@
   var pastPublicExpanded = false;
   var currentLang = 'en';
   var MP_PAST_PERFS = [];
+  var LIVE_PUBLIC_PERFS = null;
+  var LIVE_PUBLIC_PAST_PERFS = null;
   var LIVE_PERF_HEADER_DOCS = {};
   var titleChoiceLogged = false;
   var modalLocaleChoiceLogged = false;
@@ -61,18 +63,44 @@
     var k = normalizeLangCode(lang) || 'en';
     return map[k] || 'en-US';
   }
+  function fetchPublicCalendarDoc(key) {
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc(key);
+  }
   function ensureLivePerfHeader(lang) {
     var L = normalizeLangCode(lang) || 'en';
     var key = 'perf_' + L;
-    var best =
-      MP_CAL &&
-      MP_CAL.perfLocales &&
-      MP_CAL.perfLocales[key.slice(5)] &&
-      typeof MP_CAL.perfLocales[key.slice(5)] === 'object'
-        ? MP_CAL.perfLocales[key.slice(5)]
-        : null;
-    LIVE_PERF_HEADER_DOCS[key] = best;
-    return Promise.resolve(best);
+    if (Object.prototype.hasOwnProperty.call(LIVE_PERF_HEADER_DOCS, key)) {
+      return Promise.resolve(LIVE_PERF_HEADER_DOCS[key]);
+    }
+    return fetchPublicCalendarDoc('public_' + key)
+      .then(function (doc) {
+        var best = doc && doc.data && typeof doc.data === 'object' ? doc.data : null;
+        LIVE_PERF_HEADER_DOCS[key] = best;
+        return best;
+      })
+      .catch(function () {
+        LIVE_PERF_HEADER_DOCS[key] = null;
+        return null;
+      });
+  }
+  function loadLiveCalendarLists() {
+    return Promise.all([
+      fetchPublicCalendarDoc('public_rg_perfs'),
+      fetchPublicCalendarDoc('public_rg_past_perfs')
+    ]).then(function (pair) {
+      var livePerfs = pair[0] && Array.isArray(pair[0].data) ? normalizeRgPerfsList(pair[0].data) : null;
+      var livePast = pair[1] && Array.isArray(pair[1].data) ? normalizePastPublicList(pair[1].data) : null;
+      LIVE_PUBLIC_PERFS = livePerfs;
+      LIVE_PUBLIC_PAST_PERFS = livePast;
+      if (MP_CAL && livePerfs) MP_CAL.perfs = livePerfs;
+      if (livePast) MP_PAST_PERFS = livePast;
+      return { perfs: livePerfs, pastPerfs: livePast };
+    }).catch(function () {
+      LIVE_PUBLIC_PERFS = null;
+      LIVE_PUBLIC_PAST_PERFS = null;
+      return { perfs: null, pastPerfs: null };
+    });
   }
 
   function mpPick(lang, key, fb) {
@@ -274,6 +302,7 @@
   }
 
   function getPerfs() {
+    if (Array.isArray(LIVE_PUBLIC_PERFS)) return LIVE_PUBLIC_PERFS;
     return MP_CAL && Array.isArray(MP_CAL.perfs) ? MP_CAL.perfs : [];
   }
   function normalizedEditorialStatus(v) {
@@ -549,7 +578,9 @@
     return true;
   }
   function loadPastPerfs() {
-    MP_PAST_PERFS = normalizePastPublicList(MP_CAL && MP_CAL.pastPerfs);
+    MP_PAST_PERFS = Array.isArray(LIVE_PUBLIC_PAST_PERFS)
+      ? normalizePastPublicList(LIVE_PUBLIC_PAST_PERFS)
+      : normalizePastPublicList(MP_CAL && MP_CAL.pastPerfs);
     return Promise.resolve(MP_PAST_PERFS);
   }
   function renderPastPerformancesPublic() {
@@ -2183,9 +2214,11 @@
       resolveActiveLang('initial-load');
       applyPerfHeader();
       renderPerfs();
-      ensureLivePerfHeader(currentLang).finally(function () {
+      Promise.all([ensureLivePerfHeader(currentLang), loadLiveCalendarLists()]).finally(function () {
+        loadPastPerfs();
         applyPerfHeader();
         renderPerfs();
+        renderPastPerformancesPublic();
       });
     });
 })();

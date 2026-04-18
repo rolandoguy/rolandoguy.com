@@ -1,6 +1,7 @@
 /**
  * Public-safe biography page.
- * This runtime must resolve copy and portrait hints from the bundled public biography payload only.
+ * This runtime resolves copy and portrait hints from bundled public JSON
+ * plus explicit public-safe live docs only.
  * Internal/admin biography drafts must not be read by the public site.
  */
 (function () {
@@ -23,17 +24,34 @@
     return '';
   }
   function fetchFirestoreDocJsonWithMeta(key) {
-    return Promise.resolve(null);
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc('public_' + key);
   }
   function getBioDocWithFallback(lang) {
     var key = 'bio_' + lang;
-    if (BIO_DOC_CACHE[key]) return Promise.resolve(BIO_DOC_CACHE[key]);
+    if (Object.prototype.hasOwnProperty.call(BIO_DOC_CACHE, key)) return Promise.resolve(BIO_DOC_CACHE[key]);
     var code = normalizeLangCode(lang) || 'en';
     var bundled = MP_BIO && MP_BIO.locales && MP_BIO.locales[code];
-    BIO_DOC_CACHE[key] = bundled && typeof bundled === 'object'
-      ? { data: bundled, updateTime: '' }
-      : null;
-    return Promise.resolve(BIO_DOC_CACHE[key]);
+    return fetchFirestoreDocJsonWithMeta(key)
+      .then(function (doc) {
+        if (doc && doc.data && typeof doc.data === 'object') {
+          BIO_DOC_CACHE[key] = {
+            data: doc.data,
+            updateTime: doc.updateTime || ''
+          };
+          return BIO_DOC_CACHE[key];
+        }
+        BIO_DOC_CACHE[key] = bundled && typeof bundled === 'object'
+          ? { data: bundled, updateTime: '' }
+          : null;
+        return BIO_DOC_CACHE[key];
+      })
+      .catch(function () {
+        BIO_DOC_CACHE[key] = bundled && typeof bundled === 'object'
+          ? { data: bundled, updateTime: '' }
+          : null;
+        return BIO_DOC_CACHE[key];
+      });
   }
   function appendVersionIfSafe(src, token) {
     var raw = String(src || '').trim();

@@ -1,7 +1,8 @@
 /**
  * Public-safe home hero runtime.
- * The public site must render from bundled locale strings and /v1-assets/data/hero-config.json only.
- * Legacy admin/local overrides are intentionally disabled here.
+ * The public site must render from bundled locale strings and /v1-assets/data/hero-config.json,
+ * with optional explicit public-safe Firestore overrides.
+ * Legacy admin/local overrides remain intentionally disabled here.
  */
 (function () {
   /** Avoid loading bundled intro portrait before admin/config resolution runs. */
@@ -46,14 +47,25 @@
     if (local && local.value && typeof local.value === 'object') return local;
     var v = LIVE_HERO_DOCS[key];
     if (!v || typeof v !== 'object') return null;
+    if (v.data && typeof v.data === 'object') return { value: v.data, ts: v.updateTime || 0 };
     return { value: v, ts: 0 };
   }
   function fetchFirestoreDocJson(key) {
-    return Promise.resolve(null);
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc('public_' + key);
   }
   function ensureLiveHeroDoc(key) {
-    if (key) LIVE_HERO_DOCS[key] = null;
-    return Promise.resolve(null);
+    if (!key) return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(LIVE_HERO_DOCS, key)) return Promise.resolve(LIVE_HERO_DOCS[key]);
+    return fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        LIVE_HERO_DOCS[key] = doc || null;
+        return LIVE_HERO_DOCS[key];
+      })
+      .catch(function () {
+        LIVE_HERO_DOCS[key] = null;
+        return null;
+      });
   }
   function loadLiveHeroOverrides(lang) {
     var rawLang = String(lang || 'en');

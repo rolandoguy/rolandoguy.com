@@ -16,6 +16,11 @@ service cloud.firestore {
         && request.auth.token.email_verified == true
         && request.auth.token.email == 'rolandoguy@gmail.com';
     }
+    function isPublicWebsiteDoc(docId) {
+      return docId.matches('^public_(hero|bio|contact|perf)_(en|de|es|it|fr)$')
+        || docId == 'public_rg_perfs'
+        || docId == 'public_rg_past_perfs';
+    }
 
     match /rg/{docId} {
       /*
@@ -29,10 +34,11 @@ service cloud.firestore {
        * - rg_concert_history
        * - legacy mixed admin/public documents
        *
-       * If a future document truly needs public Firestore read access,
-       * add a separate explicit allowlist function for that exact doc id.
+       * Public website live docs are explicit public-safe mirrors only.
+       * Internal/admin docs remain private.
        */
-      allow read, write: if isAdminUser();
+      allow read: if isAdminUser() || isPublicWebsiteDoc(docId);
+      allow write: if isAdminUser();
     }
 
     match /{document=**} {

@@ -21,6 +21,7 @@ var outFile = path.join(root, 'v1-assets', 'data', 'calendar-data.json');
 var perfDefaultsPath = path.join(root, 'v1-assets', 'build', 'calendar-perf-defaults-en.json');
 var filter = require('./lib/public-field-filter');
 var eventSchemas = require('./lib/event-schemas');
+var exportLoader = require('./lib/load-admin-export');
 
 var PREFERRED_ARRAY_KEYS = ['perfs', 'items', 'value', 'data'];
 
@@ -102,10 +103,10 @@ if (!exportPath) {
 }
 
 var absExport = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-var payload = readJson(absExport);
-var data = payload && payload.data ? payload.data : null;
+var payload = exportLoader.loadAdminExportSource(absExport, 'build-calendar');
+var data = payload && payload.source ? payload.source : null;
 if (!data || typeof data !== 'object') {
-  console.error('build-calendar: export missing data object');
+  console.error('build-calendar: export missing usable source payload');
   process.exit(1);
 }
 

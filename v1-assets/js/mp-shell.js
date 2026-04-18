@@ -82,13 +82,6 @@
     return lang;
   }
 
-  window.getMpSiteLang = getMpSiteLang;
-  function readLegacyJson() {
-    return null;
-  }
-  function readLocalUnsyncedJson() {
-    return null;
-  }
   function fetchPublicJson(url) {
     return fetch(url, { cache: 'no-store' })
       .then(function (r) {
@@ -96,6 +89,44 @@
         return r.json();
       })
       .catch(function () { return null; });
+  }
+  /**
+   * Public-safe Firestore reader for explicit website mirror docs only.
+   * Do not use this for admin/internal document paths.
+   */
+  function fetchPublicFirestoreDoc(docId) {
+    var id = String(docId || '').trim();
+    if (!id) return Promise.resolve(null);
+    var url =
+      'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/' +
+      encodeURIComponent(id);
+    return fetch(url, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (doc) {
+        var raw = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
+        if (!raw || typeof raw !== 'string') return null;
+        try {
+          return {
+            id: id,
+            data: JSON.parse(raw),
+            updateTime: String(doc && doc.updateTime ? doc.updateTime : '').trim()
+          };
+        } catch (e) {
+          return null;
+        }
+      })
+      .catch(function () { return null; });
+  }
+  window.getMpSiteLang = getMpSiteLang;
+  window.fetchMpPublicFirestoreDoc = fetchPublicFirestoreDoc;
+  function readLegacyJson() {
+    return null;
+  }
+  function readLocalUnsyncedJson() {
+    return null;
   }
   function asVisibleFlag(raw, fb) {
     if (raw === false || raw === 'false' || raw === 0 || raw === '0' || raw === '' || raw == null) return false;

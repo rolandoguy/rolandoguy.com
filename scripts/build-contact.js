@@ -22,6 +22,7 @@ var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'contact-data.json');
 var contactDefaultsPath = path.join(root, 'v1-assets', 'build', 'contact-defaults.json');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 function readJson(p) {
   if (!fs.existsSync(p)) {
@@ -53,10 +54,10 @@ if (!exportPath) {
 }
 
 var absExport = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-var payload = readJson(absExport);
-var data = payload && payload.data ? payload.data : null;
+var payload = exportLoader.loadAdminExportSource(absExport, 'build-contact');
+var data = payload && payload.source ? payload.source : null;
 if (!data || typeof data !== 'object') {
-  console.error('build-contact: export missing data object');
+  console.error('build-contact: export missing usable source payload');
   process.exit(1);
 }
 

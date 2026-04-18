@@ -3097,6 +3097,136 @@
       }
     });
   }
+  // Public-safe website mirrors. These docs are the only live Firestore payloads
+  // the public site is allowed to read.
+  var PUBLIC_BIO_FIELDS = ['introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitImage', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
+  var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl'];
+  var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'introImage'];
+  var PUBLIC_PERF_HEADER_FIELDS = ['h2', 'intro', 'eventTypes', 'monthNames'];
+  var PUBLIC_PERF_EVENT_FIELDS = [
+    'id', 'day', 'month', 'time', 'title',
+    'detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr',
+    'venue', 'city', 'venuePhoto', 'venuePhotoFocus', 'venueOpacity',
+    'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr',
+    'ticketPrice',
+    'eventLink', 'eventLinkLabel',
+    'eventLink_en', 'eventLinkLabel_en',
+    'eventLink_de', 'eventLinkLabel_de',
+    'eventLink_es', 'eventLinkLabel_es',
+    'eventLink_it', 'eventLinkLabel_it',
+    'eventLink_fr', 'eventLinkLabel_fr',
+    'flyerImg',
+    'moreInfoDisplayMode', 'moreInfoTemplate', 'moreInfoTitle', 'moreInfoSubtitle',
+    'moreInfoArtists', 'moreInfoAddress', 'moreInfoDescription', 'moreInfoExtra',
+    'moreInfoImage1', 'moreInfoImage1Focus',
+    'moreInfoImage2', 'moreInfoImage2Focus',
+    'moreInfoImage3', 'moreInfoImage3Focus',
+    'moreInfoImage4', 'moreInfoImage4Focus',
+    'moreInfoImage5', 'moreInfoImage5Focus',
+    'modalEnabled', 'modalImg', 'modalImgHide',
+    'private', 'hidePrivateBadge', 'hidePrivateDetailLine',
+    'privateBadgeText', 'privateDetailText',
+    'privateBadgeText_en', 'privateBadgeText_de', 'privateBadgeText_es', 'privateBadgeText_it', 'privateBadgeText_fr',
+    'privateDetailText_en', 'privateDetailText_de', 'privateDetailText_es', 'privateDetailText_it', 'privateDetailText_fr',
+    'status', 'type',
+    'title_en', 'title_de', 'title_es', 'title_it', 'title_fr',
+    'sortDate',
+    'featured', 'featured_visual', 'featured_layout', 'featured_contexts', 'homepage_priority'
+  ];
+  var PUBLIC_PAST_PERF_FIELDS = ['id', 'date', 'time', 'title', 'place', 'city', 'address', 'description', 'linkText', 'link', 'image', 'status', 'private'];
+  function pickPublicFields(source, fields) {
+    var out = {};
+    var src = isObject(source) ? source : {};
+    fields.forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(src, key) && src[key] !== undefined) out[key] = clone(src[key]);
+    });
+    return out;
+  }
+  function publishPublicRgDoc(docId, payload) {
+    var key = safeString(docId).trim();
+    if (!key) return Promise.resolve(false);
+    return getAuthIdToken().then(function (token) {
+      if (!token) return false;
+      return fetch(firestoreRgDocUrl(key), {
+        method: 'PATCH',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: encodeFirestoreRgDocBody(payload)
+      }).then(function (r) {
+        return !!r.ok;
+      }).catch(function () {
+        return false;
+      });
+    }).then(function (ok) {
+      if (!ok) console.warn('[admin-v2] Failed to publish public-safe doc:', key);
+      return ok;
+    });
+  }
+  function buildPublicHeroDoc(lang) {
+    return pickPublicFields(loadDoc('hero_' + normalizeLangCode(lang || 'en'), {}), PUBLIC_HERO_FIELDS);
+  }
+  function buildPublicBiographyDoc(lang) {
+    var stored = loadDoc('bio_' + normalizeLangCode(lang || 'en'), {});
+    var out = pickPublicFields(stored, PUBLIC_BIO_FIELDS);
+    if (!Array.isArray(out.paragraphs)) {
+      var paras = [];
+      ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (key) {
+        var value = safeString(stored && stored[key]).trim();
+        if (value) paras.push(value);
+      });
+      if (paras.length) out.paragraphs = paras;
+    }
+    return out;
+  }
+  function buildPublicContactDoc(lang) {
+    return pickPublicFields(loadDoc('contact_' + normalizeLangCode(lang || 'en'), {}), PUBLIC_CONTACT_FIELDS);
+  }
+  function buildPublicPerfHeaderDoc(lang) {
+    return pickPublicFields(loadDoc('perf_' + normalizeLangCode(lang || 'en'), {}), PUBLIC_PERF_HEADER_FIELDS);
+  }
+  function buildPublicPerfEventsDoc() {
+    return normalizePerfEventsList(loadDoc('rg_perfs', [])).map(function (row) {
+      return pickPublicFields(row, PUBLIC_PERF_EVENT_FIELDS);
+    });
+  }
+  function buildPublicPastPerfsDoc() {
+    return normalizePastPerfImportArray(loadDoc('rg_past_perfs', [])).map(function (row) {
+      return pickPublicFields(row, PUBLIC_PAST_PERF_FIELDS);
+    });
+  }
+  function publishPublicHeroDocs(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    return Promise.all(list.map(function (lang) {
+      return publishPublicRgDoc('public_hero_' + lang, buildPublicHeroDoc(lang));
+    }));
+  }
+  function publishPublicBiographyDocs(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    return Promise.all(list.map(function (lang) {
+      return publishPublicRgDoc('public_bio_' + lang, buildPublicBiographyDoc(lang));
+    }));
+  }
+  function publishPublicContactDocs(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    return Promise.all(list.map(function (lang) {
+      return publishPublicRgDoc('public_contact_' + lang, buildPublicContactDoc(lang));
+    }));
+  }
+  function publishPublicPerfHeaders(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    return Promise.all(list.map(function (lang) {
+      return publishPublicRgDoc('public_perf_' + lang, buildPublicPerfHeaderDoc(lang));
+    }));
+  }
+  function publishPublicPerfEvents() {
+    return publishPublicRgDoc('public_rg_perfs', buildPublicPerfEventsDoc());
+  }
+  function publishPublicPastPerfs() {
+    return publishPublicRgDoc('public_rg_past_perfs', buildPublicPastPerfsDoc());
+  }
   function fetchFirestoreRgSnapshot() {
     return getAuthIdToken().then(function (token) {
       if (!token) return {};
@@ -3810,6 +3940,7 @@
     void fsWrite;
     void fsCta1;
     void fsCta2;
+    var applyAllWrites = [];
     if (applyAll) {
       LANGS.forEach(function (lang) {
         if (lang === state.lang) return;
@@ -3818,12 +3949,14 @@
         if (!isObject(prev)) prev = {};
         prev.bgImage = payload.bgImage;
         prev.introImage = payload.introImage;
-        saveDoc(key, prev);
+        applyAllWrites.push(saveDoc(key, prev));
         try {
           localStorage.setItem(key, JSON.stringify(prev));
         } catch (e) {}
       });
     }
+    if (applyAllWrites.length) await Promise.all(applyAllWrites);
+    await publishPublicHeroDocs(applyAll ? LANGS : [state.lang]);
   }
 
   function loadHomeIntroDefault() {
@@ -4305,7 +4438,7 @@
     });
     updateCompletenessIndicators();
   }
-  function saveBio() {
+  async function saveBio() {
     var applyAll = !!($('bio-image-all-langs') && $('bio-image-all-langs').checked);
     var paras = paragraphsArrayFromBioInputs();
     var payload = {
@@ -4333,11 +4466,12 @@
       paragraphCount: paras.length,
       applyAllPortraits: applyAll
     });
-    saveDoc('bio_' + state.lang, payload);
+    await saveDoc('bio_' + state.lang, payload);
     // Compatibility mirror for mp/biography runtime override resolution.
     try {
       localStorage.setItem('bio_' + state.lang, JSON.stringify(payload));
     } catch (e) {}
+    var applyAllWrites = [];
     if (applyAll) {
       LANGS.forEach(function (lang) {
         if (lang === state.lang) return;
@@ -4347,12 +4481,14 @@
         prev.portraitImage = payload.portraitImage;
         prev.portraitFit = payload.portraitFit;
         prev.portraitFocus = payload.portraitFocus;
-        saveDoc(key, prev);
+        applyAllWrites.push(saveDoc(key, prev));
         try {
           localStorage.setItem(key, JSON.stringify(prev));
         } catch (e) {}
       });
     }
+    if (applyAllWrites.length) await Promise.all(applyAllWrites);
+    await publishPublicBiographyDocs(applyAll ? LANGS : [state.lang]);
   }
 
   function repFiltered() {
@@ -13640,11 +13776,15 @@
     if (!Array.isArray(state.perfs)) state.perfs = [];
     renderIncomeSection();
   }
-  function savePerfHeader() { saveDoc('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) }); }
-  function savePerfEvents() {
+  async function savePerfHeader() {
+    await saveDoc('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) });
+    await publishPublicPerfHeaders([state.lang]);
+  }
+  async function savePerfEvents() {
     persistPerfEditor();
     state.perfs = normalizePerfEventsList(state.perfs);
-    saveDoc('rg_perfs', state.perfs);
+    await saveDoc('rg_perfs', state.perfs);
+    await publishPublicPerfEvents();
     if (state.section === 'income') renderIncomeSection();
   }
   function normalizePastPerfImportItem(raw, idx) {
@@ -13700,7 +13840,7 @@
     else if (!parseDateSafe(rawDate)) errors.push('Item #' + (idx + 1) + ' has invalid date: ' + rawDate);
     return errors;
   }
-  function savePastPerfsToStorage() {
+  async function savePastPerfsToStorage() {
     var allErrors = [];
     state.pastPerfs = normalizePastPerfImportArray(state.pastPerfs);
     state.pastPerfs.forEach(function (item, idx) {
@@ -13712,7 +13852,8 @@
       alert('Save failed:\n- ' + allErrors.slice(0, 12).join('\n- ') + (allErrors.length > 12 ? '\n- ... and ' + (allErrors.length - 12) + ' more' : ''));
       return false;
     }
-    saveDoc('rg_past_perfs', state.pastPerfs);
+    await saveDoc('rg_past_perfs', state.pastPerfs);
+    await publishPublicPastPerfs();
     if ($('pastperfs-summary')) $('pastperfs-summary').textContent = state.pastPerfs.length ? ('Saved past events: ' + state.pastPerfs.length) : 'No past events saved yet.';
     if ($('pastperfs-preview')) $('pastperfs-preview').value = JSON.stringify(state.pastPerfs.slice(0, 40), null, 2);
     setStatus('Past events saved', 'ok');
@@ -15448,8 +15589,8 @@
     updateContactMiniPreview();
     updateCompletenessIndicators();
   }
-  function saveContact() {
-    saveDoc('contact_' + state.lang, {
+  async function saveContact() {
+    await saveDoc('contact_' + state.lang, {
       title: safeString($('contact-title').value),
       sub: safeString($('contact-sub').value),
       email: safeString($('contact-email').value),
@@ -15458,6 +15599,7 @@
       webBtn: safeString($('contact-webBtn').value),
       webUrl: safeString($('contact-webUrl') && $('contact-webUrl').value).trim()
     });
+    await publishPublicContactDocs([state.lang]);
   }
 
   function safeContactsDoc(raw) {

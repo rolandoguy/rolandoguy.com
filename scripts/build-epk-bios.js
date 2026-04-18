@@ -11,6 +11,7 @@
 var fs = require('fs');
 var path = require('path');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
 var FIELDS = ['b50', 'b150', 'b300p1', 'b300p2', 'b300p3', 'b300p4'];
@@ -39,10 +40,10 @@ var root = path.join(__dirname, '..');
 var absExport = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
 var outFile = path.join(root, 'v1-assets', 'data', 'epk-bios.json');
 
-var payload = JSON.parse(fs.readFileSync(absExport, 'utf8'));
-var bios = payload.data && payload.data.rg_epk_bios;
+var exportSource = exportLoader.loadAdminExportSource(absExport, 'build-epk-bios');
+var bios = exportSource.source && exportSource.source.rg_epk_bios;
 if (!bios || typeof bios !== 'object') {
-  console.error('build-epk-bios: missing or invalid data.rg_epk_bios in export');
+  console.error('build-epk-bios: missing or invalid rg_epk_bios in export source payload');
   process.exit(1);
 }
 

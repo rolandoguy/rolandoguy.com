@@ -23,6 +23,7 @@ var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'press-data.json');
 var pressDefaultsPath = path.join(root, 'v1-assets', 'build', 'press-defaults.json');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
 var PDF_LANGS = ['EN', 'DE', 'ES', 'IT', 'FR'];
@@ -145,10 +146,10 @@ if (!exportPath) {
 }
 
 var absExport = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-var payload = readJson(absExport);
-var data = payload && payload.data ? payload.data : null;
+var payload = exportLoader.loadAdminExportSource(absExport, 'build-press');
+var data = payload && payload.source ? payload.source : null;
 if (!data || typeof data !== 'object') {
-  console.error('build-press: export missing data object');
+  console.error('build-press: export missing usable source payload');
   process.exit(1);
 }
 

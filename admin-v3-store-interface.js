@@ -102,6 +102,91 @@ function normalizeRecord(collection, record) {
   return clone(record);
 }
 
+// Public-safe calendar mirror for the public site.
+// This is intentionally narrower than the internal admin-v3 calendar schema.
+var PUBLIC_CALENDAR_ALLOWED_TYPES = {
+  concert: 'concert',
+  recital: 'recital',
+  teaching: 'other',
+  other: 'other',
+  engagement: 'other'
+};
+
+function parseIsoDate(value) {
+  var raw = safeString(value).trim();
+  if (!raw) return null;
+  var dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  var d = dateOnly ? new Date(dateOnly[1] + '-' + dateOnly[2] + '-' + dateOnly[3] + 'T00:00:00Z') : new Date(raw);
+  if (isNaN(d.getTime())) return null;
+  return d;
+}
+
+function publicMonthLabel(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' }) + ' ' + String(date.getUTCFullYear());
+}
+
+function normalizePublicCalendarStatus(status) {
+  var raw = safeString(status).trim().toLowerCase();
+  if (!raw) return 'current';
+  if (raw === 'completed') return 'past';
+  if (raw === 'cancelled') return 'cancelled';
+  return raw;
+}
+
+function shouldPublishPublicCalendarRecord(record) {
+  if (!record || typeof record !== 'object') return false;
+  var visibility = safeString(record.public_visibility).trim().toLowerCase();
+  var readiness = safeString(record.public_calendar_readiness).trim().toLowerCase();
+  return visibility === 'public' && readiness !== 'not_ready';
+}
+
+function toPublicCalendarRecord(record) {
+  if (!shouldPublishPublicCalendarRecord(record)) return null;
+  var date = parseIsoDate(record.start_date);
+  var safeType = PUBLIC_CALENDAR_ALLOWED_TYPES[safeString(record.event_type).trim().toLowerCase()] || 'other';
+  return {
+    id: safeString(record.id).trim(),
+    day: date ? String(date.getUTCDate()) : '',
+    month: publicMonthLabel(date),
+    time: safeString(record.start_time).trim(),
+    title: safeString(record.title).trim(),
+    detail: safeString(record.notes_public).trim(),
+    extDesc: safeString(record.notes_public).trim(),
+    venue: safeString(record.venue).trim(),
+    city: safeString(record.city).trim(),
+    type: safeType,
+    status: normalizePublicCalendarStatus(record.status),
+    sortDate: date ? date.toISOString().slice(0, 10) : safeString(record.start_date).trim(),
+    private: false
+  };
+}
+
+function writeFirestoreDocWithToken(docKey, payload, token) {
+  return fetch(STORE_CONFIG.firestoreBase + '/' + STORE_CONFIG.collectionPath + '/' + encodeURIComponent(docKey), {
+    method: 'PATCH',
+    cache: 'no-store',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: encodeFirestoreDocBody(payload)
+  }).then(function (r) {
+    if (!r.ok) {
+      return r.text().then(function (text) {
+        throw new Error('Firestore public mirror save failed: ' + r.status + ' ' + r.statusText + ' - ' + text);
+      });
+    }
+    return true;
+  });
+}
+
+function publishPublicCalendarMirror(records, token) {
+  if (!token) return Promise.reject(new Error('No auth token available for public calendar publish'));
+  var safeRecords = Array.isArray(records) ? records.map(toPublicCalendarRecord).filter(Boolean) : [];
+  return writeFirestoreDocWithToken('public_rg_perfs', safeRecords, token);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH TOKEN FETCH
 // ─────────────────────────────────────────────────────────────────────────────
@@ -318,7 +403,9 @@ function createEntityStore(collection) {
             });
           }
           setCache(collection, doc.id, doc);
-          return doc;
+          return (collection === 'calendar'
+            ? publishPublicCalendarMirror(payload.records, token).then(function () { return doc; })
+            : Promise.resolve(doc));
         });
       });
     },
@@ -387,7 +474,9 @@ function createEntityStore(collection) {
             });
           }
           setCache(collection, id, doc);
-          return doc;
+          return (collection === 'calendar'
+            ? publishPublicCalendarMirror(parsed.records, token).then(function () { return doc; })
+            : Promise.resolve(doc));
         });
       });
     },
@@ -456,7 +545,9 @@ function createEntityStore(collection) {
           }
           var cache = getCache(collection);
           delete cache[id];
-          return true;
+          return (collection === 'calendar'
+            ? publishPublicCalendarMirror(parsed.records, token).then(function () { return true; })
+            : Promise.resolve(true));
         });
       });
     }

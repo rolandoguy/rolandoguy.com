@@ -19,6 +19,7 @@
 var fs = require('fs');
 var path = require('path');
 var filter = require('./lib/public-field-filter');
+var exportLoader = require('./lib/load-admin-export');
 
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'mp-locales.json');
@@ -95,10 +96,10 @@ var exportPath = process.argv[2];
 var exportData = null;
 if (exportPath) {
   var abs = path.isAbsolute(exportPath) ? exportPath : path.join(root, exportPath);
-  var payload = readJson(abs);
-  exportData = payload && payload.data ? payload.data : null;
+  var payload = exportLoader.loadAdminExportSource(abs, 'build-mp-locales');
+  exportData = payload && payload.source ? payload.source : null;
   if (!exportData) {
-    console.error('build-mp-locales: export missing top-level data object');
+    console.error('build-mp-locales: export missing usable source payload');
     process.exit(1);
   }
 }

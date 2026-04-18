@@ -1,6 +1,6 @@
 /**
  * Public-safe contact section for mp/contact.html.
- * This runtime must only consume bundled public JSON from /v1-assets/data/contact-data.json.
+ * This runtime consumes bundled public JSON plus explicit public-safe Firestore docs.
  * Internal/admin drafts and legacy fallback payloads must never reach this page.
  */
 (function () {
@@ -30,12 +30,23 @@
   }
 
   function fetchFirestoreDocJson(key) {
-    return Promise.resolve(null);
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc('public_' + key);
   }
 
   function ensureContactDoc(key) {
-    CONTACT_DOC_CACHE[key] = null;
-    return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(CONTACT_DOC_CACHE, key)) {
+      return Promise.resolve(CONTACT_DOC_CACHE[key]);
+    }
+    return fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        CONTACT_DOC_CACHE[key] = doc && doc.data && typeof doc.data === 'object' ? doc.data : null;
+        return CONTACT_DOC_CACHE[key];
+      })
+      .catch(function () {
+        CONTACT_DOC_CACHE[key] = null;
+        return null;
+      });
   }
 
   function loadLiveContactDocs(lang) {
@@ -304,15 +315,21 @@
   window.submitForm = submitForm;
 
   window.addEventListener('mp:langchange', function () {
-    if (!MP_CONTACT) return;
-    applyFormChrome();
-    renderContact();
+    var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+    loadLiveContactDocs(lang).finally(function () {
+      if (!MP_CONTACT) return;
+      applyFormChrome();
+      renderContact();
+    });
   });
 
   window.addEventListener('mp:localesready', function () {
-    applyFormChrome();
-    if (!MP_CONTACT) return;
-    renderContact();
+    var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+    loadLiveContactDocs(lang).finally(function () {
+      applyFormChrome();
+      if (!MP_CONTACT) return;
+      renderContact();
+    });
   });
 
   fetch('/v1-assets/data/contact-data.json')
@@ -322,8 +339,11 @@
     })
     .then(function (data) {
       MP_CONTACT = data;
-      applyFormChrome();
-      renderContact();
+      var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+      loadLiveContactDocs(lang).finally(function () {
+        applyFormChrome();
+        renderContact();
+      });
     })
     .catch(function () {
       var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
@@ -342,7 +362,9 @@
         },
         formspreeId: 'xqedvoqw'
       };
-      applyFormChrome();
-      renderContact();
+      loadLiveContactDocs(lang).finally(function () {
+        applyFormChrome();
+        renderContact();
+      });
     });
 })();
