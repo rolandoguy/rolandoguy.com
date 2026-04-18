@@ -20,6 +20,7 @@ The default build is now a guarded chain:
 
 - `scripts/build-public-safe.js` orchestrates:
   - all `build:*` data generators with the same admin export input
+  - `check:public-smoke` after regeneration
   - `build:prerender-public` at the end
   - fail-fast behavior if export path is missing
 
@@ -53,6 +54,13 @@ The script pulls content from the same generated data files already used by runt
 - `v1-assets/data/press-data.json`
 - `v1-assets/data/contact-data.json`
 - `v1-assets/data/media-data.json`
+
+Important:
+
+- Admin changes do not reach the public site immediately.
+- The public site updates only after this sequence: admin export -> rebuild bundled public JSON -> deploy.
+- Bundled `v1-assets/data/*.json` files are now the source of truth for the public website.
+- Public pages should not be expected to reflect admin edits until that rebuild-and-deploy flow has completed.
 
 ## Pages injected
 

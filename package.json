@@ -7,6 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
+    "rebuild:public": "node scripts/build-public-safe.js",
     "build": "node scripts/build-public-safe.js",
     "check:public-smoke": "node scripts/check-public-smoke.js",
     "test": "npm run check:public-smoke",

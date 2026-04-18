@@ -63,6 +63,7 @@ var PUBLIC_EVENT_FIELDS = [
   'moreInfoImage4Focus',
   'moreInfoImage5',
   'moreInfoImage5Focus',
+  'modalEnabled',
   'modalImg',
   'modalImgHide',
   'private',

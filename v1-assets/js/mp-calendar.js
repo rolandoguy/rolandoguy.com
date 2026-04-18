@@ -710,6 +710,14 @@
       };
     }
     if (base === 'eventLinkLabel') {
+      var enKeyLabel = base + '_en';
+      var enLabel = p[enKeyLabel];
+      if (L !== 'en' && enLabel != null && String(enLabel).trim() !== '') {
+        return {
+          value: String(enLabel).trim(),
+          source: enKeyLabel
+        };
+      }
       var sharedLabel = p[base];
       if (sharedLabel != null && String(sharedLabel).trim() !== '') {
         return {
@@ -1116,6 +1124,12 @@
     if (kind === 'place') return perfLocalizedPlaceText(value, lang);
     return perfLocalizedPlaceholder(value, lang);
   }
+  function perfModalBodyText(p, lang, isPrivate) {
+    var detail = perfLocalizedField(p, 'detail', lang);
+    if (isPrivate) detail = perfPrivateDetailText(p, lang, detail);
+    var extBody = perfLocalizedField(p, 'extDesc', lang);
+    return extBody || detail || '';
+  }
   function perfFormatTime(raw, lang) {
     if (!raw) return '';
     var cleanTime = String(raw).replace(/\s*(uhr|h)\s*$/i, '').trim();
@@ -1475,10 +1489,10 @@
           }
         });
       }
-      var printExt = perfLocalizedField(p, 'extDesc', currentLang);
+      var modalBodyPreview = perfModalBodyText(p, currentLang, isPrivate);
       var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
       var hasExtra =
-        !!printExt ||
+        !!modalBodyPreview ||
         (p.ticketPrice && p.ticketPrice.trim()) ||
         (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
         (p.flyerImg && p.flyerImg.trim()) ||
@@ -1896,8 +1910,6 @@
       };
     var isPrivate = perfIsPrivateEvent(p, currentLang);
     var typeLabel = isPrivate ? ((uiTable(currentLang)['perf.privateEventType']) || 'Private event') : (types[p.type] || p.type || '');
-    var detail = perfLocalizedField(p, 'detail', currentLang);
-    if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
     var modalTitle = resolveEventTitle(p, currentLang);
     var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
 
@@ -1905,10 +1917,9 @@
     document.getElementById('emTitle').textContent = modalTitle;
     document.getElementById('emDate').textContent = perfDateLine(p, currentLang);
     document.getElementById('emVenue').textContent = venueCity;
-    var extBody = perfLocalizedField(p, 'extDesc', currentLang);
     // Modal body should be language-exclusive, not additive:
     // prefer localized extended text, then shared extended text, then short detail fallback.
-    var modalBody = extBody || detail || '';
+    var modalBody = perfModalBodyText(p, currentLang, isPrivate);
     var escapedBody = modalBody.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
     document.getElementById('emDetail').innerHTML = bodyWithBreaks;

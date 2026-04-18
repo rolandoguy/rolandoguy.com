@@ -23,6 +23,27 @@ var defaultsPath = path.join(root, 'v1-assets', 'build', 'biography-defaults.jso
 var filter = require('./lib/public-field-filter');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
+var BIO_SOURCE_FIELDS = [
+  'introLine',
+  'h2',
+  'p1',
+  'p2',
+  'p3',
+  'p4',
+  'p5',
+  'p6',
+  'paragraphs',
+  'portraitAlt',
+  'portraitImage',
+  'portraitFit',
+  'portraitFocus',
+  'continueSectionTag',
+  'continueSub',
+  'ctaRepertoire',
+  'ctaMedia',
+  'ctaContact',
+  'ctaHomeIntro'
+];
 
 /** First sentence end marker, then end of “… Marcelo Ayub.” block inside p1 (same structure as v1 copy). */
 var SPLIT_MARKERS = {
@@ -43,6 +64,33 @@ function readJson(p) {
 
 function nonEmptyStr(v) {
   return v != null && String(v).trim() !== '';
+}
+
+function pickBioSourceFields(raw) {
+  var out = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  BIO_SOURCE_FIELDS.forEach(function (key) {
+    if (Object.prototype.hasOwnProperty.call(raw, key) && raw[key] !== undefined) {
+      out[key] = raw[key];
+    }
+  });
+  return out;
+}
+
+function normalizeParagraphs(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+  if (Array.isArray(raw.paragraphs) && raw.paragraphs.length) {
+    return raw.paragraphs
+      .map(function (x) {
+        return String(x == null ? '' : x).trim();
+      })
+      .filter(Boolean);
+  }
+  var out = [];
+  ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (key) {
+    if (nonEmptyStr(raw[key])) out.push(String(raw[key]).trim());
+  });
+  return out;
 }
 
 /** @returns {string[]|null} four segments, or null */
@@ -66,13 +114,18 @@ function splitBioFour(p1, p2, lang) {
 function mergeBioLayer(base, rawExport) {
   var o = Object.assign({}, base);
   if (!rawExport || typeof rawExport !== 'object') return o;
-  var ex = filter.filterBiography(rawExport);
-  ['h2', 'p1', 'p2'].forEach(function (k) {
+  var ex = pickBioSourceFields(rawExport);
+  ['h2', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6'].forEach(function (k) {
     if (nonEmptyStr(ex[k])) o[k] = String(ex[k]).trim();
   });
+  var paras = normalizeParagraphs(ex);
+  if (paras.length) o.paragraphs = paras.slice();
   [
     'introLine',
     'portraitAlt',
+    'portraitImage',
+    'portraitFit',
+    'portraitFocus',
     'continueSectionTag',
     'continueSub',
     'ctaRepertoire',
@@ -86,10 +139,24 @@ function mergeBioLayer(base, rawExport) {
 }
 
 function paragraphsForLang(merged, lang) {
+  var explicit = normalizeParagraphs(merged);
+  if (explicit.length >= 2) return explicit;
   var four = splitBioFour(merged.p1, merged.p2, lang);
   if (four) return four;
   if (nonEmptyStr(merged.p1) && nonEmptyStr(merged.p2)) return [String(merged.p1).trim(), String(merged.p2).trim()];
   return null;
+}
+
+function resolvePortraitDefault(defaults, outLocales) {
+  var fromDe = outLocales && outLocales.de && nonEmptyStr(outLocales.de.portraitImage)
+    ? String(outLocales.de.portraitImage).trim()
+    : '';
+  if (fromDe) return fromDe;
+  var fromEn = outLocales && outLocales.en && nonEmptyStr(outLocales.en.portraitImage)
+    ? String(outLocales.en.portraitImage).trim()
+    : '';
+  if (fromEn) return fromEn;
+  return defaults.portraitImage != null ? String(defaults.portraitImage).trim() : '';
 }
 
 var defaults = readJson(defaultsPath);
@@ -107,7 +174,6 @@ if (exportPath) {
 }
 
 var outLocales = {};
-var portraitImage = defaults.portraitImage != null ? String(defaults.portraitImage).trim() : '';
 
 LANGS.forEach(function (lang) {
   var base = (defaults.locales && defaults.locales[lang]) || {};
@@ -160,8 +226,12 @@ LANGS.forEach(function (lang) {
     ctaContact: String(merged.ctaContact).trim(),
     ctaHomeIntro: String(merged.ctaHomeIntro).trim()
   };
+  if (nonEmptyStr(merged.portraitImage)) outLocales[lang].portraitImage = String(merged.portraitImage).trim();
+  if (nonEmptyStr(merged.portraitFit)) outLocales[lang].portraitFit = String(merged.portraitFit).trim();
+  if (nonEmptyStr(merged.portraitFocus)) outLocales[lang].portraitFocus = String(merged.portraitFocus).trim();
 });
 
+var portraitImage = resolvePortraitDefault(defaults, outLocales);
 if (!portraitImage) {
   console.error('build-biography: defaults portraitImage empty');
   process.exit(1);
