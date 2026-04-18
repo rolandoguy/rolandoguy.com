@@ -161,7 +161,7 @@ var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
 // REPERTOIRE FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_REPERTOIRE_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status'];
+var PUBLIC_REPERTOIRE_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
 
 var PUBLIC_REPERTOIRE_CHROME_FIELDS = ['h2', 'intro'];
 

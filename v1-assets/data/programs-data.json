@@ -14,9 +14,19 @@
           "published": true,
           "title": "Opera Gala: Arias & Duets",
           "description": "Tenor arias and concert ensembles from the operatic canon, weighted toward dramatic and lyrical contrast. Offered with piano alone or with soprano and baritone for duets and finales—suited to galas and chamber series that want operatic colour without staging.",
-          "formations": ["Tenor + Piano", "Tenor + Soprano + Piano", "Tenor + Baritone + Piano"],
+          "formations": [
+            "Tenor + Piano",
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano"
+          ],
           "duration": "30, 45, or 60 minutes",
-          "idealFor": ["Gala concerts", "Chamber series", "Cultural institutions", "Churches", "Private salons"]
+          "idealFor": [
+            "Gala concerts",
+            "Chamber series",
+            "Cultural institutions",
+            "Churches",
+            "Private salons"
+          ]
         },
         {
           "id": 2,
@@ -24,9 +34,17 @@
           "published": true,
           "title": "Italian Song, Opera & Canzone",
           "description": "Italian line and rhetoric across salon song, canzone, and operatic excerpts—not a survey, but a listening line built on colour, text, and vocal character. A natural fit for Italian institutes and series that programme one tradition deeply in an evening.",
-          "formations": ["Tenor + Piano", "Optional guest artist format"],
+          "formations": [
+            "Tenor + Piano",
+            "Optional guest artist format"
+          ],
           "duration": "30 to 60 minutes",
-          "idealFor": ["Italian cultural institutes", "Recital series", "House concerts", "Intimate classical settings"]
+          "idealFor": [
+            "Italian cultural institutes",
+            "Recital series",
+            "House concerts",
+            "Intimate classical settings"
+          ]
         },
         {
           "id": 3,
@@ -34,9 +52,18 @@
           "published": true,
           "title": "Tango, Passion & Poetry",
           "description": "Argentine tango and song sung with classical technique and narrative timing: diction, rubato, and stage sense drawn from recital practice rather than pop crossover. For venues that want this repertoire beside art song without sacrificing musical seriousness.",
-          "formations": ["Tenor + Piano", "Expanded collaborative version possible"],
+          "formations": [
+            "Tenor + Piano",
+            "Expanded collaborative version possible"
+          ],
           "duration": "30, 45, or 60 minutes",
-          "idealFor": ["Themed evenings", "Cultural centers", "Embassies", "Crossover recital settings", "Tango events"]
+          "idealFor": [
+            "Themed evenings",
+            "Cultural centers",
+            "Embassies",
+            "Crossover recital settings",
+            "Tango events"
+          ]
         },
         {
           "id": 4,
@@ -44,9 +71,16 @@
           "published": true,
           "title": "Songs Across Borders",
           "description": "Lieder, mélodie, and song in several languages—Italian, French, German, English, and Spanish-language Argentine repertoire among them—ordered as a single listening arc (movement, exile, return) rather than a checklist. Especially apt for international seasons, embassy programmes, and cities where the audience’s spoken languages match the mix on stage.",
-          "formations": ["Tenor + Piano"],
+          "formations": [
+            "Tenor + Piano"
+          ],
           "duration": "45 to 70 minutes",
-          "idealFor": ["International cultural institutions", "Diplomatic events", "Mixed-program recital audiences", "Curated chamber concerts"]
+          "idealFor": [
+            "International cultural institutions",
+            "Diplomatic events",
+            "Mixed-program recital audiences",
+            "Curated chamber concerts"
+          ]
         },
         {
           "id": 5,
@@ -54,9 +88,19 @@
           "published": true,
           "title": "Duo & Ensemble Recital",
           "description": "Evening-length chamber vocal programmes: tenor with soprano or baritone and piano, combining solos, duets, and small ensemble closers around a declared pairing or theme—Mozart–Da Ponte corners of the repertoire, verismo pairs, or a salon narrative. Gives presenters a dramaturgically clear alternative to an ad-hoc gala miscellany.",
-          "formations": ["Tenor + Soprano + Piano", "Tenor + Baritone + Piano", "Flexible guest artist format"],
+          "formations": [
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano",
+            "Flexible guest artist format"
+          ],
           "duration": "45 to 90 minutes",
-          "idealFor": ["Festivals", "Gala evenings", "Chamber music series", "Curated events", "Collaborative programmes"]
+          "idealFor": [
+            "Festivals",
+            "Gala evenings",
+            "Chamber music series",
+            "Curated events",
+            "Collaborative programmes"
+          ]
         }
       ]
     },
@@ -165,313 +209,313 @@
       ]
     },
     "es": {
-      "title": "Programas &amp; <em>colaboraciones</em>",
-      "subtitle": "Programas de recital para salas de concierto, instituciones culturales, embajadas, festivales, salones y eventos privados seleccionados.",
+      "title": "Programs &amp; <em>Collaborations</em>",
+      "subtitle": "Recital programmes for concert halls, cultural institutes, embassies, festivals, salons, and selected private events.",
       "profileBridge": "",
-      "intro": "Cada programa se concibe como un arco musical coherente y puede afinarse en duración, plantel y equilibrio lingüístico según la sala, el público y la ocasión.",
-      "closingNote": "La duración, el equilibrio entre idiomas y el repertorio pueden ajustarse de común acuerdo con la institución promotora y los músicos colaboradores.",
-      "linkLabel": "Ver programas y colaboraciones",
+      "intro": "Each programme is conceived as a coherent musical shape and can be refined in length, casting, and language balance for your hall, audience, and occasion.",
+      "closingNote": "Programme length, language balance, and repertoire may be adjusted in consultation with the presenter and collaborating musicians.",
+      "linkLabel": "Explore concert programmes and artistic collaborations",
       "items": [
         {
           "id": 1,
           "order": 0,
           "published": true,
-          "title": "Gala de ópera: arias y escenas de conjunto",
-          "description": "Un programa de ópera de gran llegada al público, con arias de tenor conocidas, dúos y escenas de conjunto seleccionadas. Como recital con piano o en formato ampliado con soprano y barítono, ofrece una velada de claro perfil operístico, sólida dramaturgia y alto reconocimiento para salas y ciclos que buscan color operístico sin puesta escénica.",
+          "title": "Opera Gala: Arias & Duets",
+          "description": "Tenor arias and concert ensembles from the operatic canon, weighted toward dramatic and lyrical contrast. Offered with piano alone or with soprano and baritone for duets and finales—suited to galas and chamber series that want operatic colour without staging.",
           "formations": [
-            "Tenor + piano",
-            "Tenor + soprano + piano",
-            "Tenor + barítono + piano"
+            "Tenor + Piano",
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano"
           ],
-          "duration": "30, 45 o 60 minutos",
+          "duration": "30, 45, or 60 minutes",
           "idealFor": [
-            "Conciertos de gala",
-            "Ciclos de cámara",
-            "Instituciones culturales",
-            "Iglesias",
-            "Salones privados"
+            "Gala concerts",
+            "Chamber series",
+            "Cultural institutions",
+            "Churches",
+            "Private salons"
           ]
         },
         {
           "id": 2,
           "order": 1,
           "published": true,
-          "title": "Líneas italianas: canción, canzone y ópera",
-          "description": "Una velada de impronta italiana entre canción de salón, canzone y fragmentos de ópera. Más que un simple recorrido, propone un foco estilístico claro donde la línea vocal, el texto y el color construyen una atmósfera unificada, ideal para instituciones que desean presentar repertorio italiano con identidad y continuidad.",
+          "title": "Italian Song, Opera & Canzone",
+          "description": "Italian line and rhetoric across salon song, canzone, and operatic excerpts—not a survey, but a listening line built on colour, text, and vocal character. A natural fit for Italian institutes and series that programme one tradition deeply in an evening.",
           "formations": [
-            "Tenor + piano",
-            "Formato opcional con artista invitado"
+            "Tenor + Piano",
+            "Optional guest artist format"
           ],
-          "duration": "30 a 60 minutos",
+          "duration": "30 to 60 minutes",
           "idealFor": [
-            "Institutos culturales italianos",
-            "Ciclos de recital",
-            "Conciertos de salón",
-            "Formatos clásicos íntimos"
+            "Italian cultural institutes",
+            "Recital series",
+            "House concerts",
+            "Intimate classical settings"
           ]
         },
         {
           "id": 3,
           "order": 2,
           "published": true,
-          "title": "Tango: intimidad, color y poesía",
-          "description": "Un programa entre tango, canción y potencia narrativa. Aquí el tango no aparece como sucesión de números, sino como un mundo musical propio, pensado para espacios y públicos que buscan cercanía, atmósfera y personalidad artística sin renunciar al rigor musical ni a la calidad vocal.",
+          "title": "Tango, Passion & Poetry",
+          "description": "Argentine tango and song sung with classical technique and narrative timing: diction, rubato, and stage sense drawn from recital practice rather than pop crossover. For venues that want this repertoire beside art song without sacrificing musical seriousness.",
           "formations": [
-            "Tenor + piano",
-            "Versión colaborativa ampliada posible"
+            "Tenor + Piano",
+            "Expanded collaborative version possible"
           ],
-          "duration": "30, 45 o 60 minutos",
+          "duration": "30, 45, or 60 minutes",
           "idealFor": [
-            "Noches temáticas",
-            "Centros culturales",
-            "Embajadas",
-            "Ciclos de recital con perfil crossover",
-            "Eventos de tango"
+            "Themed evenings",
+            "Cultural centers",
+            "Embassies",
+            "Crossover recital settings",
+            "Tango events"
           ]
         },
         {
           "id": 4,
           "order": 3,
           "published": true,
-          "title": "Canciones sin fronteras",
-          "description": "Un recital multilingüe que atraviesa estilos, lenguas y espacios culturales. El eje no es la variedad por sí misma, sino el diálogo entre distintas tradiciones y mundos expresivos dentro de un arco dramático unificado, especialmente apto para contextos internacionales y públicos diversos.",
+          "title": "Songs Across Borders",
+          "description": "Lieder, mélodie, and song in several languages—Italian, French, German, English, and Spanish-language Argentine repertoire among them—ordered as a single listening arc (movement, exile, return) rather than a checklist. Especially apt for international seasons, embassy programmes, and cities where the audience’s spoken languages match the mix on stage.",
           "formations": [
-            "Tenor + piano"
+            "Tenor + Piano"
           ],
-          "duration": "45 a 70 minutos",
+          "duration": "45 to 70 minutes",
           "idealFor": [
-            "Instituciones culturales internacionales",
-            "Eventos diplomáticos",
-            "Públicos mixtos de recital",
-            "Conciertos de cámara curados"
+            "International cultural institutions",
+            "Diplomatic events",
+            "Mixed-program recital audiences",
+            "Curated chamber concerts"
           ]
         },
         {
           "id": 5,
           "order": 4,
           "published": true,
-          "title": "Diálogos: recital para dúo y conjunto",
-          "description": "Un formato flexible para tenor en diálogo con soprano, barítono y piano. Solos, dúos y momentos de conjunto se articulan en una velada de dramaturgia clara que puede inclinarse, según la formación, hacia la gala, el lirismo o un diseño temático especialmente curado.",
+          "title": "Duo & Ensemble Recital",
+          "description": "Evening-length chamber vocal programmes: tenor with soprano or baritone and piano, combining solos, duets, and small ensemble closers around a declared pairing or theme—Mozart–Da Ponte corners of the repertoire, verismo pairs, or a salon narrative. Gives presenters a dramaturgically clear alternative to an ad-hoc gala miscellany.",
           "formations": [
-            "Tenor + soprano + piano",
-            "Tenor + barítono + piano",
-            "Formato flexible con artista invitado"
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano",
+            "Flexible guest artist format"
           ],
-          "duration": "45 a 90 minutos",
+          "duration": "45 to 90 minutes",
           "idealFor": [
-            "Festivales",
-            "Galas",
-            "Ciclos de cámara",
-            "Eventos curados",
-            "Programas colaborativos"
+            "Festivals",
+            "Gala evenings",
+            "Chamber music series",
+            "Curated events",
+            "Collaborative programmes"
           ]
         }
       ]
     },
     "it": {
-      "title": "Programmi &amp; <em>collaborazioni</em>",
-      "subtitle": "Programmi di recital per sale da concerto, istituti culturali, ambasciate, festival, salotti ed eventi privati selezionati.",
+      "title": "Programs &amp; <em>Collaborations</em>",
+      "subtitle": "Recital programmes for concert halls, cultural institutes, embassies, festivals, salons, and selected private events.",
       "profileBridge": "",
-      "intro": "Ogni programma è concepito come un arco musicale coerente e può essere rifinito in durata, organico ed equilibrio linguistico per la sala, il pubblico e l'occasione.",
-      "closingNote": "Durata, equilibrio linguistico e repertorio possono essere adattati di concerto con l'organizzatore e i musicisti collaboratori.",
-      "linkLabel": "Programmi e collaborazioni artistiche",
+      "intro": "Each programme is conceived as a coherent musical shape and can be refined in length, casting, and language balance for your hall, audience, and occasion.",
+      "closingNote": "Programme length, language balance, and repertoire may be adjusted in consultation with the presenter and collaborating musicians.",
+      "linkLabel": "Explore concert programmes and artistic collaborations",
       "items": [
         {
           "id": 1,
           "order": 0,
           "published": true,
-          "title": "Gala d'opera: arie e scene d'insieme",
-          "description": "Un programma operistico di forte presa sul pubblico, con arie tenorili celebri, duetti e scene d'insieme selezionate. In forma di recital con pianoforte o in organico ampliato con soprano e baritono, offre una serata dal profilo operistico chiaro, solida nella costruzione e immediatamente comunicativa.",
+          "title": "Opera Gala: Arias & Duets",
+          "description": "Tenor arias and concert ensembles from the operatic canon, weighted toward dramatic and lyrical contrast. Offered with piano alone or with soprano and baritone for duets and finales—suited to galas and chamber series that want operatic colour without staging.",
           "formations": [
-            "Tenore + pianoforte",
-            "Tenore + soprano + pianoforte",
-            "Tenore + baritono + pianoforte"
+            "Tenor + Piano",
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano"
           ],
-          "duration": "30, 45 o 60 minuti",
+          "duration": "30, 45, or 60 minutes",
           "idealFor": [
-            "Concerti di gala",
-            "Stagioni da camera",
-            "Istituzioni culturali",
-            "Chiese",
-            "Salotti privati"
+            "Gala concerts",
+            "Chamber series",
+            "Cultural institutions",
+            "Churches",
+            "Private salons"
           ]
         },
         {
           "id": 2,
           "order": 1,
           "published": true,
-          "title": "Linee italiane: lied, canzone e opera",
-          "description": "Una serata di impronta italiana fra lied da salotto, canzone e pagine d'opera. Più che una semplice antologia, propone un fuoco stilistico nitido, in cui linea vocale, parola e colore costruiscono un ascolto coerente, ideale per istituzioni che desiderano presentare il repertorio italiano con continuità e atmosfera.",
+          "title": "Italian Song, Opera & Canzone",
+          "description": "Italian line and rhetoric across salon song, canzone, and operatic excerpts—not a survey, but a listening line built on colour, text, and vocal character. A natural fit for Italian institutes and series that programme one tradition deeply in an evening.",
           "formations": [
-            "Tenore + pianoforte",
-            "Formato opzionale con artista ospite"
+            "Tenor + Piano",
+            "Optional guest artist format"
           ],
-          "duration": "30 a 60 minuti",
+          "duration": "30 to 60 minutes",
           "idealFor": [
-            "Istituti italiani di cultura",
-            "Rassegne di recital",
-            "Concerti in casa",
-            "Contesti classici intimi"
+            "Italian cultural institutes",
+            "Recital series",
+            "House concerts",
+            "Intimate classical settings"
           ]
         },
         {
           "id": 3,
           "order": 2,
           "published": true,
-          "title": "Tango: intimità, colore, poesia",
-          "description": "Un programma tra tango, canto e forza narrativa. Il tango non viene presentato come semplice successione di numeri, ma come un vero mondo musicale, pensato per spazi e pubblici che cercano prossimità, atmosfera e personalità artistica senza rinunciare a serietà musicale e qualità vocale.",
+          "title": "Tango, Passion & Poetry",
+          "description": "Argentine tango and song sung with classical technique and narrative timing: diction, rubato, and stage sense drawn from recital practice rather than pop crossover. For venues that want this repertoire beside art song without sacrificing musical seriousness.",
           "formations": [
-            "Tenore + pianoforte",
-            "Possibile versione collaborativa ampliata"
+            "Tenor + Piano",
+            "Expanded collaborative version possible"
           ],
-          "duration": "30, 45 o 60 minuti",
+          "duration": "30, 45, or 60 minutes",
           "idealFor": [
-            "Serate a tema",
-            "Centri culturali",
-            "Ambasciate",
-            "Rassegne crossover",
-            "Eventi dedicati al tango"
+            "Themed evenings",
+            "Cultural centers",
+            "Embassies",
+            "Crossover recital settings",
+            "Tango events"
           ]
         },
         {
           "id": 4,
           "order": 3,
           "published": true,
-          "title": "Canti senza frontiere",
-          "description": "Un recital multilingue che attraversa stili, lingue e geografie culturali. Il centro non è la varietà fine a se stessa, ma il dialogo fra diverse tradizioni e mondi espressivi in un arco drammatico unitario, particolarmente adatto a contesti internazionali e pubblici eterogenei.",
+          "title": "Songs Across Borders",
+          "description": "Lieder, mélodie, and song in several languages—Italian, French, German, English, and Spanish-language Argentine repertoire among them—ordered as a single listening arc (movement, exile, return) rather than a checklist. Especially apt for international seasons, embassy programmes, and cities where the audience’s spoken languages match the mix on stage.",
           "formations": [
-            "Tenore + pianoforte"
+            "Tenor + Piano"
           ],
-          "duration": "45 a 70 minuti",
+          "duration": "45 to 70 minutes",
           "idealFor": [
-            "Istituzioni culturali internazionali",
-            "Occasioni diplomatiche",
-            "Pubblici misti da recital",
-            "Concerti da camera curati"
+            "International cultural institutions",
+            "Diplomatic events",
+            "Mixed-program recital audiences",
+            "Curated chamber concerts"
           ]
         },
         {
           "id": 5,
           "order": 4,
           "published": true,
-          "title": "Dialoghi: recital per duo e ensemble",
-          "description": "Un formato flessibile per tenore in dialogo con soprano, baritono e pianoforte. Momenti solistici, duetti e pagine d'insieme si organizzano in una serata dalla chiara linea drammaturgica, che può assumere, secondo l'organico, un taglio più di gala, più lirico o più fortemente tematico.",
+          "title": "Duo & Ensemble Recital",
+          "description": "Evening-length chamber vocal programmes: tenor with soprano or baritone and piano, combining solos, duets, and small ensemble closers around a declared pairing or theme—Mozart–Da Ponte corners of the repertoire, verismo pairs, or a salon narrative. Gives presenters a dramaturgically clear alternative to an ad-hoc gala miscellany.",
           "formations": [
-            "Tenore + soprano + pianoforte",
-            "Tenore + baritono + pianoforte",
-            "Formato flessibile con artista ospite"
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano",
+            "Flexible guest artist format"
           ],
-          "duration": "45 a 90 minuti",
+          "duration": "45 to 90 minutes",
           "idealFor": [
-            "Festival",
-            "Serate di gala",
-            "Stagioni da camera",
-            "Eventi curati",
-            "Programmi collaborativi"
+            "Festivals",
+            "Gala evenings",
+            "Chamber music series",
+            "Curated events",
+            "Collaborative programmes"
           ]
         }
       ]
     },
     "fr": {
-      "title": "Programmes &amp; <em>collaborations</em>",
-      "subtitle": "Programmes de récital pour salles de concert, institutions culturelles, ambassades, festivals, salons et événements privés sélectionnés.",
+      "title": "Programs &amp; <em>Collaborations</em>",
+      "subtitle": "Recital programmes for concert halls, cultural institutes, embassies, festivals, salons, and selected private events.",
       "profileBridge": "",
-      "intro": "Chaque programme est conçu comme un arc musical cohérent et peut être affiné en durée, effectif et équilibre linguistique selon la salle, le public et l'occasion.",
-      "closingNote": "La durée, l'équilibre linguistique et le répertoire peuvent être ajustés en consultation avec l'organisateur et les musiciens collaborateurs.",
-      "linkLabel": "Programmes et collaborations artistiques",
+      "intro": "Each programme is conceived as a coherent musical shape and can be refined in length, casting, and language balance for your hall, audience, and occasion.",
+      "closingNote": "Programme length, language balance, and repertoire may be adjusted in consultation with the presenter and collaborating musicians.",
+      "linkLabel": "Explore concert programmes and artistic collaborations",
       "items": [
         {
           "id": 1,
           "order": 0,
           "published": true,
-          "title": "Gala d'opéra : airs et scènes d'ensemble",
-          "description": "Un programme d'opéra à fort impact public, construit autour d'airs de ténor connus, de duos et de scènes d'ensemble choisies. En récital avec piano ou dans une formule élargie avec soprano et baryton, ce format propose une soirée au profil lyrique net, solidement construite et immédiatement lisible pour le public.",
+          "title": "Opera Gala: Arias & Duets",
+          "description": "Tenor arias and concert ensembles from the operatic canon, weighted toward dramatic and lyrical contrast. Offered with piano alone or with soprano and baritone for duets and finales—suited to galas and chamber series that want operatic colour without staging.",
           "formations": [
-            "Ténor + piano",
-            "Ténor + soprano + piano",
-            "Ténor + baryton + piano"
+            "Tenor + Piano",
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano"
           ],
-          "duration": "30, 45 ou 60 minutes",
+          "duration": "30, 45, or 60 minutes",
           "idealFor": [
-            "Concerts de gala",
-            "Séries de musique de chambre",
-            "Institutions culturelles",
-            "Églises",
-            "Salons privés"
+            "Gala concerts",
+            "Chamber series",
+            "Cultural institutions",
+            "Churches",
+            "Private salons"
           ]
         },
         {
           "id": 2,
           "order": 1,
           "published": true,
-          "title": "Lignes italiennes : lied, canzone et opéra",
-          "description": "Une soirée d'inspiration italienne entre lied de salon, canzone et pages d'opéra. Plus qu'un simple panorama, ce programme propose un axe stylistique précis où ligne vocale, texte et couleur construisent une écoute cohérente, idéale pour les institutions souhaitant présenter le répertoire italien avec continuité et atmosphère.",
+          "title": "Italian Song, Opera & Canzone",
+          "description": "Italian line and rhetoric across salon song, canzone, and operatic excerpts—not a survey, but a listening line built on colour, text, and vocal character. A natural fit for Italian institutes and series that programme one tradition deeply in an evening.",
           "formations": [
-            "Ténor + piano",
-            "Format optionnel avec artiste invité"
+            "Tenor + Piano",
+            "Optional guest artist format"
           ],
-          "duration": "30 à 60 minutes",
+          "duration": "30 to 60 minutes",
           "idealFor": [
-            "Instituts culturels italiens",
-            "Séries de récitals",
-            "Concerts en salon",
-            "Formats classiques intimes"
+            "Italian cultural institutes",
+            "Recital series",
+            "House concerts",
+            "Intimate classical settings"
           ]
         },
         {
           "id": 3,
           "order": 2,
           "published": true,
-          "title": "Tango : intimité, couleur, poésie",
-          "description": "Un programme entre tango, mélodie et force narrative. Le tango n'y apparaît pas comme une simple succession de numéros, mais comme un monde musical à part entière, destiné aux lieux et aux publics qui recherchent proximité, atmosphère et personnalité artistique sans renoncer à l'exigence musicale.",
+          "title": "Tango, Passion & Poetry",
+          "description": "Argentine tango and song sung with classical technique and narrative timing: diction, rubato, and stage sense drawn from recital practice rather than pop crossover. For venues that want this repertoire beside art song without sacrificing musical seriousness.",
           "formations": [
-            "Ténor + piano",
-            "Version collaborative élargie possible"
+            "Tenor + Piano",
+            "Expanded collaborative version possible"
           ],
-          "duration": "30, 45 ou 60 minutes",
+          "duration": "30, 45, or 60 minutes",
           "idealFor": [
-            "Soirées thématiques",
-            "Centres culturels",
-            "Ambassades",
-            "Cadres de récital crossover",
-            "Événements tango"
+            "Themed evenings",
+            "Cultural centers",
+            "Embassies",
+            "Crossover recital settings",
+            "Tango events"
           ]
         },
         {
           "id": 4,
           "order": 3,
           "published": true,
-          "title": "Chants sans frontières",
-          "description": "Un récital multilingue qui traverse styles, langues et espaces culturels. La diversité n'y est pas un but en soi : le programme met en regard différentes traditions et couleurs expressives dans un arc dramatique unifié, particulièrement adapté aux contextes internationaux et aux publics mixtes.",
+          "title": "Songs Across Borders",
+          "description": "Lieder, mélodie, and song in several languages—Italian, French, German, English, and Spanish-language Argentine repertoire among them—ordered as a single listening arc (movement, exile, return) rather than a checklist. Especially apt for international seasons, embassy programmes, and cities where the audience’s spoken languages match the mix on stage.",
           "formations": [
-            "Ténor + piano"
+            "Tenor + Piano"
           ],
-          "duration": "45 à 70 minutes",
+          "duration": "45 to 70 minutes",
           "idealFor": [
-            "Institutions culturelles internationales",
-            "Occasions diplomatiques",
-            "Publics de récital mixtes",
-            "Concerts de chambre conçus avec soin"
+            "International cultural institutions",
+            "Diplomatic events",
+            "Mixed-program recital audiences",
+            "Curated chamber concerts"
           ]
         },
         {
           "id": 5,
           "order": 4,
           "published": true,
-          "title": "Dialogues : récital en duo et ensemble",
-          "description": "Un format flexible pour ténor en dialogue avec soprano, baryton et piano. Solos, duos et moments d'ensemble s'organisent en une soirée à la dramaturgie claire, qui peut selon la distribution prendre une couleur plus gala, plus lyrique ou plus nettement thématique.",
+          "title": "Duo & Ensemble Recital",
+          "description": "Evening-length chamber vocal programmes: tenor with soprano or baritone and piano, combining solos, duets, and small ensemble closers around a declared pairing or theme—Mozart–Da Ponte corners of the repertoire, verismo pairs, or a salon narrative. Gives presenters a dramaturgically clear alternative to an ad-hoc gala miscellany.",
           "formations": [
-            "Ténor + soprano + piano",
-            "Ténor + baryton + piano",
-            "Format flexible avec artiste invité"
+            "Tenor + Soprano + Piano",
+            "Tenor + Baritone + Piano",
+            "Flexible guest artist format"
           ],
-          "duration": "45 à 90 minutes",
+          "duration": "45 to 90 minutes",
           "idealFor": [
             "Festivals",
-            "Soirées de gala",
-            "Séries de musique de chambre",
-            "Événements curatés",
-            "Programmes collaboratifs"
+            "Gala evenings",
+            "Chamber music series",
+            "Curated events",
+            "Collaborative programmes"
           ]
         }
       ]

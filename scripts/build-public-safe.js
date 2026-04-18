@@ -24,6 +24,7 @@ var BUILD_STEPS = [
   { label: 'Home data bundle', script: 'build:mp-home' },
   { label: 'Biography data bundle', script: 'build:biography' },
   { label: 'Repertoire data bundle', script: 'build:repertoire' },
+  { label: 'Programs data bundle', script: 'build:programs' },
   { label: 'Calendar data bundle', script: 'build:calendar' },
   { label: 'Press data bundle', script: 'build:press' },
   { label: 'Media data bundle', script: 'build:media' },

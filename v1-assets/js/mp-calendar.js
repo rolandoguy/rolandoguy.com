@@ -1608,6 +1608,7 @@
         '</div>' +
         (detail ? ('<div class="perf-info-detail">' + detail + '</div>') : '') +
         venueCity;
+      var printExt = perfLocaleField(p, 'extDesc', currentLang);
       var repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
       if (printExt)
         h +=
