@@ -1,7 +1,7 @@
 /**
  * Public-safe press quotes + EPK runtime for mp/press.html.
- * This page must only consume bundled public JSON from press-data.json and epk-bios.json.
- * Legacy admin/runtime overrides are intentionally disabled here.
+ * This page reads bundled public JSON with explicit public-safe Firestore docs layered on top.
+ * Internal/admin docs must never be read directly here.
  */
 (function () {
   'use strict';
@@ -29,6 +29,7 @@
   var MP_LIVE = {
     press: null,
     pressMeta: null,
+    epkBios: null,
     epkPhotos: null,
     publicPdfs: null
   };
@@ -42,20 +43,55 @@
   }
   function asBooleanFlag(v) {
     if (typeof v === 'boolean') return v;
-    if (v === 'true' || v === 1 || v === '1') return true;
-    if (v === 'false' || v === 0 || v === '0' || v == null || v === '') return false;
+    if (v == null) return false;
+    var s = String(v).trim().toLowerCase();
+    if (!s) return false;
+    if (s === 'true' || s === '1' || s === 'yes' || s === 'y' || s === 'on') return true;
+    if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === 'off') return false;
     return !!v;
   }
   function fetchFirestoreDocJson(key) {
-    return Promise.resolve(null);
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc('public_' + key);
   }
   function loadLiveRuntimeOverrides() {
-    MP_LIVE = { press: null, pressMeta: null, epkPhotos: null, publicPdfs: null };
-    return Promise.resolve(MP_LIVE);
+    return Promise.all([
+      fetchFirestoreDocJson('rg_press'),
+      fetchFirestoreDocJson('rg_press_meta'),
+      fetchFirestoreDocJson('rg_epk_bios'),
+      fetchFirestoreDocJson('rg_epk_photos'),
+      fetchFirestoreDocJson('rg_public_pdfs')
+    ]).then(function (docs) {
+      MP_LIVE = {
+        press: docs[0] && docs[0].data,
+        pressMeta: docs[1] && docs[1].data,
+        epkBios: docs[2] && docs[2].data,
+        epkPhotos: docs[3] && docs[3].data,
+        publicPdfs: docs[4] && docs[4].data
+      };
+      return MP_LIVE;
+    }).catch(function () {
+      MP_LIVE = { press: null, pressMeta: null, epkBios: null, epkPhotos: null, publicPdfs: null };
+      return MP_LIVE;
+    });
   }
   function ensureEditorialDoc(key) {
-    EDITORIAL_DOCS[key] = null;
-    return Promise.resolve(null);
+    if (!key) return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(EDITORIAL_DOCS, key)) return Promise.resolve(EDITORIAL_DOCS[key]);
+    if (EDITORIAL_DOC_PROMISES[key]) return EDITORIAL_DOC_PROMISES[key];
+    EDITORIAL_DOC_PROMISES[key] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        EDITORIAL_DOCS[key] = doc && doc.data && typeof doc.data === 'object' ? doc.data : null;
+        return EDITORIAL_DOCS[key];
+      })
+      .catch(function () {
+        EDITORIAL_DOCS[key] = null;
+        return null;
+      })
+      .finally(function () {
+        delete EDITORIAL_DOC_PROMISES[key];
+      });
+    return EDITORIAL_DOC_PROMISES[key];
   }
   function loadEditorialOverrides(lang) {
     var L = String(lang || 'en').toLowerCase();
@@ -93,8 +129,12 @@
     return src && typeof src === 'object' ? src : {};
   }
   function asVisibleFlag(raw, fb) {
-    if (raw === false || raw === 'false' || raw === 0 || raw === '0' || raw === '' || raw == null) return false;
-    if (raw === true || raw === 'true' || raw === 1 || raw === '1') return true;
+    if (typeof raw === 'boolean') return raw;
+    if (raw == null) return fb;
+    var s = String(raw).trim().toLowerCase();
+    if (!s) return fb;
+    if (s === 'true' || s === '1' || s === 'yes' || s === 'y' || s === 'on') return true;
+    if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === 'off') return false;
     return fb;
   }
   function renderPressDebugLine() {}
@@ -305,13 +345,11 @@
       if (src[l] && typeof src[l].translatedNote === 'string') out[l].translatedNote = src[l].translatedNote;
     });
     out.showReviewsSection = asVisibleFlag(src.showReviewsSection, true);
+    if (src.reviewsIntroByLang && typeof src.reviewsIntroByLang === 'object') {
+      out.reviewsIntroByLang = src.reviewsIntroByLang;
+    }
+    if (typeof src.reviewsIntro === 'string') out.reviewsIntro = src.reviewsIntro;
     return out;
-  }
-
-  function asVisibleFlag(raw, fb) {
-    if (raw === false || raw === 'false' || raw === 0 || raw === '0') return false;
-    if (raw === true || raw === 'true' || raw === 1 || raw === '1') return true;
-    return fb;
   }
 
   function normalizeEpkPhotos(raw) {
@@ -414,27 +452,31 @@
     return best;
   }
   function resolvePressRuntime() {
+    var livePress = MP_LIVE && MP_LIVE.press;
+    var liveMeta = MP_LIVE && MP_LIVE.pressMeta;
     var staticPress = (MP_PRESS && Array.isArray(MP_PRESS.press)) ? MP_PRESS.press : [];
     var staticMeta = (MP_PRESS && MP_PRESS.pressMeta && typeof MP_PRESS.pressMeta === 'object') ? MP_PRESS.pressMeta : {};
     return {
-      pressSource: 'press-data:press',
-      metaSource: 'press-data:pressMeta',
-      pressItems: normalizePressItems(staticPress),
-      pressMeta: getPressMetaFrom(normalizePressMeta(staticMeta))
+      pressSource: livePress ? 'firestore:public_rg_press' : 'press-data:press',
+      metaSource: liveMeta ? 'firestore:public_rg_press_meta' : 'press-data:pressMeta',
+      pressItems: normalizePressItems(livePress || staticPress),
+      pressMeta: getPressMetaFrom(normalizePressMeta(liveMeta || staticMeta))
     };
   }
   function resolveEpkPhotosSource() {
+    var liveRaw = (MP_LIVE && MP_LIVE.epkPhotos) || null;
     var staticRaw = (MP_PRESS && MP_PRESS.epkPhotos) || [];
-    var normalized = normalizeEpkPhotos(staticRaw);
+    var chosenRaw = liveRaw || staticRaw;
+    var normalized = normalizeEpkPhotos(chosenRaw);
     return {
-      sourceName: 'press-data:epkPhotos',
+      sourceName: liveRaw ? 'firestore:public_rg_epk_photos' : 'press-data:epkPhotos',
       photos: normalized,
       allCandidates: [
         {
-          name: 'press-data:epkPhotos',
-          raw: staticRaw,
-          rawType: Array.isArray(staticRaw) ? 'array' : typeof staticRaw,
-          rawLength: Array.isArray(staticRaw) ? staticRaw.length : null,
+          name: liveRaw ? 'firestore:public_rg_epk_photos' : 'press-data:epkPhotos',
+          raw: chosenRaw,
+          rawType: Array.isArray(chosenRaw) ? 'array' : typeof chosenRaw,
+          rawLength: Array.isArray(chosenRaw) ? chosenRaw.length : null,
           validCount: normalized.length,
           normalized: normalized
         }
@@ -443,7 +485,23 @@
   }
 
   function getDefaultEpkBios() {
-    if (EPK_BIOS_POOL && typeof EPK_BIOS_POOL === 'object') return EPK_BIOS_POOL;
+    if (EPK_BIOS_POOL && typeof EPK_BIOS_POOL === 'object') {
+      if (MP_LIVE && MP_LIVE.epkBios && typeof MP_LIVE.epkBios === 'object') {
+        var merged = emptyEpkBiosPool();
+        LANGS.forEach(function (lang) {
+          var bundled = EPK_BIOS_POOL[lang] || {};
+          var live = MP_LIVE.epkBios[lang] || {};
+          EPK_FIELDS.forEach(function (field) {
+            merged[lang][field] =
+              (typeof live[field] === 'string' && live[field]) ||
+              (typeof bundled[field] === 'string' && bundled[field]) ||
+              '';
+          });
+        });
+        return merged;
+      }
+      return EPK_BIOS_POOL;
+    }
     return emptyEpkBiosPool();
   }
 
@@ -893,13 +951,22 @@
     var ti = uiTable(lang);
     var intro = document.getElementById('reviewsIntro');
     if (intro && MP_PRESS) {
+      var resolved = resolvePressRuntime();
+      var liveMeta = resolved && resolved.pressMeta;
       var ri = '';
-      if (MP_PRESS.reviewsIntroByLang && typeof MP_PRESS.reviewsIntroByLang === 'object') {
+      if (liveMeta && liveMeta.reviewsIntroByLang && typeof liveMeta.reviewsIntroByLang === 'object') {
+        ri =
+          liveMeta.reviewsIntroByLang[lang] ||
+          liveMeta.reviewsIntroByLang.en ||
+          '';
+      }
+      if (!ri && MP_PRESS.reviewsIntroByLang && typeof MP_PRESS.reviewsIntroByLang === 'object') {
         ri =
           MP_PRESS.reviewsIntroByLang[lang] ||
           MP_PRESS.reviewsIntroByLang.en ||
           '';
       }
+      if (!ri && liveMeta && liveMeta.reviewsIntro) ri = liveMeta.reviewsIntro;
       if (!ri && MP_PRESS.reviewsIntro) ri = MP_PRESS.reviewsIntro;
       intro.textContent = ri;
     }
@@ -922,7 +989,7 @@
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
-    loadEditorialOverrides(currentLang).finally(function () {
+    Promise.all([loadLiveRuntimeOverrides(), loadEditorialOverrides(currentLang)]).finally(function () {
       if (!MP_PRESS) return;
       applyPressChrome();
       renderPress();
@@ -932,7 +999,7 @@
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-    loadEditorialOverrides(currentLang).finally(function () {
+    Promise.all([loadLiveRuntimeOverrides(), loadEditorialOverrides(currentLang)]).finally(function () {
       if (!MP_PRESS) return;
       applyPressChrome();
       renderPress();

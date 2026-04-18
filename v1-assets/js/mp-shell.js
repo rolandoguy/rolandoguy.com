@@ -203,9 +203,13 @@
     var L = normalizeLang(lang);
     if (MP_EDITORIAL_OVERRIDES[L]) return Promise.resolve(MP_EDITORIAL_OVERRIDES[L]);
     if (MP_EDITORIAL_PROMISES[L]) return MP_EDITORIAL_PROMISES[L];
-    MP_EDITORIAL_PROMISES[L] = Promise.resolve({})
+    MP_EDITORIAL_PROMISES[L] = fetchPublicFirestoreDoc('public_rg_editorial_' + L)
       .then(function (doc) {
-        MP_EDITORIAL_OVERRIDES[L] = doc;
+        MP_EDITORIAL_OVERRIDES[L] = doc && doc.data && typeof doc.data === 'object' ? doc.data : {};
+        return MP_EDITORIAL_OVERRIDES[L];
+      })
+      .catch(function () {
+        MP_EDITORIAL_OVERRIDES[L] = {};
         return MP_EDITORIAL_OVERRIDES[L];
       })
       .finally(function () {
@@ -223,18 +227,33 @@
   }
   function asBooleanFlag(v, fallback) {
     if (typeof v === 'boolean') return v;
-    if (v === 'true' || v === 1 || v === '1') return true;
-    if (v === 'false' || v === 0 || v === '0' || v == null || v === '') return false;
+    if (v == null) return !!fallback;
+    var s = String(v).trim().toLowerCase();
+    if (!s) return !!fallback;
+    if (s === 'true' || s === '1' || s === 'yes' || s === 'y' || s === 'on') return true;
+    if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === 'off') return false;
     return !!fallback;
   }
   window.ensureMpEditorialOverrideFor = ensureEditorialOverrideFor;
   window.getMpProgramsVisibility = function (lang) {
     var L = normalizeLang(lang);
-    return Promise.resolve({
-      lang: L,
-      hideProgramsSection: false,
-      hideProgramsEntryPoints: false
-    });
+    return Promise.all([ensureEditorialOverrideFor(L), L === 'en' ? Promise.resolve(MP_EDITORIAL_OVERRIDES.en || {}) : ensureEditorialOverrideFor('en')])
+      .then(function () {
+        var hideSection = asBooleanFlag(getEditorialOverrideValue(L, 'hideProgramsSection'), false);
+        var hideEntryPoints = asBooleanFlag(getEditorialOverrideValue(L, 'hideProgramsEntryPoints'), hideSection);
+        return {
+          lang: L,
+          hideProgramsSection: hideSection,
+          hideProgramsEntryPoints: hideEntryPoints
+        };
+      })
+      .catch(function () {
+        return {
+          lang: L,
+          hideProgramsSection: false,
+          hideProgramsEntryPoints: false
+        };
+      });
   };
   function getUiOverrideString(lang, key) {
     var L = normalizeLang(lang);

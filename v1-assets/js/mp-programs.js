@@ -1,7 +1,7 @@
 /**
  * Public-safe programs section for mp/repertoire.html.
- * Source: /v1-assets/data/programs-data.json only.
- * Internal editorial/admin overrides are intentionally excluded from the public runtime.
+ * Source: bundled public JSON with explicit public-safe Firestore docs layered on top.
+ * Internal/admin docs must never be read directly here.
  */
 (function () {
   'use strict';
@@ -9,7 +9,9 @@
   var MP_PROGRAMS = null;
   var currentLang = 'en';
   var PROGRAMS_DOCS = {};
+  var PROGRAMS_DOC_PROMISES = {};
   var EDITORIAL_DOCS = {};
+  var EDITORIAL_DOC_PROMISES = {};
   var PROGRAMS_SCROLL_RAF = 0;
 
   var UI = {
@@ -53,18 +55,36 @@
   }
   function asBooleanFlag(v) {
     if (typeof v === 'boolean') return v;
-    if (v === 'true' || v === 1 || v === '1') return true;
-    if (v === 'false' || v === 0 || v === '0' || v == null || v === '') return false;
+    if (v == null) return false;
+    var s = String(v).trim().toLowerCase();
+    if (!s) return false;
+    if (s === 'true' || s === '1' || s === 'yes' || s === 'y' || s === 'on') return true;
+    if (s === 'false' || s === '0' || s === 'no' || s === 'n' || s === 'off') return false;
     return !!v;
   }
 
   function fetchFirestoreDocJson(key) {
-    return Promise.resolve(null);
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc('public_' + key);
   }
 
   function ensureDocCached(cache, promises, key) {
-    cache[key] = null;
-    return Promise.resolve(null);
+    if (!key) return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(cache, key)) return Promise.resolve(cache[key]);
+    if (promises[key]) return promises[key];
+    promises[key] = fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        cache[key] = doc && doc.data !== undefined ? doc.data : null;
+        return cache[key];
+      })
+      .catch(function () {
+        cache[key] = null;
+        return null;
+      })
+      .finally(function () {
+        delete promises[key];
+      });
+    return promises[key];
   }
 
   function ensureProgramsDoc(key) {
@@ -77,8 +97,8 @@
 
   function loadLiveProgramsOverrides(lang) {
     var L = String(lang || 'en').toLowerCase();
-    var keys = ['rg_programs_' + L, 'rg_programs_en'];
-    if (L === 'en') keys.push('rg_programs');
+    var keys = ['rg_programs_' + L];
+    if (L !== 'en') keys.push('rg_programs_en');
     return Promise.all(keys.map(ensureProgramsDoc));
   }
 
@@ -99,26 +119,27 @@
     var base = baseLang || baseEn;
     if (!base) return { data: null, source: 'none', fallback: true };
 
+    function liveItems(doc) {
+      if (!isObject(doc)) return null;
+      if (Array.isArray(doc.items)) return doc.items;
+      if (Array.isArray(doc.programs)) return doc.programs;
+      return null;
+    }
+
     var byLangKey = 'rg_programs_' + l;
     var byEnKey = 'rg_programs_en';
-    var byLegacyEnKey = 'rg_programs';
     var langDoc = PROGRAMS_DOCS[byLangKey];
     var enDoc = PROGRAMS_DOCS[byEnKey];
-    var legacyEnDoc = PROGRAMS_DOCS[byLegacyEnKey];
 
     var pick = null;
     var source = '';
     var fallback = false;
-    if (isObject(langDoc) && Array.isArray(langDoc.programs) && langDoc.programs.length) {
+    if (isObject(langDoc) && liveItems(langDoc) && liveItems(langDoc).length) {
       pick = langDoc;
       source = byLangKey;
-    } else if (isObject(enDoc) && Array.isArray(enDoc.programs) && enDoc.programs.length) {
+    } else if (isObject(enDoc) && liveItems(enDoc) && liveItems(enDoc).length) {
       pick = enDoc;
       source = byEnKey;
-      fallback = true;
-    } else if (isObject(legacyEnDoc) && Array.isArray(legacyEnDoc.programs) && legacyEnDoc.programs.length) {
-      pick = legacyEnDoc;
-      source = byLegacyEnKey;
       fallback = true;
     } else if (baseLang) {
       source = 'programs-data.json:' + l;
@@ -133,7 +154,9 @@
       if (safeString(pick.subtitle).trim()) out.subtitle = safeString(pick.subtitle);
       if (safeString(pick.intro).trim()) out.intro = safeString(pick.intro);
       if (safeString(pick.closingNote).trim()) out.closingNote = safeString(pick.closingNote);
-      if (Array.isArray(pick.programs)) out.items = clone(pick.programs);
+      if (safeString(pick.profileBridge).trim()) out.profileBridge = safeString(pick.profileBridge);
+      if (safeString(pick.linkLabel).trim()) out.linkLabel = safeString(pick.linkLabel);
+      if (liveItems(pick)) out.items = clone(liveItems(pick));
     }
     return { data: out, source: source, fallback: fallback };
   }
@@ -298,12 +321,16 @@
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
-    if (MP_PROGRAMS) renderPrograms();
+    Promise.all([loadLiveProgramsOverrides(currentLang), loadEditorialOverrides(currentLang)]).finally(function () {
+      if (MP_PROGRAMS) renderPrograms();
+    });
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-    if (MP_PROGRAMS) renderPrograms();
+    Promise.all([loadLiveProgramsOverrides(currentLang), loadEditorialOverrides(currentLang)]).finally(function () {
+      if (MP_PROGRAMS) renderPrograms();
+    });
   });
 
   fetch('/v1-assets/data/programs-data.json', { cache: 'no-store' })
@@ -314,7 +341,9 @@
     .then(function (data) {
       MP_PROGRAMS = data;
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-      renderPrograms();
+      return Promise.all([loadLiveProgramsOverrides(currentLang), loadEditorialOverrides(currentLang)]).finally(function () {
+        renderPrograms();
+      });
     })
     .catch(function () {});
 

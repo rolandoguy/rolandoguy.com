@@ -3102,6 +3102,16 @@
   var PUBLIC_BIO_FIELDS = ['introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitImage', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
   var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl'];
   var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'introImage'];
+  var PUBLIC_PRESS_ITEM_FIELDS = ['source', 'quote', 'visible'];
+  var PUBLIC_PRESS_META_LANG_FIELDS = ['translatedNote'];
+  var PUBLIC_EPK_BIO_FIELDS = ['b50', 'b150', 'b300p1', 'b300p2', 'b300p3', 'b300p4'];
+  var PUBLIC_EPK_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer'];
+  var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
+  var PUBLIC_REP_HEADER_FIELDS = ['h2', 'intro'];
+  var PUBLIC_REP_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
+  var PUBLIC_PROGRAMS_CHROME_FIELDS = ['title', 'subtitle', 'profileBridge', 'intro', 'closingNote', 'linkLabel'];
+  var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor'];
+  var PUBLIC_EDITORIAL_FIELDS = ['repProgramsLink', 'epkProgramsLink', 'hideProgramsSection', 'hideProgramsEntryPoints'];
   var PUBLIC_PERF_HEADER_FIELDS = ['h2', 'intro', 'eventTypes', 'monthNames'];
   var PUBLIC_PERF_EVENT_FIELDS = [
     'id', 'day', 'month', 'time', 'title',
@@ -3197,6 +3207,88 @@
       return pickPublicFields(row, PUBLIC_PAST_PERF_FIELDS);
     });
   }
+  function buildPublicPressDoc() {
+    var list = loadDoc('rg_press', []);
+    if (!Array.isArray(list)) return [];
+    return list.filter(isObject).map(function (row) {
+      return pickPublicFields(row, PUBLIC_PRESS_ITEM_FIELDS);
+    });
+  }
+  function buildPublicPressMetaDoc() {
+    var meta = loadDoc('rg_press_meta', {});
+    var out = {
+      showReviewsSection: asBoolean(meta && meta.showReviewsSection, true),
+      reviewsIntro: '',
+      reviewsIntroByLang: {}
+    };
+    LANGS.forEach(function (lang) {
+      var metaLang = isObject(meta && meta[lang]) ? meta[lang] : {};
+      out[lang] = pickPublicFields(metaLang, PUBLIC_PRESS_META_LANG_FIELDS);
+      var ui = loadDoc('rg_ui_' + lang, {});
+      var intro = safeString(ui && ui.reviewsIntro).trim();
+      if (intro) out.reviewsIntroByLang[lang] = intro;
+    });
+    out.reviewsIntro =
+      safeString(out.reviewsIntroByLang.en).trim() ||
+      safeString(out.reviewsIntroByLang.de).trim() ||
+      safeString(out.reviewsIntroByLang.es).trim() ||
+      safeString(out.reviewsIntroByLang.it).trim() ||
+      safeString(out.reviewsIntroByLang.fr).trim() ||
+      '';
+    return out;
+  }
+  function buildPublicEpkBiosDoc() {
+    var raw = loadDoc('rg_epk_bios', {});
+    var out = {};
+    LANGS.forEach(function (lang) {
+      out[lang] = pickPublicFields(isObject(raw && raw[lang]) ? raw[lang] : {}, PUBLIC_EPK_BIO_FIELDS);
+    });
+    return out;
+  }
+  function buildPublicEpkPhotosDoc() {
+    var list = loadDoc('rg_epk_photos', []);
+    if (!Array.isArray(list)) return [];
+    return list.filter(isObject).map(function (row) {
+      return pickPublicFields(row, PUBLIC_EPK_PHOTO_FIELDS);
+    }).filter(function (row) {
+      return !!safeString(row.url).trim();
+    });
+  }
+  function buildPublicPdfsDoc() {
+    var src = isObject(loadDoc('rg_public_pdfs', {})) ? loadDoc('rg_public_pdfs', {}) : {};
+    var out = { dossier: {}, artistSheet: {} };
+    ['dossier', 'artistSheet'].forEach(function (kind) {
+      var block = isObject(src[kind]) ? src[kind] : {};
+      ['EN', 'DE', 'ES', 'IT', 'FR'].forEach(function (lang) {
+        out[kind][lang] = pickPublicFields(isObject(block[lang]) ? block[lang] : {}, PUBLIC_PUBLIC_PDF_FIELDS);
+      });
+    });
+    return out;
+  }
+  function buildPublicRepertoireHeaderDoc(lang) {
+    return pickPublicFields(loadDoc('rep_' + normalizeLangCode(lang || 'en'), {}), PUBLIC_REP_HEADER_FIELDS);
+  }
+  function buildPublicRepertoireCardsDoc() {
+    var list = loadDoc('rg_rep_cards', []);
+    if (!Array.isArray(list)) return [];
+    return list.filter(isObject).map(function (row) {
+      return pickPublicFields(row, PUBLIC_REP_CARD_FIELDS);
+    });
+  }
+  function buildPublicProgramsDoc(lang) {
+    var L = normalizeLangCode(lang || 'en');
+    var raw = loadDoc('rg_programs_' + L, null);
+    if (!isObject(raw) && L === 'en') raw = loadDoc('rg_programs', {});
+    var doc = safeProgramsDoc(raw || {});
+    var out = pickPublicFields(doc, PUBLIC_PROGRAMS_CHROME_FIELDS);
+    out.items = (Array.isArray(doc.programs) ? doc.programs : []).filter(isObject).map(function (item) {
+      return pickPublicFields(item, PUBLIC_PROGRAMS_ITEM_FIELDS);
+    });
+    return out;
+  }
+  function buildPublicEditorialDoc(lang) {
+    return pickPublicFields(loadDoc('rg_editorial_' + normalizeLangCode(lang || 'en'), {}), PUBLIC_EDITORIAL_FIELDS);
+  }
   function publishPublicHeroDocs(langs) {
     var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
     return Promise.all(list.map(function (lang) {
@@ -3226,6 +3318,36 @@
   }
   function publishPublicPastPerfs() {
     return publishPublicRgDoc('public_rg_past_perfs', buildPublicPastPerfsDoc());
+  }
+  function publishPublicPressDocs() {
+    return Promise.all([
+      publishPublicRgDoc('public_rg_press', buildPublicPressDoc()),
+      publishPublicRgDoc('public_rg_press_meta', buildPublicPressMetaDoc()),
+      publishPublicRgDoc('public_rg_epk_bios', buildPublicEpkBiosDoc()),
+      publishPublicRgDoc('public_rg_epk_photos', buildPublicEpkPhotosDoc()),
+      publishPublicRgDoc('public_rg_public_pdfs', buildPublicPdfsDoc())
+    ]);
+  }
+  function publishPublicRepertoireDocs(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    var tasks = list.map(function (lang) {
+      return publishPublicRgDoc('public_rep_' + lang, buildPublicRepertoireHeaderDoc(lang));
+    });
+    tasks.push(publishPublicRgDoc('public_rg_rep_cards', buildPublicRepertoireCardsDoc()));
+    return Promise.all(tasks);
+  }
+  function publishPublicEditorialDocs(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    return Promise.all(list.map(function (lang) {
+      return publishPublicRgDoc('public_rg_editorial_' + lang, buildPublicEditorialDoc(lang));
+    }));
+  }
+  function publishPublicProgramsDocs(langs) {
+    var list = Array.isArray(langs) && langs.length ? langs : LANGS.slice();
+    var tasks = list.map(function (lang) {
+      return publishPublicRgDoc('public_rg_programs_' + lang, buildPublicProgramsDoc(lang));
+    });
+    return Promise.all(tasks);
   }
   function fetchFirestoreRgSnapshot() {
     return getAuthIdToken().then(function (token) {
@@ -4594,10 +4716,14 @@
     state.repIndex = -1;
     renderRepList();
   }
-  function saveRepHeader() { saveDoc('rep_' + state.lang, { h2: safeString($('rep-h2').value), intro: safeString($('rep-intro').value) }); }
-  function saveRepCards() {
+  async function saveRepHeader() {
+    await saveDoc('rep_' + state.lang, { h2: safeString($('rep-h2').value), intro: safeString($('rep-intro').value) });
+    await publishPublicRepertoireDocs([state.lang]);
+  }
+  async function saveRepCards() {
     state.repCards = state.repCards.filter(function (c) { return isObject(c); });
-    saveDoc('rg_rep_cards', state.repCards);
+    await saveDoc('rg_rep_cards', state.repCards);
+    await publishPublicRepertoireDocs();
   }
 
   function safeProgramsDoc(raw) {
@@ -4753,20 +4879,24 @@
     renderProgramsList();
     updateCompletenessIndicators();
   }
-  function savePrograms() {
+  async function savePrograms() {
     state.programsDoc.title = safeString($('programs-title').value);
     state.programsDoc.subtitle = safeString($('programs-subtitle').value);
     state.programsDoc.intro = safeString($('programs-intro').value);
     state.programsDoc.closingNote = safeString($('programs-closingNote').value);
     state.programsDoc = safeProgramsDoc(state.programsDoc);
     normalizeProgramOrders();
-    saveDoc('rg_programs_' + state.lang, state.programsDoc);
+    await saveDoc('rg_programs_' + state.lang, state.programsDoc);
     var prevEd = loadDoc('rg_editorial_' + state.lang, {});
     prevEd.repProgramsLink = safeString($('programs-repLink').value).trim();
     prevEd.epkProgramsLink = safeString($('programs-epkLink').value).trim();
     prevEd.hideProgramsSection = !!($('programs-hideSection') && $('programs-hideSection').checked);
     if (hasOwn(prevEd, 'hideProgramsEntryPoints')) delete prevEd.hideProgramsEntryPoints;
-    saveDoc('rg_editorial_' + state.lang, prevEd);
+    await saveDoc('rg_editorial_' + state.lang, prevEd);
+    await Promise.all([
+      publishPublicProgramsDocs([state.lang]),
+      publishPublicEditorialDocs([state.lang])
+    ]);
   }
   async function saveProgramsVisibilityOnly() {
     var prevEd = loadDoc('rg_editorial_' + state.lang, {});
@@ -4774,6 +4904,7 @@
     if (hasOwn(prevEd, 'hideProgramsEntryPoints')) delete prevEd.hideProgramsEntryPoints;
     var ok = await saveDoc('rg_editorial_' + state.lang, prevEd);
     if (!ok) throw new Error('programs-visibility-save-failed');
+    await publishPublicEditorialDocs([state.lang]);
   }
 
   function plannerFamilyLabel(family) {
@@ -15502,7 +15633,7 @@
     var meta = loadDoc('rg_press_meta', null);
     if (!isObject(meta)) meta = {};
     $('press-translatedNote').value = safeString(meta[state.lang] && meta[state.lang].translatedNote);
-    $('press-showReviewsSection').value = meta.showReviewsSection === false ? 'false' : 'true';
+    $('press-showReviewsSection').value = asBoolean(meta.showReviewsSection, true) ? 'true' : 'false';
     var uiStored = loadDoc('rg_ui_' + state.lang, null);
     var uiFallback = {};
     try {
@@ -15526,47 +15657,52 @@
     updatePdfValidation();
     updateCompletenessIndicators();
   }
-  function savePressMeta() {
+  async function savePressMeta() {
     var meta = loadDoc('rg_press_meta', {});
     if (!meta[state.lang]) meta[state.lang] = {};
     meta[state.lang].translatedNote = safeString($('press-translatedNote').value);
-    meta.showReviewsSection = $('press-showReviewsSection').value !== 'false';
-    saveDoc('rg_press_meta', meta);
+    meta.showReviewsSection = asBoolean($('press-showReviewsSection').value, true);
+    await saveDoc('rg_press_meta', meta);
     try {
       localStorage.setItem('rg_press_meta', JSON.stringify(meta));
       localStorage.setItem('rg_local_rg_press_meta', JSON.stringify({ ts: Date.now(), value: meta }));
     } catch (e) {}
     var ui = loadDoc('rg_ui_' + state.lang, {});
     ui.reviewsIntro = safeString($('press-reviewsIntro').value);
-    saveDoc('rg_ui_' + state.lang, ui);
+    await saveDoc('rg_ui_' + state.lang, ui);
+    await publishPublicRgDoc('public_rg_press_meta', buildPublicPressMetaDoc());
   }
-  function savePressQuotes() {
+  async function savePressQuotes() {
     state.press = state.press.filter(function (p) { return isObject(p); });
-    saveDoc('rg_press', state.press);
+    await saveDoc('rg_press', state.press);
     try {
       localStorage.setItem('rg_press', JSON.stringify(state.press));
       localStorage.setItem('rg_local_rg_press', JSON.stringify({ ts: Date.now(), value: state.press }));
     } catch (e) {}
+    await publishPublicRgDoc('public_rg_press', buildPublicPressDoc());
   }
-  function savePressPdfs() {
+  async function savePressPdfs() {
     persistPressPdfsFromUi();
-    saveDoc('rg_public_pdfs', state.publicPdfs);
+    await saveDoc('rg_public_pdfs', state.publicPdfs);
     // Compatibility mirror for public pages that read plain localStorage key directly.
     try {
       localStorage.setItem('rg_public_pdfs', JSON.stringify(state.publicPdfs));
     } catch (e) {}
+    await publishPublicRgDoc('public_rg_public_pdfs', buildPublicPdfsDoc());
   }
-  function saveEpkBios() {
+  async function saveEpkBios() {
     persistEpkBiosFromUi();
-    saveDoc('rg_epk_bios', state.epkBios);
+    await saveDoc('rg_epk_bios', state.epkBios);
+    await publishPublicRgDoc('public_rg_epk_bios', buildPublicEpkBiosDoc());
   }
-  function saveEpkPhotos() {
+  async function saveEpkPhotos() {
     state.epkPhotos = safeEpkPhotos(state.epkPhotos);
-    saveDoc('rg_epk_photos', state.epkPhotos);
+    await saveDoc('rg_epk_photos', state.epkPhotos);
     try {
       localStorage.setItem('rg_epk_photos', JSON.stringify(state.epkPhotos));
       localStorage.setItem('rg_local_rg_epk_photos', JSON.stringify({ ts: Date.now(), value: state.epkPhotos }));
     } catch (e) {}
+    await publishPublicRgDoc('public_rg_epk_photos', buildPublicEpkPhotosDoc());
   }
 
   function loadContact() {

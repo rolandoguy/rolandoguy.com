@@ -1,7 +1,7 @@
 /**
  * Public-safe repertoire module for mp/repertoire.html.
- * This page must render from /v1-assets/data/repertoire-data.json only.
- * Legacy admin documents and mixed-schema runtime fallbacks are disabled here.
+ * This page renders from bundled public JSON with explicit public-safe Firestore docs layered on top.
+ * Internal/admin docs must never be read directly here.
  */
 (function () {
   'use strict';
@@ -18,12 +18,22 @@
   }
 
   function fetchFirestoreDocJson(key) {
-    return Promise.resolve(null);
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') return Promise.resolve(null);
+    return window.fetchMpPublicFirestoreDoc('public_' + key);
   }
 
   function ensureLiveRepDoc(key) {
-    LIVE_REP_DOCS[key] = null;
-    return Promise.resolve(null);
+    if (!key) return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(LIVE_REP_DOCS, key)) return Promise.resolve(LIVE_REP_DOCS[key]);
+    return fetchFirestoreDocJson(key)
+      .then(function (doc) {
+        LIVE_REP_DOCS[key] = doc && doc.data && typeof doc.data === 'object' ? doc.data : null;
+        return LIVE_REP_DOCS[key];
+      })
+      .catch(function () {
+        LIVE_REP_DOCS[key] = null;
+        return null;
+      });
   }
 
   function ensureLiveRepertoireHeader(lang) {
@@ -32,8 +42,23 @@
   }
 
   function ensureLiveRepertoireCards() {
-    LIVE_REP_CARDS = null;
-    return Promise.resolve(null);
+    if (LIVE_REP_CARDS !== null) return Promise.resolve(LIVE_REP_CARDS);
+    return fetchFirestoreDocJson('rg_rep_cards')
+      .then(function (doc) {
+        LIVE_REP_CARDS = doc && Array.isArray(doc.data) ? doc.data : null;
+        return LIVE_REP_CARDS;
+      })
+      .catch(function () {
+        LIVE_REP_CARDS = null;
+        return null;
+      });
+  }
+
+  function loadLiveRepertoireOverrides(lang) {
+    var L = String(lang || 'en').trim().toLowerCase();
+    var keys = ['rep_' + (/^(en|de|es|it|fr)$/.test(L) ? L : 'en')];
+    if (L !== 'en') keys.push('rep_en');
+    return Promise.all(keys.map(ensureLiveRepDoc).concat([ensureLiveRepertoireCards()]));
   }
 
   function mpPick(lang, key, fb) {
@@ -578,12 +603,16 @@
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
-    if (MP_REP) renderRep();
+    loadLiveRepertoireOverrides(currentLang).finally(function () {
+      if (MP_REP) renderRep();
+    });
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-    if (MP_REP) renderRep();
+    loadLiveRepertoireOverrides(currentLang).finally(function () {
+      if (MP_REP) renderRep();
+    });
   });
 
   fetch('/v1-assets/data/repertoire-data.json', { cache: 'no-store' })
@@ -593,7 +622,9 @@
     .then(function (data) {
       MP_REP = data;
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-      renderRep();
+      return loadLiveRepertoireOverrides(currentLang).finally(function () {
+        renderRep();
+      });
     })
     .catch(function () {
       MP_REP = { rep: {}, cards: [] };
