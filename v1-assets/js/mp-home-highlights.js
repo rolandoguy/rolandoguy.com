@@ -439,15 +439,17 @@
     paired.forEach(function (item) {
       if (!audioItem && item && item.kind === 'audio') audioItem = item;
     });
-    if (!videoItem || !audioItem) {
+
+    // Only hide if BOTH video and audio are missing
+    if (!videoItem && !audioItem) {
       section.hidden = true;
       list.innerHTML = '';
       return;
     }
 
-    var videoHtml = renderVideoCard(lang, videoItem, featuredLabel);
-    var audioHtml = renderAudioCard(lang, audioItem, featuredLabel);
-    if (!videoHtml || !audioHtml) {
+    var videoHtml = videoItem ? renderVideoCard(lang, videoItem, featuredLabel) : '';
+    var audioHtml = audioItem ? renderAudioCard(lang, audioItem, featuredLabel) : '';
+    if (!videoHtml && !audioHtml) {
       section.hidden = true;
       list.innerHTML = '';
       return;
@@ -455,7 +457,13 @@
 
     section.hidden = false;
     list.innerHTML = videoHtml + audioHtml;
-    bindHomeVideoInteractions();
+    // Add class for single-item layout
+    if (videoHtml && audioHtml) {
+      list.classList.remove('home-highlights-list--single');
+    } else {
+      list.classList.add('home-highlights-list--single');
+    }
+    if (videoHtml) bindHomeVideoInteractions();
   }
 
   window.addEventListener('mp:localesready', renderHighlights);

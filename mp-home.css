@@ -804,6 +804,11 @@ body[data-mp-page="index"] .home-highlights-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
 }
+body[data-mp-page="index"] .home-highlights-list--single {
+  grid-template-columns: 1fr;
+  max-width: 520px;
+  margin: 0 auto;
+}
 body[data-mp-page="index"] .home-highlight-item {
   display: flex;
   flex-direction: column;
