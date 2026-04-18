@@ -1,121 +1,39 @@
 /**
- * Biography page: visible editorial copy merges the editorial DE source first, then the
- * language bundle, then saved admin overrides. Portrait resolution follows the same DE-first chain.
+ * Public-safe biography page.
+ * This runtime must resolve copy and portrait hints from the bundled public biography payload only.
+ * Internal/admin biography drafts must not be read by the public site.
  */
 (function () {
   'use strict';
 
   var MP_BIO = null;
-  var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var BIO_DOC_CACHE = {};
   var BIO_RENDER_SEQ = 0;
   /** Invisible placeholder so the browser never paints bundled/HTML default portrait before JS resolves the real URL. */
   var PORTRAIT_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   function readLegacyJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return null;
-        }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
   function readLocalUnsyncedJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem('rg_local_' + key);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
-        return parsed.value;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
 
   function getBioPortraitOverride() {
-    var lang = currentLang();
-    var shortLang = String(lang || 'en').split('-')[0];
-    var byLang = readLegacyJson('bio_' + lang);
-    if (byLang && typeof byLang.portraitImage === 'string' && byLang.portraitImage.trim()) return byLang.portraitImage.trim();
-    if (shortLang && shortLang !== lang) {
-      var byShort = readLegacyJson('bio_' + shortLang);
-      if (byShort && typeof byShort.portraitImage === 'string' && byShort.portraitImage.trim()) return byShort.portraitImage.trim();
-    }
-    var de = readLegacyJson('bio_de');
-    if (de && typeof de.portraitImage === 'string' && de.portraitImage.trim()) return de.portraitImage.trim();
-    var en = readLegacyJson('bio_en');
-    if (en && typeof en.portraitImage === 'string' && en.portraitImage.trim()) return en.portraitImage.trim();
     return '';
   }
   function fetchFirestoreDocJsonWithMeta(key) {
-    var url =
-      'https://firestore.googleapis.com/v1/projects/' +
-      MP_FIRESTORE_PROJECT_ID +
-      '/databases/(default)/documents/rg/' +
-      encodeURIComponent(key);
-    return fetch(url, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        var parsed = null;
-        try {
-          parsed = JSON.parse(v);
-        } catch (e) {
-          parsed = null;
-        }
-        if (!parsed || typeof parsed !== 'object') return null;
-        return {
-          data: parsed,
-          updateTime: String(doc.updateTime || '').trim()
-        };
-      })
-      .catch(function () {
-        return null;
-      });
+    return Promise.resolve(null);
   }
   function getBioDocWithFallback(lang) {
     var key = 'bio_' + lang;
     if (BIO_DOC_CACHE[key]) return Promise.resolve(BIO_DOC_CACHE[key]);
-    return fetchFirestoreDocJsonWithMeta(key).then(function (live) {
-      var localUnsynced = readLocalUnsyncedJson(key);
-      if (localUnsynced && typeof localUnsynced === 'object') {
-        BIO_DOC_CACHE[key] = { data: localUnsynced, updateTime: '' };
-        return BIO_DOC_CACHE[key];
-      }
-      if (live && live.data) {
-        BIO_DOC_CACHE[key] = live;
-        return live;
-      }
-      var local = readLegacyJson(key);
-      if (local && typeof local === 'object') {
-        BIO_DOC_CACHE[key] = { data: local, updateTime: '' };
-        return BIO_DOC_CACHE[key];
-      }
-      BIO_DOC_CACHE[key] = null;
-      return null;
-    });
+    var code = normalizeLangCode(lang) || 'en';
+    var bundled = MP_BIO && MP_BIO.locales && MP_BIO.locales[code];
+    BIO_DOC_CACHE[key] = bundled && typeof bundled === 'object'
+      ? { data: bundled, updateTime: '' }
+      : null;
+    return Promise.resolve(BIO_DOC_CACHE[key]);
   }
   function appendVersionIfSafe(src, token) {
     var raw = String(src || '').trim();

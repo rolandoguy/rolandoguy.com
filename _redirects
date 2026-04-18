@@ -1,6 +1,20 @@
 # Canonical host: apex (non-www). Redirect www → apex.
 https://www.rolandoguy.com/*  https://rolandoguy.com/:splat  301
 
+# Block internal/admin artifacts from the public origin.
+/admin.html                     /404.html  404
+/admin-v2.html                  /404.html  404
+/admin-v2.js                    /404.html  404
+/admin-v2.css                   /404.html  404
+/admin-v2-program-builder-data.js /404.html  404
+/admin-v3-*.html                /404.html  404
+/admin-v3-*.js                  /404.html  404
+/internal-calendar              /404.html  404
+/internal-calendar.html         /404.html  404
+/v1-assets/js/internal-calendar.js /404.html  404
+/v1-assets/css/internal-calendar.css /404.html  404
+/rg-site-backup-*.json          /404.html  404
+
 # Redirects 301 — páginas viejas del Weebly
 # Netlify los aplica automáticamente al detectar este archivo en la raíz del repo
 

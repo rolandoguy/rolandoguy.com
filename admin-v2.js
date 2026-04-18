@@ -15785,6 +15785,29 @@
     renderContactsEditor();
     setStatus(isNew ? 'Contact created' : 'Contact saved', 'ok');
   }
+  function deleteContactsRecord() {
+    var id = safeString(state.contactsSelectedId).trim();
+    if (!id) {
+      setStatus('No contact selected. Select a contact to delete.', 'warn');
+      return;
+    }
+    var record = contactsRecordById(id);
+    if (!record) {
+      setStatus('Selected contact could not be found.', 'warn');
+      return;
+    }
+    var label = safeString(record.contact_name || record.person_name || '(unnamed)').trim();
+    if (!window.confirm('Delete the selected contact?\n\n' + label)) return;
+    state.contactsDoc = safeContactsDoc(state.contactsDoc);
+    state.contactsDoc.records = (state.contactsDoc.records || []).filter(function (row) {
+      return safeString(row && row.id).trim() !== id;
+    });
+    saveDoc('rg_admin_contacts_followups', state.contactsDoc);
+    state.contactsSelectedId = '';
+    renderContactsList();
+    renderContactsEditor();
+    setStatus('Contact deleted', 'ok');
+  }
   function loadContacts() {
     state.contactsDoc = safeContactsDoc(loadDoc('rg_admin_contacts_followups', makeContactsSeed()));
     if (applyContactsDataMigration()) {
@@ -20091,6 +20114,7 @@
     });
     if ($('contacts-export-pdf')) $('contacts-export-pdf').addEventListener('click', exportContactsListPdf);
     if ($('contacts-save')) $('contacts-save').addEventListener('click', saveContactsRecord);
+    if ($('contacts-delete')) $('contacts-delete').addEventListener('click', deleteContactsRecord);
     if ($('contacts-export-record-pdf')) $('contacts-export-record-pdf').addEventListener('click', exportContactsRecordPdf);
     if ($('contacts-cancel')) $('contacts-cancel').addEventListener('click', function () {
       state.contactsSelectedId = '';

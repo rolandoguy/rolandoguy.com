@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    /*
+     * Public multipage site:
+     * - Do not allow anonymous Firestore reads.
+     * - Public-safe website data is shipped from bundled JSON, not live Firestore.
+     *
+     * Internal/admin data:
+     * - Admin v2 and admin v3 read/write docs under /rg/{docId}.
+     * - Access is restricted to the explicit admin allowlist below.
+     */
+    function isAdminUser() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'rolandoguy@gmail.com';
+    }
+
+    match /rg/{docId} {
+      /*
+       * This blocks anonymous access to internal/admin docs including:
+       * - admin_v3_cases
+       * - admin_v3_contacts
+       * - admin_v3_calendar
+       * - admin_v3_income
+       * - rg_admin_contacts_followups
+       * - rg_program_blueprints
+       * - rg_concert_history
+       * - legacy mixed admin/public documents
+       *
+       * If a future document truly needs public Firestore read access,
+       * add a separate explicit allowlist function for that exact doc id.
+       */
+      allow read, write: if isAdminUser();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

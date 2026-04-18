@@ -1,17 +1,15 @@
 /**
- * Programs section for mp/repertoire.html.
- * Source: /v1-assets/data/programs-data.json (derived from v1 LANG_CONTENT/DEFAULTS programs payload).
+ * Public-safe programs section for mp/repertoire.html.
+ * Source: /v1-assets/data/programs-data.json only.
+ * Internal editorial/admin overrides are intentionally excluded from the public runtime.
  */
 (function () {
   'use strict';
 
   var MP_PROGRAMS = null;
   var currentLang = 'en';
-  var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var PROGRAMS_DOCS = {};
-  var PROGRAMS_DOC_PROMISES = {};
   var EDITORIAL_DOCS = {};
-  var EDITORIAL_DOC_PROMISES = {};
   var PROGRAMS_SCROLL_RAF = 0;
 
   var UI = {
@@ -48,37 +46,10 @@
   }
 
   function readLegacyJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
   function readLocalUnsyncedJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem('rg_local_' + key);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
-        return parsed.value;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
   function asBooleanFlag(v) {
     if (typeof v === 'boolean') return v;
@@ -88,41 +59,12 @@
   }
 
   function fetchFirestoreDocJson(key) {
-    var url = 'https://firestore.googleapis.com/v1/projects/' + FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
-    return fetch(url, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        try { return JSON.parse(v); } catch (e) { return null; }
-      })
-      .catch(function () { return null; });
+    return Promise.resolve(null);
   }
 
   function ensureDocCached(cache, promises, key) {
-    if (cache[key]) return Promise.resolve(cache[key]);
-    if (promises[key]) return promises[key];
-    promises[key] = fetchFirestoreDocJson(key)
-      .then(function (doc) {
-        var localUnsynced = readLocalUnsyncedJson(key);
-        var best = (localUnsynced && typeof localUnsynced === 'object')
-          ? localUnsynced
-          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
-        cache[key] = (best && typeof best === 'object') ? best : null;
-        return cache[key];
-      })
-      .catch(function () {
-        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
-        cache[key] = (best && typeof best === 'object') ? best : null;
-        return cache[key];
-      })
-      .finally(function () {
-        delete promises[key];
-      });
-    return promises[key];
+    cache[key] = null;
+    return Promise.resolve(null);
   }
 
   function ensureProgramsDoc(key) {
@@ -356,16 +298,12 @@
 
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
-    Promise.all([loadLiveProgramsOverrides(currentLang), loadEditorialOverrides(currentLang)]).finally(function () {
-      if (MP_PROGRAMS) renderPrograms();
-    });
+    if (MP_PROGRAMS) renderPrograms();
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-    Promise.all([loadLiveProgramsOverrides(currentLang), loadEditorialOverrides(currentLang)]).finally(function () {
-      if (MP_PROGRAMS) renderPrograms();
-    });
+    if (MP_PROGRAMS) renderPrograms();
   });
 
   fetch('/v1-assets/data/programs-data.json', { cache: 'no-store' })
@@ -376,9 +314,7 @@
     .then(function (data) {
       MP_PROGRAMS = data;
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-      Promise.all([loadLiveProgramsOverrides(currentLang), loadEditorialOverrides(currentLang)]).finally(function () {
-        renderPrograms();
-      });
+      renderPrograms();
     })
     .catch(function () {});
 

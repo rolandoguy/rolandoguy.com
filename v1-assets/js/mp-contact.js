@@ -1,15 +1,13 @@
 /**
- * v1 contact section for mp/contact.html.
- * Base data comes from /v1-assets/data/contact-data.json, but runtime reads contact_<lang>
- * from Firestore first so admin edits can appear publicly without rebuilding.
+ * Public-safe contact section for mp/contact.html.
+ * This runtime must only consume bundled public JSON from /v1-assets/data/contact-data.json.
+ * Internal/admin drafts and legacy fallback payloads must never reach this page.
  */
 (function () {
   'use strict';
 
   var MP_CONTACT = null;
-  var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var CONTACT_DOC_CACHE = {};
-  var CONTACT_DOC_PROMISES = {};
 
   function normalizeLang(lang) {
     var raw = String(lang || 'en').trim().toLowerCase();
@@ -25,79 +23,19 @@
   }
 
   function readLegacyJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
   function readLocalUnsyncedJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem('rg_local_' + key);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
-        return parsed.value;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
 
   function fetchFirestoreDocJson(key) {
-    var url =
-      'https://firestore.googleapis.com/v1/projects/' +
-      FIRESTORE_PROJECT_ID +
-      '/databases/(default)/documents/rg/' +
-      encodeURIComponent(key);
-    return fetch(url, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        try { return JSON.parse(v); } catch (e) { return null; }
-      })
-      .catch(function () { return null; });
+    return Promise.resolve(null);
   }
 
   function ensureContactDoc(key) {
-    if (CONTACT_DOC_CACHE[key]) return Promise.resolve(CONTACT_DOC_CACHE[key]);
-    if (CONTACT_DOC_PROMISES[key]) return CONTACT_DOC_PROMISES[key];
-    CONTACT_DOC_PROMISES[key] = fetchFirestoreDocJson(key)
-      .then(function (doc) {
-        var localUnsynced = readLocalUnsyncedJson(key);
-        var best = (localUnsynced && typeof localUnsynced === 'object')
-          ? localUnsynced
-          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
-        CONTACT_DOC_CACHE[key] = (best && typeof best === 'object') ? best : null;
-        return CONTACT_DOC_CACHE[key];
-      })
-      .catch(function () {
-        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
-        CONTACT_DOC_CACHE[key] = (best && typeof best === 'object') ? best : null;
-        return CONTACT_DOC_CACHE[key];
-      })
-      .finally(function () {
-        delete CONTACT_DOC_PROMISES[key];
-      });
-    return CONTACT_DOC_PROMISES[key];
+    CONTACT_DOC_CACHE[key] = null;
+    return Promise.resolve(null);
   }
 
   function loadLiveContactDocs(lang) {
@@ -369,20 +307,12 @@
     if (!MP_CONTACT) return;
     applyFormChrome();
     renderContact();
-    var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
-    loadLiveContactDocs(lang).finally(function () {
-      renderContact();
-    });
   });
 
   window.addEventListener('mp:localesready', function () {
     applyFormChrome();
     if (!MP_CONTACT) return;
     renderContact();
-    var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
-    loadLiveContactDocs(lang).finally(function () {
-      renderContact();
-    });
   });
 
   fetch('/v1-assets/data/contact-data.json')
@@ -394,10 +324,6 @@
       MP_CONTACT = data;
       applyFormChrome();
       renderContact();
-      var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
-      loadLiveContactDocs(lang).finally(function () {
-        renderContact();
-      });
     })
     .catch(function () {
       var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
@@ -418,8 +344,5 @@
       };
       applyFormChrome();
       renderContact();
-      loadLiveContactDocs(lang).finally(function () {
-        renderContact();
-      });
     });
 })();

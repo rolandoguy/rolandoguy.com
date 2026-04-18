@@ -1,89 +1,29 @@
 /**
- * v1 repertoire module for mp/repertoire.html.
- * Base data comes from /v1-assets/data/repertoire-data.json, but runtime reads rep_<lang>
- * and rg_rep_cards from Firestore first so admin edits appear without rebuilding.
+ * Public-safe repertoire module for mp/repertoire.html.
+ * This page must render from /v1-assets/data/repertoire-data.json only.
+ * Legacy admin documents and mixed-schema runtime fallbacks are disabled here.
  */
 (function () {
   'use strict';
 
   var MP_REP = null;
-  var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var LIVE_REP_DOCS = {};
-  var LIVE_REP_PROMISES = {};
   var LIVE_REP_CARDS = null;
 
   function readLegacyJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
   function readLocalUnsyncedJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem('rg_local_' + key);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.value != null) return parsed.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
 
   function fetchFirestoreDocJson(key) {
-    var url =
-      'https://firestore.googleapis.com/v1/projects/' +
-      FIRESTORE_PROJECT_ID +
-      '/databases/(default)/documents/rg/' +
-      encodeURIComponent(key);
-    return fetch(url, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        try { return JSON.parse(v); } catch (e) { return null; }
-      })
-      .catch(function () { return null; });
+    return Promise.resolve(null);
   }
 
   function ensureLiveRepDoc(key) {
-    if (Object.prototype.hasOwnProperty.call(LIVE_REP_DOCS, key)) return Promise.resolve(LIVE_REP_DOCS[key]);
-    if (LIVE_REP_PROMISES[key]) return LIVE_REP_PROMISES[key];
-    LIVE_REP_PROMISES[key] = fetchFirestoreDocJson(key)
-      .then(function (doc) {
-        var localUnsynced = readLocalUnsyncedJson(key);
-        var best = localUnsynced != null ? localUnsynced : doc;
-        if (best == null) best = readLegacyJson(key);
-        LIVE_REP_DOCS[key] = best != null ? best : null;
-        return LIVE_REP_DOCS[key];
-      })
-      .catch(function () {
-        var best = readLocalUnsyncedJson(key);
-        if (best == null) best = readLegacyJson(key);
-        LIVE_REP_DOCS[key] = best != null ? best : null;
-        return LIVE_REP_DOCS[key];
-      })
-      .finally(function () {
-        delete LIVE_REP_PROMISES[key];
-      });
-    return LIVE_REP_PROMISES[key];
+    LIVE_REP_DOCS[key] = null;
+    return Promise.resolve(null);
   }
 
   function ensureLiveRepertoireHeader(lang) {
@@ -92,10 +32,8 @@
   }
 
   function ensureLiveRepertoireCards() {
-    return ensureLiveRepDoc('rg_rep_cards').then(function (doc) {
-      LIVE_REP_CARDS = Array.isArray(doc) ? doc : LIVE_REP_CARDS;
-      return LIVE_REP_CARDS;
-    });
+    LIVE_REP_CARDS = null;
+    return Promise.resolve(null);
   }
 
   function mpPick(lang, key, fb) {
@@ -641,17 +579,11 @@
   window.addEventListener('mp:langchange', function (e) {
     currentLang = (e.detail && e.detail.lang) || 'en';
     if (MP_REP) renderRep();
-    ensureLiveRepertoireHeader(currentLang).finally(function () {
-      if (MP_REP) renderRep();
-    });
   });
 
   window.addEventListener('mp:localesready', function () {
     if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
     if (MP_REP) renderRep();
-    ensureLiveRepertoireHeader(currentLang).finally(function () {
-      if (MP_REP) renderRep();
-    });
   });
 
   fetch('/v1-assets/data/repertoire-data.json', { cache: 'no-store' })
@@ -662,26 +594,21 @@
       MP_REP = data;
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
       renderRep();
-      Promise.all([ensureLiveRepertoireCards(), ensureLiveRepertoireHeader(currentLang)]).finally(function () {
-        renderRep();
-      });
     })
     .catch(function () {
       MP_REP = { rep: {}, cards: [] };
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
-      Promise.all([ensureLiveRepertoireCards(), ensureLiveRepertoireHeader(currentLang)]).finally(function () {
-        if (Array.isArray(LIVE_REP_CARDS) && LIVE_REP_CARDS.length) {
-          renderRep();
-          return;
-        }
-        var grid = document.getElementById('operaGrid');
-        var msg = mpPick(currentLang || 'en', 'rep.loadError', 'Repertoire data could not be loaded.');
-        if (grid) {
-          grid.innerHTML =
-            '<div class="rep-empty" role="status">' +
-            msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
-            '</div>';
-        }
-      });
+      if (Array.isArray(LIVE_REP_CARDS) && LIVE_REP_CARDS.length) {
+        renderRep();
+        return;
+      }
+      var grid = document.getElementById('operaGrid');
+      var msg = mpPick(currentLang || 'en', 'rep.loadError', 'Repertoire data could not be loaded.');
+      if (grid) {
+        grid.innerHTML =
+          '<div class="rep-empty" role="status">' +
+          msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+          '</div>';
+      }
     });
 })();

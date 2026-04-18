@@ -1,3 +1,8 @@
+/**
+ * Public-safe home hero runtime.
+ * The public site must render from bundled locale strings and /v1-assets/data/hero-config.json only.
+ * Legacy admin/local overrides are intentionally disabled here.
+ */
 (function () {
   /** Avoid loading bundled intro portrait before admin/config resolution runs. */
   var INTRO_PLACEHOLDER_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -23,42 +28,14 @@
     var fromShell = (window.getMpSiteLang && normalizeLangCode(window.getMpSiteLang())) || '';
     return fromArg || fromDoc || fromShell || 'en';
   }
-  var FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var LIVE_HERO_DOCS = {};
-  var LIVE_HERO_PROMISES = {};
   var LAST_PROGRAMS_CTA_VISIBILITY_LANG = '';
 
   function escUrl(u) {
     return String(u).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   }
   function readLegacyRecord(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      var directRec = null;
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) {
-          directRec = { value: direct.value, ts: Number(direct.ts) || 0 };
-        } else {
-          directRec = { value: direct, ts: 0 };
-        }
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      var wrappedRec = null;
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) {
-        wrappedRec = { value: wrapped.value, ts: Number(wrapped.ts) || 0 };
-      }
-      if (!directRec) return wrappedRec;
-      if (!wrappedRec) return directRec;
-      // Prefer freshest payload when both exist; avoids stale direct shadowing newer wrapped data.
-      return wrappedRec.ts >= directRec.ts ? wrappedRec : directRec;
-    } catch (e) {
-      return null;
-    }
+    return null;
   }
   function readLegacyJson(key) {
     var rec = readLegacyRecord(key);
@@ -72,37 +49,11 @@
     return { value: v, ts: 0 };
   }
   function fetchFirestoreDocJson(key) {
-    var url = 'https://firestore.googleapis.com/v1/projects/' + FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
-    return fetch(url, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        try { return JSON.parse(v); } catch (e) { return null; }
-      })
-      .catch(function () { return null; });
+    return Promise.resolve(null);
   }
   function ensureLiveHeroDoc(key) {
-    if (!key) return Promise.resolve(null);
-    if (LIVE_HERO_DOCS[key]) return Promise.resolve(LIVE_HERO_DOCS[key]);
-    if (LIVE_HERO_PROMISES[key]) return LIVE_HERO_PROMISES[key];
-    LIVE_HERO_PROMISES[key] = fetchFirestoreDocJson(key)
-      .then(function (doc) {
-        var local = readLegacyJson(key);
-        if (local && typeof local === 'object') {
-          LIVE_HERO_DOCS[key] = local;
-          return LIVE_HERO_DOCS[key];
-        }
-        if (doc && typeof doc === 'object') LIVE_HERO_DOCS[key] = doc;
-        return LIVE_HERO_DOCS[key] || null;
-      })
-      .finally(function () {
-        delete LIVE_HERO_PROMISES[key];
-      });
-    return LIVE_HERO_PROMISES[key];
+    if (key) LIVE_HERO_DOCS[key] = null;
+    return Promise.resolve(null);
   }
   function loadLiveHeroOverrides(lang) {
     var rawLang = String(lang || 'en');
