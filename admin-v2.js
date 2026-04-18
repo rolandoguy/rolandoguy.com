@@ -368,7 +368,7 @@
   var authObserverFirstEventSettled = false;
   var redirectResultPromise = null;
   var redirectResultProcessed = false;
-  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history|rg_repertoire_discovery|rg_outreach_tracker|rg_admin_contacts_followups)$/;
+  var SAFE_IMPORT_KEY_RE = /^(hero|bio|rep|perf|contact|rg_ui|rg_editorial)_(en|de|es|it|fr)$|^(rg_rep_cards|rg_perfs|rg_past_perfs|rg_press|rg_press_meta|rg_vid|rg_vid_en|rg_audio|rg_epk_bios|rg_epk_photos|rg_epk_cvs|rg_public_pdfs|rg_photos|rg_photo_captions|rg_programs|rg_programs_en|rg_programs_de|rg_programs_es|rg_programs_it|rg_programs_fr|programs_en|programs_de|programs_es|programs_it|programs_fr|rg_repertoire_planner|rg_program_blueprints|rg_concert_history|rg_repertoire_discovery|rg_outreach_tracker|rg_admin_contacts_followups|rg_admin_cases)$/;
   var PRESS_IMPORT_KEYS = { rg_press: true, rg_press_meta: true, rg_epk_bios: true, rg_epk_photos: true, rg_epk_cvs: true, rg_public_pdfs: true };
   var mediaPhotoDragIndex = -1;
   var bulkUrlSubmitHandler = null;
@@ -3031,6 +3031,11 @@
       return false;
     });
   }
+  function saveDocRequired(key, val) {
+    return saveDoc(key, val).then(function (ok) {
+      return ok !== false;
+    });
+  }
   function getAuthIdToken() {
     if (!firebaseAuth || !firebaseAuth.currentUser || typeof firebaseAuth.currentUser.getIdToken !== 'function') {
       return Promise.resolve('');
@@ -3171,7 +3176,14 @@
         return false;
       });
     }).then(function (ok) {
-      if (!ok) console.warn('[admin-v2] Failed to publish public-safe doc:', key);
+      if (!ok) {
+        console.warn('[admin-v2] Failed to publish public-safe doc:', key);
+        setStatus('Saved, but public mirror publish failed · ' + key, 'warn');
+        pushActivitySummary('Public mirror publish failed', [
+          key,
+          'Admin data may be saved, but the public-safe mirror did not update.'
+        ]);
+      }
       return ok;
     });
   }
@@ -3894,11 +3906,13 @@
     record.updatedAt = new Date().toISOString();
     if (isNew) record.createdAt = record.updatedAt;
     state.casesDoc = safeCasesDoc(state.casesDoc);
-    saveDoc('rg_admin_cases', state.casesDoc);
-    state.casesSelectedId = id;
-    renderCasesList();
-    renderCasesEditor();
-    setStatus(isNew ? 'Case created' : 'Case saved', 'ok');
+    saveDocRequired('rg_admin_cases', state.casesDoc).then(function (ok) {
+      if (!ok) return;
+      state.casesSelectedId = id;
+      renderCasesList();
+      renderCasesEditor();
+      setStatus(isNew ? 'Case created' : 'Case saved', 'ok');
+    });
   }
   function deleteCasesRecord() {
     var id = safeString(state.casesSelectedId).trim();
@@ -3909,12 +3923,14 @@
     if (!window.confirm('Delete ' + label + '?')) return;
     state.casesDoc = safeCasesDoc(state.casesDoc);
     state.casesDoc.records = state.casesDoc.records.filter(function (row) { return safeString(row.id).trim() !== id; });
-    saveDoc('rg_admin_cases', state.casesDoc);
-    state.casesSelectedId = '';
-    clearCasesForm();
-    renderCasesList();
-    renderCasesEditor();
-    setStatus('Case deleted', 'ok');
+    saveDocRequired('rg_admin_cases', state.casesDoc).then(function (ok) {
+      if (!ok) return;
+      state.casesSelectedId = '';
+      clearCasesForm();
+      renderCasesList();
+      renderCasesEditor();
+      setStatus('Case deleted', 'ok');
+    });
   }
   function loadCases() {
     state.contactsDoc = safeContactsDoc(loadDoc('rg_admin_contacts_followups', makeContactsSeed()));
@@ -4046,14 +4062,14 @@
       bgImage: safeString($('hero-bgImage').value),
       introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim())
     };
-    var heroSaved = await saveDoc(heroKey, payload);
+    var heroSaved = await saveDocRequired(heroKey, payload);
     try {
       localStorage.setItem(heroKey, JSON.stringify(payload));
     } catch (e) {}
     var uiMerged = loadDoc('rg_ui_' + state.lang, null);
     if (!isObject(uiMerged)) uiMerged = {};
     uiMerged = persistHomeRgUiCopyFields(uiMerged);
-    var uiSaved = await saveDoc('rg_ui_' + state.lang, uiMerged);
+    var uiSaved = await saveDocRequired('rg_ui_' + state.lang, uiMerged);
     if (!heroSaved || !uiSaved) return;
     var fsWrite = await writeHeroDocToFirestore(heroKey, payload);
     var fsReadBack = await readHeroDocFromFirestore(heroKey);
@@ -4077,7 +4093,10 @@
         } catch (e) {}
       });
     }
-    if (applyAllWrites.length) await Promise.all(applyAllWrites);
+    if (applyAllWrites.length) {
+      var applyAllResults = await Promise.all(applyAllWrites);
+      if (applyAllResults.some(function (ok) { return ok === false; })) return;
+    }
     await publishPublicHeroDocs(applyAll ? LANGS : [state.lang]);
   }
 
@@ -4588,7 +4607,7 @@
       paragraphCount: paras.length,
       applyAllPortraits: applyAll
     });
-    await saveDoc('bio_' + state.lang, payload);
+    if (!await saveDocRequired('bio_' + state.lang, payload)) return;
     // Compatibility mirror for mp/biography runtime override resolution.
     try {
       localStorage.setItem('bio_' + state.lang, JSON.stringify(payload));
@@ -4609,7 +4628,10 @@
         } catch (e) {}
       });
     }
-    if (applyAllWrites.length) await Promise.all(applyAllWrites);
+    if (applyAllWrites.length) {
+      var applyAllResults = await Promise.all(applyAllWrites);
+      if (applyAllResults.some(function (ok) { return ok === false; })) return;
+    }
     await publishPublicBiographyDocs(applyAll ? LANGS : [state.lang]);
   }
 
@@ -4717,12 +4739,12 @@
     renderRepList();
   }
   async function saveRepHeader() {
-    await saveDoc('rep_' + state.lang, { h2: safeString($('rep-h2').value), intro: safeString($('rep-intro').value) });
+    if (!await saveDocRequired('rep_' + state.lang, { h2: safeString($('rep-h2').value), intro: safeString($('rep-intro').value) })) return;
     await publishPublicRepertoireDocs([state.lang]);
   }
   async function saveRepCards() {
     state.repCards = state.repCards.filter(function (c) { return isObject(c); });
-    await saveDoc('rg_rep_cards', state.repCards);
+    if (!await saveDocRequired('rg_rep_cards', state.repCards)) return;
     await publishPublicRepertoireDocs();
   }
 
@@ -4886,13 +4908,13 @@
     state.programsDoc.closingNote = safeString($('programs-closingNote').value);
     state.programsDoc = safeProgramsDoc(state.programsDoc);
     normalizeProgramOrders();
-    await saveDoc('rg_programs_' + state.lang, state.programsDoc);
+    if (!await saveDocRequired('rg_programs_' + state.lang, state.programsDoc)) return;
     var prevEd = loadDoc('rg_editorial_' + state.lang, {});
     prevEd.repProgramsLink = safeString($('programs-repLink').value).trim();
     prevEd.epkProgramsLink = safeString($('programs-epkLink').value).trim();
     prevEd.hideProgramsSection = !!($('programs-hideSection') && $('programs-hideSection').checked);
     if (hasOwn(prevEd, 'hideProgramsEntryPoints')) delete prevEd.hideProgramsEntryPoints;
-    await saveDoc('rg_editorial_' + state.lang, prevEd);
+    if (!await saveDocRequired('rg_editorial_' + state.lang, prevEd)) return;
     await Promise.all([
       publishPublicProgramsDocs([state.lang]),
       publishPublicEditorialDocs([state.lang])
@@ -4902,9 +4924,10 @@
     var prevEd = loadDoc('rg_editorial_' + state.lang, {});
     prevEd.hideProgramsSection = !!($('programs-hideSection') && $('programs-hideSection').checked);
     if (hasOwn(prevEd, 'hideProgramsEntryPoints')) delete prevEd.hideProgramsEntryPoints;
-    var ok = await saveDoc('rg_editorial_' + state.lang, prevEd);
-    if (!ok) throw new Error('programs-visibility-save-failed');
+    var ok = await saveDocRequired('rg_editorial_' + state.lang, prevEd);
+    if (!ok) return false;
     await publishPublicEditorialDocs([state.lang]);
+    return true;
   }
 
   function plannerFamilyLabel(family) {
@@ -9864,9 +9887,11 @@
   }
   function saveOutreachRecord() {
     state.outreachDoc = safeOutreachDoc(state.outreachDoc);
-    saveDoc('rg_outreach_tracker', state.outreachDoc);
-    renderOutreachWorkspace();
-    markDirty(false, 'Outreach record saved');
+    saveDocRequired('rg_outreach_tracker', state.outreachDoc).then(function (ok) {
+      if (!ok) return;
+      renderOutreachWorkspace();
+      markDirty(false, 'Outreach record saved');
+    });
   }
   function createOutreachRecord(seedRecord) {
     state.outreachDoc = safeOutreachDoc(state.outreachDoc);
@@ -13908,13 +13933,13 @@
     renderIncomeSection();
   }
   async function savePerfHeader() {
-    await saveDoc('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) });
+    if (!await saveDocRequired('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) })) return;
     await publishPublicPerfHeaders([state.lang]);
   }
   async function savePerfEvents() {
     persistPerfEditor();
     state.perfs = normalizePerfEventsList(state.perfs);
-    await saveDoc('rg_perfs', state.perfs);
+    if (!await saveDocRequired('rg_perfs', state.perfs)) return;
     await publishPublicPerfEvents();
     if (state.section === 'income') renderIncomeSection();
   }
@@ -13983,7 +14008,7 @@
       alert('Save failed:\n- ' + allErrors.slice(0, 12).join('\n- ') + (allErrors.length > 12 ? '\n- ... and ' + (allErrors.length - 12) + ' more' : ''));
       return false;
     }
-    await saveDoc('rg_past_perfs', state.pastPerfs);
+    if (!await saveDocRequired('rg_past_perfs', state.pastPerfs)) return false;
     await publishPublicPastPerfs();
     if ($('pastperfs-summary')) $('pastperfs-summary').textContent = state.pastPerfs.length ? ('Saved past events: ' + state.pastPerfs.length) : 'No past events saved yet.';
     if ($('pastperfs-preview')) $('pastperfs-preview').value = JSON.stringify(state.pastPerfs.slice(0, 40), null, 2);
@@ -14855,10 +14880,10 @@
     renderMediaVideosList();
     markDirty(true, 'Video editado');
   }
-  function saveMediaVideos() {
+  async function saveMediaVideos() {
     state.vidData.h2 = safeString($('media-vid-h2').value);
     state.vidData = safeMediaVideos(state.vidData);
-    saveDoc('rg_vid', state.vidData);
+    await saveDocRequired('rg_vid', state.vidData);
   }
 
   function setPhotoType(type) {
@@ -14982,10 +15007,10 @@
     renderMediaPhotoEditor();
     markDirty(true, 'Foto editada');
   }
-  function saveMediaPhotos() {
+  async function saveMediaPhotos() {
     state.photosData = safePhotos(state.photosData);
-    saveDoc('rg_photos', state.photosData);
-    saveDoc('rg_photo_captions', state.photoCaptions);
+    if (!await saveDocRequired('rg_photos', state.photosData)) return;
+    await saveDocRequired('rg_photo_captions', state.photoCaptions);
   }
   function renderMediaAudioList() {
     var box = $('media-aud-list');
@@ -15125,16 +15150,16 @@
     renderMediaAudioList();
     markDirty(true, 'Audio editado');
   }
-  function saveMediaAudio() {
+  async function saveMediaAudio() {
     state.audioData.h2 = safeString($('media-aud-h2').value);
     state.audioData.sub = safeString($('media-aud-sub').value);
     state.audioData = safeMediaAudio(state.audioData);
-    saveDoc('rg_audio', state.audioData);
+    if (!await saveDocRequired('rg_audio', state.audioData)) return;
     var uiEn = loadDoc('rg_ui_en', null);
     if (!isObject(uiEn)) uiEn = {};
     uiEn['mp.audio.h2'] = state.audioData.h2;
     uiEn['mp.audio.sub'] = state.audioData.sub;
-    saveDoc('rg_ui_en', uiEn);
+    await saveDocRequired('rg_ui_en', uiEn);
   }
   function mediaReportFiltersLabel() {
     var parts = [];
@@ -15662,19 +15687,19 @@
     if (!meta[state.lang]) meta[state.lang] = {};
     meta[state.lang].translatedNote = safeString($('press-translatedNote').value);
     meta.showReviewsSection = asBoolean($('press-showReviewsSection').value, true);
-    await saveDoc('rg_press_meta', meta);
+    if (!await saveDocRequired('rg_press_meta', meta)) return;
     try {
       localStorage.setItem('rg_press_meta', JSON.stringify(meta));
       localStorage.setItem('rg_local_rg_press_meta', JSON.stringify({ ts: Date.now(), value: meta }));
     } catch (e) {}
     var ui = loadDoc('rg_ui_' + state.lang, {});
     ui.reviewsIntro = safeString($('press-reviewsIntro').value);
-    await saveDoc('rg_ui_' + state.lang, ui);
+    if (!await saveDocRequired('rg_ui_' + state.lang, ui)) return;
     await publishPublicRgDoc('public_rg_press_meta', buildPublicPressMetaDoc());
   }
   async function savePressQuotes() {
     state.press = state.press.filter(function (p) { return isObject(p); });
-    await saveDoc('rg_press', state.press);
+    if (!await saveDocRequired('rg_press', state.press)) return;
     try {
       localStorage.setItem('rg_press', JSON.stringify(state.press));
       localStorage.setItem('rg_local_rg_press', JSON.stringify({ ts: Date.now(), value: state.press }));
@@ -15683,7 +15708,7 @@
   }
   async function savePressPdfs() {
     persistPressPdfsFromUi();
-    await saveDoc('rg_public_pdfs', state.publicPdfs);
+    if (!await saveDocRequired('rg_public_pdfs', state.publicPdfs)) return;
     // Compatibility mirror for public pages that read plain localStorage key directly.
     try {
       localStorage.setItem('rg_public_pdfs', JSON.stringify(state.publicPdfs));
@@ -15692,12 +15717,12 @@
   }
   async function saveEpkBios() {
     persistEpkBiosFromUi();
-    await saveDoc('rg_epk_bios', state.epkBios);
+    if (!await saveDocRequired('rg_epk_bios', state.epkBios)) return;
     await publishPublicRgDoc('public_rg_epk_bios', buildPublicEpkBiosDoc());
   }
   async function saveEpkPhotos() {
     state.epkPhotos = safeEpkPhotos(state.epkPhotos);
-    await saveDoc('rg_epk_photos', state.epkPhotos);
+    if (!await saveDocRequired('rg_epk_photos', state.epkPhotos)) return;
     try {
       localStorage.setItem('rg_epk_photos', JSON.stringify(state.epkPhotos));
       localStorage.setItem('rg_local_rg_epk_photos', JSON.stringify({ ts: Date.now(), value: state.epkPhotos }));
@@ -15726,7 +15751,7 @@
     updateCompletenessIndicators();
   }
   async function saveContact() {
-    await saveDoc('contact_' + state.lang, {
+    if (!await saveDocRequired('contact_' + state.lang, {
       title: safeString($('contact-title').value),
       sub: safeString($('contact-sub').value),
       email: safeString($('contact-email').value),
@@ -15734,7 +15759,7 @@
       emailBtn: safeString($('contact-emailBtn').value),
       webBtn: safeString($('contact-webBtn').value),
       webUrl: safeString($('contact-webUrl') && $('contact-webUrl').value).trim()
-    });
+    })) return;
     await publishPublicContactDocs([state.lang]);
   }
 
@@ -16057,11 +16082,13 @@
     record.updatedAt = new Date().toISOString();
     if (isNew) record.createdAt = record.updatedAt;
     state.contactsDoc = safeContactsDoc(state.contactsDoc);
-    saveDoc('rg_admin_contacts_followups', state.contactsDoc);
-    state.contactsSelectedId = id;
-    renderContactsList();
-    renderContactsEditor();
-    setStatus(isNew ? 'Contact created' : 'Contact saved', 'ok');
+    saveDocRequired('rg_admin_contacts_followups', state.contactsDoc).then(function (ok) {
+      if (!ok) return;
+      state.contactsSelectedId = id;
+      renderContactsList();
+      renderContactsEditor();
+      setStatus(isNew ? 'Contact created' : 'Contact saved', 'ok');
+    });
   }
   function deleteContactsRecord() {
     var id = safeString(state.contactsSelectedId).trim();
@@ -16080,11 +16107,13 @@
     state.contactsDoc.records = (state.contactsDoc.records || []).filter(function (row) {
       return safeString(row && row.id).trim() !== id;
     });
-    saveDoc('rg_admin_contacts_followups', state.contactsDoc);
-    state.contactsSelectedId = '';
-    renderContactsList();
-    renderContactsEditor();
-    setStatus('Contact deleted', 'ok');
+    saveDocRequired('rg_admin_contacts_followups', state.contactsDoc).then(function (ok) {
+      if (!ok) return;
+      state.contactsSelectedId = '';
+      renderContactsList();
+      renderContactsEditor();
+      setStatus('Contact deleted', 'ok');
+    });
   }
   function loadContacts() {
     state.contactsDoc = safeContactsDoc(loadDoc('rg_admin_contacts_followups', makeContactsSeed()));
@@ -18879,10 +18908,12 @@
     ids.forEach(function (id) {
       var el = $(id);
       if (!el) return;
-      el.addEventListener('input', function () {
+      function run() {
         if (handler) handler();
         else markDirty(true);
-      });
+      }
+      el.addEventListener('input', run);
+      el.addEventListener('change', run);
     });
   }
 
@@ -18899,7 +18930,7 @@
       'rg_ui_en','rg_ui_de','rg_ui_es','rg_ui_it','rg_ui_fr'
     ];
     var internalKeys = [
-      'rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker','rg_admin_contacts_followups'
+      'rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker','rg_admin_contacts_followups','rg_admin_cases'
     ];
     var allKeys = publicKeys.concat(internalKeys);
     var scope = getImportScopeValue();
@@ -18914,9 +18945,11 @@
     keys.forEach(function (k) {
       var v;
       if (k === 'rg_admin_contacts_followups') {
-        v = state.contactsDoc;
+        v = state.contactsDoc || loadDoc('rg_admin_contacts_followups', makeContactsSeed());
+      } else if (k === 'rg_admin_cases') {
+        v = state.casesDoc || loadDoc('rg_admin_cases', makeCasesSeed());
       } else if (k === 'rg_outreach_tracker') {
-        v = state.outreachDoc;
+        v = state.outreachDoc || loadDoc('rg_outreach_tracker', makeOutreachSeed());
       } else if (k === 'rg_photos') {
         v = safePhotos(state.photosData || loadDoc('rg_photos', { s: [], t: [], b: [] }));
       } else if (k === 'rg_photo_captions') {
@@ -20243,7 +20276,7 @@
       var f = e.target.files && e.target.files[0];
       if (!f) return;
       var r = new FileReader();
-      r.onload = function () {
+      r.onload = async function () {
         try {
           var payload = JSON.parse(String(r.result || '{}'));
           // Handle new payload structure with separate public/internal sections
@@ -20295,18 +20328,30 @@
             pushActivitySummary('Import cancelled', ['No changes were saved.']);
             return;
           }
-          keys.forEach(function (k) {
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
             validateKeyValue(k, data[k]);
             if (k === 'rg_admin_contacts_followups') {
               state.contactsDoc = safeContactsDoc(clone(data[k]));
-              saveDoc('rg_admin_contacts_followups', state.contactsDoc);
+              if (!await saveDocRequired('rg_admin_contacts_followups', state.contactsDoc)) {
+                throw new Error('Could not import ' + humanStorageKeyLine(k));
+              }
+            } else if (k === 'rg_admin_cases') {
+              state.casesDoc = safeCasesDoc(clone(data[k]));
+              if (!await saveDocRequired('rg_admin_cases', state.casesDoc)) {
+                throw new Error('Could not import ' + humanStorageKeyLine(k));
+              }
             } else if (k === 'rg_outreach_tracker') {
               state.outreachDoc = safeOutreachDoc(clone(data[k]));
-              saveDoc('rg_outreach_tracker', state.outreachDoc);
+              if (!await saveDocRequired('rg_outreach_tracker', state.outreachDoc)) {
+                throw new Error('Could not import ' + humanStorageKeyLine(k));
+              }
             } else {
-              state.api.save(k, clone(data[k]));
+              if (!await saveDocRequired(k, clone(data[k]))) {
+                throw new Error('Could not import ' + humanStorageKeyLine(k));
+              }
             }
-          });
+          }
           refreshCurrentSection();
           markDirty(false, 'Import saved');
           setStatus('Import complete', 'ok');
