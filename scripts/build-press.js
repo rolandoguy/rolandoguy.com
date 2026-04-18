@@ -93,6 +93,9 @@ function buildReviewsIntroByLang(data, defaultsMap) {
 function mergePressMeta(base, raw) {
   var out = deepClone(base);
   if (!raw || typeof raw !== 'object') return out;
+  if (Object.prototype.hasOwnProperty.call(raw, 'showReviewsSection')) {
+    out.showReviewsSection = raw.showReviewsSection !== false;
+  }
   LANGS.forEach(function (l) {
     if (raw[l] && typeof raw[l] === 'object' && raw[l].translatedNote != null) {
       if (!out[l]) out[l] = {};

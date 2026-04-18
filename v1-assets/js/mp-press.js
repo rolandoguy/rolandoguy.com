@@ -176,6 +176,18 @@
     var L = lang || currentLang || 'en';
     return mpPick(L, key, MP_PRESS_UI_EN[key]);
   }
+  function resolvePublicEpkLabel(lang, hasQuotes) {
+    var L = String(lang || currentLang || 'en').toLowerCase();
+    if (!hasQuotes) return effectiveUiText(L, 'epk.title') || 'Dossier';
+    var byLang = {
+      en: 'Press & Dossier',
+      de: 'Presse & Dossier',
+      es: 'Prensa y dossier',
+      it: 'Stampa e dossier',
+      fr: 'Presse & dossier'
+    };
+    return byLang[L] || byLang.en;
+  }
 
   function getEditorialProgramsLink(lang) {
     var L = String(lang || currentLang || 'en').toLowerCase();
@@ -586,9 +598,18 @@
     var pool = getDefaultEpkBios();
     var bios = pool[lang] || pool.en || { b50: '', b150: '', b300p1: '', b300p2: '', b300p3: '', b300p4: '' };
     var ti = uiTable(lang);
+    var resolved = resolvePressRuntime();
+    var meta = resolved.pressMeta;
+    var showReviews = asVisibleFlag(meta && meta.showReviewsSection, true);
+    var hasVisibleQuotes = resolved.pressItems.filter(function (p) {
+      return asVisibleFlag(p && p.visible, true);
+    }).length > 0;
+    var epkLabel = resolvePublicEpkLabel(lang, showReviews && hasVisibleQuotes);
 
     var titleEl = document.getElementById('epkTitle');
-    if (titleEl) titleEl.innerHTML = ti['epk.title'] || 'Dossier';
+    if (titleEl) titleEl.innerHTML = epkLabel;
+    var sectionTagEl = document.getElementById('epkSectionTag');
+    if (sectionTagEl) sectionTagEl.textContent = epkLabel.replace(/<[^>]+>/g, '');
 
     document.querySelectorAll('.epk-tab').forEach(function (btn, i) {
       var keys = ['epk.bio50lbl', 'epk.bio150lbl', 'epk.bio300lbl'];

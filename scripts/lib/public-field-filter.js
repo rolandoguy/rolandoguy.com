@@ -149,7 +149,7 @@ var PUBLIC_CONTACT_LOCALE_FIELDS = ['title', 'sub', 'emailBtn', 'quote'];
 
 var PUBLIC_PRESS_ITEM_FIELDS = ['source', 'quote', 'visible'];
 
-var PUBLIC_PRESS_META_FIELDS = ['translatedNote'];
+var PUBLIC_PRESS_META_FIELDS = ['translatedNote', 'showReviewsSection'];
 
 var PUBLIC_PRESS_CHROME_FIELDS = ['reviewsIntro', 'reviewsIntroByLang'];
 
