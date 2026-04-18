@@ -17,6 +17,7 @@
 
 var fs = require('fs');
 var path = require('path');
+var filter = require('./lib/public-field-filter');
 
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'hero-config.json');
@@ -32,17 +33,6 @@ function readJson(p) {
 
 function deepClone(o) {
   return JSON.parse(JSON.stringify(o));
-}
-
-function stripAdminNote(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
-  var out = {};
-  for (var k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = obj[k];
-  }
-  return out;
 }
 
 /** mp/ pages: repo-root images as ../img/… */
@@ -76,12 +66,11 @@ if (!rawHero || typeof rawHero !== 'object' || Array.isArray(rawHero)) {
   process.exit(1);
 }
 
-var heroEn = stripAdminNote(rawHero);
 var defaults = readJson(defaultsPath);
 var out = deepClone(defaults);
 var MP_HERO_IMAGE = '../img/hero-portrait.webp';
 
-var bg = heroEn.bgImage != null ? String(heroEn.bgImage).trim() : '';
+var bg = rawHero.bgImage != null ? String(rawHero.bgImage).trim() : '';
 if (bg) {
   out.image = normalizeHeroImage(bg);
 }
@@ -89,6 +78,14 @@ if (bg) {
 out.image = MP_HERO_IMAGE;
 if (!String(out.image || '').trim()) {
   console.error('build-hero-config: resolved image URL is empty');
+  process.exit(1);
+}
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(out, 'hero-config.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
   process.exit(1);
 }
 

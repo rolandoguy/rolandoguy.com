@@ -195,6 +195,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   outline:2px solid var(--gold);
   outline-offset:3px;
 }
+#eventModal #emDetail,
+#eventModal #emExtDesc{white-space:pre-wrap}
 nav{
   position:static;
   width:100%;
@@ -1295,7 +1297,8 @@ position:absolute;inset:0;display:flex;align-items:center;justify-content:center
 .perf-item--private:hover{background:rgba(255,255,255,.025);padding-left:6px}
 .perf-item--private::before{background:rgba(232,227,218,.22)}
 .perf-item--private:hover::before{background:rgba(232,227,218,.44)}
-.perf-item--private .perf-venue-bg{opacity:.2 !important;filter:brightness(.7) saturate(.52) contrast(.92)}
+.perf-item--private .perf-venue-bg{opacity:.28 !important;filter:brightness(.52) saturate(.68) contrast(.96)}
+.perf-item--private .perf-venue-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,8,12,0) 0%,rgba(6,8,12,.18) 34%,rgba(6,8,12,.54) 62%,rgba(6,8,12,.84) 100%)}
 .perf-item--private .perf-info-title{color:rgba(232,227,218,.94)}
 .perf-item--private .perf-info-detail{color:rgba(232,227,218,.84)}
 .perf-venue-link--private{cursor:default;color:rgba(232,227,218,.86)}
@@ -2620,7 +2623,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   }
   #eventModal #emTitle{font-size:clamp(1.35rem,7vw,1.95rem) !important}
   #eventModal #emDetail,
-  #eventModal #emExtDesc{font-size:.86rem !important;line-height:1.72 !important}
+  #eventModal #emExtDesc{font-size:.86rem !important;line-height:1.72 !important;white-space:pre-wrap}
   #eventModal #emVenue{line-height:1.55}
   #eventModal #emActions{
     display:grid !important;
@@ -3008,4 +3011,211 @@ body[data-mp-page] .mp-cursor-ring{display:none}
   body[data-mp-page].mp-cursor-enabled *::after{cursor:none!important}
   body[data-mp-page].mp-cursor-enabled .mp-cursor-dot,
   body[data-mp-page].mp-cursor-enabled .mp-cursor-ring{display:block}
+}
+
+
+.event-modal-shell.is-editorial{
+  max-width:840px !important;
+}
+.event-modal-editorial{
+  margin:0;
+}
+.event-modal-editorial__inner{
+  position:relative;
+  width:100%;
+}
+.event-modal-editorial__hero{
+  position:relative;
+  width:100%;
+  height:180px;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  margin:0 0 24px;
+  border-radius:2px;
+  overflow:hidden;
+}
+.event-modal-editorial__hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to bottom, rgba(13,13,18,0.3), rgba(13,13,18,0.7));
+}
+.event-modal-editorial__content{
+  position:relative;
+  padding:0 4px;
+}
+.event-modal-editorial__header{
+  margin:0 0 16px;
+}
+.event-modal-editorial__label{
+  font-family:var(--ff-caps);
+  font-size:.6rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin:0 0 8px;
+}
+.event-modal-editorial__title{
+  font-family:var(--ff-title);
+  font-size:clamp(1.5rem,3.5vw,2rem);
+  font-weight:300;
+  font-style:italic;
+  color:var(--text);
+  margin:0 0 6px;
+  line-height:1.2;
+}
+.event-modal-editorial__subtitle{
+  font-family:var(--ff-body);
+  font-size:.9rem;
+  font-weight:400;
+  color:var(--gold-dim);
+  margin:0 0 4px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.event-modal-editorial__artists{
+  font-family:var(--ff-body);
+  font-size:.85rem;
+  font-weight:300;
+  color:var(--text-dim);
+  margin:0;
+  line-height:1.5;
+}
+.event-modal-editorial__meta{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:0 0 16px;
+  padding:12px 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.event-modal-editorial__meta-item{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+.event-modal-editorial__meta-label{
+  font-family:var(--ff-caps);
+  font-size:.55rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--gold-dim);
+  white-space:nowrap;
+  min-width:90px;
+}
+.event-modal-editorial__meta-value{
+  font-family:var(--ff-body);
+  font-size:.85rem;
+  font-weight:400;
+  color:var(--text-dim);
+  line-height:1.4;
+}
+.event-modal-editorial__body{
+  margin:0 0 16px;
+  font-family:var(--ff-body);
+  font-size:.9rem;
+  font-weight:300;
+  color:var(--text-dim);
+  line-height:1.7;
+}
+.event-modal-editorial__body p{
+  margin:0 0 12px;
+}
+.event-modal-editorial__body p:last-child{
+  margin:0;
+}
+.event-modal-editorial__flyer{
+  margin:0 0 16px;
+  text-align:center;
+}
+.event-modal-editorial__flyer img{
+  max-width:100%;
+  height:auto;
+  max-height:400px;
+  border-radius:2px;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.event-modal-editorial__extra{
+  margin:0;
+  padding:16px 0 0;
+  border-top:1px solid var(--border);
+}
+.event-modal-editorial__extra-label{
+  font-family:var(--ff-caps);
+  font-size:.55rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin:0 0 8px;
+}
+.event-modal-editorial__extra p{
+  font-family:var(--ff-body);
+  font-size:.85rem;
+  font-weight:300;
+  color:var(--text-dim);
+  line-height:1.6;
+  margin:0;
+}
+@media(max-width:768px){
+  #eventModal .event-modal-shell.is-editorial{
+    max-width:min(800px,calc(100vw - 24px)) !important;
+    padding:24px 16px;
+  }
+  .event-modal-editorial__hero{
+    height:140px;
+    margin:0 0 16px;
+  }
+  .event-modal-editorial__header{
+    margin:0 0 12px;
+  }
+  .event-modal-editorial__title{
+    font-size:1.4rem;
+  }
+  .event-modal-editorial__subtitle{
+    font-size:.85rem;
+  }
+  .event-modal-editorial__artists{
+    font-size:.8rem;
+  }
+  .event-modal-editorial__meta{
+    gap:4px;
+    margin:0 0 12px;
+    padding:10px 0;
+  }
+  .event-modal-editorial__meta-item{
+    flex-direction:column;
+    gap:3px;
+  }
+  .event-modal-editorial__meta-label{
+    min-width:auto;
+    font-size:.5rem;
+  }
+  .event-modal-editorial__meta-value{
+    font-size:.8rem;
+  }
+  .event-modal-editorial__body{
+    font-size:.85rem;
+    margin:0 0 12px;
+  }
+  .event-modal-editorial__body p{
+    margin:0 0 10px;
+  }
+  .event-modal-editorial__flyer{
+    margin:0 0 12px;
+  }
+  .event-modal-editorial__flyer img{
+    max-height:300px;
+  }
+  .event-modal-editorial__extra{
+    padding:12px 0 0;
+  }
+  .event-modal-editorial__extra-label{
+    font-size:.5rem;
+    margin:0 0 6px;
+  }
+  .event-modal-editorial__extra p{
+    font-size:.8rem;
+  }
 }

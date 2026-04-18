@@ -1,4 +1,4 @@
-/* Shared chrome for mp/* pages — load mp-locales.json (npm run build:mp-locales -- [export.json]; npm run build:mp-home -- export.json for hero config + locales). */
+/* Shared public chrome for mp/* pages. This file must stay on public-safe data only. */
 (function () {
   'use strict';
 
@@ -11,7 +11,9 @@
   var MP_LANG_STORAGE = 'mp_site_lang';
   var MP_LANG_LIST = ['en', 'de', 'es', 'it', 'fr'];
   var MP_LOCALES_URL = '/v1-assets/data/mp-locales.json';
-  var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
+  var MP_PRESS_DATA_URL = '/v1-assets/data/press-data.json';
+  var MP_CALENDAR_DATA_URL = '/v1-assets/data/calendar-data.json';
+  var MP_MEDIA_DATA_URL = '/v1-assets/data/media-data.json';
   var MP_UI_OVERRIDES = {};
   var MP_UI_PROMISES = {};
   var MP_EDITORIAL_OVERRIDES = {};
@@ -81,50 +83,17 @@
   }
 
   window.getMpSiteLang = getMpSiteLang;
-  function readLegacyJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
+  function readLegacyJson() {
+    return null;
   }
-  function readLocalUnsyncedJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem('rg_local_' + key);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.value != null && typeof parsed.value === 'object') {
-        return parsed.value;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+  function readLocalUnsyncedJson() {
+    return null;
   }
-  function fetchFirestoreDocJson(key) {
-    var url = 'https://firestore.googleapis.com/v1/projects/' + MP_FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
+  function fetchPublicJson(url) {
     return fetch(url, { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) return null;
         return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        try { return JSON.parse(v); } catch (e) { return null; }
       })
       .catch(function () { return null; });
   }
@@ -170,23 +139,13 @@
   function ensurePressNavState() {
     if (MP_PRESS_NAV_STATE.resolved) return Promise.resolve(MP_PRESS_NAV_STATE);
     if (MP_PRESS_NAV_PROMISE) return MP_PRESS_NAV_PROMISE;
-    MP_PRESS_NAV_PROMISE = Promise.all([
-      fetchFirestoreDocJson('rg_press'),
-      fetchFirestoreDocJson('rg_press_meta')
-    ])
-      .then(function (vals) {
-        var press = (vals[0] && typeof vals[0] === 'object') ? vals[0] : readLegacyJson('rg_press');
-        var meta = (vals[1] && typeof vals[1] === 'object') ? vals[1] : readLegacyJson('rg_press_meta');
+    MP_PRESS_NAV_PROMISE = fetchPublicJson(MP_PRESS_DATA_URL)
+      .then(function (payload) {
+        var press = payload && typeof payload === 'object' ? payload.press : null;
+        var meta = payload && typeof payload === 'object' ? payload.pressMeta : null;
         MP_PRESS_NAV_STATE = {
           resolved: true,
           hasQuotes: computePressNavHasQuotes(press, meta)
-        };
-        return MP_PRESS_NAV_STATE;
-      })
-      .catch(function () {
-        MP_PRESS_NAV_STATE = {
-          resolved: true,
-          hasQuotes: computePressNavHasQuotes(readLegacyJson('rg_press'), readLegacyJson('rg_press_meta'))
         };
         return MP_PRESS_NAV_STATE;
       })
@@ -199,19 +158,9 @@
     var L = normalizeLang(lang);
     if (MP_UI_OVERRIDES[L]) return Promise.resolve(MP_UI_OVERRIDES[L]);
     if (MP_UI_PROMISES[L]) return MP_UI_PROMISES[L];
-    var key = 'rg_ui_' + L;
-    MP_UI_PROMISES[L] = fetchFirestoreDocJson(key)
+    MP_UI_PROMISES[L] = Promise.resolve({})
       .then(function (doc) {
-        var localUnsynced = readLocalUnsyncedJson(key);
-        var best = (localUnsynced && typeof localUnsynced === 'object')
-          ? localUnsynced
-          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
-        MP_UI_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
-        return MP_UI_OVERRIDES[L];
-      })
-      .catch(function () {
-        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
-        MP_UI_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
+        MP_UI_OVERRIDES[L] = doc;
         return MP_UI_OVERRIDES[L];
       })
       .finally(function () {
@@ -223,19 +172,9 @@
     var L = normalizeLang(lang);
     if (MP_EDITORIAL_OVERRIDES[L]) return Promise.resolve(MP_EDITORIAL_OVERRIDES[L]);
     if (MP_EDITORIAL_PROMISES[L]) return MP_EDITORIAL_PROMISES[L];
-    var key = 'rg_editorial_' + L;
-    MP_EDITORIAL_PROMISES[L] = fetchFirestoreDocJson(key)
+    MP_EDITORIAL_PROMISES[L] = Promise.resolve({})
       .then(function (doc) {
-        var localUnsynced = readLocalUnsyncedJson(key);
-        var best = (localUnsynced && typeof localUnsynced === 'object')
-          ? localUnsynced
-          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
-        MP_EDITORIAL_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
-        return MP_EDITORIAL_OVERRIDES[L];
-      })
-      .catch(function () {
-        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
-        MP_EDITORIAL_OVERRIDES[L] = (best && typeof best === 'object') ? best : {};
+        MP_EDITORIAL_OVERRIDES[L] = doc;
         return MP_EDITORIAL_OVERRIDES[L];
       })
       .finally(function () {
@@ -260,18 +199,10 @@
   window.ensureMpEditorialOverrideFor = ensureEditorialOverrideFor;
   window.getMpProgramsVisibility = function (lang) {
     var L = normalizeLang(lang);
-    delete MP_EDITORIAL_OVERRIDES[L];
-    delete MP_EDITORIAL_OVERRIDES.en;
-    delete MP_EDITORIAL_PROMISES[L];
-    delete MP_EDITORIAL_PROMISES.en;
-    return Promise.all([ensureEditorialOverrideFor(L), ensureEditorialOverrideFor('en')]).then(function () {
-      var byLang = MP_EDITORIAL_OVERRIDES[L] && typeof MP_EDITORIAL_OVERRIDES[L] === 'object' ? MP_EDITORIAL_OVERRIDES[L] : {};
-      var en = MP_EDITORIAL_OVERRIDES.en && typeof MP_EDITORIAL_OVERRIDES.en === 'object' ? MP_EDITORIAL_OVERRIDES.en : {};
-      var hideSection = asBooleanFlag(byLang.hideProgramsSection, false) || asBooleanFlag(en.hideProgramsSection, false);
-      return {
-        hideProgramsSection: !!hideSection,
-        hideProgramsEntryPoints: !!hideSection
-      };
+    return Promise.resolve({
+      lang: L,
+      hideProgramsSection: false,
+      hideProgramsEntryPoints: false
     });
   };
   function getUiOverrideString(lang, key) {
@@ -407,13 +338,13 @@
     if (MP_EDITORIAL_HIGHLIGHTS_CACHE.loaded) return Promise.resolve(MP_EDITORIAL_HIGHLIGHTS_CACHE);
     if (MP_EDITORIAL_HIGHLIGHTS_PROMISE) return MP_EDITORIAL_HIGHLIGHTS_PROMISE;
     MP_EDITORIAL_HIGHLIGHTS_PROMISE = Promise.all([
-      fetchFirestoreDocJson('rg_vid'),
-      fetchFirestoreDocJson('rg_audio'),
-      fetchFirestoreDocJson('rg_perfs')
+      fetchPublicJson(MP_MEDIA_DATA_URL),
+      fetchPublicJson(MP_CALENDAR_DATA_URL)
     ]).then(function (vals) {
-      var vids = vals[0] && typeof vals[0] === 'object' ? vals[0] : readLegacyJson('rg_vid');
-      var aud = vals[1] && typeof vals[1] === 'object' ? vals[1] : readLegacyJson('rg_audio');
-      var cal = vals[2] && typeof vals[2] === 'object' ? vals[2] : readLegacyJson('rg_perfs');
+      var media = vals[0] && typeof vals[0] === 'object' ? vals[0] : {};
+      var cal = vals[1] && typeof vals[1] === 'object' ? vals[1] : {};
+      var vids = media && media.vid ? media.vid : {};
+      var aud = media && media.audio ? media.audio : {};
       MP_EDITORIAL_HIGHLIGHTS_CACHE.videos = normalizeMediaHighlightsItems(vids, 'videos').filter(function (item) {
         return !item.hidden;
       });

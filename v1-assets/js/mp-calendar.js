@@ -1,8 +1,11 @@
 /**
- * v1 performances module for mp/calendar.html — same rendering logic as live index
- * (upcoming by year, past archive by category, modal, print).
- * Base data comes from v1-assets/data/calendar-data.json, but perf_<lang>, rg_perfs,
- * and rg_past_perfs are resolved live from Firestore when available.
+ * Public-safe calendar runtime for mp/calendar.html.
+ *
+ * This module only reads the bundled public payload from
+ * /v1-assets/data/calendar-data.json.
+ *
+ * Do not reintroduce Firestore/localStorage admin fallbacks here. Internal/admin
+ * event records must be sanitized at build-time before they ever reach public JS.
  */
 (function () {
   'use strict';
@@ -11,9 +14,7 @@
   var pastPublicExpanded = false;
   var currentLang = 'en';
   var MP_PAST_PERFS = [];
-  var MP_FIRESTORE_PROJECT_ID = 'rolandoguy-57d63';
   var LIVE_PERF_HEADER_DOCS = {};
-  var LIVE_PERF_HEADER_PROMISES = {};
   var titleChoiceLogged = false;
   var modalLocaleChoiceLogged = false;
   var lastEventModalFocus = null;
@@ -60,75 +61,18 @@
     var k = normalizeLangCode(lang) || 'en';
     return map[k] || 'en-US';
   }
-  function readLegacyJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var parseMaybe = function (raw) {
-        if (!raw) return null;
-        try { return JSON.parse(raw); } catch (e) { return null; }
-      };
-      var direct = parseMaybe(window.localStorage.getItem(key));
-      if (direct != null) {
-        if (direct && typeof direct === 'object' && direct.value != null) return direct.value;
-        return direct;
-      }
-      var wrapped = parseMaybe(window.localStorage.getItem('rg_local_' + key));
-      if (wrapped && typeof wrapped === 'object' && wrapped.value != null) return wrapped.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-  function readLocalUnsyncedJson(key) {
-    try {
-      if (!window.localStorage) return null;
-      var raw = window.localStorage.getItem('rg_local_' + key);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.value != null) return parsed.value;
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-  function fetchFirestoreDocJson(key) {
-    var url = 'https://firestore.googleapis.com/v1/projects/' + MP_FIRESTORE_PROJECT_ID + '/databases/(default)/documents/rg/' + encodeURIComponent(key);
-    return fetch(url, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (doc) {
-        var v = doc && doc.fields && doc.fields.value && doc.fields.value.stringValue;
-        if (!v || typeof v !== 'string') return null;
-        try { return JSON.parse(v); } catch (e) { return null; }
-      })
-      .catch(function () { return null; });
-  }
-
   function ensureLivePerfHeader(lang) {
     var L = normalizeLangCode(lang) || 'en';
     var key = 'perf_' + L;
-    if (Object.prototype.hasOwnProperty.call(LIVE_PERF_HEADER_DOCS, key)) return Promise.resolve(LIVE_PERF_HEADER_DOCS[key]);
-    if (LIVE_PERF_HEADER_PROMISES[key]) return LIVE_PERF_HEADER_PROMISES[key];
-    LIVE_PERF_HEADER_PROMISES[key] = fetchFirestoreDocJson(key)
-      .then(function (doc) {
-        var localUnsynced = readLocalUnsyncedJson(key);
-        var best = (localUnsynced && typeof localUnsynced === 'object')
-          ? localUnsynced
-          : ((doc && typeof doc === 'object') ? doc : readLegacyJson(key));
-        LIVE_PERF_HEADER_DOCS[key] = (best && typeof best === 'object') ? best : null;
-        return LIVE_PERF_HEADER_DOCS[key];
-      })
-      .catch(function () {
-        var best = readLocalUnsyncedJson(key) || readLegacyJson(key);
-        LIVE_PERF_HEADER_DOCS[key] = (best && typeof best === 'object') ? best : null;
-        return LIVE_PERF_HEADER_DOCS[key];
-      })
-      .finally(function () {
-        delete LIVE_PERF_HEADER_PROMISES[key];
-      });
-    return LIVE_PERF_HEADER_PROMISES[key];
+    var best =
+      MP_CAL &&
+      MP_CAL.perfLocales &&
+      MP_CAL.perfLocales[key.slice(5)] &&
+      typeof MP_CAL.perfLocales[key.slice(5)] === 'object'
+        ? MP_CAL.perfLocales[key.slice(5)]
+        : null;
+    LIVE_PERF_HEADER_DOCS[key] = best;
+    return Promise.resolve(best);
   }
 
   function mpPick(lang, key, fb) {
@@ -192,6 +136,7 @@
     it: { badge: 'Solo su invito', detail: 'Evento privato - non aperto al pubblico' },
     fr: { badge: 'Sur invitation', detail: 'Événement privé - non ouvert au public' }
   };
+  var PERF_PRIVATE_DEFAULT_BG_URL = '/img/hero-bg.webp';
 
   function uiTable(lang) {
     var L = lang || currentLang || 'en';
@@ -383,7 +328,7 @@
       homepage: featuredVisual,
       calendar: featuredVisual
     });
-    return {
+    var out = {
       id: o.id != null ? o.id : ('perf-' + (idx + 1)),
       title: title,
       detail: detail,
@@ -402,6 +347,7 @@
       homepage_priority: Number.isFinite(homepagePriority) && homepagePriority >= 0 ? Math.floor(homepagePriority) : null,
       type: String(o.type || 'concert').trim().toLowerCase() || 'concert',
       venuePhoto: String(o.venuePhoto || o.image || '').trim(),
+      venuePhotoFocus: String(o.venuePhotoFocus || o.imageFocus || '').trim(),
       venueOpacity: o.venueOpacity,
       ticketPrice: String(o.ticketPrice || '').trim(),
       eventLink: String(o.eventLink || o.link || '').trim(),
@@ -409,6 +355,24 @@
       extDesc: String(o.extDesc || '').trim(),
       modalImg: String(o.modalImg || '').trim(),
       modalImgHide: isTruthyFlag(o.modalImgHide),
+      moreInfoDisplayMode: String(o.moreInfoDisplayMode || '').trim(),
+      moreInfoTemplate: String(o.moreInfoTemplate || '').trim(),
+      moreInfoTitle: String(o.moreInfoTitle || '').trim(),
+      moreInfoSubtitle: String(o.moreInfoSubtitle || '').trim(),
+      moreInfoArtists: String(o.moreInfoArtists || '').trim(),
+      moreInfoAddress: String(o.moreInfoAddress || '').trim(),
+      moreInfoDescription: String(o.moreInfoDescription || '').trim(),
+      moreInfoExtra: String(o.moreInfoExtra || '').trim(),
+      moreInfoImage1: String(o.moreInfoImage1 || '').trim(),
+      moreInfoImage1Focus: String(o.moreInfoImage1Focus || '').trim(),
+      moreInfoImage2: String(o.moreInfoImage2 || '').trim(),
+      moreInfoImage2Focus: String(o.moreInfoImage2Focus || '').trim(),
+      moreInfoImage3: String(o.moreInfoImage3 || '').trim(),
+      moreInfoImage3Focus: String(o.moreInfoImage3Focus || '').trim(),
+      moreInfoImage4: String(o.moreInfoImage4 || '').trim(),
+      moreInfoImage4Focus: String(o.moreInfoImage4Focus || '').trim(),
+      moreInfoImage5: String(o.moreInfoImage5 || '').trim(),
+      moreInfoImage5Focus: String(o.moreInfoImage5Focus || '').trim(),
       hidePrivateBadge: isTruthyFlag(o.hidePrivateBadge),
       hidePrivateDetailLine: isTruthyFlag(o.hidePrivateDetailLine),
       modalEnabled:
@@ -474,6 +438,8 @@
       eventLinkLabel_it: o.eventLinkLabel_it,
       eventLinkLabel_fr: o.eventLinkLabel_fr
     };
+    if (Object.prototype.hasOwnProperty.call(o, 'private')) out.private = isTruthyFlag(o.private);
+    return out;
   }
   function normalizeRgPerfsList(arr) {
     if (!Array.isArray(arr)) return [];
@@ -583,14 +549,8 @@
     return true;
   }
   function loadPastPerfs() {
-    return fetchFirestoreDocJson('rg_past_perfs')
-      .then(function (doc) {
-        var best = Array.isArray(doc) ? doc : readLegacyJson('rg_past_perfs');
-        MP_PAST_PERFS = normalizePastPublicList(best);
-      })
-      .catch(function () {
-        MP_PAST_PERFS = normalizePastPublicList(readLegacyJson('rg_past_perfs'));
-      });
+    MP_PAST_PERFS = normalizePastPublicList(MP_CAL && MP_CAL.pastPerfs);
+    return Promise.resolve(MP_PAST_PERFS);
   }
   function renderPastPerformancesPublic() {
     var section = document.getElementById('pastPerformancesSection');
@@ -734,7 +694,10 @@
     return { month: s, year: '' };
   }
 
-  /* detail/extDesc + lang≠en: base_<lang> → base → base_en (aligns with legacy admin detail_<lang>||detail). Others: base_<lang> → base_en → base. */
+  /* Public descriptive text must stay in the active language only.
+   * detail/extDesc: base_<lang> only for lang≠en; for en allow base_en then shared base.
+   * Other fields: base_<lang> → base_en → base.
+   */
   function perfLocaleFieldResolve(p, base, lang) {
     if (!p) return { value: '', source: '' };
     var L = normalizeLangCode(lang) || 'en';
@@ -746,20 +709,23 @@
         source: locKey
       };
     }
-    if (L !== 'en' && (base === 'detail' || base === 'extDesc')) {
+    if (base === 'eventLinkLabel') {
+      var sharedLabel = p[base];
+      if (sharedLabel != null && String(sharedLabel).trim() !== '') {
+        return {
+          value: String(sharedLabel).trim(),
+          source: base
+        };
+      }
+      return { value: '', source: '' };
+    }
+    if (base === 'detail' || base === 'extDesc') {
+      if (L !== 'en') return { value: '', source: '' };
       var sharedDetail = p[base];
       if (sharedDetail != null && String(sharedDetail).trim() !== '') {
         return {
           value: perfNormalizeSupportingText(String(sharedDetail).trim(), base, L),
           source: base
-        };
-      }
-      var enKey = base + '_en';
-      var enLoc = p[enKey];
-      if (enLoc != null && String(enLoc).trim() !== '') {
-        return {
-          value: perfNormalizeSupportingText(String(enLoc).trim(), base, L),
-          source: enKey
         };
       }
       return { value: '', source: '' };
@@ -783,6 +749,17 @@
   }
   function perfLocaleField(p, base, lang) {
     return perfLocaleFieldResolve(p, base, lang).value;
+  }
+  function resolvePerfCtaLabel(p, lang) {
+    var chosenLabel = perfLocaleField(p, 'eventLinkLabel', lang);
+    if (chosenLabel) return chosenLabel;
+    var t = uiTable(lang);
+    var ticketUrl = perfLocaleField(p, 'eventLink', lang);
+    var hasPrice = p && p.ticketPrice && String(p.ticketPrice).trim() !== '';
+    var isSalesLike =
+      ticketUrl && /ticket|booking|reserv|kaufen|billet|entrada|biglietto|billet/i.test(String(ticketUrl));
+    if (hasPrice || isSalesLike) return t['perf.ticketsInfo'] || 'Tickets & Info';
+    return t['perf.moreInfo'] || 'More info';
   }
   var PERF_PLACEHOLDER_TRANSLATIONS = {
     en: 'To be announced',
@@ -866,9 +843,15 @@
     var low = s.toLowerCase();
     return /private|invitation only|nur auf einladung|evento privado|evento privato|evenement prive|sur invitation/.test(low);
   }
+  function perfHasExplicitPrivateFlag(p) {
+    return !!(p && Object.prototype.hasOwnProperty.call(p, 'private'));
+  }
+  function perfExplicitPrivateValue(p) {
+    return !!(perfHasExplicitPrivateFlag(p) && isTruthyFlag(p.private));
+  }
   function perfIsPrivateEvent(p, lang) {
     if (!p) return false;
-    if (isTruthyFlag(p.private)) return true;
+    if (perfHasExplicitPrivateFlag(p)) return perfExplicitPrivateValue(p);
     var type = String(p.type || '').trim().toLowerCase();
     if (type === 'houseconcert' || type === 'private' || type === 'private_event' || type === 'invitation_only') return true;
     var detailCandidates = [
@@ -893,6 +876,187 @@
     var detail = String(fallbackDetail || '').trim();
     if (!detail) return perfPrivateUiText(lang, 'detail');
     return perfIsPrivateDescriptorText(detail) ? perfPrivateUiText(lang, 'detail') : detail;
+  }
+  function perfPrivateBackgroundUrl(p, lang) {
+    var explicit = String(p && p.venuePhoto || '').trim();
+    if (explicit) return explicit;
+    return perfIsPrivateEvent(p, lang) ? PERF_PRIVATE_DEFAULT_BG_URL : '';
+  }
+  function normalizePerfBackgroundFocus(raw) {
+    var value = String(raw || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    var allowed = {
+      'top left': 1,
+      'top center': 1,
+      'top right': 1,
+      'center left': 1,
+      'center center': 1,
+      'center right': 1,
+      'bottom left': 1,
+      'bottom center': 1,
+      'bottom right': 1
+    };
+    return allowed[value] ? value : 'center center';
+  }
+  function moreInfoUsesEditorialTemplate(p) {
+    return String((p && p.moreInfoDisplayMode) || '').trim().toLowerCase() === 'editorial-template';
+  }
+  function moreInfoTemplateClass(raw) {
+    var value = String(raw || '').trim().toLowerCase();
+    if (value === 'duo') return 'rg-ed--duo-a';
+    if (value === 'trio') return 'rg-ed--trio-a';
+    if (value === 'quartet') return 'rg-ed--quartet-a';
+    if (value === 'ensemble') return 'rg-ed--ensemble-a';
+    return 'rg-ed--solo-a';
+  }
+  function moreInfoImageSlotsForTemplate(raw) {
+    var value = String(raw || '').trim().toLowerCase();
+    if (value === 'duo') return ['primary', 'secondary'];
+    if (value === 'trio') return ['primary', 'secondary', 'tertiary'];
+    if (value === 'quartet') return ['q1', 'q2', 'q3', 'q4'];
+    if (value === 'ensemble') return ['hero', 'e1', 'e2', 'e3', 'e4'];
+    return ['hero'];
+  }
+  function moreInfoImageData(p, idx) {
+    var n = String(idx);
+    return {
+      url: String((p && p['moreInfoImage' + n]) || '').trim(),
+      focus: normalizePerfBackgroundFocus(p && p['moreInfoImage' + n + 'Focus'])
+    };
+  }
+  function moreInfoAllImages(p, fallbackUrl) {
+    var out = [];
+    var i;
+    for (i = 1; i <= 5; i++) {
+      var item = moreInfoImageData(p, i);
+      if (item.url) out.push(item);
+    }
+    if (!out.length && fallbackUrl) out.push({ url: fallbackUrl, focus: 'center center' });
+    return out;
+  }
+  function moreInfoImageAt(images, idx) {
+    if (!images.length) return { url: '', focus: 'center center' };
+    return images[idx] || images[images.length - 1] || images[0];
+  }
+  function moreInfoFigureHtml(slot, item) {
+    var focusClass = 'is-focus-' + normalizePerfBackgroundFocus(item && item.focus).replace(/\s+/g, '-');
+    var bg = item && item.url ? ' style="--rg-ed-image:url(\'' + escHtml(String(item.url).replace(/'/g, '%27')) + '\');"' : '';
+    return '<figure class="rg-ed__image rg-ed__image--' + slot + ' ' + focusClass + '"' + bg + '></figure>';
+  }
+  function moreInfoArtworkHtml(p, fallbackUrl, title, subtitle, meta1, meta2, body) {
+    var template = String((p && p.moreInfoTemplate) || 'solo').trim().toLowerCase() || 'solo';
+    var cls = moreInfoTemplateClass(template);
+    var images = moreInfoAllImages(p, fallbackUrl);
+    var media = '';
+    if (template === 'duo') {
+      media = '<div class="rg-ed__media rg-ed__media--split-8-4">' +
+        moreInfoFigureHtml('primary', moreInfoImageAt(images, 0)) +
+        moreInfoFigureHtml('secondary', moreInfoImageAt(images, 1)) +
+        '</div><div class="rg-ed__overlay rg-ed__overlay--horizontal"></div>';
+    } else if (template === 'trio') {
+      media = '<div class="rg-ed__media rg-ed__media--trio">' +
+        moreInfoFigureHtml('primary', moreInfoImageAt(images, 0)) +
+        '<div class="rg-ed__stack">' +
+        moreInfoFigureHtml('secondary', moreInfoImageAt(images, 1)) +
+        moreInfoFigureHtml('tertiary', moreInfoImageAt(images, 2)) +
+        '</div></div><div class="rg-ed__overlay rg-ed__overlay--vertical"></div>';
+    } else if (template === 'quartet') {
+      media = '<div class="rg-ed__media rg-ed__media--grid-2x2">' +
+        moreInfoFigureHtml('q1', moreInfoImageAt(images, 0)) +
+        moreInfoFigureHtml('q2', moreInfoImageAt(images, 1)) +
+        moreInfoFigureHtml('q3', moreInfoImageAt(images, 2)) +
+        moreInfoFigureHtml('q4', moreInfoImageAt(images, 3)) +
+        '</div><div class="rg-ed__panel rg-ed__panel--text"></div>';
+    } else if (template === 'ensemble') {
+      media = '<div class="rg-ed__media rg-ed__media--ensemble">' +
+        moreInfoFigureHtml('hero', moreInfoImageAt(images, 0)) +
+        '<div class="rg-ed__row rg-ed__row--four">' +
+        moreInfoFigureHtml('e1', moreInfoImageAt(images, 1)) +
+        moreInfoFigureHtml('e2', moreInfoImageAt(images, 2)) +
+        moreInfoFigureHtml('e3', moreInfoImageAt(images, 3)) +
+        moreInfoFigureHtml('e4', moreInfoImageAt(images, 4)) +
+        '</div></div><div class="rg-ed__overlay rg-ed__overlay--vertical"></div>';
+    } else {
+      media = '<div class="rg-ed__media">' +
+        moreInfoFigureHtml('hero', moreInfoImageAt(images, 0)) +
+        '</div><div class="rg-ed__overlay rg-ed__overlay--vertical"></div>';
+    }
+    return '<article class="rg-ed rg-ed--45 ' + cls + '">' +
+      media +
+      '<div class="' + (template === 'quartet' ? 'rg-ed__text rg-ed__text--panel-left' : 'rg-ed__text rg-ed__text--bottom-left') + '">' +
+      '<div class="rg-ed__label">' + escHtml((template === 'ensemble' ? 'SMALL ENSEMBLE' : template).toUpperCase()) + '</div>' +
+      '<h1 class="rg-ed__title">' + escHtml(title) + '</h1>' +
+      (subtitle ? '<div class="rg-ed__subtitle">' + escHtml(subtitle) + '</div>' : '') +
+      '<div class="rg-ed__meta"><div class="rg-ed__meta-line">' + escHtml(meta1) + '</div><div class="rg-ed__meta-line">' + escHtml(meta2) + '</div></div>' +
+      (body ? '<div class="rg-ed__body">' + escHtml(body) + '</div>' : '') +
+      '</div></article>';
+  }
+  function renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, fallbackUrl) {
+    var editorial = document.getElementById('emEditorial');
+    var shell = document.getElementById('eventModalShell');
+    if (!editorial || !shell) return false;
+    if (!moreInfoUsesEditorialTemplate(p)) {
+      editorial.style.display = 'none';
+      editorial.innerHTML = '';
+      shell.classList.remove('is-editorial');
+      return false;
+    }
+    var title = String(p.moreInfoTitle || '').trim() || modalTitle;
+    var subtitle = String(p.moreInfoSubtitle || '').trim();
+    var artists = String(p.moreInfoArtists || '').trim();
+    var address = String(p.moreInfoAddress || '').trim();
+    var description = String(p.moreInfoDescription || '').trim() || modalBody;
+    var extra = String(p.moreInfoExtra || '').trim();
+    var meta1 = perfDateLine(p, currentLang);
+    var meta2 = venueCity;
+    var t = uiTable(currentLang);
+    var labelArtists = t['perf.editorialArtists'] || 'Artists';
+    var labelDetails = t['perf.editorialDetails'] || 'Event details';
+    var labelType = t['perf.editorialType'] || 'Type';
+    var labelDate = t['perf.editorialDate'] || 'Date & time';
+    var labelVenue = t['perf.editorialVenue'] || 'Venue';
+    var labelAddress = t['perf.editorialAddress'] || 'Address';
+    var labelTicket = t['perf.editorialTicket'] || 'Ticket price';
+    var labelAbout = t['perf.editorialAbout'] || 'About this event';
+    var labelExtra = t['perf.editorialExtra'] || 'Additional information';
+    var template = String((p && p.moreInfoTemplate) || 'solo').trim().toLowerCase() || 'solo';
+    var cls = moreInfoTemplateClass(template);
+    var images = moreInfoAllImages(p, fallbackUrl);
+    var heroImg = moreInfoImageAt(images, 0);
+    var heroHtml = heroImg.url ? '<div class="event-modal-editorial__hero" style="--rg-ed-image:url(\'' + escHtml(String(heroImg.url).replace(/'/g, '%27')) + '\'); --rg-ed-focus:' + normalizePerfBackgroundFocus(heroImg.focus) + ';"></div>' : '';
+    var customLabel = String(p.moreInfoLabel || '').trim();
+    var labelFallbacks = {
+      solo: t['perf.editorialLabelSolo'] || 'Solo',
+      duo: t['perf.editorialLabelDuo'] || 'Duo',
+      trio: t['perf.editorialLabelTrio'] || 'Trio',
+      quartet: t['perf.editorialLabelQuartet'] || 'Quartet',
+      ensemble: t['perf.editorialLabelEnsemble'] || 'Ensemble'
+    };
+    var displayLabel = customLabel || (labelFallbacks[template] || template.charAt(0).toUpperCase() + template.slice(1));
+    var contentHtml = '<div class="event-modal-editorial__content">';
+    contentHtml += '<div class="event-modal-editorial__header">';
+    contentHtml += '<div class="event-modal-editorial__label">' + escHtml(displayLabel) + '</div>';
+    contentHtml += '<h2 class="event-modal-editorial__title">' + escHtml(title) + '</h2>';
+    if (subtitle) contentHtml += '<div class="event-modal-editorial__subtitle">' + escHtml(subtitle) + '</div>';
+    if (artists) contentHtml += '<div class="event-modal-editorial__artists">' + escHtml(artists) + '</div>';
+    contentHtml += '</div>';
+    contentHtml += '<div class="event-modal-editorial__meta">';
+    contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelType) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(typeLabel || '') + '</span></div>';
+    contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelDate) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(meta1) + '</span></div>';
+    contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelVenue) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(meta2) + '</span></div>';
+    if (address) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelAddress) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(address) + '</span></div>';
+    if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelTicket) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(p.ticketPrice) + '</span></div>';
+    contentHtml += '</div>';
+    if (description) contentHtml += '<div class="event-modal-editorial__body"><p>' + escHtml(description).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p></div>';
+    var flyerUrl = String(p.flyerImg || '').trim();
+    if (flyerUrl) {
+      contentHtml += '<div class="event-modal-editorial__flyer"><img src="' + escHtml(flyerUrl) + '" alt="' + escHtml(title) + ' flyer" loading="lazy"></div>';
+    }
+    if (extra) contentHtml += '<div class="event-modal-editorial__extra"><div class="event-modal-editorial__extra-label">' + escHtml(labelExtra) + '</div><p>' + escHtml(extra).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p></div>';
+    contentHtml += '</div>';
+    editorial.innerHTML = '<div class="event-modal-editorial__inner ' + cls + '">' + heroHtml + contentHtml + '</div>';
+    editorial.style.display = '';
+    shell.classList.add('is-editorial');
+    return true;
   }
   var PERF_COUNTRY_NAME_TO_CODE = {
     germany: 'DE',
@@ -1129,7 +1293,7 @@
           };
         }
       }
-      var venueImgAbs = toAbsolutePublicUrl(p.venuePhoto);
+      var venueImgAbs = toAbsolutePublicUrl(perfPrivateBackgroundUrl(p, currentLang));
       ev.image = [venueImgAbs || 'https://rolandoguy.com/og-image.jpg'];
       var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
       if (!isPrivate && ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
@@ -1238,7 +1402,7 @@
       var isPrivate = perfIsPrivateEvent(p, currentLang);
       var isFeaturedVisual = perfFeaturedVisual(p);
       var isFeaturedLayout = perfFeaturedLayout(p);
-      var typeLabel = types[p.type] || p.type || types.concert;
+      var typeLabel = isPrivate ? (tPerf['perf.privateEventType'] || 'Private event') : (types[p.type] || p.type || types.concert);
       var featuredLabel = tPerf['ui.featured'] || 'Featured';
       var badge =
         p.status === 'current' && !isPastSection
@@ -1318,15 +1482,17 @@
         (p.ticketPrice && p.ticketPrice.trim()) ||
         (linkForModal && /^https?:\/\//i.test(String(linkForModal).trim())) ||
         (p.flyerImg && p.flyerImg.trim()) ||
-        (p.modalImg && p.modalImg.trim());
-      var allowModalButton = isPrivate ? false : (p.modalEnabled === false ? false : hasExtra);
+        (p.modalImg && p.modalImg.trim()) ||
+        moreInfoUsesEditorialTemplate(p);
+      var allowModalButton = isPrivate ? false : (p.modalEnabled === false ? false : (p.modalEnabled === true ? true : hasExtra));
       var moreRouteClass = allowModalButton ? ' perf-item--more' : ' perf-item--nomore';
       var pastClass = isEffectivePast ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var privateClass = isPrivate ? ' perf-item--private' : '';
       var featuredVisualClass = isFeaturedVisual && !isEffectivePast ? ' perf-item-featured' : '';
       var featuredLayoutClass = isFeaturedLayout && !isEffectivePast ? ' perf-item-featured-layout' : '';
-      var venuePhotoResolved = normalizeVenuePhotoUrl(p.venuePhoto);
+      var venuePhotoResolved = normalizeVenuePhotoUrl(perfPrivateBackgroundUrl(p, currentLang));
+      var venuePhotoFocus = normalizePerfBackgroundFocus(p.venuePhotoFocus);
       var hasVenuePhoto = !!venuePhotoResolved;
       var photoClass = hasVenuePhoto ? ' perf-item-has-photo' : ' perf-item-no-photo';
       var itemId = 'event-' + safeDomToken(p.id, i + 1);
@@ -1368,7 +1534,12 @@
             .replace(/&/g, '&amp;')
             .replace(/\"/g, '&quot;')
             .replace(/</g, '&lt;') +
-          '&quot;)"></div>';
+          '&quot;);background-position:' +
+          String(venuePhotoFocus)
+            .replace(/&/g, '&amp;')
+            .replace(/\"/g, '&quot;')
+            .replace(/</g, '&lt;') +
+          '"></div>';
       }
       var monthYearParts = perfDateParts(p, currentLang);
       h +=
@@ -1404,7 +1575,7 @@
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>') +
           '</div>';
-      var moreInfoLabel = tPerf['perf.moreInfo'] || 'More Info';
+      var moreInfoLabel = resolvePerfCtaLabel(p, currentLang);
       if (allowModalButton)
         h +=
           '<button class="perf-more-btn no-print" onclick="event.stopPropagation();openEventModal(' +
@@ -1593,7 +1764,7 @@
           body += '<h2 class="year">' + esc(yrShown) + '</h2>';
           groups[yr].forEach(function (p) {
             var isPrivate = perfIsPrivateEvent(p, lang);
-            var typeLabel = types[p.type] || p.type || types.other || 'Event';
+            var typeLabel = isPrivate ? (tPrint['perf.privateEventType'] || 'Private event') : (types[p.type] || p.type || types.other || 'Event');
             var parts = perfDateParts(p, lang);
             var monthStr = parts.month || monthOut(p.month);
             var yearStr = parts.year ? (' ' + parts.year) : '';
@@ -1723,8 +1894,8 @@
         tango: 'Tango Night',
         other: 'Event'
       };
-    var typeLabel = types[p.type] || p.type || '';
     var isPrivate = perfIsPrivateEvent(p, currentLang);
+    var typeLabel = isPrivate ? ((uiTable(currentLang)['perf.privateEventType']) || 'Private event') : (types[p.type] || p.type || '');
     var detail = perfLocalizedField(p, 'detail', currentLang);
     if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
     var modalTitle = resolveEventTitle(p, currentLang);
@@ -1738,19 +1909,28 @@
     // Modal body should be language-exclusive, not additive:
     // prefer localized extended text, then shared extended text, then short detail fallback.
     var modalBody = extBody || detail || '';
-    document.getElementById('emDetail').textContent = modalBody;
+    var escapedBody = modalBody.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
+    document.getElementById('emDetail').innerHTML = bodyWithBreaks;
+    var modalFallbackImg =
+      p.modalImg && p.modalImg.trim()
+        ? p.modalImg
+        : p.venuePhoto && p.venuePhoto.trim()
+          ? p.venuePhoto
+          : '';
+    var editorialActive = renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, modalFallbackImg);
+    document.getElementById('emType').style.display = editorialActive ? 'none' : '';
+    document.getElementById('emTitle').style.display = editorialActive ? 'none' : '';
+    document.getElementById('emDate').style.display = editorialActive ? 'none' : '';
+    document.getElementById('emVenue').style.display = editorialActive ? 'none' : '';
+    document.getElementById('emDetail').style.display = editorialActive ? 'none' : '';
 
     var imgEl = document.getElementById('emVenueImg');
     var hideModalHero = isTruthyFlag(p.modalImgHide);
-    if (hideModalHero) {
+    if (editorialActive || hideModalHero) {
       imgEl.style.display = 'none';
     } else {
-      var modalSrc =
-        p.modalImg && p.modalImg.trim()
-          ? p.modalImg
-          : p.venuePhoto && p.venuePhoto.trim()
-            ? p.venuePhoto
-            : '';
+      var modalSrc = modalFallbackImg;
       if (modalSrc) {
         imgEl.style.backgroundImage = 'url(' + modalSrc + ')';
         imgEl.style.display = '';
@@ -1764,7 +1944,7 @@
     extEl.style.display = 'none';
 
     var priceWrap = document.getElementById('emPrice');
-    if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
+    if (!editorialActive && !isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
       document.getElementById('emPriceVal').textContent = p.ticketPrice;
       priceWrap.style.display = '';
     } else {
@@ -1775,13 +1955,7 @@
     var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
     if (!isPrivate && ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
       linkEl.href = ticketUrl;
-      var t = uiTable(currentLang);
-      var legacyEnglish = 'Tickets & Info';
-      var storedLabel = perfLocaleField(p, 'eventLinkLabel', currentLang);
-      linkEl.textContent =
-        storedLabel && storedLabel !== legacyEnglish
-          ? storedLabel
-          : t['perf.ticketsInfo'] || legacyEnglish;
+      linkEl.textContent = resolvePerfCtaLabel(p, currentLang);
       linkEl.style.display = '';
     } else {
       linkEl.style.display = 'none';
@@ -1821,7 +1995,7 @@
     }
 
     var flyerEl = document.getElementById('emFlyerImg');
-    if (p.flyerImg && p.flyerImg.trim()) {
+    if (!editorialActive && p.flyerImg && p.flyerImg.trim()) {
       flyerEl.src = p.flyerImg;
       var tFly = uiTable(currentLang);
       var flyTail = String(tFly['perf.flyerAltTail'] || '').trim();
@@ -1961,57 +2135,39 @@
   });
 
   var dataUrl = '/v1-assets/data/calendar-data.json';
-  Promise.all([
-    fetch(dataUrl)
-      .then(function (r) {
-        if (!r.ok) throw new Error(r.statusText);
-        return r.json();
-      })
-      .catch(function () {
-        var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
-        return {
-          perf: {
-            h2: mpPick(lang, 'perf.loadFallbackH2', 'Engagements &amp; <em>Concerts</em>'),
-            intro: mpPick(lang, 'perf.dataLoadError', 'Calendar data could not be loaded.'),
-            eventTypes: {
-              opera: 'Opera',
-              concert: 'Concert',
-              recital: 'Recital',
-              show: 'Show',
-              gala: 'Gala',
-              collaboration: 'Collaboration',
-              houseconcert: 'House Concert',
-              tango: 'Tango Night',
-              other: 'Event',
-              operetta: 'Operetta'
-            }
-          },
-          perfs: []
-        };
-      }),
-    loadPastPerfs(),
-    fetchFirestoreDocJson('rg_perfs')
-  ])
-    .then(function (parts) {
-      MP_CAL = parts[0];
-      var rgPerfsLive = parts[2];
-      var rgPerfsLocalUnsynced = readLocalUnsyncedJson('rg_perfs');
-      if (Array.isArray(rgPerfsLocalUnsynced)) {
-        MP_CAL.perfs = normalizeRgPerfsList(rgPerfsLocalUnsynced);
-        console.log('[Calendar] Using local unsynced rg_perfs override:', MP_CAL.perfs.length);
-      } else if (Array.isArray(rgPerfsLive)) {
-        MP_CAL.perfs = normalizeRgPerfsList(rgPerfsLive);
-        console.log('[Calendar] Using live rg_perfs from Firestore:', MP_CAL.perfs.length);
-      } else {
-        var legacyLocal = readLegacyJson('rg_perfs');
-        if (Array.isArray(legacyLocal)) {
-          MP_CAL.perfs = normalizeRgPerfsList(legacyLocal);
-          console.log('[Calendar] Using local rg_perfs fallback:', MP_CAL.perfs.length);
-        } else {
-          MP_CAL.perfs = normalizeRgPerfsList(MP_CAL.perfs);
-          console.log('[Calendar] Using bundled calendar fallback:', MP_CAL.perfs.length);
-        }
-      }
+  fetch(dataUrl)
+    .then(function (r) {
+      if (!r.ok) throw new Error(r.statusText);
+      return r.json();
+    })
+    .catch(function () {
+      var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
+      return {
+        perf: {
+          h2: mpPick(lang, 'perf.loadFallbackH2', 'Engagements &amp; <em>Concerts</em>'),
+          intro: mpPick(lang, 'perf.dataLoadError', 'Calendar data could not be loaded.'),
+          eventTypes: {
+            opera: 'Opera',
+            concert: 'Concert',
+            recital: 'Recital',
+            show: 'Show',
+            gala: 'Gala',
+            collaboration: 'Collaboration',
+            houseconcert: 'House Concert',
+            tango: 'Tango Night',
+            other: 'Event',
+            operetta: 'Operetta'
+          }
+        },
+        perfs: [],
+        pastPerfs: []
+      };
+    })
+    .then(function (payload) {
+      MP_CAL = payload;
+      MP_CAL.perfs = normalizeRgPerfsList(MP_CAL.perfs);
+      loadPastPerfs();
+      console.log('[Calendar] Using bundled public calendar payload:', MP_CAL.perfs.length);
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
       resolveActiveLang('initial-load');
       applyPerfHeader();

@@ -876,7 +876,7 @@
   var PROGRAMME_OFFER_STATUS_VALUES = ['draft', 'active', 'sent', 'archived'];
   var state = {
     lang: 'en',
-    section: 'home',
+    section: 'cases',
     dirty: false,
     api: null,
     repCards: [],
@@ -12610,6 +12610,7 @@
       var st = safeString(e.editorialStatus || '');
       var badges = [];
       if (st) badges.push({ kind: 'warn', label: st });
+      if (perfIsPrivateEventRecord(e, state.lang || 'en')) badges.push({ kind: 'ok', label: 'private' });
       var revenueAmount = Number(e && e.revenueAmount);
       var hasRevenueAmount = Number.isFinite(revenueAmount) && revenueAmount > 0;
       var revenueStatus = safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase();
@@ -12698,9 +12699,10 @@
     $('perf-actual-received-amount').value = safeString(e.actualReceivedAmount);
     setSelectWithCustomValue('perf-actual-received-currency', safeString(e.actualReceivedCurrency || '').trim().toUpperCase() || '', '');
     $('perf-venuePhoto').value = safeString(e.venuePhoto);
+    setSelectWithCustomValue('perf-venuePhotoFocus', normalizePerfBackgroundFocus(e.venuePhotoFocus), 'center center');
     var op = normalizePerfVenueOpacity(e.venueOpacity);
     $('perf-venueOpacity').value = String(op);
-    $('perf-venuePreview').src = safeString(e.venuePhoto);
+    $('perf-venuePreview').src = perfResolvedBackgroundUrl(e.venuePhoto, perfIsPrivateEventRecord(e, state.lang || 'en'));
     $('perf-venuePreview').style.opacity = String(op / 100);
     $('perf-venuePreview').style.filter = 'none';
     setSelectWithCustomValue('perf-status', safeString(e.status), 'upcoming');
@@ -12717,6 +12719,7 @@
       homepage: perfFeaturedVisual(e),
       calendar: perfFeaturedVisual(e)
     });
+    if ($('perf-privateEvent')) $('perf-privateEvent').value = perfIsPrivateEventRecord(e, state.lang || 'en') ? 'true' : 'false';
     if ($('perf-privateBadge')) $('perf-privateBadge').value = e.hidePrivateBadge ? 'hide' : 'show';
     if ($('perf-privateBadgeText')) $('perf-privateBadgeText').value = localeFirst('privateBadgeText');
     if ($('perf-privateDetailLine')) $('perf-privateDetailLine').value = e.hidePrivateDetailLine ? 'hide' : 'show';
@@ -12746,7 +12749,6 @@
     updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
     updatePerfTranslationWarnings();
-    syncPerfTxPicker();
   }
   function setSelectWithCustomValue(id, rawValue, fallback) {
     var el = $(id);
@@ -12788,18 +12790,117 @@
     if (!sort) return 'Date';
     return formatVisibleDate(sort) || 'Date';
   }
+  var PERF_PRIVATE_DEFAULT_BG = '/img/hero-bg.webp';
+  var PERF_PRIVATE_UI_TEXT = {
+    en: { badge: 'Invitation only', detail: 'Private event - not open to the public' },
+    de: { badge: 'Nur auf Einladung', detail: 'Private Veranstaltung - nicht öffentlich zugänglich' },
+    es: { badge: 'Solo por invitación', detail: 'Evento privado - no abierto al público' },
+    it: { badge: 'Solo su invito', detail: 'Evento privato - non aperto al pubblico' },
+    fr: { badge: 'Sur invitation', detail: 'Événement privé - non ouvert au public' }
+  };
+  function perfPrivateUiText(lang, key) {
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var row = PERF_PRIVATE_UI_TEXT[L] || PERF_PRIVATE_UI_TEXT.en;
+    return safeString(row && row[key]).trim() || safeString(PERF_PRIVATE_UI_TEXT.en && PERF_PRIVATE_UI_TEXT.en[key]).trim();
+  }
+  function isLegacyPerfCtaFallbackLabel(value) {
+    var s = safeString(value).trim().toLowerCase();
+    return s === 'tickets & info' || s === 'tickets & infos' || s === 'more info' || s === 'details';
+  }
+  function normalizePerfEventCtaLabels(e, sourceLabel, activeLang) {
+    if (!e || !isObject(e)) return e;
+    var baseLabel = sourceLabel == null ? safeString(e.eventLinkLabel) : safeString(sourceLabel);
+    if (sourceLabel != null || safeString(e.eventLinkLabel).trim() !== '') e.eventLinkLabel = baseLabel;
+    var lang = safeString(activeLang || '').trim().toLowerCase();
+    if (lang && LANGS.indexOf(lang) >= 0) e['eventLinkLabel_' + lang] = baseLabel;
+    LANGS.forEach(function (L) {
+      if (L === lang) return;
+      var labelKey = 'eventLinkLabel_' + L;
+      var urlKey = 'eventLink_' + L;
+      var localizedUrl = safeString(e[urlKey]).trim();
+      var localizedLabel = safeString(e[labelKey]).trim();
+      if (localizedUrl) return;
+      if (!localizedLabel || isLegacyPerfCtaFallbackLabel(localizedLabel)) e[labelKey] = baseLabel;
+    });
+    return e;
+  }
+  function perfTruthyFlag(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+  }
+  function perfSupportingTextKey(raw) {
+    return safeString(raw)
+      .trim()
+      .toLowerCase()
+      .replace(/'/g, '')
+      .replace(/\u2019/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+  function perfIsPrivateDescriptorText(raw) {
+    var s = safeString(raw).trim();
+    if (!s) return false;
+    var key = perfSupportingTextKey(s);
+    if (key === 'private_event' || key === 'private_engagement' || key === 'by_invitation_only' || key === 'closed_event') return true;
+    s = s.toLowerCase();
+    return /private|invitation only|nur auf einladung|evento privado|evento privato|evenement prive|sur invitation/.test(s);
+  }
+  function perfHasExplicitPrivateFlag(e) {
+    return !!(e && isObject(e) && Object.prototype.hasOwnProperty.call(e, 'private'));
+  }
+  function perfExplicitPrivateValue(e) {
+    return !!(perfHasExplicitPrivateFlag(e) && (e.private === true || perfTruthyFlag(e.private)));
+  }
+  function perfIsPrivateEventRecord(e, lang) {
+    if (!e || !isObject(e)) return false;
+    if (perfHasExplicitPrivateFlag(e)) return perfExplicitPrivateValue(e);
+    var type = safeString(e.type).trim().toLowerCase();
+    if (type === 'houseconcert' || type === 'private' || type === 'private_event' || type === 'invitation_only') return true;
+    var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
+    var detailCandidates = [e['detail_' + L], e.detail, e.detail_en, e.extDesc, e['extDesc_' + L], e.extDesc_en];
+    if (detailCandidates.some(perfIsPrivateDescriptorText)) return true;
+    var titleCandidates = [e.title, e.name, e['title_' + L], e.title_en];
+    return titleCandidates.some(function (value) {
+      var key = perfSupportingTextKey(value);
+      return key === 'private_event' || key === 'private_engagement';
+    });
+  }
+  function perfResolvedBackgroundUrl(rawUrl, isPrivate) {
+    var bg = safeString(rawUrl).trim();
+    if (bg) return bg;
+    return isPrivate ? PERF_PRIVATE_DEFAULT_BG : '';
+  }
+  function normalizePerfBackgroundFocus(raw) {
+    var value = safeString(raw).trim().toLowerCase().replace(/\s+/g, ' ');
+    var allowed = {
+      'top left': 1,
+      'top center': 1,
+      'top right': 1,
+      'center left': 1,
+      'center center': 1,
+      'center right': 1,
+      'bottom left': 1,
+      'bottom center': 1,
+      'bottom right': 1
+    };
+    return allowed[value] ? value : 'center center';
+  }
   function updatePerfCardPreview() {
     var title = safeString($('perf-title').value).trim();
     var detail = safeString($('perf-detail').value).trim();
     var venue = safeString($('perf-venue').value).trim();
     var city = safeString($('perf-city').value).trim();
-    var bg = safeString($('perf-venuePhoto').value).trim();
+    var isPrivate = safeString($('perf-privateEvent') && $('perf-privateEvent').value).trim() === 'true';
+    var bg = perfResolvedBackgroundUrl(safeString($('perf-venuePhoto').value).trim(), isPrivate);
+    var bgFocus = normalizePerfBackgroundFocus(safeString($('perf-venuePhotoFocus') && $('perf-venuePhotoFocus').value));
     var op = normalizePerfVenueOpacity($('perf-venueOpacity').value);
+    if (isPrivate && (!detail || perfIsPrivateDescriptorText(detail))) detail = perfPrivateUiText(state.lang || 'en', 'detail');
     $('perf-preview-date').textContent = perfPreviewDateLabel();
     $('perf-preview-title').textContent = title || 'Event title';
     $('perf-preview-detail').textContent = detail || 'Event detail';
     $('perf-preview-venue').textContent = ((venue || 'Venue') + ' · ' + (city || 'City'));
     $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
+    $('perf-cardPreviewBg').style.backgroundPosition = bgFocus;
     $('perf-cardPreviewBg').style.opacity = String(op / 100);
     $('perf-cardPreviewBg').style.filter = 'none';
   }
@@ -12824,6 +12925,7 @@
     if (!box) return;
     var st = safeString($('perf-status') && $('perf-status').value).trim().toLowerCase();
     var es = safeString($('perf-editorialStatus') && $('perf-editorialStatus').value).trim().toLowerCase();
+    var isPrivate = safeString($('perf-privateEvent') && $('perf-privateEvent').value).trim() === 'true';
     var hiddenByStatus = st === 'hidden';
     var hiddenByEditorial = es === 'hidden' || es === 'draft' || es === 'needs_translation' || es === 'needs translation';
     if (hiddenByStatus || hiddenByEditorial) {
@@ -12831,7 +12933,7 @@
       box.classList.remove('ok');
       box.classList.add('warn');
     } else {
-      box.textContent = 'Visible on website';
+      box.textContent = isPrivate ? 'Visible on website · private treatment' : 'Visible on website';
       box.classList.remove('warn');
       box.classList.add('ok');
     }
@@ -12890,168 +12992,6 @@
     }
     summary.style.display = '';
   }
-  function setPerfTxResult(text, kind) {
-    var el = $('perf-tx-result');
-    if (!el) return;
-    el.className = 'muted' + (kind ? (' ' + kind) : '');
-    el.textContent = safeString(text);
-  }
-  function syncPerfTxPicker() {
-    var src = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-    LANGS.forEach(function (L) {
-      var box = $('perf-tx-lang-' + L);
-      if (!box) return;
-      box.disabled = (L === src);
-      if (L === src) box.checked = false;
-      else if (box.dataset.init !== '1') box.checked = true;
-      box.dataset.init = '1';
-    });
-  }
-  function getPerfTxSelectedTargets(sourceLang) {
-    return LANGS.filter(function (L) {
-      if (L === sourceLang) return false;
-      var box = $('perf-tx-lang-' + L);
-      return !!(box && box.checked);
-    });
-  }
-  function collectPerfTxSource(e, sourceLang) {
-    function pick(base) {
-      var lk = base + '_' + sourceLang;
-      var loc = safeString(e[lk]).trim();
-      if (loc) return loc;
-      return safeString(e[base]).trim();
-    }
-    return {
-      detail: pick('detail'),
-      extDesc: pick('extDesc'),
-      eventLinkLabel: pick('eventLinkLabel'),
-      eventLink: pick('eventLink')
-    };
-  }
-  function applyPerfTxCopy(targetLangs, opts) {
-    opts = opts || {};
-    if (state.perfIndex < 0) return;
-    var e = state.perfs[state.perfIndex] || {};
-    var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-    var source = collectPerfTxSource(e, sourceLang);
-    var includeUrl = !!opts.includeUrl;
-    var fields = ['detail', 'extDesc', 'eventLinkLabel'].concat(includeUrl ? ['eventLink'] : []);
-    var overwriteHits = [];
-    targetLangs.forEach(function (L) {
-      fields.forEach(function (base) {
-        var tk = base + '_' + L;
-        var incoming = safeString(source[base]).trim();
-        var existing = safeString(e[tk]).trim();
-        if (incoming && existing && existing !== incoming) overwriteHits.push(L.toUpperCase() + ':' + tk);
-      });
-    });
-    if (overwriteHits.length) {
-      var msg = 'This will overwrite ' + overwriteHits.length + ' non-empty localized field(s).\n\nContinue?\n\n' + overwriteHits.slice(0, 10).join(', ') + (overwriteHits.length > 10 ? '…' : '');
-      if (!window.confirm(msg)) {
-        setPerfTxResult('Copy cancelled.', 'warn');
-        return;
-      }
-    }
-    targetLangs.forEach(function (L) {
-      fields.forEach(function (base) {
-        e[base + '_' + L] = safeString(source[base]).trim();
-      });
-    });
-    state.perfs[state.perfIndex] = e;
-    renderPerfEditor();
-    renderPerfList();
-    markDirty(true, 'Calendar translation copy applied');
-    updatePerfTranslationWarnings();
-    setPerfTxResult(
-      'Copied from ' + sourceLang.toUpperCase() + ' to: ' + targetLangs.map(function (L) { return L.toUpperCase(); }).join(', ') +
-      (includeUrl ? ' (including URLs).' : ' (without URLs).'),
-      'ok'
-    );
-  }
-  function runPerfCopyCurrentToTargets(targetLangs) {
-    if (state.perfIndex < 0) return;
-    if (!targetLangs.length) {
-      setPerfTxResult('No target languages selected.', 'warn');
-      return;
-    }
-    persistPerfEditor();
-    var e = state.perfs[state.perfIndex] || {};
-    var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-    var source = collectPerfTxSource(e, sourceLang);
-    var includeUrl = false;
-    if (source.eventLink) {
-      includeUrl = window.confirm('Copy localized CTA URLs as well?\n\nSelect "Cancel" to keep target URLs unchanged.');
-    }
-    applyPerfTxCopy(targetLangs, { includeUrl: includeUrl });
-  }
-  function copyPerfBaseToCurrentLang() {
-    if (state.perfIndex < 0) return;
-    var lang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-    var e = state.perfs[state.perfIndex] || {};
-    var incoming = {
-      detail: safeString(e.detail).trim(),
-      extDesc: safeString(e.extDesc).trim(),
-      eventLinkLabel: safeString(e.eventLinkLabel).trim(),
-      eventLink: safeString(e.eventLink).trim()
-    };
-    var overwriteHits = [];
-    Object.keys(incoming).forEach(function (base) {
-      var tk = base + '_' + lang;
-      var existing = safeString(e[tk]).trim();
-      if (incoming[base] && existing && existing !== incoming[base]) overwriteHits.push(tk);
-    });
-    if (overwriteHits.length) {
-      if (!window.confirm('Overwrite existing localized fields for ' + lang.toUpperCase() + '?\n\n' + overwriteHits.join(', '))) {
-        setPerfTxResult('Copy cancelled.', 'warn');
-        return;
-      }
-    }
-    Object.keys(incoming).forEach(function (base) {
-      e[base + '_' + lang] = incoming[base];
-    });
-    state.perfs[state.perfIndex] = e;
-    renderPerfEditor();
-    renderPerfList();
-    markDirty(true, 'Copied base fields to current language');
-    updatePerfTranslationWarnings();
-    setPerfTxResult('Base fields copied to ' + lang.toUpperCase() + '.', 'ok');
-  }
-  function autoTranslatePerfFromCurrentLang() {
-    if (state.perfIndex < 0) return;
-    persistPerfEditor();
-    var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-    var targetLangs = LANGS.filter(function (L) { return L !== sourceLang; });
-    var translateFn = state.api && typeof state.api.translateText === 'function' ? state.api.translateText : null;
-    if (!translateFn) {
-      setPerfTxResult('Auto-translate helper is not available in this environment. UI is ready for future integration.', 'warn');
-      return;
-    }
-    var e = state.perfs[state.perfIndex] || {};
-    var src = collectPerfTxSource(e, sourceLang);
-    var jobs = [];
-    targetLangs.forEach(function (L) {
-      ['detail', 'extDesc', 'eventLinkLabel'].forEach(function (base) {
-        if (!safeString(src[base]).trim()) return;
-        jobs.push(
-          Promise.resolve(translateFn(src[base], sourceLang, L)).then(function (out) {
-            e[base + '_' + L] = safeString(out).trim();
-          })
-        );
-      });
-    });
-    Promise.all(jobs)
-      .then(function () {
-        state.perfs[state.perfIndex] = e;
-        renderPerfEditor();
-        renderPerfList();
-        markDirty(true, 'Auto-translation drafts generated');
-        updatePerfTranslationWarnings();
-        setPerfTxResult('Draft translations generated for review. Save all event changes when ready.', 'warn');
-      })
-      .catch(function (err) {
-        setPerfTxResult('Auto-translate failed: ' + safeString(err && err.message), 'err');
-      });
-  }
   function persistPerfEditor() {
     if (state.perfIndex < 0) return;
     var e = state.perfs[state.perfIndex] || {};
@@ -13074,6 +13014,9 @@
       e[base + '_' + activeLang] = value;
       if (activeLang === 'en' || safeString(e[base]).trim() === '') e[base] = value;
     }
+    function persistCtaLabelField(value) {
+      normalizePerfEventCtaLabels(e, value, activeLang);
+    }
     var modalTitle = readVal('perf-modal-title');
     var cardTitle = safeString($('perf-title') && $('perf-title').value).trim();
     // Prevent input overwrite loop: when editing card title, it is the source of truth.
@@ -13086,6 +13029,8 @@
     e.time = safeString($('perf-time').value).trim();
     e.venue = syncPairedValue('perf-venue', 'perf-modal-venue');
     e.city = syncPairedValue('perf-city', 'perf-modal-city');
+    var privateEnabled = safeString($('perf-privateEvent') && $('perf-privateEvent').value).trim() === 'true';
+    e.private = !!privateEnabled;
     var revenueAmount = Number($('perf-revenue-amount') && $('perf-revenue-amount').value);
     e.revenueAmount = Number.isFinite(revenueAmount) && revenueAmount >= 0 ? revenueAmount : '';
     e.revenueCurrency = safeString($('perf-revenue-currency') && $('perf-revenue-currency').value || 'EUR').trim().toUpperCase() || 'EUR';
@@ -13097,13 +13042,14 @@
     e.actualReceivedAmount = Number.isFinite(actualReceivedAmount) && actualReceivedAmount >= 0 ? actualReceivedAmount : '';
     e.actualReceivedCurrency = safeString($('perf-actual-received-currency') && $('perf-actual-received-currency').value || '').trim().toUpperCase() || '';
     e.venuePhoto = safeString($('perf-venuePhoto').value).trim();
+    e.venuePhotoFocus = normalizePerfBackgroundFocus(safeString($('perf-venuePhotoFocus') && $('perf-venuePhotoFocus').value));
     var dateDisplay = normalizeSortDateForInput($('perf-dateDisplay').value);
     if (dateDisplay) $('perf-sortDate').value = dateDisplay;
     var op = normalizePerfVenueOpacity($('perf-venueOpacity').value);
     e.venueOpacity = op;
     e.venueBrightness = 100;
     e.venueContrast = 100;
-    $('perf-venuePreview').src = e.venuePhoto;
+    $('perf-venuePreview').src = perfResolvedBackgroundUrl(e.venuePhoto, privateEnabled);
     $('perf-venuePreview').style.opacity = String(op / 100);
     $('perf-venuePreview').style.filter = 'none';
     e.status = $('perf-status').value;
@@ -13124,10 +13070,14 @@
     persistLocaleBackedField('privateBadgeText', safeString($('perf-privateBadgeText') && $('perf-privateBadgeText').value));
     e.hidePrivateDetailLine = safeString($('perf-privateDetailLine') && $('perf-privateDetailLine').value).trim() === 'hide';
     persistLocaleBackedField('privateDetailText', safeString($('perf-privateDetailText') && $('perf-privateDetailText').value));
+    if (privateEnabled) {
+      if (e.hidePrivateBadge !== true) e.hidePrivateBadge = false;
+      if (e.hidePrivateDetailLine !== true) e.hidePrivateDetailLine = false;
+    }
     persistLocaleBackedField('extDesc', safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value));
     e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
     persistLocaleBackedField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
-    persistLocaleBackedField('eventLinkLabel', safeString($('perf-modal-link-label') && $('perf-modal-link-label').value));
+    persistCtaLabelField(safeString($('perf-modal-link-label') && $('perf-modal-link-label').value));
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
     e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
     if ($('perf-modal-enabled')) {
@@ -13692,10 +13642,10 @@
   }
   function savePerfHeader() { saveDoc('perf_' + state.lang, { h2: safeString($('perf-h2').value), intro: safeString($('perf-intro').value) }); }
   function savePerfEvents() {
+    persistPerfEditor();
     state.perfs = normalizePerfEventsList(state.perfs);
     saveDoc('rg_perfs', state.perfs);
     if (state.section === 'income') renderIncomeSection();
-    setPerfTxResult('Saved event list. Translation tool changes are now persisted.', 'ok');
   }
   function normalizePastPerfImportItem(raw, idx) {
     var o = isObject(raw) ? raw : {};
@@ -17027,6 +16977,510 @@
     renderPerfEditor();
     markDirty(true, 'Event marked past');
   }
+
+  // Internal calendar view state
+  state.internalCalendar = {
+    isOpen: false,
+    viewMode: 'list', // 'list' or 'grid'
+    currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
+    filter: 'all' // 'all', 'public', 'private', 'upcoming'
+  };
+
+  function internalCalendarMainView() {
+    return $('calendar-main-view');
+  }
+
+  function internalCalendarViewRoot() {
+    return $('internal-calendar-view');
+  }
+
+  function openPerfFromInternalCalendar(index) {
+    closeInternalCalendarView();
+    state.perfIndex = index;
+    renderPerfList();
+    renderPerfEditor();
+  }
+
+  function openInternalCalendarView() {
+    try {
+      state.internalCalendar.isOpen = true;
+      state.internalCalendar.viewMode = 'list';
+      state.internalCalendar.filter = 'all';
+      var internalCalendarView = internalCalendarViewRoot();
+      var calendarMainView = internalCalendarMainView();
+      
+      if (internalCalendarView) {
+        internalCalendarView.classList.remove('hidden');
+      }
+      if (calendarMainView) {
+        calendarMainView.classList.add('hidden');
+      }
+      
+      var now = new Date();
+      state.internalCalendar.currentMonth = now.toISOString().slice(0, 7);
+      $('internal-calendar-month').value = state.internalCalendar.currentMonth;
+      $('internal-calendar-filter').value = 'all';
+      $('internal-calendar-view-toggle').textContent = 'Grid view';
+      renderInternalCalendar();
+    } catch (e) {
+      console.error('[Internal Calendar] Error in openInternalCalendarView:', e);
+    }
+  }
+
+  function closeInternalCalendarView() {
+    state.internalCalendar.isOpen = false;
+    var internalCalendarView = internalCalendarViewRoot();
+    var calendarMainView = internalCalendarMainView();
+    
+    if (internalCalendarView) {
+      internalCalendarView.classList.add('hidden');
+    }
+    if (calendarMainView) {
+      calendarMainView.classList.remove('hidden');
+    }
+    
+    renderPerfList();
+  }
+
+  function toggleInternalCalendarViewMode() {
+    state.internalCalendar.viewMode = state.internalCalendar.viewMode === 'list' ? 'grid' : 'list';
+    $('internal-calendar-view-toggle').textContent = 
+      state.internalCalendar.viewMode === 'list' ? 'Grid view' : 'List view';
+    renderInternalCalendar();
+  }
+
+  function navigateInternalCalendarMonth(delta) {
+    var current = new Date(state.internalCalendar.currentMonth + '-01');
+    current.setMonth(current.getMonth() + delta);
+    state.internalCalendar.currentMonth = current.toISOString().slice(0, 7);
+    $('internal-calendar-month').value = state.internalCalendar.currentMonth;
+    renderInternalCalendar();
+  }
+
+  function renderInternalCalendar() {
+    try {
+      var container = $('internal-calendar-content');
+      if (!container) {
+        console.error('[Internal Calendar] Container #internal-calendar-content not found');
+        return;
+      }
+      var ctx = getInternalCalendarContext();
+      updateInternalCalendarSummary(ctx.monthlyEvents, ctx.filteredEvents);
+      
+      if (state.internalCalendar.viewMode === 'list') {
+        renderInternalCalendarList(container, ctx.filteredEvents);
+      } else {
+        renderInternalCalendarGrid(container, ctx.filteredEvents, ctx.year, ctx.month);
+      }
+    } catch (e) {
+      console.error('[Internal Calendar] Error in renderInternalCalendar:', e);
+    }
+  }
+
+  function getInternalCalendarContext() {
+    state.internalCalendar.currentMonth = $('internal-calendar-month').value || new Date().toISOString().slice(0, 7);
+    state.internalCalendar.filter = $('internal-calendar-filter').value || 'all';
+    var year = parseInt(state.internalCalendar.currentMonth.slice(0, 4), 10);
+    var month = parseInt(state.internalCalendar.currentMonth.slice(5, 7), 10);
+    var events = state.perfs || [];
+    var monthlyEvents = events.filter(function (e) {
+      if (!e.sortDate) return false;
+      var eventDate = new Date(e.sortDate);
+      if (eventDate.getFullYear() !== year || eventDate.getMonth() + 1 !== month) return false;
+      return true;
+    });
+    var filteredEvents = monthlyEvents.filter(function (e) {
+      var isPrivate = perfIsPrivateEventRecord(e, state.lang || 'en');
+      var status = safeString(e.status || 'upcoming').trim().toLowerCase();
+      if (state.internalCalendar.filter === 'public') return !isPrivate;
+      if (state.internalCalendar.filter === 'private') return isPrivate;
+      if (state.internalCalendar.filter === 'upcoming') return status !== 'past' && status !== 'hidden';
+      return true;
+    });
+    filteredEvents.sort(function (a, b) {
+      var da = new Date(a.sortDate || 0);
+      var db = new Date(b.sortDate || 0);
+      return da - db;
+    });
+    return {
+      year: year,
+      month: month,
+      monthValue: state.internalCalendar.currentMonth,
+      monthLabel: internalCalendarMonthLabel(year, month),
+      filter: state.internalCalendar.filter,
+      filterLabel: internalCalendarFilterLabel(state.internalCalendar.filter),
+      viewMode: state.internalCalendar.viewMode === 'grid' ? 'grid' : 'list',
+      monthlyEvents: monthlyEvents,
+      filteredEvents: filteredEvents
+    };
+  }
+
+  function internalCalendarMonthLabel(year, month) {
+    return String(month).padStart(2, '0') + '.' + String(year);
+  }
+
+  function internalCalendarFilterLabel(filter) {
+    if (filter === 'public') return 'Public';
+    if (filter === 'private') return 'Private';
+    if (filter === 'upcoming') return 'Upcoming';
+    return 'All';
+  }
+
+  function internalCalendarStatusMeta(e) {
+    var status = safeString(e && e.status || 'upcoming').trim().toLowerCase();
+    if (status === 'hidden' || status === 'cancelled' || status === 'canceled') {
+      return { key: 'hidden', label: status === 'hidden' ? 'Hidden' : 'Cancelled' };
+    }
+    if (status === 'past') {
+      return { key: 'past', label: 'Past' };
+    }
+    return { key: 'upcoming', label: 'Upcoming' };
+  }
+
+  function updateInternalCalendarSummary(monthlyEvents, filteredEvents) {
+    var summary = $('internal-calendar-summary');
+    var count = $('internal-calendar-count');
+    var publicCount = 0;
+    var privateCount = 0;
+    monthlyEvents.forEach(function (e) {
+      if (perfIsPrivateEventRecord(e, state.lang || 'en')) privateCount++;
+      else publicCount++;
+    });
+    if (summary) {
+      summary.innerHTML =
+        '<span class="internal-calendar-summary__chip">Month <strong>' + escapeHtml(String(monthlyEvents.length)) + '</strong></span>' +
+        '<span class="internal-calendar-summary__chip">Public <strong>' + escapeHtml(String(publicCount)) + '</strong></span>' +
+        '<span class="internal-calendar-summary__chip">Private <strong>' + escapeHtml(String(privateCount)) + '</strong></span>';
+    }
+    if (count) {
+      count.textContent = 'Visible ' + filteredEvents.length + ' event' + (filteredEvents.length !== 1 ? 's' : '');
+    }
+  }
+
+  function internalCalendarEventPrintMeta(e) {
+    return {
+      date: formatEuropeanDate(e.sortDate),
+      time: safeString(e.time).trim(),
+      title: safeString(e.title).trim() || '(Untitled)',
+      venue: safeString(e.venue).trim(),
+      city: safeString(e.city).trim(),
+      privacy: perfIsPrivateEventRecord(e, state.lang || 'en') ? 'Private' : 'Public',
+      revenueAmount: safeString(e.revenueAmount).trim(),
+      revenueStatus: safeString(e.revenueStatus).trim(),
+      status: internalCalendarStatusMeta(e).label
+    };
+  }
+
+  function exportInternalCalendarPdf() {
+    try {
+      var ctx = getInternalCalendarContext();
+      var popup = window.open('', '_blank', 'width=1280,height=920');
+      if (!popup) {
+        setStatus('Could not open the internal calendar export window. Check popup blocker and try again.', 'err');
+        return;
+      }
+      popup.document.write(internalCalendarPdfDocumentHtml(ctx));
+      popup.document.close();
+      popup.focus();
+      window.setTimeout(function () {
+        try {
+          popup.print();
+          setStatus('Internal calendar export ready. Use Save as PDF in the print dialog.', 'warn');
+        } catch (err) {
+          setStatus('Internal calendar export opened. Use Cmd+P to save it as PDF.', 'warn');
+        }
+      }, 250);
+    } catch (e) {
+      console.error('[Internal Calendar] Error in exportInternalCalendarPdf:', e);
+      setStatus('Could not prepare the internal calendar PDF export.', 'err');
+    }
+  }
+
+  function internalCalendarPdfDocumentHtml(ctx) {
+    var body = ctx.viewMode === 'grid'
+      ? internalCalendarGridPdfHtml(ctx)
+      : internalCalendarListPdfHtml(ctx);
+    return '<!doctype html><html><head><meta charset="utf-8">' +
+      '<title>Internal calendar · ' + escapeHtml(ctx.monthLabel) + '</title>' +
+      '<style>' +
+        '@page{size:A4 landscape;margin:10mm;}' +
+        'html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+        'body{padding:0;}' +
+        '.report{display:grid;gap:10px;}' +
+        '.report__head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1.5px solid #d8dde5;padding-bottom:8px;}' +
+        '.report__head h1{margin:0;font-size:18px;line-height:1.08;color:#111;letter-spacing:-.01em;}' +
+        '.report__head p{margin:4px 0 0;font-size:9.6px;line-height:1.45;color:#4b5563;max-width:68ch;}' +
+        '.report__meta{text-align:right;font-size:9px;line-height:1.45;color:#4b5563;white-space:nowrap;}' +
+        '.report__chips{display:flex;flex-wrap:wrap;gap:6px;}' +
+        '.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #d8dde5;border-radius:999px;font-size:9px;line-height:1.2;background:#fff;color:#111;}' +
+        '.chip strong{font-size:10px;}' +
+        '.list{display:grid;gap:6px;}' +
+        '.list-item{display:grid;grid-template-columns:82px minmax(0,1fr) 178px;gap:10px;border:1px solid #d8dde5;border-radius:8px;padding:8px 9px;background:#fff;break-inside:avoid;page-break-inside:avoid;}' +
+        '.list-item__date{display:grid;gap:4px;align-content:start;padding:6px 7px;border:1px solid #e5e7eb;border-radius:7px;text-align:center;font-size:9px;color:#374151;}' +
+        '.list-item__date strong{font-size:11px;color:#111;line-height:1.1;}' +
+        '.list-item__main{display:grid;gap:4px;min-width:0;}' +
+        '.list-item__title{font-size:11.5px;line-height:1.25;font-weight:700;color:#111;letter-spacing:-.01em;}' +
+        '.list-item__meta,.list-item__finance{display:flex;flex-wrap:wrap;gap:5px 6px;font-size:9px;line-height:1.35;color:#374151;}' +
+        '.badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;border:1px solid #d8dde5;font-size:8px;letter-spacing:.08em;text-transform:uppercase;background:#fff;color:#111;}' +
+        '.badge--public{border-color:#8fd19e;}' +
+        '.badge--private{border-color:#d7b56a;}' +
+        '.badge--past{border-color:#b8c2cf;}' +
+        '.badge--hidden{border-style:dashed;color:#6b7280;}' +
+        '.list-item__side{display:grid;gap:5px;align-content:start;font-size:9px;line-height:1.35;color:#374151;}' +
+        '.side-pair{display:grid;grid-template-columns:56px minmax(0,1fr);gap:6px;align-items:start;}' +
+        '.side-label{font-size:7.6px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;}' +
+        '.side-value{font-size:9px;color:#111;word-break:break-word;}' +
+        '.finance-pair{display:inline-grid;grid-template-columns:auto auto;gap:4px;align-items:baseline;padding:2px 6px;border:1px solid #eceff3;border-radius:999px;background:#fafbfc;}' +
+        '.finance-pair .side-label{font-size:7.4px;}' +
+        '.grid{display:grid;gap:6px;}' +
+        '.grid__head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}' +
+        '.grid__head div{padding:5px 4px;border:1px solid #d8dde5;border-radius:6px;text-align:center;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;background:#f8fafc;}' +
+        '.grid__row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;break-inside:avoid;page-break-inside:avoid;}' +
+        '.grid__cell{min-height:118px;border:1px solid #d8dde5;border-radius:8px;padding:6px;display:grid;align-content:start;gap:5px;background:#fff;break-inside:avoid;page-break-inside:avoid;}' +
+        '.grid__cell--empty{background:transparent;border-color:transparent;}' +
+        '.grid__cell-day{display:flex;justify-content:space-between;align-items:center;font-size:9.5px;font-weight:700;color:#111;line-height:1.1;}' +
+        '.grid__cell-count{font-size:7.8px;color:#6b7280;}' +
+        '.grid__events{display:grid;gap:4px;}' +
+        '.grid__event{border:1px solid #e5e7eb;border-left:2.5px solid #cbd5e1;border-radius:6px;padding:4px 5px;display:grid;gap:2px;break-inside:avoid;page-break-inside:avoid;min-width:0;}' +
+        '.grid__event--public{border-left-color:#4caf50;}' +
+        '.grid__event--private{border-left-color:#d4a843;}' +
+        '.grid__event--past{opacity:.86;}' +
+        '.grid__event--hidden{border-left-style:dashed;color:#6b7280;}' +
+        '.grid__event-title{font-size:8.8px;line-height:1.2;font-weight:700;color:#111;letter-spacing:-.005em;word-break:break-word;overflow-wrap:anywhere;}' +
+        '.grid__event-sub,.grid__event-finance{font-size:7.6px;line-height:1.28;color:#374151;word-break:break-word;overflow-wrap:anywhere;}' +
+        '.grid__event-sub strong,.grid__event-finance strong{font-weight:600;color:#111;}' +
+        '.report,.list,.grid{orphans:3;widows:3;}' +
+        '@media print{button{display:none!important;}}' +
+      '</style></head><body>' +
+      '<div class="report">' +
+        '<div class="report__head">' +
+          '<div><h1>Internal Calendar</h1><p>Printable admin export from admin-v2 for the currently visible month, active filter, and current view.</p></div>' +
+          '<div class="report__meta">Generated ' + escapeHtml(formatVisibleDateTime(new Date())) + '<br>Rolando Guy admin-v2 (internal)</div>' +
+        '</div>' +
+        '<div class="report__chips">' +
+          '<span class="chip">Month <strong>' + escapeHtml(ctx.monthLabel) + '</strong></span>' +
+          '<span class="chip">Filter <strong>' + escapeHtml(ctx.filterLabel) + '</strong></span>' +
+          '<span class="chip">View <strong>' + escapeHtml(ctx.viewMode === 'grid' ? 'Grid / Month' : 'List') + '</strong></span>' +
+          '<span class="chip">Visible <strong>' + escapeHtml(String(ctx.filteredEvents.length)) + '</strong></span>' +
+        '</div>' +
+        body +
+      '</div></body></html>';
+  }
+
+  function internalCalendarListPdfHtml(ctx) {
+    if (!ctx.filteredEvents.length) return '<div class="list"><div class="list-item"><div class="list-item__main"><div class="list-item__title">No events match the current month/filter selection.</div></div></div></div>';
+    return '<div class="list">' + ctx.filteredEvents.map(function (e) {
+      var meta = internalCalendarEventPrintMeta(e);
+      var financeBits = [];
+      if (meta.revenueAmount) financeBits.push('<span class="finance-pair"><span class="side-label">Revenue</span><span>' + escapeHtml(meta.revenueAmount) + '</span></span>');
+      if (meta.revenueStatus) financeBits.push('<span class="finance-pair"><span class="side-label">Status</span><span>' + escapeHtml(meta.revenueStatus) + '</span></span>');
+      return '<article class="list-item">' +
+        '<div class="list-item__date"><strong>' + escapeHtml(meta.date) + '</strong>' + (meta.time ? ('<span>' + escapeHtml(meta.time) + '</span>') : '') + '</div>' +
+        '<div class="list-item__main">' +
+          '<div class="list-item__title">' + escapeHtml(meta.title) + '</div>' +
+          '<div class="list-item__meta">' +
+            (meta.venue || meta.city ? ('<span>' + escapeHtml(meta.venue + (meta.venue && meta.city ? ' · ' : '') + meta.city) + '</span>') : '<span>—</span>') +
+            '<span class="badge badge--' + escapeHtml(meta.privacy.toLowerCase()) + '">' + escapeHtml(meta.privacy) + '</span>' +
+            '<span class="badge badge--' + escapeHtml(internalCalendarStatusMeta(e).key) + '">' + escapeHtml(meta.status) + '</span>' +
+          '</div>' +
+          (financeBits.length ? ('<div class="list-item__finance">' + financeBits.join('') + '</div>') : '') +
+        '</div>' +
+        '<div class="list-item__side">' +
+          '<div class="side-pair"><span class="side-label">Venue</span><span class="side-value">' + escapeHtml(meta.venue || '—') + '</span></div>' +
+          '<div class="side-pair"><span class="side-label">City</span><span class="side-value">' + escapeHtml(meta.city || '—') + '</span></div>' +
+          '<div class="side-pair"><span class="side-label">State</span><span class="side-value">' + escapeHtml(meta.privacy + ' · ' + meta.status) + '</span></div>' +
+        '</div>' +
+      '</article>';
+    }).join('') + '</div>';
+  }
+
+  function internalCalendarGridPdfHtml(ctx) {
+    var daysInMonth = new Date(ctx.year, ctx.month, 0).getDate();
+    var firstDay = new Date(ctx.year, ctx.month - 1, 1).getDay();
+    var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var html = '<div class="grid"><div class="grid__head">' + dayNames.map(function (d) {
+      return '<div>' + escapeHtml(d) + '</div>';
+    }).join('') + '</div>';
+    var day = 1;
+    for (var row = 0; row < 6; row++) {
+      html += '<div class="grid__row">';
+      for (var col = 0; col < 7; col++) {
+        if (row === 0 && col < firstDay) {
+          html += '<div class="grid__cell grid__cell--empty"></div>';
+        } else if (day > daysInMonth) {
+          html += '<div class="grid__cell grid__cell--empty"></div>';
+        } else {
+          var cellDate = ctx.year + '-' + String(ctx.month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+          var dayEvents = ctx.filteredEvents.filter(function (e) {
+            return e.sortDate && e.sortDate.slice(0, 10) === cellDate;
+          });
+          html += '<div class="grid__cell">';
+          html += '<div class="grid__cell-day"><span>' + day + '</span>' + (dayEvents.length ? ('<span class="grid__cell-count">' + dayEvents.length + ' event' + (dayEvents.length !== 1 ? 's' : '') + '</span>') : '') + '</div>';
+          html += '<div class="grid__events">';
+          html += dayEvents.map(function (e) {
+            var meta = internalCalendarEventPrintMeta(e);
+            var statusKey = internalCalendarStatusMeta(e).key;
+            var venueLine = meta.venue || meta.city ? escapeHtml(meta.venue + (meta.venue && meta.city ? ' · ' : '') + meta.city) : '—';
+            var financeLine = [meta.revenueAmount, meta.revenueStatus].filter(Boolean).map(escapeHtml).join(' · ');
+            return '<div class="grid__event grid__event--' + escapeHtml(meta.privacy.toLowerCase()) + (statusKey !== 'upcoming' ? ' grid__event--' + escapeHtml(statusKey) : '') + '">' +
+              '<div class="grid__event-title">' + escapeHtml(meta.title) + '</div>' +
+              '<div class="grid__event-sub"><strong>' + escapeHtml(meta.date) + '</strong>' + (meta.time ? (' · ' + escapeHtml(meta.time)) : '') + '</div>' +
+              '<div class="grid__event-sub">' + venueLine + '</div>' +
+              '<div class="grid__event-sub">' + escapeHtml(meta.privacy + ' · ' + meta.status) + '</div>' +
+              (financeLine ? ('<div class="grid__event-finance"><strong>Finance:</strong> ' + financeLine + '</div>') : '') +
+            '</div>';
+          }).join('');
+          html += '</div></div>';
+          day++;
+        }
+      }
+      html += '</div>';
+      if (day > daysInMonth) break;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderInternalCalendarList(container, events) {
+    var html = '<div class="internal-calendar-list">';
+    events.forEach(function (e) {
+      var date = formatEuropeanDate(e.sortDate);
+      var isPrivate = perfIsPrivateEventRecord(e, state.lang || 'en');
+      var statusMeta = internalCalendarStatusMeta(e);
+      var revenue = e.revenueAmount || '';
+      var revenueStatus = e.revenueStatus || '';
+      var time = safeString(e.time).trim();
+      var venue = e.venue || '';
+      var city = e.city || '';
+      var title = e.title || '(Untitled)';
+      var index = state.perfs.indexOf(e);
+      
+      html += '<div class="internal-calendar-event internal-calendar-event--' + (isPrivate ? 'private' : 'public') + (statusMeta.key !== 'upcoming' ? ' internal-calendar-event--' + statusMeta.key : '') + '" data-perf-index="' + index + '" role="button" tabindex="0">';
+      html += '<div class="internal-calendar-event__date">';
+      html += '<span>' + escapeHtml(date) + '</span>';
+      if (time) html += '<span class="internal-calendar-event__time">' + escapeHtml(time) + '</span>';
+      html += '</div>';
+      html += '<div class="internal-calendar-event__body">';
+      html += '<div class="internal-calendar-event__head">';
+      html += '<div class="internal-calendar-event__title">' + escapeHtml(title) + '</div>';
+      html += '<span class="internal-calendar-event__open">Open editor</span>';
+      html += '</div>';
+      html += '<div class="internal-calendar-event__meta">';
+      html += '<span class="internal-calendar-event__venue">' + escapeHtml(venue) + (city ? ' · ' + escapeHtml(city) : '') + '</span>';
+      html += '<span class="internal-calendar-event__status ' + (isPrivate ? 'internal-calendar-event__status--private' : 'internal-calendar-event__status--public') + '">' + (isPrivate ? 'Private' : 'Public') + '</span>';
+      html += '<span class="internal-calendar-event__status internal-calendar-event__status--' + statusMeta.key + '">' + escapeHtml(statusMeta.label) + '</span>';
+      html += '</div>';
+      if (revenue || revenueStatus) {
+        html += '<div class="internal-calendar-event__revenue">';
+        if (revenue) html += '<span class="internal-calendar-event__revenue-amount">' + escapeHtml(revenue) + '</span>';
+        if (revenueStatus) html += '<span class="internal-calendar-event__revenue-status">' + escapeHtml(revenueStatus) + '</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // Add edit button listeners
+    container.querySelectorAll('.internal-calendar-event').forEach(function (card) {
+      function handleOpenFromListEvent(evt) {
+        var trigger = evt.target.closest('.internal-calendar-event');
+        if (!trigger) return;
+        var idx = parseInt(trigger.getAttribute('data-perf-index'), 10);
+        if (isNaN(idx)) return;
+        openPerfFromInternalCalendar(idx);
+      }
+      card.addEventListener('click', handleOpenFromListEvent);
+      card.addEventListener('keydown', function (evt) {
+        if (evt.key !== 'Enter' && evt.key !== ' ') return;
+        evt.preventDefault();
+        handleOpenFromListEvent(evt);
+      });
+    });
+  }
+
+  function renderInternalCalendarGrid(container, events, year, month) {
+    try {
+      var daysInMonth = new Date(year, month, 0).getDate();
+      var firstDay = new Date(year, month - 1, 1).getDay();
+      var today = new Date();
+      
+      var html = '<div class="internal-calendar-grid">';
+      
+      // Day headers
+      var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      html += '<div class="internal-calendar-grid__header">';
+      dayNames.forEach(function (d) { html += '<div class="internal-calendar-grid__day">' + d + '</div>'; });
+      html += '</div>';
+      
+      // Create grid cells
+      var day = 1;
+      for (var row = 0; row < 6; row++) {
+        html += '<div class="internal-calendar-grid__row">';
+        for (var col = 0; col < 7; col++) {
+          if (row === 0 && col < firstDay) {
+            html += '<div class="internal-calendar-grid__cell internal-calendar-grid__cell--empty"></div>';
+          } else if (day > daysInMonth) {
+            html += '<div class="internal-calendar-grid__cell internal-calendar-grid__cell--empty"></div>';
+          } else {
+            var cellDate = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            var dayEvents = events.filter(function (e) {
+              return e.sortDate && e.sortDate.slice(0, 10) === cellDate;
+            });
+            
+            var isToday = today.getFullYear() === year && today.getMonth() + 1 === month && today.getDate() === day;
+            
+            html += '<div class="internal-calendar-grid__cell' + (isToday ? ' internal-calendar-grid__cell--today' : '') + (dayEvents.length ? ' internal-calendar-grid__cell--has-events' : '') + (dayEvents.length > 1 ? ' internal-calendar-grid__cell--busy' : '') + '">';
+            html += '<div class="internal-calendar-grid__cell-head">';
+            html += '<div class="internal-calendar-grid__day-number">' + day + '</div>';
+            if (dayEvents.length) html += '<div class="internal-calendar-grid__day-count">' + dayEvents.length + '</div>';
+            html += '</div>';
+            html += '<div class="internal-calendar-grid__events">';
+            
+            dayEvents.forEach(function (e) {
+              var isPrivate = perfIsPrivateEventRecord(e, state.lang || 'en');
+              var statusMeta = internalCalendarStatusMeta(e);
+              var index = state.perfs.indexOf(e);
+              var time = safeString(e.time).trim();
+              html += '<div class="internal-calendar-grid__event internal-calendar-grid__event--' + (isPrivate ? 'private' : 'public') + (statusMeta.key !== 'upcoming' ? ' internal-calendar-grid__event--' + statusMeta.key : '') + '" data-perf-index="' + index + '">';
+              if (time) html += '<span class="internal-calendar-grid__event__time">' + escapeHtml(time) + '</span>';
+              html += '<div class="internal-calendar-grid__event__title">' + escapeHtml(e.title || '(Untitled)') + '</div>';
+              html += '</div>';
+            });
+            
+            html += '</div>';
+            html += '</div>';
+            day++;
+          }
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+      
+      // Add click listeners to events
+      container.querySelectorAll('.internal-calendar-grid__event').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var idx = parseInt(el.getAttribute('data-perf-index'), 10);
+          openPerfFromInternalCalendar(idx);
+        });
+      });
+    } catch (e) {
+      console.error('[Internal Calendar] Error in renderInternalCalendarGrid:', e);
+    }
+  }
+
+  function formatEuropeanDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    var day = String(d.getDate()).padStart(2, '0');
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var year = d.getFullYear();
+    return day + '.' + month + '.' + year;
+  }
+
   function applyProgramsBulkEditorial() {
     var ids = selectedIndices(state.programsSelected);
     var action = safeString($('programs-bulk-editorial') && $('programs-bulk-editorial').value).trim();
@@ -17094,13 +17548,16 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee' });
+    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false });
     state.perfIndex = state.perfs.length - 1;
     renderPerfList(); renderPerfEditor(); markDirty(true, 'Event template created');
   }
   function normalizePerfEventsList(arr) {
     if (!Array.isArray(arr)) return [];
     return arr.filter(function (e) { return isObject(e); }).map(function (e) {
+      normalizePerfEventCtaLabels(e, null, '');
+      if (perfHasExplicitPrivateFlag(e)) e.private = perfExplicitPrivateValue(e);
+      else delete e.private;
       var featuredVisual = perfFeaturedVisual(e);
       var featuredLayout = perfFeaturedLayout(e);
       e.featured_visual = featuredVisual;
@@ -18129,8 +18586,8 @@
   }
 
   function buildExportPayload() {
-    var keys = [
-      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions','rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker','rg_admin_contacts_followups',
+    var publicKeys = [
+      'rg_rep_cards','rg_vid','rg_audio','rg_perfs','rg_past_perfs','rg_press','rg_press_meta','rg_epk_bios','rg_epk_photos','rg_epk_cvs','rg_public_pdfs','rg_photos','rg_photo_captions',
       'rg_programs','rg_programs_en','rg_programs_de','rg_programs_es','rg_programs_it','rg_programs_fr',
       'rg_editorial_en','rg_editorial_de','rg_editorial_es','rg_editorial_it','rg_editorial_fr',
       'hero_en','hero_de','hero_es','hero_it','hero_fr',
@@ -18140,13 +18597,19 @@
       'contact_en','contact_de','contact_es','contact_it','contact_fr',
       'rg_ui_en','rg_ui_de','rg_ui_es','rg_ui_it','rg_ui_fr'
     ];
+    var internalKeys = [
+      'rg_repertoire_planner','rg_program_blueprints','rg_concert_history','rg_repertoire_discovery','rg_outreach_tracker','rg_admin_contacts_followups'
+    ];
+    var allKeys = publicKeys.concat(internalKeys);
     var scope = getImportScopeValue();
+    var keys = allKeys;
     if (scope === 'contacts') {
       keys = ['rg_admin_contacts_followups'];
     } else if (scope && scope !== 'all') {
-      keys = filterImportKeys(keys, scope);
+      keys = filterImportKeys(allKeys, scope);
     }
-    var data = {};
+    var publicData = {};
+    var internalData = {};
     keys.forEach(function (k) {
       var v;
       if (k === 'rg_admin_contacts_followups') {
@@ -18156,9 +18619,28 @@
       } else {
         v = state.api.load(k);
       }
-      if (v != null) data[k] = v;
+      if (v != null) {
+        // Security validation: ensure internal keys never leak into public data
+        if (internalKeys.indexOf(k) >= 0 && publicKeys.indexOf(k) >= 0) {
+          console.error('[SECURITY] Key classified as both public and internal:', k);
+          return;
+        }
+        if (publicKeys.indexOf(k) >= 0) {
+          publicData[k] = v;
+        } else if (internalKeys.indexOf(k) >= 0) {
+          internalData[k] = v;
+        }
+      }
     });
-    return { exportedAt: new Date().toISOString(), origin: 'admin-v2', keys: keys, data: data };
+    return {
+      exportedAt: new Date().toISOString(),
+      origin: 'admin-v2',
+      version: '2.1',
+      keys: keys,
+      public: publicData,
+      internal: internalData,
+      _legacyData: publicData // For backward compatibility with old import logic
+    };
   }
 
   function downloadJson(filename, obj) {
@@ -18493,17 +18975,6 @@
       state.incomePaymentFilter = safeString($('income-payment-filter').value || 'all').trim().toLowerCase() || 'all';
       renderIncomeSection();
     });
-    if ($('perf-tx-copy-all-btn')) $('perf-tx-copy-all-btn').addEventListener('click', function () {
-      var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-      var targets = LANGS.filter(function (L) { return L !== sourceLang; });
-      runPerfCopyCurrentToTargets(targets);
-    });
-    if ($('perf-tx-copy-selected-btn')) $('perf-tx-copy-selected-btn').addEventListener('click', function () {
-      var sourceLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
-      runPerfCopyCurrentToTargets(getPerfTxSelectedTargets(sourceLang));
-    });
-    if ($('perf-tx-copy-base-to-current-btn')) $('perf-tx-copy-base-to-current-btn').addEventListener('click', copyPerfBaseToCurrentLang);
-    if ($('perf-tx-autotranslate-btn')) $('perf-tx-autotranslate-btn').addEventListener('click', autoTranslatePerfFromCurrentLang);
     if ($('pastperfs-import-btn')) $('pastperfs-import-btn').addEventListener('click', importPastPerfsJson);
     if ($('pastperfs-clear-btn')) $('pastperfs-clear-btn').addEventListener('click', clearPastPerfsDataset);
     if ($('pastperfs-save-all-btn')) $('pastperfs-save-all-btn').addEventListener('click', function () {
@@ -18837,9 +19308,14 @@
     if ($('perf-featured-context-calendar')) $('perf-featured-context-calendar').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
     if ($('perf-homepage-priority')) $('perf-homepage-priority').addEventListener('change', function () { updatePerfFeaturedStateHint(); persistPerfEditor(); });
     if ($('perf-archive-current-btn')) $('perf-archive-current-btn').addEventListener('click', perfArchiveCurrentEvent);
-    if ($('perf-open-internal-calendar')) $('perf-open-internal-calendar').addEventListener('click', function () {
-      window.open('internal-calendar.html', '_blank', 'noopener');
-    });
+    if ($('perf-open-internal-calendar-view')) $('perf-open-internal-calendar-view').addEventListener('click', openInternalCalendarView);
+    if ($('internal-calendar-back')) $('internal-calendar-back').addEventListener('click', closeInternalCalendarView);
+    if ($('internal-calendar-export-pdf')) $('internal-calendar-export-pdf').addEventListener('click', exportInternalCalendarPdf);
+    if ($('internal-calendar-view-toggle')) $('internal-calendar-view-toggle').addEventListener('click', toggleInternalCalendarViewMode);
+    if ($('internal-calendar-month')) $('internal-calendar-month').addEventListener('change', renderInternalCalendar);
+    if ($('internal-calendar-prev-month')) $('internal-calendar-prev-month').addEventListener('click', navigateInternalCalendarMonth.bind(null, -1));
+    if ($('internal-calendar-next-month')) $('internal-calendar-next-month').addEventListener('click', navigateInternalCalendarMonth.bind(null, 1));
+    if ($('internal-calendar-filter')) $('internal-calendar-filter').addEventListener('change', renderInternalCalendar);
     document.querySelectorAll('[data-revenue-quick-status]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var status = safeString(btn.getAttribute('data-revenue-quick-status') || 'unknown').trim().toLowerCase() || 'unknown';
@@ -19254,7 +19730,7 @@
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-venuePhoto','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
@@ -19462,7 +19938,22 @@
       r.onload = function () {
         try {
           var payload = JSON.parse(String(r.result || '{}'));
-          var data = payload.data || {};
+          // Handle new payload structure with separate public/internal sections
+          var data = {};
+          if (payload.public && isObject(payload.public)) {
+            Object.keys(payload.public).forEach(function (k) { data[k] = payload.public[k]; });
+          }
+          if (payload.internal && isObject(payload.internal)) {
+            Object.keys(payload.internal).forEach(function (k) { data[k] = payload.internal[k]; });
+          }
+          // Backward compatibility: handle old payload structure with single data object
+          if (payload.data && isObject(payload.data)) {
+            Object.keys(payload.data).forEach(function (k) { data[k] = payload.data[k]; });
+          }
+          // Backward compatibility: handle _legacyData
+          if (payload._legacyData && isObject(payload._legacyData)) {
+            Object.keys(payload._legacyData).forEach(function (k) { data[k] = payload._legacyData[k]; });
+          }
           if (!isObject(data)) throw new Error('The file needs a "data" object with content keys.');
           var scope = getImportScopeValue();
           var keysAll = Object.keys(data).filter(function (k) { return SAFE_IMPORT_KEY_RE.test(k); });
@@ -19747,7 +20238,7 @@
       applyPaperPreviewMode(state.paperPreview, false);
       var deep = readAdminDeepLink();
       if (deep.section) openSection(deep.section);
-      else refreshCurrentSection();
+      else openSection('cases');
       if ((deep.section || state.section) === 'calendar' && deep.perfId) {
         try { openCalendarEventById(deep.perfId); } catch (ePick) {}
       }

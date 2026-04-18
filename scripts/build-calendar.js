@@ -20,6 +20,7 @@ var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'calendar-data.json');
 var perfDefaultsPath = path.join(root, 'v1-assets', 'build', 'calendar-perf-defaults-en.json');
 var filter = require('./lib/public-field-filter');
+var eventSchemas = require('./lib/event-schemas');
 
 var PREFERRED_ARRAY_KEYS = ['perfs', 'items', 'value', 'data'];
 
@@ -36,11 +37,22 @@ function deepClone(o) {
 }
 
 function normalizePerfs(raw) {
-  if (Array.isArray(raw)) return raw.map(filter.filterCalendarEvent);
+  if (Array.isArray(raw)) return raw.map(eventSchemas.sanitizePublicEvent);
   if (raw && typeof raw === 'object') {
     for (var i = 0; i < PREFERRED_ARRAY_KEYS.length; i++) {
       var key = PREFERRED_ARRAY_KEYS[i];
-      if (Array.isArray(raw[key])) return raw[key].map(filter.filterCalendarEvent);
+      if (Array.isArray(raw[key])) return raw[key].map(eventSchemas.sanitizePublicEvent);
+    }
+  }
+  return [];
+}
+
+function normalizePastPerfs(raw) {
+  if (Array.isArray(raw)) return raw.map(eventSchemas.sanitizePublicPastEvent);
+  if (raw && typeof raw === 'object') {
+    for (var i = 0; i < PREFERRED_ARRAY_KEYS.length; i++) {
+      var key = PREFERRED_ARRAY_KEYS[i];
+      if (Array.isArray(raw[key])) return raw[key].map(eventSchemas.sanitizePublicPastEvent);
     }
   }
   return [];
@@ -52,28 +64,24 @@ function normalizePerfs(raw) {
  * @param {object|null} stored
  */
 function mergePerfEn(defaults, stored) {
-  var out = deepClone(defaults);
+  var out = eventSchemas.sanitizePublicCalendarChrome(defaults);
   if (!stored || typeof stored !== 'object') return out;
+  var safeStored = eventSchemas.sanitizePublicCalendarChrome(stored);
 
-  if (stored.h2 != null && String(stored.h2).trim() !== '') out.h2 = String(stored.h2);
-  if (stored.intro != null) out.intro = String(stored.intro);
+  if (safeStored.h2 != null && String(safeStored.h2).trim() !== '') out.h2 = String(safeStored.h2);
+  if (safeStored.intro != null) out.intro = String(safeStored.intro);
 
-  if (stored.eventTypes && typeof stored.eventTypes === 'object') {
+  if (safeStored.eventTypes && typeof safeStored.eventTypes === 'object') {
     out.eventTypes = out.eventTypes && typeof out.eventTypes === 'object' ? out.eventTypes : {};
-    for (var ek in stored.eventTypes) {
-      if (Object.prototype.hasOwnProperty.call(stored.eventTypes, ek)) {
-        out.eventTypes[ek] = stored.eventTypes[ek];
+    for (var ek in safeStored.eventTypes) {
+      if (Object.prototype.hasOwnProperty.call(safeStored.eventTypes, ek)) {
+        out.eventTypes[ek] = safeStored.eventTypes[ek];
       }
     }
   }
 
-  if (stored.monthNames && typeof stored.monthNames === 'object') {
-    out.monthNames = deepClone(stored.monthNames);
-  }
-
-  for (var k in stored) {
-    if (k === 'h2' || k === 'intro' || k === 'eventTypes' || k === 'monthNames') continue;
-    out[k] = stored[k];
+  if (safeStored.monthNames && typeof safeStored.monthNames === 'object') {
+    out.monthNames = deepClone(safeStored.monthNames);
   }
 
   return out;
@@ -102,6 +110,7 @@ if (!data || typeof data !== 'object') {
 }
 
 var perfs = normalizePerfs(data.rg_perfs);
+var pastPerfs = normalizePastPerfs(data.rg_past_perfs);
 if (!perfs.length) {
   console.error('build-calendar: data.rg_perfs normalized to empty — refusing to write');
   process.exit(1);
@@ -134,6 +143,7 @@ var output = {
   perf: perf,
   perfs: perfs
 };
+if (pastPerfs.length) output.pastPerfs = pastPerfs;
 output.perfLocales = perfLocales;
 
 // Security validation: ensure no internal fields leaked

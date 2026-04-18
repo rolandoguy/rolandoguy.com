@@ -130,7 +130,7 @@
       <div id="draftRestoreBanner" class="draft-restore-banner" hidden></div>
 
       <main class="content">
-        <section id="section-cases" class="section">
+        <section id="section-cases" class="section active">
           <h2>Cases</h2>
           <p class="muted">Internal-only opportunity tracker for the next concrete step. Keep one working title, a linked contact and venue, the next follow-up, expected fee context, and concise notes. This stays simple on purpose and never feeds public content.</p>
           <div class="toolbar">
@@ -506,8 +506,9 @@
           <h2>Calendar</h2>
           <div class="toolbar">
             <span id="calendar-completeness" class="pill">Checking…</span>
-            <button id="perf-open-internal-calendar" type="button">Open internal calendar</button>
+            <button id="perf-open-internal-calendar-view" type="button">Open internal calendar view</button>
           </div>
+          <div id="calendar-main-view">
           <div class="editor-section">
             <h3>Calendar section content</h3>
             <div class="grid two">
@@ -737,6 +738,13 @@
                   <small class="muted">Contexts control where this event can be used as an editorial highlight.</small>
                   <small id="perf-featured-state" class="muted">Highlight state: normal</small>
                 </label>
+                <label>Private event
+                  <select id="perf-privateEvent">
+                    <option value="false">no</option>
+                    <option value="true">yes</option>
+                  </select>
+                  <small class="muted">Use this single switch for invitation-only events. When enabled, the public calendar applies private styling automatically and falls back to the shared theatrical background if no custom image is set.</small>
+                </label>
                 <label>Private badge
                   <select id="perf-privateBadge">
                     <option value="show">Show for private events</option>
@@ -766,6 +774,20 @@
               <div class="editor-section">
                 <h3>Visual appearance</h3>
                 <label>Background image URL<input id="perf-venuePhoto" placeholder="https://..."></label>
+                <label>Background focus
+                  <select id="perf-venuePhotoFocus">
+                    <option value="center center">center center</option>
+                    <option value="top left">top left</option>
+                    <option value="top center">top center</option>
+                    <option value="top right">top right</option>
+                    <option value="center left">center left</option>
+                    <option value="center right">center right</option>
+                    <option value="bottom left">bottom left</option>
+                    <option value="bottom center">bottom center</option>
+                    <option value="bottom right">bottom right</option>
+                  </select>
+                  <small class="muted">Controls which part of the image stays visible in the public event card.</small>
+                </label>
                 <label>Background opacity
                   <select id="perf-venueOpacity">
                     <option value="0">none</option>
@@ -812,8 +834,8 @@
                 <label>Modal long description<textarea id="perf-modal-longdesc" rows="5"></textarea></label>
                 <small id="perf-modal-longdesc-translation-warn" class="muted warn" style="display:none"></small>
                 <div class="grid two">
-                  <label>Modal secondary CTA URL<input id="perf-modal-link" placeholder="https://..."></label>
-                  <label>Modal secondary CTA label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
+                  <label>Modal CTA button URL<input id="perf-modal-link" placeholder="https://..."></label>
+                  <label>Modal CTA button label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
                   <small id="perf-modal-link-label-translation-warn" class="muted warn" style="display:none"></small>
                   <small id="perf-modal-link-translation-warn" class="muted warn" style="display:none"></small>
                   <label>Modal price/info line<input id="perf-modal-ticketPrice" placeholder="20€ / 15€ reduced"></label>
@@ -836,25 +858,6 @@
                   </label>
                   <label>Modal flyer image URL<input id="perf-modal-flyerImg" placeholder="https://..."></label>
                 </div>
-              </div>
-
-              <div class="editor-section">
-                <h3>Translation tools</h3>
-                <p class="muted">Use the active language as source to speed up localized event support text.</p>
-                <div class="toolbar toolbar--tight">
-                  <button id="perf-tx-copy-all-btn" type="button">Copy current language to other languages</button>
-                  <button id="perf-tx-copy-selected-btn" type="button">Copy current language to selected languages…</button>
-                  <button id="perf-tx-autotranslate-btn" type="button">Auto-translate from current language</button>
-                  <button id="perf-tx-copy-base-to-current-btn" type="button">Copy base fields to current language</button>
-                </div>
-                <div class="tx-lang-picker" id="perf-tx-lang-picker">
-                  <label><input type="checkbox" id="perf-tx-lang-en" value="en"> EN</label>
-                  <label><input type="checkbox" id="perf-tx-lang-de" value="de"> DE</label>
-                  <label><input type="checkbox" id="perf-tx-lang-es" value="es"> ES</label>
-                  <label><input type="checkbox" id="perf-tx-lang-it" value="it"> IT</label>
-                  <label><input type="checkbox" id="perf-tx-lang-fr" value="fr"> FR</label>
-                </div>
-                <p id="perf-tx-result" class="muted"></p>
               </div>
 
               <details class="editor-section details-block">
@@ -913,6 +916,35 @@
           </div>
           <p class="muted">Save page heading &amp; intro saves the calendar page title and intro text only.</p>
           <p class="muted">Save all event changes saves titles, dates, venue, visibility, and other event fields.</p>
+          </div>
+          
+          <!-- Internal calendar view sub-section -->
+          <div id="internal-calendar-view" class="hidden">
+            <h2>Internal Calendar</h2>
+            <div class="toolbar">
+              <button id="internal-calendar-back" type="button">← Back to editor</button>
+              <button id="internal-calendar-view-toggle" type="button">Grid view</button>
+              <button id="internal-calendar-export-pdf" type="button">Export PDF</button>
+              <label>Month
+                <input id="internal-calendar-month" type="month">
+              </label>
+              <button id="internal-calendar-prev-month" type="button">← Prev</button>
+              <button id="internal-calendar-next-month" type="button">Next →</button>
+            </div>
+            <div class="toolbar">
+              <label>Filter
+                <select id="internal-calendar-filter">
+                  <option value="all">All</option>
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                  <option value="upcoming">Upcoming</option>
+                </select>
+              </label>
+              <span id="internal-calendar-summary" class="internal-calendar-summary muted"></span>
+              <span id="internal-calendar-count" class="muted"></span>
+            </div>
+            <div id="internal-calendar-content" class="internal-calendar-container"></div>
+          </div>
         </section>
 
         <section id="section-income" class="section">

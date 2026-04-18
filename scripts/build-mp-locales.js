@@ -18,6 +18,7 @@
 
 var fs = require('fs');
 var path = require('path');
+var filter = require('./lib/public-field-filter');
 
 var root = path.join(__dirname, '..');
 var outFile = path.join(root, 'v1-assets', 'data', 'mp-locales.json');
@@ -59,17 +60,6 @@ function nonEmptyStr(v) {
   return v != null && String(v).trim() !== '';
 }
 
-function stripAdminNote(obj) {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
-  var out = {};
-  for (var k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    if (k === 'adminNote') continue;
-    out[k] = obj[k];
-  }
-  return out;
-}
-
 /** Copy non-empty string values from `from` into `into`. */
 function mergeStrings(into, from) {
   if (!from || typeof from !== 'object') return;
@@ -84,7 +74,6 @@ function applyHeroBioFromExport(into, lang, exportData) {
   var hk = 'hero_' + lang;
   var h = exportData[hk];
   if (h && typeof h === 'object' && !Array.isArray(h)) {
-    h = stripAdminNote(h);
     if (nonEmptyStr(h.eyebrow)) into['hero.eyebrow'] = String(h.eyebrow).trim();
     if (nonEmptyStr(h.subtitle)) into['hero.subtitle'] = String(h.subtitle).trim();
     if (nonEmptyStr(h.cta1)) into['hero.cta1'] = String(h.cta1).trim();
@@ -93,7 +82,6 @@ function applyHeroBioFromExport(into, lang, exportData) {
   var bk = 'bio_' + lang;
   var b = exportData[bk];
   if (b && typeof b === 'object' && !Array.isArray(b)) {
-    b = stripAdminNote(b);
     if (nonEmptyStr(b.h2)) into['home.intro.h2'] = String(b.h2).trim();
   }
 }
@@ -148,6 +136,14 @@ for (var i = 0; i < EN_REQUIRED_HOME.length; i++) {
 var output = {
   locales: locales
 };
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'mp-locales.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
 
 fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile);

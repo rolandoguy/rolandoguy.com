@@ -10,6 +10,7 @@
  */
 var fs = require('fs');
 var path = require('path');
+var filter = require('./lib/public-field-filter');
 
 var LANGS = ['en', 'de', 'es', 'it', 'fr'];
 var FIELDS = ['b50', 'b150', 'b300p1', 'b300p2', 'b300p3', 'b300p4'];
@@ -45,5 +46,15 @@ if (!bios || typeof bios !== 'object') {
   process.exit(1);
 }
 
-fs.writeFileSync(outFile, JSON.stringify(normalizeEpkBios(bios), null, 2) + '\n', 'utf8');
+var output = normalizeEpkBios(bios);
+
+// Security validation: ensure no internal fields leaked
+try {
+  filter.validatePublicPayload(output, 'epk-bios.json');
+} catch (e) {
+  console.error('[SECURITY] Validation failed:', e.message);
+  process.exit(1);
+}
+
+fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
 console.log('Wrote', outFile);
