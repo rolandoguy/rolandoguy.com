@@ -75,6 +75,9 @@
         "provider": "soundcloud",
         "embedUrl": "https://soundcloud.com/rolandoguy/ingemisco-weisswasser?si=2717f8c36aa4433899769887f0001608&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
         "externalUrl": "",
+        "tag": "",
+        "group": "sacred_oratorio",
+        "repertoireCat": "",
         "hidden": true,
         "featured": true
       },
@@ -85,6 +88,9 @@
         "provider": "soundcloud",
         "embedUrl": "https://soundcloud.com/rolandoguy/gricel-shelve-gig-rolando-guy?si=9548b419bdea43308fbc1acb87c3e897&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
         "externalUrl": "",
+        "tag": "",
+        "group": "recital_lied",
+        "repertoireCat": "crossover",
         "hidden": false,
         "featured": true
       },
@@ -95,6 +101,9 @@
         "provider": "soundcloud",
         "embedUrl": "https://soundcloud.com/rolandoguy/gold-in-deinen-augen-frank?si=aa59c983695e48cea0eaff03157e600c&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
         "externalUrl": "",
+        "tag": "",
+        "group": "tango",
+        "repertoireCat": "recital",
         "hidden": false,
         "featured": false
       }
