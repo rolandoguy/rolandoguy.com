@@ -455,7 +455,6 @@
     var heroCta1 = document.getElementById('heroCta1');
     var heroCta2 = document.getElementById('heroCta2');
     var heroQuickBio = document.getElementById('heroQuickBio');
-    var heroQuickCal = document.getElementById('heroQuickCal');
     var heroCta3 = document.getElementById('heroCta3');
     var heroName = document.getElementById('heroName');
     var v;
@@ -465,8 +464,6 @@
     if (heroSubtitle && vSubtitle && vSubtitle.value != null) heroSubtitle.textContent = vSubtitle.value;
     var vCta1 = val('hero.cta1');
     if (heroCta1 && vCta1 && vCta1.value != null) heroCta1.textContent = vCta1.value;
-    var vCta2 = val('hero.cta2');
-    if (heroCta2 && vCta2 && vCta2.value != null) heroCta2.textContent = vCta2.value;
     var vCta3 = val('hero.cta3');
     if (heroCta3 && vCta3 && vCta3.value != null) heroCta3.textContent = vCta3.value;
     var quickBioInfo = getHeroTextOverrideInfo('quickBioLabel', L);
@@ -478,11 +475,11 @@
       }
     }
     var quickCalInfo = getHeroTextOverrideInfo('quickCalLabel', L);
-    if (heroQuickCal) {
-      if (quickCalInfo && quickCalInfo.value) heroQuickCal.textContent = quickCalInfo.value;
+    if (heroCta2) {
+      if (quickCalInfo && quickCalInfo.value) heroCta2.textContent = quickCalInfo.value;
       else {
         var quickCalFallback = pick ? pick(L, 'nav.cal') : null;
-        if (quickCalFallback != null && quickCalFallback !== '') heroQuickCal.textContent = quickCalFallback;
+        if (quickCalFallback != null && quickCalFallback !== '') heroCta2.textContent = quickCalFallback;
       }
     }
     var vName = val('hero.nameHtml');
@@ -492,8 +489,12 @@
       eyebrow: vEyebrow && vEyebrow.source,
       subtitle: vSubtitle && vSubtitle.source,
       cta1: vCta1 && vCta1.source,
-      cta2: vCta2 && vCta2.source,
-      cta3: vCta3 && vCta3.source
+      cta2: quickCalInfo && quickCalInfo.source,
+      cta3: vCta3 && vCta3.source,
+      quickBioLabel: quickBioInfo && quickBioInfo.value,
+      quickCalLabel: quickCalInfo && quickCalInfo.value,
+      heroQuickBio: heroQuickBio ? heroQuickBio.textContent : '',
+      heroCta2: heroCta2 ? heroCta2.textContent : ''
     });
     if (!HERO_SOURCE_LOGGED) {
       HERO_SOURCE_LOGGED = true;
@@ -502,10 +503,10 @@
         eyebrow: vEyebrow && vEyebrow.source,
         subtitle: vSubtitle && vSubtitle.source,
         cta1: vCta1 && vCta1.source,
-        cta2: vCta2 && vCta2.source,
+        cta2: quickCalInfo && quickCalInfo.source,
         cta3: vCta3 && vCta3.source,
         quickBio: heroQuickBio ? heroQuickBio.textContent : '',
-        quickCal: heroQuickCal ? heroQuickCal.textContent : ''
+        quickCal: heroCta2 ? heroCta2.textContent : ''
       });
     }
   }
