@@ -982,22 +982,39 @@
     ];
     var visibleGroups = [];
     var html = '';
+
+    function isAudioFeatured(a) {
+      return hasFeaturedVisual(a) || hasFeaturedLayout(a) || hasFeaturedInContext(a, 'media');
+    }
+
+    var allItems = normalised.filter(function (a) {
+      return !a.hidden && hasPublicAudioSource(a);
+    }).map(function (a, idx) {
+      return { a: a, idx: idx };
+    });
+
+    var featuredItems = allItems.filter(function (row) {
+      return isAudioFeatured(row.a);
+    }).sort(function (left, right) {
+      var lp = homepagePriorityValue(left.a);
+      var rp = homepagePriorityValue(right.a);
+      if (lp !== null && rp !== null && lp !== rp) return lp - rp;
+      if (lp !== null && rp === null) return -1;
+      if (lp === null && rp !== null) return 1;
+      return left.idx - right.idx;
+    });
+
+    var normalItems = allItems.filter(function (row) {
+      return !isAudioFeatured(row.a);
+    }).sort(function (left, right) {
+      return left.idx - right.idx;
+    });
+
+    var sortedItems = featuredItems.concat(normalItems);
+
     groups.forEach(function (gconf) {
-      var vis = normalised.filter(function (a) {
-        return !a.hidden && a.group === gconf.key && hasPublicAudioSource(a);
-      }).map(function (a, idx) {
-        return { a: a, idx: idx };
-      }).sort(function (left, right) {
-        var lv = hasFeaturedVisual(left.a) ? 1 : 0;
-        var rv = hasFeaturedVisual(right.a) ? 1 : 0;
-        var ll = hasFeaturedLayout(left.a) ? 1 : 0;
-        var rl = hasFeaturedLayout(right.a) ? 1 : 0;
-        var lp = lv + ll;
-        var rp = rv + rl;
-        if (lp !== rp) return rp - lp;
-        if (lv !== rv) return rv - lv;
-        if (ll !== rl) return rl - ll;
-        return left.idx - right.idx;
+      var vis = sortedItems.filter(function (row) {
+        return row.a.group === gconf.key;
       });
       if (!vis.length) return;
       visibleGroups.push(gconf);
