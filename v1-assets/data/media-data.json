@@ -66,7 +66,39 @@
   },
   "audio": {
     "h2": "Selected <em>Audio</em><br>&amp; Listening",
-    "sub": "Selected embedded recordings and listening excerpts."
+    "sub": "Selected embedded recordings and listening excerpts.",
+    "items": [
+      {
+        "title": "Ingemisco",
+        "subline": "Requiem",
+        "composer": "Giuseppe Verdi",
+        "provider": "soundcloud",
+        "embedUrl": "https://soundcloud.com/rolandoguy/ingemisco-weisswasser?si=2717f8c36aa4433899769887f0001608&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
+        "externalUrl": "",
+        "hidden": true,
+        "featured": true
+      },
+      {
+        "title": "Gricel",
+        "subline": "Guitar: Laico Ruiz Dominguez",
+        "composer": "Mariano Mores",
+        "provider": "soundcloud",
+        "embedUrl": "https://soundcloud.com/rolandoguy/gricel-shelve-gig-rolando-guy?si=9548b419bdea43308fbc1acb87c3e897&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
+        "externalUrl": "",
+        "hidden": false,
+        "featured": true
+      },
+      {
+        "title": "Gold in deinen Augen",
+        "subline": "Frank Schöbel",
+        "composer": "",
+        "provider": "soundcloud",
+        "embedUrl": "https://soundcloud.com/rolandoguy/gold-in-deinen-augen-frank?si=aa59c983695e48cea0eaff03157e600c&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
+        "externalUrl": "",
+        "hidden": false,
+        "featured": false
+      }
+    ]
   },
   "photos": {
     "h2": "Portraits, Stage &amp; <em>Backstage</em>",

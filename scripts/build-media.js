@@ -65,7 +65,8 @@ function resolveEffectiveAudioHeadingFields(audioData) {
     sub:
       safeString(safeAudio.sub).trim() ||
       safeString(uiEn && uiEn['mp.audio.sub']).trim() ||
-      safeString(enTable && enTable['mp.audio.sub']).trim()
+      safeString(enTable && enTable['mp.audio.sub']).trim(),
+    items: safeAudio.items
   };
 }
 
