@@ -156,10 +156,20 @@
             </label>
             <button type="button" data-open-section="programbuilder_fee">Open Fee Estimate</button>
           </div>
-          <div class="split">
-            <div id="cases-list" class="item-list"></div>
-            <div class="editor">
-              <h3 id="cases-editor-title">New case</h3>
+          <div class="split cases-workspace">
+            <div class="cases-list-panel">
+              <div class="cases-panel-head">
+                <h3>Cases list</h3>
+                <p class="muted">Desktop defaults to a compact list for faster scanning. Mobile keeps the card layout.</p>
+              </div>
+              <div id="cases-list-summary" class="cases-list-summary"></div>
+              <div id="cases-list" class="item-list"></div>
+            </div>
+            <div id="cases-editor-panel" class="editor cases-editor-panel">
+              <div class="cases-panel-head">
+                <h3 id="cases-editor-title">New case</h3>
+                <p id="cases-editor-hint" class="muted">Select a case to edit it, or start a new one here.</p>
+              </div>
               <label>Title<input id="cases-title"></label>
               <label>Status
                 <select id="cases-status">

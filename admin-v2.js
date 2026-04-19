@@ -3832,6 +3832,45 @@
     field.value = today;
     markDirty(true);
   }
+  function syncCasesEditorPanelState(isActive) {
+    var panel = $('cases-editor-panel');
+    var hint = $('cases-editor-hint');
+    if (panel) panel.classList.toggle('is-active', !!isActive);
+    if (hint) hint.textContent = isActive
+      ? 'Editing the selected case. Save or cancel when you are done.'
+      : 'Select a case to edit it, or start a new one here.';
+  }
+  function renderCasesListSummary(records) {
+    var box = $('cases-list-summary');
+    if (!box) return;
+    records = Array.isArray(records) ? records : [];
+    var counts = { overdue: 0, today: 0, next7: 0, waiting: 0, confirmed: 0 };
+    records.forEach(function (record) {
+      var follow = casesFollowupState(record);
+      if (follow.weight === 0) counts.overdue += 1;
+      else if (follow.weight === 1) counts.today += 1;
+      else {
+        var nextDate = safeString(record && record.next_followup_date).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(nextDate)) {
+          var today = new Date();
+          today.setHours(0, 0, 0, 0);
+          var followDate = new Date(nextDate + 'T00:00:00');
+          var diffDays = Math.ceil((followDate - today) / 86400000);
+          if (diffDays >= 1 && diffDays <= 7) counts.next7 += 1;
+        }
+      }
+      var status = safeString(record && record.status).trim().toLowerCase();
+      if (status === 'waiting') counts.waiting += 1;
+      if (status === 'confirmed') counts.confirmed += 1;
+    });
+    box.innerHTML = [
+      '<div class="cases-list-summary__tile cases-list-summary__tile--overdue"><span>Overdue</span><strong>' + escapeHtml(String(counts.overdue)) + '</strong><small>Needs action now</small></div>',
+      '<div class="cases-list-summary__tile cases-list-summary__tile--today"><span>Today</span><strong>' + escapeHtml(String(counts.today)) + '</strong><small>Due today</small></div>',
+      '<div class="cases-list-summary__tile cases-list-summary__tile--soon"><span>Next 7 Days</span><strong>' + escapeHtml(String(counts.next7)) + '</strong><small>Upcoming follow-ups</small></div>',
+      '<div class="cases-list-summary__tile cases-list-summary__tile--waiting"><span>Waiting</span><strong>' + escapeHtml(String(counts.waiting)) + '</strong><small>Awaiting reply</small></div>',
+      '<div class="cases-list-summary__tile cases-list-summary__tile--confirmed"><span>Confirmed</span><strong>' + escapeHtml(String(counts.confirmed)) + '</strong><small>Already secured</small></div>'
+    ].join('');
+  }
   function renderCasesContactOptions() {
     var el = $('cases-linked_contact_id');
     if (!el) return;
@@ -3888,6 +3927,7 @@
     });
   }
   function clearCasesForm() {
+    syncCasesEditorPanelState(false);
     if ($('cases-editor-title')) $('cases-editor-title').textContent = 'New case';
     if ($('cases-title')) $('cases-title').value = '';
     if ($('cases-status')) $('cases-status').value = 'open';
@@ -3916,6 +3956,7 @@
     if (!box) return;
     var records = casesFilteredRecords();
     if (countEl) countEl.textContent = records.length + ' case' + (records.length === 1 ? '' : 's');
+    renderCasesListSummary(records);
     if (!records.length) {
       box.innerHTML = '<div class="empty-state">No cases match the current filters. Add a new case to start tracking an opportunity.</div>';
       return;
@@ -3928,26 +3969,40 @@
       if (safeString(record.priority).trim().toLowerCase() === 'high') cardClasses.push('cases-card--high-priority');
       var title = safeString(record.title).trim() || '(untitled case)';
       var statusBadge = '<span class="item-badge ' + escapeAttr(casesStatusClass(record.status)) + '">' + escapeHtml(casesStatusLabel(record.status)) + '</span>';
-      var priorityBadge = '<span class="item-badge ' + escapeAttr(casesPriorityClass(record.priority)) + '">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span>';
+      var priorityBadge = '<span class="item-badge ' + escapeAttr(casesPriorityClass(record.priority)) + ' cases-row__priority">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span>';
       var follow = casesFollowupState(record);
-      var followBadge = '<span class="item-badge ' + escapeAttr(follow.className) + '">' + escapeHtml(follow.label) + '</span>';
+      var followBadge = '<span class="item-badge ' + escapeAttr(follow.className) + ' cases-row__urgency">' + escapeHtml(follow.label) + '</span>';
       var contactLine = [hydrated.contact_name, hydrated.contact_email].filter(Boolean).join(' · ');
       var venueLine = [hydrated.venue_name, hydrated.venue_city].filter(Boolean).join(' · ');
       var secondaryMeta = [safeString(hydrated.source).trim(), formatVisibleDate(record.discussed_date), formatVisibleDate(record.proposed_date)].filter(Boolean).join(' · ');
-      var needBadges = [];
-      if (!contactLine) needBadges.push('<span class="item-badge warn">Missing contact</span>');
-      if (!venueLine) needBadges.push('<span class="item-badge warn">Missing venue</span>');
-      if (!safeString(record.next_action).trim()) needBadges.push('<span class="item-badge err">No next action</span>');
-      return '<button type="button" class="' + escapeAttr(cardClasses.join(' ')) + '" data-cases-select="' + escapeAttr(record.id) + '">' +
-        '<div class="item-card__head">' +
-          '<strong>' + escapeHtml(title) + '</strong>' +
-          '<div class="item-badges">' + statusBadge + priorityBadge + followBadge + '</div>' +
+      var followupDateLabel = formatVisibleDate(record.next_followup_date) || 'No date set';
+      var softSignals = [];
+      if (!contactLine) softSignals.push('<span class="cases-soft-signal">Missing contact</span>');
+      if (!venueLine) softSignals.push('<span class="cases-soft-signal">Missing venue</span>');
+      if (!safeString(record.next_action).trim()) softSignals.push('<span class="cases-soft-signal">No next action</span>');
+      return '<button type="button" class="' + escapeAttr(cardClasses.join(' ') + ' cases-row') + '" data-cases-select="' + escapeAttr(record.id) + '">' +
+        '<div class="cases-row__status">' + statusBadge + '</div>' +
+        '<div class="cases-row__main">' +
+          '<div class="cases-row__head">' +
+            '<div class="cases-row__title-wrap">' +
+              '<strong class="cases-row__title">' + escapeHtml(title) + '</strong>' +
+            '</div>' +
+            priorityBadge +
+          '</div>' +
+          '<div class="cases-row__meta-grid">' +
+            '<div class="cases-row__meta"><span class="cases-row__meta-label">Venue</span><span class="cases-row__meta-value">' + escapeHtml(venueLine || 'No venue yet') + '</span></div>' +
+            '<div class="cases-row__meta"><span class="cases-row__meta-label">Contact</span><span class="cases-row__meta-value">' + escapeHtml(contactLine || 'No contact yet') + '</span></div>' +
+          '</div>' +
+          '<p class="item-card__note item-card__note--action cases-row__action">' + escapeHtml(safeString(record.next_action).trim() || 'Set the next concrete action') + '</p>' +
+          ((secondaryMeta || softSignals.length) ? '<div class="cases-row__support">' +
+            (secondaryMeta ? '<span class="cases-row__signals">' + escapeHtml(secondaryMeta) + '</span>' : '') +
+            softSignals.join('') +
+          '</div>' : '') +
         '</div>' +
-        (contactLine ? '<div class="item-card__meta"><strong>Contact:</strong> ' + escapeHtml(contactLine) + '</div>' : '') +
-        (venueLine ? '<div class="item-card__meta"><strong>Venue:</strong> ' + escapeHtml(venueLine) + '</div>' : '') +
-        (secondaryMeta ? '<div class="item-card__meta">' + escapeHtml(secondaryMeta) + '</div>' : '') +
-        '<p class="item-card__note item-card__note--action">' + escapeHtml(safeString(record.next_action).trim() || 'Set the next concrete action') + '</p>' +
-        (needBadges.length ? '<div class="item-badges cases-card__signals">' + needBadges.join('') + '</div>' : '') +
+        '<div class="cases-row__due">' +
+          followBadge +
+          '<span class="cases-row__date">' + escapeHtml(followupDateLabel) + '</span>' +
+        '</div>' +
       '</button>';
     }).join('');
     box.querySelectorAll('[data-cases-select]').forEach(function (btn) {
@@ -3968,6 +4023,7 @@
       clearCasesForm();
       return;
     }
+    syncCasesEditorPanelState(true);
     var hydrated = casesHydratedRecord(record);
     titleEl.textContent = 'Edit case';
     $('cases-title').value = safeString(record.title);
