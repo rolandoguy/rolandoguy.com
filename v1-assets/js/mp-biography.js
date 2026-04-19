@@ -425,9 +425,6 @@
       else if (img && !portrait) img.style.opacity = '1';
     });
 
-    if (typeof window.applyMpChromeI18n === 'function') {
-      window.applyMpChromeI18n(lang);
-    }
     if (img && merged.portraitAlt) img.setAttribute('alt', merged.portraitAlt);
 
     if (ctag) ctag.textContent = merged.continueSectionTag || '';
