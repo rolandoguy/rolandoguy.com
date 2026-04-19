@@ -115,8 +115,11 @@
   function getProgramsPayloadInfo(lang) {
     var l = (lang || 'en').toLowerCase();
     var baseLang = MP_PROGRAMS && MP_PROGRAMS.locales && MP_PROGRAMS.locales[l] ? clone(MP_PROGRAMS.locales[l]) : null;
-    var baseEn = MP_PROGRAMS && MP_PROGRAMS.locales && MP_PROGRAMS.locales.en ? clone(MP_PROGRAMS.locales.en) : null;
-    var base = baseLang || baseEn;
+    var base = baseLang;
+    if (!base) {
+      var baseEn = MP_PROGRAMS && MP_PROGRAMS.locales && MP_PROGRAMS.locales.en ? clone(MP_PROGRAMS.locales.en) : null;
+      base = baseEn;
+    }
     if (!base) return { data: null, source: 'none', fallback: true };
 
     function liveItems(doc) {
