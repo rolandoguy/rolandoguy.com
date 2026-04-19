@@ -40,6 +40,11 @@ var PUBLIC_MEDIA_AUDIO_ITEM_FIELDS = [
   'provider',
   'embedUrl',
   'externalUrl',
+  'tag',
+  'group',
+  'repertoireCat',
+  'category',
+  'type',
   'hidden',
   'featured'
 ];
