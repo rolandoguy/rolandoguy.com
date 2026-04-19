@@ -1683,9 +1683,9 @@
       var moreInfoLabel = resolvePerfCtaLabel(p, currentLang);
       if (allowModalButton)
         h +=
-          '<button class="perf-more-btn no-print" onclick=\'debugOpenEventModal(event,' +
-          JSON.stringify(p.id) +
-          ')\'>' +
+          '<button class="perf-more-btn no-print" data-perf-id="' +
+          escHtml(String(p.id)) +
+          '">' +
           moreInfoLabel +
           '</button>';
       h += '</div></div>';
@@ -1983,6 +1983,15 @@
     return openEventModal(perfId);
   }
 
+  function resolvePerfIdFromButtonValue(rawId) {
+    var target = String(rawId == null ? '' : rawId);
+    var perfs = getPerfs();
+    for (var i = 0; i < perfs.length; i++) {
+      if (String(perfs[i].id) === target) return perfs[i].id;
+    }
+    return target;
+  }
+
   function openEventModal(perfId) {
     resolveActiveLang('openEventModal');
     lastEventModalFocus = document.activeElement;
@@ -2237,6 +2246,15 @@
     });
   };
   document.addEventListener('DOMContentLoaded', function () {
+    var perfList = document.getElementById('perfList');
+    if (perfList) {
+      perfList.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.perf-more-btn[data-perf-id]') : null;
+        if (!btn || !perfList.contains(btn)) return;
+        e.preventDefault();
+        debugOpenEventModal(e, resolvePerfIdFromButtonValue(btn.getAttribute('data-perf-id')));
+      });
+    }
     var btn = document.getElementById('pastPerfCollapseBtn');
     if (btn) btn.addEventListener('click', togglePastPublicList);
   });
