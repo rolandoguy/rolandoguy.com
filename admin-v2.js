@@ -4560,7 +4560,7 @@
   function getBiographySafeStoredDoc(lang) {
     var L = normalizeLangCode(lang) || 'en';
     var raw = getBiographyStoredDoc(L);
-    if (L === 'de') return raw;
+    if (L === 'de' || L === 'en') return raw;
     if (!isObject(raw) || !hasBiographyMeaningfulContent(raw)) return raw;
     var matchedLocale = detectBiographyLocaleMatch(raw, state.bioBundle || {});
     if (matchedLocale && matchedLocale !== L) {
@@ -4604,7 +4604,7 @@
     if (matchedLocale && matchedLocale !== L) {
       bioDebug('source:locale-mismatch', { lang: L, matchedLocale: matchedLocale, key: key });
     }
-    if (L !== 'de' && state.bioBundle && isObject(state.bioBundle.en)) {
+    if (L !== 'de' && L !== 'en' && state.bioBundle && isObject(state.bioBundle.en)) {
       var deScore = bioLocaleSimilarityScore(rawStored, canonical);
       var englishScore = bioLocaleSimilarityScore(rawStored, state.bioBundle.en);
       if (englishScore >= 4 && englishScore > deScore + 1) {

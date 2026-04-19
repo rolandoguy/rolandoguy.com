@@ -19,10 +19,6 @@
   };
   var LAST_HERO_IMAGE = '';
   var HERO_SOURCE_LOGGED = false;
-  var HOME_BIO_DATA = null;
-  var HOME_BIO_LOAD_ATTEMPTED = false;
-  var HOME_BIO_LOAD_PROMISE = null;
-  var HOME_BIO_RENDER_SEQ = 0;
   var HOME_SAFE_EN = {
     introH2: 'A voice <em>shaped</em><br>by tradition',
     introP1:
@@ -75,37 +71,6 @@
       p2: root.querySelector('[data-i18n-html="home.intro.p2"]')
     };
   }
-  function ensureHomeBiographyData() {
-    if (HOME_BIO_LOAD_ATTEMPTED) return Promise.resolve(HOME_BIO_DATA);
-    if (HOME_BIO_LOAD_PROMISE) return HOME_BIO_LOAD_PROMISE;
-    HOME_BIO_LOAD_PROMISE = fetch('/v1-assets/data/biography-data.json', { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) return null;
-        return r.json();
-      })
-      .then(function (data) {
-        HOME_BIO_LOAD_ATTEMPTED = true;
-        HOME_BIO_DATA = data && data.locales && typeof data.locales === 'object' ? data : null;
-        return HOME_BIO_DATA;
-      })
-      .catch(function () {
-        HOME_BIO_LOAD_ATTEMPTED = true;
-        HOME_BIO_DATA = null;
-        return null;
-      })
-      .finally(function () {
-        HOME_BIO_LOAD_PROMISE = null;
-      });
-    return HOME_BIO_LOAD_PROMISE;
-  }
-  function normalizeBiographyParagraphs(doc) {
-    if (!doc || !Array.isArray(doc.paragraphs)) return [];
-    return doc.paragraphs
-      .map(function (value) {
-        return String(value == null ? '' : value).trim();
-      })
-      .filter(Boolean);
-  }
   function pickHomeLocaleStringExact(lang, key) {
     if (typeof window.pickMpLocaleString !== 'function') return '';
     var value = window.pickMpLocaleString(lang, key);
@@ -155,61 +120,9 @@
     }
     return { value: String(safeEnValue || ''), resolvedLang: 'en', source: 'safe-en-fallback' };
   }
-  function isUsableHomeBiographyLocale(doc) {
-    return !!(doc && typeof doc === 'object' && String(doc.h2 || '').trim() && normalizeBiographyParagraphs(doc).length >= 2);
-  }
-  function isEnglishBiographyLeak(doc) {
-    if (!isUsableHomeBiographyLocale(doc)) return true;
-    var locales = HOME_BIO_DATA && HOME_BIO_DATA.locales;
-    var deDoc = locales && locales.de;
-    if (hasGermanLeakToken(doc.h2)) return true;
-    if (!deDoc) return false;
-    var paragraphs = normalizeBiographyParagraphs(doc);
-    var deParagraphs = normalizeBiographyParagraphs(deDoc);
-    if ((paragraphs[0] && hasGermanLeakToken(paragraphs[0])) || (paragraphs[1] && hasGermanLeakToken(paragraphs[1]))) return true;
-    if (normalizeComparableText(doc.h2) === normalizeComparableText(deDoc.h2)) return true;
-    if (paragraphs[0] && deParagraphs[0] && normalizeComparableText(paragraphs[0]) === normalizeComparableText(deParagraphs[0])) return true;
-    if (paragraphs[1] && deParagraphs[1] && normalizeComparableText(paragraphs[1]) === normalizeComparableText(deParagraphs[1])) return true;
-    return false;
-  }
-  function resolveHomeBiographyLocale(currentLang) {
-    var locales = HOME_BIO_DATA && HOME_BIO_DATA.locales;
-    if (!locales || typeof locales !== 'object') return { resolvedLang: '', doc: null };
-    var lang = resolveHeroLang(currentLang);
-    if (lang !== 'en' && isUsableHomeBiographyLocale(locales[lang])) return { resolvedLang: lang, doc: locales[lang] };
-    if (lang === 'en' && isUsableHomeBiographyLocale(locales.en) && !isEnglishBiographyLeak(locales.en)) {
-      return { resolvedLang: 'en', doc: locales.en };
-    }
-    if (lang !== 'en' && isUsableHomeBiographyLocale(locales.en) && !isEnglishBiographyLeak(locales.en)) {
-      return { resolvedLang: 'en', doc: locales.en };
-    }
-    return { resolvedLang: '', doc: null };
-  }
-  function applyHomeBiographyPreview(lang) {
-    var els = getHomeBiographyEls();
-    if (!els) return Promise.resolve();
-    var currentLang = resolveHeroLang(lang);
-    var renderSeq = ++HOME_BIO_RENDER_SEQ;
-    return ensureHomeBiographyData().then(function () {
-      if (renderSeq !== HOME_BIO_RENDER_SEQ) return;
-      var resolved = resolveHomeBiographyLocale(currentLang);
-      var resolvedLang = resolved.resolvedLang || 'en';
-      var doc = resolved.doc;
-      console.log('[home bio preview]', currentLang, resolvedLang, doc ? 'biography-data.json' : 'safe-en-fallback');
-      if (!doc) {
-        if (els.h2) els.h2.innerHTML = HOME_SAFE_EN.introH2;
-        if (els.p1) els.p1.innerHTML = HOME_SAFE_EN.introP1;
-        if (els.p2) els.p2.textContent = HOME_SAFE_EN.introP2;
-        return;
-      }
-      var paragraphs = normalizeBiographyParagraphs(doc);
-      if (els.h2) els.h2.innerHTML = String(doc.h2 || '');
-      if (els.p1) els.p1.textContent = paragraphs[0] || '';
-      if (els.p2) els.p2.textContent = paragraphs[1] || '';
-    });
-  }
   function applyHomeIntroCopy(lang) {
     var L = resolveHeroLang(lang);
+    var bioEls = getHomeBiographyEls();
     var proof = document.querySelector('[data-i18n="home.intro.proof"]');
     var presenterTag = document.querySelector('[data-i18n="home.presenter.tag"]');
     var presenter1 = document.querySelector('[data-i18n="home.presenter.p1"]');
@@ -219,6 +132,9 @@
     var introCtaMedia = document.getElementById('homeIntroCtaMedia');
     var introCtaPress = document.getElementById('homeIntroCtaPress');
     var map = [
+      { el: bioEls && bioEls.h2, key: 'home.intro.h2', safe: HOME_SAFE_EN.introH2, html: true },
+      { el: bioEls && bioEls.p1, key: 'home.intro.p1', safe: HOME_SAFE_EN.introP1, html: true },
+      { el: bioEls && bioEls.p2, key: 'home.intro.p2', safe: HOME_SAFE_EN.introP2, html: false },
       { el: proof, key: 'home.intro.proof', safe: HOME_SAFE_EN.introProof },
       { el: presenterTag, key: 'home.presenter.tag', safe: HOME_SAFE_EN.presenterTag },
       { el: presenter1, key: 'home.presenter.p1', safe: HOME_SAFE_EN.presenterP1 },
@@ -233,10 +149,11 @@
       if (!item.el) return;
       var resolved = resolveHomeUiString(L, item.key, item.safe);
       introLangUsed = introLangUsed === 'en' || resolved.resolvedLang === L ? resolved.resolvedLang : introLangUsed;
-      item.el.textContent = resolved.value;
-      console.log('[home presenter field]', item.key, L, resolved.resolvedLang, resolved.source);
+      if (item.html) item.el.innerHTML = resolved.value;
+      else item.el.textContent = resolved.value;
+      console.log('[home intro field]', item.key, L, resolved.resolvedLang, resolved.source);
     });
-    console.log('[home intro]', L, introLangUsed || 'en', 'mp-locales.json/safe-en-fallback');
+    console.log('[home intro]', L, introLangUsed || 'en', 'rg_ui/mp-locales/safe-en-fallback');
   }
   var LIVE_HERO_DOCS = {};
   var LAST_PROGRAMS_CTA_VISIBILITY_LANG = '';
@@ -540,9 +457,6 @@
     var heroQuickBio = document.getElementById('heroQuickBio');
     var heroQuickCal = document.getElementById('heroQuickCal');
     var heroCta3 = document.getElementById('heroCta3');
-    var homeIntroCtaBio = document.getElementById('homeIntroCtaBio');
-    var homeIntroCtaMedia = document.getElementById('homeIntroCtaMedia');
-    var homeIntroCtaPress = document.getElementById('homeIntroCtaPress');
     var heroName = document.getElementById('heroName');
     var v;
     var vEyebrow = val('hero.eyebrow');
@@ -569,26 +483,6 @@
     }
     var vName = val('hero.nameHtml');
     if (heroName && vName && vName.value != null) applyHeroNameMarkup(heroName, vName.value);
-    // Avoid cross-language leak: do not use hero_en override for localized intro CTA labels.
-    var introBioInfo = getHeroTextOverrideInfoWithoutEn('introCtaBio', L);
-    if (homeIntroCtaBio) {
-      var introBioFallback = pick ? pick(L, 'home.intro.ctaBio') : null;
-      if (introBioFallback != null && introBioFallback !== '') homeIntroCtaBio.textContent = introBioFallback;
-      else if (introBioInfo && introBioInfo.value) homeIntroCtaBio.textContent = introBioInfo.value;
-    }
-    // Avoid cross-language leak: do not use hero_en override for localized intro CTA labels.
-    var introMediaInfo = getHeroTextOverrideInfoWithoutEn('introCtaMedia', L);
-    if (homeIntroCtaMedia) {
-      var introMediaFallback = pick ? pick(L, 'home.intro.ctaMedia') : null;
-      if (introMediaFallback != null && introMediaFallback !== '') homeIntroCtaMedia.textContent = introMediaFallback;
-      else if (introMediaInfo && introMediaInfo.value) homeIntroCtaMedia.textContent = introMediaInfo.value;
-    }
-    var introPressInfo = getHeroTextOverrideInfoWithoutEn('introCtaPress', L);
-    if (homeIntroCtaPress) {
-      var introPressFallback = pick ? pick(L, 'home.intro.ctaPress') : null;
-      if (introPressFallback != null && introPressFallback !== '') homeIntroCtaPress.textContent = introPressFallback;
-      else if (introPressInfo && introPressInfo.value) homeIntroCtaPress.textContent = introPressInfo.value;
-    }
     applyProgramsEntryPointVisibility(L);
     console.log('[home hero]', L, vSubtitle && vSubtitle.langUsed ? vSubtitle.langUsed : L, {
       eyebrow: vEyebrow && vEyebrow.source,
@@ -670,7 +564,6 @@
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
       applyHomeIntroCopy(lang);
-      applyHomeBiographyPreview(lang);
       if (introPhoto) applyIntroPhotoSource(introPhoto, '', { onlyOverride: true });
       fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
       .then(function (r) {
@@ -698,7 +591,6 @@
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
       applyHomeIntroCopy(lang);
-      applyHomeBiographyPreview(lang);
       if (introPhoto) {
         applyIntroPhotoSource(introPhoto, LAST_HERO_IMAGE || '../img/hero-portrait.webp');
       }
