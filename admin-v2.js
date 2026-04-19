@@ -3294,7 +3294,9 @@
     if (!isObject(raw) && L === 'en') raw = loadDoc('rg_programs', {});
     var doc = safeProgramsDoc(raw || {});
     var out = pickPublicFields(doc, PUBLIC_PROGRAMS_CHROME_FIELDS);
-    out.items = (Array.isArray(doc.programs) ? doc.programs : []).filter(isObject).map(function (item) {
+    out.items = (Array.isArray(doc.programs) ? doc.programs : []).filter(isObject).filter(function (item) {
+      return item.published !== false;
+    }).map(function (item) {
       return pickPublicFields(item, PUBLIC_PROGRAMS_ITEM_FIELDS);
     });
     return out;
