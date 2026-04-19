@@ -19,6 +19,11 @@
   };
   var LAST_HERO_IMAGE = '';
   var HERO_SOURCE_LOGGED = false;
+  var HOME_BIO_DATA = null;
+  var HOME_BIO_LOAD_ATTEMPTED = false;
+  var HOME_BIO_LOAD_PROMISE = null;
+  var HOME_BIO_DEFAULTS = null;
+  var HOME_BIO_RENDER_SEQ = 0;
   function normalizeLangCode(v) {
     var s = String(v || '').trim().toLowerCase();
     return /^(en|de|es|it|fr)$/.test(s) ? s : '';
@@ -28,6 +33,91 @@
     var fromDoc = normalizeLangCode(document && document.documentElement ? document.documentElement.lang : '');
     var fromShell = (window.getMpSiteLang && normalizeLangCode(window.getMpSiteLang())) || '';
     return fromArg || fromDoc || fromShell || 'en';
+  }
+  function getHomeBiographyEls() {
+    var root = document.getElementById('intro');
+    if (!root) return null;
+    return {
+      h2: root.querySelector('[data-i18n-html="home.intro.h2"]'),
+      p1: root.querySelector('[data-i18n-html="home.intro.p1"]'),
+      p2: root.querySelector('[data-i18n-html="home.intro.p2"]')
+    };
+  }
+  function getHomeBiographyDefaults() {
+    if (HOME_BIO_DEFAULTS) return HOME_BIO_DEFAULTS;
+    var els = getHomeBiographyEls();
+    HOME_BIO_DEFAULTS = {
+      h2: els && els.h2 ? els.h2.innerHTML : '',
+      p1: els && els.p1 ? els.p1.textContent : '',
+      p2: els && els.p2 ? els.p2.textContent : ''
+    };
+    return HOME_BIO_DEFAULTS;
+  }
+  function ensureHomeBiographyData() {
+    if (HOME_BIO_LOAD_ATTEMPTED) return Promise.resolve(HOME_BIO_DATA);
+    if (HOME_BIO_LOAD_PROMISE) return HOME_BIO_LOAD_PROMISE;
+    HOME_BIO_LOAD_PROMISE = fetch('/v1-assets/data/biography-data.json', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        HOME_BIO_LOAD_ATTEMPTED = true;
+        HOME_BIO_DATA = data && data.locales && typeof data.locales === 'object' ? data : null;
+        return HOME_BIO_DATA;
+      })
+      .catch(function () {
+        HOME_BIO_LOAD_ATTEMPTED = true;
+        HOME_BIO_DATA = null;
+        return null;
+      })
+      .finally(function () {
+        HOME_BIO_LOAD_PROMISE = null;
+      });
+    return HOME_BIO_LOAD_PROMISE;
+  }
+  function normalizeBiographyParagraphs(doc) {
+    if (!doc || !Array.isArray(doc.paragraphs)) return [];
+    return doc.paragraphs
+      .map(function (value) {
+        return String(value == null ? '' : value).trim();
+      })
+      .filter(Boolean);
+  }
+  function isUsableHomeBiographyLocale(doc) {
+    return !!(doc && typeof doc === 'object' && String(doc.h2 || '').trim() && normalizeBiographyParagraphs(doc).length >= 2);
+  }
+  function resolveHomeBiographyLocale(currentLang) {
+    var locales = HOME_BIO_DATA && HOME_BIO_DATA.locales;
+    if (!locales || typeof locales !== 'object') return { resolvedLang: '', doc: null };
+    var lang = resolveHeroLang(currentLang);
+    if (isUsableHomeBiographyLocale(locales[lang])) return { resolvedLang: lang, doc: locales[lang] };
+    if (isUsableHomeBiographyLocale(locales.en)) return { resolvedLang: 'en', doc: locales.en };
+    return { resolvedLang: '', doc: null };
+  }
+  function applyHomeBiographyPreview(lang) {
+    var els = getHomeBiographyEls();
+    if (!els) return Promise.resolve();
+    var defaults = getHomeBiographyDefaults();
+    var currentLang = resolveHeroLang(lang);
+    var renderSeq = ++HOME_BIO_RENDER_SEQ;
+    return ensureHomeBiographyData().then(function () {
+      if (renderSeq !== HOME_BIO_RENDER_SEQ) return;
+      var resolved = resolveHomeBiographyLocale(currentLang);
+      var resolvedLang = resolved.resolvedLang || '';
+      var doc = resolved.doc;
+      console.log('[home biography]', currentLang, resolvedLang);
+      if (!doc) {
+        if (els.h2) els.h2.innerHTML = defaults.h2;
+        if (els.p1) els.p1.textContent = defaults.p1;
+        if (els.p2) els.p2.textContent = defaults.p2;
+        return;
+      }
+      var paragraphs = normalizeBiographyParagraphs(doc);
+      if (els.h2) els.h2.innerHTML = String(doc.h2 || '');
+      if (els.p1) els.p1.textContent = paragraphs[0] || '';
+      if (els.p2) els.p2.textContent = paragraphs[1] || '';
+    });
   }
   var LIVE_HERO_DOCS = {};
   var LAST_PROGRAMS_CTA_VISIBILITY_LANG = '';
@@ -439,6 +529,7 @@
     }
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
+      applyHomeBiographyPreview(lang);
       if (introPhoto) applyIntroPhotoSource(introPhoto, '', { onlyOverride: true });
       fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
       .then(function (r) {
@@ -465,6 +556,7 @@
     }
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
+      applyHomeBiographyPreview(lang);
       if (introPhoto) {
         applyIntroPhotoSource(introPhoto, LAST_HERO_IMAGE || '../img/hero-portrait.webp');
       }
