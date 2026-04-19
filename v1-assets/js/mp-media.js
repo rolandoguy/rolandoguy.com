@@ -974,15 +974,6 @@
       );
     }
 
-    var groups = [
-      { key: 'opera_operetta', label: t['vid.cat.opera_operetta'] || 'Opera · Operetta' },
-      { key: 'recital_lied', label: t['vid.cat.recital_lied'] || 'Recital · Lied' },
-      { key: 'sacred_oratorio', label: t['vid.cat.sacred_oratorio'] || 'Sacred / Oratorio' },
-      { key: 'tango', label: t['vid.cat.tango'] || 'Tango' }
-    ];
-    var visibleGroups = [];
-    var html = '';
-
     function isAudioFeatured(a) {
       return hasFeaturedVisual(a) || hasFeaturedLayout(a) || hasFeaturedInContext(a, 'media');
     }
@@ -1012,17 +1003,10 @@
 
     var sortedItems = featuredItems.concat(normalItems);
 
-    groups.forEach(function (gconf) {
-      var vis = sortedItems.filter(function (row) {
-        return row.a.group === gconf.key;
-      });
-      if (!vis.length) return;
-      visibleGroups.push(gconf);
-      html += vis.map(function (row) { return mkAudioCard(row.a); }).join('');
-    });
+    var html = sortedItems.map(function (row) { return mkAudioCard(row.a); }).join('');
 
-    section.hidden = !visibleGroups.length;
-    section.setAttribute('data-has-items', visibleGroups.length ? 'true' : 'false');
+    section.hidden = !sortedItems.length;
+    section.setAttribute('data-has-items', sortedItems.length ? 'true' : 'false');
     grid.innerHTML = html;
     nav.style.display = 'none';
   }
