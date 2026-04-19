@@ -874,21 +874,42 @@
     function hasPublicAudioSource(a) {
       return isSafeEmbed(a && a.embedUrl) || hasExternalAudioLink(a && a.externalUrl);
     }
+    function resolveAudioBadgeCategory(a) {
+      var precedence = [
+        a.repertoire_category,
+        a.repertoireCat,
+        a.category,
+        a.type,
+        a.tag
+      ];
+      var hasExplicitBadge = false;
+      for (var i = 0; i < precedence.length; i++) {
+        var val = String(precedence[i] || '').trim().toLowerCase();
+        if (val) {
+          hasExplicitBadge = true;
+          if (val === 'operetta') return 'operetta';
+          if (val === 'lied' || val === 'recital' || val === 'recital_lied') return 'lied';
+          if (val === 'concert' || val === 'concert_sacred' || val === 'sacred' || val === 'oratorio') return 'concert';
+          if (val === 'tango') return 'tango';
+          if (val === 'crossover') return 'crossover';
+          if (val === 'opera') return 'opera';
+        }
+      }
+      if (hasExplicitBadge) return 'other';
+      var group = String(a.group || '').trim().toLowerCase();
+      if (group === 'recital_lied') return 'lied';
+      if (group === 'sacred_oratorio') return 'concert';
+      if (group === 'tango') return 'tango';
+      if (group === 'opera_operetta') return 'opera';
+      return 'other';
+    }
     function mkAudioCard(a) {
       var visualFeatured = hasFeaturedVisual(a);
       var layoutFeatured = hasFeaturedLayout(a);
       var title = escVideoHtml(a.title || '');
       var subline = escVideoHtml(a.subline || '');
       var composer = escVideoHtml(a.composer || '');
-      var groupKey = String(a.group || '').trim();
-      var repKey = String(a.repertoireCat || '').trim();
-      if (groupKey === 'sacred_oratorio' && (repKey === '' || repKey === 'opera')) repKey = 'concert_sacred';
-      if (!repKey) {
-        if (groupKey === 'sacred_oratorio') repKey = 'concert_sacred';
-        else if (groupKey === 'recital_lied') repKey = 'lied';
-        else if (groupKey === 'tango') repKey = 'tango';
-        else repKey = 'opera';
-      }
+      var repKey = resolveAudioBadgeCategory(a);
       var catKey = 'vid.repCat.' + repKey;
       var catLabelRaw = t[catKey] || repKey.replace(/_/g, ' ');
       var featuredTextRaw = effectiveUiText(currentLang, 'ui.featured') || 'Featured';
