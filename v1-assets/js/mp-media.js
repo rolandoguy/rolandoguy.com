@@ -832,7 +832,6 @@
       o.tag = pickLocalizedAudioField(o, 'tag', 'tag');
       o.composer = pickLocalizedAudioField(o, 'composer', 'composer');
       o.group = normalizeAudioGroup(o);
-      o.repertoireCat = resolveVideoRepertoireCat(o);
       return o;
     });
     function isSafeEmbed(url) {
