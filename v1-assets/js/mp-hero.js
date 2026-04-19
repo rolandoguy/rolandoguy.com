@@ -471,15 +471,19 @@
     if (heroCta3 && vCta3 && vCta3.value != null) heroCta3.textContent = vCta3.value;
     var quickBioInfo = getHeroTextOverrideInfo('quickBioLabel', L);
     if (heroQuickBio) {
-      var quickBioFallback = pick ? pick(L, 'hero.ctaBio') : null;
-      if (quickBioFallback != null && quickBioFallback !== '') heroQuickBio.textContent = quickBioFallback;
-      else if (quickBioInfo && quickBioInfo.value) heroQuickBio.textContent = quickBioInfo.value;
+      if (quickBioInfo && quickBioInfo.value) heroQuickBio.textContent = quickBioInfo.value;
+      else {
+        var quickBioFallback = pick ? pick(L, 'hero.ctaBio') : null;
+        if (quickBioFallback != null && quickBioFallback !== '') heroQuickBio.textContent = quickBioFallback;
+      }
     }
     var quickCalInfo = getHeroTextOverrideInfo('quickCalLabel', L);
     if (heroQuickCal) {
-      var quickCalFallback = pick ? pick(L, 'nav.cal') : null;
-      if (quickCalFallback != null && quickCalFallback !== '') heroQuickCal.textContent = quickCalFallback;
-      else if (quickCalInfo && quickCalInfo.value) heroQuickCal.textContent = quickCalInfo.value;
+      if (quickCalInfo && quickCalInfo.value) heroQuickCal.textContent = quickCalInfo.value;
+      else {
+        var quickCalFallback = pick ? pick(L, 'nav.cal') : null;
+        if (quickCalFallback != null && quickCalFallback !== '') heroQuickCal.textContent = quickCalFallback;
+      }
     }
     var vName = val('hero.nameHtml');
     if (heroName && vName && vName.value != null) applyHeroNameMarkup(heroName, vName.value);
