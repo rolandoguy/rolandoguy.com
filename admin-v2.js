@@ -1011,6 +1011,7 @@
     casesSelectedId: '',
     casesStatusFilter: 'all',
     casesPriorityFilter: 'all',
+    casesSummaryFilter: '',
     outreachDoc: { records: [] },
     outreachSelectedId: '',
     outreachSearch: '',
@@ -3840,6 +3841,52 @@
       ? 'Editing the selected case. Save or cancel when you are done.'
       : 'Select a case to edit it, or start a new one here.';
   }
+  function casesSummaryFilterLabel(value) {
+    var key = safeString(value).trim().toLowerCase();
+    return ({
+      overdue: 'Overdue',
+      today: 'Today',
+      next7: 'Next 7 Days',
+      waiting: 'Waiting',
+      confirmed: 'Confirmed'
+    })[key] || '';
+  }
+  function casesRecordMatchesSummaryFilter(record, filterKey) {
+    var key = safeString(filterKey).trim().toLowerCase();
+    if (!key) return true;
+    var status = safeString(record && record.status).trim().toLowerCase();
+    if (key === 'waiting') return status === 'waiting';
+    if (key === 'confirmed') return status === 'confirmed';
+    var nextDate = safeString(record && record.next_followup_date).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextDate)) return false;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var followDate = new Date(nextDate + 'T00:00:00');
+    if (isNaN(followDate.getTime())) return false;
+    var diffDays = Math.ceil((followDate - today) / 86400000);
+    if (key === 'overdue') return diffDays < 0;
+    if (key === 'today') return diffDays === 0;
+    if (key === 'next7') return diffDays >= 1 && diffDays <= 7;
+    return true;
+  }
+  function renderCasesActiveSummaryFilter() {
+    var box = $('cases-list-active-filter');
+    var key = safeString(state.casesSummaryFilter).trim().toLowerCase();
+    var label = casesSummaryFilterLabel(key);
+    if (!box) return;
+    if (!label) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML = 'Filtered by: <strong>' + escapeHtml(label) + '</strong> <button type="button" id="cases-clear-summary-filter">Clear</button>';
+    var btn = $('cases-clear-summary-filter');
+    if (btn) btn.addEventListener('click', function () {
+      state.casesSummaryFilter = '';
+      renderCasesList();
+    });
+  }
   function renderCasesListSummary(records) {
     var box = $('cases-list-summary');
     if (!box) return;
@@ -3863,13 +3910,55 @@
       if (status === 'waiting') counts.waiting += 1;
       if (status === 'confirmed') counts.confirmed += 1;
     });
+    var activeKey = safeString(state.casesSummaryFilter).trim().toLowerCase();
     box.innerHTML = [
-      '<div class="cases-list-summary__tile cases-list-summary__tile--overdue"><span>Overdue</span><strong>' + escapeHtml(String(counts.overdue)) + '</strong><small>Needs action now</small></div>',
-      '<div class="cases-list-summary__tile cases-list-summary__tile--today"><span>Today</span><strong>' + escapeHtml(String(counts.today)) + '</strong><small>Due today</small></div>',
-      '<div class="cases-list-summary__tile cases-list-summary__tile--soon"><span>Next 7 Days</span><strong>' + escapeHtml(String(counts.next7)) + '</strong><small>Upcoming follow-ups</small></div>',
-      '<div class="cases-list-summary__tile cases-list-summary__tile--waiting"><span>Waiting</span><strong>' + escapeHtml(String(counts.waiting)) + '</strong><small>Awaiting reply</small></div>',
-      '<div class="cases-list-summary__tile cases-list-summary__tile--confirmed"><span>Confirmed</span><strong>' + escapeHtml(String(counts.confirmed)) + '</strong><small>Already secured</small></div>'
-    ].join('');
+      { key: 'overdue', tone: 'overdue', label: 'Overdue', count: counts.overdue, hint: 'Needs action now' },
+      { key: 'today', tone: 'today', label: 'Today', count: counts.today, hint: 'Due today' },
+      { key: 'next7', tone: 'soon', label: 'Next 7 Days', count: counts.next7, hint: 'Upcoming follow-ups' },
+      { key: 'waiting', tone: 'waiting', label: 'Waiting', count: counts.waiting, hint: 'Awaiting reply' },
+      { key: 'confirmed', tone: 'confirmed', label: 'Confirmed', count: counts.confirmed, hint: 'Already secured' }
+    ].map(function (tile) {
+      var classes = ['cases-list-summary__tile', 'cases-list-summary__tile--' + tile.tone];
+      if (activeKey === tile.key) classes.push('is-active');
+      return '<button type="button" class="' + escapeAttr(classes.join(' ')) + '" data-cases-summary-filter="' + escapeAttr(tile.key) + '">' +
+        '<span>' + escapeHtml(tile.label) + '</span><strong>' + escapeHtml(String(tile.count)) + '</strong><small>' + escapeHtml(tile.hint) + '</small></button>';
+    }).join('');
+    box.querySelectorAll('[data-cases-summary-filter]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = safeString(btn.getAttribute('data-cases-summary-filter')).trim().toLowerCase();
+        state.casesSummaryFilter = safeString(state.casesSummaryFilter).trim().toLowerCase() === key ? '' : key;
+        renderCasesList();
+      });
+    });
+  }
+  function casesBaseFilteredRecords() {
+    var records = (state.casesDoc && Array.isArray(state.casesDoc.records)) ? state.casesDoc.records.slice() : [];
+    var statusFilter = safeString(state.casesStatusFilter || 'all').trim().toLowerCase() || 'all';
+    var priorityFilter = safeString(state.casesPriorityFilter || 'all').trim().toLowerCase() || 'all';
+    return records.filter(function (record) {
+      if (statusFilter !== 'all' && safeString(record.status).trim().toLowerCase() !== statusFilter) return false;
+      if (priorityFilter !== 'all' && safeString(record.priority).trim().toLowerCase() !== priorityFilter) return false;
+      return true;
+    });
+  }
+  function casesSortedRecords(records) {
+    return (records || []).slice().sort(function (a, b) {
+      var priorityOrder = { high: 0, medium: 1, low: 2 };
+      var pA = priorityOrder[safeString(a.priority).trim().toLowerCase()];
+      var pB = priorityOrder[safeString(b.priority).trim().toLowerCase()];
+      if ((pA || 0) !== (pB || 0)) return (pA || 0) - (pB || 0);
+      var followA = casesFollowupState(a);
+      var followB = casesFollowupState(b);
+      if (followA.weight !== followB.weight) return followA.weight - followB.weight;
+      var dateA = safeString(a.next_followup_date).trim();
+      var dateB = safeString(b.next_followup_date).trim();
+      if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB);
+      if (dateA && !dateB) return -1;
+      if (!dateA && dateB) return 1;
+      var updatedA = new Date(safeString(a.updatedAt || a.createdAt) || 0).getTime() || 0;
+      var updatedB = new Date(safeString(b.updatedAt || b.createdAt) || 0).getTime() || 0;
+      return updatedB - updatedA;
+    });
   }
   function renderCasesContactOptions() {
     var el = $('cases-linked_contact_id');
@@ -3901,30 +3990,14 @@
     el.value = selected && records.some(function (record) { return safeString(record.id).trim() === selected; }) ? selected : '';
   }
   function casesFilteredRecords() {
-    var records = (state.casesDoc && Array.isArray(state.casesDoc.records)) ? state.casesDoc.records.slice() : [];
-    var statusFilter = safeString(state.casesStatusFilter || 'all').trim().toLowerCase() || 'all';
-    var priorityFilter = safeString(state.casesPriorityFilter || 'all').trim().toLowerCase() || 'all';
-    return records.filter(function (record) {
-      if (statusFilter !== 'all' && safeString(record.status).trim().toLowerCase() !== statusFilter) return false;
-      if (priorityFilter !== 'all' && safeString(record.priority).trim().toLowerCase() !== priorityFilter) return false;
-      return true;
-    }).sort(function (a, b) {
-      var priorityOrder = { high: 0, medium: 1, low: 2 };
-      var pA = priorityOrder[safeString(a.priority).trim().toLowerCase()];
-      var pB = priorityOrder[safeString(b.priority).trim().toLowerCase()];
-      if ((pA || 0) !== (pB || 0)) return (pA || 0) - (pB || 0);
-      var followA = casesFollowupState(a);
-      var followB = casesFollowupState(b);
-      if (followA.weight !== followB.weight) return followA.weight - followB.weight;
-      var dateA = safeString(a.next_followup_date).trim();
-      var dateB = safeString(b.next_followup_date).trim();
-      if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB);
-      if (dateA && !dateB) return -1;
-      if (!dateA && dateB) return 1;
-      var updatedA = new Date(safeString(a.updatedAt || a.createdAt) || 0).getTime() || 0;
-      var updatedB = new Date(safeString(b.updatedAt || b.createdAt) || 0).getTime() || 0;
-      return updatedB - updatedA;
-    });
+    var records = casesBaseFilteredRecords();
+    var summaryFilter = safeString(state.casesSummaryFilter).trim().toLowerCase();
+    if (summaryFilter) {
+      records = records.filter(function (record) {
+        return casesRecordMatchesSummaryFilter(record, summaryFilter);
+      });
+    }
+    return casesSortedRecords(records);
   }
   function clearCasesForm() {
     syncCasesEditorPanelState(false);
@@ -3954,9 +4027,11 @@
     var box = $('cases-list');
     var countEl = $('cases-count');
     if (!box) return;
+    var baseRecords = casesBaseFilteredRecords();
     var records = casesFilteredRecords();
     if (countEl) countEl.textContent = records.length + ' case' + (records.length === 1 ? '' : 's');
-    renderCasesListSummary(records);
+    renderCasesListSummary(baseRecords);
+    renderCasesActiveSummaryFilter();
     if (!records.length) {
       box.innerHTML = '<div class="empty-state">No cases match the current filters. Add a new case to start tracking an opportunity.</div>';
       return;
@@ -4109,6 +4184,7 @@
     state.casesSelectedId = '';
     state.casesStatusFilter = 'all';
     state.casesPriorityFilter = 'all';
+    state.casesSummaryFilter = '';
     if ($('cases-status-filter')) $('cases-status-filter').value = 'all';
     if ($('cases-priority-filter')) $('cases-priority-filter').value = 'all';
     renderCasesList();
