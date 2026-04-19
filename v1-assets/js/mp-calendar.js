@@ -1683,9 +1683,9 @@
       var moreInfoLabel = resolvePerfCtaLabel(p, currentLang);
       if (allowModalButton)
         h +=
-          '<button class="perf-more-btn no-print" onclick="debugOpenEventModal(event,' +
+          '<button class="perf-more-btn no-print" onclick=\'debugOpenEventModal(event,' +
           JSON.stringify(p.id) +
-          ')">' +
+          ')\'>' +
           moreInfoLabel +
           '</button>';
       h += '</div></div>';
