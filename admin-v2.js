@@ -3580,8 +3580,17 @@
         priority: safeString(row.priority || 'medium').trim().toLowerCase() || 'medium',
         linked_contact_id: safeString(row.linked_contact_id || row.contact_id).trim(),
         linked_venue_id: safeString(row.linked_venue_id || row.venue_id).trim(),
+        contact_name: safeString(row.contact_name).trim(),
+        contact_email: safeString(row.contact_email).trim(),
+        contact_phone: safeString(row.contact_phone || row.phone).trim(),
+        venue_name: safeString(row.venue_name).trim(),
+        venue_city: safeString(row.venue_city || row.city).trim(),
+        venue_address_or_url: safeString(row.venue_address_or_url || row.venue_address || row.venue_url).trim(),
         next_followup_date: outreachDateValue(row.next_followup_date || row.next_follow_up),
         next_action: safeString(row.next_action).trim(),
+        source: safeString(row.source).trim(),
+        discussed_date: outreachDateValue(row.discussed_date),
+        proposed_date: outreachDateValue(row.proposed_date),
         estimated_fee: safeString(row.estimated_fee).trim(),
         notes_internal: safeString(row.notes_internal || row.notes).trim(),
         createdAt: safeString(row.createdAt).trim(),
@@ -3608,8 +3617,17 @@
       priority: 'medium',
       linked_contact_id: '',
       linked_venue_id: '',
+      contact_name: '',
+      contact_email: '',
+      contact_phone: '',
+      venue_name: '',
+      venue_city: '',
+      venue_address_or_url: '',
       next_followup_date: '',
       next_action: '',
+      source: '',
+      discussed_date: '',
+      proposed_date: '',
       estimated_fee: '',
       notes_internal: '',
       createdAt: now,
@@ -3630,29 +3648,72 @@
   function casesStatusClass(value) {
     var key = safeString(value).trim().toLowerCase();
     return ({
-      open: 'contacts-status--new',
-      waiting: 'contacts-status--contacted',
-      confirmed: 'contacts-status--confirmed',
-      closed: 'contacts-status--archived'
-    })[key] || 'contacts-status--new';
+      open: 'cases-status--open',
+      waiting: 'cases-status--waiting',
+      confirmed: 'cases-status--confirmed',
+      closed: 'cases-status--closed'
+    })[key] || 'cases-status--open';
   }
   function casesPriorityClass(value) {
     var key = safeString(value).trim().toLowerCase();
     return ({
-      high: 'contacts-priority--high',
-      medium: 'contacts-priority--medium',
-      low: 'contacts-priority--low'
-    })[key] || 'contacts-priority--medium';
+      high: 'cases-priority--high',
+      medium: 'cases-priority--medium',
+      low: 'cases-priority--low'
+    })[key] || 'cases-priority--medium';
   }
   function casesContactLabel(contactId) {
     var record = contactsRecordById(contactId);
     if (!record) return '';
     return safeString(record.contact_name || record.person_name || record.organization || record.email).trim();
   }
+  function casesResolvedContact(record) {
+    var linked = contactsRecordById(record && record.linked_contact_id);
+    return {
+      name: safeString(record && record.contact_name).trim() || safeString(linked && (linked.contact_name || linked.person_name || linked.organization)).trim(),
+      email: safeString(record && record.contact_email).trim() || safeString(linked && linked.email).trim(),
+      phone: safeString(record && record.contact_phone).trim() || safeString(linked && linked.phone).trim()
+    };
+  }
   function casesVenueLabel(venueId) {
     var venue = outreachRecordById(venueId);
     if (!venue) return '';
     return [safeString(venue.venueName).trim(), safeString(venue.city).trim()].filter(Boolean).join(' · ');
+  }
+  function casesResolvedVenue(record) {
+    var linked = outreachRecordById(record && record.linked_venue_id);
+    return {
+      name: safeString(record && record.venue_name).trim() || safeString(linked && linked.venueName).trim(),
+      city: safeString(record && record.venue_city).trim() || safeString(linked && linked.city).trim(),
+      addressOrUrl: safeString(record && record.venue_address_or_url).trim() || safeString(linked && (linked.website || linked.address)).trim()
+    };
+  }
+  function casesHydratedRecord(record) {
+    var out = clone(record || {});
+    var contact = casesResolvedContact(out);
+    var venue = casesResolvedVenue(out);
+    out.contact_name = contact.name;
+    out.contact_email = contact.email;
+    out.contact_phone = contact.phone;
+    out.venue_name = venue.name;
+    out.venue_city = venue.city;
+    out.venue_address_or_url = venue.addressOrUrl;
+    return out;
+  }
+  function casesFollowupState(record) {
+    var nextDate = safeString(record && record.next_followup_date).trim();
+    if (!nextDate || !/^\d{4}-\d{2}-\d{2}$/.test(nextDate)) {
+      return { weight: 2, className: 'cases-followup--missing', label: 'No follow-up set' };
+    }
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var followDate = new Date(nextDate + 'T00:00:00');
+    if (isNaN(followDate.getTime())) return { weight: 2, className: 'cases-followup--missing', label: 'Invalid follow-up' };
+    var diffDays = Math.ceil((followDate - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { weight: 0, className: 'cases-followup--overdue', label: 'Overdue by ' + Math.abs(diffDays) + ' day' + (Math.abs(diffDays) === 1 ? '' : 's') };
+    if (diffDays === 0) return { weight: 1, className: 'cases-followup--today', label: 'Due today' };
+    if (diffDays <= 7) return { weight: 3, className: 'cases-followup--soon', label: 'Due in ' + diffDays + ' day' + (diffDays === 1 ? '' : 's') };
+    return { weight: 4, className: 'cases-followup--calm', label: formatVisibleDate(nextDate) || nextDate };
   }
   function casesPrintTimestamp() {
     try {
@@ -3710,12 +3771,15 @@
             '<th style="width:13%">Next action</th>' +
           '</tr></thead>' +
           '<tbody>' + records.map(function (record) {
+            var hydrated = casesHydratedRecord(record);
+            var contactLine = [safeString(hydrated.contact_name).trim(), safeString(hydrated.contact_email).trim()].filter(Boolean).join(' · ');
+            var venueLine = [safeString(hydrated.venue_name).trim(), safeString(hydrated.venue_city).trim()].filter(Boolean).join(' · ');
             return '<tr>' +
               '<td><strong>' + escapeHtml(safeString(record.title).trim() || '(untitled case)') + '</strong></td>' +
               '<td><span class="status status--' + escapeAttr(safeString(record.status).trim().toLowerCase()) + '">' + escapeHtml(casesStatusLabel(record.status)) + '</span></td>' +
               '<td>' + escapeHtml(safeString(record.priority).trim().toUpperCase() || '—') + '</td>' +
-              '<td>' + escapeHtml(casesContactLabel(record.linked_contact_id) || '—') + '</td>' +
-              '<td>' + escapeHtml(casesVenueLabel(record.linked_venue_id) || '—') + '</td>' +
+              '<td>' + escapeHtml(contactLine || '—') + '</td>' +
+              '<td>' + escapeHtml(venueLine || '—') + '</td>' +
               '<td>' + escapeHtml(formatVisibleDate(record.next_followup_date) || '—') + '</td>' +
               '<td>' + escapeHtml(safeString(record.estimated_fee).trim() || '—') + '</td>' +
               '<td>' + escapeHtml(safeString(record.next_action).trim() || '—') + '</td>' +
@@ -3761,6 +3825,13 @@
     field.value = outreachFormatLocalYmd(base);
     markDirty(true);
   }
+  function casesSetFollowupToday() {
+    var field = $('cases-next_followup_date');
+    var today = outreachTodayIso();
+    if (!field || !today) return;
+    field.value = today;
+    markDirty(true);
+  }
   function renderCasesContactOptions() {
     var el = $('cases-linked_contact_id');
     if (!el) return;
@@ -3803,6 +3874,9 @@
       var pA = priorityOrder[safeString(a.priority).trim().toLowerCase()];
       var pB = priorityOrder[safeString(b.priority).trim().toLowerCase()];
       if ((pA || 0) !== (pB || 0)) return (pA || 0) - (pB || 0);
+      var followA = casesFollowupState(a);
+      var followB = casesFollowupState(b);
+      if (followA.weight !== followB.weight) return followA.weight - followB.weight;
       var dateA = safeString(a.next_followup_date).trim();
       var dateB = safeString(b.next_followup_date).trim();
       if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB);
@@ -3818,10 +3892,19 @@
     if ($('cases-title')) $('cases-title').value = '';
     if ($('cases-status')) $('cases-status').value = 'open';
     if ($('cases-priority')) $('cases-priority').value = 'medium';
+    if ($('cases-contact_name')) $('cases-contact_name').value = '';
+    if ($('cases-contact_email')) $('cases-contact_email').value = '';
+    if ($('cases-contact_phone')) $('cases-contact_phone').value = '';
+    if ($('cases-venue_name')) $('cases-venue_name').value = '';
+    if ($('cases-venue_city')) $('cases-venue_city').value = '';
+    if ($('cases-venue_address_or_url')) $('cases-venue_address_or_url').value = '';
     if ($('cases-linked_contact_id')) $('cases-linked_contact_id').value = '';
     if ($('cases-linked_venue_id')) $('cases-linked_venue_id').value = '';
     if ($('cases-next_followup_date')) $('cases-next_followup_date').value = '';
     if ($('cases-next_action')) $('cases-next_action').value = '';
+    if ($('cases-source')) $('cases-source').value = '';
+    if ($('cases-discussed_date')) $('cases-discussed_date').value = '';
+    if ($('cases-proposed_date')) $('cases-proposed_date').value = '';
     if ($('cases-estimated_fee')) $('cases-estimated_fee').value = '';
     if ($('cases-notes_internal')) $('cases-notes_internal').value = '';
     renderCasesContactOptions();
@@ -3838,21 +3921,33 @@
       return;
     }
     box.innerHTML = records.map(function (record) {
+      var hydrated = casesHydratedRecord(record);
       var isActive = safeString(state.casesSelectedId).trim() === safeString(record.id).trim();
-      var activeClass = isActive ? 'item-card active' : 'item-card';
+      var cardClasses = ['item-card', 'cases-card'];
+      if (isActive) cardClasses.push('active');
+      if (safeString(record.priority).trim().toLowerCase() === 'high') cardClasses.push('cases-card--high-priority');
       var title = safeString(record.title).trim() || '(untitled case)';
       var statusBadge = '<span class="item-badge ' + escapeAttr(casesStatusClass(record.status)) + '">' + escapeHtml(casesStatusLabel(record.status)) + '</span>';
       var priorityBadge = '<span class="item-badge ' + escapeAttr(casesPriorityClass(record.priority)) + '">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span>';
-      var contactLabel = casesContactLabel(record.linked_contact_id);
-      var venueLabel = casesVenueLabel(record.linked_venue_id);
-      var meta = [contactLabel, venueLabel, formatVisibleDate(record.next_followup_date)].filter(Boolean).join(' · ');
-      return '<button type="button" class="' + activeClass + '" data-cases-select="' + escapeAttr(record.id) + '">' +
+      var follow = casesFollowupState(record);
+      var followBadge = '<span class="item-badge ' + escapeAttr(follow.className) + '">' + escapeHtml(follow.label) + '</span>';
+      var contactLine = [hydrated.contact_name, hydrated.contact_email].filter(Boolean).join(' · ');
+      var venueLine = [hydrated.venue_name, hydrated.venue_city].filter(Boolean).join(' · ');
+      var secondaryMeta = [safeString(hydrated.source).trim(), formatVisibleDate(record.discussed_date), formatVisibleDate(record.proposed_date)].filter(Boolean).join(' · ');
+      var needBadges = [];
+      if (!contactLine) needBadges.push('<span class="item-badge warn">Missing contact</span>');
+      if (!venueLine) needBadges.push('<span class="item-badge warn">Missing venue</span>');
+      if (!safeString(record.next_action).trim()) needBadges.push('<span class="item-badge err">No next action</span>');
+      return '<button type="button" class="' + escapeAttr(cardClasses.join(' ')) + '" data-cases-select="' + escapeAttr(record.id) + '">' +
         '<div class="item-card__head">' +
           '<strong>' + escapeHtml(title) + '</strong>' +
-          '<div class="item-badges">' + statusBadge + priorityBadge + '</div>' +
+          '<div class="item-badges">' + statusBadge + priorityBadge + followBadge + '</div>' +
         '</div>' +
-        (meta ? '<div class="item-card__meta">' + escapeHtml(meta) + '</div>' : '') +
-        (record.next_action ? '<p class="item-card__note">' + escapeHtml(record.next_action) + '</p>' : '') +
+        (contactLine ? '<div class="item-card__meta"><strong>Contact:</strong> ' + escapeHtml(contactLine) + '</div>' : '') +
+        (venueLine ? '<div class="item-card__meta"><strong>Venue:</strong> ' + escapeHtml(venueLine) + '</div>' : '') +
+        (secondaryMeta ? '<div class="item-card__meta">' + escapeHtml(secondaryMeta) + '</div>' : '') +
+        '<p class="item-card__note item-card__note--action">' + escapeHtml(safeString(record.next_action).trim() || 'Set the next concrete action') + '</p>' +
+        (needBadges.length ? '<div class="item-badges cases-card__signals">' + needBadges.join('') + '</div>' : '') +
       '</button>';
     }).join('');
     box.querySelectorAll('[data-cases-select]').forEach(function (btn) {
@@ -3873,14 +3968,24 @@
       clearCasesForm();
       return;
     }
+    var hydrated = casesHydratedRecord(record);
     titleEl.textContent = 'Edit case';
     $('cases-title').value = safeString(record.title);
     $('cases-status').value = safeString(record.status) || 'open';
     $('cases-priority').value = safeString(record.priority) || 'medium';
+    $('cases-contact_name').value = safeString(hydrated.contact_name);
+    $('cases-contact_email').value = safeString(hydrated.contact_email);
+    $('cases-contact_phone').value = safeString(hydrated.contact_phone);
+    $('cases-venue_name').value = safeString(hydrated.venue_name);
+    $('cases-venue_city').value = safeString(hydrated.venue_city);
+    $('cases-venue_address_or_url').value = safeString(hydrated.venue_address_or_url);
     $('cases-linked_contact_id').value = safeString(record.linked_contact_id);
     $('cases-linked_venue_id').value = safeString(record.linked_venue_id);
     $('cases-next_followup_date').value = safeString(record.next_followup_date);
     $('cases-next_action').value = safeString(record.next_action);
+    $('cases-source').value = safeString(record.source);
+    $('cases-discussed_date').value = safeString(record.discussed_date);
+    $('cases-proposed_date').value = safeString(record.proposed_date);
     $('cases-estimated_fee').value = safeString(record.estimated_fee);
     $('cases-notes_internal').value = safeString(record.notes_internal);
   }
@@ -3897,10 +4002,19 @@
     }
     record.status = safeString($('cases-status').value).trim().toLowerCase() || 'open';
     record.priority = safeString($('cases-priority').value).trim().toLowerCase() || 'medium';
+    record.contact_name = safeString($('cases-contact_name').value).trim();
+    record.contact_email = safeString($('cases-contact_email').value).trim();
+    record.contact_phone = safeString($('cases-contact_phone').value).trim();
+    record.venue_name = safeString($('cases-venue_name').value).trim();
+    record.venue_city = safeString($('cases-venue_city').value).trim();
+    record.venue_address_or_url = safeString($('cases-venue_address_or_url').value).trim();
     record.linked_contact_id = safeString($('cases-linked_contact_id').value).trim();
     record.linked_venue_id = safeString($('cases-linked_venue_id').value).trim();
     record.next_followup_date = outreachDateValue($('cases-next_followup_date').value);
     record.next_action = safeString($('cases-next_action').value).trim();
+    record.source = safeString($('cases-source').value).trim();
+    record.discussed_date = outreachDateValue($('cases-discussed_date').value);
+    record.proposed_date = outreachDateValue($('cases-proposed_date').value);
     record.estimated_fee = safeString($('cases-estimated_fee').value).trim();
     record.notes_internal = safeString($('cases-notes_internal').value).trim();
     record.updatedAt = new Date().toISOString();
@@ -20397,9 +20511,11 @@
       renderCasesList();
       renderCasesEditor();
     });
+    if ($('cases-followup-today')) $('cases-followup-today').addEventListener('click', casesSetFollowupToday);
+    if ($('cases-followup-plus3')) $('cases-followup-plus3').addEventListener('click', function () { casesShiftFollowupDays(3); });
     if ($('cases-followup-plus7')) $('cases-followup-plus7').addEventListener('click', function () { casesShiftFollowupDays(7); });
     if ($('cases-followup-plus14')) $('cases-followup-plus14').addEventListener('click', function () { casesShiftFollowupDays(14); });
-    bindInputsDirty(['cases-title','cases-status','cases-priority','cases-linked_contact_id','cases-linked_venue_id','cases-next_followup_date','cases-next_action','cases-estimated_fee','cases-notes_internal'], function () {
+    bindInputsDirty(['cases-title','cases-status','cases-priority','cases-contact_name','cases-contact_email','cases-contact_phone','cases-venue_name','cases-venue_city','cases-venue_address_or_url','cases-linked_contact_id','cases-linked_venue_id','cases-next_followup_date','cases-next_action','cases-source','cases-discussed_date','cases-proposed_date','cases-estimated_fee','cases-notes_internal'], function () {
       markDirty(true);
     });
 

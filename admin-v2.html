@@ -132,7 +132,7 @@
       <main class="content">
         <section id="section-cases" class="section active">
           <h2>Cases</h2>
-          <p class="muted">Internal-only opportunity tracker for the next concrete step. Keep one working title, a linked contact and venue, the next follow-up, expected fee context, and concise notes. This stays simple on purpose and never feeds public content.</p>
+          <p class="muted">Internal-only operational tracker. Cases is the main workflow: keep the working title, direct contact and venue details, the next follow-up, the next action, fee context, and concise notes here first. Linked Contacts / Venues stay optional for reference only and never feed public content.</p>
           <div class="toolbar">
             <button id="cases-new-record" type="button" class="button-primary">New case</button>
             <button id="cases-export-pdf" type="button">Export PDF</button>
@@ -155,8 +155,6 @@
               </select>
             </label>
             <button type="button" data-open-section="programbuilder_fee">Open Fee Estimate</button>
-            <button type="button" data-open-section="contacts">Open Contacts</button>
-            <button type="button" data-open-section="outreach">Open Venues</button>
           </div>
           <div class="split">
             <div id="cases-list" class="item-list"></div>
@@ -178,26 +176,41 @@
                   <option value="low">Low</option>
                 </select>
               </label>
-              <label>Linked contact
-                <select id="cases-linked_contact_id">
-                  <option value="">(no linked contact)</option>
-                </select>
-              </label>
-              <label>Linked venue
-                <select id="cases-linked_venue_id">
-                  <option value="">(no linked venue)</option>
-                </select>
-              </label>
+              <label>Contact name<input id="cases-contact_name" placeholder="Presenter, organizer, or primary contact"></label>
+              <label>Contact email<input id="cases-contact_email" placeholder="name@example.com"></label>
+              <label>Contact phone<input id="cases-contact_phone" placeholder="+49 … (optional)"></label>
+              <label>Venue name<input id="cases-venue_name" placeholder="Venue / organization / event host"></label>
+              <label>Venue city<input id="cases-venue_city" placeholder="City"></label>
+              <label>Venue address or URL<input id="cases-venue_address_or_url" placeholder="Address or https://… (optional)"></label>
               <label>Next follow-up date
                 <input id="cases-next_followup_date" type="date">
                 <span class="cases-followup-actions">
-                  <button id="cases-followup-plus7" type="button">+7d</button>
-                  <button id="cases-followup-plus14" type="button">+14d</button>
+                  <button id="cases-followup-today" type="button">Today</button>
+                  <button id="cases-followup-plus3" type="button">+3 days</button>
+                  <button id="cases-followup-plus7" type="button">+7 days</button>
+                  <button id="cases-followup-plus14" type="button">+14 days</button>
                 </span>
               </label>
               <label>Next action<input id="cases-next_action" placeholder="Send follow-up email / confirm date / share offer"></label>
+              <label>Source<input id="cases-source" placeholder="Referral / website / direct message / returning presenter"></label>
+              <label>Discussed date<input id="cases-discussed_date" type="date"></label>
+              <label>Proposed date<input id="cases-proposed_date" type="date"></label>
               <label>Estimated fee<input id="cases-estimated_fee" placeholder="e.g. 1200 EUR"></label>
               <label>Internal notes<textarea id="cases-notes_internal" rows="8"></textarea></label>
+              <div class="editor-section cases-optional-links">
+                <h3>Optional legacy links</h3>
+                <p class="muted">Use these only if you also want to connect this case to the older Contacts / Follow-ups or Venues / Opportunities sections.</p>
+                <label>Linked contact
+                  <select id="cases-linked_contact_id">
+                    <option value="">(no linked contact)</option>
+                  </select>
+                </label>
+                <label>Linked venue
+                  <select id="cases-linked_venue_id">
+                    <option value="">(no linked venue)</option>
+                  </select>
+                </label>
+              </div>
               <div class="toolbar">
                 <button id="cases-save" type="button" class="button-primary">Save case</button>
                 <button id="cases-delete" type="button" class="danger">Delete selected</button>

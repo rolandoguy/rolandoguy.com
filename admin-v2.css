@@ -303,6 +303,24 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 .cases-placeholder-card{gap:12px}
 .cases-followup-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .cases-followup-actions button{min-height:40px;padding:8px 12px}
+.cases-optional-links{margin-top:4px}
+.cases-card{gap:8px}
+.cases-card--high-priority{border-color:rgba(255,120,82,.36);box-shadow:0 0 0 1px rgba(255,120,82,.08)}
+.cases-card .item-card__meta strong{color:#f3d690;font-weight:600}
+.item-card__note--action{margin-top:2px;color:var(--text);font-weight:600}
+.cases-card__signals{margin-left:0;margin-top:-2px;display:flex;flex-wrap:wrap}
+.cases-status--open{color:#cfe5ff;border-color:rgba(130,182,255,.34);background:rgba(130,182,255,.12)}
+.cases-status--waiting{color:#ffe1a8;border-color:rgba(255,179,91,.4);background:rgba(255,179,91,.14)}
+.cases-status--confirmed{color:#bfe9ce;border-color:rgba(163,230,194,.3);background:rgba(163,230,194,.12)}
+.cases-status--closed{color:#c0c7d3;border-color:rgba(110,118,132,.3);background:rgba(110,118,132,.14)}
+.cases-priority--high{color:#ffd7b8;border-color:#b85a34;background:rgba(184,90,52,.2)}
+.cases-priority--medium{color:#ffe6ad;border-color:#92703a;background:rgba(168,122,43,.16)}
+.cases-priority--low{color:#d8e2f3;border-color:rgba(130,182,255,.28);background:rgba(130,182,255,.1)}
+.cases-followup--missing{color:#ffd38a;border-color:rgba(212,168,67,.42);background:rgba(212,168,67,.18)}
+.cases-followup--today{color:#fff1c9;border-color:rgba(255,179,91,.56);background:rgba(255,179,91,.24)}
+.cases-followup--soon{color:#d9ebff;border-color:rgba(130,182,255,.4);background:rgba(130,182,255,.14)}
+.cases-followup--overdue{color:#ffd4dc;border-color:rgba(255,100,130,.54);background:rgba(255,100,130,.22)}
+.cases-followup--calm{color:#bfe9ce;border-color:rgba(163,230,194,.3);background:rgba(163,230,194,.12)}
 .calendar-editor .editor-section{border:1px solid var(--border);border-radius:10px;background:#11151d;padding:10px;margin-bottom:10px}
 #section-calendar.active .calendar-editor .editor-section{border-color:var(--color-calendar-border);background:linear-gradient(180deg,var(--color-calendar-surface) 0%,rgba(102,187,106,.04) 100%)}
 .editor-section h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.01em;color:var(--gold)}

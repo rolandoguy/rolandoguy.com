@@ -29,12 +29,20 @@ var CASES_SCHEMA = {
   probability: 'number',           // 0-100
   linked_venue_id: 'string',      // Reference to Venues entity
   linked_contact_ids: 'array',     // Array of Contact entity IDs
+  contact_name: 'string',
+  contact_email: 'string',
+  contact_phone: 'string',
+  venue_name: 'string',
+  venue_city: 'string',
+  venue_address_or_url: 'string',
   estimated_fee: 'number',         // Estimated fee amount
   estimated_currency: 'string',   // EUR, USD, GBP, CHF, ARS
   estimated_travel_cost: 'number',
   estimated_hotel_cost: 'number',
   expected_total_value: 'number',
   decision_deadline: 'string',    // ISO date string
+  discussed_date: 'string',       // ISO date string
+  proposed_date: 'string',        // ISO date string
   next_followup_date: 'string',   // ISO date string
   last_contact_at: 'string',       // ISO date string
   description: 'string',

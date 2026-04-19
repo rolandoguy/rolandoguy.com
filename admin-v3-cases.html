@@ -198,6 +198,50 @@
             </select>
           </div>
           <div class="form-group">
+            <label for="contact_name">Contact Name</label>
+            <input type="text" id="contact_name" name="contact_name">
+          </div>
+          <div class="form-group">
+            <label for="contact_email">Contact Email</label>
+            <input type="email" id="contact_email" name="contact_email">
+          </div>
+          <div class="form-group">
+            <label for="contact_phone">Contact Phone</label>
+            <input type="tel" id="contact_phone" name="contact_phone">
+          </div>
+          <div class="form-group">
+            <label for="venue_name">Venue Name</label>
+            <input type="text" id="venue_name" name="venue_name">
+          </div>
+          <div class="form-group">
+            <label for="venue_city">Venue City</label>
+            <input type="text" id="venue_city" name="venue_city">
+          </div>
+          <div class="form-group">
+            <label for="venue_address_or_url">Venue Address or URL</label>
+            <input type="text" id="venue_address_or_url" name="venue_address_or_url">
+          </div>
+          <div class="form-group">
+            <label for="next_followup_date">Next Follow-up Date</label>
+            <input type="date" id="next_followup_date" name="next_followup_date">
+          </div>
+          <div class="form-group">
+            <label for="next_action">Next Action</label>
+            <input type="text" id="next_action" name="next_action">
+          </div>
+          <div class="form-group">
+            <label for="source">Source</label>
+            <input type="text" id="source" name="source">
+          </div>
+          <div class="form-group">
+            <label for="discussed_date">Discussed Date</label>
+            <input type="date" id="discussed_date" name="discussed_date">
+          </div>
+          <div class="form-group">
+            <label for="proposed_date">Proposed Date</label>
+            <input type="date" id="proposed_date" name="proposed_date">
+          </div>
+          <div class="form-group">
             <label for="estimated_fee">Estimated Fee</label>
             <input type="number" id="estimated_fee" name="estimated_fee" min="0" step="0.01">
           </div>
@@ -209,12 +253,6 @@
               <option value="GBP">GBP</option>
               <option value="CHF">CHF</option>
               <option value="ARS">ARS</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="linked_venue_id">Linked Venue</label>
-            <select id="linked_venue_id" name="linked_venue_id">
-              <option value="">None</option>
             </select>
           </div>
           <div class="form-group">
@@ -244,6 +282,7 @@
   <script>
     var store = null;
     var currentCaseId = null;
+    var currentCaseRecord = null;
     var isCreating = false;
     var allCases = [];
     var filters = { status: '', priority: '' };
@@ -334,6 +373,70 @@
       }
     }
 
+    function safeTrim(value) {
+      return value == null ? '' : String(value).trim();
+    }
+
+    function buildContactsById(contacts) {
+      var out = {};
+      (contacts || []).forEach(function (contact) {
+        if (contact && contact.id) out[contact.id] = contact;
+      });
+      return out;
+    }
+
+    function buildVenuesById(venues) {
+      var out = {};
+      (venues || []).forEach(function (venue) {
+        if (venue && venue.id) out[venue.id] = venue;
+      });
+      return out;
+    }
+
+    function getLegacyLinkedContact(c, contactsById) {
+      if (!c || !Array.isArray(c.linked_contact_ids) || !contactsById) return null;
+      for (var i = 0; i < c.linked_contact_ids.length; i++) {
+        var contactId = c.linked_contact_ids[i];
+        if (contactId && contactsById[contactId]) return contactsById[contactId];
+      }
+      return null;
+    }
+
+    function hydrateCaseForWorkflow(c, contactsById, venuesById) {
+      var merged = Object.assign({}, c || {});
+      var linkedVenue = merged.linked_venue_id && venuesById ? venuesById[merged.linked_venue_id] : null;
+      var linkedContact = getLegacyLinkedContact(merged, contactsById);
+
+      if (!safeTrim(merged.contact_name) && linkedContact) merged.contact_name = linkedContact.full_name || '';
+      if (!safeTrim(merged.contact_email) && linkedContact) merged.contact_email = linkedContact.email || '';
+      if (!safeTrim(merged.contact_phone) && linkedContact) merged.contact_phone = linkedContact.phone || linkedContact.whatsapp || '';
+      if (!safeTrim(merged.venue_name) && linkedVenue) merged.venue_name = linkedVenue.name || '';
+      if (!safeTrim(merged.venue_city) && linkedVenue) merged.venue_city = linkedVenue.city || '';
+      if (!safeTrim(merged.venue_address_or_url) && linkedVenue) merged.venue_address_or_url = linkedVenue.website || linkedVenue.address || '';
+
+      return merged;
+    }
+
+    function loadCaseRelations() {
+      return Promise.all([
+        store.contacts.getAll().catch(function () { return []; }),
+        store.venues.getAll().catch(function () { return []; })
+      ]).then(function (results) {
+        return {
+          contactsById: buildContactsById(results[0] || []),
+          venuesById: buildVenuesById(results[1] || [])
+        };
+      });
+    }
+
+    function formatCaseVenueLine(c) {
+      return [safeTrim(c.venue_name), safeTrim(c.venue_city)].filter(Boolean).join(' · ');
+    }
+
+    function formatCaseContactLine(c) {
+      return [safeTrim(c.contact_name), safeTrim(c.contact_email), safeTrim(c.contact_phone)].filter(Boolean).join(' · ');
+    }
+
     function renderCaseList(cases) {
       var listEl = document.getElementById('caseList');
       if (!cases || cases.length === 0) {
@@ -342,15 +445,19 @@
       }
 
       // Load related entities for labels and counts
+      var contactsPromise = store.contacts.getAll().catch(function () { return []; });
       var venuesPromise = store.venues.getAll().catch(function () { return []; });
       var calendarPromise = store.calendar.getAll().catch(function () { return []; });
       var incomePromise = store.income.getAll().catch(function () { return []; });
 
-      Promise.all([venuesPromise, calendarPromise, incomePromise]).then(function (results) {
-        var allVenues = results[0] || [];
-        var allCalendar = results[1] || [];
-        var allIncome = results[2] || [];
+      Promise.all([contactsPromise, venuesPromise, calendarPromise, incomePromise]).then(function (results) {
+        var allContacts = results[0] || [];
+        var allVenues = results[1] || [];
+        var allCalendar = results[2] || [];
+        var allIncome = results[3] || [];
         
+        var contactsById = {};
+        allContacts.forEach(function (contact) { contactsById[contact.id] = contact; });
         var venuesById = {};
         allVenues.forEach(function (v) { venuesById[v.id] = v; });
         
@@ -371,11 +478,9 @@
         });
 
         listEl.innerHTML = cases.map(function (c) {
-          var linkedVenueLabel = '';
-          if (c.linked_venue_id && venuesById[c.linked_venue_id]) {
-            linkedVenueLabel = '<span> · <a href="admin-v3-venues.html" class="admin-v3-nav-link">Venue: ' + escapeHtml(venuesById[c.linked_venue_id].name || '(Untitled)') + '</a></span>';
-          }
-          
+          var resolvedCase = hydrateCaseForWorkflow(c, contactsById, venuesById);
+          var venueLine = formatCaseVenueLine(resolvedCase);
+          var contactLine = formatCaseContactLine(resolvedCase);
           var calendarCount = calendarByCaseId[c.id] || 0;
           var incomeCount = incomeByCaseId[c.id] || 0;
           
@@ -403,13 +508,15 @@
           
           return '<li class="case-item" data-id="' + escapeHtml(c.id) + '">' +
             '<div class="case-info">' +
-            '<div class="case-title">' + escapeHtml(c.title || '(Untitled)') + '</div>' +
+            '<div class="case-title">' + escapeHtml(resolvedCase.title || '(Untitled)') + '</div>' +
             '<div class="case-meta">' +
-            (c.status ? '<span class="badge ' + escapeHtml(c.status) + '">' + escapeHtml(c.status) + '</span>' : '') +
-            (c.priority ? '<span class="badge">' + escapeHtml(c.priority) + '</span>' : '') +
-            (c.opportunity_type ? '<span>' + escapeHtml(c.opportunity_type) + '</span>' : '') +
-            (c.estimated_fee ? '<span> · ' + escapeHtml(c.estimated_fee) + ' ' + escapeHtml(c.estimated_currency || 'EUR') + '</span>' : '') +
-            linkedVenueLabel +
+            (resolvedCase.status ? '<span class="badge ' + escapeHtml(resolvedCase.status) + '">' + escapeHtml(resolvedCase.status) + '</span>' : '') +
+            (resolvedCase.priority ? '<span class="badge">' + escapeHtml(resolvedCase.priority) + '</span>' : '') +
+            (resolvedCase.opportunity_type ? '<span>' + escapeHtml(resolvedCase.opportunity_type) + '</span>' : '') +
+            (resolvedCase.estimated_fee ? '<span> · ' + escapeHtml(resolvedCase.estimated_fee) + ' ' + escapeHtml(resolvedCase.estimated_currency || 'EUR') + '</span>' : '') +
+            (venueLine ? '<span> · Venue: ' + escapeHtml(venueLine) + '</span>' : '') +
+            (contactLine ? '<span> · Contact: ' + escapeHtml(contactLine) + '</span>' : '') +
+            (safeTrim(resolvedCase.source) ? '<span> · Source: ' + escapeHtml(resolvedCase.source) + '</span>' : '') +
             linkedCounts +
             followupInfo +
             '</div>' +
@@ -430,6 +537,8 @@
         console.error('Error loading related entities:', err);
         // Fallback to simple rendering without labels
         listEl.innerHTML = cases.map(function (c) {
+          var venueLine = formatCaseVenueLine(c);
+          var contactLine = formatCaseContactLine(c);
           return '<li class="case-item" data-id="' + escapeHtml(c.id) + '">' +
             '<div class="case-info">' +
             '<div class="case-title">' + escapeHtml(c.title || '(Untitled)') + '</div>' +
@@ -438,7 +547,8 @@
             (c.priority ? '<span class="badge">' + escapeHtml(c.priority) + '</span>' : '') +
             (c.opportunity_type ? '<span>' + escapeHtml(c.opportunity_type) + '</span>' : '') +
             (c.estimated_fee ? '<span> · ' + escapeHtml(c.estimated_fee) + ' ' + escapeHtml(c.estimated_currency || 'EUR') + '</span>' : '') +
-            (c.linked_venue_id ? '<span> · Venue linked</span>' : '') +
+            (venueLine ? '<span> · Venue: ' + escapeHtml(venueLine) + '</span>' : '') +
+            (contactLine ? '<span> · Contact: ' + escapeHtml(contactLine) + '</span>' : '') +
             '</div>' +
             '</div>' +
             '<div class="case-actions">' +
@@ -459,9 +569,10 @@
     function openCreateForm() {
       isCreating = true;
       currentCaseId = null;
+      currentCaseRecord = null;
       document.getElementById('formTitle').textContent = 'New Case';
       document.getElementById('caseForm').reset();
-      populateLinkingDropdowns();
+      document.getElementById('estimated_currency').value = 'EUR';
       showForm(true);
     }
 
@@ -471,24 +582,39 @@
       document.getElementById('formTitle').textContent = 'Edit Case';
       
       setStatus('Loading case...', 'loading');
-      store.cases.getById(id).then(function (c) {
+      Promise.all([
+        store.cases.getById(id),
+        loadCaseRelations()
+      ]).then(function (results) {
+        var c = results[0];
+        var relations = results[1];
         if (!c) {
           setStatus('Case not found', 'error');
           return;
         }
         clearStatus();
+        currentCaseRecord = c;
+        var resolvedCase = hydrateCaseForWorkflow(c, relations.contactsById, relations.venuesById);
         
-        document.getElementById('title').value = c.title || '';
-        document.getElementById('opportunity_type').value = c.opportunity_type || '';
-        document.getElementById('status').value = c.status || '';
-        document.getElementById('priority').value = c.priority || '';
-        document.getElementById('estimated_fee').value = c.estimated_fee || '';
-        document.getElementById('estimated_currency').value = c.estimated_currency || 'EUR';
-        document.getElementById('description').value = c.description || '';
-        document.getElementById('notes_internal').value = c.notes_internal || '';
-        
-        populateLinkingDropdowns();
-        document.getElementById('linked_venue_id').value = c.linked_venue_id || '';
+        document.getElementById('title').value = resolvedCase.title || '';
+        document.getElementById('opportunity_type').value = resolvedCase.opportunity_type || '';
+        document.getElementById('status').value = resolvedCase.status || '';
+        document.getElementById('priority').value = resolvedCase.priority || '';
+        document.getElementById('contact_name').value = resolvedCase.contact_name || '';
+        document.getElementById('contact_email').value = resolvedCase.contact_email || '';
+        document.getElementById('contact_phone').value = resolvedCase.contact_phone || '';
+        document.getElementById('venue_name').value = resolvedCase.venue_name || '';
+        document.getElementById('venue_city').value = resolvedCase.venue_city || '';
+        document.getElementById('venue_address_or_url').value = resolvedCase.venue_address_or_url || '';
+        document.getElementById('next_followup_date').value = resolvedCase.next_followup_date || '';
+        document.getElementById('next_action').value = resolvedCase.next_action || '';
+        document.getElementById('source').value = resolvedCase.source || '';
+        document.getElementById('discussed_date').value = resolvedCase.discussed_date || '';
+        document.getElementById('proposed_date').value = resolvedCase.proposed_date || '';
+        document.getElementById('estimated_fee').value = resolvedCase.estimated_fee || '';
+        document.getElementById('estimated_currency').value = resolvedCase.estimated_currency || 'EUR';
+        document.getElementById('description').value = resolvedCase.description || '';
+        document.getElementById('notes_internal').value = resolvedCase.notes_internal || '';
         showForm(true);
       }).catch(function (err) {
         setStatus('Error loading case: ' + err.message, 'error');
@@ -499,17 +625,27 @@
       e.preventDefault();
       
       var formData = new FormData(e.target);
-      var caseData = {
+      var caseData = Object.assign({}, currentCaseRecord || {}, {
         title: formData.get('title'),
         opportunity_type: formData.get('opportunity_type'),
         status: formData.get('status'),
         priority: formData.get('priority'),
+        contact_name: formData.get('contact_name'),
+        contact_email: formData.get('contact_email'),
+        contact_phone: formData.get('contact_phone'),
+        venue_name: formData.get('venue_name'),
+        venue_city: formData.get('venue_city'),
+        venue_address_or_url: formData.get('venue_address_or_url'),
+        next_followup_date: formData.get('next_followup_date'),
+        next_action: formData.get('next_action'),
+        source: formData.get('source'),
+        discussed_date: formData.get('discussed_date'),
+        proposed_date: formData.get('proposed_date'),
         estimated_fee: Number(formData.get('estimated_fee')) || 0,
         estimated_currency: formData.get('estimated_currency') || 'EUR',
-        linked_venue_id: formData.get('linked_venue_id'),
         description: formData.get('description'),
         notes_internal: formData.get('notes_internal')
-      };
+      });
 
       if (isCreating) {
         var newCase = window.adminV3Factories.createCase(caseData);
@@ -517,6 +653,7 @@
         store.cases.insert(newCase).then(function (saved) {
           clearStatus();
           showForm(false);
+          currentCaseRecord = null;
           loadCases();
         }).catch(function (err) {
           setStatus('Error creating case: ' + err.message, 'error');
@@ -528,6 +665,7 @@
         store.cases.update(currentCaseId, caseData).then(function (saved) {
           clearStatus();
           showForm(false);
+          currentCaseRecord = saved;
           loadCases();
         }).catch(function (err) {
           setStatus('Error updating case: ' + err.message, 'error');
@@ -555,23 +693,6 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-    }
-
-    function populateLinkingDropdowns() {
-      // Populate Venues dropdown
-      store.venues.getAll().then(function (venues) {
-        var select = document.getElementById('linked_venue_id');
-        var currentValue = select.value;
-        select.innerHTML = '<option value="">None</option>';
-        if (venues && venues.length > 0) {
-          venues.forEach(function (v) {
-            select.innerHTML += '<option value="' + escapeHtml(v.id) + '">' + escapeHtml(v.name || '(Untitled)') + '</option>';
-          });
-        }
-        select.value = currentValue;
-      }).catch(function (err) {
-        console.error('Error loading venues for dropdown:', err);
-      });
     }
 
     function init() {
@@ -636,6 +757,7 @@
       document.getElementById('refreshBtn').addEventListener('click', loadCases);
       document.getElementById('createBtn').addEventListener('click', openCreateForm);
       document.getElementById('cancelBtn').addEventListener('click', function () {
+        currentCaseRecord = null;
         showForm(false);
       });
       document.getElementById('filterStatus').addEventListener('change', function (e) {

@@ -15,8 +15,6 @@ var adminV3Nav = (function () {
     var links = [
       { page: 'workbench', label: 'Workbench', href: 'admin-v3-workbench.html', active: false },
       { page: 'cases', label: 'Cases', href: 'admin-v3-cases.html', active: false },
-      { page: 'contacts', label: 'Contacts', href: 'admin-v3-contacts.html', active: false },
-      { page: 'venues', label: 'Venues', href: 'admin-v3-venues.html', active: false },
       { page: 'calendar', label: 'Calendar', href: 'admin-v3-calendar.html', active: false },
       { page: 'income', label: 'Income', href: 'admin-v3-income.html', active: false }
     ];
@@ -34,6 +32,7 @@ var adminV3Nav = (function () {
     html += '</nav>';
     html += '<div style="margin:12px 0 0; padding:12px 14px; border:1px solid #f3d4a3; background:#fff7e8; color:#5f4300; border-radius:8px; font-size:13px; line-height:1.45;">';
     html += '<strong>Admin v3 is internal-only operational tooling.</strong> It does not publish to the public website. ';
+    html += 'Cases is the primary CRM workflow. Contacts and Venues remain available by direct URL for legacy reference only. ';
     html += 'Public-facing editorial changes still belong in admin-v2 and the explicit public-safe mirror flow.';
     html += '</div>';
     container.innerHTML = html;
