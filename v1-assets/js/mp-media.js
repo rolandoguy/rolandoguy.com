@@ -349,6 +349,12 @@
         }
         if (isDev) {
           console.log('[MP MEDIA] Loaded from Firestore projection (lastUpdated:', data.lastUpdated, ')');
+          if (data.audio && data.audio.items) {
+            console.log('[MP MEDIA] Audio items loaded:');
+            data.audio.items.forEach(function (a) {
+              console.log('[MP MEDIA]   title:', a.title, 'group:', a.group, 'repertoireCat:', a.repertoireCat);
+            });
+          }
         }
         MP_MEDIA = {
           vid: data.vid || { h2: '', videos: [] },

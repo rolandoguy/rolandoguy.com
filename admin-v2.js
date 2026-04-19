@@ -15264,15 +15264,11 @@
   }
 
   function buildPublicMediaProjection() {
-    var vidRaw = loadDoc('rg_vid', { h2: '', videos: [] });
-    var audioRaw = loadDoc('rg_audio', { h2: '', sub: '', items: [] });
-    var photosRaw = loadDoc('rg_photos', { s: [], t: [], b: [] });
-    var captionsRaw = loadDoc('rg_photo_captions', {});
+    var vid = safeMediaVideos(state.vidData || { h2: '', videos: [] });
+    var audio = safeMediaAudio(state.audioData || { h2: '', sub: '', items: [] });
+    var photos = safePhotos(state.photosData || { s: [], t: [], b: [] });
+    var captionsRaw = state.photoCaptions || {};
     var uiEnRaw = loadDoc('rg_ui_en', {});
-
-    var vid = safeMediaVideos(vidRaw);
-    var audio = safeMediaAudio(audioRaw);
-    var photos = safePhotos(photosRaw);
 
     var projection = {
       vid: {
@@ -15516,6 +15512,10 @@
     uiEn['mp.audio.sub'] = state.audioData.sub;
     await saveDocRequired('rg_ui_en', uiEn);
     await buildPublicMediaProjection();
+    if (state.audIndex >= 0 && state.audioData.items[state.audIndex]) {
+      var a = state.audioData.items[state.audIndex];
+      console.log('[ADMIN AUDIO SAVE] title:', a.title, 'group:', a.group, 'repertoireCat:', a.repertoireCat, 'featured_visual:', !!a.featured_visual, 'featured_layout:', !!a.featured_layout, 'featured_context_media:', !!(a.featured_contexts && a.featured_contexts.media));
+    }
   }
   function mediaReportFiltersLabel() {
     var parts = [];
