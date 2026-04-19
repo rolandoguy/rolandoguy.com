@@ -328,7 +328,39 @@
   }
 
   function applyLiveMediaOverridesFromFirestore() {
-    return Promise.resolve();
+    var firebaseApp = window.firebaseApp;
+    if (!firebaseApp) return Promise.resolve();
+
+    var db = firebaseApp.firestore();
+    if (!db) return Promise.resolve();
+
+    var isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    return db.collection('rg').doc('rg_public_media').get()
+      .then(function (doc) {
+        if (!doc.exists) {
+          if (isDev) console.log('[MP MEDIA] No public_media document in Firestore, using fallback');
+          return false;
+        }
+        var data = doc.data();
+        if (!data || typeof data !== 'object') {
+          if (isDev) console.log('[MP MEDIA] Invalid public_media data, using fallback');
+          return false;
+        }
+        if (isDev) {
+          console.log('[MP MEDIA] Loaded from Firestore projection (lastUpdated:', data.lastUpdated, ')');
+        }
+        MP_MEDIA = {
+          vid: data.vid || { h2: '', videos: [] },
+          audio: data.audio || { h2: '', sub: '', items: [] },
+          photos: data.photos || { h2: '', sub: '', s: [], t: [], b: [] }
+        };
+        return true;
+      })
+      .catch(function (err) {
+        if (isDev) console.log('[MP MEDIA] Firestore load failed, using fallback:', err.message);
+        return false;
+      });
   }
 
   function getCaptions() {
@@ -1646,14 +1678,24 @@
     bindMediaSectionObserver();
   });
 
-  fetch('/v1-assets/data/media-data.json', { cache: 'no-store' })
-    .then(function (r) {
-      if (!r.ok) throw new Error(r.statusText);
-      return r.json();
-    })
-    .then(function (data) {
-      MP_MEDIA = data;
-      return applyLiveMediaOverridesFromFirestore();
+  applyLiveMediaOverridesFromFirestore()
+    .then(function (usedFirestore) {
+      var isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (usedFirestore) {
+        if (isDev) console.log('[MP MEDIA] Using Firestore projection as primary data source');
+        return Promise.resolve(true);
+      }
+      if (isDev) console.log('[MP MEDIA] Firestore unavailable, loading from static media-data.json fallback');
+      return fetch('/v1-assets/data/media-data.json', { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.statusText);
+          return r.json();
+        })
+        .then(function (data) {
+          MP_MEDIA = data;
+          if (isDev) console.log('[MP MEDIA] Loaded from static media-data.json fallback');
+          return false;
+        });
     })
     .then(function () {
       if (typeof window.getMpSiteLang === 'function') currentLang = window.getMpSiteLang();
@@ -1668,6 +1710,8 @@
       bindMediaSectionObserver();
     })
     .catch(function () {
+      var isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isDev) console.log('[MP MEDIA] All data sources failed, using empty fallback');
       var lang = (typeof window.getMpSiteLang === 'function' && window.getMpSiteLang()) || 'en';
       MP_MEDIA = {
         vid: {

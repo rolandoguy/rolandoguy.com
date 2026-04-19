@@ -15132,6 +15132,7 @@
     state.vidData.h2 = safeString($('media-vid-h2').value);
     state.vidData = safeMediaVideos(state.vidData);
     await saveDocRequired('rg_vid', state.vidData);
+    await buildPublicMediaProjection();
   }
 
   function setPhotoType(type) {
@@ -15259,6 +15260,112 @@
     state.photosData = safePhotos(state.photosData);
     if (!await saveDocRequired('rg_photos', state.photosData)) return;
     await saveDocRequired('rg_photo_captions', state.photoCaptions);
+    await buildPublicMediaProjection();
+  }
+
+  function buildPublicMediaProjection() {
+    var vidRaw = loadDoc('rg_vid', { h2: '', videos: [] });
+    var audioRaw = loadDoc('rg_audio', { h2: '', sub: '', items: [] });
+    var photosRaw = loadDoc('rg_photos', { s: [], t: [], b: [] });
+    var captionsRaw = loadDoc('rg_photo_captions', {});
+    var uiEnRaw = loadDoc('rg_ui_en', {});
+
+    var vid = safeMediaVideos(vidRaw);
+    var audio = safeMediaAudio(audioRaw);
+    var photos = safePhotos(photosRaw);
+
+    var projection = {
+      vid: {
+        h2: vid.h2,
+        videos: (vid.videos || []).map(function (v) {
+          return {
+            id: safeString(v.id),
+            tag: safeString(v.tag),
+            title: safeString(v.title),
+            sub: safeString(v.sub),
+            composer: safeString(v.composer),
+            repertoireCat: safeString(v.repertoireCat),
+            hidden: !!v.hidden,
+            group: safeString(v.group),
+            featured: !!v.featured,
+            customThumb: safeString(v.customThumb)
+          };
+        })
+      },
+      audio: {
+        h2: audio.h2,
+        sub: audio.sub,
+        items: (audio.items || []).map(function (a) {
+          return {
+            title: safeString(a.title),
+            subline: safeString(a.subline),
+            composer: safeString(a.composer),
+            provider: safeString(a.provider),
+            embedUrl: safeString(a.embedUrl),
+            externalUrl: safeString(a.externalUrl),
+            tag: safeString(a.tag),
+            group: safeString(a.group),
+            repertoireCat: safeString(a.repertoireCat),
+            category: safeString(a.category),
+            type: safeString(a.type),
+            hidden: !!a.hidden,
+            featured: !!a.featured
+          };
+        })
+      },
+      photos: {
+        h2: safeString(photos.h2),
+        sub: safeString(photos.sub),
+        studioTab: safeString(photos.studioTab),
+        stageTab: safeString(photos.stageTab),
+        backstageTab: safeString(photos.backstageTab),
+        backstageEmpty: safeString(photos.backstageEmpty),
+        s: (photos.s || []).map(function (p) {
+          var entry = isObject(p) ? p : { url: p };
+          var capKey = 's_' + photos.s.indexOf(p);
+          var cap = captionsRaw[capKey];
+          return {
+            url: safeString(entry.url),
+            orientation: safeString(entry.orientation),
+            focus: safeString(entry.focus || entry.objectPosition),
+            caption: safeString(cap && cap.caption),
+            alt: safeString(cap && cap.alt),
+            photographer: safeString(cap && cap.photographer)
+          };
+        }),
+        t: (photos.t || []).map(function (p) {
+          var entry = isObject(p) ? p : { url: p };
+          var capKey = 't_' + photos.t.indexOf(p);
+          var cap = captionsRaw[capKey];
+          return {
+            url: safeString(entry.url),
+            orientation: safeString(entry.orientation),
+            focus: safeString(entry.focus || entry.objectPosition),
+            caption: safeString(cap && cap.caption),
+            alt: safeString(cap && cap.alt),
+            photographer: safeString(cap && cap.photographer)
+          };
+        }),
+        b: (photos.b || []).map(function (p) {
+          var entry = isObject(p) ? p : { url: p };
+          var capKey = 'b_' + photos.b.indexOf(p);
+          var cap = captionsRaw[capKey];
+          return {
+            url: safeString(entry.url),
+            orientation: safeString(entry.orientation),
+            focus: safeString(entry.focus || entry.objectPosition),
+            caption: safeString(cap && cap.caption),
+            alt: safeString(cap && cap.alt),
+            photographer: safeString(cap && cap.photographer)
+          };
+        }),
+        captions: isObject(captionsRaw) ? clone(captionsRaw) : {}
+      },
+      uiEn: isObject(uiEnRaw) ? clone(uiEnRaw) : {},
+      lastUpdated: new Date().toISOString()
+    };
+
+    return saveDocRequired('rg_public_media', projection);
   }
   function renderMediaAudioList() {
     var box = $('media-aud-list');
@@ -15408,6 +15515,7 @@
     uiEn['mp.audio.h2'] = state.audioData.h2;
     uiEn['mp.audio.sub'] = state.audioData.sub;
     await saveDocRequired('rg_ui_en', uiEn);
+    await buildPublicMediaProjection();
   }
   function mediaReportFiltersLabel() {
     var parts = [];
