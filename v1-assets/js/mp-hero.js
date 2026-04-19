@@ -464,8 +464,14 @@
     if (heroSubtitle && vSubtitle && vSubtitle.value != null) heroSubtitle.textContent = vSubtitle.value;
     var vCta1 = val('hero.cta1');
     if (heroCta1 && vCta1 && vCta1.value != null) heroCta1.textContent = vCta1.value;
-    var vCta3 = val('hero.cta3');
+    var vCta3 = val('hero.cta2');
+    if (L === 'fr') {
+      console.log('[FR DEBUG] vCta3 (using hero.cta2):', vCta3);
+    }
     if (heroCta3 && vCta3 && vCta3.value != null) heroCta3.textContent = vCta3.value;
+    if (L === 'fr') {
+      console.log('[FR DEBUG] heroCta3 final text:', heroCta3 ? heroCta3.textContent : '');
+    }
     var quickBioInfo = getHeroTextOverrideInfo('quickBioLabel', L);
     if (heroQuickBio) {
       if (quickBioInfo && quickBioInfo.value) heroQuickBio.textContent = quickBioInfo.value;
@@ -476,10 +482,17 @@
     }
     var quickCalInfo = getHeroTextOverrideInfo('quickCalLabel', L);
     if (heroCta2) {
+      if (L === 'fr') {
+        console.log('[FR DEBUG] quickCalInfo:', quickCalInfo);
+        console.log('[FR DEBUG] quickCalFallback (nav.cal):', pick ? pick(L, 'nav.cal') : null);
+      }
       if (quickCalInfo && quickCalInfo.value) heroCta2.textContent = quickCalInfo.value;
       else {
         var quickCalFallback = pick ? pick(L, 'nav.cal') : null;
         if (quickCalFallback != null && quickCalFallback !== '') heroCta2.textContent = quickCalFallback;
+      }
+      if (L === 'fr') {
+        console.log('[FR DEBUG] heroCta2 final text:', heroCta2.textContent);
       }
     }
     var vName = val('hero.nameHtml');
