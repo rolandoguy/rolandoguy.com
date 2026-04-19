@@ -189,9 +189,13 @@
     var L = normalizeLang(lang);
     if (MP_UI_OVERRIDES[L]) return Promise.resolve(MP_UI_OVERRIDES[L]);
     if (MP_UI_PROMISES[L]) return MP_UI_PROMISES[L];
-    MP_UI_PROMISES[L] = Promise.resolve({})
+    MP_UI_PROMISES[L] = fetchPublicFirestoreDoc('rg_ui_' + L)
       .then(function (doc) {
-        MP_UI_OVERRIDES[L] = doc;
+        MP_UI_OVERRIDES[L] = doc && doc.data && typeof doc.data === 'object' ? doc.data : {};
+        return MP_UI_OVERRIDES[L];
+      })
+      .catch(function () {
+        MP_UI_OVERRIDES[L] = {};
         return MP_UI_OVERRIDES[L];
       })
       .finally(function () {
@@ -299,6 +303,10 @@
   }
 
   window.pickMpLocaleString = pickLocaleString;
+  window.getMpUiOverrideString = function (lang, key) {
+    var value = getUiOverrideString(lang, key);
+    return value != null && value !== '' ? String(value) : '';
+  };
   function normalizeFeaturedContexts(raw, defaults) {
     var src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
     var base = defaults && typeof defaults === 'object' && !Array.isArray(defaults) ? defaults : {};

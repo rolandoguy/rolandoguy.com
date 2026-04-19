@@ -39,6 +39,7 @@
     introCtaMedia: 'Watch & listen',
     introCtaPress: 'View programmes'
   };
+  var GERMAN_LEAK_TOKENS = ['lyrischer', 'argentinisch', 'ansaessig', 'ansässig', 'eine stimme', 'gepraegt', 'geprägt', 'veranstalter'];
   function normalizeLangCode(v) {
     var s = String(v || '').trim().toLowerCase();
     return /^(en|de|es|it|fr)$/.test(s) ? s : '';
@@ -57,14 +58,22 @@
       .trim()
       .toLowerCase();
   }
+  function hasGermanLeakToken(value) {
+    var normalized = normalizeComparableText(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    return GERMAN_LEAK_TOKENS.some(function (token) {
+      return normalized.indexOf(token) >= 0;
+    });
+  }
   function getHomeBiographyEls() {
     var root = document.getElementById('intro');
     if (!root) return null;
     return {
       h2: root.querySelector('[data-i18n-html="home.intro.h2"]'),
       p1: root.querySelector('[data-i18n-html="home.intro.p1"]'),
-        p2: root.querySelector('[data-i18n-html="home.intro.p2"]')
-      };
+      p2: root.querySelector('[data-i18n-html="home.intro.p2"]')
+    };
   }
   function ensureHomeBiographyData() {
     if (HOME_BIO_LOAD_ATTEMPTED) return Promise.resolve(HOME_BIO_DATA);
@@ -102,9 +111,21 @@
     var value = window.pickMpLocaleString(lang, key);
     return value == null ? '' : String(value);
   }
+  function pickHomeBundledLocaleString(lang, key) {
+    var table = window.MP_LOCALE_TABLE;
+    var L = normalizeLangCode(lang);
+    if (!table || !L || !table[L]) return '';
+    var value = table[L][key];
+    return value == null ? '' : String(value);
+  }
+  function pickHomeUiOverrideString(lang, key) {
+    if (typeof window.getMpUiOverrideString !== 'function') return '';
+    return String(window.getMpUiOverrideString(lang, key) || '');
+  }
   function isGermanLeakForEnglish(key, value) {
     var current = normalizeComparableText(value);
     if (!current) return false;
+    if (hasGermanLeakToken(value)) return true;
     var deValue = '';
     if (key === 'home.intro.h2') deValue = '<span class="rep-title-stack"><span class="rep-title-line1">Eine Stimme,</span><span class="rep-title-line2">von <em>Tradition geprägt</em></span></span>';
     else deValue = pickHomeLocaleStringExact('de', key);
@@ -113,18 +134,26 @@
   }
   function resolveHomeUiString(currentLang, key, safeEnValue) {
     var lang = resolveHeroLang(currentLang);
-    var local = pickHomeLocaleStringExact(lang, key);
-    if (lang !== 'en' && local && normalizeComparableText(local)) {
-      return { value: local, resolvedLang: lang };
+    var localOverride = pickHomeUiOverrideString(lang, key);
+    if (localOverride && normalizeComparableText(localOverride)) {
+      return { value: localOverride, resolvedLang: lang, source: 'rg_ui_' + lang };
     }
-    if (lang === 'en' && local && !isGermanLeakForEnglish(key, local)) {
-      return { value: local, resolvedLang: 'en' };
+    var localBundled = pickHomeBundledLocaleString(lang, key);
+    if (lang !== 'en' && localBundled && normalizeComparableText(localBundled)) {
+      return { value: localBundled, resolvedLang: lang, source: 'mp-locales.json:' + lang };
     }
-    var enValue = pickHomeLocaleStringExact('en', key);
-    if (enValue && !isGermanLeakForEnglish(key, enValue)) {
-      return { value: enValue, resolvedLang: 'en' };
+    if (lang === 'en' && localBundled && !isGermanLeakForEnglish(key, localBundled)) {
+      return { value: localBundled, resolvedLang: 'en', source: 'mp-locales.json:en' };
     }
-    return { value: String(safeEnValue || ''), resolvedLang: 'en' };
+    var enOverride = pickHomeUiOverrideString('en', key);
+    if (enOverride && normalizeComparableText(enOverride)) {
+      return { value: enOverride, resolvedLang: 'en', source: 'rg_ui_en' };
+    }
+    var enBundled = pickHomeBundledLocaleString('en', key);
+    if (enBundled && !isGermanLeakForEnglish(key, enBundled)) {
+      return { value: enBundled, resolvedLang: 'en', source: 'mp-locales.json:en' };
+    }
+    return { value: String(safeEnValue || ''), resolvedLang: 'en', source: 'safe-en-fallback' };
   }
   function isUsableHomeBiographyLocale(doc) {
     return !!(doc && typeof doc === 'object' && String(doc.h2 || '').trim() && normalizeBiographyParagraphs(doc).length >= 2);
@@ -133,9 +162,11 @@
     if (!isUsableHomeBiographyLocale(doc)) return true;
     var locales = HOME_BIO_DATA && HOME_BIO_DATA.locales;
     var deDoc = locales && locales.de;
+    if (hasGermanLeakToken(doc.h2)) return true;
     if (!deDoc) return false;
     var paragraphs = normalizeBiographyParagraphs(doc);
     var deParagraphs = normalizeBiographyParagraphs(deDoc);
+    if ((paragraphs[0] && hasGermanLeakToken(paragraphs[0])) || (paragraphs[1] && hasGermanLeakToken(paragraphs[1]))) return true;
     if (normalizeComparableText(doc.h2) === normalizeComparableText(deDoc.h2)) return true;
     if (paragraphs[0] && deParagraphs[0] && normalizeComparableText(paragraphs[0]) === normalizeComparableText(deParagraphs[0])) return true;
     if (paragraphs[1] && deParagraphs[1] && normalizeComparableText(paragraphs[1]) === normalizeComparableText(deParagraphs[1])) return true;
@@ -164,7 +195,7 @@
       var resolved = resolveHomeBiographyLocale(currentLang);
       var resolvedLang = resolved.resolvedLang || 'en';
       var doc = resolved.doc;
-      console.log('[home bio preview]', resolvedLang);
+      console.log('[home bio preview]', currentLang, resolvedLang, doc ? 'biography-data.json' : 'safe-en-fallback');
       if (!doc) {
         if (els.h2) els.h2.innerHTML = HOME_SAFE_EN.introH2;
         if (els.p1) els.p1.innerHTML = HOME_SAFE_EN.introP1;
@@ -203,8 +234,9 @@
       var resolved = resolveHomeUiString(L, item.key, item.safe);
       introLangUsed = introLangUsed === 'en' || resolved.resolvedLang === L ? resolved.resolvedLang : introLangUsed;
       item.el.textContent = resolved.value;
+      console.log('[home presenter field]', item.key, L, resolved.resolvedLang, resolved.source);
     });
-    console.log('[home intro]', introLangUsed || 'en');
+    console.log('[home intro]', L, introLangUsed || 'en', 'mp-locales.json/safe-en-fallback');
   }
   var LIVE_HERO_DOCS = {};
   var LAST_PROGRAMS_CTA_VISIBILITY_LANG = '';
@@ -558,7 +590,13 @@
       else if (introPressInfo && introPressInfo.value) homeIntroCtaPress.textContent = introPressInfo.value;
     }
     applyProgramsEntryPointVisibility(L);
-    console.log('[home hero]', vSubtitle && vSubtitle.langUsed ? vSubtitle.langUsed : L);
+    console.log('[home hero]', L, vSubtitle && vSubtitle.langUsed ? vSubtitle.langUsed : L, {
+      eyebrow: vEyebrow && vEyebrow.source,
+      subtitle: vSubtitle && vSubtitle.source,
+      cta1: vCta1 && vCta1.source,
+      cta2: vCta2 && vCta2.source,
+      cta3: vCta3 && vCta3.source
+    });
     if (!HERO_SOURCE_LOGGED) {
       HERO_SOURCE_LOGGED = true;
       console.log('[Hero] Runtime source trace', {
