@@ -641,12 +641,12 @@
   function applyNavLogoFromRgUi(lang) {
     var v = pickLocaleString(lang, 'nav.logo');
     document.querySelectorAll('a.nav-logo').forEach(function (a) {
-      var raw = v != null && String(v).trim() !== '' ? String(v) : a.textContent;
+      var raw = v != null && String(v).trim() !== '' ? String(v) : (a.getAttribute('data-brand-raw') || a.textContent);
       applyBrandMarkup(a, raw);
     });
     var footerBrand = pickLocaleString(lang, 'footer.brandLine');
     document.querySelectorAll('.footer-logo').forEach(function (el) {
-      var raw = footerBrand != null && String(footerBrand).trim() !== '' ? String(footerBrand) : el.textContent;
+      var raw = footerBrand != null && String(footerBrand).trim() !== '' ? String(footerBrand) : (el.getAttribute('data-brand-raw') || el.textContent);
       applyBrandMarkup(el, raw);
     });
   }
@@ -663,6 +663,7 @@
     if (!el) return;
     var text = String(raw || '').replace(/\s+/g, ' ').trim();
     if (!text) return;
+    el.setAttribute('data-brand-raw', text);
     var parts = text.split('·');
     var namePart = String(parts[0] || '').trim();
     var suffixPart = parts.length > 1 ? parts.slice(1).join('·').trim() : '';
