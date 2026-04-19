@@ -22,8 +22,23 @@
   var HOME_BIO_DATA = null;
   var HOME_BIO_LOAD_ATTEMPTED = false;
   var HOME_BIO_LOAD_PROMISE = null;
-  var HOME_BIO_DEFAULTS = null;
   var HOME_BIO_RENDER_SEQ = 0;
+  var HOME_SAFE_EN = {
+    introH2: 'A voice <em>shaped</em><br>by tradition',
+    introP1:
+      'Argentine-Italian lyric tenor <strong>Rolando Guy</strong> is <strong>Berlin-based</strong> and appears in <strong>opera, concert, recital, operetta, and tango programmes</strong> across Germany and Europe. His profile combines the Italian vocal line, Lied sensitivity, and theatrical clarity for presenter-focused programming contexts.',
+    introP2:
+      'He collaborates with theatres, orchestras, festivals, and artistic directors for principal roles, gala formats, curated recital evenings, and chamber-scale projects where language, style, and musical reliability are central.',
+    introProof:
+      'Selected performances, press excerpts, high-resolution photos and downloadable presenter materials are available across Calendar, Media, and Press & materials.',
+    presenterTag: 'Selected materials',
+    presenterP1: 'Opera, recital, concert, tango, and chamber work.',
+    presenterP2: 'Biography, media, and programme materials are available below.',
+    presenterP3: 'Enquiries are welcome.',
+    introCtaBio: 'Read the full biography',
+    introCtaMedia: 'Watch & listen',
+    introCtaPress: 'View programmes'
+  };
   function normalizeLangCode(v) {
     var s = String(v || '').trim().toLowerCase();
     return /^(en|de|es|it|fr)$/.test(s) ? s : '';
@@ -34,24 +49,22 @@
     var fromShell = (window.getMpSiteLang && normalizeLangCode(window.getMpSiteLang())) || '';
     return fromArg || fromDoc || fromShell || 'en';
   }
+  function normalizeComparableText(v) {
+    return String(v == null ? '' : v)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&[a-z0-9#]+;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
   function getHomeBiographyEls() {
     var root = document.getElementById('intro');
     if (!root) return null;
     return {
       h2: root.querySelector('[data-i18n-html="home.intro.h2"]'),
       p1: root.querySelector('[data-i18n-html="home.intro.p1"]'),
-      p2: root.querySelector('[data-i18n-html="home.intro.p2"]')
-    };
-  }
-  function getHomeBiographyDefaults() {
-    if (HOME_BIO_DEFAULTS) return HOME_BIO_DEFAULTS;
-    var els = getHomeBiographyEls();
-    HOME_BIO_DEFAULTS = {
-      h2: els && els.h2 ? els.h2.innerHTML : '',
-      p1: els && els.p1 ? els.p1.textContent : '',
-      p2: els && els.p2 ? els.p2.textContent : ''
-    };
-    return HOME_BIO_DEFAULTS;
+        p2: root.querySelector('[data-i18n-html="home.intro.p2"]')
+      };
   }
   function ensureHomeBiographyData() {
     if (HOME_BIO_LOAD_ATTEMPTED) return Promise.resolve(HOME_BIO_DATA);
@@ -84,33 +97,78 @@
       })
       .filter(Boolean);
   }
+  function pickHomeLocaleStringExact(lang, key) {
+    if (typeof window.pickMpLocaleString !== 'function') return '';
+    var value = window.pickMpLocaleString(lang, key);
+    return value == null ? '' : String(value);
+  }
+  function isGermanLeakForEnglish(key, value) {
+    var current = normalizeComparableText(value);
+    if (!current) return false;
+    var deValue = '';
+    if (key === 'home.intro.h2') deValue = '<span class="rep-title-stack"><span class="rep-title-line1">Eine Stimme,</span><span class="rep-title-line2">von <em>Tradition geprägt</em></span></span>';
+    else deValue = pickHomeLocaleStringExact('de', key);
+    var deNorm = normalizeComparableText(deValue);
+    return !!(deNorm && current === deNorm);
+  }
+  function resolveHomeUiString(currentLang, key, safeEnValue) {
+    var lang = resolveHeroLang(currentLang);
+    var local = pickHomeLocaleStringExact(lang, key);
+    if (lang !== 'en' && local && normalizeComparableText(local)) {
+      return { value: local, resolvedLang: lang };
+    }
+    if (lang === 'en' && local && !isGermanLeakForEnglish(key, local)) {
+      return { value: local, resolvedLang: 'en' };
+    }
+    var enValue = pickHomeLocaleStringExact('en', key);
+    if (enValue && !isGermanLeakForEnglish(key, enValue)) {
+      return { value: enValue, resolvedLang: 'en' };
+    }
+    return { value: String(safeEnValue || ''), resolvedLang: 'en' };
+  }
   function isUsableHomeBiographyLocale(doc) {
     return !!(doc && typeof doc === 'object' && String(doc.h2 || '').trim() && normalizeBiographyParagraphs(doc).length >= 2);
+  }
+  function isEnglishBiographyLeak(doc) {
+    if (!isUsableHomeBiographyLocale(doc)) return true;
+    var locales = HOME_BIO_DATA && HOME_BIO_DATA.locales;
+    var deDoc = locales && locales.de;
+    if (!deDoc) return false;
+    var paragraphs = normalizeBiographyParagraphs(doc);
+    var deParagraphs = normalizeBiographyParagraphs(deDoc);
+    if (normalizeComparableText(doc.h2) === normalizeComparableText(deDoc.h2)) return true;
+    if (paragraphs[0] && deParagraphs[0] && normalizeComparableText(paragraphs[0]) === normalizeComparableText(deParagraphs[0])) return true;
+    if (paragraphs[1] && deParagraphs[1] && normalizeComparableText(paragraphs[1]) === normalizeComparableText(deParagraphs[1])) return true;
+    return false;
   }
   function resolveHomeBiographyLocale(currentLang) {
     var locales = HOME_BIO_DATA && HOME_BIO_DATA.locales;
     if (!locales || typeof locales !== 'object') return { resolvedLang: '', doc: null };
     var lang = resolveHeroLang(currentLang);
-    if (isUsableHomeBiographyLocale(locales[lang])) return { resolvedLang: lang, doc: locales[lang] };
-    if (isUsableHomeBiographyLocale(locales.en)) return { resolvedLang: 'en', doc: locales.en };
+    if (lang !== 'en' && isUsableHomeBiographyLocale(locales[lang])) return { resolvedLang: lang, doc: locales[lang] };
+    if (lang === 'en' && isUsableHomeBiographyLocale(locales.en) && !isEnglishBiographyLeak(locales.en)) {
+      return { resolvedLang: 'en', doc: locales.en };
+    }
+    if (lang !== 'en' && isUsableHomeBiographyLocale(locales.en) && !isEnglishBiographyLeak(locales.en)) {
+      return { resolvedLang: 'en', doc: locales.en };
+    }
     return { resolvedLang: '', doc: null };
   }
   function applyHomeBiographyPreview(lang) {
     var els = getHomeBiographyEls();
     if (!els) return Promise.resolve();
-    var defaults = getHomeBiographyDefaults();
     var currentLang = resolveHeroLang(lang);
     var renderSeq = ++HOME_BIO_RENDER_SEQ;
     return ensureHomeBiographyData().then(function () {
       if (renderSeq !== HOME_BIO_RENDER_SEQ) return;
       var resolved = resolveHomeBiographyLocale(currentLang);
-      var resolvedLang = resolved.resolvedLang || '';
+      var resolvedLang = resolved.resolvedLang || 'en';
       var doc = resolved.doc;
-      console.log('[home biography]', currentLang, resolvedLang);
+      console.log('[home bio preview]', resolvedLang);
       if (!doc) {
-        if (els.h2) els.h2.innerHTML = defaults.h2;
-        if (els.p1) els.p1.textContent = defaults.p1;
-        if (els.p2) els.p2.textContent = defaults.p2;
+        if (els.h2) els.h2.innerHTML = HOME_SAFE_EN.introH2;
+        if (els.p1) els.p1.innerHTML = HOME_SAFE_EN.introP1;
+        if (els.p2) els.p2.textContent = HOME_SAFE_EN.introP2;
         return;
       }
       var paragraphs = normalizeBiographyParagraphs(doc);
@@ -118,6 +176,35 @@
       if (els.p1) els.p1.textContent = paragraphs[0] || '';
       if (els.p2) els.p2.textContent = paragraphs[1] || '';
     });
+  }
+  function applyHomeIntroCopy(lang) {
+    var L = resolveHeroLang(lang);
+    var proof = document.querySelector('[data-i18n="home.intro.proof"]');
+    var presenterTag = document.querySelector('[data-i18n="home.presenter.tag"]');
+    var presenter1 = document.querySelector('[data-i18n="home.presenter.p1"]');
+    var presenter2 = document.querySelector('[data-i18n="home.presenter.p2"]');
+    var presenter3 = document.querySelector('[data-i18n="home.presenter.p3"]');
+    var introCtaBio = document.getElementById('homeIntroCtaBio');
+    var introCtaMedia = document.getElementById('homeIntroCtaMedia');
+    var introCtaPress = document.getElementById('homeIntroCtaPress');
+    var map = [
+      { el: proof, key: 'home.intro.proof', safe: HOME_SAFE_EN.introProof },
+      { el: presenterTag, key: 'home.presenter.tag', safe: HOME_SAFE_EN.presenterTag },
+      { el: presenter1, key: 'home.presenter.p1', safe: HOME_SAFE_EN.presenterP1 },
+      { el: presenter2, key: 'home.presenter.p2', safe: HOME_SAFE_EN.presenterP2 },
+      { el: presenter3, key: 'home.presenter.p3', safe: HOME_SAFE_EN.presenterP3 },
+      { el: introCtaBio, key: 'home.intro.ctaBio', safe: HOME_SAFE_EN.introCtaBio },
+      { el: introCtaMedia, key: 'home.intro.ctaMedia', safe: HOME_SAFE_EN.introCtaMedia },
+      { el: introCtaPress, key: 'home.intro.ctaPress', safe: HOME_SAFE_EN.introCtaPress }
+    ];
+    var introLangUsed = L;
+    map.forEach(function (item) {
+      if (!item.el) return;
+      var resolved = resolveHomeUiString(L, item.key, item.safe);
+      introLangUsed = introLangUsed === 'en' || resolved.resolvedLang === L ? resolved.resolvedLang : introLangUsed;
+      item.el.textContent = resolved.value;
+    });
+    console.log('[home intro]', introLangUsed || 'en');
   }
   var LIVE_HERO_DOCS = {};
   var LAST_PROGRAMS_CTA_VISIBILITY_LANG = '';
@@ -381,6 +468,7 @@
     var pick =
       typeof window.pickMpLocaleString === 'function' ? window.pickMpLocaleString : null;
     var L = resolveHeroLang(lang);
+    console.log('[home lang]', resolveHeroLang(lang), L);
     function val(key) {
       var map = {
         'hero.eyebrow': 'eyebrow',
@@ -390,15 +478,28 @@
         'hero.cta3': 'cta3'
       };
       var field = map[key];
-      var v = pick ? pick(L, key) : null;
-      if (v != null && v !== '') return { value: v, source: 'locale:' + key };
-      // Fallback to same-language hero_* text only when locale table has no value.
+      var safe = HERO_EN_FALLBACK[key];
       if (field) {
-        var info = getHeroTextOverrideInfoWithoutEn(field, L);
-        if (info && info.value) return { value: info.value, source: info.source };
+        var currentInfo = getHeroTextOverrideInfoWithoutEn(field, L);
+        if (currentInfo && currentInfo.value && (L !== 'en' || !isGermanLeakForEnglish(key, currentInfo.value))) {
+          return { value: currentInfo.value, source: currentInfo.source, langUsed: L };
+        }
       }
-      v = HERO_EN_FALLBACK[key];
-      return { value: (v != null ? v : null), source: 'fallback:' + key };
+      var currentLocale = pick ? pick(L, key) : null;
+      if (currentLocale != null && currentLocale !== '' && (L !== 'en' || !isGermanLeakForEnglish(key, currentLocale))) {
+        return { value: currentLocale, source: 'locale:' + key, langUsed: L };
+      }
+      if (field) {
+        var enInfo = getHeroTextOverrideInfoWithoutEn(field, 'en');
+        if (enInfo && enInfo.value && !isGermanLeakForEnglish(key, enInfo.value)) {
+          return { value: enInfo.value, source: enInfo.source, langUsed: 'en' };
+        }
+      }
+      var enLocale = pick ? pick('en', key) : null;
+      if (enLocale != null && enLocale !== '' && !isGermanLeakForEnglish(key, enLocale)) {
+        return { value: enLocale, source: 'locale:en:' + key, langUsed: 'en' };
+      }
+      return { value: (safe != null ? safe : null), source: 'fallback:' + key, langUsed: 'en' };
     }
     var eyebrow = document.getElementById('heroEyebrow');
     var heroSubtitle = document.getElementById('heroSubtitle');
@@ -457,6 +558,7 @@
       else if (introPressInfo && introPressInfo.value) homeIntroCtaPress.textContent = introPressInfo.value;
     }
     applyProgramsEntryPointVisibility(L);
+    console.log('[home hero]', vSubtitle && vSubtitle.langUsed ? vSubtitle.langUsed : L);
     if (!HERO_SOURCE_LOGGED) {
       HERO_SOURCE_LOGGED = true;
       console.log('[Hero] Runtime source trace', {
@@ -529,6 +631,7 @@
     }
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
+      applyHomeIntroCopy(lang);
       applyHomeBiographyPreview(lang);
       if (introPhoto) applyIntroPhotoSource(introPhoto, '', { onlyOverride: true });
       fetch('/v1-assets/data/hero-config.json', { cache: 'no-store' })
@@ -556,6 +659,7 @@
     }
     loadLiveHeroOverrides(lang).finally(function () {
       applyHeroCopy(lang);
+      applyHomeIntroCopy(lang);
       applyHomeBiographyPreview(lang);
       if (introPhoto) {
         applyIntroPhotoSource(introPhoto, LAST_HERO_IMAGE || '../img/hero-portrait.webp');
