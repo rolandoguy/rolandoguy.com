@@ -328,21 +328,21 @@
   }
 
   function applyLiveMediaOverridesFromFirestore() {
-    var firebaseApp = window.firebaseApp;
-    if (!firebaseApp) return Promise.resolve();
-
-    var db = firebaseApp.firestore();
-    if (!db) return Promise.resolve();
+    if (typeof window.fetchMpPublicFirestoreDoc !== 'function') {
+      console.log('[MP MEDIA] fetchMpPublicFirestoreDoc not available, using fallback');
+      return Promise.resolve(false);
+    }
 
     var isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-    return db.collection('rg').doc('rg_public_media').get()
+    console.log('[MP MEDIA] Attempting to load Firestore projection: rg_public_media');
+    return window.fetchMpPublicFirestoreDoc('rg_public_media')
       .then(function (doc) {
-        if (!doc.exists) {
+        if (!doc) {
           if (isDev) console.log('[MP MEDIA] No public_media document in Firestore, using fallback');
           return false;
         }
-        var data = doc.data();
+        var data = doc.data;
         if (!data || typeof data !== 'object') {
           if (isDev) console.log('[MP MEDIA] Invalid public_media data, using fallback');
           return false;
