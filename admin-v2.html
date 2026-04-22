@@ -533,98 +533,20 @@
             <button id="perf-open-internal-calendar-view" type="button">Open internal calendar view</button>
           </div>
           <div id="calendar-main-view">
-          <div class="editor-section">
-            <h3>Calendar section content</h3>
-            <div class="grid two">
-              <label>Section title (HTML)<input id="perf-h2"></label>
-              <label>Section intro text<input id="perf-intro"></label>
+          <div class="split calendar-event-workspace">
+            <div class="calendar-event-list-panel">
+              <div class="calendar-list-head">
+                <div>
+                  <h3>Events</h3>
+                  <p class="muted">Select an event or create a new one.</p>
+                </div>
+                <button id="perf-add" type="button" class="button-primary">+ New event</button>
+              </div>
+              <div id="perf-list" class="item-list"></div>
             </div>
-          </div>
-          <div class="toolbar">
-            <label>Status filter
-              <select id="perf-status-filter">
-                <option value="all">All</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="past">Past</option>
-                <option value="hidden">Hidden</option>
-              </select>
-            </label>
-            <label>Highlight filter
-              <select id="perf-highlight-filter" title="Filter by highlight treatment">
-                <option value="all">All highlight states</option>
-                <option value="featured_both">Featured visual + layout</option>
-                <option value="featured_visual">Featured visual only</option>
-                <option value="featured_layout">Featured layout only</option>
-                <option value="normal">Normal</option>
-              </select>
-            </label>
-            <label>Workflow filter
-              <select id="perf-workflow-filter" title="Filter by editorial workflow">
-                <option value="all">All workflow</option>
-                <option value="draft">Draft</option>
-                <option value="needs_translation">Needs translation</option>
-                <option value="translated">Translated</option>
-                <option value="reviewed">Reviewed</option>
-                <option value="published">Published</option>
-                <option value="hidden">Hidden</option>
-                <option value="ready">Ready to publish</option>
-              </select>
-            </label>
-            <label>Revenue
-              <select id="perf-revenue-filter" title="Filter by revenue completeness">
-                <option value="all">All events</option>
-                <option value="missing">Missing revenue data</option>
-                <option value="complete">Revenue complete</option>
-              </select>
-            </label>
-            <button id="perf-reset-filters" type="button">Reset filters</button>
-            <button id="perf-add">+ New event</button>
-            <button id="perf-dup">Duplicate</button>
-            <button id="perf-del" class="danger">Delete</button>
-            <button id="perf-up">↑</button>
-            <button id="perf-down">↓</button>
-          </div>
-          <div class="toolbar">
-            <span id="perf-selection-count" class="pill">Selected: 0</span>
-            <button id="perf-select-visible" type="button">Select all visible</button>
-            <button id="perf-clear-selection" type="button">Clear selection</button>
-            <label>Bulk status
-              <select id="perf-bulk-status">
-                <option value="">Choose…</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="past">Past</option>
-                <option value="hidden">Hidden</option>
-              </select>
-            </label>
-            <label>Bulk editorial
-              <select id="perf-bulk-editorial">
-                <option value="">Choose…</option>
-                <option value="publish_event">Mark published</option>
-                <option value="reviewed_event">Mark reviewed</option>
-                <option value="draft_event">Mark draft</option>
-                <option value="hide_event">Hide (hidden status)</option>
-                <option value="unhide_event">Unhide (upcoming)</option>
-              </select>
-            </label>
-            <label>Bulk highlight
-              <select id="perf-bulk-highlight">
-                <option value="">Choose…</option>
-                <option value="featured_visual">Set featured visual</option>
-                <option value="not_featured_visual">Set not featured visual</option>
-                <option value="featured_layout">Set featured layout</option>
-                <option value="not_featured_layout">Set not featured layout</option>
-              </select>
-            </label>
-            <button id="perf-apply-bulk" type="button">Apply status</button>
-            <button id="perf-apply-editorial-bulk" type="button">Apply editorial</button>
-            <button id="perf-apply-highlight-bulk" type="button">Apply highlight</button>
-            <button id="perf-add-template" type="button">New event from template</button>
-          </div>
-          <div class="split">
-            <div id="perf-list" class="item-list"></div>
             <div class="editor calendar-editor">
               <div class="editor-section">
-                <h3>Public event information</h3>
+                <h3>Event editor · Basic information</h3>
                 <label>Title<input id="perf-title"></label>
                 <label>Detail<input id="perf-detail"></label>
                 <small id="perf-detail-translation-warn" class="muted warn" style="display:none"></small>
@@ -642,6 +564,30 @@
                   <label>Venue<input id="perf-venue"></label>
                   <label>City<input id="perf-city"></label>
                 </div>
+                <label>Publishing status
+                  <select id="perf-editorialStatus">
+                    <option value="draft">Draft</option>
+                    <option value="needs_translation">Needs translation</option>
+                    <option value="translated">Translated</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="published">Published</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                  <small class="muted">Publishing controls whether the event is ready for public display.</small>
+                </label>
+                <label>Private event
+                  <select id="perf-privateEvent">
+                    <option value="false">no</option>
+                    <option value="true">yes</option>
+                  </select>
+                  <small class="muted">Use this single switch for invitation-only events. When enabled, the public calendar applies private styling automatically and falls back to the shared theatrical background if no custom image is set.</small>
+                </label>
+                <p id="perf-public-visibility" class="pill">Visibility: —</p>
+                <div id="perf-translation-status" class="translation-qa" style="display:none"></div>
+              </div>
+
+              <div class="editor-section">
+                <h3>Money &amp; internal tracking</h3>
                 <div class="calendar-revenue-block">
                   <p class="calendar-revenue-block__title">Revenue planning (Income / Earnings)</p>
                   <p class="calendar-revenue-block__hint">Complete these fields to clear revenue warnings and keep Income / Earnings accurate.</p>
@@ -709,17 +655,95 @@
                     </div>
                   </div>
                 </div>
-                <label>Publishing status
-                  <select id="perf-editorialStatus">
-                    <option value="draft">Draft</option>
-                    <option value="needs_translation">Needs translation</option>
-                    <option value="translated">Translated</option>
-                    <option value="reviewed">Reviewed</option>
-                    <option value="published">Published</option>
-                    <option value="hidden">Hidden</option>
+              </div>
+
+              <div class="editor-section">
+                <h3>Visuals &amp; More info modal</h3>
+                <label>Background image URL<input id="perf-venuePhoto" placeholder="https://..."></label>
+                <label>Background focus
+                  <select id="perf-venuePhotoFocus">
+                    <option value="center center">center center</option>
+                    <option value="top left">top left</option>
+                    <option value="top center">top center</option>
+                    <option value="top right">top right</option>
+                    <option value="center left">center left</option>
+                    <option value="center right">center right</option>
+                    <option value="bottom left">bottom left</option>
+                    <option value="bottom center">bottom center</option>
+                    <option value="bottom right">bottom right</option>
                   </select>
-                  <small class="muted">Publishing controls whether the event is ready for public display.</small>
+                  <small class="muted">Controls which part of the image stays visible in the public event card.</small>
                 </label>
+                <label>Background opacity
+                  <select id="perf-venueOpacity">
+                    <option value="0">none</option>
+                    <option value="10">10%</option>
+                    <option value="20">20%</option>
+                    <option value="30">30%</option>
+                    <option value="40">40%</option>
+                    <option value="50">50%</option>
+                  </select>
+                </label>
+                <div id="perf-venuePreviewWrap" class="photo-preview-wrap">
+                  <img id="perf-venuePreview" alt="Event background preview">
+                </div>
+                <div id="perf-cardPreview" class="perf-card-preview">
+                  <div class="perf-card-preview__bg" id="perf-cardPreviewBg" aria-hidden="true"></div>
+                  <div class="perf-card-preview__content">
+                    <p class="perf-card-preview__meta" id="perf-preview-date">Date</p>
+                    <h4 class="perf-card-preview__title" id="perf-preview-title">Event title</h4>
+                    <p class="perf-card-preview__detail" id="perf-preview-detail">Event detail</p>
+                    <p class="perf-card-preview__venue" id="perf-preview-venue">Venue · City</p>
+                  </div>
+                </div>
+                <hr class="calendar-editor-divider">
+                <label>More info enabled
+                  <select id="perf-modal-enabled">
+                    <option value="">auto (content-based)</option>
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                </label>
+                <div class="grid two">
+                  <label>Modal title<input id="perf-modal-title"></label>
+                  <label>Modal type / category label
+                    <select id="perf-modal-type">
+                      <option value="concert">concert</option>
+                      <option value="recital">recital</option>
+                      <option value="opera">opera</option>
+                      <option value="gala">gala</option>
+                      <option value="private event">private event</option>
+                      <option value="sacred music">sacred music</option>
+                      <option value="other">other</option>
+                    </select>
+                  </label>
+                  <label>Modal venue line<input id="perf-modal-venue"></label>
+                  <label>Modal location / city<input id="perf-modal-city"></label>
+                </div>
+                <label>Modal long description<textarea id="perf-modal-longdesc" rows="5"></textarea></label>
+                <small id="perf-modal-longdesc-translation-warn" class="muted warn" style="display:none"></small>
+                <div class="grid two">
+                  <label>Modal CTA button URL<input id="perf-modal-link" placeholder="https://..."></label>
+                  <label>Modal CTA button label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
+                  <small id="perf-modal-link-label-translation-warn" class="muted warn" style="display:none"></small>
+                  <small id="perf-modal-link-translation-warn" class="muted warn" style="display:none"></small>
+                  <label>Modal price/info line<input id="perf-modal-ticketPrice" placeholder="20€ / 15€ reduced"></label>
+                  <label>Maps button URL (from venue + city)<input id="perf-modal-maps-link" readonly></label>
+                </div>
+                <div class="grid two">
+                  <label>Modal hero image URL<input id="perf-modal-image" placeholder="https://..."></label>
+                  <label>Modal flyer image URL<input id="perf-modal-flyerImg" placeholder="https://..."></label>
+                  <label>Hide modal hero image
+                    <select id="perf-modal-image-hide">
+                      <option value="false">false</option>
+                      <option value="true">true</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <details class="editor-section details-block">
+                <summary>Editorial highlights &amp; private labels</summary>
                 <label>Featured treatment
                   <div class="grid two">
                     <label>Featured visual
@@ -762,13 +786,6 @@
                   <small class="muted">Contexts control where this event can be used as an editorial highlight.</small>
                   <small id="perf-featured-state" class="muted">Highlight state: normal</small>
                 </label>
-                <label>Private event
-                  <select id="perf-privateEvent">
-                    <option value="false">no</option>
-                    <option value="true">yes</option>
-                  </select>
-                  <small class="muted">Use this single switch for invitation-only events. When enabled, the public calendar applies private styling automatically and falls back to the shared theatrical background if no custom image is set.</small>
-                </label>
                 <label>Private badge
                   <select id="perf-privateBadge">
                     <option value="show">Show for private events</option>
@@ -791,98 +808,7 @@
                   <input id="perf-privateDetailText" placeholder="">
                   <small class="muted">If empty, the public calendar uses the default localized detail line.</small>
                 </label>
-                <p id="perf-public-visibility" class="pill">Visibility: —</p>
-                <div id="perf-translation-status" class="translation-qa" style="display:none"></div>
-              </div>
-
-              <div class="editor-section">
-                <h3>Visual appearance</h3>
-                <label>Background image URL<input id="perf-venuePhoto" placeholder="https://..."></label>
-                <label>Background focus
-                  <select id="perf-venuePhotoFocus">
-                    <option value="center center">center center</option>
-                    <option value="top left">top left</option>
-                    <option value="top center">top center</option>
-                    <option value="top right">top right</option>
-                    <option value="center left">center left</option>
-                    <option value="center right">center right</option>
-                    <option value="bottom left">bottom left</option>
-                    <option value="bottom center">bottom center</option>
-                    <option value="bottom right">bottom right</option>
-                  </select>
-                  <small class="muted">Controls which part of the image stays visible in the public event card.</small>
-                </label>
-                <label>Background opacity
-                  <select id="perf-venueOpacity">
-                    <option value="0">none</option>
-                    <option value="10">10%</option>
-                    <option value="20">20%</option>
-                    <option value="30">30%</option>
-                    <option value="40">40%</option>
-                    <option value="50">50%</option>
-                  </select>
-                </label>
-                <div id="perf-venuePreviewWrap" class="photo-preview-wrap">
-                  <img id="perf-venuePreview" alt="Event background preview">
-                </div>
-                <div id="perf-cardPreview" class="perf-card-preview">
-                  <div class="perf-card-preview__bg" id="perf-cardPreviewBg" aria-hidden="true"></div>
-                  <div class="perf-card-preview__content">
-                    <p class="perf-card-preview__meta" id="perf-preview-date">Date</p>
-                    <h4 class="perf-card-preview__title" id="perf-preview-title">Event title</h4>
-                    <p class="perf-card-preview__detail" id="perf-preview-detail">Event detail</p>
-                    <p class="perf-card-preview__venue" id="perf-preview-venue">Venue · City</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="editor-section">
-                <h3>More info modal content</h3>
-                <p class="muted">These fields control the content shown when the visitor clicks More info.</p>
-                <div class="grid two">
-                  <label>Modal title<input id="perf-modal-title"></label>
-                  <label>Modal type / category label
-                    <select id="perf-modal-type">
-                      <option value="concert">concert</option>
-                      <option value="recital">recital</option>
-                      <option value="opera">opera</option>
-                      <option value="gala">gala</option>
-                      <option value="private event">private event</option>
-                      <option value="sacred music">sacred music</option>
-                      <option value="other">other</option>
-                    </select>
-                  </label>
-                  <label>Modal venue line<input id="perf-modal-venue"></label>
-                  <label>Modal location / city<input id="perf-modal-city"></label>
-                </div>
-                <label>Modal long description<textarea id="perf-modal-longdesc" rows="5"></textarea></label>
-                <small id="perf-modal-longdesc-translation-warn" class="muted warn" style="display:none"></small>
-                <div class="grid two">
-                  <label>Modal CTA button URL<input id="perf-modal-link" placeholder="https://..."></label>
-                  <label>Modal CTA button label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
-                  <small id="perf-modal-link-label-translation-warn" class="muted warn" style="display:none"></small>
-                  <small id="perf-modal-link-translation-warn" class="muted warn" style="display:none"></small>
-                  <label>Modal price/info line<input id="perf-modal-ticketPrice" placeholder="20€ / 15€ reduced"></label>
-                  <label>Maps button URL (from venue + city)<input id="perf-modal-maps-link" readonly></label>
-                </div>
-                <div class="grid two">
-                  <label>Modal hero image URL<input id="perf-modal-image" placeholder="https://..."></label>
-                  <label>Hide modal hero image
-                    <select id="perf-modal-image-hide">
-                      <option value="false">false</option>
-                      <option value="true">true</option>
-                    </select>
-                  </label>
-                  <label>Enable More info button
-                    <select id="perf-modal-enabled">
-                      <option value="">auto (content-based)</option>
-                      <option value="true">true</option>
-                      <option value="false">false</option>
-                    </select>
-                  </label>
-                  <label>Modal flyer image URL<input id="perf-modal-flyerImg" placeholder="https://..."></label>
-                </div>
-              </div>
+              </details>
 
               <details class="editor-section details-block">
                 <summary>Advanced · scheduling, badges &amp; internal fields</summary>
@@ -927,18 +853,114 @@
             </div>
           </div>
           <div class="toolbar section-save-bar">
-            <button id="savePerfHeaderBtn" type="button" class="button-primary">Save page heading &amp; intro</button>
             <button id="savePerfEventsBtn" type="button" class="button-primary">Save all event changes</button>
-            <button id="perf-archive-current-btn" type="button" title="Mark current event as past">Archive event (past)</button>
-            <button id="perf-prev-item" type="button">Previous item</button>
-            <button id="perf-next-item" type="button">Next item</button>
-            <label>Move to #
-              <input id="perf-move-pos" type="number" min="1" step="1" placeholder="1">
-            </label>
-            <button id="perf-move-apply" type="button">Move</button>
             <button id="perf-revert-item" type="button">Revert current item</button>
           </div>
-          <p class="muted">Save page heading &amp; intro saves the calendar page title and intro text only.</p>
+
+          <details class="editor-section details-block calendar-tools-panel">
+            <summary>Calendar list tools, filters &amp; bulk actions</summary>
+            <div class="toolbar calendar-tools-toolbar">
+              <label>Status filter
+                <select id="perf-status-filter">
+                  <option value="all">All</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="past">Past</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
+              <label>Highlight filter
+                <select id="perf-highlight-filter" title="Filter by highlight treatment">
+                  <option value="all">All highlight states</option>
+                  <option value="featured_both">Featured visual + layout</option>
+                  <option value="featured_visual">Featured visual only</option>
+                  <option value="featured_layout">Featured layout only</option>
+                  <option value="normal">Normal</option>
+                </select>
+              </label>
+              <label>Workflow filter
+                <select id="perf-workflow-filter" title="Filter by editorial workflow">
+                  <option value="all">All workflow</option>
+                  <option value="draft">Draft</option>
+                  <option value="needs_translation">Needs translation</option>
+                  <option value="translated">Translated</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="published">Published</option>
+                  <option value="hidden">Hidden</option>
+                  <option value="ready">Ready to publish</option>
+                </select>
+              </label>
+              <label>Revenue
+                <select id="perf-revenue-filter" title="Filter by revenue completeness">
+                  <option value="all">All events</option>
+                  <option value="missing">Missing revenue data</option>
+                  <option value="complete">Revenue complete</option>
+                </select>
+              </label>
+              <button id="perf-reset-filters" type="button">Reset filters</button>
+            </div>
+            <div class="toolbar calendar-tools-toolbar">
+              <button id="perf-dup" type="button">Duplicate</button>
+              <button id="perf-del" type="button" class="danger">Delete</button>
+              <button id="perf-up" type="button">↑</button>
+              <button id="perf-down" type="button">↓</button>
+              <button id="perf-archive-current-btn" type="button" title="Mark current event as past">Archive event (past)</button>
+              <button id="perf-prev-item" type="button">Previous item</button>
+              <button id="perf-next-item" type="button">Next item</button>
+              <label>Move to #
+                <input id="perf-move-pos" type="number" min="1" step="1" placeholder="1">
+              </label>
+              <button id="perf-move-apply" type="button">Move</button>
+              <button id="perf-add-template" type="button">New event from template</button>
+            </div>
+            <div class="toolbar calendar-tools-toolbar">
+              <span id="perf-selection-count" class="pill">Selected: 0</span>
+              <button id="perf-select-visible" type="button">Select all visible</button>
+              <button id="perf-clear-selection" type="button">Clear selection</button>
+              <label>Bulk status
+                <select id="perf-bulk-status">
+                  <option value="">Choose…</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="past">Past</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
+              <label>Bulk editorial
+                <select id="perf-bulk-editorial">
+                  <option value="">Choose…</option>
+                  <option value="publish_event">Mark published</option>
+                  <option value="reviewed_event">Mark reviewed</option>
+                  <option value="draft_event">Mark draft</option>
+                  <option value="hide_event">Hide (hidden status)</option>
+                  <option value="unhide_event">Unhide (upcoming)</option>
+                </select>
+              </label>
+              <label>Bulk highlight
+                <select id="perf-bulk-highlight">
+                  <option value="">Choose…</option>
+                  <option value="featured_visual">Set featured visual</option>
+                  <option value="not_featured_visual">Set not featured visual</option>
+                  <option value="featured_layout">Set featured layout</option>
+                  <option value="not_featured_layout">Set not featured layout</option>
+                </select>
+              </label>
+              <button id="perf-apply-bulk" type="button">Apply status</button>
+              <button id="perf-apply-editorial-bulk" type="button">Apply editorial</button>
+              <button id="perf-apply-highlight-bulk" type="button">Apply highlight</button>
+            </div>
+          </details>
+
+          <details class="editor-section details-block calendar-page-settings">
+            <summary>Calendar page settings</summary>
+            <div class="grid two">
+              <label>Section title (HTML)<input id="perf-h2"></label>
+              <label>Section intro text<input id="perf-intro"></label>
+            </div>
+            <div class="toolbar calendar-tools-toolbar">
+              <button id="savePerfHeaderBtn" type="button" class="button-primary">Save page heading &amp; intro</button>
+            </div>
+            <p class="muted">Save page heading &amp; intro saves the calendar page title and intro text only.</p>
+          </details>
+
           <p class="muted">Save all event changes saves titles, dates, venue, visibility, and other event fields.</p>
           </div>
           
