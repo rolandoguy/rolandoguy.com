@@ -883,6 +883,9 @@
     repIndex: -1,
     perfs: [],
     perfIndex: -1,
+    perfPendingNewEvent: null,
+    perfFlashIndex: -1,
+    perfFlashTimer: null,
     pastPerfs: [],
     programsDoc: { title: '', subtitle: '', intro: '', closingNote: '', programs: [] },
     programsIndex: -1,
@@ -13043,6 +13046,62 @@
     }
   }
 
+  function perfChronoSortDate(row) {
+    var s = normalizeSortDateForInput(row && row.e && row.e.sortDate);
+    if (!s) return null;
+    var dt = new Date(s + 'T00:00:00');
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+  function comparePerfRowsChronologically(a, b) {
+    var da = perfChronoSortDate(a);
+    var db = perfChronoSortDate(b);
+    if (da && db) {
+      var diff = da.getTime() - db.getTime();
+      if (diff) return diff;
+    } else if (da && !db) {
+      return -1;
+    } else if (!da && db) {
+      return 1;
+    }
+    var ta = safeString(a && a.e && a.e.day || '') + ' ' + safeString(a && a.e && a.e.month || '');
+    var tb = safeString(b && b.e && b.e.day || '') + ' ' + safeString(b && b.e && b.e.month || '');
+    if (ta.trim() || tb.trim()) {
+      var td = ta.localeCompare(tb);
+      if (td) return td;
+    }
+    return (a && Number.isFinite(a.i) ? a.i : 0) - (b && Number.isFinite(b.i) ? b.i : 0);
+  }
+  function perfChronologicalRows() {
+    return state.perfs.map(function (e, i) { return { e: e, i: i }; }).sort(comparePerfRowsChronologically);
+  }
+  function flashPerfListItem(index) {
+    state.perfFlashIndex = Number.isFinite(index) ? index : -1;
+    if (state.perfFlashTimer) window.clearTimeout(state.perfFlashTimer);
+    state.perfFlashTimer = window.setTimeout(function () {
+      state.perfFlashIndex = -1;
+      state.perfFlashTimer = null;
+      renderPerfList();
+    }, 1600);
+  }
+  function reorderPerfEventsChronologically() {
+    if (!Array.isArray(state.perfs) || state.perfs.length < 2) return false;
+    var activeEvent = state.perfs[state.perfIndex] || null;
+    var selectedRefs = new Set();
+    selectedIndices(state.perfSelected).forEach(function (idx) {
+      if (state.perfs[idx]) selectedRefs.add(state.perfs[idx]);
+    });
+    var rows = perfChronologicalRows();
+    var changed = rows.some(function (row, nextIndex) { return row.i !== nextIndex; });
+    if (!changed) return false;
+    state.perfs = rows.map(function (row) { return row.e; });
+    state.perfIndex = activeEvent ? state.perfs.indexOf(activeEvent) : -1;
+    clearSelected(state.perfSelected);
+    state.perfs.forEach(function (event, idx) {
+      if (selectedRefs.has(event)) state.perfSelected[idx] = true;
+    });
+    return true;
+  }
+
   function renderPerfList() {
     var box = $('perf-list');
     var filter = state.perfStatusFilter || 'all';
@@ -13050,14 +13109,8 @@
     var wfPerf = state.perfWorkflowFilter || 'all';
     var revenueFilter = safeString(state.perfRevenueFilter || 'all').trim().toLowerCase();
     if (revenueFilter !== 'all' && revenueFilter !== 'missing' && revenueFilter !== 'complete') revenueFilter = 'all';
-    function perfListSortDate(row) {
-      var s = normalizeSortDateForInput(row && row.e && row.e.sortDate);
-      if (!s) return null;
-      var dt = new Date(s + 'T00:00:00');
-      return isNaN(dt.getTime()) ? null : dt;
-    }
     function perfListDateLabel(e) {
-      var dt = perfListSortDate({ e: e });
+      var dt = perfChronoSortDate({ e: e });
       if (dt) {
         return formatVisibleDate(dt);
       }
@@ -13113,25 +13166,7 @@
       if (revenueFilter === 'complete') return complete;
       if (revenueFilter === 'missing') return !complete;
       return true;
-    }).sort(function (a, b) {
-      var da = perfListSortDate(a);
-      var db = perfListSortDate(b);
-      if (da && db) {
-        var diff = da.getTime() - db.getTime();
-        if (diff) return diff;
-      } else if (da && !db) {
-        return -1;
-      } else if (!da && db) {
-        return 1;
-      }
-      var ta = safeString(a.e.day || '') + ' ' + safeString(a.e.month || '');
-      var tb = safeString(b.e.day || '') + ' ' + safeString(b.e.month || '');
-      if (ta.trim() || tb.trim()) {
-        var td = ta.localeCompare(tb);
-        if (td) return td;
-      }
-      return a.i - b.i;
-    });
+    }).sort(comparePerfRowsChronologically);
     if (!rows.length) {
       box.innerHTML = '<div class="empty-state">No hay eventos. Crea uno con "+ Nuevo evento".</div>';
       state.perfIndex = -1;
@@ -13142,47 +13177,43 @@
     box.innerHTML = rows.map(function (row) {
       var e = row.e;
       var i = row.i;
-      var t = perfListDateLabel(e) + ' · ' + (e.title || '(untitled)');
-      var revenueSummary = perfRevenueSummaryLine(e);
       var cls = i === state.perfIndex ? 'item active' : 'item';
-      var activeFlag = i === state.perfIndex ? '<span class="calendar-item-active">Active</span>' : '';
+      if (i === state.perfFlashIndex) cls += ' calendar-item-flash';
+      cls += ' calendar-event-row';
       var checked = state.perfSelected[i] ? ' checked' : '';
-      var st = safeString(e.editorialStatus || '');
-      var badges = [];
-      if (st) badges.push({ kind: 'warn', label: st });
-      if (perfIsPrivateEventRecord(e, state.lang || 'en')) badges.push({ kind: 'ok', label: 'private' });
+      var title = safeString(e && e.title).trim() || safeString(e && e.title_en).trim() || '(untitled)';
+      var venue = safeString(e && e.venue).trim();
+      var city = safeString(e && e.city).trim();
+      var location = venue && city ? venue + ' · ' + city : (venue || city);
+      var dateMissing = !perfChronoSortDate(row);
+      var st = safeString(e.editorialStatus || e.status || '').trim().toLowerCase();
+      var statusLabel = st ? st.replace(/_/g, ' ') : '';
+      var statusKind = st === 'published' || st === 'reviewed' ? 'ok' : (st === 'draft' || st === 'needs_translation' ? 'warn' : 'muted');
+      var compactBadges = [];
+      if (perfIsPrivateEventRecord(e, state.lang || 'en')) compactBadges.push({ kind: 'private', label: 'Private' });
+      if (statusLabel) compactBadges.push({ kind: statusKind, label: statusLabel });
       var revenueAmount = Number(e && e.revenueAmount);
       var hasRevenueAmount = Number.isFinite(revenueAmount) && revenueAmount > 0;
-      var revenueStatus = safeString(e && e.revenueStatus || 'unknown').trim().toLowerCase();
-      var hasRevenueStatus = revenueStatus === 'confirmed' || revenueStatus === 'potential';
-      if (!hasRevenueAmount && !hasRevenueStatus) {
-        badges.push({ kind: 'err', label: 'rev: missing amount + status' });
-      } else if (!hasRevenueAmount) {
-        badges.push({ kind: 'warn', label: 'rev: missing amount' });
-      } else if (!hasRevenueStatus) {
-        badges.push({ kind: 'warn', label: 'rev: missing status' });
+      if (hasRevenueAmount) {
+        var currency = safeString(e && e.revenueCurrency || 'EUR').trim().toUpperCase() || 'EUR';
+        var currencySymbol = ({ EUR: '€', USD: '$', GBP: '£', CHF: 'CHF ', ARS: 'ARS ' })[currency] || (currency + ' ');
+        var amountLabel = revenueAmount.toLocaleString(undefined, { minimumFractionDigits: revenueAmount % 1 ? 2 : 0, maximumFractionDigits: 2 });
+        compactBadges.push({ kind: 'money', label: currencySymbol + amountLabel });
       }
-      var paymentStatus = safeString(e && e.paymentStatus || 'pending').trim().toLowerCase();
-      var actualReceivedAmount = Number(e && e.actualReceivedAmount);
-      var hasActualReceived = Number.isFinite(actualReceivedAmount) && actualReceivedAmount > 0;
-      var paymentStatusBadge = '';
-      if (paymentStatus === 'paid') {
-        paymentStatusBadge = '<span class="pill pill--ok">paid</span>';
-      } else if (paymentStatus === 'partial') {
-        paymentStatusBadge = '<span class="pill pill--warn">partial</span>';
-      } else if (paymentStatus === 'unpaid') {
-        paymentStatusBadge = '<span class="pill pill--err">unpaid</span>';
-      } else if (paymentStatus === 'not_applicable') {
-        paymentStatusBadge = '<span class="pill pill--muted">n/a</span>';
-      } else {
-        paymentStatusBadge = '<span class="pill pill--muted">pending</span>';
-      }
-      var actualReceivedLine = hasActualReceived ? (' · received: ' + escapeHtml(actualReceivedAmount + (e.actualReceivedCurrency || e.revenueCurrency || ''))) : '';
-      if (perfFeaturedVisual(e) && perfFeaturedLayout(e)) badges.push({ kind: 'ok', label: 'featured visual+layout' });
-      else if (perfFeaturedVisual(e)) badges.push({ kind: 'ok', label: 'featured visual' });
-      else if (perfFeaturedLayout(e)) badges.push({ kind: 'ok', label: 'featured layout' });
-      var badge = badgesHtml(badges);
-      return '<div class="' + cls + '" data-idx="' + i + '"><div class="item-row"><input class="row-select" data-idx="' + i + '" type="checkbox"' + checked + '><div class="item-main"><div class="calendar-item-line">' + t + activeFlag + '</div><div class="calendar-item-revenue">' + escapeHtml(revenueSummary) + paymentStatusBadge + actualReceivedLine + '</div><div class="calendar-item-revenue">highlight: ' + escapeHtml(perfHighlightStateLabel(e)) + '</div>' + badge + '</div></div></div>';
+      var compactBadgesHtml = compactBadges.slice(0, 3).map(function (badge) {
+        return '<span class="calendar-event-row__badge calendar-event-row__badge--' + escapeAttr(badge.kind) + '">' + escapeHtml(badge.label) + '</span>';
+      }).join('');
+      return '<div class="' + cls + '" data-idx="' + i + '">' +
+        '<div class="calendar-event-row__inner">' +
+          '<input class="row-select calendar-event-row__check" data-idx="' + i + '" type="checkbox"' + checked + '>' +
+          '<div class="calendar-event-row__date' + (dateMissing ? ' calendar-event-row__date--missing' : '') + '">' + escapeHtml(perfListDateLabel(e)) + '</div>' +
+          '<div class="calendar-event-row__main">' +
+            '<div class="calendar-event-row__title">' + escapeHtml(title) + '</div>' +
+            (location ? '<div class="calendar-event-row__location">' + escapeHtml(location) + '</div>' : '') +
+          '</div>' +
+          (compactBadgesHtml ? '<div class="calendar-event-row__badges">' + compactBadgesHtml + '</div>' : '') +
+        '</div>' +
+      '</div>';
     }).join('');
     setSelectionCount('perf-selection-count', state.perfSelected);
     box.querySelectorAll('.row-select').forEach(function (el) {
@@ -13640,7 +13671,13 @@
     writeIfInactive('perf-modal-city', e.city);
     writeIfInactive('perf-type', e.type || 'concert');
     writeIfInactive('perf-modal-type', e.type || 'concert');
+    var shouldFlashNewEventAfterDate = state.perfPendingNewEvent === e && !!normalizeSortDateForInput(e.sortDate);
     state.perfs[state.perfIndex] = e;
+    reorderPerfEventsChronologically();
+    if (shouldFlashNewEventAfterDate) {
+      state.perfPendingNewEvent = null;
+      flashPerfListItem(state.perfIndex);
+    }
     updatePerfCardPreview();
     updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
@@ -13664,6 +13701,7 @@
       }
     });
     state.perfIndex = -1;
+    reorderPerfEventsChronologically();
     renderPerfList();
     updateCompletenessIndicators();
     if (state.deepLinkPerfId) {
@@ -18234,8 +18272,12 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    state.perfs.push({ title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false });
+    var event = { title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false };
+    state.perfs.push(event);
     state.perfIndex = state.perfs.length - 1;
+    state.perfPendingNewEvent = event;
+    reorderPerfEventsChronologically();
+    flashPerfListItem(state.perfIndex);
     renderPerfList(); renderPerfEditor(); markDirty(true, 'Event template created');
   }
   function normalizePerfEventsList(arr) {
@@ -20112,14 +20154,23 @@
 
     $('perf-add').addEventListener('click', function () {
       clearSelected(state.perfSelected);
-      state.perfs.push({ title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '' });
-      state.perfIndex = state.perfs.length - 1; renderPerfList(); renderPerfEditor(); markDirty(true);
+      var event = { title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '' };
+      state.perfs.push(event);
+      state.perfIndex = state.perfs.length - 1;
+      state.perfPendingNewEvent = event;
+      reorderPerfEventsChronologically();
+      flashPerfListItem(state.perfIndex);
+      renderPerfList(); renderPerfEditor(); markDirty(true);
     });
     $('perf-dup').addEventListener('click', function () {
       if (state.perfIndex < 0) return;
       clearSelected(state.perfSelected);
-      state.perfs.splice(state.perfIndex + 1, 0, clone(state.perfs[state.perfIndex]));
-      state.perfIndex += 1; renderPerfList(); renderPerfEditor(); markDirty(true);
+      var event = clone(state.perfs[state.perfIndex]);
+      state.perfs.splice(state.perfIndex + 1, 0, event);
+      state.perfIndex += 1;
+      reorderPerfEventsChronologically();
+      flashPerfListItem(state.perfIndex);
+      renderPerfList(); renderPerfEditor(); markDirty(true);
     });
     $('perf-del').addEventListener('click', function () {
       if (state.perfIndex < 0) return;
