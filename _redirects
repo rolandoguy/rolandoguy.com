@@ -1,6 +1,9 @@
 # Canonical host: apex (non-www). Redirect www → apex.
 https://www.rolandoguy.com/*  https://rolandoguy.com/:splat  301
 
+# Stable QR landing URL. Keep printed QR codes pointing to /card.
+/card                          /card.html  200
+
 # Block internal/admin artifacts from the public origin.
 /admin.html                     /404.html  404
 /admin-v2.html                  /404.html  404
