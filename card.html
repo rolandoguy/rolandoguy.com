@@ -200,7 +200,7 @@
               <p class="subtitle" data-i18n="subtitle">Argentinisch-italienischer Tenor mit Sitz in Berlin fuer Oper, Konzert, Rezital, Tango und kuratierte Programme.</p>
               <p class="value-line" data-i18n="valueLine">Bringen Sie eine verfeinerte lyrische Stimme und elegante Buehnenpraesenz in Ihr Theater, Festival, Ihre Gala oder private Veranstaltung.</p>
               <div class="hero-actions">
-                <a class="btn" href="contact.html" data-i18n="bookNow">Jetzt buchen</a>
+                <a class="btn" href="contact.html?lang=de" data-i18n="bookNow" data-book-link>Jetzt buchen</a>
               </div>
               <div class="hero-contact-actions" aria-label="Direct contact">
                 <a class="btn btn-secondary whatsapp-btn" href="https://wa.me/+491753497377" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2a9.86 9.86 0 0 0-8.5 14.86L2.2 22l5.28-1.3A9.91 9.91 0 1 0 12.04 2Zm0 1.8a8.08 8.08 0 1 1-3.93 15.14l-.34-.2-3.02.75.77-2.94-.22-.36A8.07 8.07 0 0 1 12.04 3.8Zm-3.5 4.26c-.18 0-.47.07-.72.34-.25.27-.95.93-.95 2.27 0 1.34.98 2.64 1.12 2.82.14.18 1.9 3.04 4.72 4.14 2.34.92 2.82.74 3.33.69.51-.05 1.65-.67 1.88-1.32.23-.65.23-1.21.16-1.32-.07-.11-.25-.18-.53-.32-.28-.14-1.65-.81-1.91-.9-.25-.09-.44-.14-.63.14-.18.28-.72.9-.88 1.08-.16.18-.32.21-.6.07-.28-.14-1.18-.43-2.24-1.38-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.12-.12.28-.32.42-.48.14-.16.18-.28.28-.46.09-.18.05-.34-.02-.48-.07-.14-.63-1.52-.86-2.08-.23-.54-.46-.47-.63-.48h-.53Z"/></svg><span data-i18n="whatsappButton">WhatsApp senden</span></a>
@@ -238,7 +238,7 @@
       <section class="final-cta" aria-label="Final booking call to action">
         <div class="final-inner">
           <p data-i18n="finalText">Planen Sie eine Vorstellung, Gala, ein Rezital oder kuratiertes Programm? Senden Sie Datum, Ort und Format, um die Buchung zu beginnen.</p>
-          <a class="btn" href="contact.html" data-i18n="bookNow">Jetzt buchen</a>
+          <a class="btn" href="contact.html?lang=de" data-i18n="bookNow" data-book-link>Jetzt buchen</a>
         </div>
       </section>
     </main>
@@ -278,16 +278,16 @@
       },
       es: {
         skip: 'Saltar al contenido',
-        eyebrow: 'Tenor lirico · Reservas y consultas artisticas',
+        eyebrow: 'Tenor lírico · Reservas y consultas artísticas',
         heroTitle: 'Rolando <span class="title-last">Guy</span>',
-        heroRole: 'Tenor lirico',
-        subtitle: 'Tenor argentino-italiano con sede en Berlin para opera, concierto, recital, tango y programas curados.',
-        valueLine: 'Suma una voz lirica refinada y presencia escenica elegante a tu teatro, festival, gala o evento privado.',
+        heroRole: 'Tenor lírico',
+        subtitle: 'Tenor argentino-italiano con sede en Berlin para ópera, concierto, recital, tango y programas curados.',
+        valueLine: 'Sume a su teatro, festival, gala o evento privado una voz lírica refinada y una presencia escénica elegante.',
         bookNow: 'Reservar ahora',
-        proofTag: 'Prueba social',
+        proofTag: 'Referencias destacadas',
         proofTitle: 'Confianza en contextos de concierto y opera',
-        finalText: 'Estas planificando una funcion, gala, recital o programa curado? Envia fecha, lugar y formato para iniciar la reserva.',
-        footerBrand: 'Rolando Guy · Tenor lirico',
+        finalText: 'Si está planificando una función, gala, recital o programa curado, envíe la fecha, el lugar y el formato para iniciar la reserva.',
+        footerBrand: 'Rolando Guy · Tenor lírico',
         whatsappButton: 'Enviar WhatsApp',
         emailButton: 'Enviar E-Mail',
         whatsappText: 'Enviar mensaje',
@@ -322,6 +322,9 @@
       document.querySelectorAll('[data-i18n]').forEach(function (node) {
         var key = node.getAttribute('data-i18n');
         if (translations[currentLang][key]) node.innerHTML = translations[currentLang][key];
+      });
+      document.querySelectorAll('[data-book-link]').forEach(function (link) {
+        link.setAttribute('href', 'contact.html?lang=' + currentLang);
       });
       document.querySelectorAll('[data-lang]').forEach(function (button) {
         var isActive = button.getAttribute('data-lang') === currentLang;
