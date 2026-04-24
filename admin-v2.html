@@ -281,12 +281,12 @@
           </div>
 
           <div class="pb-fee-scenarios">
-            <button class="pb-fee-scenario-btn" data-fee-scenario="berlin_local" onclick="applyBlueprintFeePreset('berlin_local')" type="button">Local concert</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="church_budget" onclick="applyBlueprintFeePreset('church_budget')" type="button">Church / cultural</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="private_premium" onclick="applyBlueprintFeePreset('private_premium')" type="button">Private event</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="corporate_luxury" onclick="applyBlueprintFeePreset('corporate_luxury')" type="button">Corporate / luxury</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="tango_tenors_local" onclick="applyBlueprintFeePreset('tango_tenors_local')" type="button">Tango Tenors</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="opera_role" onclick="(function(){var s=document.getElementById('pb-fee-eventType');if(s)s.value='opera_role';persistBlueprintFeeEstimate();})()" type="button">Opera role</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="berlin_local" type="button">Local concert</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="church_budget" type="button">Church / cultural</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="private_premium" type="button">Private event</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="corporate_luxury" type="button">Corporate / luxury</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="tango_tenors_local" type="button">Tango Tenors</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="opera_role" type="button">Opera role</button>
           </div>
 
           <details class="pb-compact-toggle pb-fee-accordion pb-fee-accordion-scenario" open>
@@ -638,6 +638,7 @@
           </div>
           <div class="toolbar section-save-bar">
             <button id="saveBioBtn" type="button" class="button-primary">Save Biography</button>
+            <button id="patchBioCorrectionsBtn" type="button">Patch corrected biography text (all languages)</button>
           </div>
         </section>
 

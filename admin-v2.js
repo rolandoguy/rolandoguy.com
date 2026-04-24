@@ -4940,6 +4940,40 @@
       if (applyAllResults.some(function (ok) { return ok === false; })) return;
     }
     await publishPublicBiographyDocs(applyAll ? LANGS : [state.lang]);
+    setStatus('Biography saved and public biography updated for ' + state.lang.toUpperCase() + '.', 'ok');
+  }
+  function patchBiographyCorrections() {
+    setStatus('Loading biography bundle…', 'ok');
+    loadBiographyBundle().then(function() {
+      if (!state.bioBundle || typeof state.bioBundle !== 'object') {
+        setStatus('Biography bundle not loaded — cannot patch.', 'warn');
+        return;
+      }
+      var tasks = LANGS.map(function(lang) {
+        var L = normalizeLangCode(lang) || 'en';
+        var bundleDoc = isObject(state.bioBundle[L]) ? state.bioBundle[L] : null;
+        if (!bundleDoc) return Promise.resolve(false);
+        var bundleParas = Array.isArray(bundleDoc.paragraphs) ? bundleDoc.paragraphs.slice() : [];
+        if (!bundleParas.length) return Promise.resolve(false);
+        var stored = loadDoc('bio_' + L, {});
+        if (!isObject(stored)) stored = {};
+        var patched = Object.assign({}, stored, {
+          paragraphs: bundleParas,
+          p1: bundleParas[0] || stored.p1 || '',
+          p2: bundleParas[1] || stored.p2 || ''
+        });
+        return saveDocRequired('bio_' + L, patched).then(function(ok) {
+          if (!ok) return false;
+          try { localStorage.setItem('bio_' + L, JSON.stringify(patched)); } catch(e) {}
+          return publishPublicRgDoc('public_bio_' + L, buildPublicBiographyDoc(lang));
+        });
+      });
+      Promise.all(tasks).then(function(results) {
+        var succeeded = results.filter(Boolean).length;
+        setStatus('Biography patch complete: ' + succeeded + '/' + LANGS.length + ' languages updated and published.', succeeded === LANGS.length ? 'ok' : 'warn');
+        if (state.lang) loadBio();
+      });
+    });
   }
 
   function repFiltered() {
@@ -12539,8 +12573,18 @@
       var fee = computed.fee;
       renderFeeEstimateWorkingSlotNotice();
       if ($('pb-fee-preset')) $('pb-fee-preset').value = safeString(fee.preset || 'berlin_local');
+      var _activeScenario = safeString(fee.preset || '');
+      var _presetDef = PROGRAMME_FEE_PRESETS[_activeScenario];
+      var _fieldsMatchPreset = !!(_presetDef &&
+        safeString(fee.eventType) === safeString(_presetDef.eventType) &&
+        safeString(fee.organizerType) === safeString(_presetDef.organizerType) &&
+        safeString(fee.locationScope) === safeString(_presetDef.locationScope));
       document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
-        btn.classList.toggle('active', btn.getAttribute('data-fee-scenario') === safeString(fee.preset || 'berlin_local'));
+        var s = btn.getAttribute('data-fee-scenario');
+        var isActive = s === 'opera_role'
+          ? safeString(fee.eventType) === 'opera_role'
+          : (_fieldsMatchPreset && s === _activeScenario);
+        btn.classList.toggle('active', isActive);
       });
       if ($('pb-fee-eventType')) $('pb-fee-eventType').value = safeString(fee.eventType || 'public_concert');
       if ($('pb-fee-locationScope')) $('pb-fee-locationScope').value = safeString(fee.locationScope || 'berlin_local');
@@ -19761,6 +19805,7 @@
     if ($('markHomeNeedsTranslationBtn')) $('markHomeNeedsTranslationBtn').addEventListener('click', function () { setSectionEditorialReview('home', 'needs_translation'); });
     if ($('markHomeReviewedBtn')) $('markHomeReviewedBtn').addEventListener('click', function () { setSectionEditorialReview('home', 'reviewed'); });
     $('saveBioBtn').addEventListener('click', saveBio);
+    if ($('patchBioCorrectionsBtn')) $('patchBioCorrectionsBtn').addEventListener('click', patchBiographyCorrections);
     if ($('copyBioFromEnBtn')) $('copyBioFromEnBtn').addEventListener('click', copyBioFromEn);
     if ($('copyBioMissingFromEnBtn')) $('copyBioMissingFromEnBtn').addEventListener('click', copyBioMissingFromEn);
     if ($('compareBioWithEnBtn')) $('compareBioWithEnBtn').addEventListener('click', compareBioWithEn);
@@ -19877,6 +19922,17 @@
     if ($('pb-flexible-note-reset')) $('pb-flexible-note-reset').addEventListener('click', function () { resetProgramOfferFieldToDefault('flexibleNote'); });
     if ($('pb-fee-apply-preset')) $('pb-fee-apply-preset').addEventListener('click', function () {
       applyBlueprintFeePreset($('pb-fee-preset') && $('pb-fee-preset').value);
+    });
+    document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var scenario = safeString(btn.getAttribute('data-fee-scenario'));
+        if (scenario === 'opera_role') {
+          if ($('pb-fee-eventType')) $('pb-fee-eventType').value = 'opera_role';
+          persistBlueprintFeeEstimate();
+        } else {
+          applyBlueprintFeePreset(scenario);
+        }
+      });
     });
     if ($('pb-save-fee-estimate')) $('pb-save-fee-estimate').addEventListener('click', saveFeeEstimateSection);
     if ($('pb-add-piece-search')) $('pb-add-piece-search').addEventListener('input', renderBlueprintBuilder);
