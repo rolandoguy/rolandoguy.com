@@ -113,8 +113,8 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .nav-item[data-section="programs"].active{background:linear-gradient(180deg,var(--color-programs-surface) 0%,rgba(79,195,247,.08) 100%);border-color:var(--color-programs);color:var(--color-programs);box-shadow:0 0 0 1px rgba(79,195,247,.15)}
 .nav-item[data-section="programbuilder"]{background:var(--color-programbuilder-surface);border-color:transparent}
 .nav-item[data-section="programbuilder"].active{background:linear-gradient(180deg,var(--color-programbuilder-surface) 0%,rgba(79,195,247,.08) 100%);border-color:var(--color-programbuilder);color:var(--color-programbuilder);box-shadow:0 0 0 1px rgba(79,195,247,.15)}
-.nav-item[data-section="fee-estimate"]{background:var(--color-programbuilder-fee-surface);border-color:transparent}
-.nav-item[data-section="fee-estimate"].active{background:linear-gradient(180deg,var(--color-programbuilder-fee-surface) 0%,rgba(79,195,247,.08) 100%);border-color:var(--color-programbuilder-fee);color:var(--color-programbuilder-fee);box-shadow:0 0 0 1px rgba(79,195,247,.15)}
+.nav-item[data-section="fee-estimate"]{background:var(--color-income-surface);border-color:transparent}
+.nav-item[data-section="fee-estimate"].active{background:linear-gradient(180deg,var(--color-income-surface) 0%,rgba(236,64,122,.08) 100%);border-color:var(--color-income);color:var(--color-income);box-shadow:0 0 0 1px rgba(236,64,122,.15)}
 .nav-item[data-section="discovery"]{background:var(--color-discovery-surface);border-color:transparent}
 .nav-item[data-section="discovery"].active{background:linear-gradient(180deg,var(--color-discovery-surface) 0%,rgba(79,195,247,.08) 100%);border-color:var(--color-discovery);color:var(--color-discovery);box-shadow:0 0 0 1px rgba(79,195,247,.15)}
 .nav-item[data-section="media"]{background:var(--color-media-surface);border-color:transparent}
@@ -243,6 +243,7 @@ button.danger:hover{background:#3a2128;border-color:#9e4b5e}
 #section-contacts.active{border-color:var(--color-contacts-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-contacts-surface) 100%)}
 #section-calendar.active{border-color:var(--color-calendar-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-calendar-surface) 100%)}
 #section-income.active{border-color:var(--color-income-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-income-surface) 100%)}
+#section-fee-estimate.active{border-color:var(--color-income-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-income-surface) 100%)}
 #section-media.active{border-color:var(--color-media-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-media-surface) 100%)}
 #section-media.active #mediaVideosPanel,#section-media.active #mediaPhotosPanel,#section-media.active #mediaAudioPanel{border:1px solid var(--color-media-border);border-radius:12px;background:linear-gradient(180deg,var(--color-media-surface) 0%,rgba(79,195,247,.04) 100%);padding:14px}
 #section-pastperfs.active{border-color:var(--color-pastperfs-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-pastperfs-surface) 100%)}
@@ -707,6 +708,14 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 .pb-fee-explainer p{margin:0;font-size:.8rem;line-height:1.6;color:var(--muted)}
 .pb-fee-explainer strong{color:var(--text);font-weight:600}
 .pb-fee-risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:10px}
+.pb-fee-result-card{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:10px;margin:10px 0 8px}
+.pb-fee-actions-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;align-items:center}
+.pb-fee-scenarios{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.pb-fee-scenario-btn{padding:7px 13px;border-radius:999px;font-size:.79rem;line-height:1.2;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);color:var(--muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.pb-fee-scenario-btn:hover{border-color:#4c5d7d;background:#253044;color:var(--text)}
+.pb-fee-scenario-btn.active{border-color:var(--color-income);color:var(--color-income);background:var(--color-income-surface)}
+.pb-fee-negotiation-inline{margin:4px 0 10px;font-size:.83rem;line-height:1.55;color:#d8e0ed}
+.pb-fee-accordion{margin:0 0 2px}
 .pb-selected-wrap{display:grid;gap:12px}
 .pb-selected-wrap--primary{padding:14px;border:1px solid rgba(212,168,67,.22);border-radius:14px;background:linear-gradient(180deg,rgba(212,168,67,.08),rgba(255,255,255,.02))}
 .pb-programme-has-selection #pb-step-selected{border-color:rgba(212,168,67,.34);box-shadow:0 0 0 1px rgba(212,168,67,.06)}
@@ -1252,6 +1261,10 @@ body.programme-print-active{overflow:hidden}
   .pb-fee-metrics{grid-template-columns:1fr 1fr}
   .pb-fee-topline{grid-template-columns:1fr}
   .pb-fee-quick-output{grid-template-columns:1fr}
+  .pb-fee-result-card{grid-template-columns:1fr}
+  .pb-fee-actions-row{flex-direction:column}
+  .pb-fee-actions-row button{width:100%;min-height:44px}
+  .pb-fee-scenario-btn{min-height:44px;padding:10px 16px}
   .pb-preview-sheet{padding:16px;max-width:100%}
   .item-badges{display:flex;flex-wrap:wrap;gap:4px 6px;margin-left:0}
   .item-badge{margin:0}

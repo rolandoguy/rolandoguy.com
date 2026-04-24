@@ -255,139 +255,170 @@
         </section>
         <section id="section-fee-estimate" class="section">
           <h2>Fee Estimate</h2>
-          <p class="muted">Internal commercial planning for quote ranges, negotiation logic and budget text. This uses the same saved Programme Offer fee data, but pricing now lives in the workflow area.</p>
           <div id="pb-fee-working-slot" class="pb-fee-slot-note warn">Choose or create a Programme Offer working slot before saving.</div>
-          <details id="pb-fee-estimate" class="editor-section pb-secondary-toggle" open>
-          <summary>Fee Estimate</summary>
-          <p class="muted">Internal quote helper only. Think in professional Berlin/Germany freelance terms: minimum, good target, package fee, risk, and what to say to the organiser.</p>
-          <div class="pb-fee-topline">
-            <div class="pb-fee-metric pb-fee-metric--primary"><span>Recommended quote <small id="pb-fee-recommended-status" class="muted">Calculated</small></span><strong id="pb-fee-recommendedRange">€0</strong></div>
-            <div class="pb-fee-metric"><span>Computed minimum</span><strong id="pb-fee-personalMinimum">€0</strong></div>
-            <div class="pb-fee-metric"><span>Computed risk level</span><strong id="pb-fee-riskLevel">Low</strong></div>
-            <button id="pb-copy-fee-email" type="button">Copy quote text</button>
+
+          <div class="pb-fee-result-card">
+            <div class="pb-fee-metric pb-fee-metric--primary">
+              <span>Recommended quote <small id="pb-fee-recommended-status" class="muted">Calculated</small></span>
+              <strong id="pb-fee-recommendedRange">€0</strong>
+            </div>
+            <div class="pb-fee-metric">
+              <span>Minimum I should accept</span>
+              <strong id="pb-fee-personalMinimum">€0</strong>
+            </div>
+            <div class="pb-fee-metric">
+              <span>Risk</span>
+              <strong id="pb-fee-riskLevel">Low</strong>
+            </div>
           </div>
-          <div class="pb-fee-quick-output">
-            <div><span>Expenses note <small class="muted">Calculated</small></span><p id="pb-fee-expenses-note">Travel and accommodation stay separate.</p></div>
-            <div><span>Negotiation sentence <small class="muted">Calculated</small></span><p id="pb-fee-negotiation-inline">Quote frame will appear here.</p></div>
-            <div><span>Client paragraph <small class="muted">Calculated</small></span><p id="pb-fee-client-inline">Client-facing budget text will appear here.</p></div>
-            <div><span>Internal rationale <small class="muted">Calculated</small></span><p id="pb-fee-rationale-inline">Internal logic will appear here.</p></div>
+
+          <p id="pb-fee-negotiation-inline" class="pb-fee-negotiation-inline">Quote frame will appear here.</p>
+
+          <div class="pb-fee-actions-row">
+            <button id="pb-copy-fee-email" type="button">Copy quote</button>
+            <button id="pb-save-fee-estimate" type="button" class="button-primary">Save</button>
+            <button id="pb-copy-fee-summary" type="button">Copy summary</button>
           </div>
-          <div class="toolbar">
-            <label>Preset
-              <select id="pb-fee-preset">
-                <option value="berlin_local">Berlin local concert</option>
-                <option value="germany_regional">Germany travel concert</option>
-                <option value="germany_overnight">Germany overnight</option>
-                <option value="embassy_institutional">Institutional / embassy</option>
-                <option value="church_budget">Church / cultural floor</option>
-                <option value="private_premium">Private / hotel gala</option>
-                <option value="corporate_luxury">Corporate / luxury</option>
-                <option value="tango_tenors_local">Tango Tenors local duo</option>
-                <option value="tango_tenors_private">Tango Tenors private/corporate</option>
-              </select>
-            </label>
-            <button id="pb-fee-apply-preset" type="button">Apply preset</button>
-            <button id="pb-copy-fee-summary" type="button">Copy budget summary</button>
-            <button id="pb-copy-fee-rationale" type="button">Copy rationale</button>
-            <button id="pb-export-fee-report-pdf" type="button">Export fee report PDF</button>
-            <button id="pb-save-fee-estimate" type="button" class="button-primary">Save fee estimate</button>
+
+          <div class="pb-fee-scenarios">
+            <button class="pb-fee-scenario-btn" data-fee-scenario="berlin_local" onclick="applyBlueprintFeePreset('berlin_local')" type="button">Local concert</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="church_budget" onclick="applyBlueprintFeePreset('church_budget')" type="button">Church / cultural</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="private_premium" onclick="applyBlueprintFeePreset('private_premium')" type="button">Private event</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="corporate_luxury" onclick="applyBlueprintFeePreset('corporate_luxury')" type="button">Corporate / luxury</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="tango_tenors_local" onclick="applyBlueprintFeePreset('tango_tenors_local')" type="button">Tango Tenors</button>
+            <button class="pb-fee-scenario-btn" data-fee-scenario="opera_role" onclick="(function(){var s=document.getElementById('pb-fee-eventType');if(s)s.value='opera_role';persistBlueprintFeeEstimate();})()" type="button">Opera role</button>
           </div>
-          <details class="pb-compact-toggle" open>
-          <summary>Commercial inputs</summary>
-          <div class="grid two">
-            <label>Event type
-              <select id="pb-fee-eventType">
-                <option value="public_concert">Public concert</option>
-                <option value="private_event">Private event</option>
-                <option value="corporate_event">Corporate event</option>
-                <option value="church_cultural">Church / cultural</option>
-                <option value="festival">Festival</option>
-                <option value="opera_role">Opera role</option>
-                <option value="gala">Gala</option>
-                <option value="tango_tenors">Tango Tenors</option>
-                <option value="custom">Custom</option>
-              </select>
-            </label>
-            <label>Formation
-              <select id="pb-fee-formation">
-                <option value="solo">Solo</option>
-                <option value="tenor_piano">Tenor + piano</option>
-                <option value="duo">Duo</option>
-                <option value="trio">Trio</option>
-                <option value="ensemble">Ensemble</option>
-              </select>
-            </label>
-          </div>
-          <div class="grid two">
-            <label>Location
-              <select id="pb-fee-locationScope">
-                <option value="berlin_local">Berlin local</option>
-                <option value="germany_travel">Germany travel</option>
-                <option value="eu_travel">EU travel</option>
-                <option value="international">International</option>
-              </select>
-            </label>
-            <label>Duration
-              <select id="pb-fee-durationBand">
-                <option value="up_to_20">up to 20 min</option>
-                <option value="thirty">30 min</option>
-                <option value="fortyfive">45 min</option>
-                <option value="sixty">60 min</option>
-                <option value="seventyfive_plus">75+ min</option>
-              </select>
-            </label>
-          </div>
-          <div class="grid two">
-            <label>Rehearsals
-              <select id="pb-fee-rehearsals">
-                <option value="none">none</option>
-                <option value="one">1</option>
-                <option value="two">2</option>
-                <option value="three_plus">3+</option>
-              </select>
-            </label>
-            <label>Preparation complexity
-              <select id="pb-fee-preparationComplexity">
-                <option value="existing_repertoire">Existing repertoire</option>
-                <option value="partly_custom">Partly custom</option>
-                <option value="new_programme">New programme</option>
-                <option value="role_or_major_work">Role or major work</option>
-              </select>
-            </label>
-          </div>
-          <div class="grid two">
-            <label>Organizer type
-              <select id="pb-fee-organizerType">
-                <option value="public_funded">Public funded</option>
-                <option value="small_cultural">Small cultural</option>
-                <option value="church">Church</option>
-                <option value="private_host">Private host</option>
-                <option value="corporate">Corporate</option>
-                <option value="luxury_hotel">Luxury hotel</option>
-                <option value="festival_theatre">Festival / theatre</option>
-              </select>
-            </label>
-            <label>Strategic value
-              <select id="pb-fee-strategicValue">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="portfolio_exception">Portfolio exception</option>
-              </select>
-            </label>
-          </div>
-          <p id="pb-fee-eventtype-help" class="muted pb-fee-adjustment-line">Good target, professional floor, and risk notes update from the inputs. Travel and accommodation stay separate from the artistic fee.</p>
-          <div class="pb-fee-explainer">
-            <p><strong>Professional floor</strong> = roughly €300–€350/day in Berlin/Germany freelance terms. It is a floor, not a good target.</p>
-            <p><strong>Good target</strong> = starts around €600+ for a solo professional concert with preparation and performance.</p>
-            <p><strong>Package fee</strong> = what the client should pay for the full formation. For Tango Tenors and duos, do not quote only Rolando’s share.</p>
-          </div>
+
+          <details class="pb-compact-toggle pb-fee-accordion pb-fee-accordion-scenario" open>
+            <summary>Scenario details</summary>
+            <div class="grid two">
+              <label>Event type
+                <select id="pb-fee-eventType">
+                  <option value="public_concert">Public concert</option>
+                  <option value="private_event">Private event</option>
+                  <option value="corporate_event">Corporate event</option>
+                  <option value="church_cultural">Church / cultural</option>
+                  <option value="festival">Festival</option>
+                  <option value="opera_role">Opera role</option>
+                  <option value="gala">Gala</option>
+                  <option value="tango_tenors">Tango Tenors</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+              <label>Formation
+                <select id="pb-fee-formation">
+                  <option value="solo">Solo</option>
+                  <option value="tenor_piano">Tenor + piano</option>
+                  <option value="duo">Duo</option>
+                  <option value="trio">Trio</option>
+                  <option value="ensemble">Ensemble</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <label>Location
+                <select id="pb-fee-locationScope">
+                  <option value="berlin_local">Berlin local</option>
+                  <option value="germany_travel">Germany travel</option>
+                  <option value="eu_travel">EU travel</option>
+                  <option value="international">International</option>
+                </select>
+              </label>
+              <label>Duration
+                <select id="pb-fee-durationBand">
+                  <option value="up_to_20">up to 20 min</option>
+                  <option value="thirty">30 min</option>
+                  <option value="fortyfive">45 min</option>
+                  <option value="sixty">60 min</option>
+                  <option value="seventyfive_plus">75+ min</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <label>Rehearsals
+                <select id="pb-fee-rehearsals">
+                  <option value="none">none</option>
+                  <option value="one">1</option>
+                  <option value="two">2</option>
+                  <option value="three_plus">3+</option>
+                </select>
+              </label>
+              <label>Preparation complexity
+                <select id="pb-fee-preparationComplexity">
+                  <option value="existing_repertoire">Existing repertoire</option>
+                  <option value="partly_custom">Partly custom</option>
+                  <option value="new_programme">New programme</option>
+                  <option value="role_or_major_work">Role or major work</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <label>Organizer type
+                <select id="pb-fee-organizerType">
+                  <option value="public_funded">Public funded</option>
+                  <option value="small_cultural">Small cultural</option>
+                  <option value="church">Church</option>
+                  <option value="private_host">Private host</option>
+                  <option value="corporate">Corporate</option>
+                  <option value="luxury_hotel">Luxury hotel</option>
+                  <option value="festival_theatre">Festival / theatre</option>
+                </select>
+              </label>
+              <label>Strategic value
+                <select id="pb-fee-strategicValue">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="portfolio_exception">Portfolio exception</option>
+                </select>
+              </label>
+            </div>
+            <p id="pb-fee-eventtype-help" class="muted pb-fee-adjustment-line">Good target, minimum, and risk update from the inputs above. Expenses stay separate from the artistic fee.</p>
           </details>
-          <details class="pb-compact-toggle">
+
+          <details class="pb-compact-toggle pb-fee-accordion">
+            <summary>Expenses</summary>
+            <div class="grid two">
+              <label>Travel cost<input id="pb-fee-travelCost" type="number" min="0" step="10"></label>
+              <label>Hotel cost<input id="pb-fee-hotelCost" type="number" min="0" step="10"></label>
+            </div>
+            <div class="grid two">
+              <label>Local transport<input id="pb-fee-localTransportCost" type="number" min="0" step="10"></label>
+              <label>Admin buffer<input id="pb-fee-adminBuffer" type="number" min="0" step="10"></label>
+            </div>
+            <p id="pb-fee-expenses-note" class="muted pb-fee-adjustment-line">Travel and accommodation stay separate.</p>
+          </details>
+
+          <details class="pb-compact-toggle pb-fee-accordion">
+            <summary>Risk flags</summary>
+            <div class="pb-fee-risk-grid">
+              <label class="checkline"><input type="checkbox" data-pb-fee-risk="low_budget"> Low budget</label>
+              <label class="checkline"><input type="checkbox" data-pb-fee-risk="unpaid_extra_rehearsals"> Unpaid extra rehearsals</label>
+              <label class="checkline"><input type="checkbox" data-pb-fee-risk="uncertain_ticket_split"> Uncertain ticket split</label>
+              <label class="checkline"><input type="checkbox" data-pb-fee-risk="travel_not_covered"> Travel not covered</label>
+              <label class="checkline"><input type="checkbox" data-pb-fee-risk="late_confirmation"> Late confirmation</label>
+              <label class="checkline"><input type="checkbox" data-pb-fee-risk="exclusivity_requested"> Exclusivity requested</label>
+            </div>
+          </details>
+
+          <details class="pb-compact-toggle pb-fee-accordion">
+            <summary>Manual overrides</summary>
+            <p class="muted">Leave blank for computed values.</p>
+            <div class="grid two">
+              <label>Minimum override<input id="pb-fee-lowBudgetOverride" type="number" min="0" step="10"></label>
+              <label>Target low override<input id="pb-fee-recommendedOverride" type="number" min="0" step="10"></label>
+            </div>
+            <div class="grid two">
+              <label>Target high override<input id="pb-fee-benchmarkOverride" type="number" min="0" step="10"></label>
+              <label>Package fee override<input id="pb-fee-premiumOverride" type="number" min="0" step="10"></label>
+            </div>
+          </details>
+
+          <details class="pb-compact-toggle pb-fee-accordion">
             <summary>Artist and production details</summary>
             <div class="grid two">
-            <label>Number of artists<input id="pb-fee-numberOfArtists" type="number" min="1" step="1"></label>
-            <label class="checkline"><input id="pb-fee-includesPianist" type="checkbox"> Includes pianist</label>
+              <label>Number of artists<input id="pb-fee-numberOfArtists" type="number" min="1" step="1"></label>
+              <label class="checkline"><input id="pb-fee-includesPianist" type="checkbox"> Includes pianist</label>
             </div>
             <div class="grid two">
               <label>Rehearsal/day fee per artist<input id="pb-fee-rehearsalFeePerArtist" type="number" min="0" step="10"></label>
@@ -405,61 +436,57 @@
             <label class="checkline"><input id="pb-fee-guaranteedMinimum" type="checkbox"> Ticket split has guaranteed minimum</label>
             <label>Legacy duration minutes<input id="pb-fee-durationMin" type="number" min="0" step="1"></label>
           </details>
-          <div class="grid two">
-            <label>Travel cost<input id="pb-fee-travelCost" type="number" min="0" step="10"></label>
-            <label>Hotel cost<input id="pb-fee-hotelCost" type="number" min="0" step="10"></label>
-          </div>
-          <div class="grid two">
-            <label>Local transport<input id="pb-fee-localTransportCost" type="number" min="0" step="10"></label>
-            <label>Admin buffer<input id="pb-fee-adminBuffer" type="number" min="0" step="10"></label>
-          </div>
-          <details class="pb-compact-toggle">
-            <summary>Risk flags</summary>
-            <div class="pb-fee-risk-grid">
-              <label class="checkline"><input type="checkbox" data-pb-fee-risk="low_budget"> Low budget</label>
-              <label class="checkline"><input type="checkbox" data-pb-fee-risk="unpaid_extra_rehearsals"> Unpaid extra rehearsals</label>
-              <label class="checkline"><input type="checkbox" data-pb-fee-risk="uncertain_ticket_split"> Uncertain ticket split</label>
-              <label class="checkline"><input type="checkbox" data-pb-fee-risk="travel_not_covered"> Travel not covered</label>
-              <label class="checkline"><input type="checkbox" data-pb-fee-risk="late_confirmation"> Late confirmation</label>
-              <label class="checkline"><input type="checkbox" data-pb-fee-risk="exclusivity_requested"> Exclusivity requested</label>
+
+          <label style="margin-top:10px">Notes<textarea id="pb-fee-notes" rows="3" placeholder="Internal context, funding constraints, travel realities, or negotiation reminders."></textarea></label>
+
+          <details class="pb-compact-toggle pb-fee-accordion">
+            <summary>Calculation details</summary>
+            <div class="pb-fee-explainer">
+              <p><strong>Professional floor</strong> = roughly €300–€350/day in Berlin/Germany freelance terms. It is a floor, not a good target.</p>
+              <p><strong>Good target</strong> = starts around €600+ for a solo professional concert with preparation and performance.</p>
+              <p><strong>Package fee</strong> = what the client should pay for the full formation. For Tango Tenors and duos, do not quote only Rolando's share.</p>
             </div>
-          </details>
-          <details class="pb-compact-toggle">
-            <summary>Manual overrides</summary>
-            <p class="muted">Manual override fields. Leave blank for computed values. Overrides are saved in the existing feeEstimate object.</p>
+            <div class="pb-fee-metrics">
+              <div class="pb-fee-metric"><span>Artistic fee</span><strong id="pb-fee-artisticSubtotal">€0</strong></div>
+              <div class="pb-fee-metric"><span>Expenses separately</span><strong id="pb-fee-logisticsSubtotal">€0</strong></div>
+              <div class="pb-fee-metric"><span>Professional floor</span><strong id="pb-fee-lowBudgetQuote">€0</strong></div>
+              <div class="pb-fee-metric"><span>Good target low</span><strong id="pb-fee-recommendedQuote">€0</strong></div>
+              <div class="pb-fee-metric"><span>Good target high</span><strong id="pb-fee-publicBenchmarkQuote">€0</strong></div>
+              <div class="pb-fee-metric"><span>Package fee</span><strong id="pb-fee-premiumQuote">€0</strong></div>
+            </div>
+            <p id="pb-fee-adjustment-breakdown" class="muted pb-fee-adjustment-line">Base cost logic, event-type weighting, and final quote positioning will appear here.</p>
+            <p id="pb-fee-client-inline" class="muted pb-fee-adjustment-line">Client-facing budget text will appear here.</p>
+            <p id="pb-fee-rationale-inline" class="muted pb-fee-adjustment-line">Internal logic will appear here.</p>
             <div class="grid two">
-              <label>Manual minimum override<input id="pb-fee-lowBudgetOverride" type="number" min="0" step="10"></label>
-              <label>Manual target low override<input id="pb-fee-recommendedOverride" type="number" min="0" step="10"></label>
+              <label>Internal note explaining the logic<textarea id="pb-fee-logic" rows="4" readonly></textarea></label>
+              <label>Suggested negotiation sentence<textarea id="pb-fee-negotiation" rows="4" readonly></textarea></label>
             </div>
+            <label>Internal budget summary<textarea id="pb-fee-summary-output" rows="8" readonly></textarea></label>
+            <label>Short client-facing budget paragraph<textarea id="pb-fee-email-output" rows="6" readonly></textarea></label>
             <div class="grid two">
-              <label>Manual target high override<input id="pb-fee-benchmarkOverride" type="number" min="0" step="10"></label>
-              <label>Manual package fee override<input id="pb-fee-premiumOverride" type="number" min="0" step="10"></label>
+              <label>Benchmark source version<input id="pb-fee-benchmarkSourceVersion" placeholder="DE/Berlin benchmark v1"></label>
+              <label>Benchmark last reviewed<input id="pb-fee-benchmarkLastReviewed" type="date"></label>
+            </div>
+            <div class="toolbar">
+              <button id="pb-copy-fee-rationale" type="button">Copy rationale</button>
+              <button id="pb-export-fee-report-pdf" type="button">Export fee report PDF</button>
             </div>
           </details>
-          <label>Notes<textarea id="pb-fee-notes" rows="3" placeholder="Internal context, funding constraints, travel realities, or negotiation reminders."></textarea></label>
-          <div class="grid two">
-            <label>Benchmark source version<input id="pb-fee-benchmarkSourceVersion" placeholder="DE/Berlin benchmark v1"></label>
-            <label>Benchmark last reviewed<input id="pb-fee-benchmarkLastReviewed" type="date"></label>
+
+          <div class="hidden">
+            <select id="pb-fee-preset">
+              <option value="berlin_local">Berlin local concert</option>
+              <option value="germany_regional">Germany travel concert</option>
+              <option value="germany_overnight">Germany overnight</option>
+              <option value="embassy_institutional">Institutional / embassy</option>
+              <option value="church_budget">Church / cultural floor</option>
+              <option value="private_premium">Private / hotel gala</option>
+              <option value="corporate_luxury">Corporate / luxury</option>
+              <option value="tango_tenors_local">Tango Tenors local duo</option>
+              <option value="tango_tenors_private">Tango Tenors private/corporate</option>
+            </select>
+            <button id="pb-fee-apply-preset" type="button">Apply preset</button>
           </div>
-          <div class="pb-fee-metrics">
-            <div class="pb-fee-metric"><span>Computed artistic fee</span><strong id="pb-fee-artisticSubtotal">€0</strong></div>
-            <div class="pb-fee-metric"><span>Expenses separately</span><strong id="pb-fee-logisticsSubtotal">€0</strong></div>
-            <div class="pb-fee-metric"><span>Professional floor</span><strong id="pb-fee-lowBudgetQuote">€0</strong></div>
-            <div class="pb-fee-metric"><span>Good target low</span><strong id="pb-fee-recommendedQuote">€0</strong></div>
-            <div class="pb-fee-metric"><span>Good target high</span><strong id="pb-fee-publicBenchmarkQuote">€0</strong></div>
-            <div class="pb-fee-metric"><span>Package fee</span><strong id="pb-fee-premiumQuote">€0</strong></div>
-          </div>
-          <details class="pb-compact-toggle">
-          <summary>Computed rationale and copy</summary>
-          <p id="pb-fee-adjustment-breakdown" class="muted pb-fee-adjustment-line">Base cost logic, event-type weighting, and final quote positioning will appear here.</p>
-          <div class="grid two">
-            <label>Internal note explaining the logic<textarea id="pb-fee-logic" rows="4" readonly></textarea></label>
-            <label>Suggested negotiation sentence<textarea id="pb-fee-negotiation" rows="4" readonly></textarea></label>
-          </div>
-          <label>Internal budget summary<textarea id="pb-fee-summary-output" rows="8" readonly></textarea></label>
-          <label>Short client-facing budget paragraph<textarea id="pb-fee-email-output" rows="6" readonly></textarea></label>
-          </details>
-          </details>
         </section>
         <section id="section-home" class="section active">
           <h2>Home / Hero</h2>

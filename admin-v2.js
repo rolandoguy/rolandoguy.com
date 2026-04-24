@@ -10550,6 +10550,10 @@
       // loadProgramBuilder() initializes the shared Programme Builder documents
       // and renders the fee estimate once via renderBlueprintBuilder().
       loadProgramBuilder();
+      if (window.matchMedia && window.matchMedia('(max-width:767px)').matches) {
+        var scenarioAcc = document.querySelector('.pb-fee-accordion-scenario');
+        if (scenarioAcc) scenarioAcc.removeAttribute('open');
+      }
     }
     function feeEstimateWorkingSlotInfo() {
       var key = plannerBlueprintKey();
@@ -12535,6 +12539,9 @@
       var fee = computed.fee;
       renderFeeEstimateWorkingSlotNotice();
       if ($('pb-fee-preset')) $('pb-fee-preset').value = safeString(fee.preset || 'berlin_local');
+      document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-fee-scenario') === safeString(fee.preset || 'berlin_local'));
+      });
       if ($('pb-fee-eventType')) $('pb-fee-eventType').value = safeString(fee.eventType || 'public_concert');
       if ($('pb-fee-locationScope')) $('pb-fee-locationScope').value = safeString(fee.locationScope || 'berlin_local');
       if ($('pb-fee-durationBand')) $('pb-fee-durationBand').value = safeString(fee.durationBand || 'fortyfive');
