@@ -85,8 +85,8 @@
     'form.success': 'Thank you! Your message has been sent.',
     'form.namePh': 'Your name',
     'form.emailPh': 'your@email.com',
-    'form.subjectPh': 'Booking inquiry',
-    'form.messagePh': 'Tell me about your project...',
+    'form.subjectPh': 'Booking enquiry',
+    'form.messagePh': 'Describe your enquiry …',
     'form.sending': 'Sending...',
     'form.errorSend': 'Error sending. Please email rolandoguy@gmail.com directly.'
   };
