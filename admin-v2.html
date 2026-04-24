@@ -27,8 +27,6 @@
           <div class="nav-group-label">Workflow / Internal</div>
           <div class="nav-group-items" id="nav-group-workflow-items">
             <button data-section="cases" class="nav-item">Cases</button>
-            <button data-section="contacts" class="nav-item">Contacts / Follow-ups</button>
-            <button data-section="outreach" class="nav-item">Venues / Opportunities</button>
             <button data-section="calendar" class="nav-item">Calendar</button>
             <button data-section="income" class="nav-item">Income / Earnings</button>
           </div>
@@ -133,6 +131,7 @@
         <section id="section-cases" class="section active">
           <h2>Cases</h2>
           <p class="muted">Internal-only operational tracker. Cases is the main workflow: keep the working title, direct contact and venue details, the next follow-up, the next action, fee context, and concise notes here first. Linked Contacts / Venues stay optional for reference only and never feed public content.</p>
+          <p class="muted workflow-note">Use Cases for opportunities, contacts, venues and follow-ups. Use Calendar for dates. Use Income for money.</p>
           <div class="toolbar">
             <button id="cases-new-record" type="button" class="button-primary">New case</button>
             <button id="cases-export-pdf" type="button">Export PDF</button>
@@ -187,12 +186,26 @@
                   <option value="low">Low</option>
                 </select>
               </label>
+              <label>Opportunity type<input id="cases-opportunity_type" placeholder="concert / recital / teaching / other"></label>
               <label>Contact name<input id="cases-contact_name" placeholder="Presenter, organizer, or primary contact"></label>
+              <label>Organization<input id="cases-organization" placeholder="Agency, venue, festival, choir, company"></label>
+              <label>Channel
+                <select id="cases-channel">
+                  <option value="">Not set</option>
+                  <option value="email">Email</option>
+                  <option value="messenger">Messenger</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="phone">Phone</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
               <label>Contact email<input id="cases-contact_email" placeholder="name@example.com"></label>
               <label>Contact phone<input id="cases-contact_phone" placeholder="+49 … (optional)"></label>
               <label>Venue name<input id="cases-venue_name" placeholder="Venue / organization / event host"></label>
               <label>Venue city<input id="cases-venue_city" placeholder="City"></label>
+              <label>Venue type<input id="cases-venue_type" placeholder="concert hall / church / festival / private / other"></label>
               <label>Venue address or URL<input id="cases-venue_address_or_url" placeholder="Address or https://… (optional)"></label>
+              <label>Last contact date<input id="cases-last_contact_date" type="date"></label>
               <label>Next follow-up date
                 <input id="cases-next_followup_date" type="date">
                 <span class="cases-followup-actions">
@@ -202,11 +215,21 @@
                   <button id="cases-followup-plus14" type="button">+14 days</button>
                 </span>
               </label>
+              <label>Follow-up status
+                <select id="cases-followup_status">
+                  <option value="">Not set</option>
+                  <option value="open">Open</option>
+                  <option value="waiting">Waiting</option>
+                  <option value="done">Done</option>
+                  <option value="paused">Paused</option>
+                </select>
+              </label>
               <label>Next action<input id="cases-next_action" placeholder="Send follow-up email / confirm date / share offer"></label>
               <label>Source<input id="cases-source" placeholder="Referral / website / direct message / returning presenter"></label>
               <label>Discussed date<input id="cases-discussed_date" type="date"></label>
               <label>Proposed date<input id="cases-proposed_date" type="date"></label>
               <label>Estimated fee<input id="cases-estimated_fee" placeholder="e.g. 1200 EUR"></label>
+              <label>Income link / reference<input id="cases-income_link" placeholder="Calendar event, invoice, payment note, or URL"></label>
               <label>Internal notes<textarea id="cases-notes_internal" rows="8"></textarea></label>
               <div class="editor-section cases-optional-links">
                 <h3>Optional legacy links</h3>
@@ -676,10 +699,10 @@
                 </label>
                 <label>Background opacity
                   <select id="perf-venueOpacity">
+                    <option value="30" selected>30%</option>
                     <option value="0">none</option>
                     <option value="10">10%</option>
                     <option value="20">20%</option>
-                    <option value="30">30%</option>
                     <option value="40">40%</option>
                     <option value="50">50%</option>
                   </select>
@@ -2340,6 +2363,7 @@
 
         <section id="section-outreach" class="section">
           <h2>Venues / Opportunities</h2>
+          <p class="muted workflow-note">Legacy reference page. New actionable venue, opportunity and follow-up work should live in Cases.</p>
           <p class="muted">Strategic venue and opportunity tracking. Identify promising venues, prioritize outreach, and connect each opportunity to relevant programme offers. This is the strategic layer—use Contacts/Follow-ups for detailed people tracking, negotiations, and reminders.</p>
           <div class="grid one">
             <div class="editor tools-card">
@@ -3098,6 +3122,7 @@
 
         <section id="section-contacts" class="section">
           <h2>Contacts / Follow-ups</h2>
+          <p class="muted workflow-note">Legacy reference page. New actionable contact and follow-up work should live in Cases.</p>
           <p class="muted">Operational CRM layer for people, negotiations, reminders, and follow-ups. Track individual contacts, link them to venues, manage fee discussions, set follow-up dates, and log communication history. This data is internal-only and never exposed publicly.</p>
           <div class="toolbar">
             <button id="contacts-new-record" type="button" class="button-primary">New contact</button>

@@ -202,6 +202,21 @@
             <input type="text" id="contact_name" name="contact_name">
           </div>
           <div class="form-group">
+            <label for="organization">Organization</label>
+            <input type="text" id="organization" name="organization">
+          </div>
+          <div class="form-group">
+            <label for="channel">Channel</label>
+            <select id="channel" name="channel">
+              <option value="">Select...</option>
+              <option value="email">Email</option>
+              <option value="messenger">Messenger</option>
+              <option value="instagram">Instagram</option>
+              <option value="phone">Phone</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="contact_email">Contact Email</label>
             <input type="email" id="contact_email" name="contact_email">
           </div>
@@ -218,12 +233,37 @@
             <input type="text" id="venue_city" name="venue_city">
           </div>
           <div class="form-group">
+            <label for="venue_type">Venue Type</label>
+            <select id="venue_type" name="venue_type">
+              <option value="">Select...</option>
+              <option value="concert_hall">Concert hall</option>
+              <option value="church">Church</option>
+              <option value="festival">Festival</option>
+              <option value="private">Private</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="venue_address_or_url">Venue Address or URL</label>
             <input type="text" id="venue_address_or_url" name="venue_address_or_url">
           </div>
           <div class="form-group">
+            <label for="last_contact_date">Last Contact Date</label>
+            <input type="date" id="last_contact_date" name="last_contact_date">
+          </div>
+          <div class="form-group">
             <label for="next_followup_date">Next Follow-up Date</label>
             <input type="date" id="next_followup_date" name="next_followup_date">
+          </div>
+          <div class="form-group">
+            <label for="followup_status">Follow-up Status</label>
+            <select id="followup_status" name="followup_status">
+              <option value="">Select...</option>
+              <option value="open">Open</option>
+              <option value="waiting">Waiting</option>
+              <option value="done">Done</option>
+              <option value="paused">Paused</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="next_action">Next Action</label>
@@ -253,6 +293,12 @@
               <option value="GBP">GBP</option>
               <option value="CHF">CHF</option>
               <option value="ARS">ARS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="linked_income_id">Linked Income / Earnings</label>
+            <select id="linked_income_id" name="linked_income_id">
+              <option value="">None</option>
             </select>
           </div>
           <div class="form-group">
@@ -408,10 +454,20 @@
       var linkedContact = getLegacyLinkedContact(merged, contactsById);
 
       if (!safeTrim(merged.contact_name) && linkedContact) merged.contact_name = linkedContact.full_name || '';
+      if (!safeTrim(merged.organization) && linkedContact) merged.organization = linkedContact.organization || '';
+      if (!safeTrim(merged.channel) && linkedContact) {
+        if (safeTrim(linkedContact.email)) merged.channel = 'email';
+        else if (safeTrim(linkedContact.instagram)) merged.channel = 'instagram';
+        else if (safeTrim(linkedContact.phone) || safeTrim(linkedContact.whatsapp)) merged.channel = 'phone';
+      }
       if (!safeTrim(merged.contact_email) && linkedContact) merged.contact_email = linkedContact.email || '';
       if (!safeTrim(merged.contact_phone) && linkedContact) merged.contact_phone = linkedContact.phone || linkedContact.whatsapp || '';
+      if (!safeTrim(merged.last_contact_date) && safeTrim(merged.last_contact_at)) merged.last_contact_date = String(merged.last_contact_at).slice(0, 10);
+      if (!safeTrim(merged.last_contact_date) && linkedContact && linkedContact.last_contact_at) merged.last_contact_date = String(linkedContact.last_contact_at).slice(0, 10);
+      if (!safeTrim(merged.next_followup_date) && linkedContact) merged.next_followup_date = linkedContact.next_followup_date || '';
       if (!safeTrim(merged.venue_name) && linkedVenue) merged.venue_name = linkedVenue.name || '';
       if (!safeTrim(merged.venue_city) && linkedVenue) merged.venue_city = linkedVenue.city || '';
+      if (!safeTrim(merged.venue_type) && linkedVenue) merged.venue_type = linkedVenue.venue_type || '';
       if (!safeTrim(merged.venue_address_or_url) && linkedVenue) merged.venue_address_or_url = linkedVenue.website || linkedVenue.address || '';
 
       return merged;
@@ -434,7 +490,29 @@
     }
 
     function formatCaseContactLine(c) {
-      return [safeTrim(c.contact_name), safeTrim(c.contact_email), safeTrim(c.contact_phone)].filter(Boolean).join(' · ');
+      return [safeTrim(c.contact_name), safeTrim(c.organization), safeTrim(c.channel), safeTrim(c.contact_email), safeTrim(c.contact_phone)].filter(Boolean).join(' · ');
+    }
+
+    function formatCaseFollowupLine(c) {
+      return [safeTrim(c.followup_status), safeTrim(c.next_action)].filter(Boolean).join(' · ');
+    }
+
+    function populateIncomeDropdown(selectedId) {
+      var select = document.getElementById('linked_income_id');
+      if (!select) return Promise.resolve();
+      var currentValue = selectedId != null ? selectedId : select.value;
+      return store.income.getAll().then(function (entries) {
+        select.innerHTML = '<option value="">None</option>';
+        (entries || []).forEach(function (entry) {
+          var label = (entry.title || '(Untitled)') +
+            (entry.amount ? ' · ' + entry.amount + ' ' + (entry.currency || 'EUR') : '') +
+            (entry.status ? ' · ' + entry.status : '');
+          select.innerHTML += '<option value="' + escapeHtml(entry.id) + '">' + escapeHtml(label) + '</option>';
+        });
+        select.value = currentValue || '';
+      }).catch(function (err) {
+        console.error('Error loading income entries for dropdown:', err);
+      });
     }
 
     function renderCaseList(cases) {
@@ -481,6 +559,7 @@
           var resolvedCase = hydrateCaseForWorkflow(c, contactsById, venuesById);
           var venueLine = formatCaseVenueLine(resolvedCase);
           var contactLine = formatCaseContactLine(resolvedCase);
+          var followupLine = formatCaseFollowupLine(resolvedCase);
           var calendarCount = calendarByCaseId[c.id] || 0;
           var incomeCount = incomeByCaseId[c.id] || 0;
           
@@ -514,11 +593,13 @@
             (resolvedCase.priority ? '<span class="badge">' + escapeHtml(resolvedCase.priority) + '</span>' : '') +
             (resolvedCase.opportunity_type ? '<span>' + escapeHtml(resolvedCase.opportunity_type) + '</span>' : '') +
             (resolvedCase.estimated_fee ? '<span> · ' + escapeHtml(resolvedCase.estimated_fee) + ' ' + escapeHtml(resolvedCase.estimated_currency || 'EUR') + '</span>' : '') +
-            (venueLine ? '<span> · Venue: ' + escapeHtml(venueLine) + '</span>' : '') +
+            (venueLine ? '<span> · Venue: ' + escapeHtml(venueLine) + (safeTrim(resolvedCase.venue_type) ? ' · ' + escapeHtml(resolvedCase.venue_type) : '') + '</span>' : '') +
             (contactLine ? '<span> · Contact: ' + escapeHtml(contactLine) + '</span>' : '') +
+            (safeTrim(resolvedCase.last_contact_date) ? '<span> · Last contact: ' + escapeHtml(formatDate(resolvedCase.last_contact_date)) + '</span>' : '') +
             (safeTrim(resolvedCase.source) ? '<span> · Source: ' + escapeHtml(resolvedCase.source) + '</span>' : '') +
             linkedCounts +
             followupInfo +
+            (followupLine ? '<span> · Follow-up status: ' + escapeHtml(followupLine) + '</span>' : '') +
             '</div>' +
             '</div>' +
             '<div class="case-actions">' +
@@ -539,6 +620,7 @@
         listEl.innerHTML = cases.map(function (c) {
           var venueLine = formatCaseVenueLine(c);
           var contactLine = formatCaseContactLine(c);
+          var followupLine = formatCaseFollowupLine(c);
           return '<li class="case-item" data-id="' + escapeHtml(c.id) + '">' +
             '<div class="case-info">' +
             '<div class="case-title">' + escapeHtml(c.title || '(Untitled)') + '</div>' +
@@ -549,6 +631,7 @@
             (c.estimated_fee ? '<span> · ' + escapeHtml(c.estimated_fee) + ' ' + escapeHtml(c.estimated_currency || 'EUR') + '</span>' : '') +
             (venueLine ? '<span> · Venue: ' + escapeHtml(venueLine) + '</span>' : '') +
             (contactLine ? '<span> · Contact: ' + escapeHtml(contactLine) + '</span>' : '') +
+            (followupLine ? '<span> · Follow-up: ' + escapeHtml(followupLine) + '</span>' : '') +
             '</div>' +
             '</div>' +
             '<div class="case-actions">' +
@@ -573,6 +656,9 @@
       document.getElementById('formTitle').textContent = 'New Case';
       document.getElementById('caseForm').reset();
       document.getElementById('estimated_currency').value = 'EUR';
+      document.getElementById('channel').value = 'email';
+      document.getElementById('followup_status').value = 'open';
+      populateIncomeDropdown('');
       showForm(true);
     }
 
@@ -601,12 +687,17 @@
         document.getElementById('status').value = resolvedCase.status || '';
         document.getElementById('priority').value = resolvedCase.priority || '';
         document.getElementById('contact_name').value = resolvedCase.contact_name || '';
+        document.getElementById('organization').value = resolvedCase.organization || '';
+        document.getElementById('channel').value = resolvedCase.channel || '';
         document.getElementById('contact_email').value = resolvedCase.contact_email || '';
         document.getElementById('contact_phone').value = resolvedCase.contact_phone || '';
         document.getElementById('venue_name').value = resolvedCase.venue_name || '';
         document.getElementById('venue_city').value = resolvedCase.venue_city || '';
+        document.getElementById('venue_type').value = resolvedCase.venue_type || '';
         document.getElementById('venue_address_or_url').value = resolvedCase.venue_address_or_url || '';
+        document.getElementById('last_contact_date').value = resolvedCase.last_contact_date || '';
         document.getElementById('next_followup_date').value = resolvedCase.next_followup_date || '';
+        document.getElementById('followup_status').value = resolvedCase.followup_status || '';
         document.getElementById('next_action').value = resolvedCase.next_action || '';
         document.getElementById('source').value = resolvedCase.source || '';
         document.getElementById('discussed_date').value = resolvedCase.discussed_date || '';
@@ -615,6 +706,7 @@
         document.getElementById('estimated_currency').value = resolvedCase.estimated_currency || 'EUR';
         document.getElementById('description').value = resolvedCase.description || '';
         document.getElementById('notes_internal').value = resolvedCase.notes_internal || '';
+        populateIncomeDropdown(resolvedCase.linked_income_id || '');
         showForm(true);
       }).catch(function (err) {
         setStatus('Error loading case: ' + err.message, 'error');
@@ -631,18 +723,25 @@
         status: formData.get('status'),
         priority: formData.get('priority'),
         contact_name: formData.get('contact_name'),
+        organization: formData.get('organization'),
+        channel: formData.get('channel'),
         contact_email: formData.get('contact_email'),
         contact_phone: formData.get('contact_phone'),
         venue_name: formData.get('venue_name'),
         venue_city: formData.get('venue_city'),
+        venue_type: formData.get('venue_type'),
         venue_address_or_url: formData.get('venue_address_or_url'),
+        last_contact_date: formData.get('last_contact_date'),
+        last_contact_at: formData.get('last_contact_date') || (currentCaseRecord && currentCaseRecord.last_contact_at) || '',
         next_followup_date: formData.get('next_followup_date'),
+        followup_status: formData.get('followup_status'),
         next_action: formData.get('next_action'),
         source: formData.get('source'),
         discussed_date: formData.get('discussed_date'),
         proposed_date: formData.get('proposed_date'),
         estimated_fee: Number(formData.get('estimated_fee')) || 0,
         estimated_currency: formData.get('estimated_currency') || 'EUR',
+        linked_income_id: formData.get('linked_income_id'),
         description: formData.get('description'),
         notes_internal: formData.get('notes_internal')
       });
@@ -776,11 +875,14 @@
         applyFilters();
       });
       document.getElementById('caseForm').addEventListener('submit', saveCase);
-      document.getElementById('signOutBtn').addEventListener('click', function () {
-        window.adminV3Auth.signOut().then(function () {
-          window.location.href = 'admin-v2.html';
+      var legacySignOutBtn = document.getElementById('signOutBtn');
+      if (legacySignOutBtn) {
+        legacySignOutBtn.addEventListener('click', function () {
+          window.adminV3Auth.signOut().then(function () {
+            window.location.href = 'admin-v2.html';
+          });
         });
-      });
+      }
     }
 
     // Start when DOM is ready

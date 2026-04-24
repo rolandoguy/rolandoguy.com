@@ -1029,8 +1029,8 @@
   var DRAFT_RESTORE_NOTICE_STORAGE_KEY = 'adm2_draft_notice_v1';
   var MOBILE_NAV_PRIMARY_STORAGE_KEY = 'rg_admin_v2_mobile_nav_primary_v1';
   var NAV_ORDER_STORAGE_KEY = 'rg_admin_v2_nav_order_v2';
-  var MOBILE_NAV_SECTION_ORDER = ['cases', 'contacts', 'outreach', 'calendar', 'income', 'rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'bio', 'home', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
-  var MOBILE_NAV_PRIMARY_DEFAULT = ['cases', 'contacts', 'outreach', 'calendar', 'income', 'rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs'];
+  var MOBILE_NAV_SECTION_ORDER = ['cases', 'calendar', 'income', 'rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs', 'bio', 'home', 'press', 'contact', 'ui', 'publishing', 'translation', 'sitehealth', 'tools'];
+  var MOBILE_NAV_PRIMARY_DEFAULT = ['cases', 'calendar', 'income', 'rep', 'programs', 'programbuilder', 'programbuilder_fee', 'discovery', 'media', 'pastperfs'];
 
   function $(id) { return document.getElementById(id); }
   function readMobileNavPrimarySections() {
@@ -1100,7 +1100,7 @@
   }
   function navSectionGroup(sectionId) {
     var key = safeString(sectionId).trim();
-    if (['cases', 'contacts', 'outreach', 'calendar', 'income'].indexOf(key) >= 0) return 'workflow';
+    if (['cases', 'calendar', 'income'].indexOf(key) >= 0) return 'workflow';
     if (['rep', 'programs', 'programbuilder', 'discovery', 'media', 'pastperfs', 'bio', 'home', 'press', 'contact', 'ui', 'publishing'].indexOf(key) >= 0) return 'public';
     return 'extra';
   }
@@ -3510,6 +3510,9 @@
       var navMore = navBtn.closest('.nav-more');
       if (navMore) navMore.open = true;
       $('currentSectionLabel').textContent = navBtn.textContent;
+    } else {
+      var sectionHeading = $('section-' + sectionId) && $('section-' + sectionId).querySelector('h2');
+      $('currentSectionLabel').textContent = sectionHeading ? sectionHeading.textContent : sectionId;
     }
     if (window.innerWidth <= 860) $('sidebar').classList.remove('open');
     syncTopbarToolsDisclosure();
@@ -3526,7 +3529,7 @@
       var params = new URLSearchParams(window.location && window.location.search ? window.location.search : '');
       var section = safeString(params.get('section')).trim();
       var perfId = safeString(params.get('perfId')).trim();
-      var okSection = section && document.querySelector('.nav-item[data-section="' + section + '"]');
+      var okSection = section && $('section-' + section);
       return { section: okSection ? section : '', perfId: perfId };
     } catch (e) {
       return { section: '', perfId: '' };
@@ -3584,20 +3587,27 @@
         title: safeString(row.title || row.name).trim(),
         status: safeString(row.status || 'open').trim().toLowerCase() || 'open',
         priority: safeString(row.priority || 'medium').trim().toLowerCase() || 'medium',
+        opportunity_type: safeString(row.opportunity_type || row.opportunityType).trim(),
         linked_contact_id: safeString(row.linked_contact_id || row.contact_id).trim(),
         linked_venue_id: safeString(row.linked_venue_id || row.venue_id).trim(),
         contact_name: safeString(row.contact_name).trim(),
+        organization: safeString(row.organization || row.contact_organization).trim(),
+        channel: safeString(row.channel || row.contact_channel).trim().toLowerCase(),
         contact_email: safeString(row.contact_email).trim(),
         contact_phone: safeString(row.contact_phone || row.phone).trim(),
         venue_name: safeString(row.venue_name).trim(),
         venue_city: safeString(row.venue_city || row.city).trim(),
+        venue_type: safeString(row.venue_type || row.venueType).trim(),
         venue_address_or_url: safeString(row.venue_address_or_url || row.venue_address || row.venue_url).trim(),
+        last_contact_date: outreachDateValue(row.last_contact_date || row.last_contact || row.last_contact_at),
         next_followup_date: outreachDateValue(row.next_followup_date || row.next_follow_up),
+        followup_status: safeString(row.followup_status || row.follow_up_status).trim().toLowerCase(),
         next_action: safeString(row.next_action).trim(),
         source: safeString(row.source).trim(),
         discussed_date: outreachDateValue(row.discussed_date),
         proposed_date: outreachDateValue(row.proposed_date),
         estimated_fee: safeString(row.estimated_fee).trim(),
+        income_link: safeString(row.income_link || row.income_reference).trim(),
         notes_internal: safeString(row.notes_internal || row.notes).trim(),
         createdAt: safeString(row.createdAt).trim(),
         updatedAt: safeString(row.updatedAt).trim()
@@ -3621,20 +3631,27 @@
       title: '',
       status: 'open',
       priority: 'medium',
+      opportunity_type: '',
       linked_contact_id: '',
       linked_venue_id: '',
       contact_name: '',
+      organization: '',
+      channel: '',
       contact_email: '',
       contact_phone: '',
       venue_name: '',
       venue_city: '',
+      venue_type: '',
       venue_address_or_url: '',
+      last_contact_date: '',
       next_followup_date: '',
+      followup_status: '',
       next_action: '',
       source: '',
       discussed_date: '',
       proposed_date: '',
       estimated_fee: '',
+      income_link: '',
       notes_internal: '',
       createdAt: now,
       updatedAt: now
@@ -3675,10 +3692,19 @@
   }
   function casesResolvedContact(record) {
     var linked = contactsRecordById(record && record.linked_contact_id);
+    var channel = safeString(record && record.channel).trim();
+    if (!channel && linked) {
+      if (safeString(linked.email).trim()) channel = 'email';
+      else if (safeString(linked.instagram).trim()) channel = 'instagram';
+      else if (safeString(linked.phone).trim()) channel = 'phone';
+    }
     return {
       name: safeString(record && record.contact_name).trim() || safeString(linked && (linked.contact_name || linked.person_name || linked.organization)).trim(),
+      organization: safeString(record && record.organization).trim() || safeString(linked && linked.organization).trim(),
+      channel: channel,
       email: safeString(record && record.contact_email).trim() || safeString(linked && linked.email).trim(),
-      phone: safeString(record && record.contact_phone).trim() || safeString(linked && linked.phone).trim()
+      phone: safeString(record && record.contact_phone).trim() || safeString(linked && linked.phone).trim(),
+      lastContactDate: outreachDateValue((record && record.last_contact_date) || (linked && linked.last_contact))
     };
   }
   function casesVenueLabel(venueId) {
@@ -3691,6 +3717,7 @@
     return {
       name: safeString(record && record.venue_name).trim() || safeString(linked && linked.venueName).trim(),
       city: safeString(record && record.venue_city).trim() || safeString(linked && linked.city).trim(),
+      type: safeString(record && record.venue_type).trim() || safeString(linked && linked.type).trim(),
       addressOrUrl: safeString(record && record.venue_address_or_url).trim() || safeString(linked && (linked.website || linked.address)).trim()
     };
   }
@@ -3699,10 +3726,14 @@
     var contact = casesResolvedContact(out);
     var venue = casesResolvedVenue(out);
     out.contact_name = contact.name;
+    out.organization = contact.organization;
+    out.channel = contact.channel;
     out.contact_email = contact.email;
     out.contact_phone = contact.phone;
+    out.last_contact_date = safeString(out.last_contact_date).trim() || contact.lastContactDate;
     out.venue_name = venue.name;
     out.venue_city = venue.city;
+    out.venue_type = venue.type;
     out.venue_address_or_url = venue.addressOrUrl;
     return out;
   }
@@ -4010,20 +4041,27 @@
     if ($('cases-title')) $('cases-title').value = '';
     if ($('cases-status')) $('cases-status').value = 'open';
     if ($('cases-priority')) $('cases-priority').value = 'medium';
+    if ($('cases-opportunity_type')) $('cases-opportunity_type').value = '';
     if ($('cases-contact_name')) $('cases-contact_name').value = '';
+    if ($('cases-organization')) $('cases-organization').value = '';
+    if ($('cases-channel')) $('cases-channel').value = '';
     if ($('cases-contact_email')) $('cases-contact_email').value = '';
     if ($('cases-contact_phone')) $('cases-contact_phone').value = '';
     if ($('cases-venue_name')) $('cases-venue_name').value = '';
     if ($('cases-venue_city')) $('cases-venue_city').value = '';
+    if ($('cases-venue_type')) $('cases-venue_type').value = '';
     if ($('cases-venue_address_or_url')) $('cases-venue_address_or_url').value = '';
+    if ($('cases-last_contact_date')) $('cases-last_contact_date').value = '';
     if ($('cases-linked_contact_id')) $('cases-linked_contact_id').value = '';
     if ($('cases-linked_venue_id')) $('cases-linked_venue_id').value = '';
     if ($('cases-next_followup_date')) $('cases-next_followup_date').value = '';
+    if ($('cases-followup_status')) $('cases-followup_status').value = '';
     if ($('cases-next_action')) $('cases-next_action').value = '';
     if ($('cases-source')) $('cases-source').value = '';
     if ($('cases-discussed_date')) $('cases-discussed_date').value = '';
     if ($('cases-proposed_date')) $('cases-proposed_date').value = '';
     if ($('cases-estimated_fee')) $('cases-estimated_fee').value = '';
+    if ($('cases-income_link')) $('cases-income_link').value = '';
     if ($('cases-notes_internal')) $('cases-notes_internal').value = '';
     renderCasesContactOptions();
     renderCasesVenueOptions();
@@ -4052,9 +4090,9 @@
       var priorityBadge = '<span class="item-badge ' + escapeAttr(casesPriorityClass(record.priority)) + ' cases-row__priority">' + escapeHtml(safeString(record.priority).trim().toUpperCase()) + '</span>';
       var follow = casesFollowupState(record);
       var followBadge = '<span class="item-badge ' + escapeAttr(follow.className) + ' cases-row__urgency">' + escapeHtml(follow.label) + '</span>';
-      var contactLine = [hydrated.contact_name, hydrated.contact_email].filter(Boolean).join(' · ');
-      var venueLine = [hydrated.venue_name, hydrated.venue_city].filter(Boolean).join(' · ');
-      var secondaryMeta = [safeString(hydrated.source).trim(), formatVisibleDate(record.discussed_date), formatVisibleDate(record.proposed_date)].filter(Boolean).join(' · ');
+      var contactLine = [hydrated.contact_name, hydrated.organization, hydrated.channel, hydrated.contact_email].filter(Boolean).join(' · ');
+      var venueLine = [hydrated.venue_name, hydrated.venue_city, hydrated.venue_type].filter(Boolean).join(' · ');
+      var secondaryMeta = [safeString(hydrated.opportunity_type).trim(), safeString(hydrated.source).trim(), formatVisibleDate(hydrated.last_contact_date), formatVisibleDate(record.discussed_date), formatVisibleDate(record.proposed_date), safeString(hydrated.income_link).trim()].filter(Boolean).join(' · ');
       var followupDateLabel = formatVisibleDate(record.next_followup_date) || 'No date set';
       var softSignals = [];
       if (!contactLine) softSignals.push('<span class="cases-soft-signal">Missing contact</span>');
@@ -4109,20 +4147,27 @@
     $('cases-title').value = safeString(record.title);
     $('cases-status').value = safeString(record.status) || 'open';
     $('cases-priority').value = safeString(record.priority) || 'medium';
+    $('cases-opportunity_type').value = safeString(record.opportunity_type);
     $('cases-contact_name').value = safeString(hydrated.contact_name);
+    $('cases-organization').value = safeString(hydrated.organization);
+    $('cases-channel').value = safeString(hydrated.channel);
     $('cases-contact_email').value = safeString(hydrated.contact_email);
     $('cases-contact_phone').value = safeString(hydrated.contact_phone);
     $('cases-venue_name').value = safeString(hydrated.venue_name);
     $('cases-venue_city').value = safeString(hydrated.venue_city);
+    $('cases-venue_type').value = safeString(hydrated.venue_type);
     $('cases-venue_address_or_url').value = safeString(hydrated.venue_address_or_url);
     $('cases-linked_contact_id').value = safeString(record.linked_contact_id);
     $('cases-linked_venue_id').value = safeString(record.linked_venue_id);
+    $('cases-last_contact_date').value = safeString(hydrated.last_contact_date);
     $('cases-next_followup_date').value = safeString(record.next_followup_date);
+    $('cases-followup_status').value = safeString(record.followup_status);
     $('cases-next_action').value = safeString(record.next_action);
     $('cases-source').value = safeString(record.source);
     $('cases-discussed_date').value = safeString(record.discussed_date);
     $('cases-proposed_date').value = safeString(record.proposed_date);
     $('cases-estimated_fee').value = safeString(record.estimated_fee);
+    $('cases-income_link').value = safeString(record.income_link);
     $('cases-notes_internal').value = safeString(record.notes_internal);
   }
   function saveCasesRecord() {
@@ -4138,20 +4183,27 @@
     }
     record.status = safeString($('cases-status').value).trim().toLowerCase() || 'open';
     record.priority = safeString($('cases-priority').value).trim().toLowerCase() || 'medium';
+    record.opportunity_type = safeString($('cases-opportunity_type').value).trim();
     record.contact_name = safeString($('cases-contact_name').value).trim();
+    record.organization = safeString($('cases-organization').value).trim();
+    record.channel = safeString($('cases-channel').value).trim().toLowerCase();
     record.contact_email = safeString($('cases-contact_email').value).trim();
     record.contact_phone = safeString($('cases-contact_phone').value).trim();
     record.venue_name = safeString($('cases-venue_name').value).trim();
     record.venue_city = safeString($('cases-venue_city').value).trim();
+    record.venue_type = safeString($('cases-venue_type').value).trim();
     record.venue_address_or_url = safeString($('cases-venue_address_or_url').value).trim();
     record.linked_contact_id = safeString($('cases-linked_contact_id').value).trim();
     record.linked_venue_id = safeString($('cases-linked_venue_id').value).trim();
+    record.last_contact_date = outreachDateValue($('cases-last_contact_date').value);
     record.next_followup_date = outreachDateValue($('cases-next_followup_date').value);
+    record.followup_status = safeString($('cases-followup_status').value).trim().toLowerCase();
     record.next_action = safeString($('cases-next_action').value).trim();
     record.source = safeString($('cases-source').value).trim();
     record.discussed_date = outreachDateValue($('cases-discussed_date').value);
     record.proposed_date = outreachDateValue($('cases-proposed_date').value);
     record.estimated_fee = safeString($('cases-estimated_fee').value).trim();
+    record.income_link = safeString($('cases-income_link').value).trim();
     record.notes_internal = safeString($('cases-notes_internal').value).trim();
     record.updatedAt = new Date().toISOString();
     if (isNew) record.createdAt = record.updatedAt;
@@ -4911,6 +4963,36 @@
     });
     return out;
   }
+  function resolveRepCardBaseTitle(c) {
+    var row = isObject(c) ? c : {};
+    var fields = [
+      'title',
+      'title_en',
+      'title_es',
+      'title_de',
+      'title_it',
+      'title_fr',
+      'work',
+      'workTitle',
+      'name',
+      'aria',
+      'pieceTitle',
+      'label',
+      'opera'
+    ];
+    for (var i = 0; i < fields.length; i += 1) {
+      var value = safeString(row[fields[i]]).trim();
+      if (value) return value;
+    }
+    return '';
+  }
+  function resolveRepCardDisplayTitle(c) {
+    var row = isObject(c) ? c : {};
+    var baseTitle = resolveRepCardBaseTitle(row);
+    var role = safeString(row.role).trim();
+    if (role && baseTitle && role !== baseTitle) return role + ' — ' + baseTitle;
+    return baseTitle || role;
+  }
   function renderRepList() {
     var box = $('rep-list');
     var rows = repFiltered();
@@ -4922,13 +5004,14 @@
       return;
     }
     box.innerHTML = rows.map(function (r) {
-      var title = (r.c.role ? r.c.role + ' — ' : '') + (r.c.opera || '(untitled)');
+      var resolvedTitle = resolveRepCardDisplayTitle(r.c);
+      var title = resolvedTitle || '(untitled)';
       var cls = r.i === state.repIndex ? 'item active' : 'item';
       var badges = [];
-      if (isBlank(r.c.role) || isBlank(r.c.opera)) badges.push({ kind: 'warn', label: 'missing title' });
+      if (isBlank(resolvedTitle)) badges.push({ kind: 'warn', label: 'missing title' });
       if (safeString(r.c.editorialStatus)) badges.push({ kind: 'warn', label: safeString(r.c.editorialStatus) });
       var checked = state.repSelected[r.i] ? ' checked' : '';
-      return '<div class="' + cls + '" data-idx="' + r.i + '"><div class="item-row"><input class="row-select" data-idx="' + r.i + '" type="checkbox"' + checked + '><div class="item-main">' + title + badgesHtml(badges) + '</div></div></div>';
+      return '<div class="' + cls + '" data-idx="' + r.i + '"><div class="item-row"><input class="row-select" data-idx="' + r.i + '" type="checkbox"' + checked + '><div class="item-main">' + escapeHtml(title) + badgesHtml(badges) + '</div></div></div>';
     }).join('');
     setSelectionCount('rep-selection-count', state.repSelected);
     box.querySelectorAll('.row-select').forEach(function (el) {
@@ -13345,7 +13428,7 @@
   }
   function normalizePerfVenueOpacity(raw) {
     var value = Number(raw);
-    if (!Number.isFinite(value)) return 50;
+    if (!Number.isFinite(value)) return 30;
     if (value <= 0) return 0;
     if (value <= 10) return 10;
     if (value <= 20) return 20;
@@ -18272,7 +18355,7 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    var event = { title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false };
+    var event = { title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false, venueOpacity: 30 };
     state.perfs.push(event);
     state.perfIndex = state.perfs.length - 1;
     state.perfPendingNewEvent = event;
@@ -20154,7 +20237,7 @@
 
     $('perf-add').addEventListener('click', function () {
       clearSelected(state.perfSelected);
-      var event = { title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '' };
+      var event = { title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '', venueOpacity: 30 };
       state.perfs.push(event);
       state.perfIndex = state.perfs.length - 1;
       state.perfPendingNewEvent = event;
@@ -20808,7 +20891,7 @@
     if ($('cases-followup-plus3')) $('cases-followup-plus3').addEventListener('click', function () { casesShiftFollowupDays(3); });
     if ($('cases-followup-plus7')) $('cases-followup-plus7').addEventListener('click', function () { casesShiftFollowupDays(7); });
     if ($('cases-followup-plus14')) $('cases-followup-plus14').addEventListener('click', function () { casesShiftFollowupDays(14); });
-    bindInputsDirty(['cases-title','cases-status','cases-priority','cases-contact_name','cases-contact_email','cases-contact_phone','cases-venue_name','cases-venue_city','cases-venue_address_or_url','cases-linked_contact_id','cases-linked_venue_id','cases-next_followup_date','cases-next_action','cases-source','cases-discussed_date','cases-proposed_date','cases-estimated_fee','cases-notes_internal'], function () {
+    bindInputsDirty(['cases-title','cases-status','cases-priority','cases-opportunity_type','cases-contact_name','cases-organization','cases-channel','cases-contact_email','cases-contact_phone','cases-venue_name','cases-venue_city','cases-venue_type','cases-venue_address_or_url','cases-linked_contact_id','cases-linked_venue_id','cases-last_contact_date','cases-next_followup_date','cases-followup_status','cases-next_action','cases-source','cases-discussed_date','cases-proposed_date','cases-estimated_fee','cases-income_link','cases-notes_internal'], function () {
       markDirty(true);
     });
 
