@@ -735,15 +735,15 @@
     }
   };
   var PROGRAMME_FEE_PRESETS = {
-    berlin_local: { label: 'Berlin local concert', eventType: 'public_concert', formationType: 'tenor_piano', locationScope: 'berlin_local', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'existing_repertoire', organizerType: 'small_cultural', strategicValue: 'medium', travelCost: 0, hotelCost: 0, localTransportCost: 25, adminBuffer: 40 },
-    germany_regional: { label: 'Germany travel concert', eventType: 'public_concert', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'sixty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'public_funded', strategicValue: 'medium', travelCost: 140, hotelCost: 0, localTransportCost: 40, adminBuffer: 75 },
-    germany_overnight: { label: 'Germany overnight', eventType: 'festival', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'sixty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'festival_theatre', strategicValue: 'medium', travelCost: 180, hotelCost: 170, localTransportCost: 45, adminBuffer: 95 },
-    embassy_institutional: { label: 'Institutional / embassy', eventType: 'gala', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'public_funded', strategicValue: 'high', travelCost: 140, hotelCost: 180, localTransportCost: 45, adminBuffer: 120 },
-    church_budget: { label: 'Church / cultural floor', eventType: 'church_cultural', formationType: 'tenor_piano', locationScope: 'berlin_local', durationBand: 'thirty', rehearsals: 'none', preparationComplexity: 'existing_repertoire', organizerType: 'church', strategicValue: 'portfolio_exception', travelCost: 0, hotelCost: 0, localTransportCost: 20, adminBuffer: 25, riskFlags: ['low_budget'] },
-    private_premium: { label: 'Private / hotel gala', eventType: 'private_event', formationType: 'tenor_piano', locationScope: 'berlin_local', durationBand: 'thirty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'private_host', strategicValue: 'medium', travelCost: 80, hotelCost: 0, localTransportCost: 50, adminBuffer: 150 },
-    corporate_luxury: { label: 'Corporate / luxury', eventType: 'corporate_event', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'thirty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'corporate', strategicValue: 'medium', travelCost: 160, hotelCost: 190, localTransportCost: 60, adminBuffer: 220 },
-    tango_tenors_local: { label: 'Tango Tenors local duo', eventType: 'tango_tenors', formationType: 'duo', locationScope: 'berlin_local', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'existing_repertoire', organizerType: 'small_cultural', strategicValue: 'medium', travelCost: 0, hotelCost: 0, localTransportCost: 40, adminBuffer: 80 },
-    tango_tenors_private: { label: 'Tango Tenors private/corporate', eventType: 'tango_tenors', formationType: 'duo', locationScope: 'germany_travel', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'corporate', strategicValue: 'medium', travelCost: 220, hotelCost: 220, localTransportCost: 70, adminBuffer: 250 }
+    berlin_local: { label: 'Berlin local concert', eventType: 'public_concert', formationType: 'tenor_piano', locationScope: 'berlin_local', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'existing_repertoire', organizerType: 'small_cultural', strategicValue: 'medium', travelCost: 0, hotelCost: 0, localTransportCost: 25, adminBuffer: 0 },
+    germany_regional: { label: 'Germany travel concert', eventType: 'public_concert', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'sixty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'public_funded', strategicValue: 'medium', travelCost: 140, hotelCost: 0, localTransportCost: 40, adminBuffer: 0 },
+    germany_overnight: { label: 'Germany overnight', eventType: 'festival', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'sixty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'festival_theatre', strategicValue: 'medium', travelCost: 180, hotelCost: 170, localTransportCost: 45, adminBuffer: 0 },
+    embassy_institutional: { label: 'Institutional / embassy', eventType: 'gala', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'public_funded', strategicValue: 'high', travelCost: 140, hotelCost: 180, localTransportCost: 45, adminBuffer: 0 },
+    church_budget: { label: 'Church / cultural strategic exception', eventType: 'church_cultural', formationType: 'tenor_piano', locationScope: 'berlin_local', durationBand: 'thirty', rehearsals: 'none', preparationComplexity: 'existing_repertoire', organizerType: 'church', strategicValue: 'portfolio_exception', travelCost: 0, hotelCost: 0, localTransportCost: 20, adminBuffer: 0, riskFlags: ['low_budget'] },
+    private_premium: { label: 'Private event', eventType: 'private_event', formationType: 'tenor_piano', locationScope: 'berlin_local', durationBand: 'thirty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'private_host', strategicValue: 'medium', travelCost: 80, hotelCost: 0, localTransportCost: 50, adminBuffer: 0 },
+    corporate_luxury: { label: 'Corporate / luxury / embassy', eventType: 'corporate_event', formationType: 'tenor_piano', locationScope: 'germany_travel', durationBand: 'thirty', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'corporate', strategicValue: 'medium', travelCost: 160, hotelCost: 190, localTransportCost: 60, adminBuffer: 0 },
+    tango_tenors_local: { label: 'Tango Tenors local package', eventType: 'tango_tenors', formationType: 'trio', locationScope: 'berlin_local', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'existing_repertoire', organizerType: 'small_cultural', strategicValue: 'medium', travelCost: 0, hotelCost: 0, localTransportCost: 40, adminBuffer: 0 },
+    tango_tenors_private: { label: 'Tango Tenors private/corporate package', eventType: 'tango_tenors', formationType: 'trio', locationScope: 'germany_travel', durationBand: 'fortyfive', rehearsals: 'one', preparationComplexity: 'partly_custom', organizerType: 'corporate', strategicValue: 'medium', travelCost: 220, hotelCost: 220, localTransportCost: 70, adminBuffer: 0 }
   };
   var PROGRAMME_FEE_COPY = {
     en: {
@@ -5554,14 +5554,40 @@
     var key = safeString(value || '').trim().toLowerCase();
     if (['solo','tenor_piano','duo','trio','ensemble'].indexOf(key) >= 0) return key;
     var text = safeString(value || fallbackText || '').trim().toLowerCase();
-    if (text.indexOf('tango tenors') >= 0 || text.indexOf('duo') >= 0) return 'duo';
+    if (text.indexOf('tango tenors') >= 0) return 'trio';
+    if (text.indexOf('two singers + piano') >= 0 || text.indexOf('two singers and piano') >= 0) return 'trio';
+    if (text.indexOf('two singers') >= 0 || text.indexOf('backing track') >= 0 || text.indexOf('duo') >= 0) return 'duo';
     if (text.indexOf('trio') >= 0 || text.indexOf('three') >= 0) return 'trio';
     if (text.indexOf('ensemble') >= 0 || text.indexOf('quartet') >= 0) return 'ensemble';
     if (formationIncludesPianist(text)) return 'tenor_piano';
     return 'solo';
   }
   function feeFormationLabel(value) {
-    return ({ solo: 'Solo', tenor_piano: 'Tenor + piano', duo: 'Duo', trio: 'Trio', ensemble: 'Ensemble' })[normalizeFeeFormationType(value)] || 'Solo';
+    return ({ solo: 'Solo / track', tenor_piano: 'Tenor + piano', duo: 'Two singers / track', trio: 'Two singers + piano', ensemble: 'Ensemble / custom' })[normalizeFeeFormationType(value)] || 'Solo / track';
+  }
+  function feeFormationArtistCount(formation, currentCount) {
+    var key = normalizeFeeFormationType(formation);
+    if (key === 'solo') return 1;
+    if (key === 'tenor_piano' || key === 'duo') return 2;
+    if (key === 'trio') return 3;
+    if (key === 'ensemble') return Math.max(4, Number(currentCount) || 4);
+    return Math.max(1, Number(currentCount) || 1);
+  }
+  function feeFormationIncludesPianist(formation, currentValue) {
+    var key = normalizeFeeFormationType(formation);
+    if (key === 'solo' || key === 'duo' || key === 'ensemble') return false;
+    if (key === 'tenor_piano' || key === 'trio') return true;
+    return !!currentValue;
+  }
+  function feeFormationDescriptor(formation) {
+    return ({ solo: 'solo performance', tenor_piano: 'tenor and piano', duo: 'two singers with backing track', trio: 'two singers and piano', ensemble: 'the full ensemble' })[normalizeFeeFormationType(formation)] || 'this format';
+  }
+  function feeClientFormationDescriptor(fee) {
+    if (fee && fee.eventType === 'tango_tenors') return 'the Tango Tenors format: two singers and piano';
+    return feeFormationDescriptor(fee && fee.formation);
+  }
+  function feeHasManualOverrides(fee) {
+    return !!(fee && (fee.lowBudgetOverride > 0 || fee.recommendedOverride > 0 || fee.benchmarkOverride > 0 || fee.premiumOverride > 0));
   }
   function normalizeFeeLocationScope(value) {
     var key = safeString(value || '').trim().toLowerCase();
@@ -5612,6 +5638,31 @@
     var key = safeString(value || '').trim().toLowerCase();
     return ['low','medium','high','portfolio_exception'].indexOf(key) >= 0 ? key : 'medium';
   }
+  function normalizeActualFeeStatus(value) {
+    var key = safeString(value || '').trim().toLowerCase();
+    return ['not_set','discussed','agreed','paid'].indexOf(key) >= 0 ? key : 'not_set';
+  }
+  function normalizeFeeAcceptanceReason(value) {
+    var key = safeString(value || '').trim().toLowerCase();
+    return ['not_set','normal_fee','strategic_visibility','relationship_building','repertoire_value','video_material','low_budget_cultural','no_better_option','charity','other'].indexOf(key) >= 0 ? key : 'not_set';
+  }
+  function feeAcceptanceReasonLabel(value) {
+    return ({
+      not_set: 'Not set',
+      normal_fee: 'Normal fee',
+      strategic_visibility: 'Strategic visibility',
+      relationship_building: 'Relationship building',
+      repertoire_value: 'Repertoire value',
+      video_material: 'Video material',
+      low_budget_cultural: 'Low-budget cultural',
+      no_better_option: 'No better option',
+      charity: 'Charity',
+      other: 'Other'
+    })[normalizeFeeAcceptanceReason(value)] || 'Not set';
+  }
+  function feeAcceptanceReasonIsStrategic(value) {
+    return ['strategic_visibility','relationship_building','repertoire_value','video_material','low_budget_cultural','no_better_option','charity','other'].indexOf(normalizeFeeAcceptanceReason(value)) >= 0;
+  }
   function normalizeFeeRiskFlags(value) {
     var allowed = ['low_budget','unpaid_extra_rehearsals','uncertain_ticket_split','travel_not_covered','late_confirmation','exclusivity_requested'];
     var list = Array.isArray(value) ? value : safeString(value).split(/[,\n]/);
@@ -5626,8 +5677,8 @@
     var formationText = safeString(bp && bp.formation).trim() || 'Tenor + Piano';
     var duration = Math.max(0, Number((bp && bp.totalDuration) || (bp && bp.targetDuration)) || 45);
     var formationType = normalizeFeeFormationType('', formationText);
-    var numberOfArtists = formationType === 'solo' ? 1 : Math.max(2, inferArtistCountFromFormation(formationText));
-    var includesPianist = formationType === 'tenor_piano' || formationIncludesPianist(formationText);
+    var numberOfArtists = feeFormationArtistCount(formationType, inferArtistCountFromFormation(formationText));
+    var includesPianist = feeFormationIncludesPianist(formationType, formationIncludesPianist(formationText));
     return {
       preset: 'berlin_local',
       eventType: 'public_concert',
@@ -5661,8 +5712,13 @@
       lowBudgetOverride: 0,
       recommendedOverride: 0,
       benchmarkOverride: 0,
-      premiumOverride: 0,
-      benchmarkSourceVersion: 'Berlin/Germany freelance planning v2',
+	      premiumOverride: 0,
+	      actualAgreedFee: 0,
+	      actualFeeStatus: 'not_set',
+		      acceptanceReason: 'not_set',
+	      shouldNotBenchmark: false,
+	      gapNote: '',
+	      benchmarkSourceVersion: 'Berlin/Germany freelance planning v2',
       benchmarkLastReviewed: '2026-04-24',
       notes: ''
     };
@@ -5676,11 +5732,8 @@
       var durationBand = normalizeFeeDurationBand(fee.durationBand || fee.durationBucket, fee.durationMin || seed.durationMin);
       var rehearsalRaw = hasOwn(fee, 'rehearsals') ? fee.rehearsals : (hasOwn(fee, 'rehearsalCount') ? fee.rehearsalCount : seed.rehearsals);
       var rehearsals = normalizeFeeRehearsals(rehearsalRaw);
-    var includesPianist = asBoolean(fee.includesPianist, formation === 'tenor_piano' || seed.includesPianist);
-    var minArtists = formation === 'solo' ? 1 : 2;
-    if (formation === 'trio') minArtists = 3;
-    if (formation === 'ensemble') minArtists = 4;
-    var numberOfArtists = Math.max(minArtists, Number(fee.numberOfArtists) || seed.numberOfArtists);
+    var includesPianist = feeFormationIncludesPianist(formation, asBoolean(fee.includesPianist, seed.includesPianist));
+    var numberOfArtists = feeFormationArtistCount(formation, Number(fee.numberOfArtists) || seed.numberOfArtists);
     return {
       preset: hasOwn(PROGRAMME_FEE_PRESETS, safeString(fee.preset).trim().toLowerCase()) ? safeString(fee.preset).trim().toLowerCase() : seed.preset,
       eventType: eventType,
@@ -5714,8 +5767,13 @@
       lowBudgetOverride: Math.max(0, Number(fee.lowBudgetOverride) || Number(fee.minimumOverride) || 0),
       recommendedOverride: Math.max(0, Number(fee.recommendedOverride) || 0),
       benchmarkOverride: Math.max(0, Number(fee.benchmarkOverride) || 0),
-      premiumOverride: Math.max(0, Number(fee.premiumOverride) || 0),
-      benchmarkSourceVersion: safeString(fee.benchmarkSourceVersion || seed.benchmarkSourceVersion),
+	      premiumOverride: Math.max(0, Number(fee.premiumOverride) || 0),
+	      actualAgreedFee: Math.max(0, Number(fee.actualAgreedFee) || 0),
+	      actualFeeStatus: normalizeActualFeeStatus(fee.actualFeeStatus || seed.actualFeeStatus),
+	      acceptanceReason: normalizeFeeAcceptanceReason(hasOwn(fee, 'acceptanceReason') ? fee.acceptanceReason : seed.acceptanceReason),
+	      shouldNotBenchmark: asBoolean(fee.shouldNotBenchmark, false),
+	      gapNote: safeString(fee.gapNote),
+	      benchmarkSourceVersion: safeString(fee.benchmarkSourceVersion || seed.benchmarkSourceVersion),
       benchmarkLastReviewed: safeString(fee.benchmarkLastReviewed || seed.benchmarkLastReviewed),
       notes: safeString(fee.notes)
     };
@@ -5724,17 +5782,50 @@
     var privateLike = ['private_event','gala'].indexOf(fee.eventType) >= 0 || ['private_host','luxury_hotel'].indexOf(fee.organizerType) >= 0;
     var corporateLike = fee.eventType === 'corporate_event' || fee.organizerType === 'corporate' || fee.organizerType === 'luxury_hotel';
     var tango = fee.eventType === 'tango_tenors';
-    if (tango && corporateLike) return { floor: 2000, targetLow: 2500, targetHigh: 4000, label: 'Tango Tenors private/corporate package' };
-    if (tango) return { floor: 1000, targetLow: 1500, targetHigh: 2500, label: 'Tango Tenors local duo package' };
+    var formationKey = normalizeFeeFormationType(fee.formation);
+    var trackDuo = formationKey === 'duo';
+    var pianoPackage = formationKey === 'tenor_piano' || formationKey === 'trio';
+    var customEnsemble = formationKey === 'ensemble';
+    var packageFormation = ['tenor_piano','duo','trio','ensemble'].indexOf(formationKey) >= 0 || (Number(fee.numberOfArtists) || 1) > 1;
+    var customPublicScope = ['partly_custom','new_programme','role_or_major_work'].indexOf(fee.preparationComplexity) >= 0 || feeRehearsalCount(fee.rehearsals) > 1;
+    var premiumTangoScope = corporateLike && (fee.locationScope !== 'berlin_local' || fee.riskFlags.indexOf('exclusivity_requested') >= 0 || ['partly_custom','new_programme','role_or_major_work'].indexOf(fee.preparationComplexity) >= 0);
+    if (tango && corporateLike) return { floor: 2500, targetLow: 3500, targetHigh: premiumTangoScope ? 5500 : 5000, label: premiumTangoScope ? 'Tango Tenors private/corporate package with travel, custom programme or exclusivity' : 'Tango Tenors private/corporate package' };
+    if (tango) return { floor: 1500, targetLow: 2000, targetHigh: 3000, label: 'Tango Tenors local package' };
     if (fee.eventType === 'opera_role') {
       var days = Math.max(Number(fee.productionDays) || 0, (Number(fee.rehearsalCount) || 0) + (Number(fee.performanceCount) || 1), 1);
       return { floor: Math.max(500, days * 350), targetLow: Math.max(900, days * 600), targetHigh: Math.max(1400, days * 900), label: 'Opera role production-period estimate' };
     }
-    if (corporateLike) return { floor: 1200, targetLow: 1800, targetHigh: 3000, label: 'Corporate / luxury' };
-    if (privateLike) return { floor: 800, targetLow: 1200, targetHigh: 1800, label: 'Private event / gala / hotel' };
-    if (fee.formation === 'solo' && fee.locationScope === 'berlin_local' && fee.durationBand === 'up_to_20') return { floor: 350, targetLow: 500, targetHigh: 700, label: 'Solo local short' };
-    if ((fee.formation === 'solo' || fee.formation === 'tenor_piano') && ['fortyfive','sixty','seventyfive_plus'].indexOf(fee.durationBand) >= 0) return { floor: 500, targetLow: 700, targetHigh: 1000, label: 'Solo recital or concert 45–75 min' };
-    return { floor: 500, targetLow: 700, targetHigh: 1000, label: 'Berlin/Germany professional concert' };
+    if (corporateLike) {
+      if (formationKey === 'solo') return { floor: 1500, targetLow: 2000, targetHigh: 2500, label: 'Corporate / luxury solo' };
+      if (trackDuo) return { floor: 1500, targetLow: 2200, targetHigh: 4000, label: 'Corporate / luxury two singers with track package' };
+      if (formationKey === 'trio') return { floor: 1800, targetLow: 3000, targetHigh: 5500, label: 'Corporate / luxury two singers + piano package' };
+      return { floor: 1500, targetLow: 2500, targetHigh: customEnsemble ? 5500 : 5000, label: customEnsemble ? 'Corporate / luxury ensemble package' : 'Corporate / luxury tenor + piano package' };
+    }
+    if (privateLike) {
+      if (formationKey === 'solo') return { floor: 1000, targetLow: 1200, targetHigh: 1800, label: 'Private event solo' };
+      if (trackDuo) return { floor: 1200, targetLow: 1500, targetHigh: 2400, label: 'Private event two singers with track package' };
+      if (formationKey === 'trio') return { floor: 1400, targetLow: 2200, targetHigh: 3500, label: 'Private event two singers + piano package' };
+      return { floor: 1200, targetLow: 1800, targetHigh: customEnsemble ? 3500 : 3000, label: customEnsemble ? 'Private event ensemble package' : 'Private event tenor + piano package' };
+    }
+    if (fee.eventType === 'church_cultural') {
+      if (formationKey === 'solo') return { floor: 500, targetLow: 600, targetHigh: 900, label: 'Church / cultural solo strategic exception' };
+      if (trackDuo) return { floor: 900, targetLow: 1200, targetHigh: 1600, label: 'Church / cultural two singers with track package strategic exception' };
+      if (formationKey === 'trio') return { floor: 1200, targetLow: 1500, targetHigh: 2200, label: 'Church / cultural two singers + piano package strategic exception' };
+      return { floor: 900, targetLow: 1200, targetHigh: customEnsemble ? 2200 : 1800, label: customEnsemble ? 'Church / cultural ensemble package strategic exception' : 'Church / cultural tenor + piano package strategic exception' };
+    }
+    if (customPublicScope) {
+      if (formationKey === 'solo') return { floor: 600, targetLow: 1000, targetHigh: 1500, label: 'Solo local public concert with custom programme or extra rehearsal' };
+      if (trackDuo) return { floor: 1000, targetLow: 1300, targetHigh: 1900, label: 'Two singers with track local package with custom programme or extra rehearsal' };
+      if (formationKey === 'trio') return { floor: 1500, targetLow: 2000, targetHigh: 2800, label: 'Two singers + piano local package with custom programme or extra rehearsal' };
+      return { floor: 1200, targetLow: 1500, targetHigh: customEnsemble ? 2800 : 2200, label: customEnsemble ? 'Ensemble local package with custom programme or extra rehearsal' : 'Tenor + piano local package with custom programme or extra rehearsal' };
+    }
+    if (packageFormation) {
+      if (trackDuo) return { floor: 1000, targetLow: 1300, targetHigh: 1800, label: 'Two singers with track local package' };
+      if (formationKey === 'trio') return { floor: 1500, targetLow: 2000, targetHigh: 2800, label: 'Two singers + piano local package' };
+      return { floor: 1200, targetLow: 1500, targetHigh: customEnsemble ? 2800 : 2200, label: customEnsemble ? 'Ensemble local package' : 'Tenor + piano local package' };
+    }
+    if (fee.formation === 'solo' && fee.locationScope === 'berlin_local' && fee.durationBand === 'up_to_20') return { floor: 500, targetLow: 700, targetHigh: 1200, label: 'Short Berlin professional solo concert' };
+    return { floor: 600, targetLow: 700, targetHigh: 1200, label: 'Solo local public concert' };
   }
   function computeBlueprintFeeEstimate(bp) {
     var fee = safeBlueprintFeeEstimate(bp && bp.feeEstimate, bp);
@@ -5742,11 +5833,18 @@
     var totalArtists = Math.max(1, Number(fee.numberOfArtists) || 1);
     var expenses = fee.travelCost + fee.hotelCost + fee.localTransportCost;
     var base = feeEstimateBaseRange(fee);
-    var rehearsalComponent = Math.max(0, fee.rehearsalCount * totalArtists * fee.rehearsalFeePerArtist);
-    var prepUplift = ({ existing_repertoire: 0, partly_custom: 150, new_programme: 350, role_or_major_work: 600 })[fee.preparationComplexity] || 0;
-    var locationUplift = ({ berlin_local: 0, germany_travel: 150, eu_travel: 350, international: 700 })[fee.locationScope] || 0;
-    var organizerUplift = ({ public_funded: 0, small_cultural: 0, church: 0, private_host: 150, corporate: 300, luxury_hotel: 450, festival_theatre: 100 })[fee.organizerType] || 0;
-    var packageUplift = totalArtists > 1 && fee.eventType !== 'tango_tenors' && fee.eventType !== 'opera_role' ? ((totalArtists - 1) * 350) : 0;
+    var formationDescriptor = feeClientFormationDescriptor(fee);
+    var includedRehearsals = fee.eventType === 'church_cultural'
+      ? 0
+      : (fee.eventType === 'public_concert' && fee.rehearsalCount > 1 ? fee.rehearsalCount : 1);
+    var extraRehearsalCount = Math.max(0, fee.rehearsalCount - includedRehearsals);
+    var rehearsalComponent = Math.max(0, extraRehearsalCount * totalArtists * fee.rehearsalFeePerArtist);
+    var majorPrepOnly = ['new_programme','role_or_major_work'].indexOf(fee.preparationComplexity) >= 0;
+    var prepUplift = majorPrepOnly && fee.eventType !== 'public_concert' ? (({ new_programme: 300, role_or_major_work: 600 })[fee.preparationComplexity] || 0) : 0;
+    var travelTimeIncludedInBase = ['private_event','corporate_event','gala','tango_tenors'].indexOf(fee.eventType) >= 0;
+    var locationUplift = travelTimeIncludedInBase ? 0 : (({ berlin_local: 0, germany_travel: 150, eu_travel: 350, international: 700 })[fee.locationScope] || 0);
+    var organizerUplift = ({ public_funded: 0, small_cultural: 0, church: 0, private_host: 0, corporate: 0, luxury_hotel: 0, festival_theatre: 100 })[fee.organizerType] || 0;
+    var packageUplift = 0;
     var strategicDiscount = fee.strategicValue === 'portfolio_exception' ? 0.85 : 1;
     var computedFloor = roundFeeQuote((base.floor + rehearsalComponent + prepUplift + organizerUplift + packageUplift + fee.adminBuffer) * strategicDiscount);
     var targetLow = roundFeeQuote(base.targetLow + rehearsalComponent + prepUplift + locationUplift + organizerUplift + packageUplift + fee.adminBuffer);
@@ -5755,55 +5853,111 @@
     var personalMinimum = fee.eventType === 'tango_tenors' || totalArtists > 1
       ? Math.max(professionalFloor, Math.round(computedFloor / totalArtists))
       : Math.max(professionalFloor, computedFloor);
-    var packageFee = totalArtists > 1 || fee.eventType === 'tango_tenors' ? Math.max(computedFloor, targetLow) : targetLow;
     if (fee.lowBudgetOverride > 0) personalMinimum = fee.lowBudgetOverride;
     if (fee.recommendedOverride > 0) targetLow = fee.recommendedOverride;
     if (fee.benchmarkOverride > 0) targetHigh = fee.benchmarkOverride;
+    var packageFee = totalArtists > 1 || fee.eventType === 'tango_tenors' ? Math.max(computedFloor, targetLow) : targetLow;
     if (fee.premiumOverride > 0) packageFee = fee.premiumOverride;
     var warnings = [];
-    if (computedFloor < 350 || personalMinimum < 350 || targetLow < professionalFloor) warnings.push('Below the rough professional floor. Too low unless strategic.');
+    var minimumRiskRank = 0;
+    var isPackageFee = totalArtists > 1 || fee.eventType === 'tango_tenors';
+	    var quoteForFloor = isPackageFee ? packageFee : targetLow;
+	    var minimumForFloor = isPackageFee ? computedFloor : personalMinimum;
+	    var actualAgreedFee = Math.max(0, Number(fee.actualAgreedFee) || 0);
+	    var hasActualAgreedFee = actualAgreedFee > 0;
+	    var realityFloor = Math.max(base.floor, computedFloor);
+	    var actualGap = hasActualAgreedFee ? (Math.round((actualAgreedFee - targetLow) / 10) * 10) : 0;
+	    var actualGapText = hasActualAgreedFee ? ((actualGap >= 0 ? '+' : '-') + formatEuroAmount(Math.abs(actualGap))) : '—';
+	    var actualRealityWarnings = [];
+	    if (quoteForFloor < base.floor || minimumForFloor < base.floor) {
+	      minimumRiskRank = Math.max(minimumRiskRank, 1);
+	      warnings.push('Below the realistic floor for this context. Raise it or treat it as a strategic exception.');
+	    }
+	    if (hasActualAgreedFee && actualAgreedFee < realityFloor) {
+	      minimumRiskRank = Math.max(minimumRiskRank, 1);
+	      actualRealityWarnings.push('Below professional floor — accept only as strategic exception.');
+	      warnings.push('Actual agreed fee is below the professional floor; do not treat it as the normal quote.');
+	      if (actualAgreedFee < realityFloor * 0.6 && !feeAcceptanceReasonIsStrategic(fee.acceptanceReason)) {
+	        minimumRiskRank = Math.max(minimumRiskRank, 2);
+	        actualRealityWarnings.push('Far below floor without a strategic reason.');
+	      }
+	    }
+	    if (fee.shouldNotBenchmark) {
+	      actualRealityWarnings.push('Do not use this fee as a future benchmark.');
+	      warnings.push('Do not benchmark: this agreed fee should not set future precedent.');
+	    }
+    if ((fee.eventType === 'corporate_event' || fee.organizerType === 'corporate' || fee.organizerType === 'luxury_hotel') && quoteForFloor < 1500) {
+      minimumRiskRank = Math.max(minimumRiskRank, 1);
+      warnings.push('Corporate/luxury fee below 1500 EUR is under the floor for this context.');
+    }
+    if (fee.eventType === 'church_cultural') warnings.push('Low-budget cultural fee: accept only if strategic, artistically valuable or relationship-building.');
+    if (fee.eventType === 'tango_tenors' && quoteForFloor < 1500) warnings.push('Tango Tenors 1000–1200 EUR is only a strategic exception / relationship price, not a normal target.');
     if (fee.strategicValue === 'portfolio_exception') warnings.push('Portfolio exception: only accept if the non-money value is real.');
     if (fee.riskFlags.indexOf('low_budget') >= 0) warnings.push('Low-budget flag: do not let this become the normal anchor.');
-    if (fee.riskFlags.indexOf('uncertain_ticket_split') >= 0 && !fee.guaranteedMinimum) warnings.push('Ticket split only with guaranteed minimum.');
-    if (fee.riskFlags.indexOf('travel_not_covered') >= 0 || expenses > 0) warnings.push('Ask travel separately.');
+    if (fee.riskFlags.indexOf('uncertain_ticket_split') >= 0 && !fee.guaranteedMinimum) {
+      minimumRiskRank = Math.max(minimumRiskRank, 2);
+      warnings.push('Ticket split without a guaranteed minimum covering the floor is high risk.');
+    } else if (fee.riskFlags.indexOf('uncertain_ticket_split') >= 0 && minimumForFloor < base.floor) {
+      minimumRiskRank = Math.max(minimumRiskRank, 2);
+      warnings.push('Ticket split guarantee must cover at least the floor.');
+    }
+    if (fee.riskFlags.indexOf('travel_not_covered') >= 0) {
+      minimumRiskRank = Math.max(minimumRiskRank, fee.locationScope === 'berlin_local' ? 1 : (fee.locationScope === 'germany_travel' ? 1 : 2));
+      warnings.push('Travel not covered: keep travel/accommodation separate and resolve before confirming.');
+    } else if (expenses > 0) {
+      warnings.push('Ask travel separately.');
+    }
     if (fee.riskFlags.indexOf('unpaid_extra_rehearsals') >= 0) warnings.push('Extra rehearsals must be paid or capped.');
     if (fee.riskFlags.indexOf('late_confirmation') >= 0) warnings.push('Late confirmation: hold availability only with written agreement.');
     if (fee.riskFlags.indexOf('exclusivity_requested') >= 0) warnings.push('Exclusivity needs a higher fee.');
-    if ((totalArtists > 1 || fee.eventType === 'tango_tenors') && !fee.partnerFeesSeparated) warnings.push('Package fee: separate partner fees before quoting.');
+    if ((totalArtists > 1 || fee.eventType === 'tango_tenors') && !fee.partnerFeesSeparated) {
+      minimumRiskRank = Math.max(minimumRiskRank, 1);
+      warnings.push('Package fee: separate partner fees before quoting.');
+    }
     if (fee.eventType === 'opera_role') warnings.push('Role fees must be calculated by production period, rehearsals, performances, travel, accommodation and role size.');
     if (fee.rehearsals === 'three_plus') warnings.push('3+ rehearsals: production-level effort. Confirm all rehearsal days are separately paid or capped in writing.');
-    var riskLevel = warnings.length >= 4 ? 'High' : (warnings.length >= 2 ? 'Medium' : 'Low');
+    var warningRiskRank = warnings.length >= 4 ? 2 : (warnings.length >= 2 ? 1 : 0);
+    var riskLevel = ['Low', 'Medium', 'High'][Math.max(minimumRiskRank, warningRiskRank)];
     var rangeText = formatEuroAmount(targetLow) + '–' + formatEuroAmount(targetHigh);
-    var negotiationSentence = warnings.indexOf('Ticket split only with guaranteed minimum.') >= 0
+    var negotiationSentence = warnings.indexOf('Ticket split without a guaranteed minimum covering the floor is high risk.') >= 0
       ? 'I can consider a ticket split only if there is a guaranteed minimum fee plus travel separately.'
-      : 'For this context I would quote ' + rangeText + (expenses ? ', with travel/accommodation charged separately.' : '.');
-    if (fee.eventType === 'tango_tenors') negotiationSentence = 'For Tango Tenors I would quote the package, not only my personal fee: ' + rangeText + (expenses ? ', plus travel/accommodation.' : '.');
+      : 'For this format, my artistic fee for a ' + formationDescriptor + ' would be in the range of ' + rangeText + ', plus travel and accommodation where applicable.';
+    if (isPackageFee) negotiationSentence = 'For this format, the artistic package fee for ' + formationDescriptor + ' would be in the range of ' + rangeText + ', plus travel and accommodation where applicable.';
     if (fee.eventType === 'opera_role') negotiationSentence = 'For an opera role I would calculate the fee by production period, rehearsals, performances, travel and accommodation, not by event duration.';
     var expensesNote = expenses
       ? 'Ask travel, accommodation and local transport separately: approximately ' + formatEuroAmount(expenses) + '.'
       : 'No travel/accommodation expense entered. Keep these separate if the scope changes.';
-    var isPackageFee = totalArtists > 1 || fee.eventType === 'tango_tenors';
-    var clientParagraph = 'For this format, my artistic ' + (isPackageFee ? 'package fee' : 'fee') + ' would be in the range of ' + rangeText + ', plus travel and accommodation where applicable.';
-    if (isPackageFee) clientParagraph += ' This covers the full formation.';
+    var clientParagraph = isPackageFee
+      ? 'For this format, the artistic package fee for ' + formationDescriptor + ' would be in the range of ' + rangeText + ', plus travel and accommodation where applicable.'
+      : 'For this format, my artistic fee for a ' + formationDescriptor + ' would be in the range of ' + rangeText + ', plus travel and accommodation where applicable.';
     var internalNote = [
       base.label + '.',
-      '300–350 EUR/day is treated as a lower professional floor, not as a good target.',
+      'Official minimums are floors only: BKM/German Music Council around 300 EUR/day, unisono/Landesmusikrat Berlin around 310 EUR/day, and DACH/Freie Szene planning around 631 EUR/day for public funding context. These are not private/corporate targets.',
+      'Berlin professional tenor fees treat church/cultural low fees as strategic exceptions, not normal targets.',
       'Base floor ' + formatEuroAmount(base.floor) + '; good target ' + formatEuroAmount(base.targetLow) + '–' + formatEuroAmount(base.targetHigh) + '.',
-      rehearsalComponent ? ('Rehearsals add ' + formatEuroAmount(rehearsalComponent) + '.') : 'No rehearsal component.',
-      prepUplift ? ('Preparation uplift: ' + formatEuroAmount(prepUplift) + '.') : 'Existing repertoire: no custom-prep uplift.',
+      rehearsalComponent ? ('Extra rehearsals add ' + formatEuroAmount(rehearsalComponent) + '.') : 'Normal rehearsal expectation is included in the range.',
+      prepUplift ? ('Preparation uplift: ' + formatEuroAmount(prepUplift) + '.') : 'Preparation/admin is included in the range unless there is major new work.',
       organizerUplift ? ('Organizer/context uplift: ' + formatEuroAmount(organizerUplift) + '.') : '',
-      packageUplift ? ('Extra artist package uplift: ' + formatEuroAmount(packageUplift) + '.') : '',
-      expensesNote,
-      warnings.length ? ('Warnings: ' + warnings.join(' ')) : 'No major risk flags.'
-    ].filter(Boolean).join(' ');
+	      packageUplift ? ('Extra artist package uplift: ' + formatEuroAmount(packageUplift) + '.') : '',
+	      expensesNote,
+	      hasActualAgreedFee ? ('Reality check: actual agreed fee ' + formatEuroAmount(actualAgreedFee) + '; gap from quote target low ' + actualGapText + '; status ' + fee.actualFeeStatus + '; strategic reason ' + feeAcceptanceReasonLabel(fee.acceptanceReason) + '.') : 'Reality check: no actual agreed fee entered.',
+	      fee.shouldNotBenchmark ? 'Do not use this fee as a future benchmark.' : '',
+	      safeString(fee.gapNote).trim() ? ('Gap note: ' + safeString(fee.gapNote).trim()) : '',
+	      warnings.length ? ('Warnings: ' + warnings.join(' ')) : 'No major risk flags.'
+	    ].filter(Boolean).join(' ');
     var summaryText = [
       'Internal fee estimate',
       title,
       'Event type: ' + fee.eventType,
-      'Formation: ' + fee.formationLabel + ' · artists: ' + totalArtists,
+      'Formation: ' + fee.formationLabel + ' · ' + (fee.eventType === 'tango_tenors' ? 'two singers + piano pricing logic' : ('service components: ' + totalArtists)),
       'Location: ' + fee.locationScope + ' · duration: ' + feeDurationBandMinutes(fee.durationBand) + ' min',
-      'Recommended quote range: ' + rangeText,
-      'Minimum I should accept: ' + formatEuroAmount(personalMinimum),
+	      'Recommended quote range: ' + rangeText,
+	      'Actual agreed fee: ' + (hasActualAgreedFee ? formatEuroAmount(actualAgreedFee) : 'Not set'),
+	      'Actual fee status: ' + fee.actualFeeStatus,
+	      'Gap from quote target low: ' + actualGapText,
+	      'Strategic reason: ' + feeAcceptanceReasonLabel(fee.acceptanceReason),
+	      fee.shouldNotBenchmark ? 'Do not benchmark: yes' : 'Do not benchmark: no',
+	      'Minimum I should accept: ' + formatEuroAmount(personalMinimum),
       (totalArtists > 1 || fee.eventType === 'tango_tenors') ? ('Package fee: ' + formatEuroAmount(packageFee)) : '',
       'Expenses separately: ' + formatEuroAmount(expenses),
       'Risk level: ' + riskLevel,
@@ -5823,10 +5977,16 @@
       premium: packageFee,
       recommendedRange: rangeText,
       personalMinimum: personalMinimum,
-      packageFee: packageFee,
-      expensesSeparately: expenses,
-      expensesNote: expensesNote,
-      riskLevel: riskLevel,
+	      packageFee: packageFee,
+	      expensesSeparately: expenses,
+	      expensesNote: expensesNote,
+	      actualAgreedFee: actualAgreedFee,
+	      hasActualAgreedFee: hasActualAgreedFee,
+	      actualGap: actualGap,
+	      actualGapText: actualGapText,
+	      actualRealityWarnings: actualRealityWarnings,
+	      acceptanceReasonLabel: feeAcceptanceReasonLabel(fee.acceptanceReason),
+	      riskLevel: riskLevel,
       warnings: warnings,
       logicSummary: internalNote,
       negotiationNotes: negotiationSentence,
@@ -5841,7 +6001,7 @@
     var key = safeString(presetKey).trim().toLowerCase();
     var preset = PROGRAMME_FEE_PRESETS[key] || PROGRAMME_FEE_PRESETS.berlin_local;
     var formation = normalizeFeeFormationType(preset.formationType || current.formation, current.formationLabel);
-    var artistCount = formation === 'solo' ? 1 : (formation === 'trio' ? 3 : (formation === 'ensemble' ? Math.max(4, current.numberOfArtists) : 2));
+    var artistCount = feeFormationArtistCount(formation, current.numberOfArtists);
     bp.feeEstimate = safeBlueprintFeeEstimate({
         preset: key,
         eventType: preset.eventType,
@@ -5853,7 +6013,7 @@
         strategicValue: preset.strategicValue,
         riskFlags: preset.riskFlags || [],
         numberOfArtists: artistCount,
-        includesPianist: formation === 'tenor_piano' || current.includesPianist,
+        includesPianist: feeFormationIncludesPianist(formation, false),
         rehearsals: preset.rehearsals,
       rehearsalFeePerArtist: current.rehearsalFeePerArtist,
       leadArtistFee: current.leadArtistFee,
@@ -5864,20 +6024,70 @@
       localTransportCost: preset.localTransportCost,
       adminBuffer: preset.adminBuffer,
       guaranteedMinimum: false,
-      partnerFeesSeparated: current.partnerFeesSeparated,
+      partnerFeesSeparated: false,
       performanceCount: current.performanceCount,
       productionDays: current.productionDays,
       lowBudgetOverride: 0,
       recommendedOverride: 0,
       benchmarkOverride: 0,
-      premiumOverride: 0,
-      benchmarkSourceVersion: current.benchmarkSourceVersion,
+	      premiumOverride: 0,
+	      actualAgreedFee: current.actualAgreedFee,
+	      actualFeeStatus: current.actualFeeStatus,
+	      acceptanceReason: current.acceptanceReason,
+	      shouldNotBenchmark: current.shouldNotBenchmark,
+	      gapNote: current.gapNote,
+	      benchmarkSourceVersion: current.benchmarkSourceVersion,
       benchmarkLastReviewed: current.benchmarkLastReviewed,
       notes: current.notes
     }, bp);
     renderBlueprintBuilder();
     markDirty(true, 'Fee preset applied');
     setStatus('Fee preset applied.', 'ok');
+  }
+  function clearBlueprintFeeManualOverrides() {
+    var bp = currentBlueprint();
+    var current = safeBlueprintFeeEstimate(bp.feeEstimate, bp);
+    bp.feeEstimate = safeBlueprintFeeEstimate({
+      preset: current.preset,
+      eventType: current.eventType,
+      formation: current.formation,
+      locationScope: current.locationScope,
+      durationBand: current.durationBand,
+      preparationComplexity: current.preparationComplexity,
+      organizerType: current.organizerType,
+      strategicValue: current.strategicValue,
+      riskFlags: current.riskFlags,
+      guaranteedMinimum: current.guaranteedMinimum,
+      partnerFeesSeparated: current.partnerFeesSeparated,
+      performanceCount: current.performanceCount,
+      productionDays: current.productionDays,
+      numberOfArtists: feeFormationArtistCount(current.formation, current.numberOfArtists),
+      includesPianist: feeFormationIncludesPianist(current.formation, current.includesPianist),
+      rehearsals: current.rehearsals,
+      rehearsalFeePerArtist: current.rehearsalFeePerArtist,
+      leadArtistFee: current.leadArtistFee,
+      collaboratorFee: current.collaboratorFee,
+      pianistFee: current.pianistFee,
+      travelCost: current.travelCost,
+      hotelCost: current.hotelCost,
+      localTransportCost: current.localTransportCost,
+      adminBuffer: current.adminBuffer,
+      lowBudgetOverride: 0,
+      recommendedOverride: 0,
+      benchmarkOverride: 0,
+      premiumOverride: 0,
+      actualAgreedFee: current.actualAgreedFee,
+      actualFeeStatus: current.actualFeeStatus,
+      acceptanceReason: current.acceptanceReason,
+      shouldNotBenchmark: current.shouldNotBenchmark,
+      gapNote: current.gapNote,
+      benchmarkSourceVersion: current.benchmarkSourceVersion,
+      benchmarkLastReviewed: current.benchmarkLastReviewed,
+      notes: current.notes
+    }, bp);
+    renderBlueprintBuilder();
+    markDirty(true, 'Fee manual overrides cleared');
+    setStatus('Fee manual overrides cleared.', 'ok');
   }
   function normalizeProgramOfferUseCase(value) {
     var key = safeString(value || 'other').trim().toLowerCase();
@@ -12614,9 +12824,14 @@
     });
     if ($('pb-fee-lowBudgetOverride')) $('pb-fee-lowBudgetOverride').value = fee.lowBudgetOverride || '';
     if ($('pb-fee-recommendedOverride')) $('pb-fee-recommendedOverride').value = fee.recommendedOverride || '';
-    if ($('pb-fee-benchmarkOverride')) $('pb-fee-benchmarkOverride').value = fee.benchmarkOverride || '';
-    if ($('pb-fee-premiumOverride')) $('pb-fee-premiumOverride').value = fee.premiumOverride || '';
-    if ($('pb-fee-benchmarkSourceVersion')) $('pb-fee-benchmarkSourceVersion').value = safeString(fee.benchmarkSourceVersion);
+	    if ($('pb-fee-benchmarkOverride')) $('pb-fee-benchmarkOverride').value = fee.benchmarkOverride || '';
+	    if ($('pb-fee-premiumOverride')) $('pb-fee-premiumOverride').value = fee.premiumOverride || '';
+	    if ($('pb-fee-actualAgreedFee')) $('pb-fee-actualAgreedFee').value = fee.actualAgreedFee || '';
+	    if ($('pb-fee-actualFeeStatus')) $('pb-fee-actualFeeStatus').value = safeString(fee.actualFeeStatus || 'not_set');
+	    if ($('pb-fee-acceptanceReason')) $('pb-fee-acceptanceReason').value = safeString(fee.acceptanceReason || 'not_set');
+	    if ($('pb-fee-shouldNotBenchmark')) $('pb-fee-shouldNotBenchmark').checked = !!fee.shouldNotBenchmark;
+	    if ($('pb-fee-gapNote')) $('pb-fee-gapNote').value = safeString(fee.gapNote);
+	    if ($('pb-fee-benchmarkSourceVersion')) $('pb-fee-benchmarkSourceVersion').value = safeString(fee.benchmarkSourceVersion);
     if ($('pb-fee-benchmarkLastReviewed')) $('pb-fee-benchmarkLastReviewed').value = safeString(fee.benchmarkLastReviewed);
     if ($('pb-fee-notes')) $('pb-fee-notes').value = safeString(fee.notes);
     if ($('pb-fee-recommendedRange')) $('pb-fee-recommendedRange').textContent = computed.recommendedRange;
@@ -12630,8 +12845,20 @@
     if ($('pb-fee-lowBudgetQuote')) $('pb-fee-lowBudgetQuote').textContent = formatEuroAmount(computed.lowBudget);
     if ($('pb-fee-recommendedQuote')) $('pb-fee-recommendedQuote').textContent = formatEuroAmount(computed.recommended);
     if ($('pb-fee-publicBenchmarkQuote')) $('pb-fee-publicBenchmarkQuote').textContent = formatEuroAmount(computed.benchmark);
-    if ($('pb-fee-premiumQuote')) $('pb-fee-premiumQuote').textContent = formatEuroAmount(computed.premium);
-      if ($('pb-fee-eventtype-help')) $('pb-fee-eventtype-help').textContent = 'Good target: ' + computed.recommendedRange + '. Minimum I should accept: ' + formatEuroAmount(computed.personalMinimum) + '. Expenses separately: ' + formatEuroAmount(computed.expensesSeparately) + '.';
+	    if ($('pb-fee-premiumQuote')) $('pb-fee-premiumQuote').textContent = formatEuroAmount(computed.premium);
+	    if ($('pb-fee-reality-recommended')) $('pb-fee-reality-recommended').textContent = computed.recommendedRange;
+	    if ($('pb-fee-reality-actual')) $('pb-fee-reality-actual').textContent = computed.hasActualAgreedFee ? formatEuroAmount(computed.actualAgreedFee) : 'Not set';
+	    if ($('pb-fee-reality-gap')) {
+	      $('pb-fee-reality-gap').textContent = computed.actualGapText;
+	      $('pb-fee-reality-gap').className = computed.hasActualAgreedFee && computed.actualGap < 0 ? 'warn' : 'ok';
+	    }
+	    if ($('pb-fee-reality-reason')) $('pb-fee-reality-reason').textContent = computed.acceptanceReasonLabel;
+	    if ($('pb-fee-reality-warning')) {
+	      $('pb-fee-reality-warning').hidden = !computed.actualRealityWarnings.length;
+	      $('pb-fee-reality-warning').textContent = computed.actualRealityWarnings.join(' ');
+	    }
+	    if ($('pb-fee-do-not-benchmark-note')) $('pb-fee-do-not-benchmark-note').hidden = !fee.shouldNotBenchmark;
+	      if ($('pb-fee-eventtype-help')) $('pb-fee-eventtype-help').textContent = 'Good target: ' + computed.recommendedRange + '. Minimum I should accept: ' + formatEuroAmount(computed.personalMinimum) + '. Expenses separately: ' + formatEuroAmount(computed.expensesSeparately) + '.';
       if ($('pb-fee-adjustment-breakdown')) $('pb-fee-adjustment-breakdown').textContent = computed.adjustmentLine;
       if ($('pb-fee-logic')) $('pb-fee-logic').value = computed.logicSummary;
       if ($('pb-fee-negotiation')) $('pb-fee-negotiation').value = computed.negotiationNotes;
@@ -12641,20 +12868,26 @@
       if ($('pb-fee-negotiation-inline')) $('pb-fee-negotiation-inline').textContent = computed.negotiationNotes;
       if ($('pb-fee-client-inline')) $('pb-fee-client-inline').textContent = computed.emailText;
       if ($('pb-fee-rationale-inline')) $('pb-fee-rationale-inline').textContent = computed.logicSummary;
-      if ($('pb-fee-recommended-status')) {
-        var hasRangeOverride = (fee.recommendedOverride > 0) || (fee.benchmarkOverride > 0);
-        $('pb-fee-recommended-status').textContent = hasRangeOverride ? 'Manual override active' : 'Calculated';
-        $('pb-fee-recommended-status').className = hasRangeOverride ? 'warn' : 'muted';
-      }
-    }
-  function persistBlueprintFeeEstimate() {
-    var bp = currentBlueprint();
-    var riskFlags = [];
+	      if ($('pb-fee-recommended-status')) {
+	        var hasRangeOverride = feeHasManualOverrides(fee);
+	        $('pb-fee-recommended-status').textContent = hasRangeOverride ? 'Manual override active' : 'Calculated';
+	        $('pb-fee-recommended-status').className = hasRangeOverride ? 'warn' : 'muted';
+	      }
+	      if ($('pb-fee-manual-warning')) {
+	        var hasManualOverride = feeHasManualOverrides(fee);
+	        $('pb-fee-manual-warning').hidden = !hasManualOverride;
+	        $('pb-fee-manual-warning').textContent = hasManualOverride ? 'Manual override active: numbers may not follow scenario.' : '';
+	      }
+	    }
+	  function persistBlueprintFeeEstimate() {
+	    var bp = currentBlueprint();
+	    var riskFlags = [];
     document.querySelectorAll('[data-pb-fee-risk]').forEach(function (el) {
       if (el.checked) riskFlags.push(el.getAttribute('data-pb-fee-risk'));
     });
-    bp.feeEstimate = safeBlueprintFeeEstimate({
-        preset: $('pb-fee-preset') && $('pb-fee-preset').value,
+	    var uiFormation = normalizeFeeFormationType($('pb-fee-formation') && $('pb-fee-formation').value);
+	    bp.feeEstimate = safeBlueprintFeeEstimate({
+	        preset: $('pb-fee-preset') && $('pb-fee-preset').value,
         eventType: $('pb-fee-eventType') && $('pb-fee-eventType').value,
         locationScope: $('pb-fee-locationScope') && $('pb-fee-locationScope').value,
         durationBand: $('pb-fee-durationBand') && $('pb-fee-durationBand').value,
@@ -12665,9 +12898,9 @@
       guaranteedMinimum: !!($('pb-fee-guaranteedMinimum') && $('pb-fee-guaranteedMinimum').checked),
       partnerFeesSeparated: !!($('pb-fee-partnerFeesSeparated') && $('pb-fee-partnerFeesSeparated').checked),
       durationMin: $('pb-fee-durationMin') && $('pb-fee-durationMin').value,
-      formation: $('pb-fee-formation') && $('pb-fee-formation').value,
-        numberOfArtists: $('pb-fee-numberOfArtists') && $('pb-fee-numberOfArtists').value,
-        includesPianist: !!($('pb-fee-includesPianist') && $('pb-fee-includesPianist').checked),
+	      formation: uiFormation,
+	        numberOfArtists: feeFormationArtistCount(uiFormation, $('pb-fee-numberOfArtists') && $('pb-fee-numberOfArtists').value),
+	        includesPianist: feeFormationIncludesPianist(uiFormation, $('pb-fee-includesPianist') && $('pb-fee-includesPianist').checked),
         rehearsals: $('pb-fee-rehearsals') && $('pb-fee-rehearsals').value,
       rehearsalFeePerArtist: $('pb-fee-rehearsalFeePerArtist') && $('pb-fee-rehearsalFeePerArtist').value,
       leadArtistFee: $('pb-fee-leadArtistFee') && $('pb-fee-leadArtistFee').value,
@@ -12681,9 +12914,14 @@
       productionDays: $('pb-fee-productionDays') && $('pb-fee-productionDays').value,
       lowBudgetOverride: $('pb-fee-lowBudgetOverride') && $('pb-fee-lowBudgetOverride').value,
       recommendedOverride: $('pb-fee-recommendedOverride') && $('pb-fee-recommendedOverride').value,
-      benchmarkOverride: $('pb-fee-benchmarkOverride') && $('pb-fee-benchmarkOverride').value,
-      premiumOverride: $('pb-fee-premiumOverride') && $('pb-fee-premiumOverride').value,
-      benchmarkSourceVersion: $('pb-fee-benchmarkSourceVersion') && $('pb-fee-benchmarkSourceVersion').value,
+	      benchmarkOverride: $('pb-fee-benchmarkOverride') && $('pb-fee-benchmarkOverride').value,
+	      premiumOverride: $('pb-fee-premiumOverride') && $('pb-fee-premiumOverride').value,
+	      actualAgreedFee: $('pb-fee-actualAgreedFee') && $('pb-fee-actualAgreedFee').value,
+	      actualFeeStatus: $('pb-fee-actualFeeStatus') && $('pb-fee-actualFeeStatus').value,
+	      acceptanceReason: $('pb-fee-acceptanceReason') && $('pb-fee-acceptanceReason').value,
+	      shouldNotBenchmark: !!($('pb-fee-shouldNotBenchmark') && $('pb-fee-shouldNotBenchmark').checked),
+	      gapNote: $('pb-fee-gapNote') && $('pb-fee-gapNote').value,
+	      benchmarkSourceVersion: $('pb-fee-benchmarkSourceVersion') && $('pb-fee-benchmarkSourceVersion').value,
       benchmarkLastReviewed: $('pb-fee-benchmarkLastReviewed') && $('pb-fee-benchmarkLastReviewed').value,
       notes: $('pb-fee-notes') && $('pb-fee-notes').value
     }, bp);
@@ -19923,18 +20161,23 @@
     if ($('pb-fee-apply-preset')) $('pb-fee-apply-preset').addEventListener('click', function () {
       applyBlueprintFeePreset($('pb-fee-preset') && $('pb-fee-preset').value);
     });
-    document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var scenario = safeString(btn.getAttribute('data-fee-scenario'));
-        if (scenario === 'opera_role') {
-          if ($('pb-fee-eventType')) $('pb-fee-eventType').value = 'opera_role';
-          persistBlueprintFeeEstimate();
-        } else {
-          applyBlueprintFeePreset(scenario);
-        }
-      });
-    });
-    if ($('pb-save-fee-estimate')) $('pb-save-fee-estimate').addEventListener('click', saveFeeEstimateSection);
+	    document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
+	      btn.addEventListener('click', function() {
+	        var scenario = safeString(btn.getAttribute('data-fee-scenario'));
+	        if (scenario === 'opera_role') {
+	          ['pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride'].forEach(function (id) {
+	            if ($(id)) $(id).value = '';
+	          });
+	          if ($('pb-fee-eventType')) $('pb-fee-eventType').value = 'opera_role';
+	          if ($('pb-fee-formation')) $('pb-fee-formation').value = 'solo';
+	          persistBlueprintFeeEstimate();
+	        } else {
+	          applyBlueprintFeePreset(scenario);
+	        }
+	      });
+	    });
+	    if ($('pb-fee-clear-manual-overrides')) $('pb-fee-clear-manual-overrides').addEventListener('click', clearBlueprintFeeManualOverrides);
+	    if ($('pb-save-fee-estimate')) $('pb-save-fee-estimate').addEventListener('click', saveFeeEstimateSection);
     if ($('pb-add-piece-search')) $('pb-add-piece-search').addEventListener('input', renderBlueprintBuilder);
     if ($('pb-offer-filter-status')) $('pb-offer-filter-status').addEventListener('change', function () { state.plannerOfferStatusFilter = $('pb-offer-filter-status').value; renderBlueprintBuilder(); });
     if ($('pb-offer-filter-category')) $('pb-offer-filter-category').addEventListener('change', function () { state.plannerOfferCategoryFilter = $('pb-offer-filter-category').value; renderBlueprintBuilder(); });
@@ -20833,7 +21076,7 @@
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
     bindInputsDirty(['pb-rep-id','pb-rep-title','pb-rep-composer','pb-rep-work','pb-rep-type','pb-rep-language','pb-rep-durationMin','pb-rep-approximateDurationMin','pb-rep-readiness','pb-rep-availabilityStatus','pb-rep-category','pb-rep-voiceCategory','pb-rep-primaryVoice','pb-rep-pairedVoices','pb-rep-includesTenor','pb-rep-formations','pb-rep-performanceStatus','pb-rep-reviewStatus','pb-rep-tags','pb-rep-fitTags','pb-rep-performedIn','pb-rep-offerOnly','pb-rep-excludeFromOffers','pb-rep-sourceGroup','pb-rep-suggestionGroup','pb-rep-dramaticRole','pb-rep-energyLevel','pb-rep-tempoProfile','pb-rep-impactLevel','pb-rep-audienceAppeal','pb-rep-galaRole','pb-rep-vocalLoad','pb-rep-texture','pb-rep-styleBucket','pb-rep-recoveryValue','pb-rep-bestDurationFit','pb-rep-moodTags','pb-rep-practicalTags','pb-rep-encoreCandidate','pb-rep-interlude','pb-rep-vocalRestSupport','pb-rep-goodBetweenBlocks','pb-rep-goodBeforeClimax','pb-rep-notes','pb-rep-publicNotes','pb-rep-sortOrder'], persistPlannerRepEditor);
     bindInputsDirty(['pb-blueprint-formation','pb-style-focus','pb-include-discovery-ideas','pb-blueprint-notes','pb-version-label','pb-build-mode','pb-repertoire-mode','pb-header-image-mode','pb-header-image-url','pb-contact-phone','pb-offer-useCase','pb-offer-status','pb-gala-preferPacing','pb-gala-allowPianoInterludes','pb-gala-includeContrast','pb-gala-buildArc'], persistBlueprintHeader);
-      bindInputsDirty(['pb-fee-eventType','pb-fee-locationScope','pb-fee-durationBand','pb-fee-preparationComplexity','pb-fee-organizerType','pb-fee-strategicValue','pb-fee-durationMin','pb-fee-formation','pb-fee-numberOfArtists','pb-fee-includesPianist','pb-fee-rehearsals','pb-fee-rehearsalFeePerArtist','pb-fee-leadArtistFee','pb-fee-collaboratorFee','pb-fee-pianistFee','pb-fee-performanceCount','pb-fee-productionDays','pb-fee-guaranteedMinimum','pb-fee-partnerFeesSeparated','pb-fee-travelCost','pb-fee-hotelCost','pb-fee-localTransportCost','pb-fee-adminBuffer','pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride','pb-fee-benchmarkSourceVersion','pb-fee-benchmarkLastReviewed','pb-fee-notes'], persistBlueprintFeeEstimate);
+      bindInputsDirty(['pb-fee-eventType','pb-fee-locationScope','pb-fee-durationBand','pb-fee-preparationComplexity','pb-fee-organizerType','pb-fee-strategicValue','pb-fee-durationMin','pb-fee-formation','pb-fee-numberOfArtists','pb-fee-includesPianist','pb-fee-rehearsals','pb-fee-rehearsalFeePerArtist','pb-fee-leadArtistFee','pb-fee-collaboratorFee','pb-fee-pianistFee','pb-fee-performanceCount','pb-fee-productionDays','pb-fee-guaranteedMinimum','pb-fee-partnerFeesSeparated','pb-fee-travelCost','pb-fee-hotelCost','pb-fee-localTransportCost','pb-fee-adminBuffer','pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride','pb-fee-actualAgreedFee','pb-fee-actualFeeStatus','pb-fee-acceptanceReason','pb-fee-shouldNotBenchmark','pb-fee-gapNote','pb-fee-benchmarkSourceVersion','pb-fee-benchmarkLastReviewed','pb-fee-notes'], persistBlueprintFeeEstimate);
     document.querySelectorAll('[data-pb-fee-risk]').forEach(function (el) {
       el.addEventListener('change', persistBlueprintFeeEstimate);
     });

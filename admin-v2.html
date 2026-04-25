@@ -272,12 +272,32 @@
             </div>
           </div>
 
+          <div class="pb-fee-result-card">
+            <div class="pb-fee-metric pb-fee-metric--primary">
+              <span>Professional quote target</span>
+              <strong id="pb-fee-reality-recommended">€0</strong>
+            </div>
+            <div class="pb-fee-metric">
+              <span>Actual agreed fee</span>
+              <strong id="pb-fee-reality-actual">Not set</strong>
+            </div>
+            <div class="pb-fee-metric">
+              <span>Gap</span>
+              <strong id="pb-fee-reality-gap">—</strong>
+            </div>
+            <div class="pb-fee-metric">
+              <span>Strategic reason</span>
+              <strong id="pb-fee-reality-reason">Not set</strong>
+            </div>
+          </div>
+          <p id="pb-fee-reality-warning" class="pb-fee-slot-note warn" hidden></p>
+
           <p id="pb-fee-negotiation-inline" class="pb-fee-negotiation-inline">Quote frame will appear here.</p>
 
           <div class="pb-fee-actions-row">
-            <button id="pb-copy-fee-email" type="button">Copy quote</button>
+            <button id="pb-copy-fee-email" type="button">Copy email quote</button>
             <button id="pb-save-fee-estimate" type="button" class="button-primary">Save</button>
-            <button id="pb-copy-fee-summary" type="button">Copy summary</button>
+            <button id="pb-copy-fee-summary" type="button">Copy internal summary</button>
           </div>
 
           <div class="pb-fee-scenarios">
@@ -307,11 +327,11 @@
               </label>
               <label>Formation
                 <select id="pb-fee-formation">
-                  <option value="solo">Solo</option>
+                  <option value="solo">Solo / track</option>
                   <option value="tenor_piano">Tenor + piano</option>
-                  <option value="duo">Duo</option>
-                  <option value="trio">Trio</option>
-                  <option value="ensemble">Ensemble</option>
+                  <option value="duo">Two singers / track</option>
+                  <option value="trio">Two singers + piano</option>
+                  <option value="ensemble">Ensemble / custom</option>
                 </select>
               </label>
             </div>
@@ -404,6 +424,7 @@
           <details class="pb-compact-toggle pb-fee-accordion">
             <summary>Manual overrides</summary>
             <p class="muted">Leave blank for computed values.</p>
+            <p id="pb-fee-manual-warning" class="pb-fee-slot-note warn" hidden>Manual override active: numbers may not follow scenario.</p>
             <div class="grid two">
               <label>Minimum override<input id="pb-fee-lowBudgetOverride" type="number" min="0" step="10"></label>
               <label>Target low override<input id="pb-fee-recommendedOverride" type="number" min="0" step="10"></label>
@@ -412,6 +433,43 @@
               <label>Target high override<input id="pb-fee-benchmarkOverride" type="number" min="0" step="10"></label>
               <label>Package fee override<input id="pb-fee-premiumOverride" type="number" min="0" step="10"></label>
             </div>
+            <div class="toolbar">
+              <button id="pb-fee-clear-manual-overrides" type="button">Clear manual override</button>
+            </div>
+          </details>
+
+          <details class="pb-compact-toggle pb-fee-accordion">
+            <summary>Reality / Strategic acceptance</summary>
+            <div class="grid two">
+              <label>Actual agreed fee<input id="pb-fee-actualAgreedFee" type="number" min="0" step="10"></label>
+              <label>Actual fee status
+                <select id="pb-fee-actualFeeStatus">
+                  <option value="not_set">Not set</option>
+                  <option value="discussed">Discussed</option>
+                  <option value="agreed">Agreed</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <label>Strategic reason
+                <select id="pb-fee-acceptanceReason">
+                  <option value="not_set">Not set</option>
+                  <option value="normal_fee">Normal fee</option>
+                  <option value="strategic_visibility">Strategic visibility</option>
+                  <option value="relationship_building">Relationship building</option>
+                  <option value="repertoire_value">Repertoire value</option>
+                  <option value="video_material">Video material</option>
+                  <option value="low_budget_cultural">Low-budget cultural</option>
+                  <option value="no_better_option">No better option</option>
+                  <option value="charity">Charity</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label class="checkline"><input id="pb-fee-shouldNotBenchmark" type="checkbox"> Do not benchmark</label>
+            </div>
+            <label>Gap note<textarea id="pb-fee-gapNote" rows="3" placeholder="Why accepting this real fee may still make sense, or why it should not set a precedent."></textarea></label>
+            <p id="pb-fee-do-not-benchmark-note" class="muted pb-fee-adjustment-line" hidden>Do not use this fee as a future benchmark.</p>
           </details>
 
           <details class="pb-compact-toggle pb-fee-accordion">
@@ -442,9 +500,9 @@
           <details class="pb-compact-toggle pb-fee-accordion">
             <summary>Calculation details</summary>
             <div class="pb-fee-explainer">
-              <p><strong>Professional floor</strong> = roughly €300–€350/day in Berlin/Germany freelance terms. It is a floor, not a good target.</p>
-              <p><strong>Good target</strong> = starts around €600+ for a solo professional concert with preparation and performance.</p>
-              <p><strong>Package fee</strong> = what the client should pay for the full formation. For Tango Tenors and duos, do not quote only Rolando's share.</p>
+              <p><strong>Professional floor</strong> = the lower boundary for Rolando's Berlin professional tenor context. Church/cultural low fees are strategic exceptions, not normal targets.</p>
+              <p><strong>Good target</strong> = starts around €700–€1,200 for a local public concert and rises for private, corporate, luxury, package, custom, or travel contexts.</p>
+              <p><strong>Package fee</strong> = what the client should pay for the full formation. Two singers / track has no pianist by default; two singers + piano includes the pianist.</p>
             </div>
             <div class="pb-fee-metrics">
               <div class="pb-fee-metric"><span>Artistic fee</span><strong id="pb-fee-artisticSubtotal">€0</strong></div>
@@ -482,7 +540,7 @@
               <option value="church_budget">Church / cultural floor</option>
               <option value="private_premium">Private / hotel gala</option>
               <option value="corporate_luxury">Corporate / luxury</option>
-              <option value="tango_tenors_local">Tango Tenors local duo</option>
+              <option value="tango_tenors_local">Tango Tenors local trio</option>
               <option value="tango_tenors_private">Tango Tenors private/corporate</option>
             </select>
             <button id="pb-fee-apply-preset" type="button">Apply preset</button>
