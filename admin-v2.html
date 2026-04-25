@@ -292,6 +292,39 @@
           </div>
           <p id="pb-fee-reality-warning" class="pb-fee-slot-note warn" hidden></p>
 
+          <div class="pb-fee-wizard">
+            <div class="pb-fee-choice-group">
+              <span class="pb-fee-choice-label">Event type</span>
+              <div class="pb-fee-choice-buttons">
+                <button class="pb-fee-choice-btn" data-fee-event-choice="church_cultural" type="button">Cultural / church</button>
+                <button class="pb-fee-choice-btn" data-fee-event-choice="public_concert" type="button">Public concert</button>
+                <button class="pb-fee-choice-btn" data-fee-event-choice="private_event" type="button">Private event</button>
+                <button class="pb-fee-choice-btn" data-fee-event-choice="corporate_event" type="button">Corporate / luxury</button>
+                <button class="pb-fee-choice-btn" data-fee-event-choice="tango_tenors" type="button">Tango Tenors</button>
+                <button class="pb-fee-choice-btn" data-fee-event-choice="opera_role" type="button">Opera role</button>
+              </div>
+            </div>
+            <div class="pb-fee-choice-group">
+              <span class="pb-fee-choice-label">Formation</span>
+              <div class="pb-fee-choice-buttons">
+                <button class="pb-fee-choice-btn" data-fee-formation-choice="solo" type="button">Solo / track</button>
+                <button class="pb-fee-choice-btn" data-fee-formation-choice="tenor_piano" type="button">Tenor + piano</button>
+                <button class="pb-fee-choice-btn" data-fee-formation-choice="duo" type="button">2 singers / track</button>
+                <button class="pb-fee-choice-btn" data-fee-formation-choice="trio" type="button">2 singers + piano</button>
+                <button class="pb-fee-choice-btn" data-fee-formation-choice="ensemble" type="button">Ensemble</button>
+              </div>
+            </div>
+            <div class="pb-fee-choice-group pb-fee-choice-group--reality">
+              <span class="pb-fee-choice-label">Reality</span>
+              <div class="pb-fee-reality-quick">
+                <label>Actual fee<input id="pb-fee-actualAgreedFee" type="number" min="0" step="10" placeholder="€"></label>
+                <button class="pb-fee-choice-btn" data-fee-reality-choice="not_set" type="button">Not set</button>
+                <button class="pb-fee-choice-btn" data-fee-reality-choice="strategic" type="button">Strategic</button>
+                <button class="pb-fee-choice-btn" data-fee-reality-choice="benchmark" type="button">Do not benchmark</button>
+              </div>
+            </div>
+          </div>
+
           <p id="pb-fee-negotiation-inline" class="pb-fee-negotiation-inline">Quote frame will appear here.</p>
 
           <div class="pb-fee-actions-row">
@@ -300,16 +333,7 @@
             <button id="pb-copy-fee-summary" type="button">Copy internal summary</button>
           </div>
 
-          <div class="pb-fee-scenarios">
-            <button class="pb-fee-scenario-btn" data-fee-scenario="berlin_local" type="button">Local concert</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="church_budget" type="button">Church / cultural</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="private_premium" type="button">Private event</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="corporate_luxury" type="button">Corporate / luxury</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="tango_tenors_local" type="button">Tango Tenors</button>
-            <button class="pb-fee-scenario-btn" data-fee-scenario="opera_role" type="button">Opera role</button>
-          </div>
-
-          <details class="pb-compact-toggle pb-fee-accordion pb-fee-accordion-scenario" open>
+          <details class="pb-compact-toggle pb-fee-accordion pb-fee-accordion-scenario">
             <summary>Scenario details</summary>
             <div class="grid two">
               <label>Event type
@@ -439,9 +463,8 @@
           </details>
 
           <details class="pb-compact-toggle pb-fee-accordion">
-            <summary>Reality / Strategic acceptance</summary>
+            <summary>Reality details</summary>
             <div class="grid two">
-              <label>Actual agreed fee<input id="pb-fee-actualAgreedFee" type="number" min="0" step="10"></label>
               <label>Actual fee status
                 <select id="pb-fee-actualFeeStatus">
                   <option value="not_set">Not set</option>

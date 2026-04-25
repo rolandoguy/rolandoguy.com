@@ -710,6 +710,16 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 .pb-fee-risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:10px}
 .pb-fee-result-card{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:10px;margin:10px 0 8px}
 .pb-fee-actions-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;align-items:center}
+.pb-fee-wizard{display:grid;gap:12px;margin:12px 0}
+.pb-fee-choice-group{padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.018)}
+.pb-fee-choice-label{display:block;margin:0 0 8px;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.pb-fee-choice-buttons{display:flex;flex-wrap:wrap;gap:7px}
+.pb-fee-choice-btn{padding:8px 13px;border-radius:999px;font-size:.8rem;line-height:1.2;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);color:var(--muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.pb-fee-choice-btn:hover{border-color:#4c5d7d;background:#253044;color:var(--text)}
+.pb-fee-choice-btn.active{border-color:var(--color-income);color:var(--color-income);background:var(--color-income-surface)}
+.pb-fee-reality-quick{display:grid;grid-template-columns:minmax(130px,190px) repeat(3,max-content);gap:8px;align-items:end}
+.pb-fee-reality-quick label{margin:0}
+.pb-fee-reality-quick input{min-height:36px}
 .pb-fee-scenarios{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
 .pb-fee-scenario-btn{padding:7px 13px;border-radius:999px;font-size:.79rem;line-height:1.2;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);color:var(--muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
 .pb-fee-scenario-btn:hover{border-color:#4c5d7d;background:#253044;color:var(--text)}
@@ -1264,6 +1274,11 @@ body.programme-print-active{overflow:hidden}
   .pb-fee-result-card{grid-template-columns:1fr}
   .pb-fee-actions-row{flex-direction:column}
   .pb-fee-actions-row button{width:100%;min-height:44px}
+  .pb-fee-choice-buttons{display:grid;grid-template-columns:1fr 1fr}
+  .pb-fee-choice-btn{min-height:44px;padding:10px 12px}
+  .pb-fee-reality-quick{grid-template-columns:1fr 1fr}
+  .pb-fee-reality-quick label{grid-column:1/-1}
+  .pb-fee-reality-quick .pb-fee-choice-btn:last-child{grid-column:1/-1}
   .pb-fee-scenario-btn{min-height:44px;padding:10px 16px}
   .pb-preview-sheet{padding:16px;max-width:100%}
   .item-badges{display:flex;flex-wrap:wrap;gap:4px 6px;margin-left:0}

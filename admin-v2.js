@@ -12742,7 +12742,7 @@
     });
     return alternatives;
   }
-  function renderBlueprintPieceEditor() {
+	  function renderBlueprintPieceEditor() {
     var bp = currentBlueprint();
     var item = bp.items[state.blueprintPieceIndex] || {};
     var piece = getPlannerItemById(item.pieceId);
@@ -12777,7 +12777,64 @@
     }
     renderBlueprintPieceAlternatives(bp, state.blueprintPieceIndex);
   }
-    function renderBlueprintFeeEstimate() {
+  function setFeeSelectValue(id, value) {
+    var el = $(id);
+    if (el) el.value = value;
+  }
+  function clearFeeManualOverrideInputs() {
+    ['pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride'].forEach(function (id) {
+      if ($(id)) $(id).value = '';
+    });
+  }
+  function applyFeeEventChoice(choice) {
+    var key = safeString(choice).trim();
+    clearFeeManualOverrideInputs();
+    if (key === 'church_cultural') {
+      setFeeSelectValue('pb-fee-eventType', 'church_cultural');
+      setFeeSelectValue('pb-fee-organizerType', 'church');
+    } else if (key === 'public_concert') {
+      setFeeSelectValue('pb-fee-eventType', 'public_concert');
+      setFeeSelectValue('pb-fee-organizerType', 'small_cultural');
+    } else if (key === 'private_event') {
+      setFeeSelectValue('pb-fee-eventType', 'private_event');
+      setFeeSelectValue('pb-fee-organizerType', 'private_host');
+    } else if (key === 'corporate_event') {
+      setFeeSelectValue('pb-fee-eventType', 'corporate_event');
+      setFeeSelectValue('pb-fee-organizerType', 'corporate');
+    } else if (key === 'tango_tenors') {
+      setFeeSelectValue('pb-fee-eventType', 'tango_tenors');
+      setFeeSelectValue('pb-fee-formation', 'trio');
+      setFeeSelectValue('pb-fee-organizerType', 'small_cultural');
+    } else if (key === 'opera_role') {
+      setFeeSelectValue('pb-fee-eventType', 'opera_role');
+      setFeeSelectValue('pb-fee-formation', 'solo');
+      setFeeSelectValue('pb-fee-preparationComplexity', 'role_or_major_work');
+      setFeeSelectValue('pb-fee-organizerType', 'festival_theatre');
+    }
+    persistBlueprintFeeEstimate();
+  }
+  function applyFeeFormationChoice(choice) {
+    clearFeeManualOverrideInputs();
+    setFeeSelectValue('pb-fee-formation', normalizeFeeFormationType(choice));
+    persistBlueprintFeeEstimate();
+  }
+  function applyFeeRealityChoice(choice) {
+    var key = safeString(choice).trim();
+    clearFeeManualOverrideInputs();
+    if (key === 'not_set') {
+      if ($('pb-fee-actualAgreedFee')) $('pb-fee-actualAgreedFee').value = '';
+      setFeeSelectValue('pb-fee-actualFeeStatus', 'not_set');
+      setFeeSelectValue('pb-fee-acceptanceReason', 'not_set');
+      if ($('pb-fee-shouldNotBenchmark')) $('pb-fee-shouldNotBenchmark').checked = false;
+    } else if (key === 'strategic') {
+      var reason = $('pb-fee-acceptanceReason') ? $('pb-fee-acceptanceReason').value : '';
+      if (!feeAcceptanceReasonIsStrategic(reason)) setFeeSelectValue('pb-fee-acceptanceReason', 'strategic_visibility');
+    } else if (key === 'benchmark') {
+      if ($('pb-fee-shouldNotBenchmark')) $('pb-fee-shouldNotBenchmark').checked = !$('pb-fee-shouldNotBenchmark').checked;
+    }
+    persistBlueprintFeeEstimate();
+  }
+  function renderBlueprintFeeEstimate() {
       var bp = currentBlueprint();
       var computed = computeBlueprintFeeEstimate(bp);
       var fee = computed.fee;
@@ -12795,6 +12852,21 @@
           ? safeString(fee.eventType) === 'opera_role'
           : (_fieldsMatchPreset && s === _activeScenario);
         btn.classList.toggle('active', isActive);
+      });
+      document.querySelectorAll('[data-fee-event-choice]').forEach(function(btn) {
+        btn.classList.toggle('active', safeString(btn.getAttribute('data-fee-event-choice')) === safeString(fee.eventType));
+      });
+      document.querySelectorAll('[data-fee-formation-choice]').forEach(function(btn) {
+        btn.classList.toggle('active', safeString(btn.getAttribute('data-fee-formation-choice')) === safeString(fee.formation));
+      });
+      document.querySelectorAll('[data-fee-reality-choice]').forEach(function(btn) {
+        var key = safeString(btn.getAttribute('data-fee-reality-choice'));
+        var active = key === 'benchmark'
+          ? !!fee.shouldNotBenchmark
+          : (key === 'strategic'
+            ? feeAcceptanceReasonIsStrategic(fee.acceptanceReason)
+            : (!fee.actualAgreedFee && fee.acceptanceReason === 'not_set' && fee.actualFeeStatus === 'not_set'));
+        btn.classList.toggle('active', active);
       });
       if ($('pb-fee-eventType')) $('pb-fee-eventType').value = safeString(fee.eventType || 'public_concert');
       if ($('pb-fee-locationScope')) $('pb-fee-locationScope').value = safeString(fee.locationScope || 'berlin_local');
@@ -20161,23 +20233,38 @@
     if ($('pb-fee-apply-preset')) $('pb-fee-apply-preset').addEventListener('click', function () {
       applyBlueprintFeePreset($('pb-fee-preset') && $('pb-fee-preset').value);
     });
-	    document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
-	      btn.addEventListener('click', function() {
-	        var scenario = safeString(btn.getAttribute('data-fee-scenario'));
-	        if (scenario === 'opera_role') {
-	          ['pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride'].forEach(function (id) {
-	            if ($(id)) $(id).value = '';
-	          });
-	          if ($('pb-fee-eventType')) $('pb-fee-eventType').value = 'opera_role';
-	          if ($('pb-fee-formation')) $('pb-fee-formation').value = 'solo';
-	          persistBlueprintFeeEstimate();
-	        } else {
-	          applyBlueprintFeePreset(scenario);
-	        }
-	      });
-	    });
-	    if ($('pb-fee-clear-manual-overrides')) $('pb-fee-clear-manual-overrides').addEventListener('click', clearBlueprintFeeManualOverrides);
-	    if ($('pb-save-fee-estimate')) $('pb-save-fee-estimate').addEventListener('click', saveFeeEstimateSection);
+    document.querySelectorAll('[data-fee-event-choice]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        applyFeeEventChoice(btn.getAttribute('data-fee-event-choice'));
+      });
+    });
+    document.querySelectorAll('[data-fee-formation-choice]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        applyFeeFormationChoice(btn.getAttribute('data-fee-formation-choice'));
+      });
+    });
+    document.querySelectorAll('[data-fee-reality-choice]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        applyFeeRealityChoice(btn.getAttribute('data-fee-reality-choice'));
+      });
+    });
+    document.querySelectorAll('[data-fee-scenario]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var scenario = safeString(btn.getAttribute('data-fee-scenario'));
+        if (scenario === 'opera_role') {
+          ['pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride'].forEach(function (id) {
+            if ($(id)) $(id).value = '';
+          });
+          if ($('pb-fee-eventType')) $('pb-fee-eventType').value = 'opera_role';
+          if ($('pb-fee-formation')) $('pb-fee-formation').value = 'solo';
+          persistBlueprintFeeEstimate();
+        } else {
+          applyBlueprintFeePreset(scenario);
+        }
+      });
+    });
+    if ($('pb-fee-clear-manual-overrides')) $('pb-fee-clear-manual-overrides').addEventListener('click', clearBlueprintFeeManualOverrides);
+    if ($('pb-save-fee-estimate')) $('pb-save-fee-estimate').addEventListener('click', saveFeeEstimateSection);
     if ($('pb-add-piece-search')) $('pb-add-piece-search').addEventListener('input', renderBlueprintBuilder);
     if ($('pb-offer-filter-status')) $('pb-offer-filter-status').addEventListener('change', function () { state.plannerOfferStatusFilter = $('pb-offer-filter-status').value; renderBlueprintBuilder(); });
     if ($('pb-offer-filter-category')) $('pb-offer-filter-category').addEventListener('change', function () { state.plannerOfferCategoryFilter = $('pb-offer-filter-category').value; renderBlueprintBuilder(); });
