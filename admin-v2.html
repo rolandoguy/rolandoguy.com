@@ -885,6 +885,10 @@
               <div id="perf-list" class="item-list"></div>
             </div>
             <div class="editor calendar-editor">
+              <div class="calendar-editor-current" aria-live="polite">
+                <span id="perf-current-editing">Editing: no event selected</span>
+                <span id="perf-save-local-status" class="pill">Ready</span>
+              </div>
               <div class="editor-section">
                 <h3>Event editor · Basic information</h3>
                 <label>Title<input id="perf-title"></label>
@@ -1059,7 +1063,7 @@
                   </label>
                   <label>Modal venue line<input id="perf-modal-venue"></label>
                   <label>Modal location / city<input id="perf-modal-city"></label>
-                  <label>Modal address / public address<input id="perf-modal-address" placeholder="Auguststraße 24, 10117 Berlin"></label>
+                  <label>Modal address / public address (shared)<input id="perf-modal-address" placeholder="Auguststraße 24, 10117 Berlin"></label>
                 </div>
                 <label>Modal long description<textarea id="perf-modal-longdesc" rows="5"></textarea></label>
                 <small id="perf-modal-longdesc-translation-warn" class="muted warn" style="display:none"></small>
@@ -1195,6 +1199,7 @@
           </div>
           <div class="toolbar section-save-bar">
             <button id="savePerfEventsBtn" type="button" class="button-primary">Save all event changes</button>
+            <span id="perf-save-local-status-bottom" class="pill">Ready</span>
             <button id="perf-revert-item" type="button">Revert current item</button>
           </div>
 

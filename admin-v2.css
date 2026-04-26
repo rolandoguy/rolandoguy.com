@@ -371,6 +371,8 @@ input,textarea,select{width:100%;background:#11151d;border:1px solid var(--borde
 .cases-followup--calm{color:#bfe9ce;border-color:rgba(163,230,194,.3);background:rgba(163,230,194,.12)}
 .calendar-editor .editor-section{border:1px solid var(--border);border-radius:10px;background:#11151d;padding:10px;margin-bottom:10px}
 #section-calendar.active .calendar-editor .editor-section{border-color:var(--color-calendar-border);background:linear-gradient(180deg,var(--color-calendar-surface) 0%,rgba(102,187,106,.04) 100%)}
+.calendar-editor-current{align-items:center;background:rgba(17,21,29,.92);border:1px solid var(--border);border-radius:14px;display:flex;gap:10px;justify-content:space-between;margin-bottom:14px;padding:10px 12px;position:sticky;top:10px;z-index:3}
+#perf-current-editing{color:var(--ink);font-weight:700;min-width:0}
 .editor-section h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.01em;color:var(--gold)}
 .calendar-event-workspace{align-items:start}
 .calendar-event-list-panel{border:1px solid var(--border);border-radius:10px;background:#11151d;padding:10px}
@@ -1400,7 +1402,8 @@ body.programme-print-active{overflow:hidden}
   #section-outreach .outreach-editor__footer .button-primary{flex:1 1 100%}
   #section-outreach .outreach-editor__footer button{min-height:42px}
   #section-calendar #perf-list{max-height:36vh}
-  #section-calendar .calendar-editor{gap:10px}
+  #section-calendar .calendar-editor{min-width:0}
+  #section-calendar .calendar-editor-current{align-items:flex-start;flex-direction:column}
   #section-calendar .calendar-editor .editor-section{padding:11px}
   #section-calendar .split{grid-template-columns:1fr;gap:10px}
   #section-calendar .calendar-editor{order:1}

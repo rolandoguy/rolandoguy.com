@@ -886,6 +886,9 @@
     repIndex: -1,
     perfs: [],
     perfIndex: -1,
+    selectedPerfId: '',
+    perfEditorDirty: false,
+    perfSaveStatus: '',
     perfPendingNewEvent: null,
     perfFlashIndex: -1,
     perfFlashTimer: null,
@@ -3130,7 +3133,7 @@
     'detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr',
     'venue', 'city', 'address', 'address_en', 'address_de', 'address_es', 'address_it', 'address_fr', 'mapsUrl', 'venuePhoto', 'venuePhotoFocus', 'venueOpacity',
     'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr',
-    'ticketPrice',
+    'ticketPrice', 'ticketPrice_en', 'ticketPrice_de', 'ticketPrice_es', 'ticketPrice_it', 'ticketPrice_fr',
     'eventLink', 'eventLinkLabel',
     'eventLink_en', 'eventLinkLabel_en',
     'eventLink_de', 'eventLinkLabel_de',
@@ -3545,7 +3548,9 @@
     if (!Array.isArray(state.perfs) || !state.perfs.length) return false;
     var idx = state.perfs.findIndex(function (e) { return safeString(e && e.id).trim() === target; });
     if (idx < 0) return false;
-    state.perfIndex = idx;
+    setSelectedPerfIndex(idx);
+    state.perfEditorDirty = false;
+    state.perfSaveStatus = '';
     renderPerfList();
     renderPerfEditor();
     return true;
@@ -13738,9 +13743,75 @@
       renderPerfList();
     }, 1600);
   }
+  function perfStableId(e, idx) {
+    if (!e || !isObject(e)) return '';
+    var id = safeString(e.id).trim();
+    if (id) return id;
+    id = 'perf-' + (Number.isFinite(idx) ? (idx + 1) : Date.now());
+    e.id = id;
+    return id;
+  }
+  function getSelectedPerfId() {
+    var current = state.perfs[state.perfIndex];
+    return safeString(state.selectedPerfId).trim() || perfStableId(current, state.perfIndex);
+  }
+  function findPerfIndexById(id) {
+    var target = safeString(id).trim();
+    if (!target || !Array.isArray(state.perfs)) return -1;
+    return state.perfs.findIndex(function (e, idx) {
+      return perfStableId(e, idx) === target;
+    });
+  }
+  function setSelectedPerfIndex(idx) {
+    if (!Array.isArray(state.perfs) || idx < 0 || idx >= state.perfs.length) {
+      state.perfIndex = -1;
+      state.selectedPerfId = '';
+      return false;
+    }
+    state.perfIndex = idx;
+    state.selectedPerfId = perfStableId(state.perfs[idx], idx);
+    return true;
+  }
+  function resolveSelectedPerfIndex(rows, opts) {
+    opts = opts || {};
+    var selectedId = safeString(state.selectedPerfId).trim();
+    if (selectedId) {
+      var idx = findPerfIndexById(selectedId);
+      if (idx >= 0) {
+        state.perfIndex = idx;
+        return true;
+      }
+      if (opts.keepMissing) {
+        state.perfIndex = -1;
+        return false;
+      }
+      state.selectedPerfId = '';
+    }
+    if (Array.isArray(rows) && rows.length && !opts.noFallback) {
+      return setSelectedPerfIndex(rows[0].i);
+    }
+    state.perfIndex = -1;
+    return false;
+  }
+  function currentPerfEditorLabel() {
+    var e = state.perfs[state.perfIndex] || {};
+    var title = safeString(e['title_' + (state.lang || 'en')]).trim() || safeString(e.title).trim() || safeString(e.title_en).trim() || 'New event';
+    var date = normalizeSortDateForInput(e.sortDate);
+    var dateLabel = date ? formatVisibleDate(date) : [safeString(e.day).trim(), safeString(e.month).trim()].filter(Boolean).join(' ');
+    var place = [safeString(e.venue).trim(), safeString(e.city).trim()].filter(Boolean).join(' / ');
+    return [title, dateLabel, place].filter(Boolean).join(' · ') || 'New event';
+  }
+  function updatePerfEditorChrome() {
+    var editing = $('perf-current-editing');
+    if (editing) editing.textContent = state.perfIndex >= 0 ? ('Editing: ' + currentPerfEditorLabel()) : 'Editing: no event selected';
+    var status = $('perf-save-local-status');
+    if (status) status.textContent = safeString(state.perfSaveStatus || (state.perfEditorDirty ? 'Unsaved changes' : 'Ready'));
+    var statusBottom = $('perf-save-local-status-bottom');
+    if (statusBottom) statusBottom.textContent = safeString(state.perfSaveStatus || (state.perfEditorDirty ? 'Unsaved changes' : 'Ready'));
+  }
   function reorderPerfEventsChronologically() {
     if (!Array.isArray(state.perfs) || state.perfs.length < 2) return false;
-    var activeEvent = state.perfs[state.perfIndex] || null;
+    var activeId = getSelectedPerfId();
     var selectedRefs = new Set();
     selectedIndices(state.perfSelected).forEach(function (idx) {
       if (state.perfs[idx]) selectedRefs.add(state.perfs[idx]);
@@ -13749,7 +13820,12 @@
     var changed = rows.some(function (row, nextIndex) { return row.i !== nextIndex; });
     if (!changed) return false;
     state.perfs = rows.map(function (row) { return row.e; });
-    state.perfIndex = activeEvent ? state.perfs.indexOf(activeEvent) : -1;
+    if (activeId) {
+      state.selectedPerfId = activeId;
+      state.perfIndex = findPerfIndexById(activeId);
+    } else {
+      state.perfIndex = -1;
+    }
     clearSelected(state.perfSelected);
     state.perfs.forEach(function (event, idx) {
       if (selectedRefs.has(event)) state.perfSelected[idx] = true;
@@ -13822,11 +13898,12 @@
       if (revenueFilter === 'missing') return !complete;
       return true;
     }).sort(comparePerfRowsChronologically);
+    resolveSelectedPerfIndex(rows, { noFallback: !!safeString(state.selectedPerfId).trim() });
     if (!rows.length) {
       box.innerHTML = '<div class="empty-state">No hay eventos. Crea uno con "+ Nuevo evento".</div>';
       state.perfIndex = -1;
       setSelectionCount('perf-selection-count', state.perfSelected);
-      renderPerfEditor();
+      updatePerfEditorChrome();
       return;
     }
     box.innerHTML = rows.map(function (row) {
@@ -13880,22 +13957,20 @@
     });
     box.querySelectorAll('.item').forEach(function (el) {
       el.addEventListener('click', function () {
-        state.perfIndex = Number(el.getAttribute('data-idx'));
+        var nextIndex = Number(el.getAttribute('data-idx'));
+        if (nextIndex === state.perfIndex) return;
+        if (state.perfEditorDirty && !window.confirm('Switch events without saving current calendar edits?')) return;
+        setSelectedPerfIndex(nextIndex);
+        state.perfEditorDirty = false;
+        state.perfSaveStatus = '';
         renderPerfList();
         renderPerfEditor();
       });
     });
-    var activeRow = box.querySelector('.item.active');
-    if (activeRow && typeof activeRow.scrollIntoView === 'function') {
-      activeRow.scrollIntoView({ block: 'nearest' });
-    }
-    if (state.perfIndex < 0 && state.perfs.length) {
-      state.perfIndex = 0;
-      renderPerfList();
-      renderPerfEditor();
-    }
+    updatePerfEditorChrome();
   }
   function renderPerfEditor() {
+    resolveSelectedPerfIndex(null, { noFallback: true, keepMissing: true });
     var e = state.perfs[state.perfIndex] || {};
     function localeFirst(base) {
       var lk = base + '_' + state.lang;
@@ -13973,6 +14048,8 @@
     updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
     updatePerfTranslationWarnings();
+    state.perfEditorDirty = false;
+    updatePerfEditorChrome();
   }
   function setSelectWithCustomValue(id, rawValue, fallback) {
     var el = $(id);
@@ -14217,8 +14294,14 @@
     summary.style.display = '';
   }
   function persistPerfEditor() {
-    if (state.perfIndex < 0) return;
+    var selectedId = getSelectedPerfId();
+    if (selectedId) {
+      var selectedIndex = findPerfIndexById(selectedId);
+      if (selectedIndex >= 0) state.perfIndex = selectedIndex;
+    }
+    if (state.perfIndex < 0) return false;
     var e = state.perfs[state.perfIndex] || {};
+    perfStableId(e, state.perfIndex);
     var activeLang = safeString(state.lang || 'en').trim().toLowerCase() || 'en';
     var activeId = document.activeElement && document.activeElement.id ? document.activeElement.id : '';
     function readVal(id) { return safeString($(id) && $(id).value).trim(); }
@@ -14237,6 +14320,12 @@
     function persistLocaleBackedField(base, value) {
       e[base + '_' + activeLang] = value;
       if (activeLang === 'en' || safeString(e[base]).trim() === '') e[base] = value;
+    }
+    function persistSharedPracticalField(base, value) {
+      var key = base + '_' + activeLang;
+      var hadLocalizedValue = safeString(e[key]).trim() !== '';
+      e[base] = value;
+      if (hadLocalizedValue) e[key] = value;
     }
     function persistCtaLabelField(value) {
       normalizePerfEventCtaLabels(e, value, activeLang);
@@ -14298,11 +14387,11 @@
       if (e.hidePrivateBadge !== true) e.hidePrivateBadge = false;
       if (e.hidePrivateDetailLine !== true) e.hidePrivateDetailLine = false;
     }
-    persistLocaleBackedField('address', safeString($('perf-modal-address') && $('perf-modal-address').value).trim());
+    persistSharedPracticalField('address', safeString($('perf-modal-address') && $('perf-modal-address').value).trim());
     e.mapsUrl = safeString($('perf-modal-maps-link') && $('perf-modal-maps-link').value).trim();
     persistLocaleBackedField('extDesc', safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value));
     e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
-    persistLocaleBackedField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
+    persistSharedPracticalField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
     persistCtaLabelField(safeString($('perf-modal-link-label') && $('perf-modal-link-label').value));
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
     e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
@@ -14339,9 +14428,14 @@
     updatePerfPublicVisibilitySummary();
     updatePerfTranslationWarnings();
     renderPerfList();
+    state.perfEditorDirty = true;
+    state.perfSaveStatus = 'Unsaved changes';
+    updatePerfEditorChrome();
     markDirty(true);
+    return true;
   }
   function loadCalendar() {
+    var previousSelectedId = getSelectedPerfId();
     var stored = loadDoc('perf_' + state.lang, null);
     var fallback = {};
     $('perf-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
@@ -14356,9 +14450,11 @@
         e.id = 'perf-' + (idx + 1);
       }
     });
-    state.perfIndex = -1;
+    state.selectedPerfId = previousSelectedId;
+    state.perfIndex = previousSelectedId ? findPerfIndexById(previousSelectedId) : -1;
     reorderPerfEventsChronologically();
     renderPerfList();
+    renderPerfEditor();
     updateCompletenessIndicators();
     if (state.deepLinkPerfId) {
       try { openCalendarEventById(state.deepLinkPerfId); } catch (eDeep) {}
@@ -14879,11 +14975,43 @@
     await publishPublicPerfHeaders([state.lang]);
   }
   async function savePerfEvents() {
-    persistPerfEditor();
-    state.perfs = normalizePerfEventsList(state.perfs);
-    if (!await saveDocRequired('rg_perfs', state.perfs)) return;
-    await publishPublicPerfEvents();
-    if (state.section === 'income') renderIncomeSection();
+    var selectedId = getSelectedPerfId();
+    var scrollY = window.scrollY;
+    state.perfSaveStatus = 'Saving…';
+    updatePerfEditorChrome();
+    try {
+      if (!persistPerfEditor()) {
+        state.perfSaveStatus = 'Save failed: no event selected';
+        updatePerfEditorChrome();
+        setStatus(state.perfSaveStatus, 'err');
+        return;
+      }
+      selectedId = getSelectedPerfId() || selectedId;
+      state.perfs = normalizePerfEventsList(state.perfs);
+      if (selectedId) {
+        state.selectedPerfId = selectedId;
+        state.perfIndex = findPerfIndexById(selectedId);
+      }
+      if (state.perfIndex < 0) throw new Error('Selected event was not found after normalization.');
+      if (!await saveDocRequired('rg_perfs', state.perfs)) throw new Error('Firestore write failed.');
+      await publishPublicPerfEvents();
+      if (selectedId) {
+        state.selectedPerfId = selectedId;
+        state.perfIndex = findPerfIndexById(selectedId);
+      }
+      state.perfEditorDirty = false;
+      var t = new Date();
+      state.perfSaveStatus = 'Saved at ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+      renderPerfList();
+      updatePerfEditorChrome();
+      setStatus('Calendar event saved and public calendar updated.', 'ok');
+      if (state.section === 'income') renderIncomeSection();
+      window.setTimeout(function () { window.scrollTo(window.scrollX, scrollY); }, 0);
+    } catch (err) {
+      state.perfSaveStatus = 'Save failed: ' + safeString(err && err.message || err || 'unknown error');
+      updatePerfEditorChrome();
+      setStatus(state.perfSaveStatus, 'err');
+    }
   }
   function normalizePastPerfImportItem(raw, idx) {
     var o = isObject(raw) ? raw : {};
@@ -18376,7 +18504,9 @@
 
   function openPerfFromInternalCalendar(index) {
     closeInternalCalendarView();
-    state.perfIndex = index;
+    setSelectedPerfIndex(index);
+    state.perfEditorDirty = false;
+    state.perfSaveStatus = '';
     renderPerfList();
     renderPerfEditor();
   }
@@ -18929,8 +19059,9 @@
   }
   function addEventFromTemplate() {
     var event = { title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', address: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false, venueOpacity: 30 };
+    perfStableId(event, state.perfs.length);
     state.perfs.push(event);
-    state.perfIndex = state.perfs.length - 1;
+    setSelectedPerfIndex(state.perfs.length - 1);
     state.perfPendingNewEvent = event;
     reorderPerfEventsChronologically();
     flashPerfListItem(state.perfIndex);
@@ -19232,7 +19363,7 @@
     } else if (section === 'perf') {
       if (state.perfIndex < 0) return;
       if (!moveArrayIndex(state.perfs, state.perfIndex, Math.min(pos, state.perfs.length - 1))) return;
-      state.perfIndex = Math.min(pos, state.perfs.length - 1);
+      setSelectedPerfIndex(Math.min(pos, state.perfs.length - 1));
       clearSelected(state.perfSelected); renderPerfList(); renderPerfEditor(); markDirty(true, 'Calendar event moved');
     }
   }
@@ -19242,7 +19373,7 @@
     if (section === 'media-vid') { if (state.vidIndex < 0) return; state.vidIndex = Math.max(0, Math.min(state.vidData.videos.length - 1, state.vidIndex + dir)); renderMediaVideosList(); renderMediaVideoEditor(); return; }
     if (section === 'press') { if (state.pressIndex < 0) return; state.pressIndex = Math.max(0, Math.min(state.press.length - 1, state.pressIndex + dir)); renderPressList(); renderPressEditor(); return; }
     if (section === 'epk-photo') { if (state.epkPhotoIndex < 0) return; state.epkPhotoIndex = Math.max(0, Math.min(state.epkPhotos.length - 1, state.epkPhotoIndex + dir)); renderEpkPhotoList(); renderEpkPhotoEditor(); return; }
-    if (section === 'perf') { if (state.perfIndex < 0) return; state.perfIndex = Math.max(0, Math.min(state.perfs.length - 1, state.perfIndex + dir)); renderPerfList(); renderPerfEditor(); return; }
+    if (section === 'perf') { if (state.perfIndex < 0) return; setSelectedPerfIndex(Math.max(0, Math.min(state.perfs.length - 1, state.perfIndex + dir))); state.perfEditorDirty = false; state.perfSaveStatus = ''; renderPerfList(); renderPerfEditor(); return; }
   }
   function revertCurrentItemToSaved(section) {
     if (section === 'rep' && state.repIndex >= 0) {
@@ -19855,7 +19986,7 @@
       renderOutreachWorkspace();
     } else if (s === 'calendar') {
       state.perfs = normalizePerfEventsList(Array.isArray(d.perfs) ? clone(d.perfs) : []);
-      state.perfIndex = Number.isFinite(Number(d.perfIndex)) ? Number(d.perfIndex) : -1;
+      setSelectedPerfIndex(Number.isFinite(Number(d.perfIndex)) ? Number(d.perfIndex) : -1);
       $('perf-h2').value = safeString(d.h2); $('perf-intro').value = safeString(d.intro);
       renderPerfList(); renderPerfEditor();
     } else if (s === 'media') {
@@ -20843,23 +20974,32 @@
     if ($('programs-revert-item')) $('programs-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('programs'); });
 
     $('perf-add').addEventListener('click', function () {
+      if (state.perfEditorDirty && !window.confirm('Create a new event without saving current calendar edits?')) return;
       clearSelected(state.perfSelected);
       var event = { title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', address: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '', venueOpacity: 30 };
+      perfStableId(event, state.perfs.length);
       state.perfs.push(event);
-      state.perfIndex = state.perfs.length - 1;
+      setSelectedPerfIndex(state.perfs.length - 1);
       state.perfPendingNewEvent = event;
       reorderPerfEventsChronologically();
       flashPerfListItem(state.perfIndex);
+      state.perfEditorDirty = false;
+      state.perfSaveStatus = 'Unsaved changes';
       renderPerfList(); renderPerfEditor(); markDirty(true);
     });
     $('perf-dup').addEventListener('click', function () {
       if (state.perfIndex < 0) return;
+      if (state.perfEditorDirty && !window.confirm('Duplicate this event without saving current calendar edits?')) return;
       clearSelected(state.perfSelected);
       var event = clone(state.perfs[state.perfIndex]);
+      event.id = '';
+      perfStableId(event, Date.now());
       state.perfs.splice(state.perfIndex + 1, 0, event);
-      state.perfIndex += 1;
+      setSelectedPerfIndex(state.perfIndex + 1);
       reorderPerfEventsChronologically();
       flashPerfListItem(state.perfIndex);
+      state.perfEditorDirty = false;
+      state.perfSaveStatus = 'Unsaved changes';
       renderPerfList(); renderPerfEditor(); markDirty(true);
     });
     $('perf-del').addEventListener('click', function () {
@@ -20867,19 +21007,23 @@
       if (!window.confirm('Delete the selected calendar event?')) return;
       clearSelected(state.perfSelected);
       state.perfs.splice(state.perfIndex, 1);
-      state.perfIndex = Math.max(0, state.perfIndex - 1); renderPerfList(); renderPerfEditor(); markDirty(true);
+      state.selectedPerfId = '';
+      setSelectedPerfIndex(Math.min(Math.max(0, state.perfIndex - 1), state.perfs.length - 1));
+      state.perfEditorDirty = false;
+      state.perfSaveStatus = 'Unsaved changes';
+      renderPerfList(); renderPerfEditor(); markDirty(true);
     });
     $('perf-up').addEventListener('click', function () {
       var i = state.perfIndex; if (i <= 0) return;
       clearSelected(state.perfSelected);
       var t = state.perfs[i - 1]; state.perfs[i - 1] = state.perfs[i]; state.perfs[i] = t;
-      state.perfIndex = i - 1; renderPerfList(); markDirty(true);
+      setSelectedPerfIndex(i - 1); renderPerfList(); markDirty(true);
     });
     $('perf-down').addEventListener('click', function () {
       var i = state.perfIndex; if (i < 0 || i >= state.perfs.length - 1) return;
       clearSelected(state.perfSelected);
       var t = state.perfs[i + 1]; state.perfs[i + 1] = state.perfs[i]; state.perfs[i] = t;
-      state.perfIndex = i + 1; renderPerfList(); markDirty(true);
+      setSelectedPerfIndex(i + 1); renderPerfList(); markDirty(true);
     });
     if ($('perf-prev-item')) $('perf-prev-item').addEventListener('click', function () { goPrevNext('perf', -1); });
     if ($('perf-next-item')) $('perf-next-item').addEventListener('click', function () { goPrevNext('perf', 1); });
