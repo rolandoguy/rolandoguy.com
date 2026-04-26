@@ -3128,7 +3128,7 @@
   var PUBLIC_PERF_EVENT_FIELDS = [
     'id', 'day', 'month', 'time', 'title',
     'detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr',
-    'venue', 'city', 'venuePhoto', 'venuePhotoFocus', 'venueOpacity',
+    'venue', 'city', 'address', 'address_en', 'address_de', 'address_es', 'address_it', 'address_fr', 'mapsUrl', 'venuePhoto', 'venuePhotoFocus', 'venueOpacity',
     'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr',
     'ticketPrice',
     'eventLink', 'eventLinkLabel',

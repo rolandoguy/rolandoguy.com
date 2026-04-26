@@ -91,11 +91,14 @@
     ]).then(function (pair) {
       var livePerfs = pair[0] && Array.isArray(pair[0].data) ? normalizeRgPerfsList(pair[0].data) : null;
       var livePast = pair[1] && Array.isArray(pair[1].data) ? normalizePastPublicList(pair[1].data) : null;
-      LIVE_PUBLIC_PERFS = livePerfs;
+      var mergedPerfs = livePerfs && MP_CAL && Array.isArray(MP_CAL.perfs)
+        ? mergeLivePerfsWithBundledFallback(livePerfs, MP_CAL.perfs)
+        : livePerfs;
+      LIVE_PUBLIC_PERFS = mergedPerfs;
       LIVE_PUBLIC_PAST_PERFS = livePast;
-      if (MP_CAL && livePerfs) MP_CAL.perfs = livePerfs;
+      if (MP_CAL && mergedPerfs) MP_CAL.perfs = mergedPerfs;
       if (livePast) MP_PAST_PERFS = livePast;
-      return { perfs: livePerfs, pastPerfs: livePast };
+      return { perfs: mergedPerfs, pastPerfs: livePast };
     }).catch(function () {
       LIVE_PUBLIC_PERFS = null;
       LIVE_PUBLIC_PAST_PERFS = null;
@@ -130,7 +133,7 @@
   })();
 
   var MP_CAL_UI_EN = {
-    'perf.maps': 'Maps',
+    'perf.maps': 'Map / Route',
     'perf.pastStamp': 'Past',
     'perf.pastDivider': 'Past Performances',
     'perf.calendarEmpty': 'Upcoming dates to be announced soon.',
@@ -308,6 +311,26 @@
   function normalizedEditorialStatus(v) {
     return String(v || '').trim().toLowerCase();
   }
+  function mergeLivePerfsWithBundledFallback(livePerfs, bundledPerfs) {
+    var fallbackById = {};
+    (bundledPerfs || []).forEach(function (item) {
+      if (item && item.id != null) fallbackById[String(item.id)] = item;
+    });
+    return (livePerfs || []).map(function (live) {
+      if (!live || live.id == null) return live;
+      var fallback = fallbackById[String(live.id)];
+      if (!fallback) return live;
+      var out = Object.assign({}, live);
+      Object.keys(fallback).forEach(function (key) {
+        var liveValue = out[key];
+        var fallbackValue = fallback[key];
+        var liveBlank = liveValue == null || (typeof liveValue === 'string' && liveValue.trim() === '');
+        var fallbackHasValue = fallbackValue != null && !(typeof fallbackValue === 'string' && fallbackValue.trim() === '');
+        if (liveBlank && fallbackHasValue) out[key] = fallbackValue;
+      });
+      return out;
+    });
+  }
   function isTruthyFlag(v) {
     if (v === true) return true;
     var s = String(v == null ? '' : v).trim().toLowerCase();
@@ -332,6 +355,13 @@
   }
   function normalizeRgPerfsItem(raw, idx) {
     var o = raw && typeof raw === 'object' ? raw : {};
+    function firstNonEmpty(keys) {
+      for (var i = 0; i < keys.length; i++) {
+        var value = o[keys[i]];
+        if (value != null && String(value).trim() !== '') return String(value).trim();
+      }
+      return '';
+    }
     var title = String(o.title || o.name || '').trim();
     var detail = String(o.detail || o.description || '').trim();
     var venue = String(o.venue || o.place || '').trim();
@@ -363,6 +393,8 @@
       detail: detail,
       venue: venue,
       city: city,
+      address: firstNonEmpty(['address', 'venueAddress', 'modalAddress', 'streetAddress']),
+      mapsUrl: firstNonEmpty(['mapsUrl', 'mapUrl', 'mapsLink', 'modalMapsLink', 'locationUrl', 'directionsUrl']),
       day: day,
       month: month,
       time: time,
@@ -378,10 +410,10 @@
       venuePhoto: String(o.venuePhoto || o.image || '').trim(),
       venuePhotoFocus: String(o.venuePhotoFocus || o.imageFocus || '').trim(),
       venueOpacity: o.venueOpacity,
-      ticketPrice: String(o.ticketPrice || '').trim(),
+      ticketPrice: firstNonEmpty(['ticketPrice', 'priceInfo', 'modalPrice', 'modalTicketPrice', 'price', 'ticketInfo']),
       eventLink: String(o.eventLink || o.link || '').trim(),
       eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
-      extDesc: String(o.extDesc || '').trim(),
+      extDesc: firstNonEmpty(['extDesc', 'modalText', 'description', 'longDescription', 'modalLongDesc']),
       modalImg: String(o.modalImg || '').trim(),
       modalImgHide: isTruthyFlag(o.modalImgHide),
       moreInfoDisplayMode: String(o.moreInfoDisplayMode || '').trim(),
@@ -426,6 +458,11 @@
       city_es: o.city_es,
       city_it: o.city_it,
       city_fr: o.city_fr,
+      address_en: firstNonEmpty(['address_en', 'venueAddress_en', 'modalAddress_en', 'streetAddress_en']),
+      address_de: firstNonEmpty(['address_de', 'venueAddress_de', 'modalAddress_de', 'streetAddress_de']),
+      address_es: firstNonEmpty(['address_es', 'venueAddress_es', 'modalAddress_es', 'streetAddress_es']),
+      address_it: firstNonEmpty(['address_it', 'venueAddress_it', 'modalAddress_it', 'streetAddress_it']),
+      address_fr: firstNonEmpty(['address_fr', 'venueAddress_fr', 'modalAddress_fr', 'streetAddress_fr']),
       time_en: o.time_en,
       time_de: o.time_de,
       time_es: o.time_es,
@@ -441,11 +478,11 @@
       detail_es: o.detail_es,
       detail_it: o.detail_it,
       detail_fr: o.detail_fr,
-      extDesc_en: o.extDesc_en,
-      extDesc_de: o.extDesc_de,
-      extDesc_es: o.extDesc_es,
-      extDesc_it: o.extDesc_it,
-      extDesc_fr: o.extDesc_fr,
+      extDesc_en: firstNonEmpty(['extDesc_en', 'modalText_en', 'description_en', 'longDescription_en', 'modalLongDesc_en']),
+      extDesc_de: firstNonEmpty(['extDesc_de', 'modalText_de', 'description_de', 'longDescription_de', 'modalLongDesc_de']),
+      extDesc_es: firstNonEmpty(['extDesc_es', 'modalText_es', 'description_es', 'longDescription_es', 'modalLongDesc_es']),
+      extDesc_it: firstNonEmpty(['extDesc_it', 'modalText_it', 'description_it', 'longDescription_it', 'modalLongDesc_it']),
+      extDesc_fr: firstNonEmpty(['extDesc_fr', 'modalText_fr', 'description_fr', 'longDescription_fr', 'modalLongDesc_fr']),
       privateBadgeText_en: o.privateBadgeText_en,
       privateBadgeText_de: o.privateBadgeText_de,
       privateBadgeText_es: o.privateBadgeText_es,
@@ -725,9 +762,10 @@
     return { month: s, year: '' };
   }
 
-  /* Public descriptive text must stay in the active language only.
-   * detail/extDesc: base_<lang> only for lang≠en; for en allow base_en then shared base.
-   * Other fields: base_<lang> → base_en → base.
+  /* Public event text resolves localized values first, then shared/admin base
+   * values, then EN values. Older payloads may only have shared modal text,
+   * so non-EN pages must not hide the modal body just because extDesc_<lang>
+   * is empty.
    */
   function perfLocaleFieldResolve(p, base, lang) {
     if (!p) return { value: '', source: '' };
@@ -759,12 +797,19 @@
       return { value: '', source: '' };
     }
     if (base === 'detail' || base === 'extDesc') {
-      if (L !== 'en') return { value: '', source: '' };
       var sharedDetail = p[base];
       if (sharedDetail != null && String(sharedDetail).trim() !== '') {
         return {
           value: perfNormalizeSupportingText(String(sharedDetail).trim(), base, L),
           source: base
+        };
+      }
+      var enKeyDetail = base + '_en';
+      var enDetail = p[enKeyDetail];
+      if (L !== 'en' && enDetail != null && String(enDetail).trim() !== '') {
+        return {
+          value: perfNormalizeSupportingText(String(enDetail).trim(), base, L),
+          source: enKeyDetail
         };
       }
       return { value: '', source: '' };
@@ -826,6 +871,8 @@
       flyerImg: String(p.flyerImg || '').trim(),
       venue: perfLocalizedField(p, 'venue', lang, 'place') || '',
       city: perfLocalizedField(p, 'city', lang, 'place') || '',
+      address: perfModalAddress(p, lang),
+      mapsUrl: String(p.mapsUrl || '').trim(),
       ticketPrice: String(p.ticketPrice || '').trim(),
       sortDate: String(p.sortDate || '').trim(),
       time: perfLocaleField(p, 'time', lang) || ''
@@ -1101,7 +1148,7 @@
     var title = String(p.moreInfoTitle || '').trim() || modalTitle;
     var subtitle = String(p.moreInfoSubtitle || '').trim();
     var artists = String(p.moreInfoArtists || '').trim();
-    var address = String(p.moreInfoAddress || '').trim();
+    var address = String(p.moreInfoAddress || '').trim() || perfModalAddress(p, currentLang);
     var description = String(p.moreInfoDescription || '').trim() || modalBody;
     var extra = String(p.moreInfoExtra || '').trim();
     var meta1 = perfDateLine(p, currentLang);
@@ -1213,6 +1260,37 @@
     if (!value) return '';
     if (kind === 'place') return perfLocalizedPlaceText(value, lang);
     return perfLocalizedPlaceholder(value, lang);
+  }
+  function perfModalAddress(p, lang) {
+    if (!p) return '';
+    return (
+      perfLocalizedField(p, 'address', lang, 'place') ||
+      perfLocalizedPlaceText(p.moreInfoAddress, lang)
+    );
+  }
+  function perfMapsLabel(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var labels = {
+      en: 'Map / Route',
+      de: 'Karte / Route',
+      es: 'Mapa / ruta',
+      it: 'Mappa / percorso',
+      fr: 'Carte / itinéraire'
+    };
+    var t = uiTable(L);
+    var fromLocale = String(t['perf.maps'] || '').trim();
+    if (fromLocale && fromLocale.indexOf('/') >= 0) return fromLocale;
+    return labels[L] || labels.en;
+  }
+  function perfMapsHref(p, lang) {
+    if (!p) return '';
+    var explicit = String(p.mapsUrl || '').trim();
+    if (isValidPerfCtaUrl(explicit)) return explicit;
+    var address = perfModalAddress(p, lang);
+    var venue = perfLocalizedField(p, 'venue', lang, 'place') || '';
+    var city = perfLocalizedField(p, 'city', lang, 'place') || '';
+    var destination = address || [venue, city].filter(Boolean).join(' ');
+    return destination ? ('https://maps.google.com/?q=' + encodeURIComponent(destination)) : '';
   }
   function perfModalBodyText(p, lang, isPrivate) {
     var detail = perfLocalizedField(p, 'detail', lang);
@@ -2029,6 +2107,7 @@
     var typeLabel = isPrivate ? ((uiTable(currentLang)['perf.privateEventType']) || 'Private event') : (types[p.type] || p.type || '');
     var modalTitle = resolveEventTitle(p, currentLang);
     var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
+    var modalAddress = perfModalAddress(p, currentLang);
     var modalBody = perfModalBodyText(p, currentLang, isPrivate);
     var escapedBody = String(modalBody || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
@@ -2046,16 +2125,29 @@
     setModalText('emTitle', modalTitle);
     setModalText('emDate', perfDateLine(p, currentLang));
     setModalText('emVenue', venueCity);
+    setModalText('emAddress', modalAddress);
     setModalHtml('emDetail', bodyWithBreaks);
 
     calendarModalOptionalStep('renderEditorialMoreInfo', snapshot, function () {
       editorialActive = !!renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, modalFallbackImg);
     });
     calendarModalOptionalStep('toggle core fields', snapshot, function () {
-      ['emType', 'emTitle', 'emDate', 'emVenue', 'emDetail'].forEach(function (id) {
+      var showAddress = !!(modalAddress && !isPrivate);
+      var showVenue = !!(!isPrivate && venueCity);
+      ['emType', 'emTitle', 'emDate', 'emDetail'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = editorialActive ? 'none' : '';
       });
+      var venueEl = document.getElementById('emVenue');
+      var addressEl = document.getElementById('emAddress');
+      if (venueEl) {
+        venueEl.style.display = showVenue ? '' : (editorialActive ? 'none' : '');
+        venueEl.style.marginBottom = (showVenue && showAddress) ? '6px' : '24px';
+      }
+      if (addressEl) {
+        addressEl.style.display = showAddress ? '' : 'none';
+        addressEl.style.margin = (showVenue && showAddress) ? '-14px 0 24px' : '0 0 24px';
+      }
     });
     calendarModalOptionalStep('hero image', snapshot, function () {
       var imgEl = document.getElementById('emVenueImg');
@@ -2078,9 +2170,9 @@
     calendarModalOptionalStep('price block', snapshot, function () {
       var priceWrap = document.getElementById('emPrice');
       if (!priceWrap) return;
-      if (!editorialActive && !isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
+      if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
         setModalText('emPriceVal', p.ticketPrice);
-        priceWrap.style.display = '';
+        priceWrap.style.display = 'block';
       } else {
         priceWrap.style.display = 'none';
       }
@@ -2091,7 +2183,7 @@
       if (!isPrivate && isValidPerfCtaUrl(ticketUrl)) {
         linkEl.href = ticketUrl;
         linkEl.textContent = resolvePerfCtaLabel(p, currentLang);
-        linkEl.style.display = '';
+        linkEl.style.display = 'inline-flex';
       } else {
         linkEl.removeAttribute('href');
         linkEl.style.display = 'none';
@@ -2149,16 +2241,13 @@
       var mapsEl = document.getElementById('emMapsLink');
       if (!mapsEl) return;
       var mapsTextEl = document.getElementById('emMapsText');
-      var destination = String((perfLocalizedField(p, 'venue', currentLang, 'place') || '') + (perfLocalizedField(p, 'city', currentLang, 'place') ? (' ' + perfLocalizedField(p, 'city', currentLang, 'place')) : '')).trim();
-      if (destination && !isPrivate) {
-        mapsEl.href = 'https://maps.google.com/?q=' + encodeURIComponent(destination);
-        var t2 = uiTable(currentLang);
-        var mapsLabel =
-          t2['perf.maps'] ||
-          ({ en: 'Maps', de: 'Karten', es: 'Mapas', it: 'Mappa', fr: 'Cartes' }[currentLang] || 'Maps');
+      var mapsHref = perfMapsHref(p, currentLang);
+      if (mapsHref && !isPrivate) {
+        mapsEl.href = mapsHref;
+        var mapsLabel = perfMapsLabel(currentLang);
         if (mapsTextEl) mapsTextEl.textContent = mapsLabel;
         else mapsEl.textContent = '\ud83d\udccd ' + mapsLabel;
-        mapsEl.style.display = '';
+        mapsEl.style.display = 'inline-flex';
       } else {
         mapsEl.removeAttribute('href');
         mapsEl.style.display = 'none';

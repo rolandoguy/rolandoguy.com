@@ -22,6 +22,13 @@ var PUBLIC_EVENT_FIELDS = [
   'detail_fr',
   'venue',
   'city',
+  'address',
+  'address_en',
+  'address_de',
+  'address_es',
+  'address_it',
+  'address_fr',
+  'mapsUrl',
   'venuePhoto',
   'venuePhotoFocus',
   'venueOpacity',
@@ -133,6 +140,13 @@ var INTERNAL_EVENT_FIELDS = [
   'detail_fr',
   'venue',
   'city',
+  'address',
+  'address_en',
+  'address_de',
+  'address_es',
+  'address_it',
+  'address_fr',
+  'mapsUrl',
   'venuePhoto',
   'venuePhotoFocus',
   'venueBrightness',
@@ -234,8 +248,42 @@ function pickFields(src, fields) {
   return out;
 }
 
+function firstNonEmptyField(src, fields) {
+  if (!src || typeof src !== 'object' || Array.isArray(src)) return '';
+  for (var i = 0; i < fields.length; i++) {
+    var key = fields[i];
+    if (Object.prototype.hasOwnProperty.call(src, key) && src[key] != null && String(src[key]).trim() !== '') {
+      return src[key];
+    }
+  }
+  return '';
+}
+
 function sanitizePublicEvent(record) {
-  return pickFields(record, PUBLIC_EVENT_FIELDS);
+  var safe = pickFields(record, PUBLIC_EVENT_FIELDS);
+  if (safe.ticketPrice == null || String(safe.ticketPrice).trim() === '') {
+    safe.ticketPrice = firstNonEmptyField(record, ['priceInfo', 'modalPrice', 'modalTicketPrice', 'price', 'ticketInfo']);
+  }
+  if (safe.address == null || String(safe.address).trim() === '') {
+    safe.address = firstNonEmptyField(record, ['venueAddress', 'modalAddress', 'streetAddress']);
+  }
+  if (safe.mapsUrl == null || String(safe.mapsUrl).trim() === '') {
+    safe.mapsUrl = firstNonEmptyField(record, ['mapUrl', 'mapsLink', 'modalMapsLink', 'locationUrl', 'directionsUrl']);
+  }
+  if (safe.extDesc == null || String(safe.extDesc).trim() === '') {
+    safe.extDesc = firstNonEmptyField(record, ['modalText', 'description', 'longDescription', 'modalLongDesc']);
+  }
+  ['en', 'de', 'es', 'it', 'fr'].forEach(function (lang) {
+    var key = 'extDesc_' + lang;
+    if (safe[key] != null && String(safe[key]).trim() !== '') return;
+    safe[key] = firstNonEmptyField(record, [
+      'modalText_' + lang,
+      'description_' + lang,
+      'longDescription_' + lang,
+      'modalLongDesc_' + lang
+    ]);
+  });
+  return safe;
 }
 
 function sanitizePublicPastEvent(record) {

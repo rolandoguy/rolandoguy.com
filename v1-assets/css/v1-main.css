@@ -2625,6 +2625,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   #eventModal #emDetail,
   #eventModal #emExtDesc{font-size:.86rem !important;line-height:1.72 !important;white-space:pre-wrap}
   #eventModal #emVenue{line-height:1.55}
+  #eventModal #emAddress{font-size:.76rem !important;line-height:1.55 !important}
   #eventModal #emActions{
     display:grid !important;
     grid-template-columns:1fr;
