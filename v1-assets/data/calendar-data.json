@@ -26,11 +26,17 @@
       "detail_en": "",
       "venue": "",
       "city": "Nördlingen",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFu9GJCex3otDZYET01mv8fO7RwRGlnQ7dRBJfDoJCUt1LI1v1Cw78QGxMoIECfzlrA741OqKn630frHm6T9lW4EBuCNO_W7rc6yKyOfilUsA9TSnpRLYr4vp7fc4jtHM8e5Zd3=s1360-w1360-h1020",
       "venuePhotoFocus": "center center",
       "venueOpacity": 30,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
+      "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
       "eventLinkLabel": "",
@@ -62,13 +68,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": "",
-      "extDesc_fr": ""
+      "homepage_priority": 0
     },
     {
       "id": 11,
@@ -84,6 +84,8 @@
       "detail_fr": "Concert de la Pentecôte proposant un programme lyrique composé d'œuvres de Schubert, Mozart, Bizet, Donizetti et Gardel.",
       "venue": "Dreieinigkeitskirche, 12351 Berlin",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://edge.churchdesk.com/blog-214889/span7_16-9/public/o/221/04_kirche_mmr1620b.jpg?c=NNN",
       "venuePhotoFocus": "center center",
       "venueOpacity": 30,
@@ -159,9 +161,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": ""
+      "homepage_priority": 0
     },
     {
       "id": 6,
@@ -177,6 +177,8 @@
       "detail_fr": "Private engagement",
       "venue": "-",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "",
       "venuePhotoFocus": "top left",
       "venueOpacity": 50,
@@ -243,9 +245,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": ""
+      "homepage_priority": 0
     },
     {
       "id": "perf-11",
@@ -257,25 +257,30 @@
       "detail_en": "Tangos argentinos and italian songs",
       "venue": "Clärchens",
       "city": "Berlin",
-      "address": "Auguststraße 24, 10117 Berlin",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://cdn.prod.website-files.com/68bae0243f7f614cfc5e6f84/68f7592468110afd6baeb2c3_von%20oben.jpeg",
       "venuePhotoFocus": "bottom left",
       "venueOpacity": 30,
       "extDesc": "Tango Tenors is a concert programme by Argentine-Italian tenor Rolando Guy and pianist-singer Gaston Efficace, celebrating the emotional worlds of Argentine tango, Neapolitan song and the Italian vocal tradition.\n\nWith a repertoire that connects Buenos Aires, Naples and the lyric stage, the evening combines the sensual melancholy of tango with the direct emotional power of Italian song. Carlos Gardel, Astor Piazzolla, Neapolitan canzonettas and well-known operatic moments meet in a programme shaped by voice, piano, rhythm and theatrical presence.\n\nTango Tenors is not a conventional classical recital, but a vivid musical journey: passionate, elegant, nostalgic and full of character.",
       "extDesc_en": "Tango Tenors is a concert programme by Argentine-Italian tenor Rolando Guy and pianist-singer Gaston Efficace, celebrating the emotional worlds of Argentine tango, Neapolitan song and the Italian vocal tradition.\n\nWith a repertoire that connects Buenos Aires, Naples and the lyric stage, the evening combines the sensual melancholy of tango with the direct emotional power of Italian song. Carlos Gardel, Astor Piazzolla, Neapolitan canzonettas and well-known operatic moments meet in a programme shaped by voice, piano, rhythm and theatrical presence.\n\nTango Tenors is not a conventional classical recital, but a vivid musical journey: passionate, elegant, nostalgic and full of character.",
-      "ticketPrice": "20€ / 15€ reduced",
-      "eventLink": "https://claerchensball.haus/programm/",
-      "eventLinkLabel": "Tickets & Info",
-      "eventLink_en": "https://claerchensball.haus/programm/",
-      "eventLinkLabel_en": "Tickets & Info",
-      "eventLink_de": "https://claerchensball.haus/programm/",
-      "eventLinkLabel_de": "Tickets & Info",
-      "eventLink_es": "https://claerchensball.haus/programm/",
-      "eventLinkLabel_es": "Tickets & Info",
-      "eventLink_it": "https://claerchensball.haus/programm/",
-      "eventLinkLabel_it": "Tickets & Info",
-      "eventLink_fr": "https://claerchensball.haus/programm/",
-      "eventLinkLabel_fr": "Tickets & Info",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
+      "extDesc_fr": "",
+      "ticketPrice": "",
+      "eventLink": "",
+      "eventLinkLabel": "",
+      "eventLink_en": "",
+      "eventLinkLabel_en": "",
+      "eventLink_de": "",
+      "eventLinkLabel_de": "",
+      "eventLink_es": "",
+      "eventLinkLabel_es": "",
+      "eventLink_it": "",
+      "eventLinkLabel_it": "",
+      "eventLink_fr": "",
+      "eventLinkLabel_fr": "",
       "flyerImg": "",
       "modalEnabled": true,
       "modalImg": "",
@@ -299,12 +304,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": "",
-      "extDesc_fr": ""
+      "homepage_priority": 0
     },
     {
       "id": "perf-12",
@@ -316,11 +316,17 @@
       "detail_en": "",
       "venue": "",
       "city": "Berlin",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "",
       "venuePhotoFocus": "top left",
       "venueOpacity": 50,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
+      "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
       "eventLinkLabel": "",
@@ -352,13 +358,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": "",
-      "extDesc_fr": ""
+      "homepage_priority": 0
     },
     {
       "id": 10,
@@ -374,6 +374,8 @@
       "detail_fr": "Une soirée musicale empreinte de passion, d'amitié et de nostalgie — au-delà des frontières et des cultures.",
       "venue": "Schwartzsche Villa",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://www.berlin.de/imgscale2/0L6bc-OzsKDoeLiBqxBhDEeeA90ZY0v76jH38_2srIc/r4zu3/aHR0cDovL2ltcGVyaWFmcm9udGVuZC1wcm9kLXd3dy1odHRwOjgwODAvYmEtc3RlZ2xpdHotemVobGVuZG9yZi9hdWYtZWluZW4tYmxpY2sva3VsdHVyL2Fzc2V0cy9hbGxnZW1laW4vc2Nod2FydHpzY2hlLXZpbGxhLWdyb3NzZXItc2Fsb24uanBn.jpg",
       "venuePhotoFocus": "center center",
       "venueOpacity": 30,
@@ -422,9 +424,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": ""
+      "homepage_priority": 0
     },
     {
       "id": 7,
@@ -440,6 +440,8 @@
       "detail_fr": "Private engagement",
       "venue": "-",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "",
       "venuePhotoFocus": "top left",
       "venueOpacity": 30,
@@ -488,9 +490,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": ""
+      "homepage_priority": 0
     },
     {
       "id": "perf-5",
@@ -502,10 +502,16 @@
       "detail_en": "",
       "venue": "Konzerthaus Berlin Kleiner Saal",
       "city": "Berlin",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://www.konzerthaus.de/media/filer_public/ea/83/ea83d46f-a740-4e45-8b2a-d6bb6f5a3b3e/kleiner_saal_foto_sebastian_runge_1.jpg",
       "venueOpacity": 50,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
+      "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
       "eventLinkLabel": "",
@@ -535,13 +541,7 @@
         "media": false,
         "homepage": false,
         "calendar": false
-      },
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": "",
-      "extDesc_fr": ""
+      }
     },
     {
       "id": 12,
@@ -557,6 +557,8 @@
       "detail_fr": "",
       "venue": "Dreieinigkeitskirche, 12351 Berlin",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://edge.churchdesk.com/blog-214889/span7_16-9/public/o/221/04_kirche_mmr1620b.jpg?c=NNN",
       "venuePhotoFocus": "center center",
       "venueOpacity": 30,
@@ -632,9 +634,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": ""
+      "homepage_priority": 0
     },
     {
       "id": "perf-9",
@@ -646,11 +646,17 @@
       "detail_en": "To be announced",
       "venue": "Zwölf-Apostel-Kirche",
       "city": "Berlin",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Berlin_Zwölf_Aposteln_Schöneberg_asv2023-10_img1.jpg/1920px-Berlin_Zwölf_Aposteln_Schöneberg_asv2023-10_img1.jpg",
       "venuePhotoFocus": "center center",
       "venueOpacity": 30,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
+      "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
       "eventLinkLabel": "",
@@ -683,13 +689,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": "",
-      "extDesc_fr": ""
+      "homepage_priority": 0
     },
     {
       "id": 8,
@@ -705,10 +705,15 @@
       "detail_fr": "Irma la douce",
       "venue": "Institut Français",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://www.institutfrancais.de/sites/default/files/styles/w960h540/public/2019-11/salle_boris_vian_2.jpg.webp?itok=I1seaeF_",
       "venueOpacity": 30,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
       "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
@@ -740,12 +745,7 @@
         "media": false,
         "homepage": false,
         "calendar": false
-      },
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": ""
+      }
     },
     {
       "id": "perf-10",
@@ -757,11 +757,17 @@
       "detail_en": "To be announced",
       "venue": "Kapelle des St. Joseph Krankenhauses",
       "city": "Berlin",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://edge.churchdesk.com/event-41730212/span7_16-9/public/o/832/stjoseph_0.jpg?c=NNN",
       "venuePhotoFocus": "center center",
       "venueOpacity": 30,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
+      "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
       "eventLinkLabel": "",
@@ -794,13 +800,7 @@
         "homepage": false,
         "calendar": false
       },
-      "homepage_priority": 0,
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": "",
-      "extDesc_fr": ""
+      "homepage_priority": 0
     },
     {
       "id": 9,
@@ -816,10 +816,15 @@
       "detail_fr": "Irma la douce",
       "venue": "Brotfabrik",
       "city": "Berlin, Germany",
+      "address": "",
+      "mapsUrl": "",
       "venuePhoto": "https://www.berlin.de/kunst-und-kultur-pankow/einrichtungen/brotfabrik/bilder/theater.jpg",
       "venueOpacity": 30,
       "extDesc": "",
       "extDesc_en": "",
+      "extDesc_de": "",
+      "extDesc_es": "",
+      "extDesc_it": "",
       "extDesc_fr": "",
       "ticketPrice": "",
       "eventLink": "",
@@ -851,12 +856,7 @@
         "media": false,
         "homepage": false,
         "calendar": false
-      },
-      "address": "",
-      "mapsUrl": "",
-      "extDesc_de": "",
-      "extDesc_es": "",
-      "extDesc_it": ""
+      }
     }
   ],
   "pastPerfs": [

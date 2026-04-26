@@ -312,6 +312,43 @@
     return String(v || '').trim().toLowerCase();
   }
   function mergeLivePerfsWithBundledFallback(livePerfs, bundledPerfs) {
+    var fallbackAllowed = {
+      extDesc: 1,
+      extDesc_en: 1,
+      extDesc_de: 1,
+      extDesc_es: 1,
+      extDesc_it: 1,
+      extDesc_fr: 1,
+      detail: 1,
+      detail_en: 1,
+      detail_de: 1,
+      detail_es: 1,
+      detail_it: 1,
+      detail_fr: 1,
+      venuePhoto: 1,
+      venuePhotoFocus: 1,
+      venueOpacity: 1,
+      modalImg: 1,
+      modalImgHide: 1,
+      flyerImg: 1,
+      moreInfoDisplayMode: 1,
+      moreInfoTemplate: 1,
+      moreInfoTitle: 1,
+      moreInfoSubtitle: 1,
+      moreInfoArtists: 1,
+      moreInfoDescription: 1,
+      moreInfoExtra: 1,
+      moreInfoImage1: 1,
+      moreInfoImage1Focus: 1,
+      moreInfoImage2: 1,
+      moreInfoImage2Focus: 1,
+      moreInfoImage3: 1,
+      moreInfoImage3Focus: 1,
+      moreInfoImage4: 1,
+      moreInfoImage4Focus: 1,
+      moreInfoImage5: 1,
+      moreInfoImage5Focus: 1
+    };
     var fallbackById = {};
     (bundledPerfs || []).forEach(function (item) {
       if (item && item.id != null) fallbackById[String(item.id)] = item;
@@ -322,6 +359,7 @@
       if (!fallback) return live;
       var out = Object.assign({}, live);
       Object.keys(fallback).forEach(function (key) {
+        if (!fallbackAllowed[key]) return;
         var liveValue = out[key];
         var fallbackValue = fallback[key];
         var liveBlank = liveValue == null || (typeof liveValue === 'string' && liveValue.trim() === '');
@@ -836,14 +874,64 @@
   }
   function resolvePerfCtaLabel(p, lang) {
     var chosenLabel = perfLocaleField(p, 'eventLinkLabel', lang);
-    if (chosenLabel) return chosenLabel;
     var t = uiTable(lang);
+    if (chosenLabel) {
+      return perfIsGenericTicketInfoLabel(chosenLabel) ? perfGenericTicketInfoLabel(lang, t) : chosenLabel;
+    }
     var ticketUrl = perfLocaleField(p, 'eventLink', lang);
     var hasPrice = p && p.ticketPrice && String(p.ticketPrice).trim() !== '';
     var isSalesLike =
       ticketUrl && /ticket|booking|reserv|kaufen|billet|entrada|biglietto|billet/i.test(String(ticketUrl));
-    if (hasPrice || isSalesLike) return t['perf.ticketsInfo'] || 'Tickets & Info';
+    if (hasPrice || isSalesLike) return perfGenericTicketInfoLabel(lang, t);
     return t['perf.moreInfo'] || 'More info';
+  }
+  function perfGenericTicketInfoLabel(lang, table) {
+    var L = normalizeLangCode(lang) || 'en';
+    var labels = {
+      en: 'Tickets & Info',
+      de: 'Tickets & Info',
+      es: 'Entradas e info',
+      it: 'Biglietti e info',
+      fr: 'Billets & infos'
+    };
+    var fromLocale = String((table || uiTable(L))['perf.ticketsInfo'] || '').trim();
+    return fromLocale || labels[L] || labels.en;
+  }
+  function perfIsGenericTicketInfoLabel(label) {
+    var normalized = String(label || '')
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/\+/g, 'and')
+      .replace(/[./:;,_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
+    return [
+      'tickets and info',
+      'tickets and infos',
+      'ticket and info',
+      'ticket info',
+      'tickets info',
+      'entradas e info',
+      'entradas e informacion',
+      'entradas e información',
+      'biglietti e info',
+      'biglietti e informazioni',
+      'billets and infos',
+      'billets et infos',
+      'billets info'
+    ].indexOf(normalized) >= 0;
+  }
+  function perfTicketPriceLabel(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var labels = {
+      en: 'Tickets',
+      de: 'Tickets / Eintritt',
+      es: 'Entradas',
+      it: 'Biglietti',
+      fr: 'Billets'
+    };
+    var fromLocale = String(uiTable(L)['perf.modalTicketsLead'] || '').trim().replace(/\s*:\s*$/, '');
+    return fromLocale || labels[L] || labels.en;
   }
   function isValidPerfCtaUrl(raw) {
     var url = String(raw || '').trim();
@@ -1289,7 +1377,7 @@
     var address = perfModalAddress(p, lang);
     var venue = perfLocalizedField(p, 'venue', lang, 'place') || '';
     var city = perfLocalizedField(p, 'city', lang, 'place') || '';
-    var destination = address || [venue, city].filter(Boolean).join(' ');
+    var destination = [address, venue, city].filter(Boolean).join(' ');
     return destination ? ('https://maps.google.com/?q=' + encodeURIComponent(destination)) : '';
   }
   function perfModalBodyText(p, lang, isPrivate) {
@@ -2142,11 +2230,11 @@
       var addressEl = document.getElementById('emAddress');
       if (venueEl) {
         venueEl.style.display = showVenue ? '' : (editorialActive ? 'none' : '');
-        venueEl.style.marginBottom = (showVenue && showAddress) ? '6px' : '24px';
+        venueEl.style.marginBottom = (showVenue && showAddress) ? '8px' : '24px';
       }
       if (addressEl) {
         addressEl.style.display = showAddress ? '' : 'none';
-        addressEl.style.margin = (showVenue && showAddress) ? '-14px 0 24px' : '0 0 24px';
+        addressEl.style.margin = '0 0 24px';
       }
     });
     calendarModalOptionalStep('hero image', snapshot, function () {
@@ -2171,6 +2259,8 @@
       var priceWrap = document.getElementById('emPrice');
       if (!priceWrap) return;
       if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
+        var priceLead = priceWrap.querySelector('[data-i18n="perf.modalTicketsLead"]');
+        if (priceLead) priceLead.textContent = perfTicketPriceLabel(currentLang);
         setModalText('emPriceVal', p.ticketPrice);
         priceWrap.style.display = 'block';
       } else {

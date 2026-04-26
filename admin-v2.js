@@ -13954,6 +13954,7 @@
     if ($('perf-modal-type')) setSelectWithCustomValue('perf-modal-type', safeString(e.type), 'concert');
     if ($('perf-modal-venue')) $('perf-modal-venue').value = safeString(e.venue);
     if ($('perf-modal-city')) $('perf-modal-city').value = safeString(e.city);
+    if ($('perf-modal-address')) $('perf-modal-address').value = localeFirst('address');
     if ($('perf-modal-longdesc')) $('perf-modal-longdesc').value = localeFirst('extDesc');
     if ($('perf-modal-link')) $('perf-modal-link').value = localeFirst('eventLink');
     if ($('perf-modal-link-label')) $('perf-modal-link-label').value = localeFirst('eventLinkLabel');
@@ -13966,10 +13967,7 @@
       else $('perf-modal-enabled').value = '';
     }
     if ($('perf-modal-flyerImg')) $('perf-modal-flyerImg').value = safeString(e.flyerImg);
-    if ($('perf-modal-maps-link')) {
-      var q = encodeURIComponent((safeString(e.venue).trim() || '') + (safeString(e.city).trim() ? (' ' + safeString(e.city).trim()) : ''));
-      $('perf-modal-maps-link').value = q ? ('https://maps.google.com/?q=' + q) : '';
-    }
+    if ($('perf-modal-maps-link')) $('perf-modal-maps-link').value = safeString(e.mapsUrl);
     $('perf-sortDate').value = safeString(e.sortDate);
     updatePerfCardPreview();
     updatePerfFeaturedStateHint();
@@ -14300,6 +14298,8 @@
       if (e.hidePrivateBadge !== true) e.hidePrivateBadge = false;
       if (e.hidePrivateDetailLine !== true) e.hidePrivateDetailLine = false;
     }
+    persistLocaleBackedField('address', safeString($('perf-modal-address') && $('perf-modal-address').value).trim());
+    e.mapsUrl = safeString($('perf-modal-maps-link') && $('perf-modal-maps-link').value).trim();
     persistLocaleBackedField('extDesc', safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value));
     e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
     persistLocaleBackedField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
@@ -14324,6 +14324,7 @@
     writeIfInactive('perf-modal-venue', e.venue);
     writeIfInactive('perf-city', e.city);
     writeIfInactive('perf-modal-city', e.city);
+    writeIfInactive('perf-modal-address', safeString(e['address_' + activeLang]).trim() || safeString(e.address).trim());
     writeIfInactive('perf-type', e.type || 'concert');
     writeIfInactive('perf-modal-type', e.type || 'concert');
     var shouldFlashNewEventAfterDate = state.perfPendingNewEvent === e && !!normalizeSortDateForInput(e.sortDate);
@@ -18927,7 +18928,7 @@
     renderPressList(); renderPressEditor(); markDirty(true, 'Quote template created');
   }
   function addEventFromTemplate() {
-    var event = { title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false, venueOpacity: 30 };
+    var event = { title: 'Event title', detail: '', day: '', month: '', time: '20:00', venue: '', city: '', address: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, homepage_priority: '', sortDate: '', revenueAmount: '', revenueCurrency: 'EUR', revenueStatus: 'unknown', revenueNotes: '', paymentStatus: 'pending', actualReceivedAmount: '', actualReceivedCurrency: '', paymentModel: 'fixed_fee', private: false, venueOpacity: 30 };
     state.perfs.push(event);
     state.perfIndex = state.perfs.length - 1;
     state.perfPendingNewEvent = event;
@@ -20843,7 +20844,7 @@
 
     $('perf-add').addEventListener('click', function () {
       clearSelected(state.perfSelected);
-      var event = { title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '', venueOpacity: 30 };
+      var event = { title: '', detail: '', day: '', month: '', time: '', venue: '', city: '', address: '', status: 'upcoming', type: 'concert', editorialStatus: 'draft', featured_visual: false, featured_layout: false, featured: false, featured_contexts: { media: false, homepage: false, calendar: false }, sortDate: '', venueOpacity: 30 };
       state.perfs.push(event);
       state.perfIndex = state.perfs.length - 1;
       state.perfPendingNewEvent = event;
@@ -21170,7 +21171,7 @@
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
