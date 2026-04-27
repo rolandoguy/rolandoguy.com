@@ -368,6 +368,19 @@ html.mp-site #intro .about-photo img.mp-home-hero-asset {
     background-position: calc(100% + 210px) -320px !important;
   }
 }
+
+/* Admin-controlled Home Hero crop. Keep this at the end so it wins over
+   the fixed historical hero composition rules above, including mobile. */
+html.mp-site #hero .hero-bg {
+  background-size: var(--hero-bg-size-desktop, 88% auto) !important;
+  background-position: var(--hero-bg-position-desktop, calc(100% + 210px) -320px) !important;
+}
+@media (max-width: 768px) {
+  html.mp-site #hero .hero-bg {
+    background-size: var(--hero-bg-size-mobile, var(--hero-bg-size-desktop, 114% auto)) !important;
+    background-position: var(--hero-bg-position-mobile, var(--hero-bg-position-desktop, 44% 16%)) !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) and (min-width: 1181px) and (max-width: 1400px) and (max-height: 1100px) and (orientation: landscape) {
   html.mp-site #hero {
     background: linear-gradient(
@@ -1003,5 +1016,18 @@ body[data-mp-page="index"] .home-highlight-sub {
   body[data-mp-page="index"] .home-highlight-sub {
     font-size: 0.74rem;
     line-height: 1.44;
+  }
+}
+
+/* Final admin-controlled Home Hero crop override. This intentionally sits at
+   the end of the file to beat older fixed hero-position media rules. */
+html.mp-site #hero .hero-bg {
+  background-size: var(--hero-bg-size-desktop, 88% auto) !important;
+  background-position: var(--hero-bg-position-desktop, calc(100% + 210px) -320px) !important;
+}
+@media (max-width: 768px) {
+  html.mp-site #hero .hero-bg {
+    background-size: var(--hero-bg-size-mobile, var(--hero-bg-size-desktop, 114% auto)) !important;
+    background-position: var(--hero-bg-position-mobile, var(--hero-bg-position-desktop, 44% 16%)) !important;
   }
 }

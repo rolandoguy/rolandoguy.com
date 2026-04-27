@@ -275,6 +275,29 @@
     }
     return null;
   }
+  function resolveHeroCrop(heroSettings, viewport, cfg) {
+    var prefix = viewport === 'mobile' ? 'mobile' : 'desktop';
+    var fallbackPosition = viewport === 'mobile' ? cfg && cfg.focalMobile : cfg && cfg.focalDesktop;
+    var manualOrPreset = normalizeHeroPosition(heroSettings && heroSettings[prefix + 'Position']);
+    var fit = normalizeHeroFit(heroSettings && heroSettings[prefix + 'Fit']);
+    return {
+      fit: fit || '',
+      position: manualOrPreset || normalizeHeroPosition(fallbackPosition)
+    };
+  }
+  function applyHeroCropVariables(heroBg, heroSettings, cfg, cropFallback) {
+    if (!heroBg) return;
+    var desktop = resolveHeroCrop(heroSettings, 'desktop', cfg || {});
+    var mobile = resolveHeroCrop(heroSettings, 'mobile', cfg || {});
+    var desktopFit = desktop.fit || cropFallback || 'cover';
+    var desktopPosition = desktop.position || 'center center';
+    var mobileFit = mobile.fit || desktopFit;
+    var mobilePosition = mobile.position || desktopPosition;
+    heroBg.style.setProperty('--hero-bg-size-desktop', desktopFit);
+    heroBg.style.setProperty('--hero-bg-position-desktop', desktopPosition);
+    heroBg.style.setProperty('--hero-bg-size-mobile', mobileFit);
+    heroBg.style.setProperty('--hero-bg-position-mobile', mobilePosition);
+  }
   function getIntroImageOverrideInfo() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     var shortLang = String(rawLang || 'en').split('-')[0];
@@ -672,21 +695,19 @@
     hb.setAttribute('data-crop', crop);
     if (hero) hero.setAttribute('data-crop', crop);
     var mq = window.matchMedia('(max-width: 700px)');
+    applyHeroCropVariables(hb, settings, cfg, crop);
     function focal() {
-      var configuredFit = settings ? (mq.matches ? settings.mobileFit : settings.desktopFit) : '';
-      var configuredPosition = settings ? (mq.matches ? settings.mobilePosition : settings.desktopPosition) : '';
-      var f = configuredPosition || (mq.matches ? cfg.focalMobile : cfg.focalDesktop);
-      if ((configuredFit || configuredPosition || hasAdminHeroImage) && configuredFit) {
-        hb.style.setProperty('background-size', configuredFit, 'important');
-        hb.setAttribute('data-crop', configuredFit);
-        if (hero) hero.setAttribute('data-crop', configuredFit);
-      } else if (configuredPosition || hasAdminHeroImage) {
-        hb.style.setProperty('background-size', crop, 'important');
+      var resolved = resolveHeroCrop(settings, mq.matches ? 'mobile' : 'desktop', cfg);
+      var f = resolved.position || (mq.matches ? cfg.focalMobile : cfg.focalDesktop);
+      if (settings || hasAdminHeroImage) {
+        hb.style.removeProperty('background-size');
+        hb.style.removeProperty('background-position');
+        hb.setAttribute('data-crop', resolved.fit || crop);
+        if (hero) hero.setAttribute('data-crop', resolved.fit || crop);
       }
       var pos = f != null && String(f).trim() ? String(f).trim() : '';
       if (pos) {
-        if (configuredPosition || hasAdminHeroImage) hb.style.setProperty('background-position', pos, 'important');
-        else hb.style.backgroundPosition = pos;
+        if (!(settings || hasAdminHeroImage)) hb.style.backgroundPosition = pos;
         if (introPhoto && !(getIntroImageSettingsOverrideInfo() && getIntroImageSettingsOverrideInfo().position)) introPhoto.style.objectPosition = pos;
       }
       applyIntroImageSettings(introPhoto);
