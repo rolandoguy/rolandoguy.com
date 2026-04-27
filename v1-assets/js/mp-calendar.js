@@ -410,6 +410,11 @@
       var m = s.match(/(?:^|T|\s)(\d{1,2}:\d{2})(?::\d{2})?/);
       return m ? m[1] : s;
     }
+    function ticketLabelValue(base) {
+      var raw = o[base];
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw;
+      return firstNonEmpty([base, base.replace('publicTicketLabel', 'ticketLabel'), base.replace('publicTicketLabel', 'priceLabel')]);
+    }
     var title = String(o.title || o.name || '').trim();
     var detail = String(o.detail || o.description || '').trim();
     var venue = String(o.venue || o.place || '').trim();
@@ -477,12 +482,12 @@
       ticketPrice_es: firstNonEmpty(['ticketPrice_es', 'priceInfo_es', 'modalPrice_es', 'modalTicketPrice_es', 'price_es', 'ticketInfo_es']),
       ticketPrice_it: firstNonEmpty(['ticketPrice_it', 'priceInfo_it', 'modalPrice_it', 'modalTicketPrice_it', 'price_it', 'ticketInfo_it']),
       ticketPrice_fr: firstNonEmpty(['ticketPrice_fr', 'priceInfo_fr', 'modalPrice_fr', 'modalTicketPrice_fr', 'price_fr', 'ticketInfo_fr']),
-      publicTicketLabel: firstNonEmpty(['publicTicketLabel', 'ticketLabel', 'priceLabel']),
-      publicTicketLabel_en: firstNonEmpty(['publicTicketLabel_en', 'ticketLabel_en', 'priceLabel_en']),
-      publicTicketLabel_de: firstNonEmpty(['publicTicketLabel_de', 'ticketLabel_de', 'priceLabel_de']),
-      publicTicketLabel_es: firstNonEmpty(['publicTicketLabel_es', 'ticketLabel_es', 'priceLabel_es']),
-      publicTicketLabel_it: firstNonEmpty(['publicTicketLabel_it', 'ticketLabel_it', 'priceLabel_it']),
-      publicTicketLabel_fr: firstNonEmpty(['publicTicketLabel_fr', 'ticketLabel_fr', 'priceLabel_fr']),
+      publicTicketLabel: ticketLabelValue('publicTicketLabel'),
+      publicTicketLabel_en: ticketLabelValue('publicTicketLabel_en'),
+      publicTicketLabel_de: ticketLabelValue('publicTicketLabel_de'),
+      publicTicketLabel_es: ticketLabelValue('publicTicketLabel_es'),
+      publicTicketLabel_it: ticketLabelValue('publicTicketLabel_it'),
+      publicTicketLabel_fr: ticketLabelValue('publicTicketLabel_fr'),
       eventLink: String(o.eventLink || o.link || '').trim(),
       eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
       extDesc: firstNonEmpty(['extDesc', 'modalText', 'description', 'longDescription', 'modalLongDesc', 'moreInfoDescription', 'moreInfoExtra']),
@@ -1719,16 +1724,49 @@
   function ticketCurrency(p) {
     return String((p && p.ticketCurrency) || 'EUR').trim().toUpperCase() || 'EUR';
   }
+  function directPublicTicketLabel(p, lang) {
+    if (!p) return '';
+    var L = normalizeLangCode(lang) || 'en';
+    var locKey = 'publicTicketLabel_' + L;
+    if (p[locKey] != null && String(p[locKey]).trim() !== '') return String(p[locKey]).trim();
+    var obj = p.publicTicketLabel;
+    if (obj && typeof obj === 'object' && !Array.isArray(obj) && obj[L] != null && String(obj[L]).trim() !== '') {
+      return String(obj[L]).trim();
+    }
+    return '';
+  }
+  function isLanguageNeutralTicketLabel(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return false;
+    return /(\d|€|\$|£|\bEUR\b|\bUSD\b|\bGBP\b)/i.test(s);
+  }
+  function generatedTicketLabel(status, price, currency, lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var labels = {
+      de: { free: 'Eintritt frei', donation_based: 'Auf Spendenbasis', fixedPrefix: 'Tickets: ' },
+      en: { free: 'Free admission', donation_based: 'Donations welcome', fixedPrefix: 'Tickets: ' },
+      es: { free: 'Entrada gratuita', donation_based: 'Contribución voluntaria', fixedPrefix: 'Entradas: ' },
+      it: { free: 'Ingresso gratuito', donation_based: 'Offerta libera', fixedPrefix: 'Biglietti: ' },
+      fr: { free: 'Entrée gratuite', donation_based: 'Participation libre', fixedPrefix: 'Billets : ' }
+    };
+    var row = labels[L] || labels.en;
+    if (status === 'free') return row.free;
+    if (status === 'donation_based') return row.donation_based;
+    if (status === 'fixed_price' && price) return row.fixedPrefix + price.replace(/\s*(€|eur)\s*$/i, '').trim() + ' ' + currency;
+    return '';
+  }
   function resolvePublicTicketLabel(p, lang, isPrivate) {
     if (isPrivate) return '';
-    var explicit = perfLocaleField(p, 'publicTicketLabel', lang);
+    var explicit = directPublicTicketLabel(p, lang);
     if (explicit) return explicit;
     var status = normalizeTicketStatus(p && p.ticketStatus);
     var currency = ticketCurrency(p);
     var price = perfLocaleField(p, 'ticketPrice', lang);
-    if (status === 'free') return 'Eintritt frei';
-    if (status === 'donation_based') return 'Auf Spendenbasis';
-    if (status === 'fixed_price' && price) return 'Tickets: ' + price.replace(/\s*(€|eur)\s*$/i, '').trim() + ' ' + currency;
+    var base = p && typeof p.publicTicketLabel === 'string' ? String(p.publicTicketLabel).trim() : '';
+    if (isLanguageNeutralTicketLabel(base)) return base;
+    var generated = generatedTicketLabel(status, price, currency, lang);
+    if (generated) return generated;
+    if ((normalizeLangCode(lang) || 'en') === 'de' && base) return base;
     return price || '';
   }
   function resolveSchemaOffer(p, lang, eventUrl, isPrivate) {

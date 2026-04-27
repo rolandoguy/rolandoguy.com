@@ -1073,18 +1073,18 @@
                   <label>Modal CTA button label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
                   <small id="perf-modal-link-label-translation-warn" class="muted warn" style="display:none"></small>
                   <small id="perf-modal-link-translation-warn" class="muted warn" style="display:none"></small>
-                  <label>Public ticket status
+                  <label><span data-admin-ticket-i18n="ticketStatusLabel">Public ticket status</span>
                     <select id="perf-ticket-status">
-                      <option value="unknown">unknown</option>
-                      <option value="free">free</option>
-                      <option value="fixed_price">fixed_price</option>
-                      <option value="donation_based">donation_based</option>
-                      <option value="private_invitation">private_invitation</option>
+                      <option value="unknown" data-admin-ticket-i18n="ticketStatusUnknown">Unknown / not set</option>
+                      <option value="free" data-admin-ticket-i18n="ticketStatusFree">Free</option>
+                      <option value="fixed_price" data-admin-ticket-i18n="ticketStatusFixed">Fixed price</option>
+                      <option value="donation_based" data-admin-ticket-i18n="ticketStatusDonation">Donation-based</option>
+                      <option value="private_invitation" data-admin-ticket-i18n="ticketStatusPrivate">Private / invitation only</option>
                     </select>
                   </label>
-                  <label>Ticket currency<input id="perf-ticket-currency" placeholder="EUR"></label>
+                  <label><span data-admin-ticket-i18n="ticketCurrencyLabel">Ticket currency</span><input id="perf-ticket-currency" placeholder="EUR"></label>
                   <label>Modal price/info line<input id="perf-modal-ticketPrice" placeholder="20€ / 15€ reduced"></label>
-                  <label>Public ticket label<input id="perf-public-ticket-label" placeholder="Eintritt frei / Tickets: 20 EUR"></label>
+                  <label><span data-admin-ticket-i18n="publicTicketLabelLabel">Public ticket label</span><input id="perf-public-ticket-label" placeholder="Eintritt frei / Tickets: 20 EUR"></label>
                   <label>Maps button URL (optional route/map URL)<input id="perf-modal-maps-link" placeholder="https://maps.google.com/..."></label>
                 </div>
                 <div class="grid two">

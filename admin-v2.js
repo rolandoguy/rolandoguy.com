@@ -14049,6 +14049,7 @@
     if ($('perf-modal-flyerImg')) $('perf-modal-flyerImg').value = safeString(e.flyerImg);
     if ($('perf-modal-maps-link')) $('perf-modal-maps-link').value = safeString(e.mapsUrl);
     $('perf-sortDate').value = safeString(e.sortDate);
+    applyAdminTicketI18n();
     updatePerfCardPreview();
     updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
@@ -14259,6 +14260,70 @@
   function normalizePerfTicketStatus(raw) {
     var s = safeString(raw).trim().toLowerCase();
     return /^(unknown|free|fixed_price|donation_based|private_invitation)$/.test(s) ? s : 'unknown';
+  }
+  var ADMIN_TICKET_I18N = {
+    en: {
+      ticketStatusLabel: 'Public ticket status',
+      ticketCurrencyLabel: 'Ticket currency',
+      publicTicketLabelLabel: 'Public ticket label',
+      ticketStatusUnknown: 'Unknown / not set',
+      ticketStatusFree: 'Free',
+      ticketStatusFixed: 'Fixed price',
+      ticketStatusDonation: 'Donation-based',
+      ticketStatusPrivate: 'Private / invitation only'
+    },
+    de: {
+      ticketStatusLabel: 'Öffentlicher Ticketstatus',
+      ticketCurrencyLabel: 'Ticketwährung',
+      publicTicketLabelLabel: 'Öffentliche Ticketanzeige',
+      ticketStatusUnknown: 'Unbekannt / nicht festgelegt',
+      ticketStatusFree: 'Eintritt frei',
+      ticketStatusFixed: 'Festpreis',
+      ticketStatusDonation: 'Auf Spendenbasis',
+      ticketStatusPrivate: 'Privat / nur auf Einladung'
+    },
+    es: {
+      ticketStatusLabel: 'Estado público de entrada',
+      ticketCurrencyLabel: 'Moneda de entrada',
+      publicTicketLabelLabel: 'Texto público de entrada',
+      ticketStatusUnknown: 'Desconocido / no definido',
+      ticketStatusFree: 'Entrada gratuita',
+      ticketStatusFixed: 'Precio fijo',
+      ticketStatusDonation: 'Contribución voluntaria',
+      ticketStatusPrivate: 'Privado / solo con invitación'
+    },
+    it: {
+      ticketStatusLabel: 'Stato pubblico dell’ingresso',
+      ticketCurrencyLabel: 'Valuta dell’ingresso',
+      publicTicketLabelLabel: 'Testo pubblico dell’ingresso',
+      ticketStatusUnknown: 'Sconosciuto / non impostato',
+      ticketStatusFree: 'Ingresso gratuito',
+      ticketStatusFixed: 'Prezzo fisso',
+      ticketStatusDonation: 'Offerta libera',
+      ticketStatusPrivate: 'Privato / solo su invito'
+    },
+    fr: {
+      ticketStatusLabel: 'Statut public de l’entrée',
+      ticketCurrencyLabel: 'Devise de l’entrée',
+      publicTicketLabelLabel: 'Libellé public de l’entrée',
+      ticketStatusUnknown: 'Inconnu / non défini',
+      ticketStatusFree: 'Entrée gratuite',
+      ticketStatusFixed: 'Prix fixe',
+      ticketStatusDonation: 'Participation libre',
+      ticketStatusPrivate: 'Privé / sur invitation uniquement'
+    }
+  };
+  function adminTicketText(key, lang) {
+    var L = normalizeLangCode(lang || state.lang || 'en');
+    return safeString((ADMIN_TICKET_I18N[L] && ADMIN_TICKET_I18N[L][key]) || (ADMIN_TICKET_I18N.en && ADMIN_TICKET_I18N.en[key]) || '');
+  }
+  function applyAdminTicketI18n() {
+    var L = normalizeLangCode(state.lang || 'en');
+    document.querySelectorAll('[data-admin-ticket-i18n]').forEach(function (node) {
+      var key = safeString(node.getAttribute('data-admin-ticket-i18n')).trim();
+      var text = adminTicketText(key, L);
+      if (text) node.textContent = text;
+    });
   }
   function updatePerfSchemaHints() {
     var box = $('perf-schema-hints');
@@ -20284,6 +20349,7 @@
       state.lang = $('langSelect').value;
       if (typeof state.api.setLang === 'function') state.api.setLang(state.lang, { persist: false });
       updateLangBadge();
+      applyAdminTicketI18n();
       refreshCurrentSection();
       primeUiPublicCopyFromStorage();
       markDirty(false, 'Language: ' + state.lang.toUpperCase());
