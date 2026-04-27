@@ -3115,14 +3115,14 @@
   // Public-safe website mirrors. These docs are the only live Firestore payloads
   // the public site is allowed to read.
   var PUBLIC_BIO_FIELDS = ['introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitImage', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
-  var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageFit', 'contactImagePosition'];
-  var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'introImage', 'homeIntroImageLayout', 'homeIntroImageFit', 'homeIntroImagePosition'];
+  var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageAspect', 'contactImageFit', 'contactImagePosition', 'contactImagePositionManual'];
+  var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'heroDesktopFit', 'heroDesktopPosition', 'heroDesktopPositionManual', 'heroMobileFit', 'heroMobilePosition', 'heroMobilePositionManual', 'introImage', 'homeIntroImageLayout', 'homeIntroImageFit', 'homeIntroImagePosition'];
   var PUBLIC_PRESS_ITEM_FIELDS = ['source', 'quote', 'visible'];
   var PUBLIC_PRESS_META_LANG_FIELDS = ['translatedNote'];
   var PUBLIC_EPK_BIO_FIELDS = ['b50', 'b150', 'b300p1', 'b300p2', 'b300p3', 'b300p4'];
   var PUBLIC_EPK_PHOTO_FIELDS = ['url', 'downloadUrl', 'caption', 'alt', 'photographer', 'orientation', 'visible', 'previewFit', 'previewPosition', 'previewPositionManual', 'previewAspect'];
   var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
-  var PUBLIC_REP_HEADER_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageFit', 'repertoireImagePosition'];
+  var PUBLIC_REP_HEADER_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageAspect', 'repertoireImageFit', 'repertoireImagePosition', 'repertoireImagePositionManual'];
   var PUBLIC_REP_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
   var PUBLIC_PROGRAMS_CHROME_FIELDS = ['title', 'subtitle', 'profileBridge', 'intro', 'closingNote', 'linkLabel'];
   var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor'];
@@ -4325,6 +4325,7 @@
     else setFieldEffectiveValue($('hero-introCtaMedia'), pickEffectiveWithSource(uiStored, uiFallback, 'home.intro.ctaMedia', 'Inherited'));
     fillHomeRgUiCopyFields(uiStored, uiFallback);
     setFieldFromSources('hero-bgImage', stored, fallback, 'bgImage', 'Bundled default');
+    applyHeroBgSettingsToInputs(stored, state.lang === 'en' ? null : loadDoc('hero_en', null));
     var storedEn = state.lang === 'en' ? stored : loadDoc('hero_en', null);
     var layoutSource = isObject(stored) && safeString(stored.homeIntroImageLayout).trim() ? stored : (isObject(storedEn) ? storedEn : fallback);
     var fitSource = isObject(stored) && safeString(stored.homeIntroImageFit).trim() ? stored : (isObject(storedEn) ? storedEn : fallback);
@@ -4336,6 +4337,7 @@
     if ($('hero-introImagePositionCustom')) $('hero-introImagePositionCustom').value = homeIntroPositionIsPreset(safeString(posSource && posSource.homeIntroImagePosition).trim()) ? '' : safeString(posSource && posSource.homeIntroImagePosition).trim();
     // Keep preview blank until final source is resolved (no stale first paint).
     $('hero-introImage').value = '';
+    updateHeroBgPreview();
     updateHomeIntroPreview();
     updateHomeMiniPreviews();
     resolveHomeIntroFinal().then(function (resolved) {
@@ -4388,6 +4390,64 @@
     var s = safeString(raw).trim().replace(/\s+/g, ' ');
     if (!s) return '';
     return s;
+  }
+  function normalizeHeroFit(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return /^(cover|contain)$/.test(s) ? s : '';
+  }
+  function normalizeHeroPosition(raw) {
+    return safeString(raw).trim().replace(/\s+/g, ' ');
+  }
+  function heroPositionIsPreset(raw, mode) {
+    var s = normalizeHeroPosition(raw).toLowerCase();
+    if (mode === 'mobile') return /^(center center|center top|center bottom|left center|right center)$/.test(s);
+    return /^(center center|center right|right center|right top|right bottom|left center)$/.test(s);
+  }
+  function heroPositionSelectValue(raw, mode) {
+    var s = normalizeHeroPosition(raw).toLowerCase();
+    return heroPositionIsPreset(s, mode) ? s : '';
+  }
+  function getHeroBgSettingsFromDoc(doc, fallbackDoc) {
+    var src = isObject(doc) ? doc : {};
+    var fallback = isObject(fallbackDoc) ? fallbackDoc : {};
+    return {
+      heroDesktopFit: normalizeHeroFit(safeString(src.heroDesktopFit).trim() || safeString(fallback.heroDesktopFit).trim()),
+      heroDesktopPosition: normalizeHeroPosition(safeString(src.heroDesktopPosition).trim() || safeString(fallback.heroDesktopPosition).trim()),
+      heroDesktopPositionManual: normalizeHeroPosition(safeString(src.heroDesktopPositionManual).trim() || safeString(fallback.heroDesktopPositionManual).trim()),
+      heroMobileFit: normalizeHeroFit(safeString(src.heroMobileFit).trim() || safeString(fallback.heroMobileFit).trim()),
+      heroMobilePosition: normalizeHeroPosition(safeString(src.heroMobilePosition).trim() || safeString(fallback.heroMobilePosition).trim()),
+      heroMobilePositionManual: normalizeHeroPosition(safeString(src.heroMobilePositionManual).trim() || safeString(fallback.heroMobilePositionManual).trim())
+    };
+  }
+  function applyHeroBgSettingsToInputs(doc, fallbackDoc) {
+    var cfg = getHeroBgSettingsFromDoc(doc || {}, fallbackDoc || {});
+    if ($('hero-desktopFit')) $('hero-desktopFit').value = cfg.heroDesktopFit || '';
+    if ($('hero-desktopPosition')) $('hero-desktopPosition').value = heroPositionSelectValue(cfg.heroDesktopPosition, 'desktop');
+    if ($('hero-desktopPositionManual')) $('hero-desktopPositionManual').value = cfg.heroDesktopPositionManual || (heroPositionIsPreset(cfg.heroDesktopPosition, 'desktop') ? '' : cfg.heroDesktopPosition);
+    if ($('hero-mobileFit')) $('hero-mobileFit').value = cfg.heroMobileFit || '';
+    if ($('hero-mobilePosition')) $('hero-mobilePosition').value = heroPositionSelectValue(cfg.heroMobilePosition, 'mobile');
+    if ($('hero-mobilePositionManual')) $('hero-mobilePositionManual').value = cfg.heroMobilePositionManual || (heroPositionIsPreset(cfg.heroMobilePosition, 'mobile') ? '' : cfg.heroMobilePosition);
+  }
+  function readHeroBgSettingsFromInputs() {
+    return {
+      heroDesktopFit: normalizeHeroFit($('hero-desktopFit') && $('hero-desktopFit').value),
+      heroDesktopPosition: normalizeHeroPosition($('hero-desktopPosition') && $('hero-desktopPosition').value),
+      heroDesktopPositionManual: normalizeHeroPosition($('hero-desktopPositionManual') && $('hero-desktopPositionManual').value),
+      heroMobileFit: normalizeHeroFit($('hero-mobileFit') && $('hero-mobileFit').value),
+      heroMobilePosition: normalizeHeroPosition($('hero-mobilePosition') && $('hero-mobilePosition').value),
+      heroMobilePositionManual: normalizeHeroPosition($('hero-mobilePositionManual') && $('hero-mobilePositionManual').value)
+    };
+  }
+  function updateHeroBgPreview() {
+    var img = $('hero-bgPreview');
+    var wrap = $('hero-bgPreview-wrap');
+    if (!img || !wrap) return;
+    var settings = readHeroBgSettingsFromInputs();
+    var position = settings.heroDesktopPositionManual || settings.heroDesktopPosition || 'center center';
+    img.src = safeString($('hero-bgImage') && $('hero-bgImage').value).trim();
+    img.style.objectFit = settings.heroDesktopFit || 'cover';
+    img.style.objectPosition = position;
+    wrap.style.setProperty('--hero-preview-object-position', position);
   }
   function getHomeIntroImageSettingsFromDoc(doc, fallbackDoc) {
     var src = isObject(doc) ? doc : {};
@@ -4461,6 +4521,7 @@
     var applyAll = !!($('home-images-all-langs') && $('home-images-all-langs').checked);
     var heroKey = 'hero_' + state.lang;
     var introImageSettings = readHomeIntroImageSettingsFromInputs();
+    var heroBgSettings = readHeroBgSettingsFromInputs();
     var payload = {
       eyebrow: safeString($('hero-eyebrow').value),
       subtitle: safeString($('hero-subtitle').value),
@@ -4471,6 +4532,12 @@
       introCtaBio: safeString($('hero-introCtaBio').value),
       introCtaMedia: safeString($('hero-introCtaMedia').value),
       bgImage: safeString($('hero-bgImage').value),
+      heroDesktopFit: heroBgSettings.heroDesktopFit,
+      heroDesktopPosition: heroBgSettings.heroDesktopPosition,
+      heroDesktopPositionManual: heroBgSettings.heroDesktopPositionManual,
+      heroMobileFit: heroBgSettings.heroMobileFit,
+      heroMobilePosition: heroBgSettings.heroMobilePosition,
+      heroMobilePositionManual: heroBgSettings.heroMobilePositionManual,
       introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim()),
       homeIntroImageLayout: introImageSettings.homeIntroImageLayout,
       homeIntroImageFit: introImageSettings.homeIntroImageFit,
@@ -4502,6 +4569,12 @@
         prev.bgImage = payload.bgImage;
         prev.introImage = payload.introImage;
       }
+      prev.heroDesktopFit = payload.heroDesktopFit;
+      prev.heroDesktopPosition = payload.heroDesktopPosition;
+      prev.heroDesktopPositionManual = payload.heroDesktopPositionManual;
+      prev.heroMobileFit = payload.heroMobileFit;
+      prev.heroMobilePosition = payload.heroMobilePosition;
+      prev.heroMobilePositionManual = payload.heroMobilePositionManual;
       prev.homeIntroImageLayout = payload.homeIntroImageLayout;
       prev.homeIntroImageFit = payload.homeIntroImageFit;
       prev.homeIntroImagePosition = payload.homeIntroImagePosition;
@@ -5232,8 +5305,11 @@
     if ($('rep-image-url')) $('rep-image-url').value = safeString(stored && stored.repertoireImageUrl);
     if ($('rep-image-alt')) $('rep-image-alt').value = safeString(stored && stored.repertoireImageAlt);
     if ($('rep-image-placement')) $('rep-image-placement').value = safeString(stored && stored.repertoireImagePlacement) || 'between_intro_tabs';
+    if ($('rep-image-aspect')) $('rep-image-aspect').value = safeString(stored && stored.repertoireImageAspect) || 'landscape_16_9';
     if ($('rep-image-fit')) $('rep-image-fit').value = safeString(stored && stored.repertoireImageFit) || 'cover';
-    if ($('rep-image-position')) $('rep-image-position').value = safeString(stored && stored.repertoireImagePosition) || 'center center';
+    if ($('rep-image-position')) $('rep-image-position').value = siteImagePositionPresetValue(stored && stored.repertoireImagePosition);
+    if ($('rep-image-position-manual')) $('rep-image-position-manual').value = safeString(stored && stored.repertoireImagePositionManual).trim() || (siteImagePositionIsPreset(stored && stored.repertoireImagePosition) ? '' : safeString(stored && stored.repertoireImagePosition).trim());
+    updateSitePlacementPreview('rep');
     if ($('rep-cat-filter')) $('rep-cat-filter').value = $('rep-cat-filter').value || 'all';
     if ($('rep-status-filter')) $('rep-status-filter').value = state.repStatusFilter || 'all';
     if ($('rep-workflow-filter')) $('rep-workflow-filter').value = state.repWorkflowFilter || 'all';
@@ -5249,8 +5325,10 @@
       repertoireImageUrl: safeString($('rep-image-url') && $('rep-image-url').value).trim(),
       repertoireImageAlt: safeString($('rep-image-alt') && $('rep-image-alt').value),
       repertoireImagePlacement: safeString($('rep-image-placement') && $('rep-image-placement').value) || 'between_intro_tabs',
+      repertoireImageAspect: safeString($('rep-image-aspect') && $('rep-image-aspect').value) || 'landscape_16_9',
       repertoireImageFit: safeString($('rep-image-fit') && $('rep-image-fit').value) || 'cover',
-      repertoireImagePosition: safeString($('rep-image-position') && $('rep-image-position').value) || 'center center'
+      repertoireImagePosition: safeString($('rep-image-position') && $('rep-image-position').value) || 'center center',
+      repertoireImagePositionManual: safeString($('rep-image-position-manual') && $('rep-image-position-manual').value).trim()
     })) return;
     await publishPublicRepertoireDocs([state.lang]);
   }
@@ -16886,6 +16964,13 @@
       var v = safeString(value).trim().toLowerCase();
       return /^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(v) ? v : 'portrait_4_5';
     }
+    function cleanPreviewObjectPosition(value) {
+      var raw = safeString(value).trim();
+      var lower = raw.toLowerCase();
+      if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
+      if (/^\d{1,3}(?:\.\d+)?%\s+\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
+      return raw;
+    }
     return arr.filter(function (p) { return isObject(p) || typeof p === 'string'; }).map(function (p) {
       if (typeof p === 'string') return { url: safeString(p), downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' };
       var caption = safeString(p.caption || p.label);
@@ -16903,7 +16988,7 @@
         visible: p.visible === false ? false : true,
         previewFit: cleanPreviewFit(p.previewFit),
         previewPosition: cleanPreviewPosition(p.previewPosition),
-        previewPositionManual: safeString(p.previewPositionManual).trim(),
+        previewPositionManual: cleanPreviewObjectPosition(p.previewPositionManual),
         previewAspect: cleanPreviewAspect(p.previewAspect),
         label: caption,
         credit: photographer
@@ -16917,11 +17002,43 @@
     var aspect = safeString(p && p.previewAspect).trim() || 'portrait_4_5';
     if (!/^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(aspect)) aspect = 'portrait_4_5';
     var fit = safeString(p && p.previewFit).trim() === 'contain' ? 'contain' : 'cover';
-    var pos = safeString(p && p.previewPositionManual).trim() || safeString(p && p.previewPosition).trim() || 'center center';
+    var pos = resolvePreviewObjectPosition(p);
     wrap.dataset.previewAspect = aspect;
+    wrap.style.setProperty('--epk-preview-object-position', pos);
     img.style.objectFit = aspect === 'auto' ? 'contain' : fit;
-    img.style.objectPosition = pos;
+    img.style.setProperty('object-position', pos);
     updatePreviewFocusMarker(wrap, pos);
+  }
+  function resolvePreviewObjectPosition(photo) {
+    var manual = safeString(photo && photo.previewPositionManual).trim();
+    if (manual) return manual;
+    return safeString(photo && photo.previewPosition).trim() || 'center center';
+  }
+  function siteImagePositionIsPreset(value) {
+    return /^(center center|center top|center bottom|left center|right center)$/i.test(safeString(value).trim());
+  }
+  function siteImagePositionPresetValue(value) {
+    var raw = safeString(value).trim();
+    return siteImagePositionIsPreset(raw) ? raw.toLowerCase() : 'center center';
+  }
+  function resolveSitePlacementPosition(prefix) {
+    var manual = safeString($(prefix + '-image-position-manual') && $(prefix + '-image-position-manual').value).trim();
+    if (manual) return manual;
+    return safeString($(prefix + '-image-position') && $(prefix + '-image-position').value).trim() || 'center center';
+  }
+  function updateSitePlacementPreview(prefix) {
+    var wrap = $(prefix + '-image-preview-wrap');
+    var img = $(prefix + '-image-preview');
+    if (!wrap || !img) return;
+    var url = safeString($(prefix + '-image-url') && $(prefix + '-image-url').value).trim();
+    var aspect = safeString($(prefix + '-image-aspect') && $(prefix + '-image-aspect').value).trim() || (prefix === 'rep' ? 'landscape_16_9' : 'portrait_4_5');
+    var fit = safeString($(prefix + '-image-fit') && $(prefix + '-image-fit').value).trim() === 'contain' ? 'contain' : 'cover';
+    var pos = resolveSitePlacementPosition(prefix);
+    wrap.dataset.previewAspect = aspect;
+    wrap.style.setProperty('--placement-object-position', pos);
+    img.src = url;
+    img.style.objectFit = fit;
+    img.style.setProperty('object-position', pos);
   }
   function togglePressTab(tab) {
     state.pressTab = tab;
@@ -17271,8 +17388,11 @@
     if ($('contact-image-url')) $('contact-image-url').value = safeString(stored && stored.contactImageUrl);
     if ($('contact-image-alt')) $('contact-image-alt').value = safeString(stored && stored.contactImageAlt);
     if ($('contact-image-placement')) $('contact-image-placement').value = safeString(stored && stored.contactImagePlacement) || 'none';
+    if ($('contact-image-aspect')) $('contact-image-aspect').value = safeString(stored && stored.contactImageAspect) || 'portrait_4_5';
     if ($('contact-image-fit')) $('contact-image-fit').value = safeString(stored && stored.contactImageFit) || 'cover';
-    if ($('contact-image-position')) $('contact-image-position').value = safeString(stored && stored.contactImagePosition) || 'center center';
+    if ($('contact-image-position')) $('contact-image-position').value = siteImagePositionPresetValue(stored && stored.contactImagePosition);
+    if ($('contact-image-position-manual')) $('contact-image-position-manual').value = safeString(stored && stored.contactImagePositionManual).trim() || (siteImagePositionIsPreset(stored && stored.contactImagePosition) ? '' : safeString(stored && stored.contactImagePosition).trim());
+    updateSitePlacementPreview('contact');
     updateContactValidation();
     updateContactMiniPreview();
     updateCompletenessIndicators();
@@ -17290,8 +17410,10 @@
       contactImageUrl: safeString($('contact-image-url') && $('contact-image-url').value).trim(),
       contactImageAlt: safeString($('contact-image-alt') && $('contact-image-alt').value),
       contactImagePlacement: safeString($('contact-image-placement') && $('contact-image-placement').value) || 'none',
+      contactImageAspect: safeString($('contact-image-aspect') && $('contact-image-aspect').value) || 'portrait_4_5',
       contactImageFit: safeString($('contact-image-fit') && $('contact-image-fit').value) || 'cover',
-      contactImagePosition: safeString($('contact-image-position') && $('contact-image-position').value) || 'center center'
+      contactImagePosition: safeString($('contact-image-position') && $('contact-image-position').value) || 'center center',
+      contactImagePositionManual: safeString($('contact-image-position-manual') && $('contact-image-position-manual').value).trim()
     })) return;
     await publishPublicContactDocs([state.lang]);
   }
@@ -20129,6 +20251,12 @@
       eyebrow: $('hero-eyebrow').value, subtitle: $('hero-subtitle').value, cta1: $('hero-cta1').value, cta2: $('hero-cta2').value,
       quickBioLabel: $('hero-quickBioLabel').value, quickCalLabel: $('hero-quickCalLabel').value, introCtaBio: $('hero-introCtaBio').value,
       introCtaMedia: $('hero-introCtaMedia').value, bgImage: $('hero-bgImage').value, introImage: $('hero-introImage').value,
+      heroDesktopFit: $('hero-desktopFit') ? $('hero-desktopFit').value : '',
+      heroDesktopPosition: $('hero-desktopPosition') ? $('hero-desktopPosition').value : '',
+      heroDesktopPositionManual: $('hero-desktopPositionManual') ? $('hero-desktopPositionManual').value : '',
+      heroMobileFit: $('hero-mobileFit') ? $('hero-mobileFit').value : '',
+      heroMobilePosition: $('hero-mobilePosition') ? $('hero-mobilePosition').value : '',
+      heroMobilePositionManual: $('hero-mobilePositionManual') ? $('hero-mobilePositionManual').value : '',
       homeIntroImageLayout: $('hero-introImageLayout') ? $('hero-introImageLayout').value : '',
       homeIntroImageFit: $('hero-introImageFit') ? $('hero-introImageFit').value : '',
       homeIntroImagePosition: $('hero-introImagePositionCustom') && $('hero-introImagePositionCustom').value ? $('hero-introImagePositionCustom').value : ($('hero-introImagePosition') ? $('hero-introImagePosition').value : '')
@@ -20164,8 +20292,10 @@
       repertoireImageUrl: $('rep-image-url') ? $('rep-image-url').value : '',
       repertoireImageAlt: $('rep-image-alt') ? $('rep-image-alt').value : '',
       repertoireImagePlacement: $('rep-image-placement') ? $('rep-image-placement').value : '',
+      repertoireImageAspect: $('rep-image-aspect') ? $('rep-image-aspect').value : '',
       repertoireImageFit: $('rep-image-fit') ? $('rep-image-fit').value : '',
       repertoireImagePosition: $('rep-image-position') ? $('rep-image-position').value : '',
+      repertoireImagePositionManual: $('rep-image-position-manual') ? $('rep-image-position-manual').value : '',
       repCards: clone(state.repCards),
       repIndex: state.repIndex
     };
@@ -20245,8 +20375,10 @@
       contactImageUrl: $('contact-image-url') ? $('contact-image-url').value : '',
       contactImageAlt: $('contact-image-alt') ? $('contact-image-alt').value : '',
       contactImagePlacement: $('contact-image-placement') ? $('contact-image-placement').value : '',
+      contactImageAspect: $('contact-image-aspect') ? $('contact-image-aspect').value : '',
       contactImageFit: $('contact-image-fit') ? $('contact-image-fit').value : '',
-      contactImagePosition: $('contact-image-position') ? $('contact-image-position').value : ''
+      contactImagePosition: $('contact-image-position') ? $('contact-image-position').value : '',
+      contactImagePositionManual: $('contact-image-position-manual') ? $('contact-image-position-manual').value : ''
     };
     if (s === 'ui') return { uiPartial: collectUiSectionInputsToDoc(), json: $('ui-json').value };
     return null;
@@ -20257,8 +20389,9 @@
       $('hero-eyebrow').value = safeString(d.eyebrow); $('hero-subtitle').value = safeString(d.subtitle); $('hero-cta1').value = safeString(d.cta1); $('hero-cta2').value = safeString(d.cta2);
       $('hero-quickBioLabel').value = safeString(d.quickBioLabel); $('hero-quickCalLabel').value = safeString(d.quickCalLabel); $('hero-introCtaBio').value = safeString(d.introCtaBio);
       $('hero-introCtaMedia').value = safeString(d.introCtaMedia); $('hero-bgImage').value = safeString(d.bgImage); $('hero-introImage').value = safeString(d.introImage);
+      applyHeroBgSettingsToInputs(d);
       applyHomeIntroImageSettingsToInputs(d);
-      updateHomeIntroPreview(); updateHomeMiniPreviews();
+      updateHeroBgPreview(); updateHomeIntroPreview(); updateHomeMiniPreviews();
     } else if (s === 'bio') {
       $('bio-introLine').value = safeString(d.introLine);
       $('bio-h2').value = safeString(d.h2);
@@ -20289,8 +20422,11 @@
       if ($('rep-image-url')) $('rep-image-url').value = safeString(d.repertoireImageUrl);
       if ($('rep-image-alt')) $('rep-image-alt').value = safeString(d.repertoireImageAlt);
       if ($('rep-image-placement')) $('rep-image-placement').value = safeString(d.repertoireImagePlacement) || 'between_intro_tabs';
+      if ($('rep-image-aspect')) $('rep-image-aspect').value = safeString(d.repertoireImageAspect) || 'landscape_16_9';
       if ($('rep-image-fit')) $('rep-image-fit').value = safeString(d.repertoireImageFit) || 'cover';
-      if ($('rep-image-position')) $('rep-image-position').value = safeString(d.repertoireImagePosition) || 'center center';
+      if ($('rep-image-position')) $('rep-image-position').value = siteImagePositionPresetValue(d.repertoireImagePosition);
+      if ($('rep-image-position-manual')) $('rep-image-position-manual').value = safeString(d.repertoireImagePositionManual).trim() || (siteImagePositionIsPreset(d.repertoireImagePosition) ? '' : safeString(d.repertoireImagePosition).trim());
+      updateSitePlacementPreview('rep');
       renderRepList(); renderRepEditor();
     } else if (s === 'programs') {
       state.programsDoc = safeProgramsDoc(d.programsDoc || {});
@@ -20409,8 +20545,11 @@
       if ($('contact-image-url')) $('contact-image-url').value = safeString(d.contactImageUrl);
       if ($('contact-image-alt')) $('contact-image-alt').value = safeString(d.contactImageAlt);
       if ($('contact-image-placement')) $('contact-image-placement').value = safeString(d.contactImagePlacement) || 'none';
+      if ($('contact-image-aspect')) $('contact-image-aspect').value = safeString(d.contactImageAspect) || 'portrait_4_5';
       if ($('contact-image-fit')) $('contact-image-fit').value = safeString(d.contactImageFit) || 'cover';
-      if ($('contact-image-position')) $('contact-image-position').value = safeString(d.contactImagePosition) || 'center center';
+      if ($('contact-image-position')) $('contact-image-position').value = siteImagePositionPresetValue(d.contactImagePosition);
+      if ($('contact-image-position-manual')) $('contact-image-position-manual').value = safeString(d.contactImagePositionManual).trim() || (siteImagePositionIsPreset(d.contactImagePosition) ? '' : safeString(d.contactImagePosition).trim());
+      updateSitePlacementPreview('contact');
       updateContactValidation(); updateContactMiniPreview();
     } else if (s === 'ui') {
       $('ui-json').value = safeString(d.json);
@@ -21754,6 +21893,12 @@
         'hero-presenterP2',
         'hero-presenterP3',
         'hero-bgImage',
+        'hero-desktopFit',
+        'hero-desktopPosition',
+        'hero-desktopPositionManual',
+        'hero-mobileFit',
+        'hero-mobilePosition',
+        'hero-mobilePositionManual',
         'hero-introImage',
         'hero-introImageLayout',
         'hero-introImageFit',
@@ -21761,6 +21906,7 @@
         'hero-introImagePositionCustom'
       ],
       function () {
+        updateHeroBgPreview();
         updateHomeIntroPreview();
         updateHomeMiniPreviews();
         updateCompletenessIndicators();
@@ -21877,8 +22023,13 @@
     });
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
-    bindInputsDirty(['contact-title','contact-sub','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','contact-image-enabled','contact-image-placement','contact-image-url','contact-image-alt','contact-image-fit','contact-image-position'], updateContactMiniPreview);
-    bindInputsDirty(['rep-h2','rep-intro','rep-image-enabled','rep-image-placement','rep-image-url','rep-image-alt','rep-image-fit','rep-image-position','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','contact-image-enabled','contact-image-placement','contact-image-url','contact-image-alt','contact-image-fit','contact-image-position','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
+    bindInputsDirty(['contact-title','contact-sub','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','contact-image-enabled','contact-image-placement','contact-image-url','contact-image-alt','contact-image-aspect','contact-image-fit','contact-image-position','contact-image-position-manual'], function () {
+      updateSitePlacementPreview('contact');
+      updateContactMiniPreview();
+    });
+    bindInputsDirty(['rep-h2','rep-intro','rep-image-enabled','rep-image-placement','rep-image-url','rep-image-alt','rep-image-aspect','rep-image-fit','rep-image-position','rep-image-position-manual','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','contact-image-enabled','contact-image-placement','contact-image-url','contact-image-alt','contact-image-aspect','contact-image-fit','contact-image-position','contact-image-position-manual','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
+      updateSitePlacementPreview('rep');
+      updateSitePlacementPreview('contact');
       updateContactValidation();
       updateContactMiniPreview();
       updateCompletenessIndicators();

@@ -146,8 +146,10 @@
       'repertoireImageUrl',
       'repertoireImageAlt',
       'repertoireImagePlacement',
+      'repertoireImageAspect',
       'repertoireImageFit',
-      'repertoireImagePosition'
+      'repertoireImagePosition',
+      'repertoireImagePositionManual'
     ].forEach(function (key) {
       if (source[key] != null && String(source[key]).trim() !== '') target[key] = source[key];
       if (key === 'repertoireImageEnabled' && typeof source[key] === 'boolean') target[key] = source[key];
@@ -228,10 +230,18 @@
       repertoireImageUrl: String(langData.repertoireImageUrl || '').trim(),
       repertoireImageAlt: String(langData.repertoireImageAlt || '').trim(),
       repertoireImagePlacement: normalizeImagePlacement(langData.repertoireImagePlacement),
+      repertoireImageAspect: String(langData.repertoireImageAspect || 'landscape_16_9').trim(),
       repertoireImageFit: String(langData.repertoireImageFit || 'cover').trim() === 'contain' ? 'contain' : 'cover',
       repertoireImagePosition: String(langData.repertoireImagePosition || 'center center').trim(),
+      repertoireImagePositionManual: String(langData.repertoireImagePositionManual || '').trim(),
       cards: cards
     };
+  }
+
+  function resolveRepertoireImagePosition(d) {
+    var manual = String(d && d.repertoireImagePositionManual || '').trim();
+    if (manual) return manual;
+    return String(d && d.repertoireImagePosition || '').trim() || 'center center';
   }
 
   function renderRepertoireImage(d) {
@@ -241,13 +251,14 @@
     var fig = document.createElement('figure');
     fig.id = 'repEditorialImage';
     fig.className = 'rep-editorial-image rep-editorial-image--' + d.repertoireImagePlacement;
+    fig.setAttribute('data-image-aspect', d.repertoireImageAspect || 'landscape_16_9');
     var img = document.createElement('img');
     img.src = d.repertoireImageUrl;
     img.alt = d.repertoireImageAlt || '';
     img.loading = 'lazy';
     img.decoding = 'async';
     img.style.objectFit = d.repertoireImageFit || 'cover';
-    img.style.objectPosition = d.repertoireImagePosition || 'center center';
+    img.style.objectPosition = resolveRepertoireImagePosition(d);
     fig.appendChild(img);
     var placement = d.repertoireImagePlacement;
     var target = placement === 'programme_offers_accent'

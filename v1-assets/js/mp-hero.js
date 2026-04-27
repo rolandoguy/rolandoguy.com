@@ -210,6 +210,71 @@
     if (/[?&]v=\d+/.test(s)) return s;
     return s + (s.indexOf('?') >= 0 ? '&' : '?') + 'v=' + n;
   }
+  function normalizeHeroImagePath(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^(data:|https?:\/\/|\/\/|\/|\.\.\/)/i.test(s)) return s;
+    if (/^\.\//.test(s)) s = s.slice(2);
+    if (/^img\//i.test(s)) return '../' + s;
+    return '../' + s;
+  }
+  function getHeroImageOverrideInfo() {
+    var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var shortLang = String(rawLang || 'en').split('-')[0];
+    var docs = [
+      { key: 'hero_' + rawLang, rec: readLiveHeroRecord('hero_' + rawLang) },
+      shortLang && shortLang !== rawLang ? { key: 'hero_' + shortLang, rec: readLiveHeroRecord('hero_' + shortLang) } : null,
+      { key: 'hero_en', rec: readLiveHeroRecord('hero_en') },
+      { key: 'hero_' + rawLang, rec: readLegacyRecord('hero_' + rawLang) },
+      shortLang && shortLang !== rawLang ? { key: 'hero_' + shortLang, rec: readLegacyRecord('hero_' + shortLang) } : null,
+      { key: 'hero_en', rec: readLegacyRecord('hero_en') }
+    ];
+    for (var i = 0; i < docs.length; i += 1) {
+      var item = docs[i];
+      var doc = item && item.rec && item.rec.value;
+      var img = doc && typeof doc.bgImage === 'string' ? doc.bgImage.trim() : '';
+      if (img) return { source: item.key + '.bgImage', url: withCacheBuster(normalizeHeroImagePath(img), item.rec.ts) };
+    }
+    return null;
+  }
+  function normalizeHeroFit(raw) {
+    var s = String(raw || '').trim().toLowerCase();
+    return /^(cover|contain)$/.test(s) ? s : '';
+  }
+  function normalizeHeroPosition(raw) {
+    return String(raw || '').trim().replace(/\s+/g, ' ');
+  }
+  function getHeroImageSettingsOverrideInfo() {
+    var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var shortLang = String(rawLang || 'en').split('-')[0];
+    var docs = [
+      readLiveHeroRecord('hero_' + rawLang),
+      shortLang && shortLang !== rawLang ? readLiveHeroRecord('hero_' + shortLang) : null,
+      readLiveHeroRecord('hero_en'),
+      readLegacyRecord('hero_' + rawLang),
+      shortLang && shortLang !== rawLang ? readLegacyRecord('hero_' + shortLang) : null,
+      readLegacyRecord('hero_en')
+    ];
+    for (var i = 0; i < docs.length; i += 1) {
+      var doc = docs[i] && docs[i].value;
+      if (!doc || typeof doc !== 'object') continue;
+      var desktopFit = normalizeHeroFit(doc.heroDesktopFit);
+      var desktopPosition = normalizeHeroPosition(doc.heroDesktopPosition);
+      var desktopManual = normalizeHeroPosition(doc.heroDesktopPositionManual);
+      var mobileFit = normalizeHeroFit(doc.heroMobileFit);
+      var mobilePosition = normalizeHeroPosition(doc.heroMobilePosition);
+      var mobileManual = normalizeHeroPosition(doc.heroMobilePositionManual);
+      if (desktopFit || desktopPosition || desktopManual || mobileFit || mobilePosition || mobileManual) {
+        return {
+          desktopFit: desktopFit,
+          desktopPosition: desktopManual || desktopPosition,
+          mobileFit: mobileFit,
+          mobilePosition: mobileManual || mobilePosition
+        };
+      }
+    }
+    return null;
+  }
   function getIntroImageOverrideInfo() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
     var shortLang = String(rawLang || 'en').split('-')[0];
@@ -588,7 +653,8 @@
     var hero = document.getElementById('hero');
     var introPhoto = document.querySelector('img.mp-home-hero-asset');
     if (!hb || !cfg) return;
-    var img = String(cfg.image || '').trim();
+    var override = getHeroImageOverrideInfo();
+    var img = override && override.url ? override.url : String(cfg.image || '').trim();
     if (img) {
       LAST_HERO_IMAGE = img;
       if (img === '../img/hero-portrait.webp') {
@@ -598,17 +664,29 @@
       }
       applyIntroPhotoSource(introPhoto, img);
     }
+    var settings = getHeroImageSettingsOverrideInfo();
     var cropRaw = String(cfg.cropMode != null ? cfg.cropMode : 'cover').toLowerCase();
     var crop = cropRaw === 'contain' ? 'contain' : 'cover';
+    var hasAdminHeroImage = !!(override && override.url);
     hb.style.backgroundSize = crop;
     hb.setAttribute('data-crop', crop);
     if (hero) hero.setAttribute('data-crop', crop);
     var mq = window.matchMedia('(max-width: 700px)');
     function focal() {
-      var f = mq.matches ? cfg.focalMobile : cfg.focalDesktop;
+      var configuredFit = settings ? (mq.matches ? settings.mobileFit : settings.desktopFit) : '';
+      var configuredPosition = settings ? (mq.matches ? settings.mobilePosition : settings.desktopPosition) : '';
+      var f = configuredPosition || (mq.matches ? cfg.focalMobile : cfg.focalDesktop);
+      if ((configuredFit || configuredPosition || hasAdminHeroImage) && configuredFit) {
+        hb.style.setProperty('background-size', configuredFit, 'important');
+        hb.setAttribute('data-crop', configuredFit);
+        if (hero) hero.setAttribute('data-crop', configuredFit);
+      } else if (configuredPosition || hasAdminHeroImage) {
+        hb.style.setProperty('background-size', crop, 'important');
+      }
       var pos = f != null && String(f).trim() ? String(f).trim() : '';
       if (pos) {
-        hb.style.backgroundPosition = pos;
+        if (configuredPosition || hasAdminHeroImage) hb.style.setProperty('background-position', pos, 'important');
+        else hb.style.backgroundPosition = pos;
         if (introPhoto && !(getIntroImageSettingsOverrideInfo() && getIntroImageSettingsOverrideInfo().position)) introPhoto.style.objectPosition = pos;
       }
       applyIntroImageSettings(introPhoto);

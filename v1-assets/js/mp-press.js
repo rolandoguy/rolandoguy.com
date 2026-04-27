@@ -376,6 +376,13 @@
       var s = String(v || '').trim().toLowerCase();
       return /^(center center|center top|center bottom|left center|right center)$/.test(s) ? s : 'center center';
     };
+    var normalizePreviewObjectPosition = function (v) {
+      var raw = String(v || '').trim();
+      var lower = raw.toLowerCase();
+      if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
+      if (/^\d{1,3}(?:\.\d+)?%\s+\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
+      return raw;
+    };
     var normalizePreviewAspect = function (v) {
       var s = String(v || '').trim().toLowerCase();
       return /^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(s) ? s : 'portrait_4_5';
@@ -399,7 +406,7 @@
           visible: true,
           previewFit: normalizePreviewFit(ph.previewFit),
           previewPosition: normalizePreviewPosition(ph.previewPosition),
-          previewPositionManual: String(ph.previewPositionManual || '').trim(),
+          previewPositionManual: normalizePreviewObjectPosition(ph.previewPositionManual),
           previewAspect: normalizePreviewAspect(ph.previewAspect),
           label: caption,
           credit: photographer
@@ -409,6 +416,11 @@
   }
   function countNormalizedEpkPhotos(raw) {
     return normalizeEpkPhotos(raw).length;
+  }
+  function resolvePreviewObjectPosition(photo) {
+    var manual = String(photo && photo.previewPositionManual || '').trim();
+    if (manual) return manual;
+    return String(photo && photo.previewPosition || '').trim() || 'center center';
   }
   function scorePressItems(raw) {
     if (!Array.isArray(raw)) return 0;
@@ -768,13 +780,14 @@
 
           var frame = document.createElement('div');
           frame.className = 'epk-press-frame';
+          frame.style.setProperty('--press-photo-object-position', resolvePreviewObjectPosition(ph));
           var img = document.createElement('img');
           img.src = url;
           img.alt = alt;
           img.loading = 'lazy';
           frame.dataset.previewAspect = ph.previewAspect || 'portrait_4_5';
           img.style.objectFit = ph.previewAspect === 'auto' ? 'contain' : (ph.previewFit || 'cover');
-          img.style.objectPosition = ph.previewPositionManual || ph.previewPosition || 'center center';
+          img.style.setProperty('object-position', resolvePreviewObjectPosition(ph));
           frame.appendChild(img);
 
           var body = document.createElement('div');

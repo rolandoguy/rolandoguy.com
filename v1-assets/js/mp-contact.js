@@ -195,10 +195,18 @@
       contactImageUrl: firstNonEmpty(liveCurrent && liveCurrent.contactImageUrl, liveEn && liveEn.contactImageUrl),
       contactImageAlt: firstNonEmpty(liveCurrent && liveCurrent.contactImageAlt, liveEn && liveEn.contactImageAlt),
       contactImagePlacement: firstNonEmpty(liveCurrent && liveCurrent.contactImagePlacement, liveEn && liveEn.contactImagePlacement, 'none'),
+      contactImageAspect: firstNonEmpty(liveCurrent && liveCurrent.contactImageAspect, liveEn && liveEn.contactImageAspect, 'portrait_4_5'),
       contactImageFit: firstNonEmpty(liveCurrent && liveCurrent.contactImageFit, liveEn && liveEn.contactImageFit, 'cover'),
       contactImagePosition: firstNonEmpty(liveCurrent && liveCurrent.contactImagePosition, liveEn && liveEn.contactImagePosition, 'center center'),
+      contactImagePositionManual: firstNonEmpty(liveCurrent && liveCurrent.contactImagePositionManual, liveEn && liveEn.contactImagePositionManual),
       quote: quote
     };
+  }
+
+  function resolveContactImagePosition(d) {
+    var manual = String(d && d.contactImagePositionManual || '').trim();
+    if (manual) return manual;
+    return String(d && d.contactImagePosition || '').trim() || 'center center';
   }
 
   function renderContactImage(d) {
@@ -220,13 +228,14 @@
     var fig = document.createElement('figure');
     fig.id = 'contactEditorialImage';
     fig.className = 'contact-editorial-image';
+    fig.setAttribute('data-image-aspect', d.contactImageAspect || 'portrait_4_5');
     var img = document.createElement('img');
     img.src = d.contactImageUrl;
     img.alt = d.contactImageAlt || '';
     img.loading = 'lazy';
     img.decoding = 'async';
     img.style.objectFit = String(d.contactImageFit || 'cover') === 'contain' ? 'contain' : 'cover';
-    img.style.objectPosition = d.contactImagePosition || 'center center';
+    img.style.objectPosition = resolveContactImagePosition(d);
     fig.appendChild(img);
     left.appendChild(fig);
   }

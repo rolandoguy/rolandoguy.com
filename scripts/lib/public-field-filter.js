@@ -211,7 +211,7 @@ var PUBLIC_BIOGRAPHY_FIELDS = ['portraitImage', 'introLine', 'h2', 'paragraphs',
 // CONTACT FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'emailBtn', 'webBtn', 'quote', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageFit', 'contactImagePosition'];
+var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'emailBtn', 'webBtn', 'quote', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageAspect', 'contactImageFit', 'contactImagePosition', 'contactImagePositionManual'];
 
 var PUBLIC_CONTACT_LOCALE_FIELDS = ['title', 'sub', 'emailBtn', 'quote'];
 
@@ -235,7 +235,7 @@ var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
 
 var PUBLIC_REPERTOIRE_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
 
-var PUBLIC_REPERTOIRE_CHROME_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageFit', 'repertoireImagePosition'];
+var PUBLIC_REPERTOIRE_CHROME_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageAspect', 'repertoireImageFit', 'repertoireImagePosition', 'repertoireImagePositionManual'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRAMS FIELDS

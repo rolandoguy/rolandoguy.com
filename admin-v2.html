@@ -642,6 +642,50 @@
           </div>
           <div class="grid one">
             <label>Hero image path<input id="hero-bgImage" placeholder="../img/hero-portrait.webp"></label>
+            <div class="grid three">
+              <label>Hero desktop fit
+                <select id="hero-desktopFit">
+                  <option value="">Current default</option>
+                  <option value="cover">cover</option>
+                  <option value="contain">contain</option>
+                </select>
+              </label>
+              <label>Hero desktop position
+                <select id="hero-desktopPosition">
+                  <option value="">Current default</option>
+                  <option value="center center">center center</option>
+                  <option value="center right">center right</option>
+                  <option value="right center">right center</option>
+                  <option value="right top">right top</option>
+                  <option value="right bottom">right bottom</option>
+                  <option value="left center">left center</option>
+                </select>
+              </label>
+              <label>Hero desktop manual position<input id="hero-desktopPositionManual" placeholder="70% 50%"></label>
+            </div>
+            <div class="grid three">
+              <label>Hero mobile fit
+                <select id="hero-mobileFit">
+                  <option value="">Current default</option>
+                  <option value="cover">cover</option>
+                  <option value="contain">contain</option>
+                </select>
+              </label>
+              <label>Hero mobile position
+                <select id="hero-mobilePosition">
+                  <option value="">Current default</option>
+                  <option value="center center">center center</option>
+                  <option value="center top">center top</option>
+                  <option value="center bottom">center bottom</option>
+                  <option value="left center">left center</option>
+                  <option value="right center">right center</option>
+                </select>
+              </label>
+              <label>Hero mobile manual position<input id="hero-mobilePositionManual" placeholder="50% 35%"></label>
+            </div>
+            <div id="hero-bgPreview-wrap" class="photo-preview-wrap hero-bg-preview-wrap">
+              <img id="hero-bgPreview" alt="Hero image preview">
+            </div>
             <label>Home intro portrait (this language only)<input id="hero-introImage" placeholder="../img/studio-2.jpg or https://..."></label>
             <div class="grid three">
               <label>Home intro image layout
@@ -779,8 +823,8 @@
             <label>H2 (HTML)<input id="rep-h2"></label>
             <label>Intro<input id="rep-intro"></label>
           </div>
-          <details class="details-block">
-            <summary>Repertoire editorial image</summary>
+          <details class="details-block public-image-placement-panel" open>
+            <summary>Public image placements · Repertoire / Programs image</summary>
             <div class="grid two">
               <label>Image enabled
                 <select id="rep-image-enabled">
@@ -797,13 +841,33 @@
               </label>
               <label>Image URL<input id="rep-image-url" placeholder="../img/studio-2.jpg or https://..."></label>
               <label>Alt text<input id="rep-image-alt"></label>
+              <label>Aspect
+                <select id="rep-image-aspect">
+                  <option value="landscape_16_9">landscape 16:9</option>
+                  <option value="landscape_3_2">landscape 3:2</option>
+                  <option value="portrait_4_5">portrait 4:5</option>
+                  <option value="square_1_1">square 1:1</option>
+                </select>
+              </label>
               <label>Fit
                 <select id="rep-image-fit">
                   <option value="cover">cover</option>
                   <option value="contain">contain</option>
                 </select>
               </label>
-              <label>Object-position<input id="rep-image-position" placeholder="center center or 50% 45%"></label>
+              <label>Position preset
+                <select id="rep-image-position">
+                  <option value="center center">center center</option>
+                  <option value="center top">center top</option>
+                  <option value="center bottom">center bottom</option>
+                  <option value="left center">left center</option>
+                  <option value="right center">right center</option>
+                </select>
+              </label>
+              <label>Manual object-position<input id="rep-image-position-manual" placeholder="50% 42%"></label>
+            </div>
+            <div id="rep-image-preview-wrap" class="photo-preview-wrap placement-preview-wrap">
+              <img id="rep-image-preview" alt="Repertoire image preview">
             </div>
             <p class="muted">Optional public image. Leave disabled to keep the current Repertoire page unchanged.</p>
           </details>
@@ -3493,8 +3557,8 @@
               <small class="muted">Optional. Used in Programme Sheets and offer emails. The live contact page does not currently show this link.</small>
             </label>
             <p id="contact-web-validation" class="muted"></p>
-            <details class="details-block">
-              <summary>Contact page image</summary>
+            <details class="details-block public-image-placement-panel" open>
+              <summary>Public image placements · Contact / Booking image</summary>
               <div class="grid two">
                 <label>Image enabled
                   <select id="contact-image-enabled">
@@ -3511,13 +3575,32 @@
                 </label>
                 <label>Image URL<input id="contact-image-url" placeholder="../img/studio-2.jpg or https://..."></label>
                 <label>Alt text<input id="contact-image-alt"></label>
+                <label>Aspect
+                  <select id="contact-image-aspect">
+                    <option value="portrait_4_5">portrait 4:5</option>
+                    <option value="landscape_3_2">landscape 3:2</option>
+                    <option value="square_1_1">square 1:1</option>
+                  </select>
+                </label>
                 <label>Fit
                   <select id="contact-image-fit">
                     <option value="cover">cover</option>
                     <option value="contain">contain</option>
                   </select>
                 </label>
-                <label>Object-position<input id="contact-image-position" placeholder="center center or 50% 45%"></label>
+                <label>Position preset
+                  <select id="contact-image-position">
+                    <option value="center center">center center</option>
+                    <option value="center top">center top</option>
+                    <option value="center bottom">center bottom</option>
+                    <option value="left center">left center</option>
+                    <option value="right center">right center</option>
+                  </select>
+                </label>
+                <label>Manual object-position<input id="contact-image-position-manual" placeholder="50% 42%"></label>
+              </div>
+              <div id="contact-image-preview-wrap" class="photo-preview-wrap placement-preview-wrap">
+                <img id="contact-image-preview" alt="Contact image preview">
               </div>
               <p class="muted">Disabled by default so the contact form keeps its current prominence.</p>
             </details>
