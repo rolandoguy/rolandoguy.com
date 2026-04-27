@@ -238,10 +238,35 @@
     };
   }
 
-  function resolveRepertoireImagePosition(d) {
-    var manual = String(d && d.repertoireImagePositionManual || '').trim();
-    if (manual) return manual;
-    return String(d && d.repertoireImagePosition || '').trim() || 'center center';
+  function resolveImageObjectFit(value) {
+    return String(value || '').trim().toLowerCase() === 'contain' ? 'contain' : 'cover';
+  }
+
+  function normalizeImageObjectPosition(value) {
+    var raw = String(value || '').trim().replace(/\s+/g, ' ');
+    if (!raw) return '';
+    var lower = raw.toLowerCase();
+    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
+    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return lower;
+    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
+    if (/^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower)) return lower;
+    return '';
+  }
+
+  function resolveImageObjectPosition(manual, preset) {
+    return normalizeImageObjectPosition(manual) || normalizeImageObjectPosition(preset) || 'center center';
+  }
+
+  function applyImageCrop(el, fit, manualPosition, presetPosition, variablePrefix) {
+    if (!el) return;
+    var resolvedFit = resolveImageObjectFit(fit);
+    var resolvedPosition = resolveImageObjectPosition(manualPosition, presetPosition);
+    el.style.setProperty('object-fit', resolvedFit, 'important');
+    el.style.setProperty('object-position', resolvedPosition, 'important');
+    if (el.parentNode && el.parentNode.style && variablePrefix) {
+      el.parentNode.style.setProperty('--' + variablePrefix + '-image-fit', resolvedFit);
+      el.parentNode.style.setProperty('--' + variablePrefix + '-image-position', resolvedPosition);
+    }
   }
 
   function renderRepertoireImage(d) {
@@ -257,8 +282,7 @@
     img.alt = d.repertoireImageAlt || '';
     img.loading = 'lazy';
     img.decoding = 'async';
-    img.style.objectFit = d.repertoireImageFit || 'cover';
-    img.style.objectPosition = resolveRepertoireImagePosition(d);
+    applyImageCrop(img, d.repertoireImageFit, d.repertoireImagePositionManual, d.repertoireImagePosition, 'rep');
     fig.appendChild(img);
     var placement = d.repertoireImagePlacement;
     var target = placement === 'programme_offers_accent'

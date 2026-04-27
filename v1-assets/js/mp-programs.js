@@ -245,8 +245,35 @@
     return esc(s).replace(/"/g, '&quot;');
   }
 
-  function programImagePosition(p) {
-    return safeString(p && p.imagePositionManual).trim() || safeString(p && p.imagePosition).trim() || 'center center';
+  function resolveImageObjectFit(value) {
+    return safeString(value).trim().toLowerCase() === 'contain' ? 'contain' : 'cover';
+  }
+
+  function normalizeImageObjectPosition(value) {
+    var raw = safeString(value).trim().replace(/\s+/g, ' ');
+    if (!raw) return '';
+    var lower = raw.toLowerCase();
+    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
+    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return lower;
+    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
+    if (/^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower)) return lower;
+    return '';
+  }
+
+  function resolveImageObjectPosition(manual, preset) {
+    return normalizeImageObjectPosition(manual) || normalizeImageObjectPosition(preset) || 'center center';
+  }
+
+  function applyImageCrop(el, fit, manualPosition, presetPosition) {
+    if (!el) return;
+    var resolvedFit = resolveImageObjectFit(fit);
+    var resolvedPosition = resolveImageObjectPosition(manualPosition, presetPosition);
+    el.style.setProperty('object-fit', resolvedFit, 'important');
+    el.style.setProperty('object-position', resolvedPosition, 'important');
+    if (el.parentNode && el.parentNode.style) {
+      el.parentNode.style.setProperty('--program-image-fit', resolvedFit);
+      el.parentNode.style.setProperty('--program-image-position', resolvedPosition);
+    }
   }
 
   function renderPrograms() {
@@ -309,13 +336,12 @@
         var forms = Array.isArray(p.formations) ? p.formations : [];
         var ideal = Array.isArray(p.idealFor) ? p.idealFor : [];
         var imageUrl = safeString(p.imageUrl).trim();
-        var imageFit = safeString(p.imageFit).trim() === 'contain' ? 'contain' : 'cover';
         var imageHtml = imageUrl
-          ? '<figure class="program-card-image"><img src="' + escAttr(imageUrl) + '" alt="' + escAttr(p.imageAlt || p.title || '') + '" style="object-fit:' + escAttr(imageFit) + ';object-position:' + escAttr(programImagePosition(p)) + '"></figure>'
+          ? '<figure class="program-card-image"><img src="' + escAttr(imageUrl) + '" alt="' + escAttr(p.imageAlt || p.title || '') + '" data-image-fit="' + escAttr(resolveImageObjectFit(p.imageFit)) + '" data-image-position="' + escAttr(p.imagePosition || '') + '" data-image-position-manual="' + escAttr(p.imagePositionManual || '') + '"></figure>'
           : '';
         return (
-          '<article class="program-card reveal visible">' +
-          imageHtml +
+          '<article class="program-card' + (imageUrl ? ' program-card--has-image' : '') + ' reveal visible">' +
+          '<div class="program-card-content">' +
           '<h3 class="program-card-title">' + esc(p.title) + '</h3>' +
           '<p class="program-card-desc">' + esc(p.description) + '</p>' +
           '<div class="program-meta">' +
@@ -327,10 +353,20 @@
           ideal.map(function (it) { return '<li>' + esc(it) + '</li>'; }).join('') +
           '</ul></div></div>' +
           '</div>' +
+          '</div>' +
+          imageHtml +
           '</article>'
         );
       })
       .join('');
+    grid.querySelectorAll('.program-card-image img').forEach(function (img) {
+      applyImageCrop(
+        img,
+        img.getAttribute('data-image-fit'),
+        img.getAttribute('data-image-position-manual'),
+        img.getAttribute('data-image-position')
+      );
+    });
 
     scheduleProgramsScroll();
   }
