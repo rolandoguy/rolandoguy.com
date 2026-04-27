@@ -1695,30 +1695,69 @@
           <div class="split">
             <div id="programs-list" class="item-list"></div>
             <div class="editor">
-              <label>Title<input id="programs-item-title"></label>
-              <label>Description<textarea id="programs-item-description" rows="5"></textarea></label>
-              <small class="muted">Description is public. Aim for 2-5 concise sentences.</small>
-              <label>Formations (one per line)<textarea id="programs-item-formations" rows="3"></textarea></label>
-              <label>Duration<input id="programs-item-duration"></label>
-              <label>Ideal for (one per line)<textarea id="programs-item-idealFor" rows="3"></textarea></label>
-              <label>On live site
-                <select id="programs-item-published" title="Maps to published true/false in saved data">
-                  <option value="true">Visible</option>
-                  <option value="false">Hidden</option>
-                </select>
-              </label>
-              <label>Publishing status
-                <select id="programs-item-editorialStatus">
-                  <option value="draft">Draft</option>
-                  <option value="needs_translation">Needs translation</option>
-                  <option value="translated">Translated</option>
-                  <option value="reviewed">Reviewed</option>
-                  <option value="published">Published</option>
-                  <option value="hidden">Hidden</option>
-                </select>
-              </label>
+              <section class="editor-section">
+                <h3>Programme Basics</h3>
+                <label>Title<input id="programs-item-title"></label>
+                <label>Duration<input id="programs-item-duration"></label>
+                <label>On live site
+                  <select id="programs-item-published" title="Maps to published true/false in saved data">
+                    <option value="true">Visible</option>
+                    <option value="false">Hidden</option>
+                  </select>
+                </label>
+                <label>Publishing status
+                  <select id="programs-item-editorialStatus">
+                    <option value="draft">Draft</option>
+                    <option value="needs_translation">Needs translation</option>
+                    <option value="translated">Translated</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="published">Published</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </label>
+              </section>
+              <section class="editor-section pb-programme-image-section">
+                <h3>Programme Image</h3>
+                <p class="muted">Optional main image for this public programme card, summary, export, and preview.</p>
+                <label>Image URL<input id="programs-item-imageUrl" placeholder="https://..."></label>
+                <label class="embed-file-label">Embed image from local file
+                  <input type="file" id="programs-item-imageFile" accept="image/*">
+                </label>
+                <label>Alt text<input id="programs-item-imageAlt"></label>
+                <div class="grid two">
+                  <label>Image fit
+                    <select id="programs-item-imageFit">
+                      <option value="cover">Cover</option>
+                      <option value="contain">Contain</option>
+                    </select>
+                  </label>
+                  <label>Image position
+                    <select id="programs-item-imagePosition">
+                      <option value="center center">Center center</option>
+                      <option value="center top">Center top</option>
+                      <option value="center bottom">Center bottom</option>
+                      <option value="left center">Left center</option>
+                      <option value="right center">Right center</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Manual object-position<input id="programs-item-imagePositionManual" placeholder="50% 42%"></label>
+                <div id="programs-item-imagePreviewWrap" class="photo-preview-wrap programme-image-preview-wrap is-empty">
+                  <img id="programs-item-imagePreview" alt="Programme image preview">
+                </div>
+              </section>
+              <section class="editor-section">
+                <h3>Programme Content / Public Texts</h3>
+                <label>Description<textarea id="programs-item-description" rows="5"></textarea></label>
+                <small class="muted">Description is public. Aim for 2-5 concise sentences.</small>
+                <label>Formations (one per line)<textarea id="programs-item-formations" rows="3"></textarea></label>
+                <label>Ideal for (one per line)<textarea id="programs-item-idealFor" rows="3"></textarea></label>
+              </section>
               <div id="programs-card-preview" class="mini-preview">
                 <h4>Program card preview</h4>
+                <div id="programs-preview-image-wrap" class="mini-preview__image-wrap" hidden>
+                  <img id="programs-preview-image" alt="">
+                </div>
                 <p class="mini-preview__title" id="programs-preview-title">Program title</p>
                 <p class="mini-preview__body" id="programs-preview-description">Program description</p>
                 <p class="mini-preview__meta" id="programs-preview-duration">Duration</p>
@@ -1806,6 +1845,27 @@
                   </label>
                 </div>
                 <div id="pb-setup-summary" class="pb-setup-summary">Current frame: Gala · 30 min · English · Tenor + Piano · Open / Mixed</div>
+                <section class="editor-section pb-programme-image-section">
+                  <h3>Programme Image</h3>
+                  <p class="muted">Main visual used for programme cards, public summaries, Programme Sheet PDF exports, and previews.</p>
+                  <div class="grid two">
+                    <label>Header image
+                      <select id="pb-header-image-mode">
+                        <option value="default">Use default portrait</option>
+                        <option value="none">No image</option>
+                        <option value="custom">Use custom image for this offer</option>
+                      </select>
+                    </label>
+                    <label id="pb-header-image-url-wrap" hidden>Custom image URL<input id="pb-header-image-url" placeholder="https://..."></label>
+                  </div>
+                  <label class="embed-file-label">Embed custom image from local file
+                    <input type="file" id="pb-header-image-file" accept="image/*">
+                  </label>
+                  <div id="pb-header-image-preview-wrap" class="photo-preview-wrap programme-image-preview-wrap">
+                    <img id="pb-header-image-preview" alt="Programme image preview">
+                  </div>
+                  <p class="muted pb-helper-copy">Use the default portrait for a solo offer, switch to no image for a cleaner sheet, paste a custom image URL, or embed a local image for this saved offer.</p>
+                </section>
                 <details class="pb-compact-toggle">
                   <summary>More setup options</summary>
                   <div class="grid two">
@@ -2168,17 +2228,6 @@
                   <button id="pb-blueprint-title-reset" type="button">Reset title to language default</button>
                 </div>
               </div>
-              <div class="grid two">
-                <label>Header image
-                  <select id="pb-header-image-mode">
-                    <option value="default">Use default portrait</option>
-                    <option value="none">No image</option>
-                    <option value="custom">Use custom image for this offer</option>
-                  </select>
-                </label>
-                <label id="pb-header-image-url-wrap" hidden>Custom image URL<input id="pb-header-image-url" placeholder="https://..."></label>
-              </div>
-              <p class="muted pb-helper-copy">Use the default portrait for a solo offer, switch to no image for a cleaner sheet, or paste a custom image URL for duet and ensemble versions.</p>
               <div class="pb-offer-field">
                 <label>Mobile phone for Programme Sheet<input id="pb-contact-phone" placeholder="+49 …"></label>
                 <div class="pb-offer-field__actions">

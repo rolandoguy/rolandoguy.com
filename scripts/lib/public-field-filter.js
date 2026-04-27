@@ -241,7 +241,7 @@ var PUBLIC_REPERTOIRE_CHROME_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 
 // PROGRAMS FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor'];
+var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor', 'imageUrl', 'imageAlt', 'imageFit', 'imagePosition', 'imagePositionManual'];
 
 var PUBLIC_PROGRAMS_CHROME_FIELDS = ['title', 'subtitle', 'profileBridge', 'intro', 'closingNote', 'linkLabel'];
 

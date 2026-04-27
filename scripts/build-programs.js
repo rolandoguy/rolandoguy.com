@@ -67,7 +67,12 @@ function normalizeProgramsDoc(raw) {
         description: safeString(item.description),
         formations: splitList(item.formations),
         duration: safeString(item.duration),
-        idealFor: splitList(item.idealFor)
+        idealFor: splitList(item.idealFor),
+        imageUrl: safeString(item.imageUrl || item.image || item.photoUrl).trim(),
+        imageAlt: safeString(item.imageAlt || item.alt).trim(),
+        imageFit: safeString(item.imageFit || 'cover').trim() === 'contain' ? 'contain' : 'cover',
+        imagePosition: safeString(item.imagePosition || 'center center').trim() || 'center center',
+        imagePositionManual: safeString(item.imagePositionManual).trim()
       });
     })
   };

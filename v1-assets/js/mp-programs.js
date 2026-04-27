@@ -241,6 +241,13 @@
   function esc(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
+  function escAttr(s) {
+    return esc(s).replace(/"/g, '&quot;');
+  }
+
+  function programImagePosition(p) {
+    return safeString(p && p.imagePositionManual).trim() || safeString(p && p.imagePosition).trim() || 'center center';
+  }
 
   function renderPrograms() {
     var info = getProgramsPayloadInfo(currentLang);
@@ -301,8 +308,14 @@
       .map(function (p) {
         var forms = Array.isArray(p.formations) ? p.formations : [];
         var ideal = Array.isArray(p.idealFor) ? p.idealFor : [];
+        var imageUrl = safeString(p.imageUrl).trim();
+        var imageFit = safeString(p.imageFit).trim() === 'contain' ? 'contain' : 'cover';
+        var imageHtml = imageUrl
+          ? '<figure class="program-card-image"><img src="' + escAttr(imageUrl) + '" alt="' + escAttr(p.imageAlt || p.title || '') + '" style="object-fit:' + escAttr(imageFit) + ';object-position:' + escAttr(programImagePosition(p)) + '"></figure>'
+          : '';
         return (
           '<article class="program-card reveal visible">' +
+          imageHtml +
           '<h3 class="program-card-title">' + esc(p.title) + '</h3>' +
           '<p class="program-card-desc">' + esc(p.description) + '</p>' +
           '<div class="program-meta">' +

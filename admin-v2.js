@@ -3125,7 +3125,7 @@
   var PUBLIC_REP_HEADER_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageAspect', 'repertoireImageFit', 'repertoireImagePosition', 'repertoireImagePositionManual'];
   var PUBLIC_REP_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
   var PUBLIC_PROGRAMS_CHROME_FIELDS = ['title', 'subtitle', 'profileBridge', 'intro', 'closingNote', 'linkLabel'];
-  var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor'];
+  var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor', 'imageUrl', 'imageAlt', 'imageFit', 'imagePosition', 'imagePositionManual'];
   var PUBLIC_EDITORIAL_FIELDS = ['repProgramsLink', 'epkProgramsLink', 'hideProgramsSection', 'hideProgramsEntryPoints'];
   var PUBLIC_PERF_HEADER_FIELDS = ['h2', 'intro', 'eventTypes', 'monthNames'];
   var PUBLIC_PERF_EVENT_FIELDS = [
@@ -5357,7 +5357,12 @@
         description: safeString(p.description),
         formations: formations.map(function (x) { return safeString(x).trim(); }).filter(Boolean),
         duration: safeString(p.duration),
-        idealFor: idealFor.map(function (x) { return safeString(x).trim(); }).filter(Boolean)
+        idealFor: idealFor.map(function (x) { return safeString(x).trim(); }).filter(Boolean),
+        imageUrl: safeString(p.imageUrl || p.image || p.photoUrl).trim(),
+        imageAlt: safeString(p.imageAlt || p.alt).trim(),
+        imageFit: safeString(p.imageFit || 'cover').trim() === 'contain' ? 'contain' : 'cover',
+        imagePosition: safeString(p.imagePosition || 'center center').trim() || 'center center',
+        imagePositionManual: safeString(p.imagePositionManual).trim()
       };
     });
     return d;
@@ -5447,6 +5452,11 @@
     $('programs-item-formations').value = Array.isArray(p.formations) ? p.formations.join('\n') : '';
     $('programs-item-duration').value = safeString(p.duration);
     $('programs-item-idealFor').value = Array.isArray(p.idealFor) ? p.idealFor.join('\n') : '';
+    if ($('programs-item-imageUrl')) $('programs-item-imageUrl').value = safeString(p.imageUrl);
+    if ($('programs-item-imageAlt')) $('programs-item-imageAlt').value = safeString(p.imageAlt);
+    if ($('programs-item-imageFit')) $('programs-item-imageFit').value = safeString(p.imageFit || 'cover') === 'contain' ? 'contain' : 'cover';
+    if ($('programs-item-imagePosition')) setSelectWithCustomValue('programs-item-imagePosition', safeString(p.imagePosition || 'center center'), 'center center');
+    if ($('programs-item-imagePositionManual')) $('programs-item-imagePositionManual').value = safeString(p.imagePositionManual);
     $('programs-item-published').value = p.published === false ? 'false' : 'true';
     setSelectWithCustomValue('programs-item-editorialStatus', safeString(p.editorialStatus || 'draft'), 'draft');
     updateProgramsMiniPreview();
@@ -5460,6 +5470,11 @@
     p.formations = safeString($('programs-item-formations').value).split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
     p.duration = safeString($('programs-item-duration').value);
     p.idealFor = safeString($('programs-item-idealFor').value).split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    p.imageUrl = safeString($('programs-item-imageUrl') && $('programs-item-imageUrl').value).trim();
+    p.imageAlt = safeString($('programs-item-imageAlt') && $('programs-item-imageAlt').value).trim();
+    p.imageFit = safeString($('programs-item-imageFit') && $('programs-item-imageFit').value).trim() === 'contain' ? 'contain' : 'cover';
+    p.imagePosition = safeString($('programs-item-imagePosition') && $('programs-item-imagePosition').value).trim() || 'center center';
+    p.imagePositionManual = safeString($('programs-item-imagePositionManual') && $('programs-item-imagePositionManual').value).trim();
     p.published = $('programs-item-published').value !== 'false';
     p.editorialStatus = safeString($('programs-item-editorialStatus').value || 'draft');
     state.programsDoc.programs[state.programsIndex] = p;
@@ -6508,6 +6523,19 @@
       return custom || '';
     }
     return programBuilderPortraitForLang(lang);
+  }
+  function updateProgramOfferHeaderImagePreview(bp, lang) {
+    var wrap = $('pb-header-image-preview-wrap');
+    var img = $('pb-header-image-preview');
+    if (!wrap || !img) return;
+    var source = resolveProgramOfferHeaderImage(bp || currentBlueprint(), lang || state.blueprintOutputLang || state.lang || 'en');
+    if (source) {
+      img.src = source;
+      wrap.classList.remove('is-empty');
+    } else {
+      img.removeAttribute('src');
+      wrap.classList.add('is-empty');
+    }
   }
   function programBuilderHistoricalSource() {
     return (typeof window !== 'undefined' && isObject(window.PROGRAM_BUILDER_HISTORICAL_IMPORT)) ? window.PROGRAM_BUILDER_HISTORICAL_IMPORT : {};
@@ -12880,6 +12908,7 @@
     if ($('pb-header-image-mode')) $('pb-header-image-mode').value = normalizeProgramOfferHeaderImageMode(bp.headerImageMode);
     if ($('pb-header-image-url')) $('pb-header-image-url').value = safeString(bp.headerImageUrl);
     if ($('pb-header-image-url-wrap')) $('pb-header-image-url-wrap').hidden = normalizeProgramOfferHeaderImageMode(bp.headerImageMode) !== 'custom';
+    updateProgramOfferHeaderImagePreview(bp, lang);
     if ($('pb-contact-phone')) $('pb-contact-phone').value = safeString(bp.contactPhoneOverride || programBuilderContactForLang(lang).phone || '');
     if ($('pb-offer-filter-status')) $('pb-offer-filter-status').value = state.plannerOfferStatusFilter || 'all';
     if ($('pb-offer-filter-category')) $('pb-offer-filter-category').value = state.plannerOfferCategoryFilter || 'all';
@@ -20045,6 +20074,27 @@
   }
   function updateProgramsMiniPreview() {
     if (!$('programs-preview-title')) return;
+    var imageUrl = safeString($('programs-item-imageUrl') && $('programs-item-imageUrl').value).trim();
+    var imageFit = safeString($('programs-item-imageFit') && $('programs-item-imageFit').value).trim() === 'contain' ? 'contain' : 'cover';
+    var imagePosition = safeString($('programs-item-imagePositionManual') && $('programs-item-imagePositionManual').value).trim() ||
+      safeString($('programs-item-imagePosition') && $('programs-item-imagePosition').value).trim() ||
+      'center center';
+    var previewWrap = $('programs-preview-image-wrap');
+    var previewImg = $('programs-preview-image');
+    var editorWrap = $('programs-item-imagePreviewWrap');
+    var editorImg = $('programs-item-imagePreview');
+    [previewImg, editorImg].forEach(function (img) {
+      if (!img) return;
+      if (imageUrl) {
+        img.src = imageUrl;
+        img.style.objectFit = imageFit;
+        img.style.objectPosition = imagePosition;
+      } else {
+        img.removeAttribute('src');
+      }
+    });
+    if (previewWrap) previewWrap.hidden = !imageUrl;
+    if (editorWrap) editorWrap.classList.toggle('is-empty', !imageUrl);
     $('programs-preview-title').textContent = clipText($('programs-item-title').value, 70) || 'Program title';
     $('programs-preview-description').textContent = clipText($('programs-item-description').value, 180) || 'Program description';
     $('programs-preview-duration').textContent = clipText($('programs-item-duration').value, 36) || 'Duration';
@@ -20897,6 +20947,19 @@
     if ($('pb-output-lang')) $('pb-output-lang').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-build-mode')) $('pb-build-mode').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-repertoire-mode')) $('pb-repertoire-mode').addEventListener('change', function () { persistBlueprintHeader('context'); });
+    if ($('pb-header-image-file')) $('pb-header-image-file').addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        if ($('pb-header-image-mode')) $('pb-header-image-mode').value = 'custom';
+        if ($('pb-header-image-url')) $('pb-header-image-url').value = safeString(ev.target.result);
+        if ($('pb-header-image-url-wrap')) $('pb-header-image-url-wrap').hidden = false;
+        persistBlueprintHeader('manual');
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    });
     if ($('pb-gala-preferPacing')) $('pb-gala-preferPacing').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-gala-allowPianoInterludes')) $('pb-gala-allowPianoInterludes').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-gala-includeContrast')) $('pb-gala-includeContrast').addEventListener('change', function () { persistBlueprintHeader('context'); });
@@ -21470,7 +21533,7 @@
     $('programs-add').addEventListener('click', function () {
       var arr = state.programsDoc.programs;
       var maxId = arr.length ? Math.max.apply(null, arr.map(function (p) { return Number(p.id) || 0; })) : 0;
-      arr.push({ id: maxId + 1, order: arr.length, published: true, editorialStatus: 'draft', title: '', description: '', formations: [], duration: '', idealFor: [] });
+      arr.push({ id: maxId + 1, order: arr.length, published: true, editorialStatus: 'draft', title: '', description: '', formations: [], duration: '', idealFor: [], imageUrl: '', imageAlt: '', imageFit: 'cover', imagePosition: 'center center', imagePositionManual: '' });
       state.programsIndex = arr.length - 1;
       renderProgramsList(); renderProgramsEditor(); markDirty(true, 'Program added');
     });
@@ -21514,6 +21577,17 @@
     if ($('programs-next-item')) $('programs-next-item').addEventListener('click', function () { goPrevNext('programs', 1); });
     if ($('programs-move-apply')) $('programs-move-apply').addEventListener('click', function () { applyMoveToPosition('programs', 'programs-move-pos'); });
     if ($('programs-revert-item')) $('programs-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('programs'); });
+    if ($('programs-item-imageFile')) $('programs-item-imageFile').addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        if ($('programs-item-imageUrl')) $('programs-item-imageUrl').value = safeString(ev.target.result);
+        persistProgramsEditor();
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    });
 
     $('perf-add').addEventListener('click', function () {
       if (state.perfEditorDirty && !window.confirm('Create a new event without saving current calendar edits?')) return;
@@ -21847,7 +21921,7 @@
     if ($('media-photo-filter-b')) $('media-photo-filter-b').addEventListener('click', function () { setPhotoType('b'); });
 
     bindInputsDirty(['rep-composer','rep-opera','rep-role','rep-cat','rep-status','rep-lang','rep-category','rep-editorialStatus'], persistRepEditor);
-    bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
+    bindInputsDirty(['programs-item-title','programs-item-description','programs-item-formations','programs-item-duration','programs-item-idealFor','programs-item-imageUrl','programs-item-imageAlt','programs-item-imageFit','programs-item-imagePosition','programs-item-imagePositionManual','programs-item-published','programs-item-editorialStatus'], persistProgramsEditor);
     bindInputsDirty(['pb-rep-id','pb-rep-title','pb-rep-composer','pb-rep-work','pb-rep-type','pb-rep-language','pb-rep-durationMin','pb-rep-approximateDurationMin','pb-rep-readiness','pb-rep-availabilityStatus','pb-rep-category','pb-rep-voiceCategory','pb-rep-primaryVoice','pb-rep-pairedVoices','pb-rep-includesTenor','pb-rep-formations','pb-rep-performanceStatus','pb-rep-reviewStatus','pb-rep-tags','pb-rep-fitTags','pb-rep-performedIn','pb-rep-offerOnly','pb-rep-excludeFromOffers','pb-rep-sourceGroup','pb-rep-suggestionGroup','pb-rep-dramaticRole','pb-rep-energyLevel','pb-rep-tempoProfile','pb-rep-impactLevel','pb-rep-audienceAppeal','pb-rep-galaRole','pb-rep-vocalLoad','pb-rep-texture','pb-rep-styleBucket','pb-rep-recoveryValue','pb-rep-bestDurationFit','pb-rep-moodTags','pb-rep-practicalTags','pb-rep-encoreCandidate','pb-rep-interlude','pb-rep-vocalRestSupport','pb-rep-goodBetweenBlocks','pb-rep-goodBeforeClimax','pb-rep-notes','pb-rep-publicNotes','pb-rep-sortOrder'], persistPlannerRepEditor);
     bindInputsDirty(['pb-blueprint-formation','pb-style-focus','pb-include-discovery-ideas','pb-blueprint-notes','pb-version-label','pb-build-mode','pb-repertoire-mode','pb-header-image-mode','pb-header-image-url','pb-contact-phone','pb-offer-useCase','pb-offer-status','pb-gala-preferPacing','pb-gala-allowPianoInterludes','pb-gala-includeContrast','pb-gala-buildArc'], persistBlueprintHeader);
       bindInputsDirty(['pb-fee-eventType','pb-fee-locationScope','pb-fee-durationBand','pb-fee-preparationComplexity','pb-fee-organizerType','pb-fee-strategicValue','pb-fee-durationMin','pb-fee-formation','pb-fee-numberOfArtists','pb-fee-includesPianist','pb-fee-rehearsals','pb-fee-rehearsalFeePerArtist','pb-fee-leadArtistFee','pb-fee-collaboratorFee','pb-fee-pianistFee','pb-fee-performanceCount','pb-fee-productionDays','pb-fee-guaranteedMinimum','pb-fee-partnerFeesSeparated','pb-fee-travelCost','pb-fee-hotelCost','pb-fee-localTransportCost','pb-fee-adminBuffer','pb-fee-lowBudgetOverride','pb-fee-recommendedOverride','pb-fee-benchmarkOverride','pb-fee-premiumOverride','pb-fee-actualAgreedFee','pb-fee-actualFeeStatus','pb-fee-acceptanceReason','pb-fee-shouldNotBenchmark','pb-fee-gapNote','pb-fee-benchmarkSourceVersion','pb-fee-benchmarkLastReviewed','pb-fee-notes'], persistBlueprintFeeEstimate);

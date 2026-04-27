@@ -581,6 +581,8 @@ section{position:relative;z-index:2}
 .program-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),rgba(212,168,67,.35));transform:scaleX(0);transition:transform .42s var(--ease-premium);transform-origin:left}
 .program-card:hover{background:var(--surface);box-shadow:inset 0 0 0 1px rgba(212,168,67,.06),0 14px 40px rgba(0,0,0,.1)}
 .program-card:hover::before{transform:scaleX(1)}
+.program-card-image{float:right;width:min(32%,220px);aspect-ratio:4/5;margin:0 0 18px 26px;border:1px solid rgba(212,168,67,.22);background:#05070a;overflow:hidden}
+.program-card-image img{display:block;width:100%;height:100%}
 .program-card-title{font-family:var(--ff-title);font-size:clamp(1.4rem,2vw,1.72rem);font-weight:400;font-style:italic;color:var(--text);line-height:1.22;margin-bottom:12px;letter-spacing:.01em}
 .program-card-desc{font-size:.9rem;color:var(--text-dim);line-height:1.78;margin-bottom:24px;max-width:min(100%,66ch)}
 .program-meta{display:grid;grid-template-columns:minmax(160px,.8fr) minmax(220px,1fr) minmax(220px,1fr);gap:16px 22px;font-size:.82rem;align-items:start}
@@ -2145,6 +2147,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .audio-embed{height:166px}
   .about-text p{font-size:.87rem}
   .program-card{padding:24px 18px}
+  .program-card-image{float:none;width:100%;max-width:240px;margin:0 0 18px;aspect-ratio:4/5}
   .program-card-title{font-size:clamp(1.22rem,6.4vw,1.42rem);line-height:1.24;margin-bottom:10px}
   .program-card-desc{font-size:.86rem;line-height:1.7;margin-bottom:16px}
   .program-meta{grid-template-columns:1fr;gap:10px}
