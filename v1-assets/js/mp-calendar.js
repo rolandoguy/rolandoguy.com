@@ -449,9 +449,14 @@
       venuePhotoFocus: String(o.venuePhotoFocus || o.imageFocus || '').trim(),
       venueOpacity: o.venueOpacity,
       ticketPrice: firstNonEmpty(['ticketPrice', 'priceInfo', 'modalPrice', 'modalTicketPrice', 'price', 'ticketInfo']),
+      ticketPrice_en: firstNonEmpty(['ticketPrice_en', 'priceInfo_en', 'modalPrice_en', 'modalTicketPrice_en', 'price_en', 'ticketInfo_en']),
+      ticketPrice_de: firstNonEmpty(['ticketPrice_de', 'priceInfo_de', 'modalPrice_de', 'modalTicketPrice_de', 'price_de', 'ticketInfo_de']),
+      ticketPrice_es: firstNonEmpty(['ticketPrice_es', 'priceInfo_es', 'modalPrice_es', 'modalTicketPrice_es', 'price_es', 'ticketInfo_es']),
+      ticketPrice_it: firstNonEmpty(['ticketPrice_it', 'priceInfo_it', 'modalPrice_it', 'modalTicketPrice_it', 'price_it', 'ticketInfo_it']),
+      ticketPrice_fr: firstNonEmpty(['ticketPrice_fr', 'priceInfo_fr', 'modalPrice_fr', 'modalTicketPrice_fr', 'price_fr', 'ticketInfo_fr']),
       eventLink: String(o.eventLink || o.link || '').trim(),
       eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
-      extDesc: firstNonEmpty(['extDesc', 'modalText', 'description', 'longDescription', 'modalLongDesc']),
+      extDesc: firstNonEmpty(['extDesc', 'modalText', 'description', 'longDescription', 'modalLongDesc', 'moreInfoDescription', 'moreInfoExtra']),
       modalImg: String(o.modalImg || '').trim(),
       modalImgHide: isTruthyFlag(o.modalImgHide),
       moreInfoDisplayMode: String(o.moreInfoDisplayMode || '').trim(),
@@ -516,11 +521,11 @@
       detail_es: o.detail_es,
       detail_it: o.detail_it,
       detail_fr: o.detail_fr,
-      extDesc_en: firstNonEmpty(['extDesc_en', 'modalText_en', 'description_en', 'longDescription_en', 'modalLongDesc_en']),
-      extDesc_de: firstNonEmpty(['extDesc_de', 'modalText_de', 'description_de', 'longDescription_de', 'modalLongDesc_de']),
-      extDesc_es: firstNonEmpty(['extDesc_es', 'modalText_es', 'description_es', 'longDescription_es', 'modalLongDesc_es']),
-      extDesc_it: firstNonEmpty(['extDesc_it', 'modalText_it', 'description_it', 'longDescription_it', 'modalLongDesc_it']),
-      extDesc_fr: firstNonEmpty(['extDesc_fr', 'modalText_fr', 'description_fr', 'longDescription_fr', 'modalLongDesc_fr']),
+      extDesc_en: firstNonEmpty(['extDesc_en', 'modalText_en', 'description_en', 'longDescription_en', 'modalLongDesc_en', 'moreInfoDescription_en', 'moreInfoExtra_en']),
+      extDesc_de: firstNonEmpty(['extDesc_de', 'modalText_de', 'description_de', 'longDescription_de', 'modalLongDesc_de', 'moreInfoDescription_de', 'moreInfoExtra_de']),
+      extDesc_es: firstNonEmpty(['extDesc_es', 'modalText_es', 'description_es', 'longDescription_es', 'modalLongDesc_es', 'moreInfoDescription_es', 'moreInfoExtra_es']),
+      extDesc_it: firstNonEmpty(['extDesc_it', 'modalText_it', 'description_it', 'longDescription_it', 'modalLongDesc_it', 'moreInfoDescription_it', 'moreInfoExtra_it']),
+      extDesc_fr: firstNonEmpty(['extDesc_fr', 'modalText_fr', 'description_fr', 'longDescription_fr', 'modalLongDesc_fr', 'moreInfoDescription_fr', 'moreInfoExtra_fr']),
       privateBadgeText_en: o.privateBadgeText_en,
       privateBadgeText_de: o.privateBadgeText_de,
       privateBadgeText_es: o.privateBadgeText_es,
@@ -808,6 +813,47 @@
   function perfLocaleFieldResolve(p, base, lang) {
     if (!p) return { value: '', source: '' };
     var L = normalizeLangCode(lang) || 'en';
+    function valueFor(key) {
+      if (!key || p[key] == null || String(p[key]).trim() === '') return '';
+      return String(p[key]).trim();
+    }
+    function resolveFromKeys(keys, normalizeBase) {
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var val = valueFor(key);
+        if (val) {
+          return {
+            value: perfNormalizeSupportingText(val, normalizeBase || base, L),
+            source: key
+          };
+        }
+      }
+      return { value: '', source: '' };
+    }
+    function suffixedKeys(names, suffix) {
+      var out = [];
+      for (var i = 0; i < names.length; i++) out.push(names[i] + suffix);
+      return out;
+    }
+    if (base === 'extDesc') {
+      var descAliases = ['description', 'modalText', 'longDescription', 'modalLongDesc', 'moreInfoDescription', 'moreInfoExtra'];
+      var extKeys = [];
+      if (L === 'en') {
+        extKeys = ['extDesc_en', 'extDesc']
+          .concat(suffixedKeys(descAliases, '_en'))
+          .concat(descAliases)
+          .concat(['detail_en', 'detail']);
+      } else {
+        extKeys = ['extDesc_' + L]
+          .concat(suffixedKeys(descAliases, '_' + L))
+          .concat(['extDesc'])
+          .concat(descAliases)
+          .concat(['extDesc_en'])
+          .concat(suffixedKeys(descAliases, '_en'))
+          .concat(['detail_' + L, 'detail', 'detail_en']);
+      }
+      return resolveFromKeys(extKeys, 'extDesc');
+    }
     var locKey = base + '_' + L;
     var loc = p[locKey];
     if (loc != null && String(loc).trim() !== '') {
@@ -817,6 +863,13 @@
       };
     }
     if (base === 'eventLinkLabel') {
+      var sharedLabel = p[base];
+      if (sharedLabel != null && String(sharedLabel).trim() !== '') {
+        return {
+          value: String(sharedLabel).trim(),
+          source: base
+        };
+      }
       var enKeyLabel = base + '_en';
       var enLabel = p[enKeyLabel];
       if (L !== 'en' && enLabel != null && String(enLabel).trim() !== '') {
@@ -825,16 +878,9 @@
           source: enKeyLabel
         };
       }
-      var sharedLabel = p[base];
-      if (sharedLabel != null && String(sharedLabel).trim() !== '') {
-        return {
-          value: String(sharedLabel).trim(),
-          source: base
-        };
-      }
       return { value: '', source: '' };
     }
-    if (base === 'detail' || base === 'extDesc') {
+    if (base === 'detail') {
       var sharedDetail = p[base];
       if (sharedDetail != null && String(sharedDetail).trim() !== '') {
         return {
@@ -852,19 +898,19 @@
       }
       return { value: '', source: '' };
     }
+    var g = p[base];
+    if (g != null && String(g).trim() !== '') {
+      return {
+        value: perfNormalizeSupportingText(String(g).trim(), base, L),
+        source: base
+      };
+    }
     var enKey2 = base + '_en';
     var enLoc2 = p[enKey2];
     if (L !== 'en' && enLoc2 != null && String(enLoc2).trim() !== '') {
       return {
         value: perfNormalizeSupportingText(String(enLoc2).trim(), base, L),
         source: enKey2
-      };
-    }
-    var g = p[base];
-    if (g != null && String(g).trim() !== '') {
-      return {
-        value: perfNormalizeSupportingText(String(g).trim(), base, L),
-        source: base
       };
     }
     return { value: '', source: '' };
@@ -879,7 +925,7 @@
       return perfIsGenericTicketInfoLabel(chosenLabel) ? perfGenericTicketInfoLabel(lang, t) : chosenLabel;
     }
     var ticketUrl = perfLocaleField(p, 'eventLink', lang);
-    var hasPrice = p && p.ticketPrice && String(p.ticketPrice).trim() !== '';
+    var hasPrice = p && perfLocaleField(p, 'ticketPrice', lang);
     var isSalesLike =
       ticketUrl && /ticket|booking|reserv|kaufen|billet|entrada|biglietto|billet/i.test(String(ticketUrl));
     if (hasPrice || isSalesLike) return perfGenericTicketInfoLabel(lang, t);
@@ -961,7 +1007,7 @@
       city: perfLocalizedField(p, 'city', lang, 'place') || '',
       address: perfModalAddress(p, lang),
       mapsUrl: String(p.mapsUrl || '').trim(),
-      ticketPrice: String(p.ticketPrice || '').trim(),
+      ticketPrice: perfLocaleField(p, 'ticketPrice', lang) || '',
       sortDate: String(p.sortDate || '').trim(),
       time: perfLocaleField(p, 'time', lang) || ''
     };
@@ -1277,7 +1323,8 @@
     contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelDate) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(meta1) + '</span></div>';
     contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelVenue) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(meta2) + '</span></div>';
     if (address) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelAddress) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(address) + '</span></div>';
-    if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelTicket) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(p.ticketPrice) + '</span></div>';
+    var editorialTicketPrice = perfLocaleField(p, 'ticketPrice', currentLang);
+    if (!isPrivate && editorialTicketPrice) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelTicket) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(editorialTicketPrice) + '</span></div>';
     contentHtml += '</div>';
     if (description) contentHtml += '<div class="event-modal-editorial__body"><p>' + escHtml(description).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p></div>';
     var flyerUrl = String(p.flyerImg || '').trim();
@@ -1487,6 +1534,114 @@
       return '';
     }
   }
+  function stripSchemaText(raw) {
+    return String(raw || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function schemaDescription(raw) {
+    var s = stripSchemaText(raw);
+    if (!s) return '';
+    if (s.length <= 320) return s;
+    var clipped = s.slice(0, 317).replace(/\s+\S*$/, '').trim();
+    return clipped ? clipped + '...' : s.slice(0, 317).trim() + '...';
+  }
+  function resolveSchemaDescription(p, lang, title, isPrivate) {
+    var candidates = [
+      perfLocaleField(p, 'extDesc', lang),
+      perfLocaleField(p, 'moreInfoDescription', lang),
+      perfLocaleField(p, 'moreInfoExtra', lang),
+      perfLocaleField(p, 'detail', lang),
+      perfLocaleField(p, 'moreInfoSubtitle', lang)
+    ];
+    for (var i = 0; i < candidates.length; i += 1) {
+      var text = schemaDescription(candidates[i]);
+      if (text) return isPrivate ? schemaDescription(perfPrivateDetailText(p, lang, text)) : text;
+    }
+    if (isPrivate) return schemaDescription(perfPrivateDetailText(p, lang, ''));
+    return title ? schemaDescription(title + ' featuring tenor Rolando Guy.') : '';
+  }
+  function eventStatusUrl(status) {
+    var s = String(status || '').trim().toLowerCase();
+    if (s === 'cancelled' || s === 'canceled') return 'https://schema.org/EventCancelled';
+    if (s === 'postponed') return 'https://schema.org/EventPostponed';
+    if (s === 'rescheduled') return 'https://schema.org/EventRescheduled';
+    return 'https://schema.org/EventScheduled';
+  }
+  function lastSundayOfMonth(year, monthIndex) {
+    var d = new Date(Date.UTC(year, monthIndex + 1, 0));
+    d.setUTCDate(d.getUTCDate() - d.getUTCDay());
+    return d.getUTCDate();
+  }
+  function berlinOffsetForDate(dateRaw) {
+    var m = String(dateRaw || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '';
+    var y = Number(m[1]);
+    var mo = Number(m[2]);
+    var d = Number(m[3]);
+    var isDst = false;
+    if (mo > 3 && mo < 10) isDst = true;
+    else if (mo === 3) isDst = d >= lastSundayOfMonth(y, 2);
+    else if (mo === 10) isDst = d < lastSundayOfMonth(y, 9);
+    return isDst ? '+02:00' : '+01:00';
+  }
+  function isGermanyEvent(p, lang) {
+    var hay = [
+      perfLocalizedField(p, 'city', lang, 'place'),
+      perfLocalizedField(p, 'venue', lang, 'place'),
+      perfLocalizedField(p, 'address', lang, 'place')
+    ].join(' ').toLowerCase();
+    return /berlin|germany|deutschland|allemagne|alemania|germania|nördlingen|noerdlingen/.test(hay);
+  }
+  function normalizeSchemaDateTime(dateRaw, timeRaw, includeOffset) {
+    var date = String(dateRaw || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
+    var time = String(timeRaw || '').trim();
+    if (!/^\d{1,2}:\d{2}$/.test(time)) return date;
+    var hhmm = time.split(':');
+    var out = date + 'T' + hhmm[0].padStart(2, '0') + ':' + hhmm[1] + ':00';
+    return includeOffset ? out + berlinOffsetForDate(date) : out;
+  }
+  function parseDurationMinutes(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return 0;
+    var iso = s.match(/^PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?$/i);
+    if (iso) return Math.round((Number(iso[1] || 0) * 60) + Number(iso[2] || 0));
+    var h = s.match(/(\d+(?:[.,]\d+)?)\s*(?:h|hour|hours|std|stunde|stunden|hora|horas|heure|heures|ora|ore)\b/i);
+    var m = s.match(/(\d+)\s*(?:m|min|minute|minutes|minuten|minuti)\b/i);
+    var total = 0;
+    if (h) total += Math.round(Number(h[1].replace(',', '.')) * 60);
+    if (m) total += Number(m[1]);
+    if (total) return total;
+    var n = s.match(/^\d{1,3}$/);
+    return n ? Number(n[0]) : 0;
+  }
+  function addMinutesToSchemaDateTime(startDate, minutes) {
+    var m = String(startDate || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})([+-]\d{2}:\d{2})?$/);
+    if (!m || !minutes) return '';
+    var offset = m[7] || '';
+    var total = (Number(m[4]) * 60) + Number(m[5]) + Number(minutes);
+    var dayShift = Math.floor(total / 1440);
+    total = ((total % 1440) + 1440) % 1440;
+    var d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + dayShift));
+    var y = d.getUTCFullYear();
+    var mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+    var da = String(d.getUTCDate()).padStart(2, '0');
+    var hh = String(Math.floor(total / 60)).padStart(2, '0');
+    var mm = String(total % 60).padStart(2, '0');
+    return y + '-' + mo + '-' + da + 'T' + hh + ':' + mm + ':' + m[6] + offset;
+  }
+  function resolveSchemaEndDate(p, dateRaw, startDate, hasStartTime, includeOffset) {
+    var explicitDate = String(p.endDate || p.end_date || '').trim();
+    var explicitTime = String(p.endTime || p.end_time || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(explicitDate)) {
+      return normalizeSchemaDateTime(explicitDate, explicitTime || (hasStartTime ? String(p.time || '') : ''), includeOffset);
+    }
+    var duration = parseDurationMinutes(p.duration || p.durationMinutes || p.duration_mins || p.durationText);
+    if (hasStartTime && !duration) duration = 90;
+    return hasStartTime && duration ? addMinutesToSchemaDateTime(startDate, duration) : '';
+  }
   function parseOfferPrice(raw) {
     var s = String(raw || '').trim();
     if (!s) return null;
@@ -1494,6 +1649,8 @@
     var low = s.toLowerCase();
     if (/(^|\b)(free|gratis|libre|gratuito|gratuita|kostenlos|gratuit)\b/.test(low)) {
       out.isFree = true;
+      out.price = '0';
+      out.priceCurrency = 'EUR';
       return out;
     }
     var m = s.replace(',', '.').match(/(\d+(?:\.\d{1,2})?)/);
@@ -1504,7 +1661,28 @@
     if (/€|eur/i.test(s)) out.priceCurrency = 'EUR';
     else if (/\$|usd/i.test(s)) out.priceCurrency = 'USD';
     else if (/£|gbp/i.test(s)) out.priceCurrency = 'GBP';
+    else out.priceCurrency = 'EUR';
     return out;
+  }
+  function resolveSchemaOffer(p, lang, eventUrl, isPrivate) {
+    if (isPrivate) return null;
+    var offerParsed = parseOfferPrice(perfLocaleField(p, 'ticketPrice', lang));
+    if (!offerParsed || offerParsed.price == null || !offerParsed.priceCurrency) return null;
+    var ticketUrl = perfLocaleField(p, 'eventLink', lang);
+    var safeTicketUrl = ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim()) ? String(ticketUrl).trim() : eventUrl;
+    return {
+      '@type': 'Offer',
+      url: safeTicketUrl,
+      price: offerParsed.price,
+      priceCurrency: offerParsed.priceCurrency,
+      availability: 'https://schema.org/InStock',
+      validFrom: new Date().toISOString()
+    };
+  }
+  function cleanSchemaPlaceName(raw) {
+    var s = stripSchemaText(raw);
+    if (!s || /^[-–—]+$/.test(s) || /^(tba|tbd)$/i.test(s)) return '';
+    return s;
   }
   function updateUpcomingEventSchema(upcomingList) {
     var prev = document.getElementById('calendar-events-jsonld');
@@ -1517,20 +1695,18 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) return;
       var title = resolveEventTitle(p, currentLang);
       if (!title) return;
-      var startDate = dateRaw;
       var time = String(p.time || '').trim();
-      if (/^\d{1,2}:\d{2}$/.test(time)) {
-        var hhmm = time.split(':');
-        var hh = hhmm[0].padStart(2, '0');
-        startDate = dateRaw + 'T' + hh + ':' + hhmm[1] + ':00';
-      }
+      var hasStartTime = /^\d{1,2}:\d{2}$/.test(time);
+      var useBerlinOffset = hasStartTime && isGermanyEvent(p, currentLang);
+      var startDate = normalizeSchemaDateTime(dateRaw, time, useBerlinOffset);
+      var endDate = resolveSchemaEndDate(p, dateRaw, startDate, hasStartTime, useBerlinOffset);
       var eventAnchor = String(p.id || '').trim() ? ('#event-' + safeDomToken(p.id, '')) : '';
       var eventUrl = 'https://rolandoguy.com/calendar' + eventAnchor;
       var ev = {
         '@type': 'MusicEvent',
         name: title,
         startDate: startDate,
-        eventStatus: 'https://schema.org/EventScheduled',
+        eventStatus: eventStatusUrl(p.status),
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         url: eventUrl,
         mainEntityOfPage: eventUrl,
@@ -1545,42 +1721,32 @@
           url: 'https://rolandoguy.com/'
         }
       };
+      if (endDate) ev.endDate = endDate;
       if (String(p.id || '').trim()) ev.identifier = String(p.id).trim();
-      var detail = perfLocalizedField(p, 'detail', currentLang);
-      if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
+      var detail = resolveSchemaDescription(p, currentLang, title, isPrivate);
       if (detail) ev.description = detail;
-      var venueName = perfLocalizedField(p, 'venue', currentLang, 'place');
-      var city = perfLocalizedField(p, 'city', currentLang, 'place');
+      var venueName = cleanSchemaPlaceName(perfLocalizedField(p, 'venue', currentLang, 'place'));
+      var city = cleanSchemaPlaceName(perfLocalizedField(p, 'city', currentLang, 'place'));
+      var address = cleanSchemaPlaceName(perfModalAddress(p, currentLang));
       if (venueName || city) {
         ev.location = {
           '@type': 'Place',
           name: venueName || city
         };
-        if (city) {
+        if (city || address) {
           ev.location.address = {
-            '@type': 'PostalAddress',
-            addressLocality: city
+            '@type': 'PostalAddress'
           };
+          if (address) ev.location.address.streetAddress = address;
+          if (city) ev.location.address.addressLocality = city;
         }
       }
       var venueImgAbs = toAbsolutePublicUrl(perfPrivateBackgroundUrl(p, currentLang));
       ev.image = [venueImgAbs || 'https://rolandoguy.com/og-image.jpg'];
-      var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
-      if (!isPrivate && ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim())) {
-        var offerParsed = parseOfferPrice(p.ticketPrice);
-        ev.offers = {
-          '@type': 'Offer',
-          url: String(ticketUrl).trim(),
-          availability: 'https://schema.org/InStock',
-          validFrom: new Date().toISOString()
-        };
-        if (offerParsed && offerParsed.isFree) {
-          ev.isAccessibleForFree = true;
-        }
-        if (offerParsed && offerParsed.price != null && offerParsed.priceCurrency) {
-          ev.offers.price = offerParsed.price;
-          ev.offers.priceCurrency = offerParsed.priceCurrency;
-        }
+      var offer = resolveSchemaOffer(p, currentLang, eventUrl, isPrivate);
+      if (offer) {
+        ev.offers = offer;
+        if (offer.price === '0') ev.isAccessibleForFree = true;
       }
       items.push(ev);
     });
@@ -1747,9 +1913,10 @@
       }
       var modalBodyPreview = perfModalBodyText(p, currentLang, isPrivate);
       var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
+      var priceForModal = perfLocaleField(p, 'ticketPrice', currentLang);
       var hasExtra =
         !!modalBodyPreview ||
-        (p.ticketPrice && p.ticketPrice.trim()) ||
+        !!priceForModal ||
         isValidPerfCtaUrl(linkForModal) ||
         (p.flyerImg && p.flyerImg.trim()) ||
         (p.modalImg && p.modalImg.trim()) ||
@@ -2197,6 +2364,7 @@
     var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
     var modalAddress = perfModalAddress(p, currentLang);
     var modalBody = perfModalBodyText(p, currentLang, isPrivate);
+    var modalTicketPrice = perfLocaleField(p, 'ticketPrice', currentLang);
     var escapedBody = String(modalBody || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
     var modalFallbackImg =
@@ -2258,10 +2426,10 @@
     calendarModalOptionalStep('price block', snapshot, function () {
       var priceWrap = document.getElementById('emPrice');
       if (!priceWrap) return;
-      if (!isPrivate && p.ticketPrice && p.ticketPrice.trim()) {
+      if (!isPrivate && modalTicketPrice) {
         var priceLead = priceWrap.querySelector('[data-i18n="perf.modalTicketsLead"]');
         if (priceLead) priceLead.textContent = perfTicketPriceLabel(currentLang);
-        setModalText('emPriceVal', p.ticketPrice);
+        setModalText('emPriceVal', modalTicketPrice);
         priceWrap.style.display = 'block';
       } else {
         priceWrap.style.display = 'none';

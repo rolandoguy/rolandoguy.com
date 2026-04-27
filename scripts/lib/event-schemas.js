@@ -13,6 +13,11 @@ var PUBLIC_EVENT_FIELDS = [
   'day',
   'month',
   'time',
+  'endDate',
+  'endTime',
+  'duration',
+  'durationMinutes',
+  'durationText',
   'title',
   'detail',
   'detail_en',
@@ -39,6 +44,11 @@ var PUBLIC_EVENT_FIELDS = [
   'extDesc_it',
   'extDesc_fr',
   'ticketPrice',
+  'ticketPrice_en',
+  'ticketPrice_de',
+  'ticketPrice_es',
+  'ticketPrice_it',
+  'ticketPrice_fr',
   'eventLink',
   'eventLinkLabel',
   'eventLink_en',
@@ -107,6 +117,11 @@ var PUBLIC_PAST_EVENT_FIELDS = [
   'id',
   'date',
   'time',
+  'endDate',
+  'endTime',
+  'duration',
+  'durationMinutes',
+  'durationText',
   'title',
   'place',
   'city',
@@ -271,16 +286,28 @@ function sanitizePublicEvent(record) {
     safe.mapsUrl = firstNonEmptyField(record, ['mapUrl', 'mapsLink', 'modalMapsLink', 'locationUrl', 'directionsUrl']);
   }
   if (safe.extDesc == null || String(safe.extDesc).trim() === '') {
-    safe.extDesc = firstNonEmptyField(record, ['modalText', 'description', 'longDescription', 'modalLongDesc']);
+    safe.extDesc = firstNonEmptyField(record, ['modalText', 'description', 'longDescription', 'modalLongDesc', 'moreInfoDescription', 'moreInfoExtra']);
   }
   ['en', 'de', 'es', 'it', 'fr'].forEach(function (lang) {
+    var priceKey = 'ticketPrice_' + lang;
+    if (safe[priceKey] == null || String(safe[priceKey]).trim() === '') {
+      safe[priceKey] = firstNonEmptyField(record, [
+        'priceInfo_' + lang,
+        'modalPrice_' + lang,
+        'modalTicketPrice_' + lang,
+        'price_' + lang,
+        'ticketInfo_' + lang
+      ]);
+    }
     var key = 'extDesc_' + lang;
     if (safe[key] != null && String(safe[key]).trim() !== '') return;
     safe[key] = firstNonEmptyField(record, [
       'modalText_' + lang,
       'description_' + lang,
       'longDescription_' + lang,
-      'modalLongDesc_' + lang
+      'modalLongDesc_' + lang,
+      'moreInfoDescription_' + lang,
+      'moreInfoExtra_' + lang
     ]);
   });
   return safe;

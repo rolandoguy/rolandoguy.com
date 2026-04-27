@@ -51,6 +51,27 @@ var blankOperational = {
   address_fr: '',
   mapsUrl: ''
 };
+var i18nEvent = {
+  id: 'i18n-desc-test',
+  day: '02',
+  month: 'JAN',
+  time: '19:30',
+  title: 'I18n Description Test',
+  type: 'concert',
+  venue: 'Shared Venue',
+  city: 'Shared City',
+  address: 'Shared Street 1, 10115 Berlin',
+  ticketPrice: 'Shared price 123',
+  eventLink: 'https://example.com/shared-tickets',
+  eventLinkLabel: 'Tickets & Info',
+  mapsUrl: 'https://maps.example/shared',
+  extDesc: 'Base modal description',
+  extDesc_en: 'English modal description',
+  extDesc_de: 'German modal description',
+  extDesc_es: 'Spanish modal description',
+  extDesc_it: 'Italian modal description',
+  extDesc_fr: 'French modal description'
+};
 
 var fixture = {
   perf: {
@@ -86,7 +107,8 @@ var fixture = {
       eventLink: 'https://example.com/private',
       eventLinkLabel: 'Private Tickets',
       mapsUrl: 'https://maps.example/private'
-    }
+    },
+    i18nEvent
   ],
   livePerfs: [
     Object.assign({}, tango, blankOperational, {
@@ -115,7 +137,8 @@ var fixture = {
       eventLink: 'https://example.com/private',
       eventLinkLabel: 'Private Tickets',
       mapsUrl: 'https://maps.example/private'
-    }
+    },
+    i18nEvent
   ],
   pastPerfs: []
 };
@@ -130,7 +153,7 @@ var html = '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
   '<script>window.__CAL_FIXTURE__=' + htmlEscapeScriptJson(fixture) + ';' +
   'window.__TEST_LANG__="de";' +
   'window.getMpSiteLang=function(){return window.__TEST_LANG__||"de"};' +
-  'window.pickMpLocaleString=function(lang,key){var d={de:{"perf.maps":"Karte / Route","perf.moreInfo":"Mehr Info","perf.ticketsInfo":"Tickets & Info","perf.modalTicketsLead":"Tickets / Eintritt","perf.privateEventType":"Private Veranstaltung","perf.privateDetail":"Private Veranstaltung"},fr:{"perf.maps":"Carte / itinéraire","perf.moreInfo":"Plus d\'infos","perf.ticketsInfo":"Billets & infos","perf.modalTicketsLead":"Billets","perf.privateEventType":"Événement privé","perf.privateDetail":"Événement privé"}};return (d[lang]&&d[lang][key])||""};' +
+  'window.pickMpLocaleString=function(lang,key){var d={en:{"perf.maps":"Map / Route","perf.moreInfo":"More info","perf.ticketsInfo":"Tickets & Info","perf.modalTicketsLead":"Tickets","perf.privateEventType":"Private event","perf.privateDetail":"Private event"},de:{"perf.maps":"Karte / Route","perf.moreInfo":"Mehr Info","perf.ticketsInfo":"Tickets & Info","perf.modalTicketsLead":"Tickets / Eintritt","perf.privateEventType":"Private Veranstaltung","perf.privateDetail":"Private Veranstaltung"},es:{"perf.maps":"Mapa / ruta","perf.moreInfo":"Más información","perf.ticketsInfo":"Entradas e info","perf.modalTicketsLead":"Entradas","perf.privateEventType":"Evento privado","perf.privateDetail":"Evento privado"},it:{"perf.maps":"Mappa / percorso","perf.moreInfo":"Maggiori info","perf.ticketsInfo":"Biglietti e info","perf.modalTicketsLead":"Biglietti","perf.privateEventType":"Evento privato","perf.privateDetail":"Evento privato"},fr:{"perf.maps":"Carte / itinéraire","perf.moreInfo":"Plus d\'infos","perf.ticketsInfo":"Billets & infos","perf.modalTicketsLead":"Billets","perf.privateEventType":"Événement privé","perf.privateDetail":"Événement privé"}};return (d[lang]&&d[lang][key])||""};' +
   'window.fetchMpPublicFirestoreDoc=function(key){if(key==="public_rg_perfs")return Promise.resolve({data:window.__CAL_FIXTURE__.livePerfs});if(key==="public_rg_past_perfs")return Promise.resolve({data:[]});if(/^public_perf_/.test(key))return Promise.resolve({data:window.__CAL_FIXTURE__.perf});return Promise.resolve(null)};' +
   'window.fetch=function(url){if(String(url).indexOf("/v1-assets/data/calendar-data.json")>=0)return Promise.resolve({ok:true,json:function(){return Promise.resolve(window.__CAL_FIXTURE__)}});return Promise.reject(new Error("unexpected fetch "+url))};' +
   '</script></head><body data-mp-page="calendar">' +
@@ -141,7 +164,7 @@ var html = '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
   '</div></div><pre id="result">pending</pre><script src="/v1-assets/js/mp-calendar.js"></script><script>' +
   'function visible(id){var el=document.getElementById(id);if(!el)return false;var cs=getComputedStyle(el);return cs.display!=="none"&&cs.visibility!=="hidden"&&cs.opacity!=="0"}' +
   'function collect(){return{venueVisible:visible("emVenue"),venueText:document.getElementById("emVenue").textContent.trim(),venueMarginBottom:document.getElementById("emVenue").style.marginBottom,descriptionVisible:visible("emDetail"),descriptionText:document.getElementById("emDetail").textContent.trim(),priceVisible:visible("emPrice"),priceDisplay:getComputedStyle(document.getElementById("emPrice")).display,priceLeadText:document.querySelector("[data-i18n=\\"perf.modalTicketsLead\\"]").textContent.trim(),priceText:document.getElementById("emPriceVal").textContent.trim(),primaryCtaVisible:visible("emEventLink"),primaryCtaDisplay:getComputedStyle(document.getElementById("emEventLink")).display,primaryCtaText:document.getElementById("emEventLink").textContent.trim(),primaryCtaHref:document.getElementById("emEventLink").href,mapCtaVisible:visible("emMapsLink"),mapCtaDisplay:getComputedStyle(document.getElementById("emMapsLink")).display,mapCtaText:document.getElementById("emMapsText").textContent.trim(),addressVisible:visible("emAddress"),addressText:document.getElementById("emAddress").textContent.trim(),addressMargin:document.getElementById("emAddress").style.margin}}' +
-  'setTimeout(function(){window.__TEST_LANG__="de";document.documentElement.lang="de";window.openEventModal("perf-blank");var blankResult=collect();window.openEventModal("perf-saved");var deResult=collect();window.__TEST_LANG__="fr";document.documentElement.lang="fr";window.openEventModal("perf-saved");var frResult=collect();window.__TEST_LANG__="de";document.documentElement.lang="de";window.openEventModal("editorial-test");var editorialResult=collect();window.openEventModal("private-test");var privateResult=collect();document.getElementById("result").textContent="RESULT_JSON:"+JSON.stringify({blankResult:blankResult,deResult:deResult,frResult:frResult,editorialResult:editorialResult,privateResult:privateResult},null,2)},1200);' +
+  'setTimeout(function(){window.__TEST_LANG__="de";document.documentElement.lang="de";window.openEventModal("perf-blank");var blankResult=collect();window.openEventModal("perf-saved");var deResult=collect();window.__TEST_LANG__="fr";document.documentElement.lang="fr";window.openEventModal("perf-saved");var frResult=collect();var langResults={};["en","de","es","it","fr"].forEach(function(lang){window.__TEST_LANG__=lang;document.documentElement.lang=lang;window.openEventModal("i18n-desc-test");langResults[lang]=collect()});window.__TEST_LANG__="de";document.documentElement.lang="de";window.openEventModal("editorial-test");var editorialResult=collect();window.openEventModal("private-test");var privateResult=collect();document.getElementById("result").textContent="RESULT_JSON:"+JSON.stringify({blankResult:blankResult,deResult:deResult,frResult:frResult,langResults:langResults,editorialResult:editorialResult,privateResult:privateResult},null,2)},1200);' +
   '</script></body></html>';
 
 function findChrome() {
@@ -230,8 +253,37 @@ server.listen(0, '127.0.0.1', function () {
       var blankResult = payload.blankResult;
       var publicResult = payload.deResult;
       var frResult = payload.frResult;
+      var langResults = payload.langResults || {};
       var editorialResult = payload.editorialResult;
       var privateResult = payload.privateResult;
+      var expectedDescriptions = {
+        en: 'English modal description',
+        de: 'German modal description',
+        es: 'Spanish modal description',
+        it: 'Italian modal description',
+        fr: 'French modal description'
+      };
+      var expectedMapLabels = {
+        en: 'Map / Route',
+        de: 'Karte / Route',
+        es: 'Mapa / ruta',
+        it: 'Mappa / percorso',
+        fr: 'Carte / itinéraire'
+      };
+      var expectedPriceLabels = {
+        en: 'Tickets',
+        de: 'Tickets / Eintritt',
+        es: 'Entradas',
+        it: 'Biglietti',
+        fr: 'Billets'
+      };
+      var expectedTicketLabels = {
+        en: 'Tickets & Info',
+        de: 'Tickets & Info',
+        es: 'Entradas e info',
+        it: 'Biglietti e info',
+        fr: 'Billets & infos'
+      };
 
       assert(blankResult.venueVisible, 'Blank-live event venue is not visible');
       assert(blankResult.descriptionVisible, 'Blank-live event description fallback is not visible');
@@ -260,6 +312,20 @@ server.listen(0, '127.0.0.1', function () {
       assert(frResult.priceLeadText === 'Billets', 'Tango Tenors FR price label is wrong');
       assert(frResult.primaryCtaText === 'Billets & infos', 'Tango Tenors FR primary CTA label is wrong');
       assert(frResult.mapCtaText === 'Carte / itinéraire', 'Tango Tenors FR map CTA label is wrong');
+      Object.keys(expectedDescriptions).forEach(function (lang) {
+        var result = langResults[lang];
+        assert(result && result.descriptionVisible, 'Localized fixture description is not visible for ' + lang);
+        assert(result.descriptionText === expectedDescriptions[lang], 'Localized fixture description is wrong for ' + lang + ': ' + (result && result.descriptionText));
+        assert(result.addressVisible, 'Shared fixture address is not visible for ' + lang);
+        assert(result.addressText === 'Shared Street 1, 10115 Berlin', 'Shared fixture address is wrong for ' + lang);
+        assert(result.priceVisible, 'Shared fixture price is not visible for ' + lang);
+        assert(result.priceText === 'Shared price 123', 'Shared fixture price is wrong for ' + lang);
+        assert(result.primaryCtaVisible, 'Shared fixture CTA is not visible for ' + lang);
+        assert(result.primaryCtaText === expectedTicketLabels[lang], 'Generic CTA label is wrong for ' + lang + ': ' + result.primaryCtaText);
+        assert(result.mapCtaVisible, 'Shared fixture map CTA is not visible for ' + lang);
+        assert(result.mapCtaText === expectedMapLabels[lang], 'Map CTA label is wrong for ' + lang + ': ' + result.mapCtaText);
+        assert(result.priceLeadText === expectedPriceLabels[lang], 'Price label is wrong for ' + lang + ': ' + result.priceLeadText);
+      });
       assert(editorialResult.venueVisible, 'Editorial public event venue is not visible');
       assert(editorialResult.venueText === 'Cl\u00e4rchens \u00b7 Berlin', 'Editorial public event venue text is wrong');
       assert(editorialResult.addressVisible, 'Editorial public event address is not visible');
@@ -300,6 +366,20 @@ server.listen(0, '127.0.0.1', function () {
         frPriceLeadText: frResult.priceLeadText,
         frPrimaryCtaText: frResult.primaryCtaText,
         frMapCtaText: frResult.mapCtaText,
+        localizedDescriptions: {
+          en: langResults.en && langResults.en.descriptionText,
+          de: langResults.de && langResults.de.descriptionText,
+          es: langResults.es && langResults.es.descriptionText,
+          it: langResults.it && langResults.it.descriptionText,
+          fr: langResults.fr && langResults.fr.descriptionText
+        },
+        sharedPracticalFields: {
+          en: langResults.en && { address: langResults.en.addressText, price: langResults.en.priceText, primaryCta: langResults.en.primaryCtaText, mapCta: langResults.en.mapCtaText },
+          de: langResults.de && { address: langResults.de.addressText, price: langResults.de.priceText, primaryCta: langResults.de.primaryCtaText, mapCta: langResults.de.mapCtaText },
+          es: langResults.es && { address: langResults.es.addressText, price: langResults.es.priceText, primaryCta: langResults.es.primaryCtaText, mapCta: langResults.es.mapCtaText },
+          it: langResults.it && { address: langResults.it.addressText, price: langResults.it.priceText, primaryCta: langResults.it.primaryCtaText, mapCta: langResults.it.mapCtaText },
+          fr: langResults.fr && { address: langResults.fr.addressText, price: langResults.fr.priceText, primaryCta: langResults.fr.primaryCtaText, mapCta: langResults.fr.mapCtaText }
+        },
         editorialVenueVisible: editorialResult.venueVisible,
         editorialAddressVisible: editorialResult.addressVisible,
         editorialVenueMarginBottom: editorialResult.venueMarginBottom,
