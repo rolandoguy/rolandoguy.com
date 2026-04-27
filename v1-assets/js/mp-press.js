@@ -369,17 +369,38 @@
       return '../img/' + s;
     };
     var arr = Array.isArray(src) ? src : [];
+    var normalizePreviewFit = function (v) {
+      return String(v || '').trim().toLowerCase() === 'contain' ? 'contain' : 'cover';
+    };
+    var normalizePreviewPosition = function (v) {
+      var s = String(v || '').trim().toLowerCase();
+      return /^(center center|center top|center bottom|left center|right center)$/.test(s) ? s : 'center center';
+    };
+    var normalizePreviewAspect = function (v) {
+      var s = String(v || '').trim().toLowerCase();
+      return /^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(s) ? s : 'portrait_4_5';
+    };
     return arr
       .map(function (ph) {
-        if (typeof ph === 'string') return { url: normalizePhotoUrl(ph), caption: '', alt: '', photographer: '', label: '', credit: '' };
+        if (typeof ph === 'string') return { url: normalizePhotoUrl(ph), downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' };
         if (!ph || typeof ph !== 'object') return null;
+        if (ph.visible === false) return null;
         var caption = typeof ph.caption === 'string' ? ph.caption : (typeof ph.label === 'string' ? ph.label : '');
         var photographer = typeof ph.photographer === 'string' ? ph.photographer : (typeof ph.credit === 'string' ? ph.credit : '');
+        var orientation = typeof ph.orientation === 'string' ? ph.orientation.trim().toLowerCase() : '';
+        if (orientation !== 'vertical' && orientation !== 'horizontal' && orientation !== 'square') orientation = '';
         return {
           url: normalizePhotoUrl(typeof ph.url === 'string' ? ph.url : ''),
+          downloadUrl: normalizePhotoUrl(typeof ph.downloadUrl === 'string' ? ph.downloadUrl : ''),
           caption: caption,
           alt: typeof ph.alt === 'string' ? ph.alt : '',
           photographer: photographer,
+          orientation: orientation,
+          visible: true,
+          previewFit: normalizePreviewFit(ph.previewFit),
+          previewPosition: normalizePreviewPosition(ph.previewPosition),
+          previewPositionManual: String(ph.previewPositionManual || '').trim(),
+          previewAspect: normalizePreviewAspect(ph.previewAspect),
           label: caption,
           credit: photographer
         };
@@ -732,17 +753,18 @@
           .replace(/"/g, '&quot;');
         var validPhotos = epkPhotos.filter(function (ph) {
           return ph && typeof ph.url === 'string' && ph.url.trim();
-        });
+        }).slice(0, 3);
         photosContainer.innerHTML = '';
         var frag = document.createDocumentFragment();
         validPhotos.forEach(function (ph, i) {
           var url = String(ph.url || '').trim();
+          var downloadUrl = String(ph.downloadUrl || '').trim();
           var caption = String((ph.caption || ph.label || '').trim());
           var photographer = String((ph.photographer || ph.credit || '').trim());
           var alt = String((ph.alt || '').trim()) || caption || photographer || 'Press photo — Rolando Guy';
 
           var card = document.createElement('article');
-          card.className = 'epk-press-card';
+          card.className = 'epk-press-card' + (ph.orientation ? ' epk-press-card--' + ph.orientation : '');
 
           var frame = document.createElement('div');
           frame.className = 'epk-press-frame';
@@ -750,6 +772,9 @@
           img.src = url;
           img.alt = alt;
           img.loading = 'lazy';
+          frame.dataset.previewAspect = ph.previewAspect || 'portrait_4_5';
+          img.style.objectFit = ph.previewAspect === 'auto' ? 'contain' : (ph.previewFit || 'cover');
+          img.style.objectPosition = ph.previewPositionManual || ph.previewPosition || 'center center';
           frame.appendChild(img);
 
           var body = document.createElement('div');
@@ -777,10 +802,14 @@
           preview.className = 'epk-press-preview';
           preview.textContent = previewLbl;
           var dl = document.createElement('a');
-          dl.href = url;
-          dl.setAttribute('download', '');
           dl.className = 'epk-press-dl';
           dl.textContent = downloadLbl;
+          if (downloadUrl) {
+            dl.href = downloadUrl;
+            dl.setAttribute('download', '');
+          } else {
+            dl.style.display = 'none';
+          }
           actions.appendChild(preview);
           actions.appendChild(dl);
 

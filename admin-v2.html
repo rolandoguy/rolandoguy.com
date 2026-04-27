@@ -643,14 +643,54 @@
           <div class="grid one">
             <label>Hero image path<input id="hero-bgImage" placeholder="../img/hero-portrait.webp"></label>
             <label>Home intro portrait (this language only)<input id="hero-introImage" placeholder="../img/studio-2.jpg or https://..."></label>
-            <p class="muted">This image appears only on Home intro. Changes apply only to the currently selected language.</p>
+            <div class="grid three">
+              <label>Home intro image layout
+                <select id="hero-introImageLayout">
+                  <option value="auto">auto</option>
+                  <option value="portrait">portrait</option>
+                  <option value="landscape">landscape</option>
+                  <option value="wide">wide</option>
+                </select>
+              </label>
+              <label>Home intro image fit
+                <select id="hero-introImageFit">
+                  <option value="">Default</option>
+                  <option value="cover">cover</option>
+                  <option value="contain">contain</option>
+                </select>
+              </label>
+              <label>Home intro image position
+                <select id="hero-introImagePosition">
+                  <option value="">Default</option>
+                  <option value="center center">center center</option>
+                  <option value="center top">center top</option>
+                  <option value="center bottom">center bottom</option>
+                  <option value="left center">left center</option>
+                  <option value="right center">right center</option>
+                </select>
+              </label>
+            </div>
+            <label>Manual object-position (optional)<input id="hero-introImagePositionCustom" placeholder="50% 45%"></label>
+            <p class="muted">This image appears only on Home intro. Image URL is language-specific; layout, fit and crop are shared across languages.</p>
             <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
               <input type="checkbox" id="home-images-all-langs" style="width:auto">
               Apply Home hero + Home intro images to all languages
             </label>
-            <div class="photo-preview-wrap">
+            <div id="hero-introPreview-wrap" class="photo-preview-wrap home-intro-preview-wrap">
               <img id="hero-introPreview" alt="Home intro portrait preview">
             </div>
+            <details class="details-block site-image-placements">
+              <summary>Public image placements</summary>
+              <div class="site-image-placement-grid">
+                <div><strong>Home hero</strong><span>Large first-screen image.</span></div>
+                <div><strong>Home intro</strong><span>Editorial image beside the Home introduction.</span></div>
+                <div><strong>Biography</strong><span>Dedicated portrait/content image on Biography.</span></div>
+                <div><strong>Repertoire</strong><span>Optional secondary editorial accent.</span></div>
+                <div><strong>Media gallery</strong><span>Selected studio, stage, and backstage photos.</span></div>
+                <div><strong>Press / Dossier</strong><span>Up to 3 official downloadable press photos.</span></div>
+                <div><strong>Contact</strong><span>Optional image, disabled by default.</span></div>
+              </div>
+            </details>
           </div>
           <div class="toolbar section-save-bar">
             <button id="saveHeroBtn" type="button" class="button-primary">Save Home / Hero</button>
@@ -696,8 +736,18 @@
                   <option value="contain">Contain</option>
                 </select>
               </label>
-              <label>Biography portrait focus / object-position<input id="bio-portraitFocus" placeholder="50% 26%"></label>
+              <label>Biography portrait position preset
+                <select id="bio-portraitPositionPreset">
+                  <option value="">Manual / saved value</option>
+                  <option value="center center">center center</option>
+                  <option value="center top">center top</option>
+                  <option value="center bottom">center bottom</option>
+                  <option value="left center">left center</option>
+                  <option value="right center">right center</option>
+                </select>
+              </label>
             </div>
+            <label>Biography portrait focus / object-position<input id="bio-portraitFocus" placeholder="50% 26%"></label>
             <p class="muted">This image appears only on Biography page. Changes apply only to the currently selected language.</p>
             <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
               <input type="checkbox" id="bio-image-all-langs" style="width:auto">
@@ -729,6 +779,34 @@
             <label>H2 (HTML)<input id="rep-h2"></label>
             <label>Intro<input id="rep-intro"></label>
           </div>
+          <details class="details-block">
+            <summary>Repertoire editorial image</summary>
+            <div class="grid two">
+              <label>Image enabled
+                <select id="rep-image-enabled">
+                  <option value="false">no</option>
+                  <option value="true">yes</option>
+                </select>
+              </label>
+              <label>Placement
+                <select id="rep-image-placement">
+                  <option value="between_intro_tabs">Between intro and repertoire tabs</option>
+                  <option value="header_accent">Header accent</option>
+                  <option value="programme_offers_accent">Programme offers accent</option>
+                </select>
+              </label>
+              <label>Image URL<input id="rep-image-url" placeholder="../img/studio-2.jpg or https://..."></label>
+              <label>Alt text<input id="rep-image-alt"></label>
+              <label>Fit
+                <select id="rep-image-fit">
+                  <option value="cover">cover</option>
+                  <option value="contain">contain</option>
+                </select>
+              </label>
+              <label>Object-position<input id="rep-image-position" placeholder="center center or 50% 45%"></label>
+            </div>
+            <p class="muted">Optional public image. Leave disabled to keep the current Repertoire page unchanged.</p>
+          </details>
           <div class="toolbar">
             <label>Category filter
               <select id="rep-cat-filter">
@@ -1066,6 +1144,7 @@
                   <label>Modal location / city<input id="perf-modal-city"></label>
                   <label>Modal address / public address (shared)<input id="perf-modal-address" placeholder="Auguststraße 24, 10117 Berlin"></label>
                 </div>
+                <small class="muted">For private events, venue, address, description and ticket fields are internal unless enabled in Private event public visibility.</small>
                 <label>Modal long description<textarea id="perf-modal-longdesc" rows="5"></textarea></label>
                 <small id="perf-modal-longdesc-translation-warn" class="muted warn" style="display:none"></small>
                 <div class="grid two">
@@ -1165,6 +1244,24 @@
                   <input id="perf-privateDetailText" placeholder="">
                   <small class="muted">If empty, the public calendar uses the default localized detail line.</small>
                 </label>
+                <div class="editor-section">
+                  <h3>Private event public visibility</h3>
+                  <p class="muted">Internal unless enabled here. These controls decide what a private event may reveal publicly.</p>
+                  <div class="grid two">
+                    <label>Show public title<select id="perf-private-public-title-enabled"><option value="false">no</option><option value="true">yes</option></select></label>
+                    <label>Public title mode<select id="perf-private-public-title-mode"><option value="generic">Generic private title</option><option value="custom">Custom public title</option><option value="real">Real event title</option></select></label>
+                    <label>Custom public title<input id="perf-private-public-title" placeholder="Private Event"></label>
+                    <label>Show More Info button<select id="perf-private-public-more-info"><option value="auto">auto</option><option value="false">no</option><option value="true">yes</option></select></label>
+                    <label>Show public venue<select id="perf-private-public-venue-enabled"><option value="false">no</option><option value="true">yes</option></select></label>
+                    <label>Public venue mode<select id="perf-private-public-venue-mode"><option value="hide">Hide venue</option><option value="city">Generic city only</option><option value="custom">Custom public venue line</option><option value="real">Real venue</option></select></label>
+                    <label>Custom public venue line<input id="perf-private-public-venue" placeholder="Berlin"></label>
+                    <label>Show public city/location<select id="perf-private-public-location-enabled"><option value="true">yes</option><option value="false">no</option></select></label>
+                    <label>Public location mode<select id="perf-private-public-location-mode"><option value="city_country">City + country</option><option value="hide">Hide location</option><option value="city">City only</option><option value="custom">Custom public location</option><option value="real">Real location</option></select></label>
+                    <label>Custom public location<input id="perf-private-public-location" placeholder="Berlin, Germany"></label>
+                    <label>Show public address/maps<select id="perf-private-public-address-maps"><option value="false">no</option><option value="true">yes</option></select></label>
+                    <label>Show public ticket/price information<select id="perf-private-public-ticket"><option value="false">no</option><option value="true">yes</option></select></label>
+                  </div>
+                </div>
               </details>
 
               <details class="editor-section details-block">
@@ -2877,6 +2974,15 @@
                   </label>
                   <label>Focus / object-position<input id="media-photo-focus" placeholder="50% 20%"></label>
                 </div>
+                <div class="grid two">
+                  <label>Visible
+                    <select id="media-photo-visible">
+                      <option value="true">yes</option>
+                      <option value="false">no</option>
+                    </select>
+                  </label>
+                  <label>Hi-res / download URL (optional)<input id="media-photo-downloadUrl"></label>
+                </div>
                 <p id="media-photo-orientation-warn" class="muted warn" style="margin:0;display:none"></p>
                 <label>Caption<input id="media-photo-caption"></label>
                 <label>Alt text<input id="media-photo-alt"></label>
@@ -3230,14 +3336,57 @@
             <div class="split">
               <div id="epk-photo-list" class="item-list"></div>
               <div class="editor">
-                <div class="photo-preview-wrap">
+                <div id="epk-photo-preview-wrap" class="photo-preview-wrap epk-photo-preview-wrap">
                   <img id="epk-photo-preview" alt="EPK photo preview">
                 </div>
                 <label>Photo URL<input id="epk-photo-url"></label>
+                <label>Hi-res download URL<input id="epk-photo-downloadUrl" placeholder="Leave empty to hide download button"></label>
+                <div class="grid two">
+                  <label>Orientation
+                    <select id="epk-photo-orientation">
+                      <option value="">Auto / unset</option>
+                      <option value="vertical">Vertical</option>
+                      <option value="horizontal">Horizontal</option>
+                      <option value="square">Square</option>
+                    </select>
+                  </label>
+                  <label>Visible
+                    <select id="epk-photo-visible">
+                      <option value="true">yes</option>
+                      <option value="false">no</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="grid two">
+                  <label>Preview fit
+                    <select id="epk-photo-previewFit">
+                      <option value="cover">cover</option>
+                      <option value="contain">contain</option>
+                    </select>
+                  </label>
+                  <label>Preview aspect ratio
+                    <select id="epk-photo-previewAspect">
+                      <option value="portrait_4_5">portrait 4:5</option>
+                      <option value="portrait_3_4">portrait 3:4</option>
+                      <option value="square_1_1">square 1:1</option>
+                      <option value="auto">original / auto</option>
+                    </select>
+                  </label>
+                  <label>Preview position preset
+                    <select id="epk-photo-previewPosition">
+                      <option value="center center">center center</option>
+                      <option value="center top">center top</option>
+                      <option value="center bottom">center bottom</option>
+                      <option value="left center">left center</option>
+                      <option value="right center">right center</option>
+                    </select>
+                  </label>
+                  <label>Manual preview object-position<input id="epk-photo-previewPositionManual" placeholder="50% 40%"></label>
+                </div>
                 <label>Caption<input id="epk-photo-caption"></label>
                 <label>Alt text<input id="epk-photo-alt"></label>
                 <label>Photographer<input id="epk-photo-photographer"></label>
-                <p class="muted" style="margin:4px 0 0;line-height:1.35">Caption and Photographer are shown on public EPK cards when filled. Alt text is used only for image alt.</p>
+                <p class="muted" style="margin:4px 0 0;line-height:1.35">The public Press / Dossier page shows the first 3 visible EPK photos as official press photos. If hi-res URL is empty, the preview remains visible and the download button is hidden.</p>
                 <label class="embed-file-label">Embed replacement image from local file
                   <input type="file" id="epk-photo-replace-file" accept="image/*">
                 </label>
@@ -3344,6 +3493,34 @@
               <small class="muted">Optional. Used in Programme Sheets and offer emails. The live contact page does not currently show this link.</small>
             </label>
             <p id="contact-web-validation" class="muted"></p>
+            <details class="details-block">
+              <summary>Contact page image</summary>
+              <div class="grid two">
+                <label>Image enabled
+                  <select id="contact-image-enabled">
+                    <option value="false">no</option>
+                    <option value="true">yes</option>
+                  </select>
+                </label>
+                <label>Placement
+                  <select id="contact-image-placement">
+                    <option value="none">none</option>
+                    <option value="editorial">Small editorial image beside text</option>
+                    <option value="background">Subtle background</option>
+                  </select>
+                </label>
+                <label>Image URL<input id="contact-image-url" placeholder="../img/studio-2.jpg or https://..."></label>
+                <label>Alt text<input id="contact-image-alt"></label>
+                <label>Fit
+                  <select id="contact-image-fit">
+                    <option value="cover">cover</option>
+                    <option value="contain">contain</option>
+                  </select>
+                </label>
+                <label>Object-position<input id="contact-image-position" placeholder="center center or 50% 45%"></label>
+              </div>
+              <p class="muted">Disabled by default so the contact form keeps its current prominence.</p>
+            </details>
             <div id="contact-cta-preview" class="mini-preview">
               <h4>Public contact page preview</h4>
               <p class="mini-preview__title" id="contact-preview-title">Contact title</p>

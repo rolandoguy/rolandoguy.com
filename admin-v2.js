@@ -3115,14 +3115,14 @@
   // Public-safe website mirrors. These docs are the only live Firestore payloads
   // the public site is allowed to read.
   var PUBLIC_BIO_FIELDS = ['introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitImage', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
-  var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl'];
-  var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'introImage'];
+  var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageFit', 'contactImagePosition'];
+  var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'introImage', 'homeIntroImageLayout', 'homeIntroImageFit', 'homeIntroImagePosition'];
   var PUBLIC_PRESS_ITEM_FIELDS = ['source', 'quote', 'visible'];
   var PUBLIC_PRESS_META_LANG_FIELDS = ['translatedNote'];
   var PUBLIC_EPK_BIO_FIELDS = ['b50', 'b150', 'b300p1', 'b300p2', 'b300p3', 'b300p4'];
-  var PUBLIC_EPK_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer'];
+  var PUBLIC_EPK_PHOTO_FIELDS = ['url', 'downloadUrl', 'caption', 'alt', 'photographer', 'orientation', 'visible', 'previewFit', 'previewPosition', 'previewPositionManual', 'previewAspect'];
   var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
-  var PUBLIC_REP_HEADER_FIELDS = ['h2', 'intro'];
+  var PUBLIC_REP_HEADER_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageFit', 'repertoireImagePosition'];
   var PUBLIC_REP_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
   var PUBLIC_PROGRAMS_CHROME_FIELDS = ['title', 'subtitle', 'profileBridge', 'intro', 'closingNote', 'linkLabel'];
   var PUBLIC_PROGRAMS_ITEM_FIELDS = ['id', 'order', 'published', 'title', 'description', 'formations', 'duration', 'idealFor'];
@@ -3155,6 +3155,10 @@
     'privateBadgeText', 'privateDetailText',
     'privateBadgeText_en', 'privateBadgeText_de', 'privateBadgeText_es', 'privateBadgeText_it', 'privateBadgeText_fr',
     'privateDetailText_en', 'privateDetailText_de', 'privateDetailText_es', 'privateDetailText_it', 'privateDetailText_fr',
+    'privatePublicTitleEnabled', 'privatePublicTitleMode', 'privatePublicTitle', 'privatePublicTitle_en', 'privatePublicTitle_de', 'privatePublicTitle_es', 'privatePublicTitle_it', 'privatePublicTitle_fr',
+    'privatePublicVenueEnabled', 'privatePublicVenueMode', 'privatePublicVenueLine', 'privatePublicVenueLine_en', 'privatePublicVenueLine_de', 'privatePublicVenueLine_es', 'privatePublicVenueLine_it', 'privatePublicVenueLine_fr',
+    'privatePublicLocationEnabled', 'privatePublicLocationMode', 'privatePublicLocationLine', 'privatePublicLocationLine_en', 'privatePublicLocationLine_de', 'privatePublicLocationLine_es', 'privatePublicLocationLine_it', 'privatePublicLocationLine_fr',
+    'privatePublicMoreInfo', 'privatePublicAddressMaps', 'privatePublicTicket',
     'status', 'type',
     'title_en', 'title_de', 'title_es', 'title_it', 'title_fr',
     'sortDate',
@@ -3166,6 +3170,37 @@
     var src = isObject(source) ? source : {};
     fields.forEach(function (key) {
       if (Object.prototype.hasOwnProperty.call(src, key) && src[key] !== undefined) out[key] = clone(src[key]);
+    });
+    return out;
+  }
+  function privatePublicAllowed(row, key) {
+    if (!row || !isObject(row)) return false;
+    if (key === 'title') return row.privatePublicTitleEnabled === true && safeString(row.privatePublicTitleMode) === 'real';
+    if (key === 'venue') return row.privatePublicVenueEnabled === true && safeString(row.privatePublicVenueMode) === 'real';
+    if (key === 'city') return row.privatePublicLocationEnabled !== false && (safeString(row.privatePublicLocationMode || 'city_country') === 'real' || safeString(row.privatePublicLocationMode || 'city_country') === 'city' || safeString(row.privatePublicLocationMode || 'city_country') === 'city_country');
+    if (key === 'address' || key === 'mapsUrl') return row.privatePublicAddressMaps === true;
+    if (key === 'detail' || key === 'extDesc') return safeString(row.privatePublicMoreInfo || 'auto') === 'true';
+    if (key === 'ticketPrice' || key === 'ticketStatus' || key === 'ticketCurrency' || key === 'publicTicketLabel' || key === 'eventLink' || key === 'eventLinkLabel') return row.privatePublicTicket === true;
+    return false;
+  }
+  function projectPrivateEventForPublic(row) {
+    var out = pickPublicFields(row, PUBLIC_PERF_EVENT_FIELDS);
+    if (!perfIsPrivateEventRecord(row, state.lang || 'en')) return out;
+    ['title', 'title_en', 'title_de', 'title_es', 'title_it', 'title_fr'].forEach(function (k) {
+      if (!privatePublicAllowed(row, 'title')) out[k] = '';
+    });
+    ['venue'].forEach(function (k) { if (!privatePublicAllowed(row, 'venue')) out[k] = ''; });
+    ['address', 'address_en', 'address_de', 'address_es', 'address_it', 'address_fr', 'mapsUrl'].forEach(function (k) {
+      if (!privatePublicAllowed(row, k === 'mapsUrl' ? 'mapsUrl' : 'address')) out[k] = '';
+    });
+    ['detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr', 'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr'].forEach(function (k) {
+      if (!privatePublicAllowed(row, k.indexOf('extDesc') === 0 ? 'extDesc' : 'detail')) out[k] = '';
+    });
+    ['moreInfoTitle', 'moreInfoSubtitle', 'moreInfoArtists', 'moreInfoAddress', 'moreInfoDescription', 'moreInfoExtra', 'moreInfoImage1', 'moreInfoImage2', 'moreInfoImage3', 'moreInfoImage4', 'moreInfoImage5', 'venuePhoto', 'venuePhotoFocus', 'venueOpacity', 'modalImg', 'flyerImg'].forEach(function (k) {
+      out[k] = '';
+    });
+    ['ticketPrice', 'ticketPrice_en', 'ticketPrice_de', 'ticketPrice_es', 'ticketPrice_it', 'ticketPrice_fr', 'ticketStatus', 'ticketCurrency', 'publicTicketLabel', 'publicTicketLabel_en', 'publicTicketLabel_de', 'publicTicketLabel_es', 'publicTicketLabel_it', 'publicTicketLabel_fr', 'eventLink', 'eventLinkLabel', 'eventLink_en', 'eventLinkLabel_en', 'eventLink_de', 'eventLinkLabel_de', 'eventLink_es', 'eventLinkLabel_es', 'eventLink_it', 'eventLinkLabel_it', 'eventLink_fr', 'eventLinkLabel_fr'].forEach(function (k) {
+      if (!privatePublicAllowed(row, 'ticketPrice')) out[k] = '';
     });
     return out;
   }
@@ -3223,7 +3258,7 @@
   }
   function buildPublicPerfEventsDoc() {
     return normalizePerfEventsList(loadDoc('rg_perfs', [])).map(function (row) {
-      return pickPublicFields(row, PUBLIC_PERF_EVENT_FIELDS);
+      return projectPrivateEventForPublic(row);
     });
   }
   function buildPublicPastPerfsDoc() {
@@ -4290,6 +4325,15 @@
     else setFieldEffectiveValue($('hero-introCtaMedia'), pickEffectiveWithSource(uiStored, uiFallback, 'home.intro.ctaMedia', 'Inherited'));
     fillHomeRgUiCopyFields(uiStored, uiFallback);
     setFieldFromSources('hero-bgImage', stored, fallback, 'bgImage', 'Bundled default');
+    var storedEn = state.lang === 'en' ? stored : loadDoc('hero_en', null);
+    var layoutSource = isObject(stored) && safeString(stored.homeIntroImageLayout).trim() ? stored : (isObject(storedEn) ? storedEn : fallback);
+    var fitSource = isObject(stored) && safeString(stored.homeIntroImageFit).trim() ? stored : (isObject(storedEn) ? storedEn : fallback);
+    var posSource = isObject(stored) && safeString(stored.homeIntroImagePosition).trim() ? stored : (isObject(storedEn) ? storedEn : fallback);
+    setFieldFromSources('hero-introImageLayout', layoutSource, fallback, 'homeIntroImageLayout', 'Default auto');
+    setFieldFromSources('hero-introImageFit', fitSource, fallback, 'homeIntroImageFit', 'Default cover');
+    setFieldFromSources('hero-introImagePosition', {}, {}, 'homeIntroImagePosition', 'Default crop');
+    if ($('hero-introImagePosition')) $('hero-introImagePosition').value = homeIntroPositionSelectValue(safeString(posSource && posSource.homeIntroImagePosition).trim());
+    if ($('hero-introImagePositionCustom')) $('hero-introImagePositionCustom').value = homeIntroPositionIsPreset(safeString(posSource && posSource.homeIntroImagePosition).trim()) ? '' : safeString(posSource && posSource.homeIntroImagePosition).trim();
     // Keep preview blank until final source is resolved (no stale first paint).
     $('hero-introImage').value = '';
     updateHomeIntroPreview();
@@ -4298,6 +4342,7 @@
       if (nonce !== state.homeLoadNonce) return;
       $('hero-introImage').value = safeString(resolved && resolved.url).trim();
       setFieldEffectiveValue($('hero-introImage'), { value: safeString(resolved && resolved.url).trim(), source: friendlyImageSourceLabel(resolved && resolved.source) });
+      if (resolved && resolved.settings) applyHomeIntroImageSettingsToInputs(resolved.settings);
       updateHomeIntroPreview();
       updateHomeMiniPreviews();
       updateCompletenessIndicators();
@@ -4306,20 +4351,68 @@
   }
   function readHomeIntroFromBridge() {
     var stored = loadDoc('hero_' + state.lang, null);
+    var storedEn = loadDoc('hero_en', null);
     if (isObject(stored) && safeString(stored.introImage).trim()) {
       return {
         source: 'bridge:hero_' + state.lang + '.introImage',
-        url: normalizeHomeIntroImagePath(safeString(stored.introImage).trim())
+        url: normalizeHomeIntroImagePath(safeString(stored.introImage).trim()),
+        settings: getHomeIntroImageSettingsFromDoc(stored, storedEn)
       };
     }
-    var storedEn = loadDoc('hero_en', null);
     if (isObject(storedEn) && safeString(storedEn.introImage).trim()) {
       return {
         source: 'bridge:hero_en.introImage',
-        url: normalizeHomeIntroImagePath(safeString(storedEn.introImage).trim())
+        url: normalizeHomeIntroImagePath(safeString(storedEn.introImage).trim()),
+        settings: getHomeIntroImageSettingsFromDoc(storedEn)
       };
     }
     return null;
+  }
+  function normalizeHomeIntroLayout(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return /^(auto|portrait|landscape|wide)$/.test(s) ? s : 'auto';
+  }
+  function normalizeHomeIntroFit(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return /^(cover|contain)$/.test(s) ? s : '';
+  }
+  function homeIntroPositionIsPreset(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return /^(center center|center top|center bottom|left center|right center)$/.test(s);
+  }
+  function homeIntroPositionSelectValue(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return homeIntroPositionIsPreset(s) ? s : '';
+  }
+  function normalizeHomeIntroPosition(raw) {
+    var s = safeString(raw).trim().replace(/\s+/g, ' ');
+    if (!s) return '';
+    return s;
+  }
+  function getHomeIntroImageSettingsFromDoc(doc, fallbackDoc) {
+    var src = isObject(doc) ? doc : {};
+    var fallback = isObject(fallbackDoc) ? fallbackDoc : {};
+    return {
+      homeIntroImageLayout: normalizeHomeIntroLayout(safeString(src.homeIntroImageLayout).trim() || safeString(fallback.homeIntroImageLayout).trim()),
+      homeIntroImageFit: normalizeHomeIntroFit(safeString(src.homeIntroImageFit).trim() || safeString(fallback.homeIntroImageFit).trim()),
+      homeIntroImagePosition: normalizeHomeIntroPosition(safeString(src.homeIntroImagePosition).trim() || safeString(fallback.homeIntroImagePosition).trim())
+    };
+  }
+  function readHomeIntroImageSettingsFromInputs() {
+    var custom = normalizeHomeIntroPosition($('hero-introImagePositionCustom') && $('hero-introImagePositionCustom').value);
+    var preset = normalizeHomeIntroPosition($('hero-introImagePosition') && $('hero-introImagePosition').value);
+    return {
+      homeIntroImageLayout: normalizeHomeIntroLayout($('hero-introImageLayout') && $('hero-introImageLayout').value),
+      homeIntroImageFit: normalizeHomeIntroFit($('hero-introImageFit') && $('hero-introImageFit').value),
+      homeIntroImagePosition: custom || preset
+    };
+  }
+  function applyHomeIntroImageSettingsToInputs(settings) {
+    var cfg = getHomeIntroImageSettingsFromDoc(settings || {});
+    if ($('hero-introImageLayout') && cfg.homeIntroImageLayout) $('hero-introImageLayout').value = cfg.homeIntroImageLayout;
+    if ($('hero-introImageFit') && cfg.homeIntroImageFit) $('hero-introImageFit').value = cfg.homeIntroImageFit;
+    if ($('hero-introImagePosition')) $('hero-introImagePosition').value = homeIntroPositionSelectValue(cfg.homeIntroImagePosition);
+    if ($('hero-introImagePositionCustom')) $('hero-introImagePositionCustom').value = homeIntroPositionIsPreset(cfg.homeIntroImagePosition) ? '' : cfg.homeIntroImagePosition;
   }
   function fetchFirestoreDocJson(key) {
     var url = 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/' + encodeURIComponent(key);
@@ -4339,7 +4432,7 @@
     if (!isObject(doc)) return null;
     var s = safeString(doc.introImage).trim();
     if (!s) return null;
-    return { source: 'firestore:' + keyLabel + '.introImage', url: normalizeHomeIntroImagePath(s) };
+    return { source: 'firestore:' + keyLabel + '.introImage', url: normalizeHomeIntroImagePath(s), settings: getHomeIntroImageSettingsFromDoc(doc) };
   }
   async function resolveHomeIntroFinal() {
     var langKey = 'hero_' + state.lang;
@@ -4348,22 +4441,26 @@
     var fsEnPromise = fetchFirestoreDocJson('hero_en');
     var defaultPromise = loadHomeIntroDefault();
 
+    var fsEn = await fsEnPromise;
     var fsLang = await fsLangPromise;
     var fsLangCandidate = readHomeIntroFromFirestore(fsLang, langKey);
-    if (fsLangCandidate) return fsLangCandidate;
+    if (fsLangCandidate) {
+      fsLangCandidate.settings = getHomeIntroImageSettingsFromDoc(fsLang, fsEn);
+      return fsLangCandidate;
+    }
 
-    var fsEn = await fsEnPromise;
     var fsEnCandidate = readHomeIntroFromFirestore(fsEn, 'hero_en');
     if (fsEnCandidate) return fsEnCandidate;
 
     if (bridgeCandidate && bridgeCandidate.url) return bridgeCandidate;
 
     var def = safeString(await defaultPromise).trim();
-    return { source: 'default:hero-config.image', url: def };
+    return { source: 'default:hero-config.image', url: def, settings: {} };
   }
   async function saveHome() {
     var applyAll = !!($('home-images-all-langs') && $('home-images-all-langs').checked);
     var heroKey = 'hero_' + state.lang;
+    var introImageSettings = readHomeIntroImageSettingsFromInputs();
     var payload = {
       eyebrow: safeString($('hero-eyebrow').value),
       subtitle: safeString($('hero-subtitle').value),
@@ -4374,7 +4471,10 @@
       introCtaBio: safeString($('hero-introCtaBio').value),
       introCtaMedia: safeString($('hero-introCtaMedia').value),
       bgImage: safeString($('hero-bgImage').value),
-      introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim())
+      introImage: normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim()),
+      homeIntroImageLayout: introImageSettings.homeIntroImageLayout,
+      homeIntroImageFit: introImageSettings.homeIntroImageFit,
+      homeIntroImagePosition: introImageSettings.homeIntroImagePosition
     };
     var heroSaved = await saveDocRequired(heroKey, payload);
     try {
@@ -4393,25 +4493,28 @@
     void fsCta1;
     void fsCta2;
     var applyAllWrites = [];
-    if (applyAll) {
-      LANGS.forEach(function (lang) {
-        if (lang === state.lang) return;
-        var key = 'hero_' + lang;
-        var prev = loadDoc(key, {});
-        if (!isObject(prev)) prev = {};
+    LANGS.forEach(function (lang) {
+      if (lang === state.lang) return;
+      var key = 'hero_' + lang;
+      var prev = loadDoc(key, {});
+      if (!isObject(prev)) prev = {};
+      if (applyAll) {
         prev.bgImage = payload.bgImage;
         prev.introImage = payload.introImage;
-        applyAllWrites.push(saveDoc(key, prev));
-        try {
-          localStorage.setItem(key, JSON.stringify(prev));
-        } catch (e) {}
-      });
-    }
+      }
+      prev.homeIntroImageLayout = payload.homeIntroImageLayout;
+      prev.homeIntroImageFit = payload.homeIntroImageFit;
+      prev.homeIntroImagePosition = payload.homeIntroImagePosition;
+      applyAllWrites.push(saveDoc(key, prev));
+      try {
+        localStorage.setItem(key, JSON.stringify(prev));
+      } catch (e) {}
+    });
     if (applyAllWrites.length) {
       var applyAllResults = await Promise.all(applyAllWrites);
       if (applyAllResults.some(function (ok) { return ok === false; })) return;
     }
-    await publishPublicHeroDocs(applyAll ? LANGS : [state.lang]);
+    await publishPublicHeroDocs(LANGS);
   }
 
   function loadHomeIntroDefault() {
@@ -4433,13 +4536,24 @@
   function updateHomeIntroPreview() {
     var src = normalizeHomeIntroImagePath(safeString($('hero-introImage').value).trim());
     if ($('hero-introImage').value !== src) $('hero-introImage').value = src;
+    var settings = readHomeIntroImageSettingsFromInputs();
     var previewSrc = src;
     if (previewSrc && !/^(data:|https?:\/\/|\/\/|\/)/i.test(previewSrc)) {
       try {
         previewSrc = new URL(previewSrc, window.location.origin + '/mp/').toString();
       } catch (e) {}
     }
-    $('hero-introPreview').src = previewSrc;
+    var preview = $('hero-introPreview');
+    var wrap = $('hero-introPreview-wrap');
+    if (wrap) {
+      wrap.classList.remove('home-intro-preview-wrap--auto', 'home-intro-preview-wrap--portrait', 'home-intro-preview-wrap--landscape', 'home-intro-preview-wrap--wide');
+      wrap.classList.add('home-intro-preview-wrap--' + (settings.homeIntroImageLayout || 'auto'));
+    }
+    if (preview) {
+      preview.src = previewSrc;
+      preview.style.objectFit = settings.homeIntroImageFit || 'cover';
+      preview.style.objectPosition = settings.homeIntroImagePosition || '';
+    }
   }
   function normalizeHomeIntroImagePath(raw) {
     var s = safeString(raw).trim();
@@ -4789,6 +4903,10 @@
     $('bio-portraitPreview').src = previewSrc;
     $('bio-portraitPreview').style.objectFit = safeString($('bio-portraitFit').value).trim() || 'cover';
     $('bio-portraitPreview').style.objectPosition = safeString($('bio-portraitFocus').value).trim() || '50% 26%';
+    if ($('bio-portraitPositionPreset')) {
+      var focus = safeString($('bio-portraitFocus').value).trim();
+      $('bio-portraitPositionPreset').value = /^(center center|center top|center bottom|left center|right center)$/.test(focus) ? focus : '';
+    }
     updatePreviewFocusMarker($('bio-portraitPreview-wrap'), $('bio-portraitFocus').value);
   }
 
@@ -5110,6 +5228,12 @@
     var fallback = {};
     $('rep-h2').value = pickStoredOrFallback(stored, fallback, 'h2');
     $('rep-intro').value = pickStoredOrFallback(stored, fallback, 'intro');
+    if ($('rep-image-enabled')) $('rep-image-enabled').value = asBoolean(stored && stored.repertoireImageEnabled, false) ? 'true' : 'false';
+    if ($('rep-image-url')) $('rep-image-url').value = safeString(stored && stored.repertoireImageUrl);
+    if ($('rep-image-alt')) $('rep-image-alt').value = safeString(stored && stored.repertoireImageAlt);
+    if ($('rep-image-placement')) $('rep-image-placement').value = safeString(stored && stored.repertoireImagePlacement) || 'between_intro_tabs';
+    if ($('rep-image-fit')) $('rep-image-fit').value = safeString(stored && stored.repertoireImageFit) || 'cover';
+    if ($('rep-image-position')) $('rep-image-position').value = safeString(stored && stored.repertoireImagePosition) || 'center center';
     if ($('rep-cat-filter')) $('rep-cat-filter').value = $('rep-cat-filter').value || 'all';
     if ($('rep-status-filter')) $('rep-status-filter').value = state.repStatusFilter || 'all';
     if ($('rep-workflow-filter')) $('rep-workflow-filter').value = state.repWorkflowFilter || 'all';
@@ -5118,7 +5242,16 @@
     renderRepList();
   }
   async function saveRepHeader() {
-    if (!await saveDocRequired('rep_' + state.lang, { h2: safeString($('rep-h2').value), intro: safeString($('rep-intro').value) })) return;
+    if (!await saveDocRequired('rep_' + state.lang, {
+      h2: safeString($('rep-h2').value),
+      intro: safeString($('rep-intro').value),
+      repertoireImageEnabled: $('rep-image-enabled') && $('rep-image-enabled').value === 'true',
+      repertoireImageUrl: safeString($('rep-image-url') && $('rep-image-url').value).trim(),
+      repertoireImageAlt: safeString($('rep-image-alt') && $('rep-image-alt').value),
+      repertoireImagePlacement: safeString($('rep-image-placement') && $('rep-image-placement').value) || 'between_intro_tabs',
+      repertoireImageFit: safeString($('rep-image-fit') && $('rep-image-fit').value) || 'cover',
+      repertoireImagePosition: safeString($('rep-image-position') && $('rep-image-position').value) || 'center center'
+    })) return;
     await publishPublicRepertoireDocs([state.lang]);
   }
   async function saveRepCards() {
@@ -14027,6 +14160,18 @@
     if ($('perf-privateBadgeText')) $('perf-privateBadgeText').value = localeFirst('privateBadgeText');
     if ($('perf-privateDetailLine')) $('perf-privateDetailLine').value = e.hidePrivateDetailLine ? 'hide' : 'show';
     if ($('perf-privateDetailText')) $('perf-privateDetailText').value = localeFirst('privateDetailText');
+    if ($('perf-private-public-title-enabled')) $('perf-private-public-title-enabled').value = e.privatePublicTitleEnabled === true ? 'true' : 'false';
+    if ($('perf-private-public-title-mode')) setSelectWithCustomValue('perf-private-public-title-mode', safeString(e.privatePublicTitleMode || 'generic'), 'generic');
+    if ($('perf-private-public-title')) $('perf-private-public-title').value = localeFirst('privatePublicTitle');
+    if ($('perf-private-public-venue-enabled')) $('perf-private-public-venue-enabled').value = e.privatePublicVenueEnabled === true ? 'true' : 'false';
+    if ($('perf-private-public-venue-mode')) setSelectWithCustomValue('perf-private-public-venue-mode', safeString(e.privatePublicVenueMode || 'hide'), 'hide');
+    if ($('perf-private-public-venue')) $('perf-private-public-venue').value = localeFirst('privatePublicVenueLine');
+    if ($('perf-private-public-location-enabled')) $('perf-private-public-location-enabled').value = e.privatePublicLocationEnabled === false ? 'false' : 'true';
+    if ($('perf-private-public-location-mode')) setSelectWithCustomValue('perf-private-public-location-mode', safeString(e.privatePublicLocationMode || 'city_country'), 'city_country');
+    if ($('perf-private-public-location')) $('perf-private-public-location').value = localeFirst('privatePublicLocationLine');
+    if ($('perf-private-public-more-info')) setSelectWithCustomValue('perf-private-public-more-info', safeString(e.privatePublicMoreInfo || 'auto'), 'auto');
+    if ($('perf-private-public-address-maps')) $('perf-private-public-address-maps').value = e.privatePublicAddressMaps === true ? 'true' : 'false';
+    if ($('perf-private-public-ticket')) $('perf-private-public-ticket').value = e.privatePublicTicket === true ? 'true' : 'false';
     if ($('perf-modal-title')) $('perf-modal-title').value = localeFirstTitle();
     if ($('perf-modal-type')) setSelectWithCustomValue('perf-modal-type', safeString(e.type), 'concert');
     if ($('perf-modal-venue')) $('perf-modal-venue').value = safeString(e.venue);
@@ -14100,11 +14245,11 @@
   }
   var PERF_PRIVATE_DEFAULT_BG = '/img/hero-bg.webp';
   var PERF_PRIVATE_UI_TEXT = {
-    en: { badge: 'Invitation only', detail: 'Private event - not open to the public' },
-    de: { badge: 'Nur auf Einladung', detail: 'Private Veranstaltung - nicht öffentlich zugänglich' },
-    es: { badge: 'Solo por invitación', detail: 'Evento privado - no abierto al público' },
-    it: { badge: 'Solo su invito', detail: 'Evento privato - non aperto al pubblico' },
-    fr: { badge: 'Sur invitation', detail: 'Événement privé - non ouvert au public' }
+    en: { badge: 'By invitation only', detail: 'Private engagement · not publicly accessible' },
+    de: { badge: 'Nur auf Einladung', detail: 'Private Veranstaltung · nicht öffentlich zugänglich' },
+    es: { badge: 'Solo por invitación', detail: 'Evento privado · no accesible al público' },
+    it: { badge: 'Solo su invito', detail: 'Evento privato · non accessibile al pubblico' },
+    fr: { badge: 'Sur invitation uniquement', detail: 'Événement privé · non accessible au public' }
   };
   function perfPrivateUiText(lang, key) {
     var L = safeString(lang || 'en').trim().toLowerCase() || 'en';
@@ -14493,6 +14638,18 @@
     persistLocaleBackedField('privateBadgeText', safeString($('perf-privateBadgeText') && $('perf-privateBadgeText').value));
     e.hidePrivateDetailLine = safeString($('perf-privateDetailLine') && $('perf-privateDetailLine').value).trim() === 'hide';
     persistLocaleBackedField('privateDetailText', safeString($('perf-privateDetailText') && $('perf-privateDetailText').value));
+    e.privatePublicTitleEnabled = safeString($('perf-private-public-title-enabled') && $('perf-private-public-title-enabled').value).trim() === 'true';
+    e.privatePublicTitleMode = safeString($('perf-private-public-title-mode') && $('perf-private-public-title-mode').value).trim() || 'generic';
+    persistLocaleBackedField('privatePublicTitle', safeString($('perf-private-public-title') && $('perf-private-public-title').value).trim());
+    e.privatePublicVenueEnabled = safeString($('perf-private-public-venue-enabled') && $('perf-private-public-venue-enabled').value).trim() === 'true';
+    e.privatePublicVenueMode = safeString($('perf-private-public-venue-mode') && $('perf-private-public-venue-mode').value).trim() || 'hide';
+    persistLocaleBackedField('privatePublicVenueLine', safeString($('perf-private-public-venue') && $('perf-private-public-venue').value).trim());
+    e.privatePublicLocationEnabled = safeString($('perf-private-public-location-enabled') && $('perf-private-public-location-enabled').value).trim() !== 'false';
+    e.privatePublicLocationMode = safeString($('perf-private-public-location-mode') && $('perf-private-public-location-mode').value).trim() || 'city_country';
+    persistLocaleBackedField('privatePublicLocationLine', safeString($('perf-private-public-location') && $('perf-private-public-location').value).trim());
+    e.privatePublicMoreInfo = safeString($('perf-private-public-more-info') && $('perf-private-public-more-info').value).trim() || 'auto';
+    e.privatePublicAddressMaps = safeString($('perf-private-public-address-maps') && $('perf-private-public-address-maps').value).trim() === 'true';
+    e.privatePublicTicket = safeString($('perf-private-public-ticket') && $('perf-private-public-ticket').value).trim() === 'true';
     if (privateEnabled) {
       if (e.hidePrivateBadge !== true) e.hidePrivateBadge = false;
       if (e.hidePrivateDetailLine !== true) e.hidePrivateDetailLine = false;
@@ -15586,7 +15743,9 @@
         var orientation = safeString(isObject(x) ? x.orientation : '').trim().toLowerCase();
         if (orientation !== 'portrait' && orientation !== 'landscape') orientation = '';
         var focus = safeString(isObject(x) ? (x.focus != null ? x.focus : x.objectPosition) : '').trim();
-        return { url: url, orientation: orientation, focus: focus };
+        var visible = isObject(x) && x.visible === false ? false : true;
+        var downloadUrl = safeString(isObject(x) ? x.downloadUrl : '').trim();
+        return { url: url, orientation: orientation, focus: focus, visible: visible, downloadUrl: downloadUrl };
       }).filter(Boolean);
     });
     return d;
@@ -15601,10 +15760,12 @@
           v = safeString(v).trim().toLowerCase();
           return v === 'portrait' || v === 'landscape' ? v : '';
         })(raw.orientation),
-        focus: safeString(raw.focus != null ? raw.focus : raw.objectPosition).trim()
+        focus: safeString(raw.focus != null ? raw.focus : raw.objectPosition).trim(),
+        visible: raw.visible === false ? false : true,
+        downloadUrl: safeString(raw.downloadUrl).trim()
       };
     }
-    return { url: safeString(raw).trim(), orientation: '', focus: '' };
+    return { url: safeString(raw).trim(), orientation: '', focus: '', visible: true, downloadUrl: '' };
   }
   function setPhotoEntry(type, idx, entry) {
     if (!Array.isArray(state.photosData[type])) state.photosData[type] = [];
@@ -15614,7 +15775,9 @@
         v = safeString(v).trim().toLowerCase();
         return v === 'portrait' || v === 'landscape' ? v : '';
       })(entry && entry.orientation),
-      focus: safeString(entry && entry.focus).trim()
+      focus: safeString(entry && entry.focus).trim(),
+      visible: entry && entry.visible === false ? false : true,
+      downloadUrl: safeString(entry && entry.downloadUrl).trim()
     };
   }
   function inferPhotoOrientation(width, height) {
@@ -16170,6 +16333,8 @@
     $('media-photo-url').value = safeString(photo.url);
     $('media-photo-orientation').value = safeString(photo.orientation);
     $('media-photo-focus').value = safeString(photo.focus);
+    if ($('media-photo-visible')) $('media-photo-visible').value = photo.visible === false ? 'false' : 'true';
+    if ($('media-photo-downloadUrl')) $('media-photo-downloadUrl').value = safeString(photo.downloadUrl);
     $('media-photo-caption').value = safeString(c.caption);
     $('media-photo-alt').value = safeString(c.alt);
     $('media-photo-photographer').value = safeString(c.photographer);
@@ -16185,7 +16350,9 @@
     setPhotoEntry(state.photoType, state.photoIndex, {
       url: $('media-photo-url').value,
       orientation: $('media-photo-orientation').value,
-      focus: $('media-photo-focus').value
+      focus: $('media-photo-focus').value,
+      visible: !($('media-photo-visible') && $('media-photo-visible').value === 'false'),
+      downloadUrl: $('media-photo-downloadUrl') ? $('media-photo-downloadUrl').value : ''
     });
     setPhotoCaption(state.photoType, state.photoIndex, $('media-photo-caption').value, $('media-photo-alt').value, $('media-photo-photographer').value);
     renderMediaPhotosList();
@@ -16260,6 +16427,8 @@
             url: safeString(entry.url),
             orientation: safeString(entry.orientation),
             focus: safeString(entry.focus || entry.objectPosition),
+            visible: entry.visible === false ? false : true,
+            downloadUrl: safeString(entry.downloadUrl),
             caption: safeString(cap && cap.caption),
             alt: safeString(cap && cap.alt),
             photographer: safeString(cap && cap.photographer)
@@ -16273,6 +16442,8 @@
             url: safeString(entry.url),
             orientation: safeString(entry.orientation),
             focus: safeString(entry.focus || entry.objectPosition),
+            visible: entry.visible === false ? false : true,
+            downloadUrl: safeString(entry.downloadUrl),
             caption: safeString(cap && cap.caption),
             alt: safeString(cap && cap.alt),
             photographer: safeString(cap && cap.photographer)
@@ -16286,6 +16457,8 @@
             url: safeString(entry.url),
             orientation: safeString(entry.orientation),
             focus: safeString(entry.focus || entry.objectPosition),
+            visible: entry.visible === false ? false : true,
+            downloadUrl: safeString(entry.downloadUrl),
             caption: safeString(cap && cap.caption),
             alt: safeString(cap && cap.alt),
             photographer: safeString(cap && cap.photographer)
@@ -16701,13 +16874,54 @@
     var src = raw;
     if (!Array.isArray(src) && isObject(src) && Array.isArray(src.value)) src = src.value;
     var arr = Array.isArray(src) ? src : [];
+    function cleanPreviewFit(value) {
+      var v = safeString(value).trim().toLowerCase();
+      return v === 'contain' ? 'contain' : 'cover';
+    }
+    function cleanPreviewPosition(value) {
+      var v = safeString(value).trim().toLowerCase();
+      return /^(center center|center top|center bottom|left center|right center)$/.test(v) ? v : 'center center';
+    }
+    function cleanPreviewAspect(value) {
+      var v = safeString(value).trim().toLowerCase();
+      return /^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(v) ? v : 'portrait_4_5';
+    }
     return arr.filter(function (p) { return isObject(p) || typeof p === 'string'; }).map(function (p) {
-      if (typeof p === 'string') return { url: safeString(p), caption: '', alt: '', photographer: '', label: '', credit: '' };
+      if (typeof p === 'string') return { url: safeString(p), downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' };
       var caption = safeString(p.caption || p.label);
       var photographer = safeString(p.photographer || p.credit);
       var alt = safeString(p.alt);
-      return { url: safeString(p.url).trim(), caption: caption, alt: alt, photographer: photographer, label: caption, credit: photographer };
+      var orientation = safeString(p.orientation).trim().toLowerCase();
+      if (orientation !== 'vertical' && orientation !== 'horizontal' && orientation !== 'square') orientation = '';
+      return {
+        url: safeString(p.url).trim(),
+        downloadUrl: safeString(p.downloadUrl).trim(),
+        caption: caption,
+        alt: alt,
+        photographer: photographer,
+        orientation: orientation,
+        visible: p.visible === false ? false : true,
+        previewFit: cleanPreviewFit(p.previewFit),
+        previewPosition: cleanPreviewPosition(p.previewPosition),
+        previewPositionManual: safeString(p.previewPositionManual).trim(),
+        previewAspect: cleanPreviewAspect(p.previewAspect),
+        label: caption,
+        credit: photographer
+      };
     });
+  }
+  function updateEpkPhotoPreviewCrop(p) {
+    var wrap = $('epk-photo-preview-wrap');
+    var img = $('epk-photo-preview');
+    if (!wrap || !img) return;
+    var aspect = safeString(p && p.previewAspect).trim() || 'portrait_4_5';
+    if (!/^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(aspect)) aspect = 'portrait_4_5';
+    var fit = safeString(p && p.previewFit).trim() === 'contain' ? 'contain' : 'cover';
+    var pos = safeString(p && p.previewPositionManual).trim() || safeString(p && p.previewPosition).trim() || 'center center';
+    wrap.dataset.previewAspect = aspect;
+    img.style.objectFit = aspect === 'auto' ? 'contain' : fit;
+    img.style.objectPosition = pos;
+    updatePreviewFocusMarker(wrap, pos);
   }
   function togglePressTab(tab) {
     state.pressTab = tab;
@@ -16790,17 +17004,32 @@
     }
   }
   function renderEpkPhotoEditor() {
-    var p = state.epkPhotos[state.epkPhotoIndex] || { url: '', caption: '', alt: '', photographer: '', label: '', credit: '' };
+    var p = state.epkPhotos[state.epkPhotoIndex] || { url: '', downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' };
     $('epk-photo-url').value = safeString(p.url);
+    if ($('epk-photo-downloadUrl')) $('epk-photo-downloadUrl').value = safeString(p.downloadUrl);
+    if ($('epk-photo-orientation')) $('epk-photo-orientation').value = safeString(p.orientation);
+    if ($('epk-photo-visible')) $('epk-photo-visible').value = p.visible === false ? 'false' : 'true';
+    if ($('epk-photo-previewFit')) $('epk-photo-previewFit').value = safeString(p.previewFit) || 'cover';
+    if ($('epk-photo-previewPosition')) $('epk-photo-previewPosition').value = safeString(p.previewPosition) || 'center center';
+    if ($('epk-photo-previewPositionManual')) $('epk-photo-previewPositionManual').value = safeString(p.previewPositionManual);
+    if ($('epk-photo-previewAspect')) $('epk-photo-previewAspect').value = safeString(p.previewAspect) || 'portrait_4_5';
     $('epk-photo-caption').value = safeString(p.caption || p.label);
     $('epk-photo-alt').value = safeString(p.alt);
     $('epk-photo-photographer').value = safeString(p.photographer || p.credit);
     $('epk-photo-preview').src = safeString(p.url);
+    updateEpkPhotoPreviewCrop(p);
   }
   function persistEpkPhotoEditor() {
     if (state.epkPhotoIndex < 0) return;
     var p = state.epkPhotos[state.epkPhotoIndex] || {};
     p.url = safeString($('epk-photo-url').value).trim();
+    p.downloadUrl = safeString($('epk-photo-downloadUrl') && $('epk-photo-downloadUrl').value).trim();
+    p.orientation = safeString($('epk-photo-orientation') && $('epk-photo-orientation').value).trim();
+    p.visible = !($('epk-photo-visible') && $('epk-photo-visible').value === 'false');
+    p.previewFit = safeString($('epk-photo-previewFit') && $('epk-photo-previewFit').value).trim() === 'contain' ? 'contain' : 'cover';
+    p.previewPosition = safeString($('epk-photo-previewPosition') && $('epk-photo-previewPosition').value).trim() || 'center center';
+    p.previewPositionManual = safeString($('epk-photo-previewPositionManual') && $('epk-photo-previewPositionManual').value).trim();
+    p.previewAspect = safeString($('epk-photo-previewAspect') && $('epk-photo-previewAspect').value).trim() || 'portrait_4_5';
     p.caption = safeString($('epk-photo-caption').value);
     p.alt = safeString($('epk-photo-alt').value);
     p.photographer = safeString($('epk-photo-photographer').value);
@@ -17038,6 +17267,12 @@
     setFieldFromSources('contact-emailBtn', stored, fallback, 'emailBtn', 'Bundled default');
     setFieldEffectiveValue($('contact-webBtn'), { value: inferredWebBtn, source: safeString(inferredWebBtn).trim() ? ((isObject(stored) && safeString(stored.webBtn).trim()) ? 'Saved here' : 'Bundled default') : 'Bundled default' });
     if ($('contact-webUrl')) $('contact-webUrl').value = inferredWebUrl;
+    if ($('contact-image-enabled')) $('contact-image-enabled').value = asBoolean(stored && stored.contactImageEnabled, false) ? 'true' : 'false';
+    if ($('contact-image-url')) $('contact-image-url').value = safeString(stored && stored.contactImageUrl);
+    if ($('contact-image-alt')) $('contact-image-alt').value = safeString(stored && stored.contactImageAlt);
+    if ($('contact-image-placement')) $('contact-image-placement').value = safeString(stored && stored.contactImagePlacement) || 'none';
+    if ($('contact-image-fit')) $('contact-image-fit').value = safeString(stored && stored.contactImageFit) || 'cover';
+    if ($('contact-image-position')) $('contact-image-position').value = safeString(stored && stored.contactImagePosition) || 'center center';
     updateContactValidation();
     updateContactMiniPreview();
     updateCompletenessIndicators();
@@ -17050,7 +17285,13 @@
       phone: safeString($('contact-phone').value),
       emailBtn: safeString($('contact-emailBtn').value),
       webBtn: safeString($('contact-webBtn').value),
-      webUrl: safeString($('contact-webUrl') && $('contact-webUrl').value).trim()
+      webUrl: safeString($('contact-webUrl') && $('contact-webUrl').value).trim(),
+      contactImageEnabled: $('contact-image-enabled') && $('contact-image-enabled').value === 'true',
+      contactImageUrl: safeString($('contact-image-url') && $('contact-image-url').value).trim(),
+      contactImageAlt: safeString($('contact-image-alt') && $('contact-image-alt').value),
+      contactImagePlacement: safeString($('contact-image-placement') && $('contact-image-placement').value) || 'none',
+      contactImageFit: safeString($('contact-image-fit') && $('contact-image-fit').value) || 'cover',
+      contactImagePosition: safeString($('contact-image-position') && $('contact-image-position').value) || 'center center'
     })) return;
     await publishPublicContactDocs([state.lang]);
   }
@@ -19887,7 +20128,10 @@
     if (s === 'home') return {
       eyebrow: $('hero-eyebrow').value, subtitle: $('hero-subtitle').value, cta1: $('hero-cta1').value, cta2: $('hero-cta2').value,
       quickBioLabel: $('hero-quickBioLabel').value, quickCalLabel: $('hero-quickCalLabel').value, introCtaBio: $('hero-introCtaBio').value,
-      introCtaMedia: $('hero-introCtaMedia').value, bgImage: $('hero-bgImage').value, introImage: $('hero-introImage').value
+      introCtaMedia: $('hero-introCtaMedia').value, bgImage: $('hero-bgImage').value, introImage: $('hero-introImage').value,
+      homeIntroImageLayout: $('hero-introImageLayout') ? $('hero-introImageLayout').value : '',
+      homeIntroImageFit: $('hero-introImageFit') ? $('hero-introImageFit').value : '',
+      homeIntroImagePosition: $('hero-introImagePositionCustom') && $('hero-introImagePositionCustom').value ? $('hero-introImagePositionCustom').value : ($('hero-introImagePosition') ? $('hero-introImagePosition').value : '')
     };
     if (s === 'bio') {
       return {
@@ -19908,10 +20152,23 @@
         portraitAlt: $('bio-portraitAlt').value,
         quote: $('bio-quote').value,
         cite: $('bio-cite').value,
-        portraitImage: $('bio-portraitImage').value
+        portraitImage: $('bio-portraitImage').value,
+        portraitFit: $('bio-portraitFit') ? $('bio-portraitFit').value : '',
+        portraitFocus: $('bio-portraitFocus') ? $('bio-portraitFocus').value : ''
       };
     }
-    if (s === 'rep') return { h2: $('rep-h2').value, intro: $('rep-intro').value, repCards: clone(state.repCards), repIndex: state.repIndex };
+    if (s === 'rep') return {
+      h2: $('rep-h2').value,
+      intro: $('rep-intro').value,
+      repertoireImageEnabled: $('rep-image-enabled') && $('rep-image-enabled').value === 'true',
+      repertoireImageUrl: $('rep-image-url') ? $('rep-image-url').value : '',
+      repertoireImageAlt: $('rep-image-alt') ? $('rep-image-alt').value : '',
+      repertoireImagePlacement: $('rep-image-placement') ? $('rep-image-placement').value : '',
+      repertoireImageFit: $('rep-image-fit') ? $('rep-image-fit').value : '',
+      repertoireImagePosition: $('rep-image-position') ? $('rep-image-position').value : '',
+      repCards: clone(state.repCards),
+      repIndex: state.repIndex
+    };
     if (s === 'programs') return { programsDoc: clone(state.programsDoc), programsIndex: state.programsIndex };
     if (s === 'programbuilder' || s === 'fee-estimate') return {
       plannerDoc: clone(state.plannerDoc),
@@ -19976,7 +20233,21 @@
     if (s === 'calendar') return { h2: $('perf-h2').value, intro: $('perf-intro').value, perfs: clone(state.perfs), perfIndex: state.perfIndex };
     if (s === 'media') return { vidData: clone(state.vidData), vidIndex: state.vidIndex, audioData: clone(state.audioData), audIndex: state.audIndex, photosData: clone(state.photosData), photoCaptions: clone(state.photoCaptions), photoType: state.photoType, photoIndex: state.photoIndex };
     if (s === 'press') return { press: clone(state.press), pressIndex: state.pressIndex, publicPdfs: clone(state.publicPdfs), epkBios: clone(state.epkBios), epkPhotos: clone(state.epkPhotos), epkPhotoIndex: state.epkPhotoIndex };
-    if (s === 'contact') return { title: $('contact-title').value, sub: $('contact-sub').value, email: $('contact-email').value, phone: $('contact-phone') ? $('contact-phone').value : '', emailBtn: $('contact-emailBtn').value, webBtn: $('contact-webBtn').value, webUrl: $('contact-webUrl') ? $('contact-webUrl').value : '' };
+    if (s === 'contact') return {
+      title: $('contact-title').value,
+      sub: $('contact-sub').value,
+      email: $('contact-email').value,
+      phone: $('contact-phone') ? $('contact-phone').value : '',
+      emailBtn: $('contact-emailBtn').value,
+      webBtn: $('contact-webBtn').value,
+      webUrl: $('contact-webUrl') ? $('contact-webUrl').value : '',
+      contactImageEnabled: $('contact-image-enabled') && $('contact-image-enabled').value === 'true',
+      contactImageUrl: $('contact-image-url') ? $('contact-image-url').value : '',
+      contactImageAlt: $('contact-image-alt') ? $('contact-image-alt').value : '',
+      contactImagePlacement: $('contact-image-placement') ? $('contact-image-placement').value : '',
+      contactImageFit: $('contact-image-fit') ? $('contact-image-fit').value : '',
+      contactImagePosition: $('contact-image-position') ? $('contact-image-position').value : ''
+    };
     if (s === 'ui') return { uiPartial: collectUiSectionInputsToDoc(), json: $('ui-json').value };
     return null;
   }
@@ -19986,6 +20257,7 @@
       $('hero-eyebrow').value = safeString(d.eyebrow); $('hero-subtitle').value = safeString(d.subtitle); $('hero-cta1').value = safeString(d.cta1); $('hero-cta2').value = safeString(d.cta2);
       $('hero-quickBioLabel').value = safeString(d.quickBioLabel); $('hero-quickCalLabel').value = safeString(d.quickCalLabel); $('hero-introCtaBio').value = safeString(d.introCtaBio);
       $('hero-introCtaMedia').value = safeString(d.introCtaMedia); $('hero-bgImage').value = safeString(d.bgImage); $('hero-introImage').value = safeString(d.introImage);
+      applyHomeIntroImageSettingsToInputs(d);
       updateHomeIntroPreview(); updateHomeMiniPreviews();
     } else if (s === 'bio') {
       $('bio-introLine').value = safeString(d.introLine);
@@ -20013,6 +20285,12 @@
       state.repCards = Array.isArray(d.repCards) ? clone(d.repCards) : [];
       state.repIndex = Number.isFinite(Number(d.repIndex)) ? Number(d.repIndex) : -1;
       $('rep-h2').value = safeString(d.h2); $('rep-intro').value = safeString(d.intro);
+      if ($('rep-image-enabled')) $('rep-image-enabled').value = d.repertoireImageEnabled ? 'true' : 'false';
+      if ($('rep-image-url')) $('rep-image-url').value = safeString(d.repertoireImageUrl);
+      if ($('rep-image-alt')) $('rep-image-alt').value = safeString(d.repertoireImageAlt);
+      if ($('rep-image-placement')) $('rep-image-placement').value = safeString(d.repertoireImagePlacement) || 'between_intro_tabs';
+      if ($('rep-image-fit')) $('rep-image-fit').value = safeString(d.repertoireImageFit) || 'cover';
+      if ($('rep-image-position')) $('rep-image-position').value = safeString(d.repertoireImagePosition) || 'center center';
       renderRepList(); renderRepEditor();
     } else if (s === 'programs') {
       state.programsDoc = safeProgramsDoc(d.programsDoc || {});
@@ -20127,6 +20405,12 @@
       loadPressPdfsIntoUi(); loadEpkBiosIntoUi(); renderPressList(); renderPressEditor(); renderEpkPhotoList(); renderEpkPhotoEditor();
     } else if (s === 'contact') {
       $('contact-title').value = safeString(d.title); $('contact-sub').value = safeString(d.sub); $('contact-email').value = safeString(d.email); if ($('contact-phone')) $('contact-phone').value = safeString(d.phone); $('contact-emailBtn').value = safeString(d.emailBtn); $('contact-webBtn').value = safeString(d.webBtn); if ($('contact-webUrl')) $('contact-webUrl').value = safeString(d.webUrl);
+      if ($('contact-image-enabled')) $('contact-image-enabled').value = d.contactImageEnabled ? 'true' : 'false';
+      if ($('contact-image-url')) $('contact-image-url').value = safeString(d.contactImageUrl);
+      if ($('contact-image-alt')) $('contact-image-alt').value = safeString(d.contactImageAlt);
+      if ($('contact-image-placement')) $('contact-image-placement').value = safeString(d.contactImagePlacement) || 'none';
+      if ($('contact-image-fit')) $('contact-image-fit').value = safeString(d.contactImageFit) || 'cover';
+      if ($('contact-image-position')) $('contact-image-position').value = safeString(d.contactImagePosition) || 'center center';
       updateContactValidation(); updateContactMiniPreview();
     } else if (s === 'ui') {
       $('ui-json').value = safeString(d.json);
@@ -20356,6 +20640,10 @@
     });
 
     $('saveHeroBtn').addEventListener('click', saveHome);
+    if ($('hero-introImagePosition')) $('hero-introImagePosition').addEventListener('change', function () {
+      if ($('hero-introImagePositionCustom')) $('hero-introImagePositionCustom').value = '';
+      updateHomeIntroPreview();
+    });
     if ($('copyHomeFromEnBtn')) $('copyHomeFromEnBtn').addEventListener('click', copyHomeFromEn);
     if ($('copyHomeMissingFromEnBtn')) $('copyHomeMissingFromEnBtn').addEventListener('click', copyHomeMissingFromEn);
     if ($('compareHomeWithEnBtn')) $('compareHomeWithEnBtn').addEventListener('click', compareHomeWithEn);
@@ -21183,7 +21471,7 @@
       if (!url) return;
       var clean = safeString(url).trim();
       if (!clean) return;
-      state.epkPhotos.push({ url: clean, caption: '', alt: '', photographer: '', label: '', credit: '' });
+      state.epkPhotos.push({ url: clean, downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' });
       state.epkPhotoIndex = state.epkPhotos.length - 1;
       renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo agregada');
     });
@@ -21192,7 +21480,7 @@
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function (ev) {
-        state.epkPhotos.push({ url: safeString(ev.target.result), caption: '', alt: '', photographer: '', label: '', credit: '' });
+        state.epkPhotos.push({ url: safeString(ev.target.result), downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' });
         state.epkPhotoIndex = state.epkPhotos.length - 1;
         renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo subida');
       };
@@ -21430,7 +21718,7 @@
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-ticket-status','perf-ticket-currency','perf-modal-ticketPrice','perf-public-ticket-label','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-private-public-title-enabled','perf-private-public-title-mode','perf-private-public-title','perf-private-public-venue-enabled','perf-private-public-venue-mode','perf-private-public-venue','perf-private-public-location-enabled','perf-private-public-location-mode','perf-private-public-location','perf-private-public-more-info','perf-private-public-address-maps','perf-private-public-ticket','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-ticket-status','perf-ticket-currency','perf-modal-ticketPrice','perf-public-ticket-label','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
@@ -21439,12 +21727,12 @@
       markDirty(true, 'Public PDFs editados');
     });
     bindInputsDirty(['epk-bio-b50','epk-bio-b150','epk-bio-b300p1','epk-bio-b300p2','epk-bio-b300p3','epk-bio-b300p4'], function () { persistEpkBiosFromUi(); markDirty(true, 'EPK bios editadas'); });
-    bindInputsDirty(['epk-photo-url','epk-photo-caption','epk-photo-alt','epk-photo-photographer'], persistEpkPhotoEditor);
+    bindInputsDirty(['epk-photo-url','epk-photo-downloadUrl','epk-photo-orientation','epk-photo-visible','epk-photo-previewFit','epk-photo-previewPosition','epk-photo-previewPositionManual','epk-photo-previewAspect','epk-photo-caption','epk-photo-alt','epk-photo-photographer'], persistEpkPhotoEditor);
     bindInputsDirty(['media-vid-id','media-vid-title','media-vid-sub','media-vid-tag','media-vid-composer','media-vid-group','media-vid-repertoireCat','media-vid-customThumb','media-vid-featured-visual','media-vid-featured-layout','media-vid-featured-context-homepage','media-vid-featured-context-media','media-vid-featured-context-calendar','media-vid-homepage-priority','media-vid-hidden','media-vid-editorialStatus'], persistMediaVideoEditor);
     bindInputsDirty(['media-vid-h2']);
     bindInputsDirty(['media-aud-provider','media-aud-embedUrl','media-aud-externalUrl','media-aud-coverImage','media-aud-title','media-aud-subline','media-aud-sub-en','media-aud-sub-de','media-aud-sub-es','media-aud-sub-it','media-aud-sub-fr','media-aud-tag','media-aud-composer','media-aud-group','media-aud-repertoireCat','media-aud-featured-visual','media-aud-featured-layout','media-aud-featured-context-homepage','media-aud-featured-context-media','media-aud-featured-context-calendar','media-aud-homepage-priority','media-aud-hidden','media-aud-editorialStatus'], persistMediaAudioEditor);
     bindInputsDirty(['media-aud-h2','media-aud-sub']);
-    bindInputsDirty(['media-photo-url','media-photo-orientation','media-photo-focus','media-photo-caption','media-photo-alt','media-photo-photographer'], persistMediaPhotoEditor);
+    bindInputsDirty(['media-photo-url','media-photo-orientation','media-photo-focus','media-photo-visible','media-photo-downloadUrl','media-photo-caption','media-photo-alt','media-photo-photographer'], persistMediaPhotoEditor);
 
     bindInputsDirty(
       [
@@ -21466,7 +21754,11 @@
         'hero-presenterP2',
         'hero-presenterP3',
         'hero-bgImage',
-        'hero-introImage'
+        'hero-introImage',
+        'hero-introImageLayout',
+        'hero-introImageFit',
+        'hero-introImagePosition',
+        'hero-introImagePositionCustom'
       ],
       function () {
         updateHomeIntroPreview();
@@ -21496,6 +21788,7 @@
         'bio-cite',
         'bio-portraitImage',
         'bio-portraitFit',
+        'bio-portraitPositionPreset',
         'bio-portraitFocus'
       ],
       function () {
@@ -21527,6 +21820,15 @@
     if ($('media-photo-quick-filter')) $('media-photo-quick-filter').addEventListener('change', function () {
       state.mediaPhotoQuickFilter = $('media-photo-quick-filter').value;
       renderMediaPhotosList();
+    });
+    if ($('bio-portraitPositionPreset')) $('bio-portraitPositionPreset').addEventListener('change', function () {
+      var v = safeString($('bio-portraitPositionPreset').value).trim();
+      if (!v || !$('bio-portraitFocus')) return;
+      $('bio-portraitFocus').value = v;
+      updateBioPortraitPreview();
+      updateBioMiniPreview();
+      updateCompletenessIndicators();
+      markDirty(true);
     });
     if ($('bio-portraitPreview')) {
       $('bio-portraitPreview').addEventListener('load', function () {
@@ -21575,8 +21877,8 @@
     });
     bindInputsDirty(['programs-item-title','programs-item-description','programs-item-duration'], updateProgramsMiniPreview);
     bindInputsDirty(['press-source','press-quote'], updatePressMiniPreview);
-    bindInputsDirty(['contact-title','contact-sub','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl'], updateContactMiniPreview);
-    bindInputsDirty(['rep-h2','rep-intro','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
+    bindInputsDirty(['contact-title','contact-sub','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','contact-image-enabled','contact-image-placement','contact-image-url','contact-image-alt','contact-image-fit','contact-image-position'], updateContactMiniPreview);
+    bindInputsDirty(['rep-h2','rep-intro','rep-image-enabled','rep-image-placement','rep-image-url','rep-image-alt','rep-image-fit','rep-image-position','programs-title','programs-subtitle','programs-intro','programs-closingNote','programs-repLink','programs-epkLink','programs-hideSection','perf-h2','perf-intro','press-translatedNote','press-reviewsIntro','press-showReviewsSection','contact-title','contact-sub','contact-email','contact-phone','contact-emailBtn','contact-webBtn','contact-webUrl','contact-image-enabled','contact-image-placement','contact-image-url','contact-image-alt','contact-image-fit','contact-image-position','ui-json','ui-nav-home','ui-nav-bio','ui-nav-rep','ui-nav-media','ui-nav-cal','ui-nav-epk','ui-nav-book','ui-nav-contact','ui-logoHaloEnabled','ui-logoHaloIntensity','ui-featherHaloEnabled','ui-featherHaloIntensity','hero-homeIntroH2','hero-homeIntroP1','hero-homeIntroP2','hero-homeIntroProof','hero-presenterTag','hero-presenterStyle','hero-presenterP1','hero-presenterP2','hero-presenterP3'], function () {
       updateContactValidation();
       updateContactMiniPreview();
       updateCompletenessIndicators();

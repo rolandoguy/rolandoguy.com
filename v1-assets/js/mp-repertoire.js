@@ -134,6 +134,26 @@
       .replace(/>/g, '&gt;');
   }
 
+  function normalizeImagePlacement(value) {
+    var v = String(value || '').trim();
+    return /^(header_accent|between_intro_tabs|programme_offers_accent)$/.test(v) ? v : 'between_intro_tabs';
+  }
+
+  function applyRepImageFields(target, source) {
+    if (!target || !source || typeof source !== 'object') return;
+    [
+      'repertoireImageEnabled',
+      'repertoireImageUrl',
+      'repertoireImageAlt',
+      'repertoireImagePlacement',
+      'repertoireImageFit',
+      'repertoireImagePosition'
+    ].forEach(function (key) {
+      if (source[key] != null && String(source[key]).trim() !== '') target[key] = source[key];
+      if (key === 'repertoireImageEnabled' && typeof source[key] === 'boolean') target[key] = source[key];
+    });
+  }
+
   function getRep() {
     var lang = currentLang || 'en';
     var base = MP_REP && MP_REP.rep ? MP_REP.rep : { h2: '', intro: '' };
@@ -144,14 +164,17 @@
         base.h2 = String(liveRepCurrent.h2);
       }
       if (liveRepCurrent.intro != null) base.intro = liveRepCurrent.intro;
+      applyRepImageFields(base, liveRepCurrent);
     } else if (liveRepEn && typeof liveRepEn === 'object') {
       if (liveRepEn.h2 != null && String(liveRepEn.h2).trim() !== '') base.h2 = String(liveRepEn.h2);
       if (liveRepEn.intro != null) base.intro = liveRepEn.intro;
+      applyRepImageFields(base, liveRepEn);
     }
     var langData = {
       h2: base.h2 != null ? String(base.h2) : '',
       intro: base.intro != null ? base.intro : ''
     };
+    applyRepImageFields(langData, base);
     var hadLocH2 = false;
     if (
       MP_REP &&
@@ -165,6 +188,7 @@
         hadLocH2 = true;
       }
       if (loc.intro != null) langData.intro = loc.intro;
+      applyRepImageFields(langData, loc);
     }
     if (!hadLocH2) {
       var bundleH2 = mpPick(lang, 'rep.pageH2', '');
@@ -197,7 +221,41 @@
       o.category = category;
       return o;
     });
-    return { h2: langData.h2, intro: langData.intro, cards: cards };
+    return {
+      h2: langData.h2,
+      intro: langData.intro,
+      repertoireImageEnabled: langData.repertoireImageEnabled === true,
+      repertoireImageUrl: String(langData.repertoireImageUrl || '').trim(),
+      repertoireImageAlt: String(langData.repertoireImageAlt || '').trim(),
+      repertoireImagePlacement: normalizeImagePlacement(langData.repertoireImagePlacement),
+      repertoireImageFit: String(langData.repertoireImageFit || 'cover').trim() === 'contain' ? 'contain' : 'cover',
+      repertoireImagePosition: String(langData.repertoireImagePosition || 'center center').trim(),
+      cards: cards
+    };
+  }
+
+  function renderRepertoireImage(d) {
+    var old = document.getElementById('repEditorialImage');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    if (!d || d.repertoireImageEnabled !== true || !d.repertoireImageUrl) return;
+    var fig = document.createElement('figure');
+    fig.id = 'repEditorialImage';
+    fig.className = 'rep-editorial-image rep-editorial-image--' + d.repertoireImagePlacement;
+    var img = document.createElement('img');
+    img.src = d.repertoireImageUrl;
+    img.alt = d.repertoireImageAlt || '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.style.objectFit = d.repertoireImageFit || 'cover';
+    img.style.objectPosition = d.repertoireImagePosition || 'center center';
+    fig.appendChild(img);
+    var placement = d.repertoireImagePlacement;
+    var target = placement === 'programme_offers_accent'
+      ? document.getElementById('programsGrid')
+      : placement === 'header_accent'
+        ? document.getElementById('rep-top-jump')
+        : document.getElementById('repStatusFilters') || document.getElementById('operaGrid');
+    if (target && target.parentNode) target.parentNode.insertBefore(fig, target);
   }
 
   function repCreditEntryHasContent(pc) {
@@ -301,6 +359,7 @@
 
   function renderRep() {
     var d = getRep();
+    renderRepertoireImage(d);
     var cat = currentRepCategory || 'opera';
     if (cat === 'operetta_roles') {
       currentRepCategory = 'opera';

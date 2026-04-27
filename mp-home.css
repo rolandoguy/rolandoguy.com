@@ -110,6 +110,23 @@ body[data-mp-page="index"] #homeIntroCtas .btn-primary,
 body[data-mp-page="index"] #homeIntroCtas .btn-secondary {
   min-height: 41px;
 }
+body[data-mp-page="index"] #intro .about-photo-wrap.home-intro-image--landscape,
+body[data-mp-page="index"] #intro .about-photo-wrap.home-intro-image--wide {
+  align-self: center;
+}
+body[data-mp-page="index"] #intro .about-photo.home-intro-image--portrait {
+  aspect-ratio: 3 / 4;
+}
+body[data-mp-page="index"] #intro .about-photo.home-intro-image--landscape {
+  aspect-ratio: 3 / 2;
+}
+body[data-mp-page="index"] #intro .about-photo.home-intro-image--wide {
+  aspect-ratio: 16 / 9;
+}
+body[data-mp-page="index"] #intro .about-photo img.home-intro-image--landscape,
+body[data-mp-page="index"] #intro .about-photo img.home-intro-image--wide {
+  background: rgba(10,10,14,.92);
+}
 
 @media (max-width: 700px) {
   body[data-mp-page="index"] #hero .hero-subtitle {
@@ -145,6 +162,14 @@ body[data-mp-page="index"] #homeIntroCtas .btn-secondary {
   body[data-mp-page="index"] #homeIntroCtas {
     margin-top: 24px;
     padding-top: 12px;
+  }
+  body[data-mp-page="index"] #intro .about-photo-wrap.home-intro-image--landscape,
+  body[data-mp-page="index"] #intro .about-photo-wrap.home-intro-image--wide {
+    max-width: min(100%, 520px);
+  }
+  body[data-mp-page="index"] #intro .about-photo.home-intro-image--landscape,
+  body[data-mp-page="index"] #intro .about-photo.home-intro-image--wide {
+    max-width: 100%;
   }
 }
 

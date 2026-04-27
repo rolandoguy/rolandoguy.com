@@ -49,7 +49,7 @@ var PUBLIC_MEDIA_AUDIO_ITEM_FIELDS = [
   'featured'
 ];
 
-var PUBLIC_MEDIA_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer', 'orientation', 'focus'];
+var PUBLIC_MEDIA_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer', 'orientation', 'focus', 'visible', 'downloadUrl'];
 
 var PUBLIC_MEDIA_CHROME_FIELDS = ['h2', 'sub', 'studioTab', 'stageTab', 'backstageTab', 'backstageEmpty'];
 
@@ -157,6 +157,33 @@ var PUBLIC_CALENDAR_EVENT_FIELDS = [
   'privateDetailText_es',
   'privateDetailText_it',
   'privateDetailText_fr',
+  'privatePublicTitleEnabled',
+  'privatePublicTitleMode',
+  'privatePublicTitle',
+  'privatePublicTitle_en',
+  'privatePublicTitle_de',
+  'privatePublicTitle_es',
+  'privatePublicTitle_it',
+  'privatePublicTitle_fr',
+  'privatePublicVenueEnabled',
+  'privatePublicVenueMode',
+  'privatePublicVenueLine',
+  'privatePublicVenueLine_en',
+  'privatePublicVenueLine_de',
+  'privatePublicVenueLine_es',
+  'privatePublicVenueLine_it',
+  'privatePublicVenueLine_fr',
+  'privatePublicLocationEnabled',
+  'privatePublicLocationMode',
+  'privatePublicLocationLine',
+  'privatePublicLocationLine_en',
+  'privatePublicLocationLine_de',
+  'privatePublicLocationLine_es',
+  'privatePublicLocationLine_it',
+  'privatePublicLocationLine_fr',
+  'privatePublicMoreInfo',
+  'privatePublicAddressMaps',
+  'privatePublicTicket',
   'eventLink_en',
   'eventLinkLabel_en',
   'eventLink_de',
@@ -178,13 +205,13 @@ var PUBLIC_CALENDAR_EVENT_TYPE_FIELDS = ['opera', 'concert', 'recital', 'show', 
 // BIOGRAPHY FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_BIOGRAPHY_FIELDS = ['portraitImage', 'introLine', 'h2', 'paragraphs', 'portraitAlt', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
+var PUBLIC_BIOGRAPHY_FIELDS = ['portraitImage', 'introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTACT FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'emailBtn', 'webBtn', 'quote'];
+var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'emailBtn', 'webBtn', 'quote', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageFit', 'contactImagePosition'];
 
 var PUBLIC_CONTACT_LOCALE_FIELDS = ['title', 'sub', 'emailBtn', 'quote'];
 
@@ -198,7 +225,7 @@ var PUBLIC_PRESS_META_FIELDS = ['translatedNote', 'showReviewsSection'];
 
 var PUBLIC_PRESS_CHROME_FIELDS = ['reviewsIntro', 'reviewsIntroByLang'];
 
-var PUBLIC_EPK_PHOTO_FIELDS = ['url', 'caption', 'alt', 'photographer'];
+var PUBLIC_EPK_PHOTO_FIELDS = ['url', 'downloadUrl', 'caption', 'alt', 'photographer', 'orientation', 'visible', 'previewFit', 'previewPosition', 'previewPositionManual', 'previewAspect'];
 
 var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
 
@@ -208,7 +235,7 @@ var PUBLIC_PUBLIC_PDF_FIELDS = ['url', 'data'];
 
 var PUBLIC_REPERTOIRE_CARD_FIELDS = ['role', 'opera', 'composer', 'work', 'status', 'cat', 'category'];
 
-var PUBLIC_REPERTOIRE_CHROME_FIELDS = ['h2', 'intro'];
+var PUBLIC_REPERTOIRE_CHROME_FIELDS = ['h2', 'intro', 'repertoireImageEnabled', 'repertoireImageUrl', 'repertoireImageAlt', 'repertoireImagePlacement', 'repertoireImageFit', 'repertoireImagePosition'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRAMS FIELDS
@@ -319,6 +346,55 @@ function filterCombined(obj, whitelist) {
   return safe;
 }
 
+function truthyFlag(value) {
+  var s = String(value == null ? '' : value).trim().toLowerCase();
+  return value === true || s === 'true' || s === '1' || s === 'yes' || s === 'on';
+}
+
+function isPrivateCalendarEvent(event) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) return false;
+  return Object.prototype.hasOwnProperty.call(event, 'private') && truthyFlag(event.private);
+}
+
+function privateEventAllows(event, key) {
+  if (!isPrivateCalendarEvent(event)) return true;
+  if (key === 'title') return truthyFlag(event.privatePublicTitleEnabled) && String(event.privatePublicTitleMode || '').trim().toLowerCase() === 'real';
+  if (key === 'venue') return truthyFlag(event.privatePublicVenueEnabled) && String(event.privatePublicVenueMode || '').trim().toLowerCase() === 'real';
+  if (key === 'address' || key === 'mapsUrl') return truthyFlag(event.privatePublicAddressMaps);
+  if (key === 'ticket') return truthyFlag(event.privatePublicTicket);
+  return false;
+}
+
+function removeFields(obj, fields) {
+  fields.forEach(function (field) {
+    if (Object.prototype.hasOwnProperty.call(obj, field)) delete obj[field];
+  });
+}
+
+function stripPrivateCalendarInternals(safe, source) {
+  if (!isPrivateCalendarEvent(source)) return safe;
+  if (!privateEventAllows(source, 'title')) removeFields(safe, ['title', 'title_en', 'title_de', 'title_es', 'title_it', 'title_fr']);
+  if (!privateEventAllows(source, 'venue')) removeFields(safe, ['venue']);
+  if (!privateEventAllows(source, 'address')) removeFields(safe, ['address', 'address_en', 'address_de', 'address_es', 'address_it', 'address_fr', 'mapsUrl', 'moreInfoAddress']);
+  removeFields(safe, [
+    'detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr',
+    'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr',
+    'moreInfoTitle', 'moreInfoSubtitle', 'moreInfoArtists', 'moreInfoDescription', 'moreInfoExtra',
+    'moreInfoImage1', 'moreInfoImage1Focus', 'moreInfoImage2', 'moreInfoImage2Focus', 'moreInfoImage3', 'moreInfoImage3Focus',
+    'moreInfoImage4', 'moreInfoImage4Focus', 'moreInfoImage5', 'moreInfoImage5Focus',
+    'venuePhoto', 'venuePhotoFocus', 'venueOpacity', 'modalImg', 'flyerImg'
+  ]);
+  if (!privateEventAllows(source, 'ticket')) {
+    removeFields(safe, [
+      'ticketStatus', 'ticketCurrency', 'ticketPrice', 'ticketPrice_en', 'ticketPrice_de', 'ticketPrice_es', 'ticketPrice_it', 'ticketPrice_fr',
+      'publicTicketLabel', 'publicTicketLabel_en', 'publicTicketLabel_de', 'publicTicketLabel_es', 'publicTicketLabel_it', 'publicTicketLabel_fr',
+      'eventLink', 'eventLinkLabel', 'eventLink_en', 'eventLinkLabel_en', 'eventLink_de', 'eventLinkLabel_de', 'eventLink_es', 'eventLinkLabel_es',
+      'eventLink_it', 'eventLinkLabel_it', 'eventLink_fr', 'eventLinkLabel_fr'
+    ]);
+  }
+  return safe;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MEDIA FILTERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -349,7 +425,7 @@ function filterMediaCaption(caption) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function filterCalendarEvent(event) {
-  return filterCombined(event, PUBLIC_CALENDAR_EVENT_FIELDS);
+  return stripPrivateCalendarInternals(filterCombined(event, PUBLIC_CALENDAR_EVENT_FIELDS), event);
 }
 
 function filterCalendarChrome(chrome) {

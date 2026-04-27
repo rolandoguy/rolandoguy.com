@@ -273,6 +273,64 @@
     }
     return null;
   }
+  function normalizeIntroLayout(raw) {
+    var s = String(raw || '').trim().toLowerCase();
+    return /^(portrait|landscape|wide)$/.test(s) ? s : '';
+  }
+  function normalizeIntroFit(raw) {
+    var s = String(raw || '').trim().toLowerCase();
+    return /^(cover|contain)$/.test(s) ? s : '';
+  }
+  function normalizeIntroPosition(raw) {
+    return String(raw || '').trim().replace(/\s+/g, ' ');
+  }
+  function getIntroImageSettingsOverrideInfo() {
+    var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
+    var shortLang = String(rawLang || 'en').split('-')[0];
+    var docs = [
+      readLiveHeroRecord('hero_' + rawLang),
+      shortLang && shortLang !== rawLang ? readLiveHeroRecord('hero_' + shortLang) : null,
+      readLiveHeroRecord('hero_en'),
+      readLegacyRecord('hero_' + rawLang),
+      shortLang && shortLang !== rawLang ? readLegacyRecord('hero_' + shortLang) : null,
+      readLegacyRecord('hero_en')
+    ];
+    for (var i = 0; i < docs.length; i += 1) {
+      var doc = docs[i] && docs[i].value;
+      if (!doc || typeof doc !== 'object') continue;
+      var layout = normalizeIntroLayout(doc.homeIntroImageLayout);
+      var fit = normalizeIntroFit(doc.homeIntroImageFit);
+      var position = normalizeIntroPosition(doc.homeIntroImagePosition);
+      if (layout || fit || position) {
+        return { layout: layout, fit: fit, position: position };
+      }
+    }
+    return null;
+  }
+  function applyIntroImageSettings(introPhoto) {
+    if (!introPhoto) return;
+    var settings = getIntroImageSettingsOverrideInfo();
+    var photoBox = introPhoto.closest ? introPhoto.closest('.about-photo') : null;
+    var wrap = introPhoto.closest ? introPhoto.closest('.about-photo-wrap') : null;
+    [introPhoto, photoBox, wrap].forEach(function (el) {
+      if (!el || !el.classList) return;
+      el.classList.remove('home-intro-image--portrait', 'home-intro-image--landscape', 'home-intro-image--wide');
+    });
+    if (!settings) {
+      introPhoto.style.removeProperty('object-fit');
+      introPhoto.style.removeProperty('object-position');
+      return;
+    }
+    if (settings.layout) {
+      [introPhoto, photoBox, wrap].forEach(function (el) {
+        if (el && el.classList) el.classList.add('home-intro-image--' + settings.layout);
+      });
+    }
+    if (settings.fit) introPhoto.style.setProperty('object-fit', settings.fit, 'important');
+    else introPhoto.style.removeProperty('object-fit');
+    if (settings.position) introPhoto.style.setProperty('object-position', settings.position, 'important');
+    else introPhoto.style.removeProperty('object-position');
+  }
   function resolveIntroImage(cfgImageOrFallback) {
     var override = getIntroImageOverrideInfo();
     if (override && override.url) {
@@ -282,6 +340,7 @@
   }
   function applyIntroPhotoSource(introPhoto, cfgImageOrFallback, options) {
     if (!introPhoto) return;
+    applyIntroImageSettings(introPhoto);
     options = options || {};
     var onlyOverride = !!options.onlyOverride;
     if (!introPhoto.dataset.baseSrcset) {
@@ -550,8 +609,9 @@
       var pos = f != null && String(f).trim() ? String(f).trim() : '';
       if (pos) {
         hb.style.backgroundPosition = pos;
-        if (introPhoto) introPhoto.style.objectPosition = pos;
+        if (introPhoto && !(getIntroImageSettingsOverrideInfo() && getIntroImageSettingsOverrideInfo().position)) introPhoto.style.objectPosition = pos;
       }
+      applyIntroImageSettings(introPhoto);
     }
     focal();
     if (typeof mq.addEventListener === 'function') {

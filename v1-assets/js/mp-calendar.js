@@ -161,11 +161,11 @@
     'ui.featured': 'Featured'
   };
   var PERF_PRIVATE_UI_TEXT = {
-    en: { badge: 'Invitation only', detail: 'Private event - not open to the public' },
-    de: { badge: 'Nur auf Einladung', detail: 'Private Veranstaltung - nicht öffentlich zugänglich' },
-    es: { badge: 'Solo por invitación', detail: 'Evento privado - no abierto al público' },
-    it: { badge: 'Solo su invito', detail: 'Evento privato - non aperto al pubblico' },
-    fr: { badge: 'Sur invitation', detail: 'Événement privé - non ouvert au public' }
+    en: { title: 'Private Event', badge: 'By invitation only', invitation: 'By invitation only', detail: 'Private engagement · not publicly accessible', berlin: 'Berlin, Germany' },
+    de: { title: 'Private Veranstaltung', badge: 'Nur auf Einladung', invitation: 'Nur auf Einladung', detail: 'Private Veranstaltung · nicht öffentlich zugänglich', berlin: 'Berlin, Deutschland' },
+    es: { title: 'Evento privado', badge: 'Solo por invitación', invitation: 'Solo por invitación', detail: 'Evento privado · no accesible al público', berlin: 'Berlín, Alemania' },
+    it: { title: 'Evento privato', badge: 'Solo su invito', invitation: 'Solo su invito', detail: 'Evento privato · non accessibile al pubblico', berlin: 'Berlino, Germania' },
+    fr: { title: 'Événement privé', badge: 'Sur invitation uniquement', invitation: 'Sur invitation uniquement', detail: 'Événement privé · non accessible au public', berlin: 'Berlin, Allemagne' }
   };
   var PERF_PRIVATE_DEFAULT_BG_URL = '/img/hero-bg.webp';
 
@@ -1190,6 +1190,82 @@
     if (!detail) return perfPrivateUiText(lang, 'detail');
     return perfIsPrivateDescriptorText(detail) ? perfPrivateUiText(lang, 'detail') : detail;
   }
+  function privatePublicMode(p, key, fallback) {
+    var raw = String(p && p[key] != null ? p[key] : '').trim().toLowerCase();
+    return raw || fallback;
+  }
+  function privatePublicEnabled(p, key, fallback) {
+    if (!p || !Object.prototype.hasOwnProperty.call(p, key)) return !!fallback;
+    return isTruthyFlag(p[key]);
+  }
+  function privateRealTitle(p, lang) {
+    if (!p) return '';
+    return String(p.title || p.name || p['title_' + lang] || p.title_en || '').trim();
+  }
+  function privateCityOnly(p, lang) {
+    var city = perfLocalizedField(p, 'city', lang, 'place') || '';
+    if (city.indexOf(',') >= 0) city = city.split(',')[0].trim();
+    return city;
+  }
+  function privateCityCountryLine(p, lang) {
+    var city = privateCityOnly(p, lang);
+    if (!city) return '';
+    if (/^berlin$/i.test(String(p && p.city || city).trim())) return perfPrivateUiText(lang, 'berlin');
+    var place = perfLocalizedField(p, 'city', lang, 'place') || city;
+    if (place.indexOf(',') >= 0) return place;
+    if (isGermanyEvent(p, lang)) {
+      try {
+        var display = new Intl.DisplayNames([localeTagForMpLang(lang)], { type: 'region' });
+        var country = display.of('DE') || 'Germany';
+        return city + ', ' + country;
+      } catch (e) {
+        return city;
+      }
+    }
+    return city;
+  }
+  function resolvePublicPrivateEventView(p, lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var titleMode = privatePublicMode(p, 'privatePublicTitleMode', 'generic');
+    var titleEnabled = privatePublicEnabled(p, 'privatePublicTitleEnabled', false);
+    var title = perfPrivateUiText(L, 'title');
+    if (titleEnabled && titleMode === 'custom') title = perfLocaleField(p, 'privatePublicTitle', L) || title;
+    else if (titleEnabled && titleMode === 'real') title = privateRealTitle(p, L) || title;
+
+    var venueLine = '';
+    var venueEnabled = privatePublicEnabled(p, 'privatePublicVenueEnabled', false);
+    var venueMode = privatePublicMode(p, 'privatePublicVenueMode', 'hide');
+    if (venueEnabled && venueMode === 'custom') venueLine = perfLocaleField(p, 'privatePublicVenueLine', L) || '';
+    else if (venueEnabled && venueMode === 'real') venueLine = perfLocalizedField(p, 'venue', L, 'place') || '';
+    else if (venueEnabled && venueMode === 'city') venueLine = privateCityOnly(p, L);
+
+    var locationLine = '';
+    var locationEnabled = privatePublicEnabled(p, 'privatePublicLocationEnabled', true);
+    var locationMode = privatePublicMode(p, 'privatePublicLocationMode', 'city_country');
+    if (locationEnabled && locationMode !== 'hide') {
+      if (locationMode === 'custom') locationLine = perfLocaleField(p, 'privatePublicLocationLine', L) || '';
+      else if (locationMode === 'real') locationLine = [perfLocalizedField(p, 'venue', L, 'place'), perfLocalizedField(p, 'city', L, 'place')].filter(Boolean).join(' · ');
+      else if (locationMode === 'city') locationLine = privateCityOnly(p, L);
+      else locationLine = privateCityCountryLine(p, L);
+    }
+
+    var moreInfoMode = privatePublicMode(p, 'privatePublicMoreInfo', 'auto');
+    var ticketEnabled = privatePublicEnabled(p, 'privatePublicTicket', false);
+    return {
+      publicTitle: title,
+      publicSubtitle: perfPrivateDetailText(p, L, ''),
+      publicVenueLine: venueLine,
+      publicLocationLine: locationLine,
+      publicBadgeLabel: String(perfLocaleField(p, 'privateBadgeText', L) || '').trim() || perfPrivateUiText(L, 'badge'),
+      publicInvitationLabel: perfPrivateUiText(L, 'invitation'),
+      publicMoreInfoEnabled: moreInfoMode === 'true',
+      publicAddressMapsEnabled: privatePublicEnabled(p, 'privatePublicAddressMaps', false),
+      publicTicketEnabled: ticketEnabled,
+      publicTicketLabel: ticketEnabled ? resolvePublicTicketLabel(p, L, false) : '',
+      publicCta: ticketEnabled ? perfLocaleField(p, 'eventLink', L) : '',
+      publicBackgroundImage: PERF_PRIVATE_DEFAULT_BG_URL
+    };
+  }
   function perfPrivateBackgroundUrl(p, lang) {
     var explicit = String(p && p.venuePhoto || '').trim();
     if (explicit) return explicit;
@@ -1531,9 +1607,9 @@
     // Localized title fields are only fallback for legacy items missing canonical title.
     var chosen;
     var source;
-    if (perfIsPrivateEvent(p, lang) && localeTitle) {
-      chosen = localeTitle;
-      source = 'title_' + lang + '(private preferred)';
+    if (perfIsPrivateEvent(p, lang)) {
+      chosen = resolvePublicPrivateEventView(p, lang).publicTitle;
+      source = 'private-public-view';
     } else {
       chosen = title || name || localeTitle || '';
       source = title ? 'title(canonical)' : (name ? 'name(legacy)' : (localeTitle ? 'title_' + lang + '(fallback)' : 'empty'));
@@ -1840,7 +1916,8 @@
       var isPrivate = perfIsPrivateEvent(p, currentLang);
       var dateRaw = resolveSchemaStartDateRaw(p);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) return;
-      var title = resolveEventTitle(p, currentLang);
+      var privateView = isPrivate ? resolvePublicPrivateEventView(p, currentLang) : null;
+      var title = privateView ? privateView.publicTitle : resolveEventTitle(p, currentLang);
       if (!title) return;
       var time = resolveSchemaStartTimeRaw(p, currentLang);
       var hasStartTime = /^\d{1,2}:\d{2}$/.test(time);
@@ -1870,11 +1947,11 @@
       };
       if (endDate) ev.endDate = endDate;
       if (String(p.id || '').trim()) ev.identifier = String(p.id).trim();
-      var detail = resolveSchemaDescription(p, currentLang, title, isPrivate);
+      var detail = privateView ? schemaDescription(privateView.publicSubtitle) : resolveSchemaDescription(p, currentLang, title, isPrivate);
       if (detail) ev.description = detail;
-      var venueName = cleanSchemaPlaceName(perfLocalizedField(p, 'venue', currentLang, 'place'));
-      var city = cleanSchemaPlaceName(perfLocalizedField(p, 'city', currentLang, 'place'));
-      var address = cleanSchemaPlaceName(perfModalAddress(p, currentLang));
+      var venueName = privateView ? cleanSchemaPlaceName(privateView.publicVenueLine || privateView.publicLocationLine) : cleanSchemaPlaceName(perfLocalizedField(p, 'venue', currentLang, 'place'));
+      var city = privateView ? cleanSchemaPlaceName(privateView.publicLocationLine) : cleanSchemaPlaceName(perfLocalizedField(p, 'city', currentLang, 'place'));
+      var address = privateView && !privateView.publicAddressMapsEnabled ? '' : cleanSchemaPlaceName(perfModalAddress(p, currentLang));
       if (venueName || city) {
         ev.location = {
           '@type': 'Place',
@@ -1888,7 +1965,7 @@
           if (city) ev.location.address.addressLocality = city;
         }
       }
-      var venueImgAbs = toAbsolutePublicUrl(perfPrivateBackgroundUrl(p, currentLang));
+      var venueImgAbs = toAbsolutePublicUrl(privateView ? privateView.publicBackgroundImage : perfPrivateBackgroundUrl(p, currentLang));
       ev.image = [venueImgAbs || 'https://rolandoguy.com/og-image.jpg'];
       var offer = resolveSchemaOffer(p, currentLang, eventUrl, isPrivate);
       if (offer) {
@@ -1983,9 +2060,10 @@
       var isArchive = sortDate(p) < today;
       var isEffectivePast = !!(isPastSection || isArchive || p.status === 'past');
       var isPrivate = perfIsPrivateEvent(p, currentLang);
+      var privateView = isPrivate ? resolvePublicPrivateEventView(p, currentLang) : null;
       var isFeaturedVisual = perfFeaturedVisual(p);
       var isFeaturedLayout = perfFeaturedLayout(p);
-      var typeLabel = isPrivate ? (tPerf['perf.privateEventType'] || 'Private event') : (types[p.type] || p.type || types.concert);
+      var typeLabel = isPrivate ? (privateView.publicTitle || perfPrivateUiText(currentLang, 'title')) : (types[p.type] || p.type || types.concert);
       var featuredLabel = tPerf['ui.featured'] || 'Featured';
       var badge =
         p.status === 'current' && !isPastSection
@@ -2000,12 +2078,12 @@
       var privateBadgeText = String(perfLocaleField(p, 'privateBadgeText', currentLang) || '').trim();
       var privateBadge =
         isPrivate && !isTruthyFlag(p.hidePrivateBadge)
-          ? '<div class="perf-badge perf-badge-private">' + (privateBadgeText || perfPrivateUiText(currentLang, 'badge')) + '</div>'
+          ? '<div class="perf-badge perf-badge-private">' + (privateView ? privateView.publicBadgeLabel : (privateBadgeText || perfPrivateUiText(currentLang, 'badge'))) + '</div>'
           : '';
       var localizedTime = perfFormatTime(perfLocaleField(p, 'time', currentLang), currentLang);
       var timeHtml = localizedTime ? ('<div class="perf-time">' + localizedTime + '</div>') : '';
-      var venueText = perfLocalizedField(p, 'venue', currentLang, 'place');
-      var cityText = perfLocalizedField(p, 'city', currentLang, 'place');
+      var venueText = privateView ? privateView.publicVenueLine : perfLocalizedField(p, 'venue', currentLang, 'place');
+      var cityText = privateView ? privateView.publicLocationLine : perfLocalizedField(p, 'city', currentLang, 'place');
       var venueShort = compactVenueForCard(venueText);
       var venueCity = '';
       if (venueShort || cityText) {
@@ -2023,8 +2101,7 @@
             '</span></a>';
         }
       }
-      var detail = perfLocalizedField(p, 'detail', currentLang);
-      if (isPrivate) detail = perfPrivateDetailText(p, currentLang, detail);
+      var detail = privateView ? privateView.publicSubtitle : perfLocalizedField(p, 'detail', currentLang);
       if (!supportingLocaleChoiceLogged) {
         supportingLocaleChoiceLogged = true;
         var detailResolve = perfLocaleFieldResolve(p, 'detail', currentLang);
@@ -2058,24 +2135,24 @@
           }
         });
       }
-      var modalBodyPreview = perfModalBodyText(p, currentLang, isPrivate);
-      var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
-      var priceForModal = resolvePublicTicketLabel(p, currentLang, isPrivate);
+      var modalBodyPreview = privateView && !privateView.publicMoreInfoEnabled ? '' : perfModalBodyText(p, currentLang, isPrivate);
+      var linkForModal = privateView ? privateView.publicCta : perfLocaleField(p, 'eventLink', currentLang);
+      var priceForModal = privateView ? privateView.publicTicketLabel : resolvePublicTicketLabel(p, currentLang, isPrivate);
       var hasExtra =
         !!modalBodyPreview ||
         !!priceForModal ||
         isValidPerfCtaUrl(linkForModal) ||
-        (p.flyerImg && p.flyerImg.trim()) ||
-        (p.modalImg && p.modalImg.trim()) ||
-        moreInfoUsesEditorialTemplate(p);
-      var allowModalButton = isPrivate ? false : (p.modalEnabled === false ? false : (p.modalEnabled === true ? true : hasExtra));
+        (!isPrivate && p.flyerImg && p.flyerImg.trim()) ||
+        (!isPrivate && p.modalImg && p.modalImg.trim()) ||
+        (!isPrivate && moreInfoUsesEditorialTemplate(p));
+      var allowModalButton = isPrivate ? !!(privateView && privateView.publicMoreInfoEnabled && hasExtra) : (p.modalEnabled === false ? false : (p.modalEnabled === true ? true : hasExtra));
       var moreRouteClass = allowModalButton ? ' perf-item--more' : ' perf-item--nomore';
       var pastClass = isEffectivePast ? ' perf-item-past' : '';
       var archiveClass = isArchive ? ' perf-item--archive' : '';
       var privateClass = isPrivate ? ' perf-item--private' : '';
       var featuredVisualClass = isFeaturedVisual && !isEffectivePast ? ' perf-item-featured' : '';
       var featuredLayoutClass = isFeaturedLayout && !isEffectivePast ? ' perf-item-featured-layout' : '';
-      var venuePhotoResolved = normalizeVenuePhotoUrl(perfPrivateBackgroundUrl(p, currentLang));
+      var venuePhotoResolved = normalizeVenuePhotoUrl(privateView ? privateView.publicBackgroundImage : perfPrivateBackgroundUrl(p, currentLang));
       var venuePhotoFocus = normalizePerfBackgroundFocus(p.venuePhotoFocus);
       var hasVenuePhoto = !!venuePhotoResolved;
       var photoClass = hasVenuePhoto ? ' perf-item-has-photo' : ' perf-item-no-photo';
@@ -2136,7 +2213,7 @@
         '</div>' +
         timeHtml +
         '</div>';
-      var listTitle = resolveEventTitle(p, currentLang);
+      var listTitle = privateView ? privateView.publicTitle : resolveEventTitle(p, currentLang);
       h += '<div class="perf-item-stack">';
       h +=
         featuredBadge +
@@ -2147,7 +2224,7 @@
         '</div>' +
         (detail ? ('<div class="perf-info-detail">' + detail + '</div>') : '') +
         venueCity;
-      var printExt = perfLocaleField(p, 'extDesc', currentLang);
+      var printExt = isPrivate ? '' : perfLocaleField(p, 'extDesc', currentLang);
       var repLabel = tPerf['perf.repertoireLabel'] || 'Repertoire';
       if (printExt)
         h +=
@@ -2349,7 +2426,8 @@
           body += '<h2 class="year">' + esc(yrShown) + '</h2>';
           groups[yr].forEach(function (p) {
             var isPrivate = perfIsPrivateEvent(p, lang);
-            var typeLabel = isPrivate ? (tPrint['perf.privateEventType'] || 'Private event') : (types[p.type] || p.type || types.other || 'Event');
+            var privateView = isPrivate ? resolvePublicPrivateEventView(p, lang) : null;
+            var typeLabel = isPrivate ? (privateView.publicTitle || perfPrivateUiText(lang, 'title')) : (types[p.type] || p.type || types.other || 'Event');
             var parts = perfDateParts(p, lang);
             var monthStr = parts.month || monthOut(p.month);
             var yearStr = parts.year ? (' ' + parts.year) : '';
@@ -2360,14 +2438,18 @@
                 : esc(monthStr + yearStr).trim() || esc(tbaWord);
             var tStr = perfFormatTime(perfLocaleField(p, 'time', lang), lang);
             var when = tStr ? dateStr + ' · ' + esc(tStr) : dateStr;
-            var title = resolveEventTitle(p, lang);
-            var detail = perfLocalizedField(p, 'detail', lang);
-            if (isPrivate) detail = perfPrivateDetailText(p, lang, detail);
+            var title = privateView ? privateView.publicTitle : resolveEventTitle(p, lang);
+            var detail = privateView ? privateView.publicSubtitle : perfLocalizedField(p, 'detail', lang);
             var venueBits = [];
-            if (perfLocalizedField(p, 'venue', lang, 'place')) venueBits.push(perfLocalizedField(p, 'venue', lang, 'place'));
-            if (perfLocalizedField(p, 'city', lang, 'place')) venueBits.push(perfLocalizedField(p, 'city', lang, 'place'));
+            if (privateView) {
+              if (privateView.publicVenueLine) venueBits.push(privateView.publicVenueLine);
+              if (privateView.publicLocationLine) venueBits.push(privateView.publicLocationLine);
+            } else {
+              if (perfLocalizedField(p, 'venue', lang, 'place')) venueBits.push(perfLocalizedField(p, 'venue', lang, 'place'));
+              if (perfLocalizedField(p, 'city', lang, 'place')) venueBits.push(perfLocalizedField(p, 'city', lang, 'place'));
+            }
             var venueLine = venueBits.join(' · ');
-            var moreInfo = perfLocaleField(p, 'eventLink', lang);
+            var moreInfo = privateView ? privateView.publicCta : perfLocaleField(p, 'eventLink', lang);
             body +=
               '<article class="event">' +
               '<div class="meta">' +
@@ -2381,7 +2463,7 @@
               (title ? '<div class="title">' + esc(title) + '</div>' : '') +
               (detail ? '<div class="detail">' + esc(detail) + '</div>' : '') +
               (venueLine ? '<div class="venue">' + esc(venueLine) + '</div>' : '') +
-              (!isPrivate && moreInfo
+              ((!isPrivate || (privateView && privateView.publicTicketEnabled)) && moreInfo
                 ? '<div class="more"><a href="' +
                   esc(moreInfo) +
                   '">' +
@@ -2506,21 +2588,22 @@
         other: 'Event'
       };
     var isPrivate = perfIsPrivateEvent(p, currentLang);
-    var typeLabel = isPrivate ? ((uiTable(currentLang)['perf.privateEventType']) || 'Private event') : (types[p.type] || p.type || '');
-    var modalTitle = resolveEventTitle(p, currentLang);
-    var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
-    var modalAddress = perfModalAddress(p, currentLang);
-    var modalBody = perfModalBodyText(p, currentLang, isPrivate);
-    var modalTicketPrice = resolvePublicTicketLabel(p, currentLang, isPrivate);
+    var privateView = isPrivate ? resolvePublicPrivateEventView(p, currentLang) : null;
+    var typeLabel = isPrivate ? ((privateView && privateView.publicTitle) || perfPrivateUiText(currentLang, 'title')) : (types[p.type] || p.type || '');
+    var modalTitle = privateView ? privateView.publicTitle : resolveEventTitle(p, currentLang);
+    var venueCity = privateView ? [privateView.publicVenueLine, privateView.publicLocationLine].filter(Boolean).join(' · ') : [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
+    var modalAddress = privateView && !privateView.publicAddressMapsEnabled ? '' : perfModalAddress(p, currentLang);
+    var modalBody = privateView ? (privateView.publicMoreInfoEnabled ? privateView.publicSubtitle : '') : perfModalBodyText(p, currentLang, isPrivate);
+    var modalTicketPrice = privateView ? privateView.publicTicketLabel : resolvePublicTicketLabel(p, currentLang, isPrivate);
     var escapedBody = String(modalBody || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
     var modalFallbackImg =
-      p.modalImg && p.modalImg.trim()
+      !isPrivate && p.modalImg && p.modalImg.trim()
         ? p.modalImg
-        : p.venuePhoto && p.venuePhoto.trim()
+        : !isPrivate && p.venuePhoto && p.venuePhoto.trim()
           ? p.venuePhoto
           : '';
-    var ticketUrl = perfLocaleField(p, 'eventLink', currentLang);
+    var ticketUrl = privateView ? privateView.publicCta : perfLocaleField(p, 'eventLink', currentLang);
     var hideModalHero = isTruthyFlag(p.modalImgHide);
     var editorialActive = false;
 
@@ -2532,11 +2615,11 @@
     setModalHtml('emDetail', bodyWithBreaks);
 
     calendarModalOptionalStep('renderEditorialMoreInfo', snapshot, function () {
-      editorialActive = !!renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, modalFallbackImg);
+      editorialActive = !isPrivate && !!renderEditorialMoreInfo(p, isPrivate, modalTitle, typeLabel, venueCity, modalBody, modalFallbackImg);
     });
     calendarModalOptionalStep('toggle core fields', snapshot, function () {
-      var showAddress = !!(modalAddress && !isPrivate);
-      var showVenue = !!(!isPrivate && venueCity);
+      var showAddress = !!(modalAddress && (!isPrivate || (privateView && privateView.publicAddressMapsEnabled)));
+      var showVenue = !!(venueCity && (!isPrivate || privateView));
       ['emType', 'emTitle', 'emDate', 'emDetail'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = editorialActive ? 'none' : '';
@@ -2573,7 +2656,7 @@
     calendarModalOptionalStep('price block', snapshot, function () {
       var priceWrap = document.getElementById('emPrice');
       if (!priceWrap) return;
-      if (!isPrivate && modalTicketPrice) {
+      if ((!isPrivate || (privateView && privateView.publicTicketEnabled)) && modalTicketPrice) {
         var priceLead = priceWrap.querySelector('[data-i18n="perf.modalTicketsLead"]');
         if (priceLead) priceLead.textContent = perfTicketPriceLabel(currentLang);
         setModalText('emPriceVal', modalTicketPrice);
@@ -2585,7 +2668,7 @@
     calendarModalOptionalStep('cta link', snapshot, function () {
       var linkEl = document.getElementById('emEventLink');
       if (!linkEl) return;
-      if (!isPrivate && isValidPerfCtaUrl(ticketUrl)) {
+      if ((!isPrivate || (privateView && privateView.publicTicketEnabled)) && isValidPerfCtaUrl(ticketUrl)) {
         linkEl.href = ticketUrl;
         linkEl.textContent = resolvePerfCtaLabel(p, currentLang);
         linkEl.style.display = 'inline-flex';
@@ -2630,7 +2713,7 @@
     calendarModalOptionalStep('flyer', snapshot, function () {
       var flyerEl = document.getElementById('emFlyerImg');
       if (!flyerEl) return;
-      if (!editorialActive && p.flyerImg && p.flyerImg.trim()) {
+      if (!editorialActive && !isPrivate && p.flyerImg && p.flyerImg.trim()) {
         flyerEl.src = p.flyerImg;
         var tFly = uiTable(currentLang);
         var flyTail = String(tFly['perf.flyerAltTail'] || '').trim();
@@ -2647,7 +2730,7 @@
       if (!mapsEl) return;
       var mapsTextEl = document.getElementById('emMapsText');
       var mapsHref = perfMapsHref(p, currentLang);
-      if (mapsHref && !isPrivate) {
+      if (mapsHref && (!isPrivate || (privateView && privateView.publicAddressMapsEnabled))) {
         mapsEl.href = mapsHref;
         var mapsLabel = perfMapsLabel(currentLang);
         if (mapsTextEl) mapsTextEl.textContent = mapsLabel;

@@ -155,8 +155,17 @@
       orientation = String(x.orientation != null ? x.orientation : '').trim().toLowerCase();
       if (orientation !== 'portrait' && orientation !== 'landscape') orientation = '';
       focus = String(x.focus != null ? x.focus : x.objectPosition != null ? x.objectPosition : '').trim();
+      if (x.visible === false) return null;
     }
-    return { url: url, orientation: orientation, focus: focus };
+    return {
+      url: url,
+      orientation: orientation,
+      focus: focus,
+      downloadUrl: typeof x === 'object' ? String(x.downloadUrl || '').trim() : '',
+      caption: typeof x === 'object' ? String(x.caption || '').trim() : '',
+      alt: typeof x === 'object' ? String(x.alt || '').trim() : '',
+      photographer: typeof x === 'object' ? String(x.photographer || '').trim() : ''
+    };
   }
   function getPhotoEntries() {
     if (!MP_MEDIA || !MP_MEDIA.photos) return { s: [], t: [], b: [] };
@@ -1278,6 +1287,14 @@
 
   function updateLbCaption() {
     var cap = getCaption(lbSet, lbIdx);
+    var entry = getPhotoEntries()[lbSet] && getPhotoEntries()[lbSet][lbIdx];
+    if (entry && (entry.caption || entry.alt || entry.photographer)) {
+      cap = {
+        caption: String(entry.caption || cap.caption || ''),
+        alt: String(entry.alt || cap.alt || ''),
+        photographer: String(entry.photographer || cap.photographer || '')
+      };
+    }
     var t = document.getElementById('lbCapText');
     var p = document.getElementById('lbCapPhotog');
     if (t) {
@@ -1303,6 +1320,8 @@
     if (!img || !lb || !ctr) return;
     img.src = arr[idx];
     var openCap = getCaption(lbSet, lbIdx);
+    var openEntry = getPhotoEntries()[lbSet] && getPhotoEntries()[lbSet][lbIdx];
+    if (openEntry && openEntry.alt) openCap.alt = openEntry.alt;
     var openAlt = String(openCap.alt || '').trim();
     img.alt = openAlt || 'Photo';
     ctr.textContent = idx + 1 + ' / ' + arr.length;
@@ -1330,6 +1349,8 @@
     if (img) img.src = arr[lbIdx];
     if (img) {
       var navCap = getCaption(lbSet, lbIdx);
+      var navEntry = getPhotoEntries()[lbSet] && getPhotoEntries()[lbSet][lbIdx];
+      if (navEntry && navEntry.alt) navCap.alt = navEntry.alt;
       img.alt = String(navCap.alt || '').trim() || 'Photo';
     }
     if (ctr) ctr.textContent = lbIdx + 1 + ' / ' + lbArr(lbSet).length;
@@ -1411,6 +1432,13 @@
     function renderPhotoItem(refs, entry, i, altFallback) {
       var imgSrc = resolvePhotoSrc(entry);
       var cap = getCaption(refs.type, i);
+      if (entry && (entry.caption || entry.alt || entry.photographer)) {
+        cap = {
+          caption: String(entry.caption || cap.caption || ''),
+          alt: String(entry.alt || cap.alt || ''),
+          photographer: String(entry.photographer || cap.photographer || '')
+        };
+      }
       var alt = String(cap.alt || '').trim() || altFallback;
       var caption = String(cap.caption || '').trim();
       var photographer = String(cap.photographer || '').trim();

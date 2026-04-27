@@ -110,6 +110,33 @@ var PUBLIC_EVENT_FIELDS = [
   'privateDetailText_es',
   'privateDetailText_it',
   'privateDetailText_fr',
+  'privatePublicTitleEnabled',
+  'privatePublicTitleMode',
+  'privatePublicTitle',
+  'privatePublicTitle_en',
+  'privatePublicTitle_de',
+  'privatePublicTitle_es',
+  'privatePublicTitle_it',
+  'privatePublicTitle_fr',
+  'privatePublicVenueEnabled',
+  'privatePublicVenueMode',
+  'privatePublicVenueLine',
+  'privatePublicVenueLine_en',
+  'privatePublicVenueLine_de',
+  'privatePublicVenueLine_es',
+  'privatePublicVenueLine_it',
+  'privatePublicVenueLine_fr',
+  'privatePublicLocationEnabled',
+  'privatePublicLocationMode',
+  'privatePublicLocationLine',
+  'privatePublicLocationLine_en',
+  'privatePublicLocationLine_de',
+  'privatePublicLocationLine_es',
+  'privatePublicLocationLine_it',
+  'privatePublicLocationLine_fr',
+  'privatePublicMoreInfo',
+  'privatePublicAddressMaps',
+  'privatePublicTicket',
   'status',
   'type',
   'title_en',
@@ -292,6 +319,59 @@ function firstNonEmptyField(src, fields) {
   return '';
 }
 
+function truthyFlag(value) {
+  var s = String(value == null ? '' : value).trim().toLowerCase();
+  return value === true || s === 'true' || s === '1' || s === 'yes' || s === 'on';
+}
+
+function isPrivatePublicEvent(record) {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return false;
+  return Object.prototype.hasOwnProperty.call(record, 'private') && truthyFlag(record.private);
+}
+
+function privatePublicAllowed(record, key) {
+  if (!isPrivatePublicEvent(record)) return true;
+  if (key === 'title') return truthyFlag(record.privatePublicTitleEnabled) && String(record.privatePublicTitleMode || '').trim().toLowerCase() === 'real';
+  if (key === 'venue') return truthyFlag(record.privatePublicVenueEnabled) && String(record.privatePublicVenueMode || '').trim().toLowerCase() === 'real';
+  if (key === 'address' || key === 'mapsUrl') return truthyFlag(record.privatePublicAddressMaps);
+  if (key === 'ticket') return truthyFlag(record.privatePublicTicket);
+  return false;
+}
+
+function deletePublicFields(record, fields) {
+  fields.forEach(function (field) {
+    if (Object.prototype.hasOwnProperty.call(record, field)) delete record[field];
+  });
+}
+
+function stripPrivateEventInternals(safe, source) {
+  if (!isPrivatePublicEvent(source)) return safe;
+  if (!privatePublicAllowed(source, 'title')) {
+    deletePublicFields(safe, ['title', 'title_en', 'title_de', 'title_es', 'title_it', 'title_fr']);
+  }
+  if (!privatePublicAllowed(source, 'venue')) deletePublicFields(safe, ['venue']);
+  if (!privatePublicAllowed(source, 'address')) {
+    deletePublicFields(safe, ['address', 'address_en', 'address_de', 'address_es', 'address_it', 'address_fr', 'mapsUrl', 'moreInfoAddress']);
+  }
+  deletePublicFields(safe, [
+    'detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr',
+    'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr',
+    'moreInfoTitle', 'moreInfoSubtitle', 'moreInfoArtists', 'moreInfoDescription', 'moreInfoExtra',
+    'moreInfoImage1', 'moreInfoImage1Focus', 'moreInfoImage2', 'moreInfoImage2Focus', 'moreInfoImage3', 'moreInfoImage3Focus',
+    'moreInfoImage4', 'moreInfoImage4Focus', 'moreInfoImage5', 'moreInfoImage5Focus',
+    'venuePhoto', 'venuePhotoFocus', 'venueOpacity', 'modalImg', 'flyerImg'
+  ]);
+  if (!privatePublicAllowed(source, 'ticket')) {
+    deletePublicFields(safe, [
+      'ticketStatus', 'ticketCurrency', 'ticketPrice', 'ticketPrice_en', 'ticketPrice_de', 'ticketPrice_es', 'ticketPrice_it', 'ticketPrice_fr',
+      'publicTicketLabel', 'publicTicketLabel_en', 'publicTicketLabel_de', 'publicTicketLabel_es', 'publicTicketLabel_it', 'publicTicketLabel_fr',
+      'eventLink', 'eventLinkLabel', 'eventLink_en', 'eventLinkLabel_en', 'eventLink_de', 'eventLinkLabel_de', 'eventLink_es', 'eventLinkLabel_es',
+      'eventLink_it', 'eventLinkLabel_it', 'eventLink_fr', 'eventLinkLabel_fr'
+    ]);
+  }
+  return safe;
+}
+
 function sanitizePublicEvent(record) {
   var safe = pickFields(record, PUBLIC_EVENT_FIELDS);
   if (safe.ticketPrice == null || String(safe.ticketPrice).trim() === '') {
@@ -339,7 +419,7 @@ function sanitizePublicEvent(record) {
       'moreInfoExtra_' + lang
     ]);
   });
-  return safe;
+  return stripPrivateEventInternals(safe, record);
 }
 
 function sanitizePublicPastEvent(record) {

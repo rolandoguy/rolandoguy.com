@@ -189,8 +189,46 @@
       webBtn: webBtn,
       webUrl: firstNonEmpty(liveCurrent && liveCurrent.webUrl, liveEn && liveEn.webUrl, base.webUrl),
       phone: firstNonEmpty(liveCurrent && liveCurrent.phone, liveEn && liveEn.phone),
+      contactImageEnabled: liveCurrent && Object.prototype.hasOwnProperty.call(liveCurrent, 'contactImageEnabled')
+        ? liveCurrent.contactImageEnabled === true
+        : !!(liveEn && liveEn.contactImageEnabled),
+      contactImageUrl: firstNonEmpty(liveCurrent && liveCurrent.contactImageUrl, liveEn && liveEn.contactImageUrl),
+      contactImageAlt: firstNonEmpty(liveCurrent && liveCurrent.contactImageAlt, liveEn && liveEn.contactImageAlt),
+      contactImagePlacement: firstNonEmpty(liveCurrent && liveCurrent.contactImagePlacement, liveEn && liveEn.contactImagePlacement, 'none'),
+      contactImageFit: firstNonEmpty(liveCurrent && liveCurrent.contactImageFit, liveEn && liveEn.contactImageFit, 'cover'),
+      contactImagePosition: firstNonEmpty(liveCurrent && liveCurrent.contactImagePosition, liveEn && liveEn.contactImagePosition, 'center center'),
       quote: quote
     };
+  }
+
+  function renderContactImage(d) {
+    var old = document.getElementById('contactEditorialImage');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var contact = document.getElementById('contact');
+    if (contact) contact.style.removeProperty('--contact-image-url');
+    if (contact) contact.classList.remove('contact-has-bg-image');
+    if (!d || d.contactImageEnabled !== true || !d.contactImageUrl) return;
+    var placement = String(d.contactImagePlacement || 'none').trim();
+    if (placement === 'background' && contact) {
+      contact.style.setProperty('--contact-image-url', 'url("' + String(d.contactImageUrl).replace(/"/g, '\\"') + '")');
+      contact.classList.add('contact-has-bg-image');
+      return;
+    }
+    if (placement !== 'editorial') return;
+    var left = document.querySelector('#contact .contact-left');
+    if (!left) return;
+    var fig = document.createElement('figure');
+    fig.id = 'contactEditorialImage';
+    fig.className = 'contact-editorial-image';
+    var img = document.createElement('img');
+    img.src = d.contactImageUrl;
+    img.alt = d.contactImageAlt || '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.style.objectFit = String(d.contactImageFit || 'cover') === 'contain' ? 'contain' : 'cover';
+    img.style.objectPosition = d.contactImagePosition || 'center center';
+    fig.appendChild(img);
+    left.appendChild(fig);
   }
 
   function applyFormChrome() {
@@ -225,6 +263,7 @@
       contactTitle.innerHTML = rawTitle.trim() ? formatSectionTitleIfAmpersand(rawTitle) : '';
     }
     if (contactSub) contactSub.textContent = d.sub || '';
+    renderContactImage(d);
     var cqEl = document.getElementById('contactQuoteText');
     var cqWrap = document.getElementById('contactQuoteWrap');
     if (cqEl && cqWrap) {
