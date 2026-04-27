@@ -400,16 +400,28 @@
       }
       return '';
     }
+    function datePart(raw) {
+      var s = String(raw || '').trim();
+      var m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+      return m ? m[1] : s;
+    }
+    function timePart(raw) {
+      var s = String(raw || '').trim();
+      var m = s.match(/(?:^|T|\s)(\d{1,2}:\d{2})(?::\d{2})?/);
+      return m ? m[1] : s;
+    }
     var title = String(o.title || o.name || '').trim();
     var detail = String(o.detail || o.description || '').trim();
     var venue = String(o.venue || o.place || '').trim();
     var city = String(o.city || '').trim();
     var status = String(o.status || '').trim().toLowerCase();
     var editorialStatus = normalizedEditorialStatus(o.editorialStatus);
-    var sortDate = String(o.sortDate || o.date || '').trim();
+    var startDateRaw = firstNonEmpty(['startDate', 'start_date', 'dateStart', 'startsAt', 'start']);
+    var sortDate = datePart(firstNonEmpty(['sortDate', 'date', 'dateDisplay', 'displayDate']) || startDateRaw);
     var day = String(o.day || '').trim();
     var month = String(o.month || '').trim();
-    var time = String(o.time || '').trim();
+    var time = firstNonEmpty(['time', 'startTime', 'start_time', 'timeStart', 'startsAt']);
+    if (!time && startDateRaw) time = timePart(startDateRaw);
     if (!day || !month) {
       var parsed = sortDate ? new Date(sortDate) : null;
       if (parsed && !isNaN(parsed.getTime())) {
@@ -436,6 +448,15 @@
       day: day,
       month: month,
       time: time,
+      startDate: datePart(startDateRaw),
+      startTime: timePart(firstNonEmpty(['startTime', 'start_time', 'timeStart']) || startDateRaw),
+      endDate: datePart(firstNonEmpty(['endDate', 'end_date', 'dateEnd', 'endsAt', 'end'])),
+      endTime: timePart(firstNonEmpty(['endTime', 'end_time', 'timeEnd']) || firstNonEmpty(['endsAt', 'end'])),
+      duration: firstNonEmpty(['duration', 'eventDuration', 'publicDuration', 'programmeDuration', 'programDuration']),
+      durationMinutes: firstNonEmpty(['durationMinutes', 'durationMin', 'durationMins', 'publicDurationMinutes', 'programmeDurationMinutes', 'programDurationMinutes']),
+      durationText: firstNonEmpty(['durationText', 'durationLabel', 'publicDurationText', 'programmeDurationText', 'programDurationText']),
+      publicDuration: firstNonEmpty(['publicDuration', 'publicDurationText', 'publicDurationMinutes']),
+      programmeDuration: firstNonEmpty(['programmeDuration', 'programmeDurationText', 'programmeDurationMinutes', 'programDuration', 'programDurationText', 'programDurationMinutes']),
       sortDate: sortDate,
       status: status || 'upcoming',
       editorialStatus: editorialStatus,
@@ -448,12 +469,20 @@
       venuePhoto: String(o.venuePhoto || o.image || '').trim(),
       venuePhotoFocus: String(o.venuePhotoFocus || o.imageFocus || '').trim(),
       venueOpacity: o.venueOpacity,
+      ticketStatus: normalizeTicketStatus(o.ticketStatus || o.ticket_status),
+      ticketCurrency: String(o.ticketCurrency || o.priceCurrency || o.currency || 'EUR').trim().toUpperCase() || 'EUR',
       ticketPrice: firstNonEmpty(['ticketPrice', 'priceInfo', 'modalPrice', 'modalTicketPrice', 'price', 'ticketInfo']),
       ticketPrice_en: firstNonEmpty(['ticketPrice_en', 'priceInfo_en', 'modalPrice_en', 'modalTicketPrice_en', 'price_en', 'ticketInfo_en']),
       ticketPrice_de: firstNonEmpty(['ticketPrice_de', 'priceInfo_de', 'modalPrice_de', 'modalTicketPrice_de', 'price_de', 'ticketInfo_de']),
       ticketPrice_es: firstNonEmpty(['ticketPrice_es', 'priceInfo_es', 'modalPrice_es', 'modalTicketPrice_es', 'price_es', 'ticketInfo_es']),
       ticketPrice_it: firstNonEmpty(['ticketPrice_it', 'priceInfo_it', 'modalPrice_it', 'modalTicketPrice_it', 'price_it', 'ticketInfo_it']),
       ticketPrice_fr: firstNonEmpty(['ticketPrice_fr', 'priceInfo_fr', 'modalPrice_fr', 'modalTicketPrice_fr', 'price_fr', 'ticketInfo_fr']),
+      publicTicketLabel: firstNonEmpty(['publicTicketLabel', 'ticketLabel', 'priceLabel']),
+      publicTicketLabel_en: firstNonEmpty(['publicTicketLabel_en', 'ticketLabel_en', 'priceLabel_en']),
+      publicTicketLabel_de: firstNonEmpty(['publicTicketLabel_de', 'ticketLabel_de', 'priceLabel_de']),
+      publicTicketLabel_es: firstNonEmpty(['publicTicketLabel_es', 'ticketLabel_es', 'priceLabel_es']),
+      publicTicketLabel_it: firstNonEmpty(['publicTicketLabel_it', 'ticketLabel_it', 'priceLabel_it']),
+      publicTicketLabel_fr: firstNonEmpty(['publicTicketLabel_fr', 'ticketLabel_fr', 'priceLabel_fr']),
       eventLink: String(o.eventLink || o.link || '').trim(),
       eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
       extDesc: firstNonEmpty(['extDesc', 'modalText', 'description', 'longDescription', 'modalLongDesc', 'moreInfoDescription', 'moreInfoExtra']),
@@ -1007,7 +1036,7 @@
       city: perfLocalizedField(p, 'city', lang, 'place') || '',
       address: perfModalAddress(p, lang),
       mapsUrl: String(p.mapsUrl || '').trim(),
-      ticketPrice: perfLocaleField(p, 'ticketPrice', lang) || '',
+      ticketPrice: resolvePublicTicketLabel(p, lang, perfIsPrivateEvent(p, lang)) || '',
       sortDate: String(p.sortDate || '').trim(),
       time: perfLocaleField(p, 'time', lang) || ''
     };
@@ -1323,7 +1352,7 @@
     contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelDate) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(meta1) + '</span></div>';
     contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelVenue) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(meta2) + '</span></div>';
     if (address) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelAddress) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(address) + '</span></div>';
-    var editorialTicketPrice = perfLocaleField(p, 'ticketPrice', currentLang);
+    var editorialTicketPrice = resolvePublicTicketLabel(p, currentLang, isPrivate);
     if (!isPrivate && editorialTicketPrice) contentHtml += '<div class="event-modal-editorial__meta-item"><span class="event-modal-editorial__meta-label">' + escHtml(labelTicket) + '</span> <span class="event-modal-editorial__meta-value">' + escHtml(editorialTicketPrice) + '</span></div>';
     contentHtml += '</div>';
     if (description) contentHtml += '<div class="event-modal-editorial__body"><p>' + escHtml(description).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p></div>';
@@ -1596,6 +1625,11 @@
   }
   function normalizeSchemaDateTime(dateRaw, timeRaw, includeOffset) {
     var date = String(dateRaw || '').trim();
+    var dateFromIso = date.match(/^(\d{4}-\d{2}-\d{2})T(\d{1,2}:\d{2})(?::\d{2})?/);
+    if (dateFromIso && !String(timeRaw || '').trim()) {
+      date = dateFromIso[1];
+      timeRaw = dateFromIso[2];
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
     var time = String(timeRaw || '').trim();
     if (!/^\d{1,2}:\d{2}$/.test(time)) return date;
@@ -1638,7 +1672,21 @@
     if (/^\d{4}-\d{2}-\d{2}$/.test(explicitDate)) {
       return normalizeSchemaDateTime(explicitDate, explicitTime || (hasStartTime ? String(p.time || '') : ''), includeOffset);
     }
-    var duration = parseDurationMinutes(p.duration || p.durationMinutes || p.duration_mins || p.durationText);
+    var duration = parseDurationMinutes(
+      p.duration ||
+      p.durationMinutes ||
+      p.duration_mins ||
+      p.durationText ||
+      p.publicDuration ||
+      p.programmeDuration ||
+      p.programDuration ||
+      p.publicDurationMinutes ||
+      p.programmeDurationMinutes ||
+      p.programDurationMinutes ||
+      p.publicDurationText ||
+      p.programmeDurationText ||
+      p.programDurationText
+    );
     if (hasStartTime && !duration) duration = 90;
     return hasStartTime && duration ? addMinutesToSchemaDateTime(startDate, duration) : '';
   }
@@ -1664,8 +1712,42 @@
     else out.priceCurrency = 'EUR';
     return out;
   }
+  function normalizeTicketStatus(raw) {
+    var s = String(raw || '').trim().toLowerCase();
+    return /^(unknown|free|fixed_price|donation_based|private_invitation)$/.test(s) ? s : '';
+  }
+  function ticketCurrency(p) {
+    return String((p && p.ticketCurrency) || 'EUR').trim().toUpperCase() || 'EUR';
+  }
+  function resolvePublicTicketLabel(p, lang, isPrivate) {
+    if (isPrivate) return '';
+    var explicit = perfLocaleField(p, 'publicTicketLabel', lang);
+    if (explicit) return explicit;
+    var status = normalizeTicketStatus(p && p.ticketStatus);
+    var currency = ticketCurrency(p);
+    var price = perfLocaleField(p, 'ticketPrice', lang);
+    if (status === 'free') return 'Eintritt frei';
+    if (status === 'donation_based') return 'Auf Spendenbasis';
+    if (status === 'fixed_price' && price) return 'Tickets: ' + price.replace(/\s*(€|eur)\s*$/i, '').trim() + ' ' + currency;
+    return price || '';
+  }
   function resolveSchemaOffer(p, lang, eventUrl, isPrivate) {
     if (isPrivate) return null;
+    var status = normalizeTicketStatus(p && p.ticketStatus);
+    if (status === 'private_invitation' || status === 'unknown' || status === 'donation_based') return null;
+    if (status === 'free') {
+      return {
+        '@type': 'Offer',
+        url: (function () {
+          var ticketUrl = perfLocaleField(p, 'eventLink', lang);
+          return ticketUrl && /^https?:\/\//i.test(String(ticketUrl).trim()) ? String(ticketUrl).trim() : eventUrl;
+        })(),
+        price: '0',
+        priceCurrency: ticketCurrency(p),
+        availability: 'https://schema.org/InStock',
+        validFrom: new Date().toISOString()
+      };
+    }
     var offerParsed = parseOfferPrice(perfLocaleField(p, 'ticketPrice', lang));
     if (!offerParsed || offerParsed.price == null || !offerParsed.priceCurrency) return null;
     var ticketUrl = perfLocaleField(p, 'eventLink', lang);
@@ -1674,7 +1756,7 @@
       '@type': 'Offer',
       url: safeTicketUrl,
       price: offerParsed.price,
-      priceCurrency: offerParsed.priceCurrency,
+      priceCurrency: ticketCurrency(p) || offerParsed.priceCurrency,
       availability: 'https://schema.org/InStock',
       validFrom: new Date().toISOString()
     };
@@ -1684,6 +1766,33 @@
     if (!s || /^[-–—]+$/.test(s) || /^(tba|tbd)$/i.test(s)) return '';
     return s;
   }
+  function schemaDatePart(raw) {
+    var s = String(raw || '').trim();
+    var m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : s;
+  }
+  function schemaTimePart(raw) {
+    var s = String(raw || '').trim();
+    var m = s.match(/(?:^|T|\s)(\d{1,2}:\d{2})(?::\d{2})?/);
+    return m ? m[1] : s;
+  }
+  function resolveSchemaStartDateRaw(p) {
+    return schemaDatePart(
+      p.sortDate ||
+      p.date ||
+      p.dateDisplay ||
+      p.displayDate ||
+      p.startDate ||
+      p.start_date ||
+      p.startsAt ||
+      p.start
+    );
+  }
+  function resolveSchemaStartTimeRaw(p, lang) {
+    var time = perfLocaleField(p, 'time', lang);
+    if (time) return time;
+    return schemaTimePart(p.startTime || p.start_time || p.timeStart || p.startsAt || p.start);
+  }
   function updateUpcomingEventSchema(upcomingList) {
     var prev = document.getElementById('calendar-events-jsonld');
     if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
@@ -1691,11 +1800,11 @@
     var items = [];
     upcomingList.forEach(function (p) {
       var isPrivate = perfIsPrivateEvent(p, currentLang);
-      var dateRaw = String(p.sortDate || '').trim();
+      var dateRaw = resolveSchemaStartDateRaw(p);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) return;
       var title = resolveEventTitle(p, currentLang);
       if (!title) return;
-      var time = String(p.time || '').trim();
+      var time = resolveSchemaStartTimeRaw(p, currentLang);
       var hasStartTime = /^\d{1,2}:\d{2}$/.test(time);
       var useBerlinOffset = hasStartTime && isGermanyEvent(p, currentLang);
       var startDate = normalizeSchemaDateTime(dateRaw, time, useBerlinOffset);
@@ -1913,7 +2022,7 @@
       }
       var modalBodyPreview = perfModalBodyText(p, currentLang, isPrivate);
       var linkForModal = perfLocaleField(p, 'eventLink', currentLang);
-      var priceForModal = perfLocaleField(p, 'ticketPrice', currentLang);
+      var priceForModal = resolvePublicTicketLabel(p, currentLang, isPrivate);
       var hasExtra =
         !!modalBodyPreview ||
         !!priceForModal ||
@@ -2364,7 +2473,7 @@
     var venueCity = [perfLocalizedField(p, 'venue', currentLang, 'place'), perfLocalizedField(p, 'city', currentLang, 'place')].filter(Boolean).join(' · ');
     var modalAddress = perfModalAddress(p, currentLang);
     var modalBody = perfModalBodyText(p, currentLang, isPrivate);
-    var modalTicketPrice = perfLocaleField(p, 'ticketPrice', currentLang);
+    var modalTicketPrice = resolvePublicTicketLabel(p, currentLang, isPrivate);
     var escapedBody = String(modalBody || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     var bodyWithBreaks = escapedBody.replace(/\n/g, '<br>');
     var modalFallbackImg =

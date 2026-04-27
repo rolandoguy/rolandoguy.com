@@ -13,11 +13,15 @@ var PUBLIC_EVENT_FIELDS = [
   'day',
   'month',
   'time',
+  'startDate',
+  'startTime',
   'endDate',
   'endTime',
   'duration',
   'durationMinutes',
   'durationText',
+  'publicDuration',
+  'programmeDuration',
   'title',
   'detail',
   'detail_en',
@@ -43,12 +47,20 @@ var PUBLIC_EVENT_FIELDS = [
   'extDesc_es',
   'extDesc_it',
   'extDesc_fr',
+  'ticketStatus',
+  'ticketCurrency',
   'ticketPrice',
   'ticketPrice_en',
   'ticketPrice_de',
   'ticketPrice_es',
   'ticketPrice_it',
   'ticketPrice_fr',
+  'publicTicketLabel',
+  'publicTicketLabel_en',
+  'publicTicketLabel_de',
+  'publicTicketLabel_es',
+  'publicTicketLabel_it',
+  'publicTicketLabel_fr',
   'eventLink',
   'eventLinkLabel',
   'eventLink_en',
@@ -117,11 +129,15 @@ var PUBLIC_PAST_EVENT_FIELDS = [
   'id',
   'date',
   'time',
+  'startDate',
+  'startTime',
   'endDate',
   'endTime',
   'duration',
   'durationMinutes',
   'durationText',
+  'publicDuration',
+  'programmeDuration',
   'title',
   'place',
   'city',
@@ -173,6 +189,8 @@ var INTERNAL_EVENT_FIELDS = [
   'extDesc_es',
   'extDesc_it',
   'extDesc_fr',
+  'ticketStatus',
+  'ticketCurrency',
   'ticketPrice',
   'eventLink',
   'eventLinkLabel',
@@ -279,6 +297,9 @@ function sanitizePublicEvent(record) {
   if (safe.ticketPrice == null || String(safe.ticketPrice).trim() === '') {
     safe.ticketPrice = firstNonEmptyField(record, ['priceInfo', 'modalPrice', 'modalTicketPrice', 'price', 'ticketInfo']);
   }
+  if (safe.ticketCurrency == null || String(safe.ticketCurrency).trim() === '') {
+    safe.ticketCurrency = firstNonEmptyField(record, ['priceCurrency', 'currency']) || 'EUR';
+  }
   if (safe.address == null || String(safe.address).trim() === '') {
     safe.address = firstNonEmptyField(record, ['venueAddress', 'modalAddress', 'streetAddress']);
   }
@@ -297,6 +318,14 @@ function sanitizePublicEvent(record) {
         'modalTicketPrice_' + lang,
         'price_' + lang,
         'ticketInfo_' + lang
+      ]);
+    }
+    var labelKey = 'publicTicketLabel_' + lang;
+    if (safe[labelKey] == null || String(safe[labelKey]).trim() === '') {
+      safe[labelKey] = firstNonEmptyField(record, [
+        'publicTicketLabel_' + lang,
+        'ticketLabel_' + lang,
+        'priceLabel_' + lang
       ]);
     }
     var key = 'extDesc_' + lang;

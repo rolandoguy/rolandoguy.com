@@ -927,6 +927,7 @@
                   <small class="muted">Use this single switch for invitation-only events. When enabled, the public calendar applies private styling automatically and falls back to the shared theatrical background if no custom image is set.</small>
                 </label>
                 <p id="perf-public-visibility" class="pill">Visibility: —</p>
+                <div id="perf-schema-hints" class="translation-qa" style="display:none"></div>
                 <div id="perf-translation-status" class="translation-qa" style="display:none"></div>
               </div>
 
@@ -1072,7 +1073,18 @@
                   <label>Modal CTA button label<input id="perf-modal-link-label" placeholder="Tickets &amp; Info"></label>
                   <small id="perf-modal-link-label-translation-warn" class="muted warn" style="display:none"></small>
                   <small id="perf-modal-link-translation-warn" class="muted warn" style="display:none"></small>
+                  <label>Public ticket status
+                    <select id="perf-ticket-status">
+                      <option value="unknown">unknown</option>
+                      <option value="free">free</option>
+                      <option value="fixed_price">fixed_price</option>
+                      <option value="donation_based">donation_based</option>
+                      <option value="private_invitation">private_invitation</option>
+                    </select>
+                  </label>
+                  <label>Ticket currency<input id="perf-ticket-currency" placeholder="EUR"></label>
                   <label>Modal price/info line<input id="perf-modal-ticketPrice" placeholder="20€ / 15€ reduced"></label>
+                  <label>Public ticket label<input id="perf-public-ticket-label" placeholder="Eintritt frei / Tickets: 20 EUR"></label>
                   <label>Maps button URL (optional route/map URL)<input id="perf-modal-maps-link" placeholder="https://maps.google.com/..."></label>
                 </div>
                 <div class="grid two">

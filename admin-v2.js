@@ -3133,7 +3133,9 @@
     'detail', 'detail_en', 'detail_de', 'detail_es', 'detail_it', 'detail_fr',
     'venue', 'city', 'address', 'address_en', 'address_de', 'address_es', 'address_it', 'address_fr', 'mapsUrl', 'venuePhoto', 'venuePhotoFocus', 'venueOpacity',
     'extDesc', 'extDesc_en', 'extDesc_de', 'extDesc_es', 'extDesc_it', 'extDesc_fr',
+    'ticketStatus', 'ticketCurrency',
     'ticketPrice', 'ticketPrice_en', 'ticketPrice_de', 'ticketPrice_es', 'ticketPrice_it', 'ticketPrice_fr',
+    'publicTicketLabel', 'publicTicketLabel_en', 'publicTicketLabel_de', 'publicTicketLabel_es', 'publicTicketLabel_it', 'publicTicketLabel_fr',
     'eventLink', 'eventLinkLabel',
     'eventLink_en', 'eventLinkLabel_en',
     'eventLink_de', 'eventLinkLabel_de',
@@ -14033,7 +14035,10 @@
     if ($('perf-modal-longdesc')) $('perf-modal-longdesc').value = localeFirst('extDesc');
     if ($('perf-modal-link')) $('perf-modal-link').value = localeFirst('eventLink');
     if ($('perf-modal-link-label')) $('perf-modal-link-label').value = localeFirst('eventLinkLabel');
+    if ($('perf-ticket-status')) setSelectWithCustomValue('perf-ticket-status', safeString(e.ticketStatus || (perfIsPrivateEventRecord(e, state.lang || 'en') ? 'private_invitation' : 'unknown')).trim() || 'unknown', 'unknown');
+    if ($('perf-ticket-currency')) $('perf-ticket-currency').value = safeString(e.ticketCurrency || 'EUR').trim().toUpperCase() || 'EUR';
     if ($('perf-modal-ticketPrice')) $('perf-modal-ticketPrice').value = safeString(e.ticketPrice);
+    if ($('perf-public-ticket-label')) $('perf-public-ticket-label').value = localeFirst('publicTicketLabel');
     if ($('perf-modal-image')) $('perf-modal-image').value = safeString(e.modalImg);
     if ($('perf-modal-image-hide')) $('perf-modal-image-hide').value = e.modalImgHide ? 'true' : 'false';
     if ($('perf-modal-enabled')) {
@@ -14047,6 +14052,7 @@
     updatePerfCardPreview();
     updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
+    updatePerfSchemaHints();
     updatePerfTranslationWarnings();
     state.perfEditorDirty = false;
     updatePerfEditorChrome();
@@ -14239,6 +14245,45 @@
       box.classList.add('ok');
     }
   }
+  function perfTimeIsEmptyOrTba(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return !s || s === 'tba' || s === 'tbd' || s === 'to be announced' || s === 'to be determined';
+  }
+  function perfTicketStatusKnown(raw) {
+    var s = safeString(raw).trim();
+    if (!s) return false;
+    var low = s.toLowerCase();
+    if (/(^|\b)(free|gratis|libre|gratuito|gratuita|kostenlos|gratuit)\b/.test(low)) return true;
+    return /\d/.test(s);
+  }
+  function normalizePerfTicketStatus(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return /^(unknown|free|fixed_price|donation_based|private_invitation)$/.test(s) ? s : 'unknown';
+  }
+  function updatePerfSchemaHints() {
+    var box = $('perf-schema-hints');
+    if (!box) return;
+    var isPrivate = safeString($('perf-privateEvent') && $('perf-privateEvent').value).trim() === 'true';
+    var ticketStatus = normalizePerfTicketStatus($('perf-ticket-status') && $('perf-ticket-status').value);
+    var isPrivateLike = isPrivate || ticketStatus === 'private_invitation';
+    var hints = [];
+    if (!isPrivateLike && perfTimeIsEmptyOrTba($('perf-time') && $('perf-time').value)) {
+      hints.push('SEO: Google cannot generate endDate without a real public time.');
+    }
+    if (!isPrivateLike && ticketStatus === 'fixed_price' && !perfTicketStatusKnown($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value)) {
+      hints.push('SEO: fixed_price should include a real ticketPrice so Google can receive a complete Offer.');
+    } else if (!isPrivateLike && (ticketStatus === 'unknown' || ticketStatus === 'donation_based')) {
+      hints.push('SEO: Google may show missing offers warning unless price or explicit free status is set.');
+    }
+    if (!hints.length) {
+      box.innerHTML = '';
+      box.style.display = 'none';
+      return;
+    }
+    box.className = 'translation-qa';
+    box.innerHTML = '<strong>Schema hints</strong><ul><li>' + hints.map(escapeHtml).join('</li><li>') + '</li></ul>';
+    box.style.display = '';
+  }
   function updatePerfTranslationWarnings() {
     var summary = $('perf-translation-status');
     var warnDetail = $('perf-detail-translation-warn');
@@ -14390,7 +14435,10 @@
     persistSharedPracticalField('address', safeString($('perf-modal-address') && $('perf-modal-address').value).trim());
     e.mapsUrl = safeString($('perf-modal-maps-link') && $('perf-modal-maps-link').value).trim();
     persistLocaleBackedField('extDesc', safeString($('perf-modal-longdesc') && $('perf-modal-longdesc').value));
+    e.ticketStatus = normalizePerfTicketStatus($('perf-ticket-status') && $('perf-ticket-status').value);
+    e.ticketCurrency = safeString($('perf-ticket-currency') && $('perf-ticket-currency').value || 'EUR').trim().toUpperCase() || 'EUR';
     e.ticketPrice = safeString($('perf-modal-ticketPrice') && $('perf-modal-ticketPrice').value).trim();
+    persistLocaleBackedField('publicTicketLabel', safeString($('perf-public-ticket-label') && $('perf-public-ticket-label').value).trim());
     persistSharedPracticalField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
     persistCtaLabelField(safeString($('perf-modal-link-label') && $('perf-modal-link-label').value));
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
@@ -14426,6 +14474,7 @@
     updatePerfCardPreview();
     updatePerfFeaturedStateHint();
     updatePerfPublicVisibilitySummary();
+    updatePerfSchemaHints();
     updatePerfTranslationWarnings();
     renderPerfList();
     state.perfEditorDirty = true;
@@ -21315,7 +21364,7 @@
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-modal-ticketPrice','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-ticket-status','perf-ticket-currency','perf-modal-ticketPrice','perf-public-ticket-label','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
