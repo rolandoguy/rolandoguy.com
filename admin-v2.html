@@ -1720,9 +1720,7 @@
                 <h3>Programme Image</h3>
                 <p class="muted">Optional main image for this public programme card, summary, export, and preview.</p>
                 <label>Image URL<input id="programs-item-imageUrl" placeholder="https://..."></label>
-                <label class="embed-file-label">Embed image from local file
-                  <input type="file" id="programs-item-imageFile" accept="image/*">
-                </label>
+                <p class="muted embed-note">Use a public URL from Cloudinary, YouTube, SoundCloud, Google Drive or another trusted source. Direct uploads from this admin are not supported.</p>
                 <label>Alt text<input id="programs-item-imageAlt"></label>
                 <div class="grid two">
                   <label>Image fit
@@ -1858,9 +1856,7 @@
                     </label>
                     <label id="pb-header-image-url-wrap" hidden>Custom image URL<input id="pb-header-image-url" placeholder="https://..."></label>
                   </div>
-                  <label class="embed-file-label">Embed custom image from local file
-                    <input type="file" id="pb-header-image-file" accept="image/*">
-                  </label>
+                  <p class="muted embed-note">Use a public URL from Cloudinary, YouTube, SoundCloud, Google Drive or another trusted source. Direct uploads from this admin are not supported.</p>
                   <div id="pb-header-image-preview-wrap" class="photo-preview-wrap programme-image-preview-wrap">
                     <img id="pb-header-image-preview" alt="Programme image preview">
                   </div>
@@ -3438,9 +3434,7 @@
                 <input id="epk-photo-search" placeholder="Search caption / alt / photographer / URL">
               </label>
               <button id="epk-photo-add-url">+ Add by URL</button>
-              <label class="import-label embed-file-label">+ Embed photo from local file
-                <input type="file" id="epk-photo-add-file" accept="image/*">
-              </label>
+              <p class="muted embed-note">Use a public URL from Cloudinary, YouTube, SoundCloud, Google Drive or another trusted source. Direct uploads from this admin are not supported.</p>
               <button id="epk-photo-dup">Duplicate</button>
               <button id="epk-photo-del" class="danger">Delete</button>
               <button id="epk-photo-up">↑</button>
@@ -3500,10 +3494,7 @@
                 <label>Alt text<input id="epk-photo-alt"></label>
                 <label>Photographer<input id="epk-photo-photographer"></label>
                 <p class="muted" style="margin:4px 0 0;line-height:1.35">The public Press / Dossier page shows the first 3 visible EPK photos as official press photos. If hi-res URL is empty, the preview remains visible and the download button is hidden.</p>
-                <label class="embed-file-label">Embed replacement image from local file
-                  <input type="file" id="epk-photo-replace-file" accept="image/*">
-                </label>
-                <p class="muted embed-note">This does not upload to image storage; it embeds the image as data into the saved record.</p>
+                <p class="muted embed-note">Use a public URL from Cloudinary, YouTube, SoundCloud, Google Drive or another trusted source. Direct uploads from this admin are not supported.</p>
               </div>
             </div>
             <div class="toolbar section-save-bar">
@@ -3520,30 +3511,31 @@
 
           <div id="pressCvsPanel" style="display:none" hidden>
             <p class="muted">CV PDF per language. If empty for a language, the site falls back to the default PDF under <code>docs/</code> when applicable.</p>
+            <p class="muted embed-note">Use a public URL from Cloudinary, YouTube, SoundCloud, Google Drive or another trusted source. Direct uploads from this admin are not supported.</p>
             <div class="grid two">
               <div class="editor">
                 <label>EN status<input id="epk-cv-status-EN" readonly></label>
-                <label class="import-label">Upload EN PDF<input type="file" id="epk-cv-file-EN" accept="application/pdf"></label>
+                <label>EN PDF URL<input id="epk-cv-url-EN" placeholder="https://..."></label>
                 <button id="epk-cv-clear-EN" class="danger">Remove EN custom CV</button>
               </div>
               <div class="editor">
                 <label>DE status<input id="epk-cv-status-DE" readonly></label>
-                <label class="import-label">Upload DE PDF<input type="file" id="epk-cv-file-DE" accept="application/pdf"></label>
+                <label>DE PDF URL<input id="epk-cv-url-DE" placeholder="https://..."></label>
                 <button id="epk-cv-clear-DE" class="danger">Remove DE custom CV</button>
               </div>
               <div class="editor">
                 <label>ES status<input id="epk-cv-status-ES" readonly></label>
-                <label class="import-label">Upload ES PDF<input type="file" id="epk-cv-file-ES" accept="application/pdf"></label>
+                <label>ES PDF URL<input id="epk-cv-url-ES" placeholder="https://..."></label>
                 <button id="epk-cv-clear-ES" class="danger">Remove ES custom CV</button>
               </div>
               <div class="editor">
                 <label>IT status<input id="epk-cv-status-IT" readonly></label>
-                <label class="import-label">Upload IT PDF<input type="file" id="epk-cv-file-IT" accept="application/pdf"></label>
+                <label>IT PDF URL<input id="epk-cv-url-IT" placeholder="https://..."></label>
                 <button id="epk-cv-clear-IT" class="danger">Remove IT custom CV</button>
               </div>
               <div class="editor">
                 <label>FR status<input id="epk-cv-status-FR" readonly></label>
-                <label class="import-label">Upload FR PDF<input type="file" id="epk-cv-file-FR" accept="application/pdf"></label>
+                <label>FR PDF URL<input id="epk-cv-url-FR" placeholder="https://..."></label>
                 <button id="epk-cv-clear-FR" class="danger">Remove FR custom CV</button>
               </div>
             </div>

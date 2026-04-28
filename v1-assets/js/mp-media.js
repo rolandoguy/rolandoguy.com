@@ -1395,10 +1395,13 @@
     var tRefs = getPhotoPanelRefs('stage');
     var bRefs = getPhotoPanelRefs('backstage');
 
-    function maxPhotoCols(itemClass) {
-      var w = window.innerWidth || document.documentElement.clientWidth || 1280;
+    function maxPhotoCols(refs) {
+      var grid = refs && refs.grid;
+      var itemClass = refs && refs.itemClass;
+      var w = grid && grid.getBoundingClientRect ? grid.getBoundingClientRect().width : 0;
+      if (!w) w = window.innerWidth || document.documentElement.clientWidth || 1280;
       if (w <= 600) return itemClass === 'photo-item-p' ? 2 : 1;
-      if (w <= 1000) return 2;
+      if (w < 900) return 2;
       return 3;
     }
 
@@ -1455,8 +1458,24 @@
     function renderItems(refs, items, altFallback) {
       if (!refs || !refs.grid) return;
       var count = Array.isArray(items) ? items.length : 0;
-      var cols = maxPhotoCols(refs.itemClass);
+      var cols = maxPhotoCols(refs);
+      var remainder = cols > 0 ? count % cols : 0;
+
       refs.grid.style.setProperty('--photo-cols', String(cols || 1));
+      refs.grid.setAttribute('data-cols', String(cols || 1));
+      refs.grid.setAttribute('data-remainder', String(remainder || 0));
+      refs.grid.setAttribute('data-photo-count', String(count));
+
+      Array.prototype.slice.call(refs.grid.classList).forEach(function (cls) {
+        if (/^photo-grid--cols-\d+$/.test(cls) || /^photo-grid--remainder-\d+$/.test(cls)) {
+          refs.grid.classList.remove(cls);
+        }
+      });
+      refs.grid.classList.add('photo-grid--cols-' + cols);
+      if (remainder > 0) {
+        refs.grid.classList.add('photo-grid--remainder-' + remainder);
+      }
+
       refs.grid.innerHTML = (items || [])
         .map(function (entry, index) {
           return renderPhotoItem(refs, entry, index, altFallback);
@@ -1468,6 +1487,7 @@
     renderItems(tRefs, ph.t, altStageFb);
     renderItems(bRefs, ph.b, altBackFb);
     if (bRefs && bRefs.empty) bRefs.empty.style.display = ph.b && ph.b.length ? 'none' : '';
+
 
     try {
       document.querySelectorAll('#photos .reveal:not(.visible)').forEach(function (el) {

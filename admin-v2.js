@@ -20981,20 +20981,7 @@
     if ($('pb-output-lang')) $('pb-output-lang').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-build-mode')) $('pb-build-mode').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-repertoire-mode')) $('pb-repertoire-mode').addEventListener('change', function () { persistBlueprintHeader('context'); });
-    if ($('pb-header-image-file')) $('pb-header-image-file').addEventListener('change', function (e) {
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        if ($('pb-header-image-mode')) $('pb-header-image-mode').value = 'custom';
-        if ($('pb-header-image-url')) $('pb-header-image-url').value = safeString(ev.target.result);
-        if ($('pb-header-image-url-wrap')) $('pb-header-image-url-wrap').hidden = false;
-        persistBlueprintHeader('manual');
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    });
-    if ($('pb-gala-preferPacing')) $('pb-gala-preferPacing').addEventListener('change', function () { persistBlueprintHeader('context'); });
+        if ($('pb-gala-preferPacing')) $('pb-gala-preferPacing').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-gala-allowPianoInterludes')) $('pb-gala-allowPianoInterludes').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-gala-includeContrast')) $('pb-gala-includeContrast').addEventListener('change', function () { persistBlueprintHeader('context'); });
     if ($('pb-gala-buildArc')) $('pb-gala-buildArc').addEventListener('change', function () { persistBlueprintHeader('context'); });
@@ -21611,18 +21598,7 @@
     if ($('programs-next-item')) $('programs-next-item').addEventListener('click', function () { goPrevNext('programs', 1); });
     if ($('programs-move-apply')) $('programs-move-apply').addEventListener('click', function () { applyMoveToPosition('programs', 'programs-move-pos'); });
     if ($('programs-revert-item')) $('programs-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('programs'); });
-    if ($('programs-item-imageFile')) $('programs-item-imageFile').addEventListener('change', function (e) {
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        if ($('programs-item-imageUrl')) $('programs-item-imageUrl').value = safeString(ev.target.result);
-        persistProgramsEditor();
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    });
-
+    
     $('perf-add').addEventListener('click', function () {
       if (state.perfEditorDirty && !window.confirm('Create a new event without saving current calendar edits?')) return;
       clearSelected(state.perfSelected);
@@ -21722,31 +21698,7 @@
       state.epkPhotoIndex = state.epkPhotos.length - 1;
       renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo agregada');
     });
-    $('epk-photo-add-file').addEventListener('change', function (e) {
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        state.epkPhotos.push({ url: safeString(ev.target.result), downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' });
-        state.epkPhotoIndex = state.epkPhotos.length - 1;
-        renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo subida');
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    });
-    $('epk-photo-replace-file').addEventListener('change', function (e) {
-      if (state.epkPhotoIndex < 0) return;
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        state.epkPhotos[state.epkPhotoIndex].url = safeString(ev.target.result);
-        renderEpkPhotoList(); renderEpkPhotoEditor(); markDirty(true, 'EPK photo reemplazada');
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
-    });
-    $('epk-photo-dup').addEventListener('click', function () {
+        $('epk-photo-dup').addEventListener('click', function () {
       if (state.epkPhotoIndex < 0) return;
       state.epkPhotos.splice(state.epkPhotoIndex + 1, 0, clone(state.epkPhotos[state.epkPhotoIndex]));
       state.epkPhotoIndex += 1;
@@ -21777,34 +21729,6 @@
     if ($('epk-photo-revert-item')) $('epk-photo-revert-item').addEventListener('click', function () { revertCurrentItemToSaved('epk-photo'); });
 
     ['EN', 'DE', 'ES', 'IT', 'FR'].forEach(function (L) {
-      $('epk-cv-file-' + L).addEventListener('change', function (e) {
-        var file = e.target.files && e.target.files[0];
-        if (!file) return;
-        if (!/\.pdf$/i.test(file.name || '') && file.type !== 'application/pdf') {
-          alert('Only PDF files are allowed.');
-          e.target.value = '';
-          return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-          alert('File is too large (max 5MB).');
-          e.target.value = '';
-          return;
-        }
-        var reader = new FileReader();
-        reader.onload = function (ev) {
-          var raw = safeString(ev.target.result);
-          var b64 = raw.split(',')[1] || '';
-          if (!b64) {
-            alert('Invalid PDF payload.');
-            return;
-          }
-          state.epkCvsTemp[L] = b64;
-          renderEpkCvsUi();
-          markDirty(true, 'CV ' + L + ' cargado');
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
-      });
       $('epk-cv-clear-' + L).addEventListener('click', function () {
         if (!window.confirm('Remove custom CV for ' + L + '?')) return;
         delete state.epkCvsTemp[L];
