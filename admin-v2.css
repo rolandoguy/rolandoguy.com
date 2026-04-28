@@ -789,7 +789,7 @@ body.programme-offer-modal-active{overflow:hidden}
 .pb-preview-sheet__rule{width:2px;height:72px;background:rgba(212,168,67,.58);flex:0 0 auto;margin-top:2px}
 .pb-preview-sheet__artist{margin:0 0 8px;font-size:2.1rem;line-height:1.08;color:var(--text);font-weight:700;font-family:Arial,Helvetica,sans-serif}
 .pb-preview-sheet__subtitle{margin:0;font-size:.98rem;line-height:1.46;color:#c7cfdb;font-style:italic}
-.pb-preview-sheet__portrait{width:118px;height:118px;object-fit:cover;object-position:center;flex:0 0 auto}
+.pb-preview-sheet__portrait{width:118px;height:118px;max-width:100%;max-height:100%;object-fit:contain;object-position:center;overflow:hidden;background:#06070a;display:block;flex:0 0 auto}
 .pb-preview-sheet__divider{border-top:1px solid rgba(255,255,255,.08);margin:22px 0 26px}
 .pb-preview-sheet__eyebrow{margin:0 0 10px;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:#c9ac69}
 .pb-preview-sheet__title{margin:0 0 14px;font-family:var(--font-serif,Georgia,serif);font-size:2.15rem;line-height:1.08;color:var(--text);font-weight:400}
@@ -826,7 +826,7 @@ body.programme-print-active{overflow:hidden}
 .pb-print-sheet__rule{width:2px;height:72px;background:#b7aea0;flex:0 0 auto;margin-top:2px}
 .pb-print-sheet__artist{font-size:29px;line-height:1.08;font-weight:700;margin:0 0 8px;color:#1b1b1b;font-family:Arial,Helvetica,sans-serif}
 .pb-print-sheet__subtitle{font-size:15.5px;line-height:1.38;font-style:italic;color:#2f2f2f;margin:0}
-.pb-print-sheet__portrait{width:108px;height:108px;object-fit:cover;object-position:center;border:none}
+.pb-print-sheet__portrait{width:108px;height:108px;max-width:100%;max-height:100%;object-fit:contain;object-position:center;overflow:hidden;background:#06070a;border:none;display:block}
 .pb-print-sheet__divider{border-top:1px solid #d8d2c8;margin:20px 0 22px}
 .pb-print-sheet__title{font-family:Georgia,"Times New Roman",serif;font-size:36px;line-height:1.08;font-weight:400;margin:0 0 10px;color:#1b1b1b}
 .pb-print-sheet__version{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#635844;margin:0 0 16px}

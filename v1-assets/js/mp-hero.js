@@ -296,6 +296,11 @@
     var desktopPosition = desktop.position || 'center center';
     var mobileFit = mobile.fit || desktopFit;
     var mobilePosition = mobile.position || desktopPosition;
+    var hasMobilePositionOverride = !!(heroSettings && String(heroSettings.mobilePosition || '').trim());
+    if (hasMobilePositionOverride && (!mobile.fit || mobile.fit === 'cover')) {
+      // A tall mobile hero with plain cover can leave no vertical crop room, so Y percentages appear static.
+      mobileFit = 'auto 118%';
+    }
     heroBg.style.setProperty('--hero-bg-size-desktop', desktopFit);
     heroBg.style.setProperty('--hero-bg-position-desktop', desktopPosition);
     heroBg.style.setProperty('--hero-bg-size-mobile', mobileFit);
