@@ -1425,7 +1425,7 @@
         (refs.type === 's' && orientation === 'landscape') ||
         ((refs.type === 't' || refs.type === 'b') && orientation === 'portrait');
       var focusStyle = entry && entry.focus
-        ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + ' !important;--rg-img-position:' + String(entry.focus).replace(/"/g, '&quot;') + '"'
+        ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + ' !important;--rg-img-position:' + String(entry.focus).replace(/"/g, '&quot;') + ';transform:scale(1.08) !important;transform-origin:' + String(entry.focus).replace(/"/g, '&quot;') + ' !important"'
         : '';
       var metaHtml = '';
       if (caption || photographer) {

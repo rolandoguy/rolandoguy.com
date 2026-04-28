@@ -417,6 +417,8 @@
     if (!settings) {
       introPhoto.style.removeProperty('object-fit');
       introPhoto.style.removeProperty('object-position');
+      introPhoto.style.removeProperty('transform');
+      introPhoto.style.removeProperty('transform-origin');
       return;
     }
     if (settings.layout) {
@@ -431,6 +433,13 @@
       else introPhoto.style.removeProperty('object-fit');
       if (settings.position) introPhoto.style.setProperty('object-position', settings.position, 'important');
       else introPhoto.style.removeProperty('object-position');
+    }
+    if (settings.position && settings.fit !== 'contain') {
+      introPhoto.style.setProperty('transform', 'scale(1.12)', 'important');
+      introPhoto.style.setProperty('transform-origin', settings.position, 'important');
+    } else {
+      introPhoto.style.removeProperty('transform');
+      introPhoto.style.removeProperty('transform-origin');
     }
   }
   function resolveIntroImage(cfgImageOrFallback) {

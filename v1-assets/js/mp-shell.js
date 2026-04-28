@@ -157,10 +157,18 @@
     if (!imgEl) return { fit: normalizeImageFit(fit), position: resolveImagePosition(manualPosition, presetPosition, fallbackPosition) };
     var resolvedFit = normalizeImageFit(fit);
     var resolvedPosition = resolveImagePosition(manualPosition, presetPosition, fallbackPosition);
+    var hasManualPosition = String(manualPosition || '').trim() && imagePositionIsValid(manualPosition);
     imgEl.style.setProperty('object-fit', resolvedFit, 'important');
     imgEl.style.setProperty('object-position', resolvedPosition, 'important');
     imgEl.style.setProperty('--rg-img-fit', resolvedFit);
     imgEl.style.setProperty('--rg-img-position', resolvedPosition);
+    if (hasManualPosition && resolvedFit === 'cover') {
+      imgEl.style.setProperty('transform', 'scale(1.08)', 'important');
+      imgEl.style.setProperty('transform-origin', resolvedPosition, 'important');
+    } else {
+      imgEl.style.removeProperty('transform');
+      imgEl.style.removeProperty('transform-origin');
+    }
     if (imgEl.parentNode && imgEl.parentNode.style) {
       imgEl.parentNode.style.setProperty('--rg-img-fit', resolvedFit);
       imgEl.parentNode.style.setProperty('--rg-img-position', resolvedPosition);
