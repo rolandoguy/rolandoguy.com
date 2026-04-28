@@ -151,19 +151,30 @@ writeText('contact.html', contactHtml);
 // media.html
 var mediaHtml = readText('media.html');
 var mediaVideos = mediaData.videos || {};
-var mediaPhotos = mediaData.photos || {};
 mediaHtml = replaceById(mediaHtml, 'vidH2', ensureOneLine(mediaVideos.h2 || 'Stage, Concert &amp; Recital Highlights'));
-mediaHtml = replaceById(mediaHtml, 'photosH2', ensureOneLine(mediaPhotos.h2 || 'Portraits, Stage &amp; <em>Backstage</em>'));
-mediaHtml = replaceById(
-  mediaHtml,
-  'photosSub',
-  escapeHtml(
-    ensureOneLine(
-      mediaPhotos.sub ||
-      'Selected portrait, stage and backstage photography. Click any image to view full size.'
-    )
-  )
-);
 writeText('media.html', mediaHtml);
+
+// photos.html
+if (fs.existsSync(path.join(root, 'photos.html'))) {
+  var photosHtml = readText('photos.html');
+  var mediaPhotos = mediaData.photos || {};
+  photosHtml = replaceById(
+    photosHtml,
+    'photosH2',
+    ensureOneLine(mediaPhotos.h2 || enLocale['mp.photos.h2'] || 'Portraits, Stage &amp; <em>Backstage</em>')
+  );
+  photosHtml = replaceById(
+    photosHtml,
+    'photosSub',
+    escapeHtml(
+      ensureOneLine(
+        enLocale['mp.photos.sub'] ||
+        mediaPhotos.sub ||
+        'Studio portraits, stage moments and backstage impressions.'
+      )
+    )
+  );
+  writeText('photos.html', photosHtml);
+}
 
 console.log('Prerendered EN static content into public HTML templates.');

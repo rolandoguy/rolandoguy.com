@@ -1141,9 +1141,10 @@ position:absolute;inset:0;display:flex;align-items:center;justify-content:center
 .photo-section-head{scroll-margin-top:116px}
 .photo-section-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(212,168,67,.24),rgba(212,168,67,.06),transparent)}
 .photo-section-eyebrow{font-family:var(--ff-caps);font-size:.53rem;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;white-space:nowrap}
-.photo-grid-4,.photo-grid-3{display:flex;flex-direction:column;gap:3px;background:var(--border);border:1px solid var(--border);cursor:pointer}
-.photo-grid-row{display:grid;gap:3px}
+.photo-grid-4,.photo-grid-3{display:grid;grid-template-columns:repeat(var(--photo-cols,3),minmax(0,1fr));gap:3px;background:var(--border);border:1px solid var(--border);cursor:pointer}
+.photo-grid-row{display:contents}
 .photo-item{overflow:hidden;cursor:pointer;position:relative;background:var(--surface);opacity:1;will-change:opacity,transform}
+.photo-item.reveal{opacity:1;transform:none}
 .photo-item-p{aspect-ratio:3/4}.photo-item-s{aspect-ratio:4/3}
 .photo-item.photo-item-auto{aspect-ratio:auto}
 .photo-item-fit-contain{background:linear-gradient(145deg,#17181d,#0d1014)}
@@ -1182,11 +1183,6 @@ position:absolute;inset:0;display:flex;align-items:center;justify-content:center
   letter-spacing:.18em;
   text-transform:uppercase;
   color:rgba(245,242,236,.58);
-}
-
-@media(min-width:1001px){
-  .photo-grid-row:first-child .photo-item-s{aspect-ratio:16/10}
-  .photo-grid-row:first-child .photo-item-p{aspect-ratio:5/6}
 }
 
 @media (pointer: fine){
@@ -1922,8 +1918,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .about-photo-wrap{max-width:320px;margin:0 auto;width:100%}
   .achievements{grid-template-columns:1fr}
   .rep-tabs{flex-wrap:wrap}.rep-tab{flex:1 1 auto;min-width:7rem}
-  .photo-grid-4{grid-template-columns:1fr 1fr}
-  .photo-grid-3{grid-template-columns:1fr 1fr}
+  .photo-grid-4,.photo-grid-3{grid-template-columns:repeat(var(--photo-cols,2),minmax(0,1fr))}
   /* Calendar rows live in #performances — avoid tablet .perf-item grid/gap overrides fighting the dedicated min-width:601 rules */
   #contact .contact-grid{
     grid-template-columns:1fr;
@@ -2164,8 +2159,7 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .program-meta-value{line-height:1.55}
   .program-meta-value ul{gap:3px}
   .program-meta-value li{padding-left:11px;line-height:1.45}
-  .photo-grid-4{grid-template-columns:1fr 1fr}
-  .photo-grid-3{grid-template-columns:1fr}
+  .photo-grid-4,.photo-grid-3{grid-template-columns:repeat(var(--photo-cols,1),minmax(0,1fr))}
   .photo-panel{margin-top:24px}
   .photo-panel:first-of-type{margin-top:16px}
   .photo-panel{scroll-margin-top:132px}

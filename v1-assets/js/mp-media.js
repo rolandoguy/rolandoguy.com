@@ -1,5 +1,5 @@
 /**
- * Public-safe videos + photos module for mp/media.html.
+ * Public-safe videos + photos module for mp/media.html and mp/photos.html.
  * Data comes only from /v1-assets/data/media-data.json, which is the public-safe export layer.
  * Legacy admin docs, Firestore reads, and local draft fallbacks are disabled on the public site.
  */
@@ -1389,7 +1389,7 @@
     var ph = getPhotoEntries();
     var lang = currentLang || 'en';
     var altStudioFb = mpPick(lang, 'mp.photos.studioTab', 'Rolando Guy');
-    var altStageFb = mpPick(lang, 'mp.photos.stageTab', 'On Stage');
+    var altStageFb = mpPick(lang, 'mp.photos.stageTab', 'On stage');
     var altBackFb = mpPick(lang, 'mp.photos.backstageTab', 'Backstage');
     var sRefs = getPhotoPanelRefs('studio');
     var tRefs = getPhotoPanelRefs('stage');
@@ -1399,35 +1399,7 @@
       var w = window.innerWidth || document.documentElement.clientWidth || 1280;
       if (w <= 600) return itemClass === 'photo-item-p' ? 2 : 1;
       if (w <= 1000) return 2;
-      return itemClass === 'photo-item-p' ? 4 : 3;
-    }
-
-    function balancedRowSizes(count, maxCols, refs) {
-      if (count <= 0) return [];
-      var w = window.innerWidth || document.documentElement.clientWidth || 1280;
-      if (w > 1000) {
-        if (refs.type === 't' || refs.type === 'b') {
-          if (count >= 5) {
-            return [2].concat(balancedRowSizes(count - 2, 3, { type: refs.type, itemClass: refs.itemClass }));
-          }
-          if (count === 4) return [2, 2];
-        }
-        if (refs.type === 's') {
-          if (count >= 7) {
-            return [3].concat(balancedRowSizes(count - 3, 4, { type: refs.type, itemClass: refs.itemClass }));
-          }
-          if (count === 6) return [3, 3];
-          if (count === 5) return [3, 2];
-        }
-      }
-      var rows = Math.ceil(count / maxCols);
-      var base = Math.floor(count / rows);
-      var extra = count % rows;
-      var sizes = [];
-      for (var i = 0; i < rows; i++) {
-        sizes.push(base + (i < extra ? 1 : 0));
-      }
-      return sizes;
+      return 3;
     }
 
     function renderPhotoItem(refs, entry, i, altFallback) {
@@ -1484,24 +1456,10 @@
       if (!refs || !refs.grid) return;
       var count = Array.isArray(items) ? items.length : 0;
       var cols = maxPhotoCols(refs.itemClass);
-      var rows = balancedRowSizes(count, cols, refs);
-      var cursor = 0;
-      refs.grid.innerHTML = rows
-        .map(function (rowSize) {
-          var rowItems = (items || []).slice(cursor, cursor + rowSize);
-          var start = cursor;
-          cursor += rowSize;
-          return (
-            '<div class="photo-grid-row" style="grid-template-columns:repeat(' +
-            rowSize +
-            ', minmax(0,1fr))">' +
-            rowItems
-              .map(function (entry, rowIdx) {
-                return renderPhotoItem(refs, entry, start + rowIdx, altFallback);
-              })
-              .join('') +
-            '</div>'
-          );
+      refs.grid.style.setProperty('--photo-cols', String(cols || 1));
+      refs.grid.innerHTML = (items || [])
+        .map(function (entry, index) {
+          return renderPhotoItem(refs, entry, index, altFallback);
         })
         .join('');
     }
@@ -1763,8 +1721,8 @@
         photos: {
           h2: mpPick(lang, 'mp.photos.h2', 'Portraits, Stage &amp; <em>Backstage</em>'),
           sub: mpPick(lang, 'mp.mediaLoadError', 'Media data could not be loaded.'),
-          studioTab: mpPick(lang, 'mp.photos.studioTab', 'Studio Portraits'),
-          stageTab: mpPick(lang, 'mp.photos.stageTab', 'On Stage'),
+          studioTab: mpPick(lang, 'mp.photos.studioTab', 'Studio photos'),
+          stageTab: mpPick(lang, 'mp.photos.stageTab', 'On stage'),
           backstageTab: mpPick(lang, 'mp.photos.backstageTab', 'Backstage'),
           backstageEmpty: mpPick(lang, 'mp.photos.backstageEmpty', 'No photos yet.'),
           s: [],

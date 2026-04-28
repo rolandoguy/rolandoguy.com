@@ -30,6 +30,7 @@ https://www.rolandoguy.com/*  https://rolandoguy.com/:splat  301
 /mp/calendar                    https://rolandoguy.com/calendar           301
 /mp/contact                     https://rolandoguy.com/contact            301
 /mp/media                       https://rolandoguy.com/media              301
+/mp/photos                      https://rolandoguy.com/photos             301
 /mp/press                       https://rolandoguy.com/press              301
 /mp/repertoire                  https://rolandoguy.com/repertoire         301
 /mp/reviews                     https://rolandoguy.com/reviews            301
@@ -37,6 +38,7 @@ https://www.rolandoguy.com/*  https://rolandoguy.com/:splat  301
 /mp/calendar.html               https://rolandoguy.com/calendar           301
 /mp/contact.html                https://rolandoguy.com/contact            301
 /mp/media.html                  https://rolandoguy.com/media              301
+/mp/photos.html                 https://rolandoguy.com/photos             301
 /mp/press.html                  https://rolandoguy.com/press              301
 /mp/repertoire.html             https://rolandoguy.com/repertoire         301
 /mp/reviews.html                https://rolandoguy.com/reviews            301
@@ -45,6 +47,7 @@ https://www.rolandoguy.com/*  https://rolandoguy.com/:splat  301
 /repertoire.html                https://rolandoguy.com/repertoire         301
 /calendar.html                  https://rolandoguy.com/calendar           301
 /media.html                     https://rolandoguy.com/media              301
+/photos.html                    https://rolandoguy.com/photos             301
 /contact.html                   https://rolandoguy.com/contact            301
 /press.html                     https://rolandoguy.com/press              301
 /reviews.html                   https://rolandoguy.com/reviews            301

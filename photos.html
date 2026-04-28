@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <script>(function(){try{var s=(localStorage.getItem('mp_site_lang')||'').toLowerCase().slice(0,2);if(/^(en|de|es|it|fr)$/.test(s))document.documentElement.lang=s;}catch(e){}document.documentElement.classList.add('mp-lang-pending');})();</script>
 <meta name="theme-color" content="#0D0D12">
-<meta name="description" content="Bookings and artistic enquiries for Berlin-based lyric tenor and opera singer Rolando Guy — opera, concert, recital, tango, and curated programmes.">
-<title>Bookings — Rolando Guy</title>
-<link rel="canonical" href="https://rolandoguy.com/contact">
+<meta name="description" content="Studio portraits, stage moments and backstage impressions. Rolando Guy.">
+<title>Photos — Rolando Guy</title>
+<link rel="canonical" href="https://rolandoguy.com/photos">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Bookings — Rolando Guy">
-<meta property="og:description" content="Bookings and artistic enquiries for Berlin-based lyric tenor and opera singer Rolando Guy — opera, concert, recital, tango, and curated programmes.">
-<meta property="og:url" content="https://rolandoguy.com/contact">
+<meta property="og:title" content="Photos — Rolando Guy">
+<meta property="og:description" content="Studio portraits, stage moments and backstage impressions. Rolando Guy.">
+<meta property="og:url" content="https://rolandoguy.com/photos">
 <meta property="og:image" content="https://rolandoguy.com/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Bookings — Rolando Guy">
-<meta name="twitter:description" content="Bookings and artistic enquiries for Berlin-based lyric tenor and opera singer Rolando Guy — opera, concert, recital, tango, and curated programmes.">
+<meta name="twitter:title" content="Photos — Rolando Guy">
+<meta name="twitter:description" content="Studio portraits, stage moments and backstage impressions. Rolando Guy.">
 <meta name="twitter:image" content="https://rolandoguy.com/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="v1-assets/css/v1-main.css">
 <link rel="stylesheet" href="mp-home.css">
 </head>
-<body data-mp-page="contact">
+<body data-mp-page="photos">
 <a class="skip-link" href="#top" data-i18n="ui.skipMain">Skip to main content</a>
 <header class="site-chrome" role="banner">
 <div class="lang-bar">
@@ -65,47 +65,61 @@
     <button type="button" onclick="setLang('fr', { persist: true });closeMenu()" id="mob-btn-fr"><span class="lang-flag" aria-hidden="true">&#127467;&#127479;</span><span class="lang-label">FR</span></button>
   </div>
 </div>
-<main id="top" class="mp-page-main">
-<section id="contact">
+<main id="top" class="mp-page-main mp-photos-page-main">
+<div class="lightbox" id="lightbox" onclick="closeLbOnBg(event)">
+  <button type="button" class="lightbox-close" onclick="closeLb()" data-i18n="ui.close">Close ✕</button>
+  <button type="button" class="lb-nav lb-prev" onclick="navLb(-1)">&#8592;</button>
+  <img class="lightbox-img" id="lbImg" src="" alt="">
+  <button type="button" class="lb-nav lb-next" onclick="navLb(1)">&#8594;</button>
+  <div class="lb-counter" id="lbCtr">1 / 4</div>
+  <div id="lbCaption" style="text-align:center;max-width:600px;margin:12px auto 0;padding:0 20px">
+    <div id="lbCapText" style="font-size:.85rem;color:var(--text-dim);line-height:1.6"></div>
+    <div id="lbCapPhotog" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;margin-top:6px"></div>
+  </div>
+</div>
+
+<section id="photos">
   <div class="section-inner">
-    <p class="section-tag" data-num="09" id="contactSectionTag" data-i18n="nav.contact">Contact</p>
-    <div class="contact-grid">
-      <h2 id="contactTitle" class="reveal">Bookings &amp; <em>Artistic Enquiries</em></h2>
-      <div class="contact-form reveal rd2">
-        <div class="form-row">
-          <div class="form-group"><label class="form-label" for="cf-name" data-i18n="form.name">Name</label><input type="text" id="cf-name" class="form-input" data-i18n-placeholder="form.namePh" placeholder="Your name" autocomplete="name"></div>
-          <div class="form-group"><label class="form-label" for="cf-email" data-i18n="form.email">Email</label><input type="email" id="cf-email" class="form-input" data-i18n-placeholder="form.emailPh" placeholder="your@email.com" autocomplete="email"></div>
-        </div>
-        <div class="form-group"><label class="form-label" for="cf-subject" data-i18n="form.subject">Subject</label><input type="text" id="cf-subject" class="form-input" data-i18n-placeholder="form.subjectPh" placeholder="Booking enquiry" autocomplete="off"></div>
-        <div class="form-group"><label class="form-label" for="cf-message" data-i18n="form.message">Message</label><textarea id="cf-message" class="form-input" rows="5" data-i18n-placeholder="form.messagePh" placeholder="Describe your enquiry …"></textarea></div>
-        <button type="button" class="form-submit" onclick="submitForm()"><span data-i18n="form.send">Send Message</span></button>
-        <div class="form-success" id="formOk" data-i18n="form.success">Thank you! Your message has been sent.</div>
+    <p class="section-tag" data-num="01" data-i18n="mp.section.photos">Photos</p>
+    <div class="photos-header">
+      <h2 class="reveal" id="photosH2" data-i18n-html="mp.photos.h2">Portraits, Stage &amp; <em>Backstage</em></h2>
+      <p class="reveal rd1" id="photosSub" data-i18n="mp.photos.sub">Studio portraits, stage moments and backstage impressions.</p>
+    </div>
+    <div class="photo-tabs">
+      <a href="#photo-head-studio" class="photo-tab active" id="tab-studio" onclick="showTab('studio')" data-i18n="mp.photos.studioTab">Studio photos</a>
+      <a href="#photo-head-stage" class="photo-tab" id="tab-stage" onclick="showTab('stage')" data-i18n="mp.photos.stageTab">On stage</a>
+      <a href="#photo-head-backstage" class="photo-tab" id="tab-backstage" onclick="showTab('backstage')" data-i18n="mp.photos.backstageTab">Backstage</a>
+    </div>
+    <div id="panel-studio" class="photo-panel active">
+      <div class="photo-section-head" id="photo-head-studio">
+        <p class="photo-section-eyebrow" data-i18n="mp.photos.studioTab">Studio photos</p>
       </div>
-      <div class="contact-left reveal">
-        <p id="contactSub">For booking enquiries, artistic projects, private concerts, and opera evenings, please use the contact form.
-
-Based in Berlin, Rolando Guy is available for opera, concert, recital, tango, and curated programmes for presenters, programmers, festivals, and artistic collaborations.
-
-All enquiries will be answered as soon as possible.</p>
-        <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
-          <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
-        </div>
-        <div class="contact-ctas">
-          <a id="contactEmailBtn" class="btn-secondary">Send Email</a>
-          <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none" data-i18n="contact.webBtn">Official Website</a>
-        </div>
+      <div class="photo-grid-4"></div>
+    </div>
+    <div id="panel-stage" class="photo-panel">
+      <div class="photo-section-head" id="photo-head-stage">
+        <p class="photo-section-eyebrow" data-i18n="mp.photos.stageTab">On stage</p>
       </div>
+      <div class="photo-grid-3"></div>
+    </div>
+    <div id="panel-backstage" class="photo-panel">
+      <div class="photo-section-head" id="photo-head-backstage">
+        <p class="photo-section-eyebrow" data-i18n="mp.photos.backstageTab">Backstage</p>
+      </div>
+      <div class="photo-grid-3" id="backstageGrid"></div>
+      <div id="backstageEmpty" style="text-align:center;padding:60px 0;color:var(--text-faint);font-style:italic" data-i18n="mp.photos.backstageEmpty"></div>
     </div>
   </div>
 </section>
 
+
 <section class="mp-onward-band" data-i18n-aria="ui.onwardSectionAria" aria-label="Next steps">
   <div class="section-inner reveal rd2">
-  <p class="section-sub mp-onward-note" data-i18n="mp.contactBottomNote">Explore programmes, calendar, and press materials to support casting and programming decisions.</p>
+  <p class="section-sub mp-onward-note mp-aura-press" data-i18n="mp.mediaBottomNote">Press materials and high-resolution assets are available on the press page.</p>
   <div class="contact-ctas mp-onward-ctas">
-    <a href="repertoire.html" class="btn-primary" data-i18n="nav.rep">Repertoire</a>
-    <a href="calendar.html" class="btn-secondary" data-i18n="nav.cal">Calendar</a>
-    <a href="press.html" class="btn-secondary" data-i18n="nav.epk">Press &amp; materials</a>
+    <a href="media.html" class="btn-secondary mp-aura-press" data-i18n="nav.media">Media</a>
+    <a href="calendar.html" class="btn-secondary mp-aura-press" data-i18n="nav.cal">Calendar</a>
+    <a href="contact.html" class="btn-primary mp-cta-glint" data-i18n="nav.book">Book now</a>
   </div>
   </div>
 </section>
@@ -131,7 +145,8 @@ All enquiries will be answered as soon as possible.</p>
     </div>
   </div>
 </footer>
+
 <script defer src="v1-assets/js/mp-shell.js?v=20260419b"></script>
-<script defer src="v1-assets/js/mp-contact.js?v=20260419b"></script>
+<script defer src="v1-assets/js/mp-media.js?v=20260419b"></script>
 </body>
 </html>

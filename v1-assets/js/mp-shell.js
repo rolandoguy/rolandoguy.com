@@ -339,6 +339,26 @@
     var d = MP_UI_OVERRIDES[L];
     if (d && typeof d[key] === 'string' && d[key].trim()) {
       var raw = String(d[key]).trim();
+      if (/^(nav\.photos|mp\.photos\.|page\.photos\.)/.test(key) && L !== 'en') {
+        var localeTable = window.MP_LOCALE_TABLE || {};
+        var localPhotoVal =
+          localeTable && localeTable[L] && localeTable[L][key] != null ? String(localeTable[L][key]).trim() : '';
+        if (localPhotoVal) {
+          var rawPhotoNorm = raw.toLowerCase();
+          var localPhotoNorm = localPhotoVal.toLowerCase();
+          var bleedLang = MP_LANG_LIST.some(function (candidate) {
+            if (candidate === L) return false;
+            var candidateVal =
+              localeTable &&
+              localeTable[candidate] &&
+              localeTable[candidate][key] != null
+                ? String(localeTable[candidate][key]).trim()
+                : '';
+            return candidateVal && candidateVal.toLowerCase() === rawPhotoNorm;
+          });
+          if (bleedLang && rawPhotoNorm !== localPhotoNorm) return localPhotoVal;
+        }
+      }
       if (key === 'home.intro.ctaPress' && L !== 'en') {
         var table = window.MP_LOCALE_TABLE || {};
         var enVal = table && table.en && table.en[key] != null ? String(table.en[key]).trim() : '';

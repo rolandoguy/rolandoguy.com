@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <script>(function(){try{var s=(localStorage.getItem('mp_site_lang')||'').toLowerCase().slice(0,2);if(/^(en|de|es|it|fr)$/.test(s))document.documentElement.lang=s;}catch(e){}document.documentElement.classList.add('mp-lang-pending');})();</script>
 <meta name="theme-color" content="#0D0D12">
-<meta name="description" content="Performance videos, listening highlights, and portrait / stage / backstage photography — Rolando Guy.">
+<meta name="description" content="Performance videos and listening highlights — Rolando Guy.">
 <title>Media — Rolando Guy</title>
 <link rel="canonical" href="https://rolandoguy.com/media">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Media — Rolando Guy">
-<meta property="og:description" content="Performance videos, listening highlights, and portrait / stage / backstage photography — Rolando Guy.">
+<meta property="og:description" content="Performance videos and listening highlights — Rolando Guy.">
 <meta property="og:url" content="https://rolandoguy.com/media">
 <meta property="og:image" content="https://rolandoguy.com/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Media — Rolando Guy">
-<meta name="twitter:description" content="Performance videos, listening highlights, and portrait / stage / backstage photography — Rolando Guy.">
+<meta name="twitter:description" content="Performance videos and listening highlights — Rolando Guy.">
 <meta name="twitter:image" content="https://rolandoguy.com/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,6 +40,7 @@
     <li><a href="biography.html" data-i18n="nav.bio">Biography</a></li>
     <li><a href="repertoire.html" data-i18n="nav.rep">Repertoire</a></li>
     <li><a href="media.html" data-i18n="nav.media">Media</a></li>
+    <li><a href="photos.html" data-i18n="nav.photos">Photos</a></li>
     <li><a href="calendar.html" data-i18n="nav.cal">Calendar</a></li>
     <li><a href="press.html" data-i18n="nav.epk">Press & materials</a></li>
     <li><a href="contact.html" data-i18n="nav.book">Book now</a></li>
@@ -52,6 +53,7 @@
   <a href="biography.html" onclick="closeMenu()" data-i18n="nav.bio">Biography</a>
   <a href="repertoire.html" onclick="closeMenu()" data-i18n="nav.rep">Repertoire</a>
   <a href="media.html" onclick="closeMenu()" data-i18n="nav.media">Media</a>
+  <a href="photos.html" onclick="closeMenu()" data-i18n="nav.photos">Photos</a>
   <a href="calendar.html" onclick="closeMenu()" data-i18n="nav.cal">Calendar</a>
   <a href="press.html" onclick="closeMenu()" data-i18n="nav.epk">Press & materials</a>
   <a href="contact.html" onclick="closeMenu()" data-i18n="nav.book">Book now</a>
@@ -67,7 +69,7 @@
 <section id="videos">
   <div class="section-inner">
     <div class="media-section-jump media-section-jump-top">
-      <a href="#photos" class="media-section-jump-link" data-i18n="mp.jumpToPhotos">Go to photos</a>
+      <a href="photos.html" class="media-section-jump-link" data-i18n="mp.jumpToPhotos">Go to photos</a>
       <a href="#audio" class="media-section-jump-link" data-i18n="mp.jumpToAudio" data-audio-jump hidden>Go to audio</a>
     </div>
     <p class="section-tag" data-num="03" data-i18n="mp.section.videos">Videos</p>
@@ -94,65 +96,11 @@
   </div>
 </div>
 
-<div class="lightbox" id="lightbox" onclick="closeLbOnBg(event)">
-  <button type="button" class="lightbox-close" onclick="closeLb()" data-i18n="ui.close">Close ✕</button>
-  <button type="button" class="lb-nav lb-prev" onclick="navLb(-1)">&#8592;</button>
-  <img class="lightbox-img" id="lbImg" src="" alt="">
-  <button type="button" class="lb-nav lb-next" onclick="navLb(1)">&#8594;</button>
-  <div class="lb-counter" id="lbCtr">1 / 4</div>
-  <div id="lbCaption" style="text-align:center;max-width:600px;margin:12px auto 0;padding:0 20px">
-    <div id="lbCapText" style="font-size:.85rem;color:var(--text-dim);line-height:1.6"></div>
-    <div id="lbCapPhotog" style="font-family:var(--ff-caps);font-size:.48rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;margin-top:6px"></div>
-  </div>
-</div>
-
-<section id="photos">
-  <div class="section-inner">
-    <div class="media-section-jump media-section-jump-top">
-      <a href="#videos" class="media-section-jump-link" data-i18n="mp.jumpToVideos">Back to videos</a>
-      <a href="#audio" class="media-section-jump-link" data-i18n="mp.jumpToAudio" data-audio-jump hidden>Go to audio</a>
-    </div>
-    <p class="section-tag" data-num="04" data-i18n="mp.section.photos">Photos</p>
-    <div class="photos-header">
-      <h2 class="reveal" id="photosH2" data-i18n-html="mp.photos.h2">Portraits, Stage &amp; <em>Backstage</em></h2>
-      <p class="reveal rd1" id="photosSub" data-i18n="mp.photos.sub">Selected portrait, stage and backstage photography. Click any image to view full size.</p>
-    </div>
-    <div class="photo-tabs">
-      <a href="#photo-head-studio" class="photo-tab active" id="tab-studio" onclick="showTab('studio')" data-i18n="mp.photos.studioTab">Studio Portraits</a>
-      <a href="#photo-head-stage" class="photo-tab" id="tab-stage" onclick="showTab('stage')" data-i18n="mp.photos.stageTab">On Stage</a>
-      <a href="#photo-head-backstage" class="photo-tab" id="tab-backstage" onclick="showTab('backstage')" data-i18n="mp.photos.backstageTab">Backstage</a>
-    </div>
-    <div id="panel-studio" class="photo-panel active">
-      <div class="photo-section-head" id="photo-head-studio">
-        <p class="photo-section-eyebrow" data-i18n="mp.photos.studioTab">Studio Portraits</p>
-      </div>
-      <div class="photo-grid-4"></div>
-    </div>
-    <div id="panel-stage" class="photo-panel">
-      <div class="photo-section-head" id="photo-head-stage">
-        <p class="photo-section-eyebrow" data-i18n="mp.photos.stageTab">On Stage</p>
-      </div>
-      <div class="photo-grid-3"></div>
-    </div>
-    <div id="panel-backstage" class="photo-panel">
-      <div class="photo-section-head" id="photo-head-backstage">
-        <p class="photo-section-eyebrow" data-i18n="mp.photos.backstageTab">Backstage</p>
-      </div>
-      <div class="photo-grid-3" id="backstageGrid"></div>
-      <div id="backstageEmpty" style="text-align:center;padding:60px 0;color:var(--text-faint);font-style:italic" data-i18n="mp.photos.backstageEmpty"></div>
-    </div>
-    <div class="media-section-jump media-section-jump-bottom">
-      <a href="#videos" class="media-section-jump-link" data-i18n="mp.jumpToVideos">Back to videos</a>
-      <a href="#audio" class="media-section-jump-link" data-i18n="mp.jumpToAudio" data-audio-jump hidden>Go to audio</a>
-    </div>
-  </div>
-</section>
-
 <section id="audio" hidden data-has-items="false">
   <div class="section-inner">
     <div class="media-section-jump media-section-jump-top">
       <a href="#videos" class="media-section-jump-link" data-i18n="mp.jumpToVideos">Back to videos</a>
-      <a href="#photos" class="media-section-jump-link" data-i18n="mp.jumpToPhotos">Go to photos</a>
+      <a href="photos.html" class="media-section-jump-link" data-i18n="mp.jumpToPhotos">Go to photos</a>
     </div>
     <p class="section-tag" data-num="05" data-i18n="mp.section.audio">Audio</p>
     <div class="audio-header">
@@ -163,7 +111,7 @@
     <div class="audio-grid" id="audioGrid"></div>
     <div class="media-section-jump media-section-jump-bottom">
       <a href="#videos" class="media-section-jump-link" data-i18n="mp.jumpToVideos">Back to videos</a>
-      <a href="#photos" class="media-section-jump-link" data-i18n="mp.jumpToPhotos">Go to photos</a>
+      <a href="photos.html" class="media-section-jump-link" data-i18n="mp.jumpToPhotos">Go to photos</a>
     </div>
   </div>
 </section>

@@ -26,7 +26,12 @@ var requiredHtmlPages = [
   {
     file: 'media.html',
     pageId: 'media',
-    hooks: ['data-i18n=', 'id="videoGrid"', 'id="videoMore"', 'id="videoModal"', 'id="photos"']
+    hooks: ['data-i18n=', 'id="videoGrid"', 'id="videoMore"', 'id="videoModal"', 'href="photos.html"']
+  },
+  {
+    file: 'photos.html',
+    pageId: 'photos',
+    hooks: ['data-i18n=', 'id="photos"', 'id="photosH2"', 'id="photo-head-studio"', 'id="lightbox"']
   },
   {
     file: 'calendar.html',
@@ -248,6 +253,11 @@ async function main() {
       file: 'media.html',
       titleKey: 'page.media.title',
       descriptionKey: 'page.media.metaDescription'
+    },
+    {
+      file: 'photos.html',
+      titleKey: 'page.photos.title',
+      descriptionKey: 'page.photos.metaDescription'
     },
     {
       file: 'reviews.html',
