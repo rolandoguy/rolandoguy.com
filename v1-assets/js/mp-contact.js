@@ -204,26 +204,28 @@
   }
 
   function resolveImageObjectFit(value) {
-    return String(value || '').trim().toLowerCase() === 'contain' ? 'contain' : 'cover';
+    return window.RGImageCrop ? window.RGImageCrop.normalizeImageFit(value) : (String(value || '').trim().toLowerCase() === 'contain' ? 'contain' : 'cover');
   }
 
   function normalizeImageObjectPosition(value) {
-    var raw = String(value || '').trim().replace(/\s+/g, ' ');
-    if (!raw) return '';
-    var lower = raw.toLowerCase();
-    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
-    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return lower;
-    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
-    if (/^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower)) return lower;
-    return '';
+    if (window.RGImageCrop) return window.RGImageCrop.normalizeImagePosition(value);
+    return String(value || '').trim().replace(/\s+/g, ' ') || 'center center';
   }
 
   function resolveImageObjectPosition(manual, preset) {
-    return normalizeImageObjectPosition(manual) || normalizeImageObjectPosition(preset) || 'center center';
+    return window.RGImageCrop ? window.RGImageCrop.resolveImagePosition(manual, preset, 'center center') : (normalizeImageObjectPosition(manual) || normalizeImageObjectPosition(preset) || 'center center');
   }
 
   function applyImageCrop(el, fit, manualPosition, presetPosition, variablePrefix) {
     if (!el) return;
+    if (window.RGImageCrop) {
+      var crop = window.RGImageCrop.applyObjectImageCrop(el, fit, manualPosition, presetPosition, 'center center');
+      if (el.parentNode && el.parentNode.style && variablePrefix) {
+        el.parentNode.style.setProperty('--' + variablePrefix + '-image-fit', crop.fit);
+        el.parentNode.style.setProperty('--' + variablePrefix + '-image-position', crop.position);
+      }
+      return;
+    }
     var resolvedFit = resolveImageObjectFit(fit);
     var resolvedPosition = resolveImageObjectPosition(manualPosition, presetPosition);
     el.style.setProperty('object-fit', resolvedFit, 'important');
@@ -244,6 +246,9 @@
     var placement = String(d.contactImagePlacement || 'none').trim();
     if (placement === 'background' && contact) {
       contact.style.setProperty('--contact-image-url', 'url("' + String(d.contactImageUrl).replace(/"/g, '\\"') + '")');
+      if (window.RGImageCrop) {
+        window.RGImageCrop.applyBackgroundImageCrop(contact, d.contactImageFit, d.contactImagePositionManual, d.contactImagePosition, 'center center');
+      }
       contact.classList.add('contact-has-bg-image');
       return;
     }

@@ -238,11 +238,12 @@
     return null;
   }
   function normalizeHeroFit(raw) {
-    var s = String(raw || '').trim().toLowerCase();
-    return /^(cover|contain)$/.test(s) ? s : '';
+    if (!String(raw || '').trim()) return '';
+    return window.RGImageCrop ? window.RGImageCrop.normalizeImageFit(raw) : String(raw || '').trim().toLowerCase();
   }
   function normalizeHeroPosition(raw) {
-    return String(raw || '').trim().replace(/\s+/g, ' ');
+    if (!String(raw || '').trim()) return '';
+    return window.RGImageCrop ? window.RGImageCrop.normalizeImagePosition(raw) : String(raw || '').trim().replace(/\s+/g, ' ');
   }
   function getHeroImageSettingsOverrideInfo() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
@@ -278,7 +279,9 @@
   function resolveHeroCrop(heroSettings, viewport, cfg) {
     var prefix = viewport === 'mobile' ? 'mobile' : 'desktop';
     var fallbackPosition = viewport === 'mobile' ? cfg && cfg.focalMobile : cfg && cfg.focalDesktop;
-    var manualOrPreset = normalizeHeroPosition(heroSettings && heroSettings[prefix + 'Position']);
+    var manualOrPreset = window.RGImageCrop
+      ? window.RGImageCrop.resolveImagePosition(heroSettings && heroSettings[prefix + 'Position'], '', fallbackPosition)
+      : normalizeHeroPosition(heroSettings && heroSettings[prefix + 'Position']);
     var fit = normalizeHeroFit(heroSettings && heroSettings[prefix + 'Fit']);
     return {
       fit: fit || '',
@@ -297,6 +300,8 @@
     heroBg.style.setProperty('--hero-bg-position-desktop', desktopPosition);
     heroBg.style.setProperty('--hero-bg-size-mobile', mobileFit);
     heroBg.style.setProperty('--hero-bg-position-mobile', mobilePosition);
+    heroBg.style.setProperty('--rg-bg-size', desktopFit);
+    heroBg.style.setProperty('--rg-bg-position', desktopPosition);
   }
   function getIntroImageOverrideInfo() {
     var rawLang = (window.getMpSiteLang && window.getMpSiteLang()) || 'en';
@@ -414,10 +419,14 @@
         if (el && el.classList) el.classList.add('home-intro-image--' + settings.layout);
       });
     }
-    if (settings.fit) introPhoto.style.setProperty('object-fit', settings.fit, 'important');
-    else introPhoto.style.removeProperty('object-fit');
-    if (settings.position) introPhoto.style.setProperty('object-position', settings.position, 'important');
-    else introPhoto.style.removeProperty('object-position');
+    if (window.RGImageCrop) {
+      window.RGImageCrop.applyObjectImageCrop(introPhoto, settings.fit || 'cover', settings.position, '', 'center center');
+    } else {
+      if (settings.fit) introPhoto.style.setProperty('object-fit', settings.fit, 'important');
+      else introPhoto.style.removeProperty('object-fit');
+      if (settings.position) introPhoto.style.setProperty('object-position', settings.position, 'important');
+      else introPhoto.style.removeProperty('object-position');
+    }
   }
   function resolveIntroImage(cfgImageOrFallback) {
     var override = getIntroImageOverrideInfo();

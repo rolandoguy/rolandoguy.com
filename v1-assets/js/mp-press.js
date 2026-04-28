@@ -370,18 +370,14 @@
     };
     var arr = Array.isArray(src) ? src : [];
     var normalizePreviewFit = function (v) {
-      return String(v || '').trim().toLowerCase() === 'contain' ? 'contain' : 'cover';
+      return window.RGImageCrop ? window.RGImageCrop.normalizeImageFit(v) : (String(v || '').trim().toLowerCase() === 'contain' ? 'contain' : 'cover');
     };
     var normalizePreviewPosition = function (v) {
-      var s = String(v || '').trim().toLowerCase();
-      return /^(center center|center top|center bottom|left center|right center)$/.test(s) ? s : 'center center';
+      return window.RGImageCrop ? window.RGImageCrop.normalizeImagePosition(v) : (String(v || '').trim().toLowerCase() || 'center center');
     };
     var normalizePreviewObjectPosition = function (v) {
-      var raw = String(v || '').trim();
-      var lower = raw.toLowerCase();
-      if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
-      if (/^\d{1,3}(?:\.\d+)?%\s+\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
-      return raw;
+      if (!String(v || '').trim()) return '';
+      return window.RGImageCrop ? window.RGImageCrop.normalizeImagePosition(v) : String(v || '').trim();
     };
     var normalizePreviewAspect = function (v) {
       var s = String(v || '').trim().toLowerCase();
@@ -418,9 +414,9 @@
     return normalizeEpkPhotos(raw).length;
   }
   function resolvePreviewObjectPosition(photo) {
-    var manual = String(photo && photo.previewPositionManual || '').trim();
-    if (manual) return manual;
-    return String(photo && photo.previewPosition || '').trim() || 'center center';
+    return window.RGImageCrop
+      ? window.RGImageCrop.resolveImagePosition(photo && photo.previewPositionManual, photo && photo.previewPosition, 'center center')
+      : (String(photo && photo.previewPositionManual || '').trim() || String(photo && photo.previewPosition || '').trim() || 'center center');
   }
   function scorePressItems(raw) {
     if (!Array.isArray(raw)) return 0;
@@ -786,8 +782,12 @@
           img.alt = alt;
           img.loading = 'lazy';
           frame.dataset.previewAspect = ph.previewAspect || 'portrait_4_5';
-          img.style.objectFit = ph.previewAspect === 'auto' ? 'contain' : (ph.previewFit || 'cover');
-          img.style.setProperty('object-position', resolvePreviewObjectPosition(ph));
+          if (window.RGImageCrop) {
+            window.RGImageCrop.applyObjectImageCrop(img, ph.previewAspect === 'auto' ? 'contain' : ph.previewFit, ph.previewPositionManual, ph.previewPosition, 'center center');
+          } else {
+            img.style.objectFit = ph.previewAspect === 'auto' ? 'contain' : (ph.previewFit || 'cover');
+            img.style.setProperty('object-position', resolvePreviewObjectPosition(ph));
+          }
           frame.appendChild(img);
 
           var body = document.createElement('div');

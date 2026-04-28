@@ -122,6 +122,80 @@
   }
   window.getMpSiteLang = getMpSiteLang;
   window.fetchMpPublicFirestoreDoc = fetchPublicFirestoreDoc;
+  function normalizeImageFit(value) {
+    var v = String(value || '').trim().toLowerCase();
+    return /^(cover|contain|fill|none|scale-down)$/.test(v) ? v : 'cover';
+  }
+  function normalizeImagePosition(value) {
+    var raw = String(value || '').trim().replace(/\s+/g, ' ');
+    if (!raw) return 'center center';
+    var lower = raw.toLowerCase();
+    var single = { center: 'center center', top: 'center top', bottom: 'center bottom', left: 'left center', right: 'right center' };
+    if (single[lower]) return single[lower];
+    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
+    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return lower;
+    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
+    if (/^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower)) return lower;
+    return 'center center';
+  }
+  function imagePositionIsValid(value) {
+    var raw = String(value || '').trim().replace(/\s+/g, ' ');
+    if (!raw) return false;
+    var lower = raw.toLowerCase();
+    if (/^(center|top|bottom|left|right)$/.test(lower)) return true;
+    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return true;
+    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return true;
+    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return true;
+    return /^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower);
+  }
+  function resolveImagePosition(manual, preset, fallback) {
+    if (String(manual || '').trim() && imagePositionIsValid(manual)) return normalizeImagePosition(manual);
+    if (String(preset || '').trim() && imagePositionIsValid(preset)) return normalizeImagePosition(preset);
+    return normalizeImagePosition(fallback || 'center center');
+  }
+  function applyObjectImageCrop(imgEl, fit, manualPosition, presetPosition, fallbackPosition) {
+    if (!imgEl) return { fit: normalizeImageFit(fit), position: resolveImagePosition(manualPosition, presetPosition, fallbackPosition) };
+    var resolvedFit = normalizeImageFit(fit);
+    var resolvedPosition = resolveImagePosition(manualPosition, presetPosition, fallbackPosition);
+    imgEl.style.setProperty('object-fit', resolvedFit, 'important');
+    imgEl.style.setProperty('object-position', resolvedPosition, 'important');
+    imgEl.style.setProperty('--rg-img-fit', resolvedFit);
+    imgEl.style.setProperty('--rg-img-position', resolvedPosition);
+    if (imgEl.parentNode && imgEl.parentNode.style) {
+      imgEl.parentNode.style.setProperty('--rg-img-fit', resolvedFit);
+      imgEl.parentNode.style.setProperty('--rg-img-position', resolvedPosition);
+    }
+    return { fit: resolvedFit, position: resolvedPosition };
+  }
+  function applyBackgroundImageCrop(el, fitOrSize, manualPosition, presetPosition, fallbackPosition) {
+    var resolvedSize = normalizeImageFit(fitOrSize);
+    var resolvedPosition = resolveImagePosition(manualPosition, presetPosition, fallbackPosition);
+    if (el) {
+      el.style.setProperty('background-size', resolvedSize, 'important');
+      el.style.setProperty('background-position', resolvedPosition, 'important');
+      el.style.setProperty('--rg-bg-size', resolvedSize);
+      el.style.setProperty('--rg-bg-position', resolvedPosition);
+    }
+    return { fit: resolvedSize, position: resolvedPosition };
+  }
+  window.RGImageCrop = {
+    normalizeImageFit: normalizeImageFit,
+    normalizeImagePosition: normalizeImagePosition,
+    resolveImagePosition: resolveImagePosition,
+    applyObjectImageCrop: applyObjectImageCrop,
+    applyBackgroundImageCrop: applyBackgroundImageCrop,
+    selfTest: function () {
+      return {
+        '50% 20%': normalizeImagePosition('50% 20%'),
+        '10% 90%': normalizeImagePosition('10% 90%'),
+        'center center': normalizeImagePosition('center center'),
+        'top center': normalizeImagePosition('top center'),
+        'center top': normalizeImagePosition('center top'),
+        empty: normalizeImagePosition(''),
+        banana: normalizeImagePosition('banana')
+      };
+    }
+  };
   function readLegacyJson() {
     return null;
   }

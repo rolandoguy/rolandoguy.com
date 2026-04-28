@@ -154,7 +154,8 @@
     if (typeof x === 'object') {
       orientation = String(x.orientation != null ? x.orientation : '').trim().toLowerCase();
       if (orientation !== 'portrait' && orientation !== 'landscape') orientation = '';
-      focus = String(x.focus != null ? x.focus : x.objectPosition != null ? x.objectPosition : '').trim();
+      var rawFocus = String(x.focus != null ? x.focus : x.objectPosition != null ? x.objectPosition : '').trim();
+      focus = rawFocus && window.RGImageCrop ? window.RGImageCrop.normalizeImagePosition(rawFocus) : rawFocus;
       if (x.visible === false) return null;
     }
     return {
@@ -1447,7 +1448,7 @@
         (refs.type === 's' && orientation === 'landscape') ||
         ((refs.type === 't' || refs.type === 'b') && orientation === 'portrait');
       var focusStyle = entry && entry.focus
-        ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + '"'
+        ? ' style="object-position:' + String(entry.focus).replace(/"/g, '&quot;') + ' !important;--rg-img-position:' + String(entry.focus).replace(/"/g, '&quot;') + '"'
         : '';
       var metaHtml = '';
       if (caption || photographer) {

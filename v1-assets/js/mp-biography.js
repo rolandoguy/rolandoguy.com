@@ -375,7 +375,11 @@
       img.src = PORTRAIT_PLACEHOLDER;
       delete img.dataset.currentSrc;
       img.dataset.fit = String(merged.portraitFit || '').trim() || 'cover';
-      img.style.objectPosition = String(merged.portraitFocus || '').trim() || '';
+      if (window.RGImageCrop) {
+        window.RGImageCrop.applyObjectImageCrop(img, merged.portraitFit, merged.portraitFocus, '', 'top center');
+      } else {
+        img.style.objectPosition = String(merged.portraitFocus || '').trim() || '';
+      }
     }
 
     if (!hasAnyBioBody(merged)) {

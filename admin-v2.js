@@ -1839,6 +1839,63 @@
   function safeString(v) {
     return typeof v === 'string' ? v : (v == null ? '' : String(v));
   }
+  function normalizeImageFit(value) {
+    var v = safeString(value).trim().toLowerCase();
+    return /^(cover|contain|fill|none|scale-down)$/.test(v) ? v : 'cover';
+  }
+  function normalizeImagePosition(value) {
+    var raw = safeString(value).trim().replace(/\s+/g, ' ');
+    if (!raw) return 'center center';
+    var lower = raw.toLowerCase();
+    var single = { center: 'center center', top: 'center top', bottom: 'center bottom', left: 'left center', right: 'right center' };
+    if (single[lower]) return single[lower];
+    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
+    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return lower;
+    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
+    if (/^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower)) return lower;
+    return 'center center';
+  }
+  function imagePositionIsValid(value) {
+    var raw = safeString(value).trim().replace(/\s+/g, ' ');
+    if (!raw) return false;
+    var lower = raw.toLowerCase();
+    if (/^(center|top|bottom|left|right)$/.test(lower)) return true;
+    if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return true;
+    if (/^(top|bottom)\s+(center|left|right)$/.test(lower)) return true;
+    if (/^-?\d{1,3}(?:\.\d+)?%\s+-?\d{1,3}(?:\.\d+)?%$/.test(raw)) return true;
+    return /^-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)\s+-?\d+(?:\.\d+)?(?:px|rem|em|vw|vh)$/.test(lower);
+  }
+  function resolveImagePosition(manual, preset, fallback) {
+    if (imagePositionIsValid(manual)) return normalizeImagePosition(manual);
+    if (imagePositionIsValid(preset)) return normalizeImagePosition(preset);
+    return normalizeImagePosition(fallback || 'center center');
+  }
+  function applyObjectImageCrop(imgEl, fit, manualPosition, presetPosition, fallbackPosition) {
+    var resolvedFit = normalizeImageFit(fit);
+    var resolvedPosition = resolveImagePosition(manualPosition, presetPosition, fallbackPosition);
+    if (imgEl) {
+      imgEl.style.setProperty('object-fit', resolvedFit, 'important');
+      imgEl.style.setProperty('object-position', resolvedPosition, 'important');
+      imgEl.style.setProperty('--rg-img-fit', resolvedFit);
+      imgEl.style.setProperty('--rg-img-position', resolvedPosition);
+      if (imgEl.parentNode && imgEl.parentNode.style) {
+        imgEl.parentNode.style.setProperty('--rg-img-fit', resolvedFit);
+        imgEl.parentNode.style.setProperty('--rg-img-position', resolvedPosition);
+      }
+    }
+    return { fit: resolvedFit, position: resolvedPosition };
+  }
+  function applyBackgroundImageCrop(el, fitOrSize, manualPosition, presetPosition, fallbackPosition) {
+    var resolvedSize = normalizeImageFit(fitOrSize);
+    var resolvedPosition = resolveImagePosition(manualPosition, presetPosition, fallbackPosition);
+    if (el) {
+      el.style.setProperty('background-size', resolvedSize, 'important');
+      el.style.setProperty('background-position', resolvedPosition, 'important');
+      el.style.setProperty('--rg-bg-size', resolvedSize);
+      el.style.setProperty('--rg-bg-position', resolvedPosition);
+    }
+    return { fit: resolvedSize, position: resolvedPosition };
+  }
   function normalizeLangCode(lang) {
     var raw = safeString(lang || '').trim().toLowerCase();
     if (!raw) return 'en';
@@ -4443,11 +4500,9 @@
     var wrap = $('hero-bgPreview-wrap');
     if (!img || !wrap) return;
     var settings = readHeroBgSettingsFromInputs();
-    var position = settings.heroDesktopPositionManual || settings.heroDesktopPosition || 'center center';
     img.src = safeString($('hero-bgImage') && $('hero-bgImage').value).trim();
-    img.style.objectFit = settings.heroDesktopFit || 'cover';
-    img.style.objectPosition = position;
-    wrap.style.setProperty('--hero-preview-object-position', position);
+    var crop = applyObjectImageCrop(img, settings.heroDesktopFit, settings.heroDesktopPositionManual, settings.heroDesktopPosition, 'center center');
+    wrap.style.setProperty('--hero-preview-object-position', crop.position);
   }
   function getHomeIntroImageSettingsFromDoc(doc, fallbackDoc) {
     var src = isObject(doc) ? doc : {};
@@ -4624,8 +4679,7 @@
     }
     if (preview) {
       preview.src = previewSrc;
-      preview.style.objectFit = settings.homeIntroImageFit || 'cover';
-      preview.style.objectPosition = settings.homeIntroImagePosition || '';
+      applyObjectImageCrop(preview, settings.homeIntroImageFit, settings.homeIntroImagePosition, '', 'center center');
     }
   }
   function normalizeHomeIntroImagePath(raw) {
@@ -4974,8 +5028,7 @@
       } catch (e) {}
     }
     $('bio-portraitPreview').src = previewSrc;
-    $('bio-portraitPreview').style.objectFit = safeString($('bio-portraitFit').value).trim() || 'cover';
-    $('bio-portraitPreview').style.objectPosition = safeString($('bio-portraitFocus').value).trim() || '50% 26%';
+    applyObjectImageCrop($('bio-portraitPreview'), $('bio-portraitFit').value, $('bio-portraitFocus').value, '', '50% 26%');
     if ($('bio-portraitPositionPreset')) {
       var focus = safeString($('bio-portraitFocus').value).trim();
       $('bio-portraitPositionPreset').value = /^(center center|center top|center bottom|left center|right center)$/.test(focus) ? focus : '';
@@ -14431,19 +14484,7 @@
     return isPrivate ? PERF_PRIVATE_DEFAULT_BG : '';
   }
   function normalizePerfBackgroundFocus(raw) {
-    var value = safeString(raw).trim().toLowerCase().replace(/\s+/g, ' ');
-    var allowed = {
-      'top left': 1,
-      'top center': 1,
-      'top right': 1,
-      'center left': 1,
-      'center center': 1,
-      'center right': 1,
-      'bottom left': 1,
-      'bottom center': 1,
-      'bottom right': 1
-    };
-    return allowed[value] ? value : 'center center';
+    return normalizeImagePosition(raw);
   }
   function updatePerfCardPreview() {
     var title = safeString($('perf-title').value).trim();
@@ -14460,7 +14501,7 @@
     $('perf-preview-detail').textContent = detail || 'Event detail';
     $('perf-preview-venue').textContent = ((venue || 'Venue') + ' · ' + (city || 'City'));
     $('perf-cardPreviewBg').style.backgroundImage = bg ? 'url("' + bg.replace(/"/g, '\\"') + '")' : 'none';
-    $('perf-cardPreviewBg').style.backgroundPosition = bgFocus;
+    applyBackgroundImageCrop($('perf-cardPreviewBg'), 'cover', bgFocus, '', 'center center');
     $('perf-cardPreviewBg').style.opacity = String(op / 100);
     $('perf-cardPreviewBg').style.filter = 'none';
   }
@@ -16446,8 +16487,7 @@
     $('media-photo-alt').value = safeString(c.alt);
     $('media-photo-photographer').value = safeString(c.photographer);
     $('media-photo-preview').src = safeString(photo.url);
-    $('media-photo-preview').style.objectFit = 'cover';
-    $('media-photo-preview').style.objectPosition = safeString(photo.focus) || 'center center';
+    applyObjectImageCrop($('media-photo-preview'), 'cover', safeString(photo.focus), '', 'center center');
     updatePreviewFocusMarker($('media-photo-preview-wrap'), safeString(photo.focus));
     setMediaPhotoPreviewMeta(photo, $('media-photo-preview').naturalWidth || 0, $('media-photo-preview').naturalHeight || 0, '');
     updateMediaPhotoOrientationWarning(photo);
@@ -16982,23 +17022,17 @@
     if (!Array.isArray(src) && isObject(src) && Array.isArray(src.value)) src = src.value;
     var arr = Array.isArray(src) ? src : [];
     function cleanPreviewFit(value) {
-      var v = safeString(value).trim().toLowerCase();
-      return v === 'contain' ? 'contain' : 'cover';
+      return normalizeImageFit(value);
     }
     function cleanPreviewPosition(value) {
-      var v = safeString(value).trim().toLowerCase();
-      return /^(center center|center top|center bottom|left center|right center)$/.test(v) ? v : 'center center';
+      return normalizeImagePosition(value);
     }
     function cleanPreviewAspect(value) {
       var v = safeString(value).trim().toLowerCase();
       return /^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(v) ? v : 'portrait_4_5';
     }
     function cleanPreviewObjectPosition(value) {
-      var raw = safeString(value).trim();
-      var lower = raw.toLowerCase();
-      if (/^(center|left|right)\s+(center|top|bottom)$/.test(lower)) return lower;
-      if (/^\d{1,3}(?:\.\d+)?%\s+\d{1,3}(?:\.\d+)?%$/.test(raw)) return raw;
-      return raw;
+      return safeString(value).trim() ? normalizeImagePosition(value) : '';
     }
     return arr.filter(function (p) { return isObject(p) || typeof p === 'string'; }).map(function (p) {
       if (typeof p === 'string') return { url: safeString(p), downloadUrl: '', caption: '', alt: '', photographer: '', orientation: '', visible: true, previewFit: 'cover', previewPosition: 'center center', previewPositionManual: '', previewAspect: 'portrait_4_5', label: '', credit: '' };
@@ -17030,30 +17064,30 @@
     if (!wrap || !img) return;
     var aspect = safeString(p && p.previewAspect).trim() || 'portrait_4_5';
     if (!/^(portrait_4_5|portrait_3_4|square_1_1|auto)$/.test(aspect)) aspect = 'portrait_4_5';
-    var fit = safeString(p && p.previewFit).trim() === 'contain' ? 'contain' : 'cover';
+    var fit = normalizeImageFit(p && p.previewFit);
     var pos = resolvePreviewObjectPosition(p);
     wrap.dataset.previewAspect = aspect;
     wrap.style.setProperty('--epk-preview-object-position', pos);
-    img.style.objectFit = aspect === 'auto' ? 'contain' : fit;
-    img.style.setProperty('object-position', pos);
+    applyObjectImageCrop(img, aspect === 'auto' ? 'contain' : fit, pos, '', 'center center');
     updatePreviewFocusMarker(wrap, pos);
   }
   function resolvePreviewObjectPosition(photo) {
-    var manual = safeString(photo && photo.previewPositionManual).trim();
-    if (manual) return manual;
-    return safeString(photo && photo.previewPosition).trim() || 'center center';
+    return resolveImagePosition(photo && photo.previewPositionManual, photo && photo.previewPosition, 'center center');
   }
   function siteImagePositionIsPreset(value) {
-    return /^(center center|center top|center bottom|left center|right center)$/i.test(safeString(value).trim());
+    var raw = safeString(value).trim();
+    return imagePositionIsValid(raw) && !/%|px|rem|em|vw|vh/i.test(raw);
   }
   function siteImagePositionPresetValue(value) {
     var raw = safeString(value).trim();
-    return siteImagePositionIsPreset(raw) ? raw.toLowerCase() : 'center center';
+    return siteImagePositionIsPreset(raw) ? normalizeImagePosition(raw) : 'center center';
   }
   function resolveSitePlacementPosition(prefix) {
-    var manual = safeString($(prefix + '-image-position-manual') && $(prefix + '-image-position-manual').value).trim();
-    if (manual) return manual;
-    return safeString($(prefix + '-image-position') && $(prefix + '-image-position').value).trim() || 'center center';
+    return resolveImagePosition(
+      $(prefix + '-image-position-manual') && $(prefix + '-image-position-manual').value,
+      $(prefix + '-image-position') && $(prefix + '-image-position').value,
+      'center center'
+    );
   }
   function updateSitePlacementPreview(prefix) {
     var wrap = $(prefix + '-image-preview-wrap');
@@ -17061,13 +17095,12 @@
     if (!wrap || !img) return;
     var url = safeString($(prefix + '-image-url') && $(prefix + '-image-url').value).trim();
     var aspect = safeString($(prefix + '-image-aspect') && $(prefix + '-image-aspect').value).trim() || (prefix === 'rep' ? 'landscape_16_9' : 'portrait_4_5');
-    var fit = safeString($(prefix + '-image-fit') && $(prefix + '-image-fit').value).trim() === 'contain' ? 'contain' : 'cover';
+    var fit = normalizeImageFit($(prefix + '-image-fit') && $(prefix + '-image-fit').value);
     var pos = resolveSitePlacementPosition(prefix);
     wrap.dataset.previewAspect = aspect;
     wrap.style.setProperty('--placement-object-position', pos);
     img.src = url;
-    img.style.objectFit = fit;
-    img.style.setProperty('object-position', pos);
+    applyObjectImageCrop(img, fit, pos, '', 'center center');
   }
   function togglePressTab(tab) {
     state.pressTab = tab;
@@ -20075,10 +20108,12 @@
   function updateProgramsMiniPreview() {
     if (!$('programs-preview-title')) return;
     var imageUrl = safeString($('programs-item-imageUrl') && $('programs-item-imageUrl').value).trim();
-    var imageFit = safeString($('programs-item-imageFit') && $('programs-item-imageFit').value).trim() === 'contain' ? 'contain' : 'cover';
-    var imagePosition = safeString($('programs-item-imagePositionManual') && $('programs-item-imagePositionManual').value).trim() ||
-      safeString($('programs-item-imagePosition') && $('programs-item-imagePosition').value).trim() ||
-      'center center';
+    var imageFit = normalizeImageFit($('programs-item-imageFit') && $('programs-item-imageFit').value);
+    var imagePosition = resolveImagePosition(
+      $('programs-item-imagePositionManual') && $('programs-item-imagePositionManual').value,
+      $('programs-item-imagePosition') && $('programs-item-imagePosition').value,
+      'center center'
+    );
     var previewWrap = $('programs-preview-image-wrap');
     var previewImg = $('programs-preview-image');
     var editorWrap = $('programs-item-imagePreviewWrap');
@@ -20087,8 +20122,7 @@
       if (!img) return;
       if (imageUrl) {
         img.src = imageUrl;
-        img.style.objectFit = imageFit;
-        img.style.objectPosition = imagePosition;
+        applyObjectImageCrop(img, imageFit, imagePosition, '', 'center center');
       } else {
         img.removeAttribute('src');
       }

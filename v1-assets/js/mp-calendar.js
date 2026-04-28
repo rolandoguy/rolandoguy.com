@@ -1272,19 +1272,7 @@
     return perfIsPrivateEvent(p, lang) ? PERF_PRIVATE_DEFAULT_BG_URL : '';
   }
   function normalizePerfBackgroundFocus(raw) {
-    var value = String(raw || '').trim().toLowerCase().replace(/\s+/g, ' ');
-    var allowed = {
-      'top left': 1,
-      'top center': 1,
-      'top right': 1,
-      'center left': 1,
-      'center center': 1,
-      'center right': 1,
-      'bottom left': 1,
-      'bottom center': 1,
-      'bottom right': 1
-    };
-    return allowed[value] ? value : 'center center';
+    return window.RGImageCrop ? window.RGImageCrop.normalizeImagePosition(raw) : (String(raw || '').trim().toLowerCase().replace(/\s+/g, ' ') || 'center center');
   }
   function moreInfoUsesEditorialTemplate(p) {
     return String((p && p.moreInfoDisplayMode) || '').trim().toLowerCase() === 'editorial-template';
@@ -2200,6 +2188,12 @@
             .replace(/&/g, '&amp;')
             .replace(/\"/g, '&quot;')
             .replace(/</g, '&lt;') +
+          ';--rg-bg-position:' +
+          String(venuePhotoFocus)
+            .replace(/&/g, '&amp;')
+            .replace(/\"/g, '&quot;')
+            .replace(/</g, '&lt;') +
+          ';--rg-bg-size:cover' +
           '"></div>';
       }
       var monthYearParts = perfDateParts(p, currentLang);
