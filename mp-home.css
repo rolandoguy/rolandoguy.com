@@ -1031,3 +1031,36 @@ html.mp-site #hero .hero-bg {
     background-position: var(--hero-bg-position-mobile, var(--hero-bg-position-desktop, 44% 16%)) !important;
   }
 }
+@media (min-width: 700px) and (max-width: 1100px) and (orientation: portrait) {
+  html.mp-site #hero {
+    min-height: 100svh !important;
+    align-items: center !important;
+  }
+  html.mp-site #hero .hero-bg {
+    background-size: var(--hero-bg-size-tablet, var(--hero-bg-size-mobile, auto 110%)) !important;
+    background-position: var(--hero-bg-position-tablet, var(--hero-bg-position-mobile, 48% 18%)) !important;
+  }
+  html.mp-site #hero .hero-bg::before {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(8, 10, 14, 0.94) 0%,
+        rgba(10, 12, 18, 0.82) 20%,
+        rgba(12, 14, 20, 0.54) 42%,
+        rgba(12, 15, 21, 0.18) 64%,
+        rgba(12, 15, 21, 0) 82%
+      ) !important;
+  }
+  html.mp-site #hero .hero-content {
+    max-width: min(58vw, 560px) !important;
+    padding-left: clamp(22px, 5vw, 54px) !important;
+    padding-right: 24px !important;
+    padding-bottom: clamp(150px, 22vh, 260px) !important;
+  }
+  html.mp-site #hero .hero-content::before {
+    left: clamp(8px, 2.5vw, 26px) !important;
+  }
+  html.mp-site #hero .hero-cta {
+    margin-top: 22px !important;
+  }
+}

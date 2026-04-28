@@ -301,10 +301,16 @@
       // A tall mobile hero with plain cover can leave no vertical crop room, so Y percentages appear static.
       mobileFit = 'auto 118%';
     }
+    var tabletFit = mobileFit;
+    if (!hasMobilePositionOverride && (!mobile.fit || mobile.fit === 'cover')) {
+      tabletFit = 'auto 110%';
+    }
     heroBg.style.setProperty('--hero-bg-size-desktop', desktopFit);
     heroBg.style.setProperty('--hero-bg-position-desktop', desktopPosition);
     heroBg.style.setProperty('--hero-bg-size-mobile', mobileFit);
     heroBg.style.setProperty('--hero-bg-position-mobile', mobilePosition);
+    heroBg.style.setProperty('--hero-bg-size-tablet', tabletFit);
+    heroBg.style.setProperty('--hero-bg-position-tablet', mobilePosition);
     heroBg.style.setProperty('--rg-bg-size', desktopFit);
     heroBg.style.setProperty('--rg-bg-position', desktopPosition);
   }
