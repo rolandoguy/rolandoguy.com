@@ -22,6 +22,22 @@
     fr: { sectionTag: 'Programmes', formations: 'Format', duration: 'Durée', idealFor: 'Idéal pour' }
   };
 
+  var DURATION_WORDS = {
+    en: { or: 'or', to: 'to', minutes: 'minutes' },
+    de: { or: 'oder', to: 'bis', minutes: 'Minuten' },
+    es: { or: 'o', to: 'a', minutes: 'minutos' },
+    it: { or: 'o', to: 'a', minutes: 'minuti' },
+    fr: { or: 'ou', to: 'à', minutes: 'minutes' }
+  };
+
+  var PROGRAMS_EXPLORE_DEFAULTS = {
+    en: 'Discover concert programmes and artistic projects',
+    de: 'Entdecken Sie Konzertprogramme und künstlerische Projekte',
+    es: 'Descubra programas de concierto y proyectos artísticos',
+    it: 'Scopra programmi da concerto e progetti artistici',
+    fr: 'Découvrez les programmes de concert et les projets artistiques'
+  };
+
   function t(lang) {
     return UI[lang] || UI.en;
   }
@@ -39,12 +55,129 @@
     return typeof v === 'string' ? v : (v == null ? '' : String(v));
   }
 
+  function durationWords(lang) {
+    return DURATION_WORDS[lang] || DURATION_WORDS.en;
+  }
+
+  function hasLocalizedDurationWords(raw, lang) {
+    var s = safeString(raw).trim().toLowerCase();
+    var nums = parseDurationNumbers(s);
+    if (!s) return false;
+    if (nums.length <= 1) {
+      if (lang === 'de') return /\bminuten\b/.test(s);
+      if (lang === 'en') return /\bminutes?\b/.test(s);
+      if (lang === 'es') return /\bminutos?\b/.test(s);
+      if (lang === 'it') return /\bminuti?\b/.test(s);
+      if (lang === 'fr') return /\bminutes?\b/.test(s);
+    }
+    if (lang === 'de') return /\b(oder|bis)\b/.test(s);
+    if (lang === 'en') return /\b(or|to)\b/.test(s);
+    if (lang === 'es') return /\b(o|a)\b/.test(s);
+    if (lang === 'it') return /\b(o|a)\b/.test(s);
+    if (lang === 'fr') return /\b(ou|à|a)\b/.test(s);
+    return false;
+  }
+
+  function formatDurationList(values, lang) {
+    var nums = values
+      .map(function (n) { return Number(n); })
+      .filter(function (n) { return Number.isFinite(n) && n > 0; });
+    if (!nums.length) return '';
+    var words = durationWords(lang);
+    if (nums.length === 1) return String(nums[0]) + ' ' + words.minutes;
+    if (nums.length === 2) return String(nums[0]) + ' ' + words.to + ' ' + String(nums[1]) + ' ' + words.minutes;
+    return nums.slice(0, -1).join(', ') + ' ' + words.or + ' ' + nums[nums.length - 1] + ' ' + words.minutes;
+  }
+
+  function parseDurationNumbers(raw) {
+    var matches = safeString(raw).match(/\d+/g) || [];
+    return matches.map(function (n) { return Number(n); }).filter(function (n) { return Number.isFinite(n) && n > 0; });
+  }
+
+  function resolveStructuredDuration(program, lang) {
+    if (!isObject(program)) return '';
+    var options = Array.isArray(program.durationOptions)
+      ? program.durationOptions
+      : Array.isArray(program.durations)
+        ? program.durations
+        : null;
+    if (options && options.length) return formatDurationList(options, lang);
+    var min = Number(program.durationMin || program.minDuration || program.durationFrom || 0);
+    var max = Number(program.durationMax || program.maxDuration || program.durationTo || 0);
+    if (Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && min !== max) {
+      return formatDurationList([min, max], lang);
+    }
+    var single = Number(program.durationMinutes || program.durationMinute || 0);
+    if (Number.isFinite(single) && single > 0) return formatDurationList([single], lang);
+    return '';
+  }
+
+  function resolveDuration(program, lang) {
+    var L = /^(en|de|es|it|fr)$/.test(lang) ? lang : 'en';
+    var raw = safeString(program && program.duration).trim();
+    var structured = resolveStructuredDuration(program, L);
+    if (structured && !raw) return structured;
+    if (raw && hasLocalizedDurationWords(raw, L)) return raw;
+    if (structured) return structured;
+    var nums = parseDurationNumbers(raw);
+    if (nums.length) return formatDurationList(nums, L);
+    return raw;
+  }
+
+  function isLikelyGermanProgramsText(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return /\b(entdecken|konzertprogramme|künstlerische|kuenstlerische|und)\b/.test(s);
+  }
+
+  function isLegacyProgramsExploreText(raw) {
+    var s = safeString(raw).trim().toLowerCase();
+    return (
+      isLikelyGermanProgramsText(s) ||
+      s === 'explore concert programmes and artistic collaborations' ||
+      s === 'explora formatos de concierto y colaboraciones artísticas' ||
+      s === 'esplora programmi da concerto e collaborazioni artistiche' ||
+      s === 'découvrez des programmes de concert et des collaborations artistiques' ||
+      s === 'découvrir les programmes de concert et collaborations artistiques'
+    );
+  }
+
   function isObject(v) {
     return !!v && typeof v === 'object' && !Array.isArray(v);
   }
 
   function clone(v) {
     return JSON.parse(JSON.stringify(v));
+  }
+
+  function mergeProgramVisualFields(items, sources) {
+    if (!Array.isArray(items) || !items.length || !Array.isArray(sources) || !sources.length) return items;
+    function keyFor(item, index) {
+      if (!item || typeof item !== 'object') return '';
+      if (item.id != null && String(item.id).trim() !== '') return 'id:' + String(item.id).trim();
+      if (item.order != null && String(item.order).trim() !== '') return 'order:' + String(item.order).trim();
+      return 'index:' + index;
+    }
+    var visuals = {};
+    sources.forEach(function (sourceItems) {
+      if (!Array.isArray(sourceItems)) return;
+      sourceItems.forEach(function (item, index) {
+        if (!item || typeof item !== 'object' || !safeString(item.imageUrl).trim()) return;
+        var key = keyFor(item, index);
+        if (key && !visuals[key]) visuals[key] = item;
+      });
+    });
+    items.forEach(function (item, index) {
+      if (!item || typeof item !== 'object' || safeString(item.imageUrl).trim()) return;
+      var source = visuals[keyFor(item, index)] || null;
+      if (!source && item.order != null) source = visuals['order:' + String(item.order).trim()] || null;
+      if (!source && item.id != null) source = visuals['id:' + String(item.id).trim()] || null;
+      if (!source) source = visuals['index:' + index] || null;
+      if (!source) return;
+      ['imageUrl', 'imageFit', 'imagePosition', 'imagePositionManual'].forEach(function (key) {
+        if (safeString(item[key]).trim() === '' && safeString(source[key]).trim() !== '') item[key] = source[key];
+      });
+    });
+    return items;
   }
 
   function readLegacyJson(key) {
@@ -133,6 +266,9 @@
     var byEnKey = 'rg_programs_en';
     var langDoc = PROGRAMS_DOCS[byLangKey];
     var enDoc = PROGRAMS_DOCS[byEnKey];
+    var enBaseItems = MP_PROGRAMS && MP_PROGRAMS.locales && MP_PROGRAMS.locales.en && Array.isArray(MP_PROGRAMS.locales.en.items)
+      ? MP_PROGRAMS.locales.en.items
+      : [];
 
     var pick = null;
     var source = '';
@@ -159,18 +295,30 @@
       if (safeString(pick.closingNote).trim()) out.closingNote = safeString(pick.closingNote);
       if (safeString(pick.profileBridge).trim()) out.profileBridge = safeString(pick.profileBridge);
       if (safeString(pick.linkLabel).trim()) out.linkLabel = safeString(pick.linkLabel);
-      if (liveItems(pick)) out.items = clone(liveItems(pick));
+      if (liveItems(pick)) {
+        out.items = clone(liveItems(pick));
+        mergeProgramVisualFields(out.items, [liveItems(enDoc), baseLang && baseLang.items, enBaseItems]);
+      }
+    } else if (Array.isArray(out.items)) {
+      mergeProgramVisualFields(out.items, [liveItems(enDoc), enBaseItems]);
     }
     return { data: out, source: source, fallback: fallback };
   }
 
   function getEditorialProgramsLink(lang) {
     var l = (lang || 'en').toLowerCase();
+    var fallback = lp(l, 'rep.programsExplore', PROGRAMS_EXPLORE_DEFAULTS[l] || PROGRAMS_EXPLORE_DEFAULTS.en);
     var byLang = EDITORIAL_DOCS['rg_editorial_' + l];
-    if (isObject(byLang) && safeString(byLang.repProgramsLink).trim()) return safeString(byLang.repProgramsLink);
+    if (isObject(byLang) && safeString(byLang.repProgramsLink).trim()) {
+      var localLabel = safeString(byLang.repProgramsLink).trim();
+      return isLegacyProgramsExploreText(localLabel) ? fallback : localLabel;
+    }
     var en = EDITORIAL_DOCS['rg_editorial_en'];
-    if (isObject(en) && safeString(en.repProgramsLink).trim()) return safeString(en.repProgramsLink);
-    return '';
+    if (l === 'en' && isObject(en) && safeString(en.repProgramsLink).trim()) {
+      var enLabel = safeString(en.repProgramsLink).trim();
+      return isLegacyProgramsExploreText(enLabel) ? fallback : enLabel;
+    }
+    return fallback;
   }
 
   function isProgramsSectionHidden(lang) {
@@ -337,6 +485,7 @@
       .map(function (p) {
         var forms = Array.isArray(p.formations) ? p.formations : [];
         var ideal = Array.isArray(p.idealFor) ? p.idealFor : [];
+        var duration = resolveDuration(p, currentLang);
         var imageUrl = safeString(p.imageUrl).trim();
         var imageHtml = imageUrl
           ? '<figure class="program-card-image"><img src="' + escAttr(imageUrl) + '" alt="' + escAttr(p.imageAlt || p.title || '') + '" data-image-fit="' + escAttr(resolveImageObjectFit(p.imageFit)) + '" data-image-position="' + escAttr(p.imagePosition || '') + '" data-image-position-manual="' + escAttr(p.imagePositionManual || '') + '"></figure>'
@@ -350,7 +499,7 @@
           '<div class="program-meta-block"><div class="program-meta-label">' + esc(ui.formations) + '</div><div class="program-meta-value"><ul>' +
           forms.map(function (it) { return '<li>' + esc(it) + '</li>'; }).join('') +
           '</ul></div></div>' +
-          '<div class="program-meta-block"><div class="program-meta-label">' + esc(ui.duration) + '</div><div class="program-meta-value">' + esc(p.duration || '') + '</div></div>' +
+          '<div class="program-meta-block"><div class="program-meta-label">' + esc(ui.duration) + '</div><div class="program-meta-value">' + esc(duration) + '</div></div>' +
           '<div class="program-meta-block"><div class="program-meta-label">' + esc(ui.idealFor) + '</div><div class="program-meta-value"><ul>' +
           ideal.map(function (it) { return '<li>' + esc(it) + '</li>'; }).join('') +
           '</ul></div></div>' +

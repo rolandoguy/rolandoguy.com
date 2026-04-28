@@ -376,7 +376,6 @@ html[data-feather-halo-intensity="lush"]{--feather-halo-filter:blur(58px) satura
   letter-spacing:.15em;
   color:var(--gold-dim);
   text-decoration:none;
-  text-transform:uppercase;
   padding-bottom:3px;
   border-bottom:1px solid rgba(212,168,67,.24);
   transition:border-color .38s var(--ease-soft),color .38s var(--ease-soft);
@@ -577,8 +576,8 @@ section{position:relative;z-index:2}
 .programs-profile-bridge[hidden]{display:none!important}
 .programs-intro{font-size:.94rem;color:var(--text-dim);line-height:1.9;max-width:min(100%,56rem);margin:0 0 52px;padding:0 0 0 14px;border-left:1px solid rgba(212,168,67,.24);letter-spacing:.012em}
 .programs-grid{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
-.program-card{background:var(--surface2);padding:34px 30px;transition:background .38s var(--ease-soft),box-shadow .38s var(--ease-soft);position:relative;overflow:hidden}
-.program-card--has-image{display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,22vw,240px);gap:28px;align-items:center}
+.program-card{background:var(--surface2);padding:30px 28px;transition:background .38s var(--ease-soft),box-shadow .38s var(--ease-soft);position:relative;overflow:hidden}
+.program-card--has-image{display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,22vw,240px);gap:24px;align-items:center}
 .program-card-content{min-width:0}
 .program-card--has-image .program-card-title,.program-card--has-image .program-card-desc,.program-card--has-image .program-meta{grid-column:1}
 .program-card--has-image .program-card-image{grid-column:2;grid-row:1 / span 3}
@@ -594,7 +593,7 @@ section{position:relative;z-index:2}
 .program-meta-block:nth-child(2){grid-column:1;grid-row:1 / span 2;padding:10px 12px;border:1px solid rgba(212,168,67,.24);background:rgba(212,168,67,.06)}
 .program-meta-label{font-family:var(--ff-caps);font-size:.5rem;letter-spacing:.19em;color:var(--gold);text-transform:uppercase;margin-bottom:7px}
 .program-meta-value{color:var(--text-dim);line-height:1.62}
-.program-meta-block:nth-child(2) .program-meta-value{font-size:.9rem;color:var(--text);font-family:var(--ff-caps);letter-spacing:.09em;text-transform:uppercase;line-height:1.35}
+.program-meta-block:nth-child(2) .program-meta-value{font-size:.9rem;color:var(--text);font-family:var(--ff-caps);letter-spacing:.06em;line-height:1.35}
 .program-meta-value ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
 .program-meta-value li{position:relative;padding-left:12px;line-height:1.5}
 .program-meta-value li::before{content:'•';position:absolute;left:0;top:0;color:rgba(212,168,67,.85)}
@@ -2150,13 +2149,13 @@ textarea.adm-input{resize:vertical;min-height:80px}
   .audio-category-title{margin-bottom:10px;scroll-margin-top:152px}
   .audio-embed{height:166px}
   .about-text p{font-size:.87rem}
-  .program-card{padding:24px 18px}
-  .program-card--has-image{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
+  .program-card{padding:22px 17px}
+  .program-card--has-image{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
   .program-card--has-image .program-card-title,.program-card--has-image .program-card-desc,.program-card--has-image .program-meta,.program-card--has-image .program-card-image{grid-column:1;grid-row:auto}
   .program-card-image{display:block;width:min(100%,240px);max-width:none;margin:0;aspect-ratio:4/5}
   .rep-editorial-image,.rep-editorial-image--programme_offers_accent{display:block;width:min(100%,320px);margin:22px auto}
-  .program-card-title{font-size:clamp(1.22rem,6.4vw,1.42rem);line-height:1.24;margin-bottom:10px}
-  .program-card-desc{font-size:.86rem;line-height:1.7;margin-bottom:16px}
+  .program-card-title{font-size:clamp(1.22rem,6.4vw,1.42rem);line-height:1.24;margin-bottom:8px}
+  .program-card-desc{font-size:.86rem;line-height:1.7;margin-bottom:14px}
   .program-meta{grid-template-columns:1fr;gap:10px}
   .program-meta-block,.program-meta-block:nth-child(2){grid-column:auto;grid-row:auto}
   .program-meta-label{font-size:.47rem;letter-spacing:.165em;margin-bottom:5px}
