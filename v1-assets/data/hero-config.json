@@ -2,6 +2,6 @@
   "image": "../img/hero-portrait.webp",
   "cropMode": "cover",
   "focalDesktop": "50% 26%",
-  "focalMobile": "48% 22%",
+  "focalMobile": "48% 18%",
   "alt": "Rolando Guy, lyric tenor — studio portrait for the site hero"
 }

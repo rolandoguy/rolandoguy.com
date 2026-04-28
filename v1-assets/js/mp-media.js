@@ -1241,6 +1241,8 @@
     ['studio', 'stage', 'backstage'].forEach(function (x) {
       var tab = document.getElementById('tab-' + x);
       if (tab) tab.classList.toggle('active', x === n);
+      var panel = document.getElementById('panel-' + x);
+      if (panel) panel.classList.toggle('active', x === n);
     });
   }
 
@@ -1517,6 +1519,18 @@
     setActivePhotoTab(next);
     var head = document.getElementById('photo-head-' + next);
     if (head) {
+      var isMobilePhotoTabs = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+      if (isMobilePhotoTabs) {
+        var tabs = document.querySelector('.photo-tabs');
+        if (!tabs) return;
+        var mobileTop = Math.max(0, window.scrollY + tabs.getBoundingClientRect().top - 96);
+        try {
+          window.scrollTo({ top: mobileTop, behavior: 'smooth' });
+        } catch (e) {
+          window.scrollTo(0, mobileTop);
+        }
+        return;
+      }
       var isMobile = window.matchMedia && window.matchMedia('(max-width: 1000px)').matches;
       var offset = isMobile ? 142 : 118;
       var top = Math.max(0, window.scrollY + head.getBoundingClientRect().top - offset);

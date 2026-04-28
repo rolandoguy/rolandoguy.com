@@ -144,7 +144,8 @@
     "page.photos.title": "Photos — Rolando Guy",
     "page.photos.metaDescription": "Studio portraits, stage moments and backstage impressions. Rolando Guy.",
     "page.media.title": "Media — Rolando Guy",
-    "page.media.metaDescription": "Performance videos and listening highlights — Rolando Guy."
+    "page.media.metaDescription": "Performance videos and listening highlights — Rolando Guy.",
+    "mp.mediaPhotoGalleryLink": "View photo gallery"
   },
   "de": {
     "rep.thRole": "Rolle",
@@ -293,7 +294,8 @@
     "page.photos.title": "Fotos — Rolando Guy",
     "page.photos.metaDescription": "Studioporträts, Bühnenmomente und Eindrücke hinter den Kulissen. Rolando Guy.",
     "page.media.title": "Medien — Rolando Guy",
-    "page.media.metaDescription": "Performance-Videos und ausgewählte Hörbeispiele — Rolando Guy."
+    "page.media.metaDescription": "Performance-Videos und ausgewählte Hörbeispiele — Rolando Guy.",
+    "mp.mediaPhotoGalleryLink": "Fotogalerie ansehen"
   },
   "es": {
     "rep.thRole": "Papel",
@@ -442,7 +444,8 @@
     "page.photos.title": "Fotos — Rolando Guy",
     "page.photos.metaDescription": "Retratos de estudio, momentos en escena e impresiones de backstage. Rolando Guy.",
     "page.media.title": "Media — Rolando Guy",
-    "page.media.metaDescription": "Vídeos de actuación y selecciones de audio — Rolando Guy."
+    "page.media.metaDescription": "Vídeos de actuación y selecciones de audio — Rolando Guy.",
+    "mp.mediaPhotoGalleryLink": "Ver galería de fotos"
   },
   "it": {
     "rep.thRole": "Ruolo",
@@ -591,7 +594,8 @@
     "page.photos.title": "Foto — Rolando Guy",
     "page.photos.metaDescription": "Ritratti in studio, momenti sul palco e impressioni dal backstage. Rolando Guy.",
     "page.media.title": "Media — Rolando Guy",
-    "page.media.metaDescription": "Video di performance e ascolti selezionati — Rolando Guy."
+    "page.media.metaDescription": "Video di performance e ascolti selezionati — Rolando Guy.",
+    "mp.mediaPhotoGalleryLink": "Vedi galleria fotografica"
   },
   "fr": {
     "rep.thRole": "Rôle",
@@ -740,6 +744,7 @@
     "page.photos.title": "Photos — Rolando Guy",
     "page.photos.metaDescription": "Portraits en studio, moments de scène et impressions en coulisses. Rolando Guy.",
     "page.media.title": "Médias — Rolando Guy",
-    "page.media.metaDescription": "Vidéos de performance et extraits audio — Rolando Guy."
+    "page.media.metaDescription": "Vidéos de performance et extraits audio — Rolando Guy.",
+    "mp.mediaPhotoGalleryLink": "Voir la galerie photos"
   }
 }
