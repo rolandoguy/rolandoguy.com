@@ -511,6 +511,13 @@
       moreInfoImage4Focus: String(o.moreInfoImage4Focus || '').trim(),
       moreInfoImage5: String(o.moreInfoImage5 || '').trim(),
       moreInfoImage5Focus: String(o.moreInfoImage5Focus || '').trim(),
+      isPrivate: o.isPrivate,
+      visibility: o.visibility,
+      publicVisibility: o.publicVisibility,
+      public_visibility: o.public_visibility,
+      privacy: o.privacy,
+      calendarVisibility: o.calendarVisibility,
+      calendar_visibility: o.calendar_visibility,
       hidePrivateBadge: isTruthyFlag(o.hidePrivateBadge),
       hidePrivateDetailLine: isTruthyFlag(o.hidePrivateDetailLine),
       modalEnabled:
@@ -1162,9 +1169,37 @@
   function perfExplicitPrivateValue(p) {
     return !!(perfHasExplicitPrivateFlag(p) && isTruthyFlag(p.private));
   }
+  function perfHasOwnField(p, key) {
+    return !!(p && Object.prototype.hasOwnProperty.call(p, key));
+  }
+  function perfPrivateVisibilityValue(raw) {
+    var value = String(raw == null ? '' : raw)
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+    return value === 'private' ||
+      value === 'private_event' ||
+      value === 'private_engagement' ||
+      value === 'internal' ||
+      value === 'internal_only' ||
+      value === 'invitation_only' ||
+      value === 'by_invitation_only' ||
+      value === 'closed_event';
+  }
   function perfIsPrivateEvent(p, lang) {
     if (!p) return false;
-    if (perfHasExplicitPrivateFlag(p)) return perfExplicitPrivateValue(p);
+    if (perfHasExplicitPrivateFlag(p) && perfExplicitPrivateValue(p)) return true;
+    if (perfHasOwnField(p, 'isPrivate') && isTruthyFlag(p.isPrivate)) return true;
+    var visibilityFields = [
+      'visibility',
+      'publicVisibility',
+      'public_visibility',
+      'privacy',
+      'calendarVisibility',
+      'calendar_visibility',
+      'status'
+    ];
+    if (visibilityFields.some(function (key) { return perfPrivateVisibilityValue(p[key]); })) return true;
     var type = String(p.type || '').trim().toLowerCase();
     if (type === 'houseconcert' || type === 'private' || type === 'private_event' || type === 'invitation_only') return true;
     var detailCandidates = [
@@ -2325,14 +2360,18 @@
   function getPublicPerfs() {
     return getPerfs().filter(function (p, idx) {
       return shouldRenderPublicEvent(p, idx);
+    }).filter(function (p) {
+      return !perfIsPrivateEvent(p, currentLang || 'en');
     });
   }
 
   function printAgenda() {
     var lang = currentLang || 'en';
     var tPrint = uiTable(lang);
-    // Print must mirror the same public visibility rules as live calendar rendering.
-    var perfs = getPublicPerfs();
+    // Print mirrors public visibility and defensively excludes private events.
+    var perfs = getPublicPerfs().filter(function (p) {
+      return !perfIsPrivateEvent(p, lang);
+    });
     var today = new Date();
     today.setHours(0, 0, 0, 0);
     var upcoming = (Array.isArray(perfs) ? perfs : [])
