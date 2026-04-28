@@ -1873,19 +1873,13 @@
   function applyObjectImageCrop(imgEl, fit, manualPosition, presetPosition, fallbackPosition) {
     var resolvedFit = normalizeImageFit(fit);
     var resolvedPosition = resolveImagePosition(manualPosition, presetPosition, fallbackPosition);
-    var hasManualPosition = imagePositionIsValid(manualPosition);
     if (imgEl) {
       imgEl.style.setProperty('object-fit', resolvedFit, 'important');
       imgEl.style.setProperty('object-position', resolvedPosition, 'important');
       imgEl.style.setProperty('--rg-img-fit', resolvedFit);
       imgEl.style.setProperty('--rg-img-position', resolvedPosition);
-      if (hasManualPosition && resolvedFit === 'cover') {
-        imgEl.style.setProperty('transform', 'scale(1.08)', 'important');
-        imgEl.style.setProperty('transform-origin', resolvedPosition, 'important');
-      } else {
-        imgEl.style.removeProperty('transform');
-        imgEl.style.removeProperty('transform-origin');
-      }
+      imgEl.style.removeProperty('transform');
+      imgEl.style.removeProperty('transform-origin');
       if (imgEl.parentNode && imgEl.parentNode.style) {
         imgEl.parentNode.style.setProperty('--rg-img-fit', resolvedFit);
         imgEl.parentNode.style.setProperty('--rg-img-position', resolvedPosition);
@@ -4541,13 +4535,30 @@
     if (!img) return;
     var fit = normalizeHomeIntroFit(settings && settings.homeIntroImageFit);
     var position = normalizeHomeIntroPosition(settings && settings.homeIntroImagePosition);
-    if (position && fit !== 'contain') {
-      img.style.setProperty('transform', 'scale(1.12)', 'important');
-      img.style.setProperty('transform-origin', position, 'important');
-    } else {
-      img.style.removeProperty('transform');
-      img.style.removeProperty('transform-origin');
+    var match = String(position || '').trim().replace(/\s+/g, ' ').match(/^(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%$/);
+    if (!position || fit === 'contain' || !match) {
+      ['position', 'width', 'height', 'max-width', 'max-height', 'left', 'top', 'right', 'bottom', 'transform', 'transform-origin'].forEach(function (prop) {
+        img.style.removeProperty(prop);
+      });
+      return;
     }
+    var x = Math.max(0, Math.min(100, parseFloat(match[1])));
+    var y = Math.max(0, Math.min(100, parseFloat(match[2])));
+    var scale = 132;
+    var overflow = scale - 100;
+    img.style.setProperty('position', 'absolute', 'important');
+    img.style.setProperty('width', scale + '%', 'important');
+    img.style.setProperty('height', scale + '%', 'important');
+    img.style.setProperty('max-width', 'none', 'important');
+    img.style.setProperty('max-height', 'none', 'important');
+    img.style.setProperty('left', (-overflow * x / 100) + '%', 'important');
+    img.style.setProperty('top', (-overflow * y / 100) + '%', 'important');
+    img.style.setProperty('right', 'auto', 'important');
+    img.style.setProperty('bottom', 'auto', 'important');
+    img.style.setProperty('object-fit', 'cover', 'important');
+    img.style.setProperty('object-position', 'center center', 'important');
+    img.style.removeProperty('transform');
+    img.style.removeProperty('transform-origin');
   }
   function fetchFirestoreDocJson(key) {
     var url = 'https://firestore.googleapis.com/v1/projects/rolandoguy-57d63/databases/(default)/documents/rg/' + encodeURIComponent(key);
