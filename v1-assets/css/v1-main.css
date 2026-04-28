@@ -1181,7 +1181,9 @@ position:absolute;inset:0;display:flex;align-items:center;justify-content:center
 .photo-grid-3[data-cols="3"][data-remainder="2"] .photo-item:last-child,
 .photo-grid-4[data-cols="3"][data-remainder="2"] .photo-item:nth-last-child(2),
 .photo-grid-4[data-cols="3"][data-remainder="2"] .photo-item:last-child {
-  justify-self: center;
+  justify-self: stretch;
+  width:auto;
+  max-width:none;
 }
 .photo-item-meta{
   position:absolute;
