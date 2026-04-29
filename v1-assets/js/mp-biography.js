@@ -257,6 +257,21 @@
     var c = canonicalLocale && typeof canonicalLocale === 'object' ? canonicalLocale : {};
     var b = bundleLocale && typeof bundleLocale === 'object' ? bundleLocale : {};
     var a = adminDoc && typeof adminDoc === 'object' ? adminDoc : {};
+    
+    // Prefer sections over paragraphs
+    var adminSections = a.sections && typeof a.sections === 'object' ? a.sections : null;
+    var bundleSections = b.sections && typeof b.sections === 'object' ? b.sections : null;
+    var canonicalSections = c.sections && typeof c.sections === 'object' ? c.sections : null;
+    
+    var sections = null;
+    if (adminSections && hasNonEmptySection(adminSections)) {
+      sections = adminSections;
+    } else if (bundleSections && hasNonEmptySection(bundleSections)) {
+      sections = bundleSections;
+    } else if (canonicalSections && hasNonEmptySection(canonicalSections)) {
+      sections = canonicalSections;
+    }
+    
     var adminParas = normalizeParagraphsFromDoc(a);
     var bundleParas = Array.isArray(b.paragraphs)
       ? b.paragraphs
@@ -273,10 +288,10 @@
           .filter(Boolean)
       : [];
     var paras = adminParas.length ? adminParas : (bundleParas.length ? bundleParas : canonicalParas);
-    return {
+    
+    var merged = {
       introLine: firstNonEmpty(a.introLine, b.introLine, c.introLine),
       h2: firstNonEmpty(a.h2, b.h2, c.h2),
-      paragraphs: paras,
       portraitAlt: firstNonEmpty(a.portraitAlt, b.portraitAlt, c.portraitAlt),
       portraitFit: firstNonEmpty(a.portraitFit, b.portraitFit, c.portraitFit),
       portraitFocus: firstNonEmpty(a.portraitFocus, b.portraitFocus, c.portraitFocus),
@@ -287,6 +302,21 @@
       ctaContact: firstNonEmpty(a.ctaContact, b.ctaContact, c.ctaContact),
       ctaHomeIntro: firstNonEmpty(a.ctaHomeIntro, b.ctaHomeIntro, c.ctaHomeIntro)
     };
+    
+    if (sections) {
+      merged.sections = sections;
+    } else {
+      merged.paragraphs = paras;
+    }
+    
+    return merged;
+  }
+  
+  function hasNonEmptySection(sections) {
+    if (!sections || typeof sections !== 'object') return false;
+    return ['profile', 'training', 'stage', 'repertoire'].some(function (k) {
+      return sections[k] && String(sections[k]).trim() !== '';
+    });
   }
 
   function hasAnyBioBody(merged) {

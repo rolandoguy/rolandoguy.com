@@ -3173,7 +3173,7 @@
   }
   // Public-safe website mirrors. These docs are the only live Firestore payloads
   // the public site is allowed to read.
-  var PUBLIC_BIO_FIELDS = ['introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitImage', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
+  var PUBLIC_BIO_FIELDS = ['introLine', 'h2', 'paragraphs', 'sections', 'portraitAlt', 'portraitImage', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
   var PUBLIC_CONTACT_FIELDS = ['title', 'sub', 'email', 'phone', 'emailBtn', 'webBtn', 'webUrl', 'contactImageEnabled', 'contactImageUrl', 'contactImageAlt', 'contactImagePlacement', 'contactImageAspect', 'contactImageFit', 'contactImagePosition', 'contactImagePositionManual'];
   var PUBLIC_HERO_FIELDS = ['eyebrow', 'subtitle', 'cta1', 'cta2', 'quickBioLabel', 'quickCalLabel', 'introCtaBio', 'introCtaMedia', 'bgImage', 'heroDesktopFit', 'heroDesktopPosition', 'heroDesktopPositionManual', 'heroMobileFit', 'heroMobilePosition', 'heroMobilePositionManual', 'introImage', 'homeIntroImageLayout', 'homeIntroImageFit', 'homeIntroImagePosition'];
   var PUBLIC_PRESS_ITEM_FIELDS = ['source', 'quote', 'visible'];
@@ -3307,6 +3307,13 @@
         if (value) paras.push(value);
       });
       if (paras.length) out.paragraphs = paras;
+    }
+    if (stored.sections && typeof stored.sections === 'object') {
+      out.sections = {};
+      ['profile', 'training', 'stage', 'repertoire'].forEach(function (k) {
+        var value = safeString(stored.sections[k]).trim();
+        if (value) out.sections[k] = value;
+      });
     }
     return out;
   }

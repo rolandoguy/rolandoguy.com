@@ -205,7 +205,7 @@ var PUBLIC_CALENDAR_EVENT_TYPE_FIELDS = ['opera', 'concert', 'recital', 'show', 
 // BIOGRAPHY FIELDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-var PUBLIC_BIOGRAPHY_FIELDS = ['portraitImage', 'introLine', 'h2', 'paragraphs', 'portraitAlt', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
+var PUBLIC_BIOGRAPHY_FIELDS = ['portraitImage', 'introLine', 'h2', 'paragraphs', 'sections', 'portraitAlt', 'portraitFit', 'portraitFocus', 'continueSectionTag', 'continueSub', 'ctaRepertoire', 'ctaMedia', 'ctaContact', 'ctaHomeIntro'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTACT FIELDS

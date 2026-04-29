@@ -34,6 +34,7 @@ var BIO_SOURCE_FIELDS = [
   'p5',
   'p6',
   'paragraphs',
+  'sections',
   'portraitAlt',
   'portraitImage',
   'portraitFit',
@@ -121,6 +122,12 @@ function mergeBioLayer(base, rawExport) {
   });
   var paras = normalizeParagraphs(ex);
   if (paras.length) o.paragraphs = paras.slice();
+  if (ex.sections && typeof ex.sections === 'object') {
+    o.sections = {};
+    ['profile', 'training', 'stage', 'repertoire'].forEach(function (k) {
+      if (nonEmptyStr(ex.sections[k])) o.sections[k] = String(ex.sections[k]).trim();
+    });
+  }
   [
     'introLine',
     'portraitAlt',
@@ -230,6 +237,12 @@ LANGS.forEach(function (lang) {
   if (nonEmptyStr(merged.portraitImage)) outLocales[lang].portraitImage = String(merged.portraitImage).trim();
   if (nonEmptyStr(merged.portraitFit)) outLocales[lang].portraitFit = String(merged.portraitFit).trim();
   if (nonEmptyStr(merged.portraitFocus)) outLocales[lang].portraitFocus = String(merged.portraitFocus).trim();
+  if (merged.sections && typeof merged.sections === 'object') {
+    outLocales[lang].sections = {};
+    ['profile', 'training', 'stage', 'repertoire'].forEach(function (k) {
+      if (nonEmptyStr(merged.sections[k])) outLocales[lang].sections[k] = String(merged.sections[k]).trim();
+    });
+  }
 });
 
 var portraitImage = resolvePortraitDefault(defaults, outLocales);
