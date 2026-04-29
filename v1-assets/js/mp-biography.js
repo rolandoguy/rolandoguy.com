@@ -404,19 +404,26 @@
       .filter(Boolean);
   }
 
+  function splitBioSectionParagraphs(text) {
+    return safeString(text)
+      .split(/\r?\n(?:[ \t]*\r?\n)+/)
+      .map(function (part) { return part.trim(); })
+      .filter(Boolean);
+  }
+
   function buildBioSections(paragraphs, lang, sectionsObj) {
     var labels = bioSectionLabelsForLang(lang);
     if (sectionsObj && typeof sectionsObj === 'object') {
-      var profile = safeString(sectionsObj.profile || '').trim();
-      var training = safeString(sectionsObj.training || '').trim();
-      var stage = safeString(sectionsObj.stage || '').trim();
-      var repertoire = safeString(sectionsObj.repertoire || '').trim();
-      if (profile || training || stage || repertoire) {
+      var profile = splitBioSectionParagraphs(sectionsObj.profile);
+      var training = splitBioSectionParagraphs(sectionsObj.training);
+      var stage = splitBioSectionParagraphs(sectionsObj.stage);
+      var repertoire = splitBioSectionParagraphs(sectionsObj.repertoire);
+      if (profile.length || training.length || stage.length || repertoire.length) {
         var out = [];
-        if (profile) out.push({ title: labels[0], paragraphs: [profile] });
-        if (training) out.push({ title: labels[1], paragraphs: [training] });
-        if (stage) out.push({ title: labels[2], paragraphs: [stage] });
-        if (repertoire) out.push({ title: labels[3], paragraphs: [repertoire] });
+        if (profile.length) out.push({ title: labels[0], paragraphs: profile });
+        if (training.length) out.push({ title: labels[1], paragraphs: training });
+        if (stage.length) out.push({ title: labels[2], paragraphs: stage });
+        if (repertoire.length) out.push({ title: labels[3], paragraphs: repertoire });
         return out;
       }
     }
