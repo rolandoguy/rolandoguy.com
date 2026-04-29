@@ -86,9 +86,10 @@
     'form.namePh': 'Your name',
     'form.emailPh': 'your@email.com',
     'form.subjectPh': 'Booking enquiry',
-    'form.messagePh': 'Describe your enquiry …',
+    'form.messagePh': 'Describe the occasion, location, date, desired programme and event context …',
     'form.sending': 'Sending...',
-    'form.errorSend': 'Error sending. Please email rolandoguy@gmail.com directly.'
+    'form.errorSend': 'Error sending. Please email rolandoguy@gmail.com directly.',
+    'contact.directLabel': 'Prefer direct email?'
   };
 
   function uiTable() {
@@ -290,6 +291,8 @@
     if (sendSpan && t['form.send']) sendSpan.textContent = t['form.send'];
     var ok = document.getElementById('formOk');
     if (ok && t['form.success']) ok.textContent = t['form.success'];
+    var err = document.getElementById('formErr');
+    if (err && t['form.errorSend']) err.textContent = t['form.errorSend'];
   }
 
   function renderContact() {
@@ -300,7 +303,7 @@
       var rawTitle = d.title || '';
       contactTitle.innerHTML = rawTitle.trim() ? formatSectionTitleIfAmpersand(rawTitle) : '';
     }
-    if (contactSub) contactSub.textContent = d.sub || '';
+    if (contactSub) renderContactIntro(contactSub, d.sub || '');
     renderContactImage(d);
     var cqEl = document.getElementById('contactQuoteText');
     var cqWrap = document.getElementById('contactQuoteWrap');
@@ -330,6 +333,35 @@
     if (tag && tnav['nav.contact']) tag.textContent = tnav['nav.contact'];
   }
 
+  function splitContactIntro(text) {
+    var raw = String(text || '').trim();
+    if (!raw) return [];
+    var byBreaks = raw
+      .split(/\n\s*\n+/)
+      .map(function (part) { return part.replace(/\s+/g, ' ').trim(); })
+      .filter(Boolean);
+    if (byBreaks.length > 1) return byBreaks;
+    var compact = raw.replace(/\s+/g, ' ');
+    var sentences = compact.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) || [];
+    sentences = sentences
+      .map(function (part) { return part.trim(); })
+      .filter(Boolean);
+    return sentences.length > 1 ? sentences : [raw];
+  }
+
+  function renderContactIntro(el, text) {
+    var parts = splitContactIntro(text);
+    el.innerHTML = '';
+    if (!parts.length) return;
+    var frag = document.createDocumentFragment();
+    parts.forEach(function (part) {
+      var p = document.createElement('p');
+      p.textContent = part;
+      frag.appendChild(p);
+    });
+    el.appendChild(frag);
+  }
+
   function getFormspreeId() {
     // Canonical source: bundled contact-data.json. Live public contact docs are copy-only.
     if (MP_CONTACT && MP_CONTACT.formspreeId && String(MP_CONTACT.formspreeId).trim()) {
@@ -356,6 +388,10 @@
     var btn = document.querySelector('.form-submit');
     var t = uiTable();
     if (!btn) return;
+    var formOk = document.getElementById('formOk');
+    var formErr = document.getElementById('formErr');
+    if (formOk) formOk.style.display = 'none';
+    if (formErr) formErr.style.display = 'none';
     btn.disabled = true;
     btn.style.opacity = '.5';
     var span = btn.querySelector('span');
@@ -372,7 +408,6 @@
         })
       });
       if (res.ok) {
-        var formOk = document.getElementById('formOk');
         if (formOk) formOk.style.display = 'block';
         inputs.forEach(function (i) {
           i.value = '';
@@ -381,15 +416,24 @@
           if (formOk) formOk.style.display = 'none';
         }, 5000);
       } else {
-        alert(t['form.errorSend'] || 'Error sending. Please email rolandoguy@gmail.com directly.');
+        showFormError(formErr, t['form.errorSend'] || 'Error sending. Please email rolandoguy@gmail.com directly.');
       }
     } catch (e) {
-      alert(t['form.errorSend'] || 'Error sending. Please email rolandoguy@gmail.com directly.');
+      showFormError(formErr, t['form.errorSend'] || 'Error sending. Please email rolandoguy@gmail.com directly.');
     } finally {
       btn.disabled = false;
       btn.style.opacity = '';
       if (span) span.textContent = t['form.send'] || 'Send Message';
     }
+  }
+
+  function showFormError(el, text) {
+    if (!el) {
+      alert(text);
+      return;
+    }
+    el.textContent = text;
+    el.style.display = 'block';
   }
 
   window.submitForm = submitForm;

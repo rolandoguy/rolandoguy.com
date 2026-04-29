@@ -158,6 +158,7 @@
     'perf.privateBadge': 'Invitation only',
     'perf.privateEventType': 'Private event',
     'perf.yearTba': 'TBA',
+    'perf.timeTba': 'Time to be announced',
     'ui.featured': 'Featured'
   };
   var PERF_PRIVATE_UI_TEXT = {
@@ -490,6 +491,10 @@
       publicTicketLabel_fr: ticketLabelValue('publicTicketLabel_fr'),
       eventLink: String(o.eventLink || o.link || '').trim(),
       eventLinkLabel: String(o.eventLinkLabel || o.linkText || '').trim(),
+      publicCtaStyle: (function () {
+        var s = String(o.publicCtaStyle || '').trim().toLowerCase();
+        return (s === 'primary' || s === 'secondary') ? s : 'auto';
+      }()),
       extDesc: firstNonEmpty(['extDesc', 'modalText', 'description', 'longDescription', 'modalLongDesc', 'moreInfoDescription', 'moreInfoExtra']),
       modalImg: String(o.modalImg || '').trim(),
       modalImgHide: isTruthyFlag(o.modalImgHide),
@@ -976,7 +981,7 @@
     var L = normalizeLangCode(lang) || 'en';
     var labels = {
       en: 'Tickets & Info',
-      de: 'Tickets & Info',
+      de: 'Tickets & Infos',
       es: 'Entradas e info',
       it: 'Biglietti e info',
       fr: 'Billets & infos'
@@ -1569,6 +1574,17 @@
   function perfFormatTime(raw, lang) {
     if (!raw) return '';
     var cleanTime = String(raw).replace(/\s*(uhr|h)\s*$/i, '').trim();
+    if (/^(tba|tbd|to be announced|to be confirmed|coming soon)$/i.test(cleanTime)) {
+      var L = normalizeLangCode(lang) || 'en';
+      var timeTba = {
+        en: 'Time to be announced',
+        de: 'Uhrzeit folgt',
+        es: 'Horario por confirmar',
+        it: 'Orario da definire',
+        fr: 'Horaire à confirmer'
+      };
+      return mpPick(L, 'perf.timeTba', timeTba[L] || timeTba.en);
+    }
     var timeFmts = {
       en: function (t) {
         return t;
@@ -2269,7 +2285,9 @@
       var moreInfoLabel = resolvePerfCtaLabel(p, currentLang);
       if (allowModalButton)
         h +=
-          '<button class="perf-more-btn no-print" data-perf-id="' +
+          '<button class="perf-more-btn' +
+          (p.publicCtaStyle === 'primary' ? ' perf-more-btn--tickets' : (p.publicCtaStyle === 'secondary' ? '' : (perfIsGenericTicketInfoLabel(moreInfoLabel) ? ' perf-more-btn--tickets' : ''))) +
+          ' no-print" data-perf-id="' +
           escHtml(String(p.id)) +
           '">' +
           moreInfoLabel +
@@ -2361,7 +2379,13 @@
     return getPerfs().filter(function (p, idx) {
       return shouldRenderPublicEvent(p, idx);
     }).filter(function (p) {
-      return !perfIsPrivateEvent(p, currentLang || 'en');
+      var st = String(p.status || '').trim().toLowerCase();
+      var es = normalizedEditorialStatus(p.editorialStatus);
+      var excludedStatus = { hidden: 1, draft: 1 };
+      var excludedEditorial = { hidden: 1, draft: 1, needs_translation: 1, 'needs translation': 1 };
+      if (excludedStatus[st]) return false;
+      if (excludedEditorial[es]) return false;
+      return true;
     });
   }
 

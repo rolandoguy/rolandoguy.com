@@ -3201,6 +3201,7 @@
     'eventLink_es', 'eventLinkLabel_es',
     'eventLink_it', 'eventLinkLabel_it',
     'eventLink_fr', 'eventLinkLabel_fr',
+    'publicCtaStyle',
     'flyerImg',
     'moreInfoDisplayMode', 'moreInfoTemplate', 'moreInfoTitle', 'moreInfoSubtitle',
     'moreInfoArtists', 'moreInfoAddress', 'moreInfoDescription', 'moreInfoExtra',
@@ -4762,8 +4763,48 @@
       el.value = safeString(v);
     }
   }
+  function migrateParagraphsToSections(paragraphs) {
+    var ps = (paragraphs || []).map(function (p) { return safeString(p).trim(); }).filter(Boolean);
+    var out = { profile: '', training: '', stage: '', repertoire: '' };
+    if (ps[0]) out.profile = ps[0];
+    if (ps[1]) out.training = ps[1];
+    if (ps[2]) out.training = (out.training ? out.training + ' ' : '') + ps[2];
+    if (ps[3]) {
+      var sentences = ps[3].split(/(?<=[.!?])\s+/);
+      var trainingTail = sentences[0] || '';
+      var stageMid = sentences.slice(1, -1).join(' ');
+      var repertoireTail = sentences.length > 1 ? sentences[sentences.length - 1] : '';
+      if (trainingTail) out.training = (out.training ? out.training + ' ' : '') + trainingTail;
+      if (stageMid) out.stage = stageMid;
+      if (repertoireTail) out.repertoire = repertoireTail;
+    }
+    for (var i = 4; i < ps.length; i++) out.repertoire = (out.repertoire ? out.repertoire + ' ' : '') + ps[i];
+    return out;
+  }
+  function fillBioSectionInputsFromStored(stored, fallback) {
+    var storedSections = isObject(stored) && isObject(stored.sections) ? stored.sections : null;
+    var fallbackSections = isObject(fallback) && isObject(fallback.sections) ? fallback.sections : null;
+    var storedParas = normalizeParagraphsFromBioStored(isObject(stored) ? stored : {});
+    var fallbackParas = normalizeParagraphsFromBioStored(isObject(fallback) ? fallback : {});
+    var migratedStored = storedSections ? storedSections : migrateParagraphsToSections(storedParas);
+    var migratedFallback = fallbackSections ? fallbackSections : migrateParagraphsToSections(fallbackParas);
+    var fieldMap = {
+      'bio-section-profile': 'profile',
+      'bio-section-training': 'training',
+      'bio-section-stage': 'stage',
+      'bio-section-repertoire': 'repertoire'
+    };
+    Object.keys(fieldMap).forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      var key = fieldMap[id];
+      var v = migratedStored[key];
+      if (isBlank(v) && !isBlank(migratedFallback[key])) v = migratedFallback[key];
+      el.value = safeString(v);
+    });
+  }
   function isBiographyEditorVisiblyEmpty() {
-    var ids = ['bio-introLine', 'bio-h2', 'bio-p1', 'bio-p2', 'bio-continue-tag', 'bio-continue-sub', 'bio-cta-rep', 'bio-cta-media', 'bio-cta-contact', 'bio-cta-home'];
+    var ids = ['bio-introLine', 'bio-h2', 'bio-section-profile', 'bio-section-training', 'bio-continue-tag', 'bio-continue-sub', 'bio-cta-rep', 'bio-cta-media', 'bio-cta-contact', 'bio-cta-home'];
     for (var i = 0; i < ids.length; i += 1) {
       var el = $(ids[i]);
       if (el && safeString(el.value).trim()) return false;
@@ -4774,7 +4815,7 @@
     var src = isObject(doc) ? doc : {};
     setFieldEffectiveValue($('bio-introLine'), { value: safeString(src.introLine), source: sourceLabel });
     setFieldEffectiveValue($('bio-h2'), { value: safeString(src.h2), source: sourceLabel });
-    fillBioParagraphInputsFromStored({}, src);
+    fillBioSectionInputsFromStored({}, src);
     setFieldEffectiveValue($('bio-continue-tag'), { value: safeString(src.continueSectionTag), source: sourceLabel });
     setFieldEffectiveValue($('bio-continue-sub'), { value: safeString(src.continueSub), source: sourceLabel });
     setFieldEffectiveValue($('bio-cta-rep'), { value: safeString(src.ctaRepertoire), source: sourceLabel });
@@ -5076,6 +5117,26 @@
     return safeString(defaultPortrait).trim();
   }
 
+  function updateBioSectionHeadings() {
+    var lang = state.lang || 'en';
+    var ui = {};
+    try {
+      if (typeof state.api.uiTable === 'function') {
+        ui = state.api.uiTable(lang) || {};
+      }
+    } catch (e) {}
+    var labels = [
+      ui['bio.section0'] || 'Profile',
+      ui['bio.section1'] || 'Training & artistic development',
+      ui['bio.section2'] || 'Stage & concert',
+      ui['bio.section3'] || 'Repertoire & programmes'
+    ];
+    if ($('bio-section-heading-0')) $('bio-section-heading-0').textContent = labels[0];
+    if ($('bio-section-heading-1')) $('bio-section-heading-1').textContent = labels[1];
+    if ($('bio-section-heading-2')) $('bio-section-heading-2').textContent = labels[2];
+    if ($('bio-section-heading-3')) $('bio-section-heading-3').textContent = labels[3];
+  }
+
   function loadBio() {
     var nonce = ++state.bioLoadNonce;
     var storedRaw = getBiographyStoredDoc(state.lang);
@@ -5100,7 +5161,7 @@
     });
     setFieldFromSources('bio-introLine', storedDisplay, bioFallback, 'introLine', bioFallbackLabel);
     setFieldFromSources('bio-h2', storedDisplay, bioFallback, 'h2', bioFallbackLabel);
-    fillBioParagraphInputsFromStored(storedDisplay, bioFallback);
+    fillBioSectionInputsFromStored(storedDisplay, bioFallback);
     setFieldFromSources('bio-continue-tag', storedDisplay, bioFallback, 'continueSectionTag', bioFallbackLabel);
     setFieldFromSources('bio-continue-sub', storedDisplay, bioFallback, 'continueSub', bioFallbackLabel);
     setFieldFromSources('bio-cta-rep', storedDisplay, bioFallback, 'ctaRepertoire', bioFallbackLabel);
@@ -5121,6 +5182,7 @@
       bioDebug('load:force-fill-initial', { lang: state.lang, source: bioFallbackLabel });
       forceFillBiographyEditorFromDoc(bioFallback, bioFallbackLabel);
     }
+    updateBioSectionHeadings();
     updateBioMiniPreview();
     loadBiographyBundle().then(function () {
       if (nonce !== state.bioLoadNonce) return;
@@ -5164,6 +5226,7 @@
         bioDebug('load:force-fill-live', { lang: state.lang, source: liveFallbackLabel });
         forceFillBiographyEditorFromDoc(liveFallback, liveFallbackLabel);
       }
+      updateBioSectionHeadings();
       updateBioMiniPreview();
       updateCompletenessIndicators();
     });
@@ -5171,13 +5234,16 @@
   }
   async function saveBio() {
     var applyAll = !!($('bio-image-all-langs') && $('bio-image-all-langs').checked);
-    var paras = paragraphsArrayFromBioInputs();
+    var sections = {
+      profile: safeString($('bio-section-profile') && $('bio-section-profile').value).trim(),
+      training: safeString($('bio-section-training') && $('bio-section-training').value).trim(),
+      stage: safeString($('bio-section-stage') && $('bio-section-stage').value).trim(),
+      repertoire: safeString($('bio-section-repertoire') && $('bio-section-repertoire').value).trim()
+    };
     var payload = {
       introLine: safeString($('bio-introLine').value),
       h2: safeString($('bio-h2').value),
-      p1: paras[0] || '',
-      p2: paras[1] || '',
-      paragraphs: paras,
+      sections: sections,
       continueSectionTag: safeString($('bio-continue-tag').value),
       continueSub: safeString($('bio-continue-sub').value),
       ctaRepertoire: safeString($('bio-cta-rep').value),
@@ -5194,7 +5260,7 @@
     bioDebug('save', {
       lang: state.lang,
       target: 'bio_' + state.lang,
-      paragraphCount: paras.length,
+      sections: Object.keys(sections).filter(function (k) { return sections[k]; }),
       applyAllPortraits: applyAll
     });
     if (!await saveDocRequired('bio_' + state.lang, payload)) return;
@@ -14372,6 +14438,10 @@
     if ($('perf-modal-longdesc')) $('perf-modal-longdesc').value = localeFirst('extDesc');
     if ($('perf-modal-link')) $('perf-modal-link').value = localeFirst('eventLink');
     if ($('perf-modal-link-label')) $('perf-modal-link-label').value = localeFirst('eventLinkLabel');
+    if ($('perf-public-cta-style')) {
+      var _ctaStyleVal = safeString(e.publicCtaStyle).trim().toLowerCase();
+      $('perf-public-cta-style').value = (_ctaStyleVal === 'primary' || _ctaStyleVal === 'secondary') ? _ctaStyleVal : 'auto';
+    }
     if ($('perf-ticket-status')) setSelectWithCustomValue('perf-ticket-status', safeString(e.ticketStatus || (perfIsPrivateEventRecord(e, state.lang || 'en') ? 'private_invitation' : 'unknown')).trim() || 'unknown', 'unknown');
     if ($('perf-ticket-currency')) $('perf-ticket-currency').value = safeString(e.ticketCurrency || 'EUR').trim().toUpperCase() || 'EUR';
     if ($('perf-modal-ticketPrice')) $('perf-modal-ticketPrice').value = safeString(e.ticketPrice);
@@ -14843,6 +14913,8 @@
     persistLocaleBackedField('publicTicketLabel', safeString($('perf-public-ticket-label') && $('perf-public-ticket-label').value).trim());
     persistSharedPracticalField('eventLink', safeString($('perf-modal-link') && $('perf-modal-link').value).trim());
     persistCtaLabelField(safeString($('perf-modal-link-label') && $('perf-modal-link-label').value));
+    var _publicCtaStyleRaw = safeString($('perf-public-cta-style') && $('perf-public-cta-style').value).trim().toLowerCase();
+    e.publicCtaStyle = (_publicCtaStyleRaw === 'primary' || _publicCtaStyleRaw === 'secondary') ? _publicCtaStyleRaw : 'auto';
     e.modalImg = safeString($('perf-modal-image') && $('perf-modal-image').value).trim();
     e.modalImgHide = safeString($('perf-modal-image-hide') && $('perf-modal-image-hide').value).trim() === 'true';
     if ($('perf-modal-enabled')) {
@@ -20133,8 +20205,8 @@
     if (!$('bio-preview-title')) return;
     if ($('bio-preview-intro')) $('bio-preview-intro').textContent = clipText($('bio-introLine').value, 160) || 'Intro line';
     $('bio-preview-title').textContent = clipText($('bio-h2').value, 80) || 'Biography';
-    $('bio-preview-p1').textContent = clipText($('bio-p1').value, 180) || 'Paragraph 1';
-    $('bio-preview-p2').textContent = clipText($('bio-p2').value, 180) || 'Paragraph 2';
+    $('bio-preview-p1').textContent = clipText($('bio-section-profile').value, 180) || 'Profile';
+    $('bio-preview-p2').textContent = clipText($('bio-section-training').value, 180) || 'Training';
     $('bio-preview-quote').textContent = clipText($('bio-quote').value, 130) || 'Quote';
   }
   function updateProgramsMiniPreview() {
@@ -20381,12 +20453,10 @@
       return {
         introLine: $('bio-introLine').value,
         h2: $('bio-h2').value,
-        p1: $('bio-p1').value,
-        p2: $('bio-p2').value,
-        p3: $('bio-p3').value,
-        p4: $('bio-p4').value,
-        p5: $('bio-p5').value,
-        p6: $('bio-p6').value,
+        profile: $('bio-section-profile').value,
+        training: $('bio-section-training').value,
+        stage: $('bio-section-stage').value,
+        repertoire: $('bio-section-repertoire').value,
         continueSectionTag: $('bio-continue-tag').value,
         continueSub: $('bio-continue-sub').value,
         ctaRepertoire: $('bio-cta-rep').value,
@@ -20511,12 +20581,10 @@
     } else if (s === 'bio') {
       $('bio-introLine').value = safeString(d.introLine);
       $('bio-h2').value = safeString(d.h2);
-      $('bio-p1').value = safeString(d.p1);
-      $('bio-p2').value = safeString(d.p2);
-      $('bio-p3').value = safeString(d.p3);
-      $('bio-p4').value = safeString(d.p4);
-      $('bio-p5').value = safeString(d.p5);
-      $('bio-p6').value = safeString(d.p6);
+      $('bio-section-profile').value = safeString(d.profile);
+      $('bio-section-training').value = safeString(d.training);
+      $('bio-section-stage').value = safeString(d.stage);
+      $('bio-section-repertoire').value = safeString(d.repertoire);
       $('bio-continue-tag').value = safeString(d.continueSectionTag);
       $('bio-continue-sub').value = safeString(d.continueSub);
       $('bio-cta-rep').value = safeString(d.ctaRepertoire);
@@ -21921,7 +21989,7 @@
     bindInputsDirty(['pb-blueprint-title','pb-offer-description','pb-flexible-note'], function () { persistBlueprintHeader('manual'); });
     bindInputsDirty(['pb-piece-customTitle','pb-piece-customDuration','pb-piece-notes'], persistBlueprintPieceEditor);
     bindInputsDirty(['pb-history-year','pb-history-title','pb-history-format','pb-history-sourceType','pb-history-collaborators','pb-history-programmeItems','pb-history-notes'], persistConcertHistoryEditor);
-    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-private-public-title-enabled','perf-private-public-title-mode','perf-private-public-title','perf-private-public-venue-enabled','perf-private-public-venue-mode','perf-private-public-venue','perf-private-public-location-enabled','perf-private-public-location-mode','perf-private-public-location','perf-private-public-more-info','perf-private-public-address-maps','perf-private-public-ticket','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-ticket-status','perf-ticket-currency','perf-modal-ticketPrice','perf-public-ticket-label','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
+    bindInputsDirty(['perf-title','perf-detail','perf-day','perf-month','perf-dateDisplay','perf-time','perf-venue','perf-city','perf-revenue-amount','perf-revenue-currency','perf-revenue-status','perf-revenue-notes','perf-payment-status','perf-payment-model','perf-actual-received-amount','perf-actual-received-currency','perf-venuePhoto','perf-venuePhotoFocus','perf-venueOpacity','perf-status','perf-type','perf-sortDate','perf-editorialStatus','perf-featured-context-homepage','perf-featured-context-media','perf-featured-context-calendar','perf-homepage-priority','perf-privateEvent','perf-privateBadge','perf-privateBadgeText','perf-privateDetailLine','perf-privateDetailText','perf-private-public-title-enabled','perf-private-public-title-mode','perf-private-public-title','perf-private-public-venue-enabled','perf-private-public-venue-mode','perf-private-public-venue','perf-private-public-location-enabled','perf-private-public-location-mode','perf-private-public-location','perf-private-public-more-info','perf-private-public-address-maps','perf-private-public-ticket','perf-modal-title','perf-modal-type','perf-modal-venue','perf-modal-city','perf-modal-address','perf-modal-maps-link','perf-modal-longdesc','perf-modal-link','perf-modal-link-label','perf-public-cta-style','perf-ticket-status','perf-ticket-currency','perf-modal-ticketPrice','perf-public-ticket-label','perf-modal-image','perf-modal-image-hide','perf-modal-enabled','perf-modal-flyerImg'], persistPerfEditor);
     bindInputsDirty(['press-source','press-quote','press-production','press-url','press-visible','press-editorialStatus'], persistPressEditor);
     bindInputsDirty(['pdf-dossier-EN','pdf-artist-EN','pdf-dossier-DE','pdf-artist-DE','pdf-dossier-ES','pdf-artist-ES','pdf-dossier-IT','pdf-artist-IT','pdf-dossier-FR','pdf-artist-FR'], function () {
       persistPressPdfsFromUi();
@@ -21981,12 +22049,10 @@
       [
         'bio-introLine',
         'bio-h2',
-        'bio-p1',
-        'bio-p2',
-        'bio-p3',
-        'bio-p4',
-        'bio-p5',
-        'bio-p6',
+        'bio-section-profile',
+        'bio-section-training',
+        'bio-section-stage',
+        'bio-section-repertoire',
         'bio-continue-tag',
         'bio-continue-sub',
         'bio-cta-rep',

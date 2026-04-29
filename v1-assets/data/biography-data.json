@@ -3,20 +3,20 @@
   "locales": {
     "en": {
       "introLine": "Selected performances, press excerpts, high-resolution photos, and downloadable presenter materials are available across Calendar, Media, and Press & materials.",
-      "h2": "<span class=\"rep-title-stack\"><span class=\"rep-title-line1\">Eine Stimme,</span><span class=\"rep-title-line2\">von <em>Tradition geprägt</em></span></span>",
+      "h2": "<span class=\"rep-title-stack\"><span class=\"rep-title-line1\">A voice,</span><span class=\"rep-title-line2\">forged in <em>tradition</em></span></span>",
       "paragraphs": [
-        "Der argentinisch-italienische Tenor Rolando Guy wurde in Buenos Aires geboren, wo er am Nationalen Konservatorium studierte.",
-        "Privat bildete er sich bei Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck und Víctor Torres weiter — allesamt Sänger und Pädagogen mit Verbindung zum Teatro Colón — und erarbeitete sein Opernrepertoire mit Dante Ranieri, Susana Cardonnet, Rozita Zozoulia und Marcelo Ayub.",
-        "In einer früheren Phase seiner künstlerischen Entwicklung erhielt er außerdem Coachings bei Jack Li Vigni in New York und bei dem Tenor Francesco Anile in Rom. 2017 nahm er an der renommierten Javier-Camarena-Meisterklasse in Buenos Aires teil.",
+        "The Argentine-Italian tenor Rolando Guy was born in Buenos Aires, where he studied at the National Conservatory of Music.",
+        "He trained privately with Luis Bragato, Ricardo Ortale, Garbis Adiamanian, Gustavo López Manzitti, Darío Schmunck and Víctor Torres — all singers and teachers connected to the Teatro Colón — and developed his operatic repertoire with Dante Ranieri, Susana Cardonnet, Rozita Zozoulia and Marcelo Ayub.",
+        "In an earlier phase of his artistic development, he also received coachings with Jack Li Vigni in New York and with the tenor Francesco Anile in Rome. In 2017 he participated in the prestigious Javier Camarena Masterclass in Buenos Aires.",
         "Based in Berlin since 2019, he studied with Maestro Reiner Goldberg and Uwe Griem, and currently continues to develop his technique and interpretation with Maestro Stephan von Cron Catalano, Austrian conductor and violinist. In 2025, he performed Roderich de Weert in “Der Vetter aus Dingsda” (Eduard Künneke) at Kammeroper Frankfurt under the direction of Stanislav Rosenberg, and in 2023 sang Tamino in “Die Zauberflöte” with Opernwerkstatt am Rhein. He has appeared as a soloist in the Apollo Saal of the Staatsoper Berlin in private events with Opera Dinners, with whom he has collaborated on several occasions, including performances in London in 2025. He has also performed with the ensemble Die Goldvögel in Berlin and Copenhagen, and as soloist with the Diplomatic Choir of Berlin at the Berliner Dom, the Federal Foreign Office, and Notre-Dame in Strasbourg. He has given Lieder recitals featuring works by Schubert, Strauss, Rachmaninov, and Liszt with pianist Marcelo Ayub. From Berlin, he is available for opera, concert, recital, tango, and curated programmes in collaboration with presenters, programmers, festivals, and artistic partners."
       ],
-      "portraitAlt": "Rolando Guy, lyrischer Tenor — szenisches Portrait für die Website",
+      "portraitAlt": "Rolando Guy, lyric tenor — theatrical portrait for the website",
       "continueSectionTag": "FOR PRESENTERS",
-      "continueSub": "Repertoire-Stränge, Aufnahmen und Buchungswege für Programm- und Casting-Kontexte im Überblick.",
+      "continueSub": "Repertoire strands, recordings and booking routes for programme and casting contexts at a glance.",
       "ctaRepertoire": "Repertoire",
       "ctaMedia": "Media",
       "ctaContact": "Book now",
-      "ctaHomeIntro": "Programme ansehen",
+      "ctaHomeIntro": "View programmes",
       "portraitImage": "../img/studio-1.jpg",
       "portraitFocus": "84.1% 0%"
     },

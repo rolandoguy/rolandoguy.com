@@ -161,6 +161,9 @@
     }
     return '';
   }
+  function safeString(v) {
+    return String(v == null ? '' : v);
+  }
   function normalizeComparableText(v) {
     return String(v == null ? '' : v)
       .replace(/<[^>]*>/g, ' ')
@@ -328,6 +331,92 @@
     return map[L] || map.en;
   }
 
+  function defaultDossierCtaForLang(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var map = {
+      en: 'View dossier',
+      de: 'Dossier ansehen',
+      es: 'Ver dossier',
+      it: 'Vedi dossier',
+      fr: 'Voir le dossier'
+    };
+    return map[L] || map.en;
+  }
+
+  function bioSectionLabelsForLang(lang) {
+    var L = normalizeLangCode(lang) || 'en';
+    var fallbackMap = {
+      en: ['Profile', 'Training & artistic development', 'Stage & concert', 'Repertoire & programmes'],
+      de: ['Profil', 'Ausbildung & künstlerische Entwicklung', 'Bühne & Konzert', 'Repertoire & Programme'],
+      es: ['Perfil', 'Formación y desarrollo artístico', 'Escena y concierto', 'Repertorio y programas'],
+      it: ['Profilo', 'Formazione e sviluppo artistico', 'Palcoscenico e concerto', 'Repertorio e programmi'],
+      fr: ['Profil', 'Formation et développement artistique', 'Scène et concert', 'Répertoire et programmes']
+    };
+    var pick = typeof window.pickMpLocaleString === 'function' ? window.pickMpLocaleString : function () { return null; };
+    var labels = [
+      pick(L, 'bio.section0') || fallbackMap[L][0] || fallbackMap.en[0],
+      pick(L, 'bio.section1') || fallbackMap[L][1] || fallbackMap.en[1],
+      pick(L, 'bio.section2') || fallbackMap[L][2] || fallbackMap.en[2],
+      pick(L, 'bio.section3') || fallbackMap[L][3] || fallbackMap.en[3]
+    ];
+    return labels;
+  }
+
+  function splitBioSentences(text) {
+    var raw = safeString(text).trim();
+    if (!raw) return [];
+    var protectedText = raw.replace(/z\.B\./g, 'z<BIO_DOT>B<BIO_DOT>');
+    var parts = protectedText.match(/[^.!?]+(?:[.!?]+|$)(?:["“”»«])?/g) || [protectedText];
+    return parts
+      .map(function (part) {
+        return part.replace(/<BIO_DOT>/g, '.').trim();
+      })
+      .filter(Boolean);
+  }
+
+  function buildBioSections(paragraphs, lang, sectionsObj) {
+    var labels = bioSectionLabelsForLang(lang);
+    if (sectionsObj && typeof sectionsObj === 'object') {
+      var profile = safeString(sectionsObj.profile || '').trim();
+      var training = safeString(sectionsObj.training || '').trim();
+      var stage = safeString(sectionsObj.stage || '').trim();
+      var repertoire = safeString(sectionsObj.repertoire || '').trim();
+      if (profile || training || stage || repertoire) {
+        var out = [];
+        if (profile) out.push({ title: labels[0], paragraphs: [profile] });
+        if (training) out.push({ title: labels[1], paragraphs: [training] });
+        if (stage) out.push({ title: labels[2], paragraphs: [stage] });
+        if (repertoire) out.push({ title: labels[3], paragraphs: [repertoire] });
+        return out;
+      }
+    }
+    var ps = (paragraphs || [])
+      .map(function (p) { return safeString(p).trim(); })
+      .filter(Boolean);
+    var sections = [
+      { title: labels[0], paragraphs: [] },
+      { title: labels[1], paragraphs: [] },
+      { title: labels[2], paragraphs: [] },
+      { title: labels[3], paragraphs: [] }
+    ];
+    if (ps[0]) sections[0].paragraphs.push(ps[0]);
+    if (ps[1]) sections[1].paragraphs.push(ps[1]);
+    if (ps[2]) sections[1].paragraphs.push(ps[2]);
+    if (ps[3]) {
+      var tail = splitBioSentences(ps[3]);
+      if (tail.length) sections[1].paragraphs.push(tail.shift());
+      if (tail.length) {
+        var finalSentence = tail.pop();
+        if (tail.length) sections[2].paragraphs.push(tail.join(' '));
+        if (finalSentence) sections[3].paragraphs.push(finalSentence);
+      }
+    }
+    for (var i = 4; i < ps.length; i++) sections[3].paragraphs.push(ps[i]);
+    return sections.filter(function (section) {
+      return section.paragraphs.length;
+    });
+  }
+
   function resolveProgramsCtaLang(explicitLang) {
     var fromArg = normalizeLangCode(explicitLang);
     var fromUi = normalizeLangCode(activeLangFromUi());
@@ -397,14 +486,25 @@
     if (parasEl) {
       parasEl.innerHTML = '';
       var ps = merged.paragraphs || [];
-      var featherIndex = ps.length > 1 ? 1 : (ps.length ? 0 : -1);
-      for (var i = 0; i < ps.length; i++) {
-        var p = document.createElement('p');
-        p.className = 'reveal rd' + (i + 1);
-        if (i === featherIndex) p.className += ' bio-feather-anchor';
-        p.textContent = ps[i];
-        parasEl.appendChild(p);
-      }
+      var sections = buildBioSections(ps, lang, merged.sections);
+      var paragraphIndex = 0;
+      sections.forEach(function (section, sectionIndex) {
+        var sectionEl = document.createElement('section');
+        sectionEl.className = 'bio-copy-section reveal rd' + (sectionIndex + 1);
+        var title = document.createElement('h3');
+        title.className = 'bio-copy-section-title';
+        title.textContent = section.title;
+        sectionEl.appendChild(title);
+        section.paragraphs.forEach(function (copy) {
+          var p = document.createElement('p');
+          paragraphIndex += 1;
+          p.className = 'bio-copy-paragraph';
+          if (paragraphIndex === 2) p.className += ' bio-feather-anchor';
+          p.textContent = copy;
+          sectionEl.appendChild(p);
+        });
+        parasEl.appendChild(sectionEl);
+      });
       try {
         var obs = new IntersectionObserver(
           function (entries) {
@@ -441,11 +541,7 @@
       }
     }
     if (ctaMed) {
-      if (merged.ctaMedia) ctaMed.textContent = merged.ctaMedia;
-      else if (pick) {
-        var nm = pick(lang, 'nav.media');
-        if (nm != null && String(nm).trim() !== '') ctaMed.textContent = String(nm);
-      }
+      ctaMed.textContent = defaultDossierCtaForLang(lang);
     }
     if (ctaCon) {
       if (merged.ctaContact) ctaCon.textContent = merged.ctaContact;

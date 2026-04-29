@@ -72,7 +72,11 @@
 <main id="top" class="mp-page-main">
 <section id="press">
   <div class="section-inner">
-    <p class="section-tag" data-num="06" id="pressSectionTag" data-i18n="mp.pressCoverage">Press coverage</p>
+    <p class="section-tag" data-num="06" id="pressSectionTag" data-i18n="epk.pageEyebrow">Dossier</p>
+    <div class="press-page-header">
+      <h1 class="reveal" id="pressPageTitle" data-i18n-html="epk.pageTitle"><span class="title-amp-stack"><span class="title-line1">Dossier</span><span class="title-line2"><span class="title-amp">&amp;</span> <em>Press Materials</em></span></span></h1>
+      <p class="section-sub reveal rd1" id="pressPageSubtitle" data-i18n="epk.pageSubtitle">Biography, press photos and materials for presenters, programmers and media.</p>
+    </div>
     <p class="section-sub reveal rd1" id="reviewsIntro" data-i18n="press.intro">Selected press responses to recent productions and performances.</p>
     <div class="press-grid" id="pressGrid"><p class="press-empty" data-i18n="press.loadingStub">Loading press highlights…</p></div>
   </div>
@@ -91,10 +95,13 @@
           <button type="button" class="epk-tab active" onclick="epkTab(this,'bio150')" data-i18n="epk.bio150lbl">150-word Bio</button>
           <button type="button" class="epk-tab" onclick="epkTab(this,'bio300')" data-i18n="epk.bio300lbl">Full Biography</button>
         </div>
+        <div class="epk-bio-tools">
+          <p data-i18n="epk.bioHelp">Choose a biography length, then copy the selected text.</p>
+          <button type="button" class="epk-copy-btn" onclick="epkCopyBio()" id="epkCopyBtn" data-i18n="epk.copyBio">⧉ Copy biography</button>
+        </div>
         <div class="epk-bio-pane" id="bio50"><p id="bio50Text"></p></div>
         <div class="epk-bio-pane active" id="bio150"><p id="bio150Text"></p></div>
         <div class="epk-bio-pane" id="bio300"><p id="bio300TextP1"></p><p id="bio300TextP2"></p><p id="bio300TextP3"></p><p id="bio300TextP4"></p></div>
-        <button type="button" class="epk-copy-btn" onclick="epkCopyBio()" id="epkCopyBtn" data-i18n="epk.copyBio">⧖ Copy biography</button>
       </div>
 
       <div class="epk-dl-col">
@@ -112,14 +119,12 @@
             <span id="epkDossierSoon" class="epk-pdf-note"></span>
             <a id="epkArtistSheetBtn" class="epk-dl-btn" href="#" target="_blank" rel="noopener" data-i18n="epk.downloadArtistSheet">Download artist sheet</a>
             <span id="epkArtistSoon" class="epk-pdf-note"></span>
+            <a href="repertoire.html#programs" id="epkProgramsLink" class="epk-dl-btn epk-dl-btn--secondary" data-i18n="epk.programsLink">See programmes and artistic collaborations</a>
           </div>
         </div>
       </div>
 
     </div>
-    <p class="reveal rd1" style="margin-top:18px;text-align:center">
-      <a href="repertoire.html" id="epkProgramsLink" data-i18n="epk.programsLink" style="font-family:var(--ff-caps);font-size:.52rem;letter-spacing:.15em;color:var(--gold-dim);text-decoration:none;text-transform:uppercase;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">See programmes and artistic collaborations</a>
-    </p>
   </div>
 </section>
 
@@ -127,9 +132,9 @@
   <div class="section-inner reveal rd2">
   <p class="section-sub mp-onward-note" data-i18n="mp.pressFooterNote">Performance calendar, videos and photo galleries live on their dedicated pages.</p>
   <div class="contact-ctas mp-onward-ctas">
-    <a href="media.html" class="btn-primary" data-i18n="nav.media">Media</a>
+    <a href="contact.html" class="btn-primary" data-i18n="nav.book">Book now</a>
+    <a href="media.html" class="btn-secondary" data-i18n="nav.media">Media</a>
     <a href="calendar.html" class="btn-secondary" data-i18n="nav.cal">Calendar</a>
-    <a href="contact.html" class="btn-secondary" data-i18n="nav.book">Book now</a>
   </div>
   </div>
 </section>

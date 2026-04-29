@@ -338,6 +338,7 @@
   function getUiOverrideString(lang, key) {
     var L = normalizeLang(lang);
     if (key === 'nav.epk') return resolveNavEpkLabel(L);
+    if (key === 'epk.pageEyebrow') return 'Dossier';
     var d = MP_UI_OVERRIDES[L];
     if (d && typeof d[key] === 'string' && d[key].trim()) {
       var raw = String(d[key]).trim();
@@ -369,6 +370,25 @@
         var enNorm = enVal.toLowerCase();
         var localNorm = localVal.toLowerCase();
         if (enNorm && localNorm && localNorm !== enNorm && rawNorm === enNorm) return localVal;
+      }
+      if (key === 'epk.downloadArtistSheet' && L !== 'en') {
+        var epkTable = window.MP_LOCALE_TABLE || {};
+        var epkLocal =
+          epkTable && epkTable[L] && epkTable[L][key] != null
+            ? String(epkTable[L][key]).trim()
+            : '';
+        if (epkLocal && /artist sheet/i.test(raw) && !/artist sheet/i.test(epkLocal)) return epkLocal;
+      }
+      if (key === 'form.messagePh') {
+        var formTable = window.MP_LOCALE_TABLE || {};
+        var formLocal =
+          formTable && formTable[L] && formTable[L][key] != null
+            ? String(formTable[L][key]).trim()
+            : '';
+        if (formLocal) {
+          var hasSpecificBookingCue = /date|datum|fecha|data|lieu|lugar|luogo|ort|location|programme|programm|programa|programma|événement|evento|veranstaltung/i;
+          if (!hasSpecificBookingCue.test(raw) && hasSpecificBookingCue.test(formLocal)) return formLocal;
+        }
       }
       if (L === 'it' && key === 'nav.media' && raw.toLowerCase() === 'video') return 'Media';
       return raw;

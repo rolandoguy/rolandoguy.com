@@ -83,20 +83,24 @@
         <div class="form-group"><label class="form-label" for="cf-subject" data-i18n="form.subject">Subject</label><input type="text" id="cf-subject" class="form-input" data-i18n-placeholder="form.subjectPh" placeholder="Booking enquiry" autocomplete="off"></div>
         <div class="form-group"><label class="form-label" for="cf-message" data-i18n="form.message">Message</label><textarea id="cf-message" class="form-input" rows="5" data-i18n-placeholder="form.messagePh" placeholder="Describe your enquiry …"></textarea></div>
         <button type="button" class="form-submit" onclick="submitForm()"><span data-i18n="form.send">Send Message</span></button>
-        <div class="form-success" id="formOk" data-i18n="form.success">Thank you! Your message has been sent.</div>
+        <div class="form-success" id="formOk" role="status" aria-live="polite" data-i18n="form.success">Thank you! Your message has been sent.</div>
+        <div class="form-error" id="formErr" role="alert" data-i18n="form.errorSend">Error sending. Please email rolandoguy@gmail.com directly.</div>
       </div>
       <div class="contact-left reveal">
-        <p id="contactSub">For booking enquiries, artistic projects, private concerts, and opera evenings, please use the contact form.
-
-Based in Berlin, Rolando Guy is available for opera, concert, recital, tango, and curated programmes for presenters, programmers, festivals, and artistic collaborations.
-
-All enquiries will be answered as soon as possible.</p>
+        <div id="contactSub" class="contact-intro-copy">
+          <p>For booking enquiries, artistic projects, private concerts, and opera evenings, please use the contact form.</p>
+          <p>Based in Berlin, Rolando Guy is available for opera, concert, recital, tango, and curated programmes for presenters, programmers, festivals, and artistic collaborations.</p>
+          <p>All enquiries will be answered as soon as possible.</p>
+        </div>
         <div class="about-quote" id="contactQuoteWrap" style="display:none;margin:20px 0">
           <p id="contactQuoteText" style="font-family:var(--ff-title);font-size:1.1rem;font-style:italic;color:var(--text);line-height:1.6"></p>
         </div>
-        <div class="contact-ctas">
-          <a id="contactEmailBtn" class="btn-secondary">Send Email</a>
-          <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none" data-i18n="contact.webBtn">Official Website</a>
+        <div class="contact-direct">
+          <p class="contact-direct-label" data-i18n="contact.directLabel">Prefer direct email?</p>
+          <div class="contact-ctas">
+            <a id="contactEmailBtn" class="btn-secondary">Send Email</a>
+            <a id="contactWebBtn" class="btn-secondary" href="https://rolandoguy.com" target="_blank" rel="noopener" style="display:none" data-i18n="contact.webBtn">Official Website</a>
+          </div>
         </div>
       </div>
     </div>
@@ -107,9 +111,9 @@ All enquiries will be answered as soon as possible.</p>
   <div class="section-inner reveal rd2">
   <p class="section-sub mp-onward-note" data-i18n="mp.contactBottomNote">Explore programmes, calendar, and press materials to support casting and programming decisions.</p>
   <div class="contact-ctas mp-onward-ctas">
-    <a href="repertoire.html" class="btn-primary" data-i18n="nav.rep">Repertoire</a>
+    <a href="press.html" class="btn-primary" data-i18n="nav.epk">Press &amp; materials</a>
+    <a href="media.html" class="btn-secondary" data-i18n="nav.media">Media</a>
     <a href="calendar.html" class="btn-secondary" data-i18n="nav.cal">Calendar</a>
-    <a href="press.html" class="btn-secondary" data-i18n="nav.epk">Press &amp; materials</a>
   </div>
   </div>
 </section>

@@ -189,15 +189,20 @@
     'press.readMore': 'Read article',
     'epk.tag': 'Presenter materials',
     'epk.title': 'Dossier',
+    'epk.pageEyebrow': 'Dossier',
+    'epk.pageTitle': '<span class="title-amp-stack"><span class="title-line1">Dossier</span><span class="title-line2"><span class="title-amp">&amp;</span> <em>Press Materials</em></span></span>',
+    'epk.pageSubtitle': 'Biography, press photos and materials for presenters, programmers and media.',
     'epk.bio50lbl': '50-word Bio',
     'epk.bio150lbl': '150-word Bio',
     'epk.bio300lbl': 'Full Biography',
+    'epk.bioHelp': 'Choose a biography length, then copy the selected text.',
     'epk.copyBio': '\u29d6 Copy biography',
     'epk.photos': 'High-Res Photos',
     'epk.photosIntro':
       'Official press images for media, programmes and print use. Please credit the photographer where indicated.',
     'epk.photoCredit': 'Press and programme photos. Photo credits indicated per image.',
     'epk.docs': 'Documents',
+    'epk.docsIntro': 'Download ready-to-share files for programming, season planning, presenter packs, and press coverage.',
     'epk.downloadDossier': 'Download dossier',
     'epk.downloadArtistSheet': 'Download artist sheet',
     'epk.programsLink': 'See programmes and artistic collaborations',
@@ -543,10 +548,15 @@
     var allQuotes = resolved.pressItems;
     var visibleQuotes = allQuotes.filter(function (p) { return asVisibleFlag(p && p.visible, true); });
     var showResolvedPress = showReviews && visibleQuotes.length > 0;
-    if (pressSection) pressSection.style.display = showResolvedPress ? '' : 'none';
-    if (!showReviews) return;
     var el = document.getElementById('pressGrid');
+    var introEl = document.getElementById('reviewsIntro');
+    if (pressSection) pressSection.classList.toggle('press-no-reviews', !showResolvedPress);
+    if (introEl) introEl.hidden = !showResolvedPress;
     if (!el) return;
+    if (!showResolvedPress) {
+      el.innerHTML = '';
+      return;
+    }
     var items = visibleQuotes
       .sort(function (a, b) {
         return (a.order || 0) - (b.order || 0);
@@ -730,10 +740,12 @@
     var epkPhotosIntroEl = document.getElementById('epkPhotosIntro');
     var epkPhotoNoteEl = document.getElementById('epkPhotoNote');
     var epkLblDocs = document.getElementById('epkLblDocs');
+    var epkDocsIntroEl = document.getElementById('epkDocsIntro');
     if (epkLblPhotos && ti['epk.photos']) epkLblPhotos.textContent = ti['epk.photos'];
     if (epkPhotosIntroEl && ti['epk.photosIntro']) epkPhotosIntroEl.textContent = ti['epk.photosIntro'];
     if (epkPhotoNoteEl && ti['epk.photoCredit']) epkPhotoNoteEl.textContent = ti['epk.photoCredit'];
     if (epkLblDocs && ti['epk.docs']) epkLblDocs.textContent = ti['epk.docs'];
+    if (epkDocsIntroEl && ti['epk.docsIntro']) epkDocsIntroEl.textContent = ti['epk.docsIntro'];
     var dossierBtnLabel = document.getElementById('epkDossierBtn');
     var artistBtnLabel = document.getElementById('epkArtistSheetBtn');
     if (dossierBtnLabel && ti['epk.downloadDossier']) dossierBtnLabel.textContent = ti['epk.downloadDossier'];
@@ -823,8 +835,8 @@
           } else {
             dl.style.display = 'none';
           }
-          actions.appendChild(preview);
           actions.appendChild(dl);
+          actions.appendChild(preview);
 
           body.appendChild(actions);
           card.appendChild(frame);
@@ -996,16 +1008,16 @@
       var resolved = resolvePressRuntime();
       var liveMeta = resolved && resolved.pressMeta;
       var ri = '';
-      if (liveMeta && liveMeta.reviewsIntroByLang && typeof liveMeta.reviewsIntroByLang === 'object') {
-        ri =
-          liveMeta.reviewsIntroByLang[lang] ||
-          liveMeta.reviewsIntroByLang.en ||
-          '';
-      }
-      if (!ri && MP_PRESS.reviewsIntroByLang && typeof MP_PRESS.reviewsIntroByLang === 'object') {
+      if (MP_PRESS.reviewsIntroByLang && typeof MP_PRESS.reviewsIntroByLang === 'object') {
         ri =
           MP_PRESS.reviewsIntroByLang[lang] ||
           MP_PRESS.reviewsIntroByLang.en ||
+          '';
+      }
+      if (!ri && liveMeta && liveMeta.reviewsIntroByLang && typeof liveMeta.reviewsIntroByLang === 'object') {
+        ri =
+          liveMeta.reviewsIntroByLang[lang] ||
+          liveMeta.reviewsIntroByLang.en ||
           '';
       }
       if (!ri && liveMeta && liveMeta.reviewsIntro) ri = liveMeta.reviewsIntro;

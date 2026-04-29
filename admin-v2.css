@@ -258,6 +258,7 @@ button.danger:hover{background:#3a2128;border-color:#9e4b5e}
 #section-tools.active{border-color:var(--color-tools-border);border-width:1.5px;background:linear-gradient(180deg,var(--panel) 0%,var(--color-tools-surface) 100%)}
 h2{margin:0 0 14px}
 h3{margin:0;font-size:.95rem;color:var(--text)}
+.admin-section-heading{margin:16px 0 8px;font-size:.86rem;letter-spacing:.01em;color:var(--gold);font-weight:600}
 .grid{display:grid;gap:10px;margin-bottom:12px}
 .grid.two{grid-template-columns:1fr 1fr}
 .grid.one{grid-template-columns:1fr}

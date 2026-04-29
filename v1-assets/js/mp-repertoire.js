@@ -134,6 +134,10 @@
       .replace(/>/g, '&gt;');
   }
 
+  function repTitleHtml(text) {
+    return repEscapeHtml(text).replace(/&lt;em&gt;/g, '<em>').replace(/&lt;\/em&gt;/g, '</em>');
+  }
+
   function normalizeImagePlacement(value) {
     var v = String(value || '').trim();
     return /^(header_accent|between_intro_tabs|programme_offers_accent)$/.test(v) ? v : 'between_intro_tabs';
@@ -407,6 +411,7 @@
     var titleStackEl = document.getElementById('repTitleStack');
     var adjEl = document.getElementById('repTitleAdj');
     var mainEl = document.getElementById('repTitleMain');
+    var repH2 = document.getElementById('repH2');
     var titleAdj = mpPick(currentLang || 'en', 'rep.titlePrefix', 'Selected');
     var titleNoun = mpPick(currentLang || 'en', 'nav.rep', 'Repertoire');
     var isPostpositiveTitle = /^(es|it|fr)$/i.test(currentLang || 'en');
@@ -414,6 +419,8 @@
     if (adjEl && mainEl) {
       adjEl.textContent = titleAdj;
       mainEl.textContent = titleNoun;
+    } else if (repH2) {
+      repH2.innerHTML = repTitleHtml(d.h2 || mpPick(currentLang || 'en', 'rep.pageH2', 'Selected <em>Repertoire</em>'));
     }
     var repIntroLineEl = document.getElementById('repIntroLine');
     if (repIntroLineEl) repIntroLineEl.textContent = ed.repIntroLine || '';
